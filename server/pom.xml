@@ -55,7 +55,7 @@
         <maven-war-plugin.version>3.4.0</maven-war-plugin.version>
         <maven-compiler-plugin.version>3.14.0</maven-compiler-plugin.version>
         <maven-surefire-plugin.version>3.5.3</maven-surefire-plugin.version>
-        <flatten-maven-plugin.version>1.3.0</flatten-maven-plugin.version>
+        <flatten-maven-plugin.version>1.8.0</flatten-maven-plugin.version>
         <!-- 鲸熵汇基线：测试默认执行；如需跳过必须在一次性本地命令中显式声明 -->
         <skipTests>false</skipTests>
     </properties>
