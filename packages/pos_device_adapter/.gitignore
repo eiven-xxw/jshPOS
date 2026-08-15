@@ -24,8 +24,7 @@ migrate_working_dir/
 #.vscode/
 
 # Flutter/Dart/Pub related
-# Libraries should not include pubspec.lock, per https://dart.dev/guides/libraries/private-files#pubspeclock.
-/pubspec.lock
+# This monorepo tracks the adapter lockfile for reproducible certified builds.
 **/doc/api/
 .dart_tool/
 .flutter-plugins-dependencies

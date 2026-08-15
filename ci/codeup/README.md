@@ -1,6 +1,6 @@
-# Codeup / 云效 Flow T0 流水线
+# Codeup / 云效 Flow T0 镜像配置
 
-`t0-flow.yml` 是鲸熵汇收银系统在阿里云云效 Flow 上的 T0 质量门禁权威副本。Codeup 不会像 GitHub 一样自动识别仓库内的 CI 文件，因此必须在 Flow 控制台创建“YAML 化编排”流水线，并把本文件同步到编辑器。
+`t0-flow.yml` 是鲸熵汇收银系统在 Codeup/云效 Flow 上的镜像与灾备参考。根据 ADR-013，GitHub Actions 已是正式 T0 验收入口；Flow 运行不得单独把 RTM 更新为 `ACCEPTED`。Codeup 不会像 GitHub 一样自动识别仓库内的 CI 文件，如需灾备演练，必须在 Flow 控制台创建“YAML 化编排”流水线，并把本文件同步到编辑器。
 
 ## 绑定方式
 

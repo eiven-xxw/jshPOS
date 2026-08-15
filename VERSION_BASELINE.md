@@ -18,6 +18,7 @@
 | Android 新认证基线 | Android 11+ / ARM64 | Android 9/10 仅兼容已认证存量机型 |
 | MySQL | 8.4 LTS | InnoDB、utf8mb4、严格 SQL 模式 |
 | Redis | 7.4 系列 | 仅缓存/协调，不作为交易事实源 |
+| 正式 CI | GitHub Actions `ubuntu-24.04` 托管 runner | 实际 image 版本记录在每次 run 日志；Action 固定完整 SHA |
 | 云效 Flow Python 镜像 | Python 3.12.11 slim-bookworm + digest | 治理与契约门禁 |
 | 云效 Flow Maven 镜像 | Maven 3.9.9 + Temurin 21 + digest | 服务端与供应链门禁 |
 | 云效 Flow Node 镜像 | Node 24.9.0 bookworm-slim + digest | Vue 管理后台门禁 |

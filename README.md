@@ -12,7 +12,8 @@
 - `packages/pos_device_adapter/`：Flutter/Kotlin 设备适配契约。
 - `contracts/`：OpenAPI、事件和连接器契约。
 - `infra/`：本地依赖与部署基线。
-- `ci/codeup/`：Codeup / 云效 Flow 的正式 T0 流水线权威副本。
+- `.github/workflows/`：GitHub Actions 正式 T0 质量门禁。
+- `ci/codeup/`：Codeup / 云效 Flow 镜像与灾备参考配置。
 - `tests/`：契约、端到端、硬件和故障测试入口。
 - `docs/governance/`：RTM、变更控制和研发证据。
 - `docs/adr/`：架构决策记录。
@@ -36,4 +37,4 @@ pwsh ./scripts/verify-t0.ps1
 
 完整门禁需要 JDK 21、Node 24、pnpm 10.33、Flutter 3.47、Android SDK 和 Docker Compose v2。只做不含 APK/Compose 的本地复验时可显式使用 `-SkipAndroidBuild -SkipInfrastructure`；这两项仍必须在 CI 通过后才能签署 T0。各工程也可以独立验证；所需版本见 `VERSION_BASELINE.md`。
 
-正式代码仓库使用 Codeup，云效 Flow 配置与启用方式见 `ci/codeup/README.md`。`.github/workflows/` 保留为镜像仓库兼容门禁，不是 Codeup 的实际执行入口。
+正式代码仓库为 GitHub `eiven-xxw/jshPOS`，GitHub Actions 是 T0 验收与制品权威入口。Codeup/云效 Flow 仅作可选镜像与灾备参考，详见 `docs/adr/ADR-013-github-primary-repository-ci.md`。
