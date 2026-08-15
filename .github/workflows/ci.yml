@@ -171,9 +171,15 @@ jobs:
           python scripts/check_sbom_licenses.py server/target/bom.json docs/compliance/reviewed-license-allowlist.json
           ignored_licenses="$(python -c 'import json; print(",".join(json.load(open("docs/compliance/reviewed-license-allowlist.json", encoding="utf-8"))["trivy_ignored_licenses"]))')"
           /tmp/trivy sbom --skip-version-check --scanners license --severity HIGH,CRITICAL --exit-code 1 --ignored-licenses "$ignored_licenses" server/target/bom.json
-      - name: Scan repository dependencies and secrets
+      - name: Scan non-Maven repository dependencies
         run: |
-          /tmp/trivy fs --skip-version-check --db-repository ghcr.io/aquasecurity/trivy-db:2 --java-db-repository ghcr.io/aquasecurity/trivy-java-db:1 --scanners vuln,secret --severity HIGH,CRITICAL --exit-code 1 --skip-dirs .git .
+          # Maven dependencies are scanned from the aggregate SBOM above. Excluding
+          # server here prevents a duplicate POM resolution from depending on
+          # Maven Central rate limits while preserving all dependency coverage.
+          /tmp/trivy fs --skip-version-check --db-repository ghcr.io/aquasecurity/trivy-db:2 --java-db-repository ghcr.io/aquasecurity/trivy-java-db:1 --scanners vuln --severity HIGH,CRITICAL --exit-code 1 --skip-dirs .git --skip-dirs server .
+      - name: Scan repository secrets
+        run: |
+          /tmp/trivy fs --skip-version-check --scanners secret --severity HIGH,CRITICAL --exit-code 1 --skip-dirs .git .
       - name: Scan infrastructure as code
         run: |
           /tmp/trivy config --skip-version-check --checks-bundle-repository ghcr.io/aquasecurity/trivy-checks:2 --severity HIGH,CRITICAL --exit-code 1 .
