@@ -14,6 +14,7 @@ GitHub Actions 的 Trivy 0.72.0 SBOM 门禁在 T0 候选提交 `92cf6196509ee686
 3. Netty BOM 在 Spring Boot BOM 之前导入，其他坐标在本项目 `dependencyManagement` 显式管理，确保 Maven 解析结果不受上游传递版本漂移影响。
 4. 删除 Redis 模块未实际启用的 Fory 直接依赖；SnailJob 所需的传递依赖统一提升至已修复版本。
 5. 继续使用 HIGH/CRITICAL 零容忍门禁，不增加 ignore、VEX 豁免或降级扫描范围。
+6. 服务端、监控端和 SnailJob 的容器运行阶段统一使用固定 UID/GID `10001:10001`，构建阶段创建不可登录用户并把应用目录和 JAR 所有权交给该用户；禁止生产容器默认以 root 运行。
 
 ## 依赖治理记录
 
@@ -32,6 +33,7 @@ GitHub Actions 的 Trivy 0.72.0 SBOM 门禁在 T0 候选提交 `92cf6196509ee686
 - fastjson2 兼容层并不承诺覆盖所有 fastjson 1.x 边缘 API；当前使用面由专门回归测试约束，后续新增调用必须优先使用项目 Jackson 能力。
 - Fory 从 0.13.x 跨越到 1.1.0，必须保持完整 Maven 构建、SnailJob 编译和 SBOM 扫描为发布门禁；T0 不启动正式调度业务或生产数据迁移。
 - 回滚只能回滚整项依赖决策并重新通过 HIGH/CRITICAL 门禁，不得回退到已知漏洞版本后发布。
+- 非 root 容器不能写入镜像中未显式授权的目录；新增日志、临时文件或探针目录时必须声明挂载点/权限并在镜像测试中验证。
 
 ## 验证方式
 

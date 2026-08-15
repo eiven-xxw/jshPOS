@@ -5,7 +5,10 @@ FROM bellsoft/liberica-openjdk-rocky:17.0.16-cds
 
 LABEL maintainer="Lion Li"
 
-RUN mkdir -p /ruoyi/monitor/logs
+RUN groupadd --system --gid 10001 ruoyi \
+    && useradd --system --uid 10001 --gid ruoyi --home-dir /ruoyi --shell /sbin/nologin ruoyi \
+    && mkdir -p /ruoyi/monitor/logs \
+    && chown -R ruoyi:ruoyi /ruoyi
 
 WORKDIR /ruoyi/monitor
 
@@ -13,7 +16,9 @@ ENV LANG=C.UTF-8 LC_ALL=C.UTF-8 JAVA_OPTS=""
 
 EXPOSE 9090
 
-ADD ./target/ruoyi-monitor-admin.jar ./app.jar
+COPY --chown=ruoyi:ruoyi ./target/ruoyi-monitor-admin.jar ./app.jar
+
+USER 10001:10001
 
 SHELL ["/bin/bash", "-c"]
 

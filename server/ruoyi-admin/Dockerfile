@@ -5,9 +5,12 @@ FROM bellsoft/liberica-openjdk-rocky:17.0.16-cds
 
 LABEL maintainer="Lion Li"
 
-RUN mkdir -p /ruoyi/server/logs \
+RUN groupadd --system --gid 10001 ruoyi \
+    && useradd --system --uid 10001 --gid ruoyi --home-dir /ruoyi --shell /sbin/nologin ruoyi \
+    && mkdir -p /ruoyi/server/logs \
     /ruoyi/server/temp \
-    /ruoyi/skywalking/agent
+    /ruoyi/skywalking/agent \
+    && chown -R ruoyi:ruoyi /ruoyi
 
 WORKDIR /ruoyi/server
 
@@ -17,7 +20,9 @@ EXPOSE ${SERVER_PORT}
 # 暴露 snail job 客户端端口 用于定时任务调度中心通信
 EXPOSE ${SNAIL_PORT}
 
-ADD ./target/ruoyi-admin.jar ./app.jar
+COPY --chown=ruoyi:ruoyi ./target/ruoyi-admin.jar ./app.jar
+
+USER 10001:10001
 
 SHELL ["/bin/bash", "-c"]
 

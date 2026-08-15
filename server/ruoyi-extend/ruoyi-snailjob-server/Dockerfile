@@ -5,7 +5,10 @@ FROM bellsoft/liberica-openjdk-rocky:17.0.16-cds
 
 LABEL maintainer="Lion Li"
 
-RUN mkdir -p /ruoyi/snailjob/logs
+RUN groupadd --system --gid 10001 ruoyi \
+    && useradd --system --uid 10001 --gid ruoyi --home-dir /ruoyi --shell /sbin/nologin ruoyi \
+    && mkdir -p /ruoyi/snailjob/logs \
+    && chown -R ruoyi:ruoyi /ruoyi
 
 WORKDIR /ruoyi/snailjob
 
@@ -14,7 +17,9 @@ ENV LANG=C.UTF-8 LC_ALL=C.UTF-8 JAVA_OPTS=""
 EXPOSE 8800
 EXPOSE 17888
 
-ADD ./target/ruoyi-snailjob-server.jar ./app.jar
+COPY --chown=ruoyi:ruoyi ./target/ruoyi-snailjob-server.jar ./app.jar
+
+USER 10001:10001
 
 SHELL ["/bin/bash", "-c"]
 
