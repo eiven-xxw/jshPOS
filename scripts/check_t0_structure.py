@@ -26,6 +26,7 @@ REQUIRED = [
     "pos-flutter/android/gradle/wrapper/gradle-wrapper.jar",
     "packages/pos_device_adapter/pubspec.yaml",
     "packages/pos_device_adapter/pubspec.lock",
+    "packages/pos_device_adapter/example/pubspec.lock",
     "packages/pos_device_adapter/android/src/main/kotlin/com/jingshanghui/pos/pos_device_adapter/PosDeviceAdapterPlugin.kt",
     "contracts/openapi/openapi.yaml",
     "infra/compose/compose.yaml",
@@ -45,6 +46,12 @@ def main() -> None:
     )
     tracked = set(tracked_result.stdout.decode("utf-8").split("\0"))
     untracked_required = [relative for relative in REQUIRED if relative not in tracked]
+    mirrored_pub_locks = [
+        relative
+        for relative in tracked
+        if relative.endswith("pubspec.lock")
+        and "pub.flutter-io.cn" in (ROOT / relative).read_text(encoding="utf-8")
+    ]
     nested_git = [path for path in ROOT.glob("*/.git") if path.is_dir()]
     ci = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
     workflow_text = "\n".join(
@@ -93,6 +100,7 @@ def main() -> None:
     if (
         missing
         or untracked_required
+        or mirrored_pub_locks
         or nested_git
         or mutable_actions
         or missing_github_jobs
@@ -104,6 +112,12 @@ def main() -> None:
             print("STRUCTURE ERROR: missing " + ", ".join(missing), file=sys.stderr)
         if untracked_required:
             print("STRUCTURE ERROR: required paths are not tracked: " + ", ".join(untracked_required), file=sys.stderr)
+        if mirrored_pub_locks:
+            print(
+                "STRUCTURE ERROR: Pub lockfiles must use the canonical pub.dev registry: "
+                + ", ".join(mirrored_pub_locks),
+                file=sys.stderr,
+            )
         if nested_git:
             print("STRUCTURE ERROR: nested git " + ", ".join(map(str, nested_git)), file=sys.stderr)
         if mutable_actions:
