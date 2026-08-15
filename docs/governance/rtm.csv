@@ -1,16 +1,16 @@
 requirement_id,phase,domain,priority,source,acceptance,status,implementation,test_evidence,owner,notes
-T0-GOV-001,T0,governance,P0,技术规范15与详细设计40-5,根AGENTS与研发治理规则存在且RTM校验通过,VERIFIED,AGENTS.md;docs/governance,docs/evidence/T0-verification-2026-08-15.md,架构负责人,禁止业务实现先于需求准入
-T0-ADR-001,T0,architecture,P0,技术规范17,ADR-001至ADR-012均有明确状态和验证方式,VERIFIED,docs/adr,docs/evidence/T0-verification-2026-08-15.md,架构负责人,
-T0-REPO-001,T0,repository,P0,技术规范16-T0,Monorepo目录与上游commit可追溯且无嵌套Git仓库,VERIFIED,README.md;VERSION_BASELINE.md,docs/evidence/T0-verification-2026-08-15.md,技术负责人,
-T0-SRV-001,T0,server,P0,技术规范3.1与4,服务端在固定JDK和Maven基线上可编译测试,VERIFIED,server,docs/evidence/T0-verification-2026-08-15.md,后端负责人,不得开发交易业务
-T0-WEB-001,T0,admin-web,P0,技术规范3.2,前端依赖锁定并通过lint类型检查与生产构建,VERIFIED,admin-web,docs/evidence/T0-verification-2026-08-15.md,前端负责人,
-T0-POS-001,T0,pos,P0,技术规范3.3与5,Flutter骨架在固定SDK上通过analyze和test,VERIFIED,pos-flutter,docs/evidence/T0-verification-2026-08-15.md,POS负责人,Android优先；APK实编译待远程CI闭环
-T0-DEV-001,T0,device,P0,技术规范6与详细设计36,Flutter只通过统一适配契约访问Kotlin设备层且具备fake实现,IMPLEMENTED,packages/pos_device_adapter,docs/evidence/T0-verification-2026-08-15.md,设备负责人,契约与Dart测试已通过；Kotlin实编译待远程CI
-T0-CON-001,T0,contracts,P1,详细设计37与38,OpenAPI事件和连接器目录具有版本和校验入口,VERIFIED,contracts,docs/evidence/T0-verification-2026-08-15.md,架构负责人,仅建契约骨架
-T0-INF-001,T0,infrastructure,P0,技术规范3.1与12,本地MySQL8.4与Redis7.4配置无硬编码生产密钥,IMPLEMENTED,infra/compose,docs/evidence/T0-verification-2026-08-15.md,DevOps,镜像已固定摘要；Compose解析待远程CI
-T0-CI-001,T0,ci,P0,技术规范11与12,CI分别验证治理服务端Web和Flutter且失败可定位,IMPLEMENTED,.github/workflows,docs/evidence/T0-verification-2026-08-15.md,DevOps,actionlint通过；仓库未配置远程故尚无CI运行记录
-T0-LIC-001,T0,compliance,P0,技术规范3.3与12,固定上游许可证保留且依赖审计有入口,VERIFIED,THIRD_PARTY_NOTICES.md;docs/compliance/dependency-baseline.md,docs/evidence/T0-verification-2026-08-15.md,安全负责人,服务端SCA须在首次远程CI闭环
-T0-BLD-001,T0,quality,P0,技术规范16-T0,统一验证脚本输出版本和各工程结果并生成T0证据,IMPLEMENTED,scripts/verify-t0.ps1,docs/evidence/T0-verification-2026-08-15.md,QA,本地七项通过；Android APK与Compose待远程CI
+T0-GOV-001,T0,governance,P0,技术规范15与详细设计40-5,根AGENTS与研发治理规则存在且RTM校验通过,ACCEPTED,AGENTS.md;docs/governance,docs/evidence/T0-seal-2026-08-16.md,架构负责人,远程governance门禁通过；禁止业务实现先于需求准入
+T0-ADR-001,T0,architecture,P0,技术规范17,ADR-001至ADR-012均有明确状态和验证方式,ACCEPTED,docs/adr,docs/evidence/T0-seal-2026-08-16.md,架构负责人,封板时实际包含ADR-001至ADR-015
+T0-REPO-001,T0,repository,P0,技术规范16-T0,Monorepo目录与上游commit可追溯且无嵌套Git仓库,ACCEPTED,README.md;VERSION_BASELINE.md,docs/evidence/T0-seal-2026-08-16.md,技术负责人,GitHub为正式私有仓库；Codeup保留可选镜像
+T0-SRV-001,T0,server,P0,技术规范3.1与4,服务端在固定JDK和Maven基线上可编译测试,ACCEPTED,server,docs/evidence/T0-seal-2026-08-16.md,后端负责人,37个reactor模块通过；不得开发交易业务
+T0-WEB-001,T0,admin-web,P0,技术规范3.2,前端依赖锁定并通过lint类型检查与生产构建,ACCEPTED,admin-web,docs/evidence/T0-seal-2026-08-16.md,前端负责人,high audit无已知漏洞且许可证制品已核对
+T0-POS-001,T0,pos,P0,技术规范3.3与5,Flutter骨架在固定SDK上通过analyze和test,ACCEPTED,pos-flutter,docs/evidence/T0-seal-2026-08-16.md,POS负责人,Flutter 3.47.0实编译APK及摘要已核对
+T0-DEV-001,T0,device,P0,技术规范6与详细设计36,Flutter只通过统一适配契约访问Kotlin设备层且具备fake实现,ACCEPTED,packages/pos_device_adapter,docs/evidence/T0-seal-2026-08-16.md,设备负责人,3项Dart契约测试及Kotlin Android单测通过
+T0-CON-001,T0,contracts,P1,详细设计37与38,OpenAPI事件和连接器目录具有版本和校验入口,ACCEPTED,contracts,docs/evidence/T0-seal-2026-08-16.md,架构负责人,仅建契约骨架；2个JSON Schema及OpenAPI校验通过
+T0-INF-001,T0,infrastructure,P0,技术规范3.1与12,本地MySQL8.4与Redis7.4配置无硬编码生产密钥,ACCEPTED,infra/compose,docs/evidence/T0-seal-2026-08-16.md,DevOps,Compose解析通过；Java运行镜像非root
+T0-CI-001,T0,ci,P0,技术规范11与12,CI分别验证治理服务端Web和Flutter且失败可定位,ACCEPTED,.github/workflows,docs/evidence/T0-seal-2026-08-16.md,DevOps,GitHub Actions #34六个job全绿；PR额外执行仓库自有Dependency Review
+T0-LIC-001,T0,compliance,P0,技术规范3.3与12,固定上游许可证保留且依赖审计有入口,ACCEPTED,THIRD_PARTY_NOTICES.md;docs/compliance/dependency-baseline.md,docs/evidence/T0-seal-2026-08-16.md,安全负责人,410组件SBOM零高危严重漏洞；14个受限组件精确准入
+T0-BLD-001,T0,quality,P0,技术规范16-T0,统一验证脚本输出版本和各工程结果并生成T0证据,ACCEPTED,scripts/verify-t0.ps1,docs/evidence/T0-seal-2026-08-16.md,QA,APK SBOM许可证清单制品及SHA-256已核对
 V1-SAA-001,T2,saas,P0,V3-11.5与详细设计31,租户门店员工权限配置终端具备端到端隔离验收,DRAFT,,待定义,产品负责人,商业V1
 V1-PRD-001,T2,product,P0,V3-11.5与详细设计31,商品条码单位价格导入发布与POS下发闭环,DRAFT,,待定义,产品负责人,商业V1
 V1-POS-001,T2,pos,P0,V3-3.5与11.5,开班销售现金收款退款交班小票形成可恢复闭环,DRAFT,,待定义,产品负责人,需拆为原子需求

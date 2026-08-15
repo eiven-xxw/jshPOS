@@ -1,6 +1,6 @@
 # T0 工具链与上游版本基线
 
-基线日期：2026-08-15。升级必须通过 ADR 和兼容性回归，不跟随上游主分支自动升级。
+基线日期：2026-08-16。升级必须通过 ADR 和兼容性回归，不跟随上游主分支自动升级。
 
 | 组件 | 固定基线 | 说明 |
 |---|---|---|
@@ -25,6 +25,21 @@
 | 云效 Flow Flutter 基础镜像 | Cirrus Flutter stable digest（内含 Android SDK） | 运行时强制切换并核对 Flutter 3.47.0 commit |
 | 云效 Flow Docker CLI | Docker CLI/Compose 27.5.1 + digest | Compose 配置解析，不连接生产 Docker daemon |
 | Trivy | 0.72.0 + SHA-256 `bbb64b9695866ce4a7a8f5c9592002c5961cab378577fa3f8a040df362b9b2ea` | 漏洞、许可证、密钥与 IaC 门禁 |
+
+## T0 安全覆盖版本
+
+| 组件 | T0 固定/解析版本 | 治理原因 |
+|---|---:|---|
+| fastjson2 1.x API 兼容制品 | 2.0.61 | 替代存在已知高危且无修复版本的 fastjson 1.2.83；兼容测试锁定当前使用面 |
+| Netty BOM | 4.1.136.Final | 修复 T0 SBOM 发现的 HIGH 漏洞 |
+| Apache HttpCore | 5.4.3 | 修复 T0 SBOM 发现的 HIGH 漏洞 |
+| Bouncy Castle | 1.85 | 固定在本次漏洞修复线以上 |
+| PostgreSQL JDBC | 42.7.12 | 修复 T0 SBOM 发现的 HIGH 漏洞 |
+| Apache Fory | 1.1.0 | 修复 SnailJob 传递依赖漏洞；未使用的 Redis 直接依赖已删除 |
+| Aviator | 5.4.4 | 使用含沙箱安全修复的版本；商业发布许可证事项仍需关闭 |
+| Java 容器运行身份 | UID/GID `10001:10001` | 服务端、监控端、SnailJob 均禁止 root 运行 |
+
+T0 代码候选 `9fd73f04e1b1304071ad5bfd4259fb84679d926c` 已通过 GitHub Actions #34 全量门禁。精确许可证处置见 `docs/compliance/reviewed-license-allowlist.json` 和 ADR-015；这不是商业分发法律意见。
 
 ## 上游更新策略
 
