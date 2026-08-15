@@ -203,7 +203,7 @@ stages:
                 /tmp/trivy sbom --skip-version-check --scanners license --severity HIGH,CRITICAL --exit-code 1 --ignored-licenses "$ignored_licenses" target/bom.json
                 cd ..
                 /tmp/trivy fs --skip-version-check --db-repository ghcr.io/aquasecurity/trivy-db:2 --java-db-repository ghcr.io/aquasecurity/trivy-java-db:1 --scanners vuln --severity HIGH,CRITICAL --exit-code 1 --skip-dirs .git --skip-dirs server --skip-dirs admin-web/node_modules .
-                /tmp/trivy fs --skip-version-check --scanners secret --severity HIGH,CRITICAL --exit-code 1 --skip-dirs .git --skip-dirs admin-web/node_modules .
+                /tmp/trivy fs --skip-version-check --offline-scan --scanners secret --severity HIGH,CRITICAL --exit-code 1 --skip-dirs .git --skip-dirs admin-web/node_modules .
                 /tmp/trivy config --skip-version-check --checks-bundle-repository ghcr.io/aquasecurity/trivy-checks:2 --severity HIGH,CRITICAL --exit-code 1 .
           security_artifact_step:
             name: "上传安全扫描输入"

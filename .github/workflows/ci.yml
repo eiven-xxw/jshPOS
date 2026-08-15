@@ -179,7 +179,10 @@ jobs:
           /tmp/trivy fs --skip-version-check --db-repository ghcr.io/aquasecurity/trivy-db:2 --java-db-repository ghcr.io/aquasecurity/trivy-java-db:1 --scanners vuln --severity HIGH,CRITICAL --exit-code 1 --skip-dirs .git --skip-dirs server .
       - name: Scan repository secrets
         run: |
-          /tmp/trivy fs --skip-version-check --scanners secret --severity HIGH,CRITICAL --exit-code 1 --skip-dirs .git .
+          # Secret rules need file contents, not remote dependency metadata.
+          # Offline mode keeps the full-repository walk while preventing Maven
+          # analyzers from issuing unrelated repository requests.
+          /tmp/trivy fs --skip-version-check --offline-scan --scanners secret --severity HIGH,CRITICAL --exit-code 1 --skip-dirs .git .
       - name: Scan infrastructure as code
         run: |
           /tmp/trivy config --skip-version-check --checks-bundle-repository ghcr.io/aquasecurity/trivy-checks:2 --severity HIGH,CRITICAL --exit-code 1 .

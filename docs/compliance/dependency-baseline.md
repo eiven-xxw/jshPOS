@@ -15,7 +15,7 @@
 
 GitHub Actions 会重新生成服务端 SBOM 和前端许可证清单，并把它们作为短期构建制品保存。正式供应链门禁使用校验和固定的 Trivy 0.72.0 阻断 high/critical 漏洞、高风险许可证、密钥与高风险 IaC 配置，并由前端门禁显式阻断 GPL-3.0、AGPL-3.0；Pull Request 额外执行 Dependency Review，Dependabot 持续检查锁定依赖。
 
-Java/Maven 依赖以完成 `clean verify` 后生成的聚合 CycloneDX SBOM 为唯一漏洞扫描输入；文件系统漏洞扫描排除 `server/`，避免重复解析 POM 依赖 Maven Central 的共享 runner 限流。密钥扫描仍覆盖包括 `server/` 在内的整个仓库，IaC 扫描也覆盖全仓库，因此该拆分不减少依赖、源码或基础设施检查范围。
+Java/Maven 依赖以完成 `clean verify` 后生成的聚合 CycloneDX SBOM 为唯一漏洞扫描输入；文件系统漏洞扫描排除 `server/`，避免重复解析 POM 依赖 Maven Central 的共享 runner 限流。密钥扫描使用离线解析但仍覆盖包括 `server/` 在内的整个仓库，IaC 扫描也覆盖全仓库，因此该拆分不减少依赖、源码或基础设施检查范围。
 
 Trivy 会把 LGPL、Classpath Exception 以及双许可证组件中的限制型选项统一标为 HIGH。鲸熵汇不使用宽泛的全局放行：`scripts/check_sbom_licenses.py` 先按 `docs/compliance/reviewed-license-allowlist.json` 校验精确坐标、版本和实际许可证集合，任何新增或版本变化都会失败；随后 Trivy 仅忽略该清单覆盖的许可证类别，继续阻断其他 HIGH/CRITICAL 许可证。双许可证组件明确选择 EPL、Apache、BSD 或 CDDL 选项；仅有 LGPL 选项的 Aviator 和 simple-http 仍是商业发布前法务/替换阻断项。
 
