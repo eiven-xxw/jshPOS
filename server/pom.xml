@@ -35,7 +35,12 @@
         <mapstruct-plus.version>1.5.0</mapstruct-plus.version>
         <mapstruct-plus.lombok.version>0.2.0</mapstruct-plus.lombok.version>
         <lombok.version>1.18.44</lombok.version>
-        <bouncycastle.version>1.83</bouncycastle.version>
+        <bouncycastle.version>1.85</bouncycastle.version>
+        <!-- T0 供应链基线：显式覆盖上游 BOM 中尚未发布修复的版本 -->
+        <netty.version>4.1.136.Final</netty.version>
+        <httpcore5.version>5.4.3</httpcore5.version>
+        <postgresql.version>42.7.12</postgresql.version>
+        <fory.version>1.1.0</fory.version>
         <justauth.version>1.16.7</justauth.version>
         <!-- 离线IP地址定位库 -->
         <ip2region.version>3.3.7</ip2region.version>
@@ -43,8 +48,8 @@
         <aws.sdk.version>2.28.22</aws.sdk.version>
         <!-- SMS 配置 -->
         <sms4j.version>3.3.5</sms4j.version>
-        <!-- 限制框架中的fastjson版本 -->
-        <fastjson.version>1.2.83</fastjson.version>
+        <!-- fastjson2 官方提供的 1.x API 兼容包；消除 fastjson 1.x 无修复版本的 RCE 风险 -->
+        <fastjson.version>2.0.61</fastjson.version>
         <!-- 面向运行时的D-ORM依赖 -->
         <anyline.version>8.7.3-20260319</anyline.version>
         <!-- 工作流配置 -->
@@ -99,6 +104,41 @@
     <!-- 依赖声明 -->
     <dependencyManagement>
         <dependencies>
+
+            <!--
+              安全版本覆盖必须位于 Spring Boot BOM 之前：Maven 对多个导入 BOM
+              中的同一坐标采用先声明者。具体原因与回滚策略见 ADR-014。
+            -->
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-bom</artifactId>
+                <version>${netty.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.httpcomponents.core5</groupId>
+                <artifactId>httpcore5</artifactId>
+                <version>${httpcore5.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.httpcomponents.core5</groupId>
+                <artifactId>httpcore5-h2</artifactId>
+                <version>${httpcore5.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.postgresql</groupId>
+                <artifactId>postgresql</artifactId>
+                <version>${postgresql.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.fory</groupId>
+                <artifactId>fory-core</artifactId>
+                <version>${fory.version}</version>
+            </dependency>
 
             <!-- SpringBoot的依赖配置-->
             <dependency>
