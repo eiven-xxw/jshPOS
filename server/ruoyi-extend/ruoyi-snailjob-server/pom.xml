@@ -21,6 +21,11 @@
                     <groupId>org.scala-lang</groupId>
                     <artifactId>scala-library</artifactId>
                 </exclusion>
+                <!-- 鲸熵汇 T0 仅认证 MySQL 8.4；移除未使用的 LGPL MariaDB 数据源 -->
+                <exclusion>
+                    <groupId>com.aizuda</groupId>
+                    <artifactId>snail-job-mariadb-datasource</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
 

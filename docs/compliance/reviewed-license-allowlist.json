@@ -1,0 +1,125 @@
+{
+  "schema_version": 1,
+  "scope": "T0 technical baseline only; commercial release still requires legal approval or replacement",
+  "trivy_ignored_licenses": [
+    "LGPL-2.1-only",
+    "LGPL-2.1-or-later",
+    "LGPL-3.0-only",
+    "GPL-2.0-with-classpath-exception",
+    "GNU LESSER GENERAL PUBLIC LICENSE"
+  ],
+  "approvals": [
+    {
+      "coordinate": "ch.qos.logback:logback-classic",
+      "version": "1.5.34",
+      "approved_restricted_licenses": ["LGPL-2.1-only"],
+      "selected_license": "EPL-2.0",
+      "basis": "dual-license alternative selected",
+      "commercial_release_status": "LEGAL_REVIEW_REQUIRED"
+    },
+    {
+      "coordinate": "ch.qos.logback:logback-core",
+      "version": "1.5.34",
+      "approved_restricted_licenses": ["LGPL-2.1-only"],
+      "selected_license": "EPL-2.0",
+      "basis": "dual-license alternative selected",
+      "commercial_release_status": "LEGAL_REVIEW_REQUIRED"
+    },
+    {
+      "coordinate": "com.github.jsqlparser:jsqlparser",
+      "version": "5.2",
+      "approved_restricted_licenses": ["LGPL-2.1-only"],
+      "selected_license": "Apache-2.0",
+      "basis": "dual-license alternative selected",
+      "commercial_release_status": "LEGAL_REVIEW_REQUIRED"
+    },
+    {
+      "coordinate": "com.googlecode.aviator:aviator",
+      "version": "5.4.4",
+      "approved_restricted_licenses": ["GNU LESSER GENERAL PUBLIC LICENSE"],
+      "selected_license": "LGPL-2.1-or-later",
+      "basis": "required by SnailJob job-task; fixed to security release 5.4.4",
+      "commercial_release_status": "REPLACE_OR_LEGAL_APPROVAL_REQUIRED"
+    },
+    {
+      "coordinate": "com.xkcoding.http:simple-http",
+      "version": "1.0.5",
+      "approved_restricted_licenses": ["LGPL-3.0-only"],
+      "selected_license": "LGPL-3.0-only",
+      "basis": "required by the pinned JustAuth adapter",
+      "commercial_release_status": "REPLACE_OR_LEGAL_APPROVAL_REQUIRED"
+    },
+    {
+      "coordinate": "jakarta.annotation:jakarta.annotation-api",
+      "version": "2.1.1",
+      "approved_restricted_licenses": ["GPL-2.0-with-classpath-exception"],
+      "selected_license": "EPL-2.0",
+      "basis": "dual-license alternative selected",
+      "commercial_release_status": "LEGAL_REVIEW_REQUIRED"
+    },
+    {
+      "coordinate": "jakarta.mail:jakarta.mail-api",
+      "version": "2.1.5",
+      "approved_restricted_licenses": ["GPL-2.0-with-classpath-exception"],
+      "selected_license": "BSD-3-Clause",
+      "basis": "multi-license permissive alternative selected",
+      "commercial_release_status": "LEGAL_REVIEW_REQUIRED"
+    },
+    {
+      "coordinate": "jakarta.servlet:jakarta.servlet-api",
+      "version": "6.0.0",
+      "approved_restricted_licenses": ["GPL-2.0-with-classpath-exception"],
+      "selected_license": "EPL-2.0",
+      "basis": "dual-license alternative selected",
+      "commercial_release_status": "LEGAL_REVIEW_REQUIRED"
+    },
+    {
+      "coordinate": "jakarta.websocket:jakarta.websocket-api",
+      "version": "2.1.1",
+      "approved_restricted_licenses": ["GNU General Public License, version 2 with the GNU Classpath Exception"],
+      "selected_license": "EPL-2.0",
+      "basis": "dual-license alternative selected",
+      "commercial_release_status": "LEGAL_REVIEW_REQUIRED"
+    },
+    {
+      "coordinate": "jakarta.websocket:jakarta.websocket-client-api",
+      "version": "2.1.1",
+      "approved_restricted_licenses": ["GNU General Public License, version 2 with the GNU Classpath Exception"],
+      "selected_license": "EPL-2.0",
+      "basis": "dual-license alternative selected",
+      "commercial_release_status": "LEGAL_REVIEW_REQUIRED"
+    },
+    {
+      "coordinate": "javax.xml.bind:jaxb-api",
+      "version": "2.3.0",
+      "approved_restricted_licenses": ["GPL-2.0-with-classpath-exception"],
+      "selected_license": "CDDL-1.1",
+      "basis": "dual-license alternative selected",
+      "commercial_release_status": "LEGAL_REVIEW_REQUIRED"
+    },
+    {
+      "coordinate": "org.eclipse.angus:jakarta.mail",
+      "version": "2.0.5",
+      "approved_restricted_licenses": ["GPL-2.0-with-classpath-exception"],
+      "selected_license": "BSD-3-Clause",
+      "basis": "multi-license permissive alternative selected",
+      "commercial_release_status": "LEGAL_REVIEW_REQUIRED"
+    },
+    {
+      "coordinate": "org.javassist:javassist",
+      "version": "3.24.1-GA",
+      "approved_restricted_licenses": ["LGPL-2.1-only"],
+      "selected_license": "Apache-2.0",
+      "basis": "multi-license permissive alternative selected",
+      "commercial_release_status": "LEGAL_REVIEW_REQUIRED"
+    },
+    {
+      "coordinate": "com.mysql:mysql-connector-j",
+      "version": "9.7.0",
+      "approved_restricted_licenses": ["The GNU General Public License, v2 with Universal FOSS Exception, v1.0"],
+      "selected_license": "Oracle commercial license or approved replacement driver",
+      "basis": "required by the MySQL 8.4 baseline; Universal FOSS Exception is not assumed to cover proprietary distribution",
+      "commercial_release_status": "COMMERCIAL_LICENSE_OR_REPLACEMENT_REQUIRED"
+    }
+  ]
+}

@@ -16,6 +16,9 @@ REQUIRED = [
     "docs/adr/ADR-001-modular-monolith.md",
     "docs/adr/ADR-012-observability-privacy-support.md",
     "docs/adr/ADR-013-github-primary-repository-ci.md",
+    "docs/adr/ADR-014-t0-supply-chain-security-overrides.md",
+    "docs/adr/ADR-015-restricted-license-policy.md",
+    "docs/compliance/reviewed-license-allowlist.json",
     "server/pom.xml",
     "server/mvnw",
     "admin-web/package.json",
@@ -33,6 +36,7 @@ REQUIRED = [
     ".github/workflows/ci.yml",
     "ci/codeup/t0-flow.yml",
     "ci/codeup/README.md",
+    "scripts/check_sbom_licenses.py",
 ]
 
 

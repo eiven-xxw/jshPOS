@@ -179,9 +179,9 @@ stages:
             with:
               run: |
                 set -euo pipefail
-                if ! command -v curl >/dev/null 2>&1; then
+                if ! command -v curl >/dev/null 2>&1 || ! command -v python3 >/dev/null 2>&1; then
                   apt-get update
-                  apt-get install -y --no-install-recommends curl ca-certificates
+                  apt-get install -y --no-install-recommends curl ca-certificates python3
                   rm -rf /var/lib/apt/lists/*
                 fi
                 curl -fsSL -o /tmp/trivy.tar.gz https://github.com/aquasecurity/trivy/releases/download/v0.72.0/trivy_0.72.0_Linux-64bit.tar.gz
@@ -198,7 +198,9 @@ stages:
                 cd server
                 ./mvnw -DskipTests org.cyclonedx:cyclonedx-maven-plugin:2.9.1:makeAggregateBom
                 /tmp/trivy sbom --skip-version-check --db-repository ghcr.io/aquasecurity/trivy-db:2 --java-db-repository ghcr.io/aquasecurity/trivy-java-db:1 --scanners vuln --severity HIGH,CRITICAL --exit-code 1 target/bom.json
-                /tmp/trivy sbom --scanners license --severity HIGH,CRITICAL --exit-code 1 --license-full target/bom.json
+                python3 ../scripts/check_sbom_licenses.py target/bom.json ../docs/compliance/reviewed-license-allowlist.json
+                ignored_licenses="$(python3 -c 'import json; print(",".join(json.load(open("../docs/compliance/reviewed-license-allowlist.json", encoding="utf-8"))["trivy_ignored_licenses"]))')"
+                /tmp/trivy sbom --skip-version-check --scanners license --severity HIGH,CRITICAL --exit-code 1 --ignored-licenses "$ignored_licenses" target/bom.json
                 cd ..
                 /tmp/trivy fs --skip-version-check --db-repository ghcr.io/aquasecurity/trivy-db:2 --java-db-repository ghcr.io/aquasecurity/trivy-java-db:1 --scanners vuln,secret --severity HIGH,CRITICAL --exit-code 1 --skip-dirs .git --skip-dirs admin-web/node_modules .
                 /tmp/trivy config --skip-version-check --checks-bundle-repository ghcr.io/aquasecurity/trivy-checks:2 --severity HIGH,CRITICAL --exit-code 1 .
