@@ -163,7 +163,9 @@ jobs:
           /tmp/trivy sbom --skip-version-check --db-repository ghcr.io/aquasecurity/trivy-db:2 --java-db-repository ghcr.io/aquasecurity/trivy-java-db:1 --scanners vuln --severity HIGH,CRITICAL --exit-code 1 server/target/bom.json
       - name: Enforce SBOM license policy
         run: |
-          /tmp/trivy sbom --skip-version-check --scanners license --severity HIGH,CRITICAL --exit-code 1 --license-full server/target/bom.json
+          # Trivy supports standard package-license scanning for SBOM targets;
+          # full-text license classification is only available to image/fs/repo targets.
+          /tmp/trivy sbom --skip-version-check --scanners license --severity HIGH,CRITICAL --exit-code 1 server/target/bom.json
       - name: Scan repository dependencies and secrets
         run: |
           /tmp/trivy fs --skip-version-check --db-repository ghcr.io/aquasecurity/trivy-db:2 --java-db-repository ghcr.io/aquasecurity/trivy-java-db:1 --scanners vuln,secret --severity HIGH,CRITICAL --exit-code 1 --skip-dirs .git .
