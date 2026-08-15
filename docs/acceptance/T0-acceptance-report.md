@@ -11,7 +11,7 @@
 - 正式仓库：`https://github.com/eiven-xxw/jshPOS`；Codeup 仅保留可选镜像配置。
 - 代码候选 SHA：`9fd73f04e1b1304071ad5bfd4259fb84679d926c`。
 - 全量 CI：GitHub Actions `T0 Quality Gates` #34，run ID `31898880851`，结论 `success`。
-- Dependency Review：`DEPENDENCY_REVIEW_PR_TO_BE_CREATED`。
+- Dependency Review：PR #16，`https://github.com/eiven-xxw/jshPOS/pull/16`。
 - 待确认 tag：`t0-baseline-2026-08-16`；本报告提交与合并均不得创建该 tag。
 
 本次仅验收技术基线，不验收收银业务能力，不代表可试营业或可商用上线。已交付需求治理、ADR/RTM、Monorepo、固定工具链、RuoYi-Vue-Plus 服务端、Vue 管理后台、Flutter Android POS、Kotlin 设备适配层、契约骨架、MySQL/Redis Compose、CI 与供应链门禁。明确未开发订单、支付、退款、库存、促销、会员、离线同步或连接器正式业务，T1 未启动。
@@ -28,7 +28,7 @@
 | G5 基础设施 | PASS | MySQL 8.4/Redis 7.4 Docker Compose 解析通过；三个 Java 镜像已改为非 root |
 | G6 供应链安全 | PASS | 410 组件 SBOM；HIGH/CRITICAL 漏洞、未批准许可证、其余依赖、密钥、IaC 均为 0 |
 | G7 制品 | PASS | APK、SBOM、前端许可证清单均已下载并核对大小与 SHA-256 |
-| G8 PR 依赖评审 | PASS（合并前置） | `DEPENDENCY_REVIEW_PR_TO_BE_CREATED`；通过后方可合并本报告 |
+| G8 PR 依赖评审 | PASS（合并前置） | PR #16；Dependency Review 成功后方可合并本报告 |
 | G9 范围控制 | PASS | 未进入 T1，未实现订单/支付/库存/促销等正式业务 |
 
 详细 Job、制品 ID、摘要和修复过程见 `docs/evidence/T0-seal-2026-08-16.md`。
