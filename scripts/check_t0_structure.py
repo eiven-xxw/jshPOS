@@ -18,6 +18,7 @@ REQUIRED = [
     "docs/adr/ADR-013-github-primary-repository-ci.md",
     "docs/adr/ADR-014-t0-supply-chain-security-overrides.md",
     "docs/adr/ADR-015-restricted-license-policy.md",
+    "docs/adr/ADR-016-private-repository-dependency-review.md",
     "docs/compliance/reviewed-license-allowlist.json",
     "docs/evidence/T0-seal-2026-08-16.md",
     "server/pom.xml",
@@ -38,6 +39,7 @@ REQUIRED = [
     "ci/codeup/t0-flow.yml",
     "ci/codeup/README.md",
     "scripts/check_sbom_licenses.py",
+    "scripts/review_dependency_diff.py",
 ]
 
 

@@ -11,7 +11,51 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: actions/dependency-review-action@2031cfc080254a8a887f58cffee85186f0e49e48 # v4.9.0
         with:
-          fail-on-severity: high
-          deny-licenses: GPL-3.0, AGPL-3.0
+          fetch-depth: 0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+      - name: Record dependency inputs changed by the PR
+        run: |
+          python scripts/review_dependency_diff.py \
+            "${{ github.event.pull_request.base.sha }}" \
+            "${{ github.event.pull_request.head.sha }}"
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      - name: Generate PR-head server SBOM
+        working-directory: server
+        run: ./mvnw -DskipTests org.cyclonedx:cyclonedx-maven-plugin:2.9.1:makeAggregateBom
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+        with:
+          version: 10.33.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "24"
+          cache: pnpm
+          cache-dependency-path: admin-web/pnpm-lock.yaml
+      - name: Review frontend vulnerabilities and licenses
+        working-directory: admin-web
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm audit --registry https://registry.npmjs.org --audit-level high
+          pnpm licenses list --json > dependency-licenses.json
+          node -e "const x=require('./dependency-licenses.json');const bad=Object.keys(x).filter(k=>/(^|[ (])(AGPL|GPL)-?3([.]0)?(-only|-or-later)?($|[ )])/i.test(k));if(bad.length){console.error('Forbidden licenses: '+bad.join(','));process.exit(1)}"
+      - name: Install verified Trivy
+        run: |
+          curl -fsSL -o /tmp/trivy.tar.gz https://github.com/aquasecurity/trivy/releases/download/v0.72.0/trivy_0.72.0_Linux-64bit.tar.gz
+          echo "bbb64b9695866ce4a7a8f5c9592002c5961cab378577fa3f8a040df362b9b2ea  /tmp/trivy.tar.gz" | sha256sum --check
+          tar -xzf /tmp/trivy.tar.gz -C /tmp trivy
+          test "$(/tmp/trivy --version | awk '/Version:/ {print $2}')" = "0.72.0"
+      - name: Review server vulnerabilities and licenses
+        run: |
+          /tmp/trivy sbom --skip-version-check --db-repository ghcr.io/aquasecurity/trivy-db:2 --java-db-repository ghcr.io/aquasecurity/trivy-java-db:1 --scanners vuln --severity HIGH,CRITICAL --exit-code 1 server/target/bom.json
+          python scripts/check_sbom_licenses.py server/target/bom.json docs/compliance/reviewed-license-allowlist.json
+          ignored_licenses="$(python -c 'import json; print(",".join(json.load(open("docs/compliance/reviewed-license-allowlist.json", encoding="utf-8"))["trivy_ignored_licenses"]))')"
+          /tmp/trivy sbom --skip-version-check --scanners license --severity HIGH,CRITICAL --exit-code 1 --ignored-licenses "$ignored_licenses" server/target/bom.json
+      - name: Review non-Maven lockfile vulnerabilities
+        run: |
+          /tmp/trivy fs --skip-version-check --db-repository ghcr.io/aquasecurity/trivy-db:2 --java-db-repository ghcr.io/aquasecurity/trivy-java-db:1 --scanners vuln --severity HIGH,CRITICAL --exit-code 1 --skip-dirs .git --skip-dirs server --skip-dirs admin-web/node_modules .
