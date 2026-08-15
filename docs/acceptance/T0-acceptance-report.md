@@ -1,86 +1,76 @@
-# 鲸熵汇收银系统 T0 技术基线验收报告
+# 鲸熵汇收银系统 T0 技术基线最终封板报告
 
-报告日期：2026-08-15  
-基线阶段：T0 需求治理、工程骨架与质量门禁  
-验收结论：**有条件通过，待首次远程 CI 封板**
+报告日期：2026-08-16
 
-## 1. 验收范围
+基线阶段：T0 需求治理、工程骨架与质量门禁
 
-本次仅验收技术基线，不验收收银业务能力，不代表可试营业或可商用上线。范围包括：
+验收结论：**T0 技术门禁通过；基线 tag 待项目发起人确认**
 
-- 需求治理、根 `AGENTS.md`、RTM、变更控制和 12 项 ADR；
-- Monorepo 目录、工具链、开发环境说明和统一验证脚本；
-- RuoYi-Vue-Plus 服务端、Vue 管理后台、Flutter Android POS 骨架；
-- Flutter/Kotlin 设备适配插件及版本化私有契约；
-- OpenAPI、事件信封和连接器清单契约骨架；
-- MySQL/Redis 本地 Compose 配置；
-- GitHub Actions、Dependabot、依赖评审、SBOM 与许可证清单入口。
+## 1. 封板对象与边界
 
-明确不在本次范围：订单、支付、退款、库存、促销、会员、连接器、离线交易等正式业务逻辑；真实支付、硬件厂商 SDK 和生产部署。
+- 正式仓库：`https://github.com/eiven-xxw/jshPOS`；Codeup 仅保留可选镜像配置。
+- 代码候选 SHA：`9fd73f04e1b1304071ad5bfd4259fb84679d926c`。
+- 全量 CI：GitHub Actions `T0 Quality Gates` #34，run ID `31898880851`，结论 `success`。
+- Dependency Review：`DEPENDENCY_REVIEW_PR_TO_BE_CREATED`。
+- 待确认 tag：`t0-baseline-2026-08-16`；本报告提交与合并均不得创建该 tag。
 
-## 2. 交付物核对
+本次仅验收技术基线，不验收收银业务能力，不代表可试营业或可商用上线。已交付需求治理、ADR/RTM、Monorepo、固定工具链、RuoYi-Vue-Plus 服务端、Vue 管理后台、Flutter Android POS、Kotlin 设备适配层、契约骨架、MySQL/Redis Compose、CI 与供应链门禁。明确未开发订单、支付、退款、库存、促销、会员、离线同步或连接器正式业务，T1 未启动。
 
-| 门类 | 主要交付物 | 状态 |
-|---|---|---:|
-| 治理 | `AGENTS.md`、研发治理、RTM、变更日志 | 完成并验证 |
-| 架构决策 | ADR-001 至 ADR-012、模块边界 | 完成并验证 |
-| 服务端 | 固定上游快照、Maven Wrapper、自有模块边界 | 完成并验证 |
-| 管理后台 | 固定上游快照、锁文件、类型与安全基线 | 完成并验证 |
-| POS | Flutter Android 骨架、固定 SDK、测试入口 | 完成并验证 |
-| 设备层 | Kotlin 插件、版本契约、fake/测试 | 已实现；Kotlin 实编译待 CI |
-| 契约 | OpenAPI、事件、连接器 manifest | 完成并验证 |
-| 环境 | MySQL/Redis Compose、版本摘要、无生产密钥 | 已实现；解析待 CI |
-| CI | 五类质量 job、依赖评审、Dependabot、制品 | 已实现并通过静态检查；运行待远程仓库 |
+## 2. 最终门禁判定
 
-## 3. T0 门禁判定
-
-| 门禁 | 判定 | 说明 |
+| 门禁 | 结论 | 封板证据 |
 |---|---:|---|
-| G0 需求可追踪 | 通过 | 12 条 T0 需求均有来源、验收、实现和证据入口 |
-| G1 架构与边界 | 通过 | ADR、模块边界、租户/金额/时间/ID 等不变量已建立 |
-| G2 服务端可构建 | 通过 | 37 个 Maven reactor 模块 `clean verify` 成功 |
-| G3 管理后台可构建 | 通过 | audit、lint、typecheck、test 入口和 production build 成功 |
-| G4 Flutter 静态质量 | 通过 | POS 与插件 analyze/test 成功 |
-| G5 Android/Kotlin 实编译 | 待闭环 | 本机无 Android SDK；远程 CI 已配置 APK 构建 |
-| G6 基础设施配置解析 | 待闭环 | 本机无 Docker；远程 CI 已配置 Compose 验证 |
-| G7 供应链 | 部分通过 | 前端审计为零、SBOM 可生成；远程 dependency review/SCA 待执行 |
-| G8 范围控制 | 通过 | 未铺开正式业务开发 |
-| G9 责任人签署 | 待闭环 | 尚未进行人工签署 |
+| G0 需求治理与追踪 | PASS | 29 个结构必需项、24 条 RTM/12 条 T0、契约校验通过 |
+| G1 架构与范围 | PASS | ADR-001—015、模块边界、变更记录和禁止 T1 业务范围生效 |
+| G2 服务端 | PASS | JDK 21 + Maven 3.9.9；37 个 reactor 模块 `clean verify`；兼容性测试通过 |
+| G3 管理后台 | PASS | frozen install、high audit、生产构建、lint、typecheck、测试入口通过 |
+| G4 Flutter/Kotlin/Android | PASS | 两个 analyze、设备适配器 3 测试、POS 1 测试、Gradle 单测、APK 构建通过 |
+| G5 基础设施 | PASS | MySQL 8.4/Redis 7.4 Docker Compose 解析通过；三个 Java 镜像已改为非 root |
+| G6 供应链安全 | PASS | 410 组件 SBOM；HIGH/CRITICAL 漏洞、未批准许可证、其余依赖、密钥、IaC 均为 0 |
+| G7 制品 | PASS | APK、SBOM、前端许可证清单均已下载并核对大小与 SHA-256 |
+| G8 PR 依赖评审 | PASS（合并前置） | `DEPENDENCY_REVIEW_PR_TO_BE_CREATED`；通过后方可合并本报告 |
+| G9 范围控制 | PASS | 未进入 T1，未实现订单/支付/库存/促销等正式业务 |
 
-详细命令与结果见 `docs/evidence/T0-verification-2026-08-15.md`。
+详细 Job、制品 ID、摘要和修复过程见 `docs/evidence/T0-seal-2026-08-16.md`。
+
+## 3. 制品与测试摘要
+
+| 项目 | 结果 |
+|---|---|
+| APK | `app-debug.apk`，154,809,692 B，SHA-256 `06a25c608d32b70eaf6b34c07e6215acb98abd92ec11f47af8696538d2278dd4` |
+| 服务端 SBOM | CycloneDX 1.6，410 components / 411 dependencies；漏洞 HIGH/CRITICAL = 0 |
+| 前端许可证 | 471 条记录、12 类许可证；GPL-3.0/AGPL-3.0 = 0；high audit 无已知漏洞 |
+| Android/Kotlin | `testDebugUnitTest` 成功，debug APK 成功生成并上传 |
+| Compose | `docker compose --env-file .env config --quiet` 成功 |
+| 安全 | 精确核对 14 个受限/多许可证组件；未批准 GPL/AGPL、密钥、HIGH/CRITICAL IaC = 0 |
 
 ## 4. 验收决定
 
-1. 允许把当前成果作为 T0 候选基线推送到受控远程仓库并运行 CI。
-2. 在远程 CI 全绿、供应链结果合格且责任人签署前，RTM 中待闭环项保持 `IMPLEMENTED`，全部 T0 项不得改为 `ACCEPTED`。
-3. 在 T0 封板前不得启动 T1 PoC，更不得进入 T2 正式业务开发。
-4. T0 封板不代表系统具备商业收银能力；商业发布仍受 T1—T4、试营业和 V1 验收计划约束。
+1. 将 RTM 中 12 条 T0 需求更新为 `ACCEPTED`；V1/T2—T4 需求继续保持 `DRAFT`。
+2. 允许准备但不创建 `t0-baseline-2026-08-16` tag；项目发起人确认前不得打 tag。
+3. 不启动 T1，不开发订单、支付、退款、库存、促销等正式业务。
+4. 本结论是 T0 技术基线验收，不是商业发布、支付合规、许可证法律意见或试营业验收。
 
-## 5. 封板待办与责任
+## 5. 风险与强制后续项
 
-| 编号 | 待办 | 完成证据 | 建议责任角色 |
+| 风险/事项 | 当前控制 | 商用前关闭条件 |
+|---|---|---|
+| GitHub 私有仓库当前套餐无 Branch Protection | PR + Actions + RTM/ADR 流程补偿，禁止团队成员直推 main | 升级套餐并启用 required checks/PR review；或迁至具备同等保护的私有仓库 |
+| Aviator、simple-http 许可证义务 | 精确坐标/版本门禁，技术准入不等同法务批准 | 替换、取得适用许可，或书面法务意见及履约方案 |
+| MySQL Connector/J 商业分发 | 不假设 Universal FOSS Exception 覆盖闭源分发 | Oracle 商业许可、法务批准的替代驱动或产品许可模式调整 |
+| `crypto-js` 停止维护及 AES-ECB | 不进入 T0 业务扩展 | 独立 ADR、双端迁移、兼容回归和安全测试通过 |
+| 真实硬件/支付/连接器/灾备未验收 | 明确排除 T0 商用结论 | 按 T1—T4 和商业 V1 计划取得证据与联合签署 |
+
+## 6. Tag 前最终确认
+
+建议 tag：`t0-baseline-2026-08-16`。创建 tag 后应指向最终 evidence PR 合并后的 `main` 提交，而不是仅指向代码候选 SHA；tag 应使用 annotated tag，说明 T0 范围、CI run 和本报告路径。
+
+当前停止点：**T0 已具备封板条件，等待项目发起人确认创建 tag。** 在该确认到达前，不创建 tag、不启动 T1。
+
+## 7. 签署记录
+
+| 角色/证据 | 结论 | 日期 | 备注 |
 |---|---|---|---|
-| C-01 | 配置受控 GitHub 仓库、分支保护和远程地址 | 仓库设置截图/导出、remote 信息 | 技术负责人 |
-| C-02 | 推送候选基线并运行全部 T0 workflow | 五类 job 全绿的运行链接和 commit SHA | DevOps |
-| C-03 | 核对 Android APK/Kotlin 编译与 Compose 解析 | CI 日志、APK 制品、Compose job | POS/DevOps |
-| C-04 | 核对依赖评审、SBOM 和许可证清单 | 无阻断报告、制品链接 | 安全负责人 |
-| C-05 | 回填 RTM 和最终签署结论 | RTM 全部 T0 为 `ACCEPTED`、签署记录 | QA/产品/架构 |
-
-## 6. 风险与后续约束
-
-- 首次 CI 的任何失败都必须修复根因并重新全量运行，禁止以跳过测试或降低阈值取得绿灯。
-- 真实硬件、支付沙箱和鲸熵汇接口资料不是 T0 输入，但将成为 T1/T3 的外部依赖；必须先登记来源、版本、授权与测试环境。
-- 公网商用前必须治理 `crypto-js`/AES-ECB、完成服务端 SCA、租户隔离、安全和灾备验收。
-- 当前无数据库业务迁移、无生产数据、无远程发布，回退方式为放弃本候选提交并恢复到已签署的上一基线；首次封板后必须以 Git tag 和变更记录管理回退。
-
-## 7. 签署栏
-
-| 角色 | 姓名/账号 | 结论 | 日期 | 备注 |
-|---|---|---|---|---|
-| 产品负责人 |  |  |  |  |
-| 架构负责人 |  |  |  |  |
-| 技术负责人 |  |  |  |  |
-| QA 负责人 |  |  |  |  |
-| 安全/DevOps |  |  |  |  |
-
-签署规则：所有阻断项关闭且上述角色一致同意后，方可将结论更新为“通过”，将全部 T0 RTM 状态更新为 `ACCEPTED`，并建立不可变 T0 tag。
+| 自动化质量门禁 | 通过 | 2026-08-16 | GitHub Actions #34 六个 Job 全绿 |
+| 安全/供应链门禁 | 通过 | 2026-08-16 | 漏洞、许可证、密钥、IaC 门禁通过；制品已复核 |
+| 项目发起人 | 待最终确认 tag |  | 确认只授权创建 T0 tag，不自动授权启动 T1 |

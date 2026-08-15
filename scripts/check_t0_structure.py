@@ -19,6 +19,7 @@ REQUIRED = [
     "docs/adr/ADR-014-t0-supply-chain-security-overrides.md",
     "docs/adr/ADR-015-restricted-license-policy.md",
     "docs/compliance/reviewed-license-allowlist.json",
+    "docs/evidence/T0-seal-2026-08-16.md",
     "server/pom.xml",
     "server/mvnw",
     "admin-web/package.json",
