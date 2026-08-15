@@ -27,7 +27,7 @@
     "@element-plus/icons-vue": "2.3.2",
     "@highlightjs/vue-plugin": "2.1.2",
     "@vueup/vue-quill": "1.5.5",
-    "@vueuse/core": "14.2.1",
+    "@vueuse/core": "14.4.0",
     "animate.css": "4.1.1",
     "await-to-js": "3.0.0",
     "axios": "1.19.0",
