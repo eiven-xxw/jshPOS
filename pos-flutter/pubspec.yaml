@@ -1,0 +1,22 @@
+name: jshpos_pos
+description: 鲸熵汇收银系统 Android POS T0 工程骨架
+publish_to: none
+version: 0.1.0+1
+
+environment:
+  sdk: '>=3.13.0 <4.0.0'
+  flutter: 3.47.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  pos_device_adapter:
+    path: ../packages/pos_device_adapter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: 6.0.0
+
+flutter:
+  uses-material-design: true

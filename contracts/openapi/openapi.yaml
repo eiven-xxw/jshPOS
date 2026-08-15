@@ -1,0 +1,34 @@
+openapi: 3.1.0
+info:
+  title: 鲸熵汇收银系统开放接口
+  version: 0.0.0-t0
+  description: T0 契约骨架；尚未批准任何交易业务接口。
+servers: []
+paths:
+  /internal/health:
+    get:
+      operationId: getInternalHealth
+      summary: 工程健康检查
+      tags: [internal]
+      responses:
+        "200":
+          description: 工程可用
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      additionalProperties: false
+      required: [status, version]
+      properties:
+        status:
+          type: string
+          const: UP
+        version:
+          type: string
+tags:
+  - name: internal
+    description: 不对生态开发者开放的内部接口

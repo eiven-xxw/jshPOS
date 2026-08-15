@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.jshpos.local/events/envelope.schema.json",
+  "title": "JshPosEventEnvelope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "event_id",
+    "event_type",
+    "event_version",
+    "occurred_at",
+    "tenant_id",
+    "trace_id",
+    "payload"
+  ],
+  "properties": {
+    "event_id": { "type": "string", "minLength": 26, "maxLength": 26 },
+    "event_type": { "type": "string", "pattern": "^[a-z][a-z0-9_.-]+$" },
+    "event_version": { "type": "integer", "minimum": 1 },
+    "occurred_at": { "type": "string", "format": "date-time" },
+    "tenant_id": { "type": "string", "minLength": 1, "maxLength": 20 },
+    "trace_id": { "type": "string", "minLength": 16, "maxLength": 64 },
+    "subject_id": { "type": ["string", "null"] },
+    "producer": { "type": ["string", "null"] },
+    "payload": { "type": "object" }
+  }
+}

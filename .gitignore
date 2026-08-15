@@ -1,0 +1,50 @@
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+*.iml
+
+# secrets and local overrides
+.env
+.env.*.local
+!.env.example
+*.jks
+*.keystore
+*.p12
+*.pem
+*.key
+
+# Java / Maven
+**/target/
+**/.flattened-pom.xml
+
+# Node / Vue
+**/node_modules/
+**/dist/
+**/.vite/
+**/.eslintcache
+
+# Flutter / Dart / Android
+**/.dart_tool/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/.packages
+**/build/
+**/android/.gradle/
+**/android/local.properties
+**/ios/Flutter/ephemeral/
+
+# test and tooling output
+artifacts/
+coverage/
+reports/
+tmp/
+*.log
+
+# generated document QA caches already owned by documentation workflow
+docs/**/__pycache__/
+docs/**/.docx_build/
+docs/**/.docx_qa/
+docs/**/.qa_render/
+docs/**/.qa_v3/
