@@ -23,3 +23,24 @@ V1-JSH-001,T3,connector,P0,V3-11.5与详细设计37,鲸熵汇完成订单库存�
 V1-API-001,T3,open-platform,P1,详细设计38,OpenAPI鉴权幂等限流错误与Webhook签名重放防护验收,DRAFT,,待定义,开放平台负责人,
 V1-SEC-001,T3,security,P0,详细设计39,租户隔离隐私审计备份灾备与安全高危零项通过,DRAFT,,待定义,安全负责人,
 V1-UAT-001,T4,commercial-acceptance,P0,详细设计40,试营业每日对账P0P1为零且GoNoGo联合签署,DRAFT,,待定义,QA负责人,
+T1-GOV-001,T1-Prep,governance,P0,项目发起人指令与技术规范15-16,T1章程范围RTM测试门禁风险和评审材料完整且机器校验通过,READY,docs/t1-prep,待T1-Prep评审证据,项目经理,仅文档治理；未经确认不得PoC编码
+T1-SCP-001,T1-Prep,scope,P0,CR-T1P-001与ADR-017,便利店主样板及两类对照样板的范围非目标和准入规则经批准,READY,docs/t1-prep/02_T1范围非目标与需求准入清单.md,待项目发起人确认,产品负责人,不建立三套业务核心
+T1-HWD-001,T1,device-contract,P0,详细设计36与ADR-008/017,统一设备能力错误超时恢复契约及Fake场景覆盖打印扫码称重钱箱客显,READY,packages/pos_device_adapter骨架;docs/t1-prep/03_T1七类风险PoC方案.md,待PoC编码与契约测试,设备负责人,ASSUMPTION：厂商实现均经稳定适配层
+T1-HWD-002,T1,device-real,P0,详细设计36与项目发起人指令,一台明确厂商型号Android版本CPU内存SDK授权的主认证机完成实机矩阵,BLOCKED,,缺主机型号SDK和实机,设备负责人,BLOCKED：采购与厂商技术支持未落实
+T1-PRN-001,T1,printer,P0,详细设计36与项目发起人指令,内置厂商SDK和标准外置打印两条链路通过恢复与连续打印实机指标,BLOCKED,,缺主机内置打印SDK和外置打印机型号,设备负责人,Fake不可替代REAL_DEVICE
+T1-SCN-001,T1,scanner,P0,详细设计36与项目发起人指令,至少一种扫码链路在主机完成条码兼容吞吐重复输入和恢复实测,BLOCKED,,缺扫码头型号接口和实机,设备负责人,可先用Fake验证事件契约
+T1-SCL-001,T1,scale,P0,详细设计36与项目发起人指令,至少一种电子秤完成稳定读数去抖断连恢复单位精度与错误码实测,BLOCKED,,缺电子秤型号协议检定要求和实机,设备负责人,社区超市差异用例；不构成计量合规认证
+T1-IO-001,T1,peripheral-io,P1,详细设计36与项目发起人指令,钱箱和客显在主认证机完成能力探测命令幂等超时断连和恢复实测,BLOCKED,,缺钱箱客显型号接口和实机,设备负责人,客显需确认内置副屏或外置协议
+T1-OFF-001,T1,offline-recovery,P0,详细设计35与ADR-007,SQLite本地事实支付意图Outbox同事务且崩溃重启断电注入零静默丢失零重复业务效果,READY,docs/t1-prep/03_T1七类风险PoC方案.md,待PoC故障注入证据,POS负责人,仅风险模型与最小技术探针；不实现正式订单
+T1-SYN-001,T1,sync-idempotency,P0,详细设计35与ADR-007,重复乱序延迟丢包和游标中断下Inbox幂等数据包验签及原子切换达到量化门槛,READY,docs/t1-prep/03_T1七类风险PoC方案.md,待PoC故障注入证据,POS与后端负责人,ASSUMPTION：使用合成事件而非商业订单
+T1-TEN-001,T1,tenant-isolation,P0,详细设计31/39与ADR-006,Mapper XML原生SQL后台任务缓存导出和对象存储等越权矩阵跨租户泄漏为零,READY,docs/t1-prep/03_T1七类风险PoC方案.md,待PoC安全测试证据,安全负责人,使用两个虚构租户和脱敏数据
+T1-PAY-001,T1,payment-contract,P0,详细设计32与ADR-009/017,不少于五家候选支付档案映射统一命令查询退款回调幂等和UNKNOWN语义且Fake契约全通过,READY,docs/t1-prep/05_支付沙箱与鲸熵汇外部资料清单.md,待PoC契约测试证据,支付负责人,候选易宝汇付拉卡拉富友收钱吧；档案不等于已接入
+T1-PAY-002,T1,payment-sandbox,P0,详细设计32与项目发起人指令,一家授权沙箱覆盖成功失败超时UNKNOWN查询重复乱序回调退款及对账且无二次扣款,BLOCKED,,缺合作方沙箱账号终端文档技术联系人,支付负责人,BLOCKED：禁止用生产账号或真实资金替代
+T1-DPK-001,T1,data-package,P0,详细设计35与技术规范16.1,商品价格全量增量包完成签名校验断点续传损坏拒收版本兼容和原子切换,READY,docs/t1-prep/03_T1七类风险PoC方案.md,待PoC契约与故障注入证据,POS与后端负责人,使用合成商品价格数据
+T1-UPG-001,T1,upgrade-rollback,P0,ADR-010与技术规范16.1,APK灰度升级SQLite迁移失败应用回退兼容窗口和数据前向修复达到量化门槛,READY,docs/t1-prep/03_T1七类风险PoC方案.md,待PoC升级回滚证据,发布负责人,主机静默安装能力依赖厂商SDK
+T1-SEC-001,T1,security-data,P0,详细设计39与项目发起人指令,仓库日志制品证据均无生产密钥真实支付和未脱敏商户数据且高危严重为零,READY,docs/t1-prep/08_T1_CI质量门禁制品与证据规范.md,待T1 CI证据,安全负责人,发现泄漏立即停止并轮换撤销
+T1-PAR-001,T1,design-partner,P1,CR-T1P-001,目标五家设计伙伴且至少三家签署后续试点意愿并可提供合规脱敏样本,BLOCKED,,缺设计伙伴名单意愿和数据授权,产品负责人,T1可先用合成或脱敏样本但不能代替试点意愿
+T1-JSH-001,T1,connector,P1,CR-T1P-002与ADR-017,真实接口目录鉴权限流沙箱回调验收标准和负责人与收银主体完成后收集,DEFERRED,,待收银系统主体完成后由项目发起人提供,连接器负责人,届时必须提醒项目发起人；T1不猜测不接入
+T1-CI-001,T1,ci-evidence,P0,技术规范11-12与ADR-016,T1门禁区分FAKE SANDBOX REAL_DEVICE证据并保留可追溯制品摘要漏洞许可证和测试结果,READY,docs/t1-prep/08_T1_CI质量门禁制品与证据规范.md,待T1 CI实现与运行证据,DevOps,GitHub不升级；继续补偿控制
+T1-LIC-001,T1,license,P1,CR-T1P-003与ADR-015/017,Aviator simple-http MySQL Connector/J在商业发布前具备替换或法务结论和负责人,DEFERRED,docs/compliance/restricted-components.json,商业发布前待办,法务与技术负责人,不阻断T1-Prep或风险PoC；阻断商业发布
+T1-UAT-001,T1,go-no-go,P0,技术规范16与详细设计40,T1七类PoC证据齐备P0P1为零外部实证不以Fake替代并由评审角色签署,READY,docs/t1-prep/09_T1风险阻断GoNoGo与回退方案.md,待T1退出评审,QA负责人,当前仅允许启动评审；不是商业V1验收
