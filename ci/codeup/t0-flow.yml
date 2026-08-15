@@ -1,0 +1,213 @@
+name: "鲸熵汇收银系统-T0质量门禁"
+
+# Codeup 代码源由云效 Flow 控制台绑定。本文件是受版本控制的权威副本；
+# 修改后必须同步到 Flow YAML 编辑器并通过“校验、保存并运行”。
+stages:
+  t0_quality_gates:
+    name: "T0质量门禁"
+    jobs:
+      governance_job:
+        name: "治理与契约"
+        runsOn:
+          group: public/cn-hangzhou
+          container: docker.io/library/python:3.12.11-slim-bookworm@sha256:519591d6871b7bc437060736b9f7456b8731f1499a57e22e6c285135ae657bf7
+          instanceType: SMALL_1C2G
+        timeoutMinutes: 15
+        steps:
+          governance_step:
+            name: "验证治理结构"
+            step: Command
+            with:
+              run: |
+                set -euo pipefail
+                python --version
+                python scripts/check_t0_structure.py
+                python scripts/check_rtm.py
+                python scripts/check_contracts.py
+
+      server_job:
+        name: "服务端与SBOM"
+        runsOn:
+          group: public/cn-hangzhou
+          container: docker.io/library/maven:3.9.9-eclipse-temurin-21@sha256:3a4ab3276a087bf276f79cae96b1af04f53731bec53fb2e651aca79e4b10211e
+          instanceType: LARGE_4C8G
+        timeoutMinutes: 60
+        steps:
+          server_verify_step:
+            name: "编译并测试服务端"
+            step: Command
+            with:
+              run: |
+                set -euo pipefail
+                java -version
+                mvn -version
+                chmod +x server/mvnw
+                cd server
+                ./mvnw -DskipTests=false clean verify
+          server_sbom_step:
+            name: "生成服务端SBOM"
+            step: Command
+            with:
+              run: |
+                set -euo pipefail
+                cd server
+                ./mvnw -DskipTests org.cyclonedx:cyclonedx-maven-plugin:2.9.1:makeAggregateBom
+                test -s target/bom.json
+                test -s target/bom.xml
+          server_artifact_step:
+            name: "上传服务端SBOM"
+            step: ArtifactUpload
+            with:
+              uploadType: flowPublic
+              artifact: t0-server-sbom
+              filePath:
+                - server/target/bom.json
+                - server/target/bom.xml
+
+      admin_job:
+        name: "Vue管理后台"
+        runsOn:
+          group: public/cn-hangzhou
+          container: docker.io/library/node:24.9.0-bookworm-slim@sha256:3e69116c924bfcba6c6979aff60d966c37aef56d488ce091c69d442ebec9f103
+          instanceType: LARGE_4C8G
+        timeoutMinutes: 45
+        steps:
+          admin_verify_step:
+            name: "审计测试并构建后台"
+            step: Command
+            with:
+              run: |
+                set -euo pipefail
+                test "$(node --version)" = "v24.9.0"
+                npm install --global pnpm@10.33.0
+                test "$(pnpm --version)" = "10.33.0"
+                cd admin-web
+                pnpm install --frozen-lockfile
+                pnpm audit --registry https://registry.npmjs.org --audit-level high
+                pnpm lint:eslint
+                pnpm typecheck
+                pnpm test:unit
+                pnpm build:prod
+                pnpm licenses list --json > dependency-licenses.json
+                node -e "const x=require('./dependency-licenses.json');const bad=Object.keys(x).filter(k=>/(^|[ (])(AGPL|GPL)-?3([.]0)?(-only|-or-later)?($|[ )])/i.test(k));if(bad.length){console.error('Forbidden licenses: '+bad.join(','));process.exit(1)}"
+          admin_artifact_step:
+            name: "上传前端许可证清单"
+            step: ArtifactUpload
+            with:
+              uploadType: flowPublic
+              artifact: t0-admin-licenses
+              filePath:
+                - admin-web/dependency-licenses.json
+
+      flutter_job:
+        name: "Flutter与Android"
+        runsOn:
+          group: public/cn-hangzhou
+          container: ghcr.io/cirruslabs/flutter:stable@sha256:46691e311715845de03a3ba4753a475476936805b29431b1f00f1816981033f8
+          instanceType: XLARGE_8C16G
+        timeoutMinutes: 90
+        steps:
+          flutter_verify_step:
+            name: "验证POS与Kotlin适配层"
+            step: Command
+            with:
+              run: |
+                set -euo pipefail
+                repo_root="$PWD"
+                git config --global --add safe.directory /sdks/flutter
+                git -C /sdks/flutter fetch --force --depth 1 https://github.com/flutter/flutter.git refs/tags/3.47.0:refs/tags/3.47.0
+                git -C /sdks/flutter checkout --force --detach refs/tags/3.47.0
+                test "$(git -C /sdks/flutter rev-parse HEAD)" = "4cf24164269a5ebf0c16a028a00727d0e77bbb05"
+                flutter config --no-analytics
+                flutter precache --android
+                flutter --version | tee /tmp/flutter-version.txt
+                grep -q "Flutter 3.47.0" /tmp/flutter-version.txt
+                cd "$repo_root/packages/pos_device_adapter"
+                flutter pub get --enforce-lockfile
+                flutter analyze --fatal-infos
+                flutter test
+                cd "$repo_root/pos-flutter"
+                flutter pub get --enforce-lockfile
+                flutter analyze --fatal-infos
+                flutter test
+                chmod +x android/gradlew
+                cd android
+                ./gradlew --no-daemon testDebugUnitTest
+                cd ..
+                flutter build apk --debug
+                test -s build/app/outputs/flutter-apk/app-debug.apk
+          flutter_artifact_step:
+            name: "上传T0调试APK"
+            step: ArtifactUpload
+            with:
+              uploadType: flowPublic
+              artifact: t0-pos-debug-apk
+              filePath:
+                - pos-flutter/build/app/outputs/flutter-apk/app-debug.apk
+
+      infrastructure_job:
+        name: "基础设施配置"
+        runsOn:
+          group: public/cn-hangzhou
+          container: docker.io/library/docker:27.5.1-cli@sha256:851f91d241214e7c6db86513b270d58776379aacc5eb9c4a87e5b47115e3065c
+          instanceType: SMALL_1C2G
+        timeoutMinutes: 15
+        steps:
+          compose_verify_step:
+            name: "验证Compose"
+            step: Command
+            with:
+              run: |
+                set -euo pipefail
+                docker --version
+                docker compose version
+                cd infra/compose
+                cp .env.example .env
+                docker compose --env-file .env config --quiet
+
+      supply_chain_job:
+        name: "供应链安全"
+        runsOn:
+          group: public/cn-hangzhou
+          container: docker.io/library/maven:3.9.9-eclipse-temurin-21@sha256:3a4ab3276a087bf276f79cae96b1af04f53731bec53fb2e651aca79e4b10211e
+          instanceType: LARGE_4C8G
+        timeoutMinutes: 90
+        steps:
+          trivy_install_step:
+            name: "安装校验Trivy"
+            step: Command
+            with:
+              run: |
+                set -euo pipefail
+                if ! command -v curl >/dev/null 2>&1; then
+                  apt-get update
+                  apt-get install -y --no-install-recommends curl ca-certificates
+                  rm -rf /var/lib/apt/lists/*
+                fi
+                curl -fsSL -o /tmp/trivy.tar.gz https://github.com/aquasecurity/trivy/releases/download/v0.72.0/trivy_0.72.0_Linux-64bit.tar.gz
+                echo "bbb64b9695866ce4a7a8f5c9592002c5961cab378577fa3f8a040df362b9b2ea  /tmp/trivy.tar.gz" | sha256sum --check
+                tar -xzf /tmp/trivy.tar.gz -C /tmp trivy
+                test "$(/tmp/trivy --version | awk '/Version:/ {print $2}')" = "0.72.0"
+          supply_chain_scan_step:
+            name: "扫描依赖许可证与密钥"
+            step: Command
+            with:
+              run: |
+                set -euo pipefail
+                chmod +x server/mvnw
+                cd server
+                ./mvnw -DskipTests org.cyclonedx:cyclonedx-maven-plugin:2.9.1:makeAggregateBom
+                /tmp/trivy sbom --skip-version-check --db-repository ghcr.io/aquasecurity/trivy-db:2 --java-db-repository ghcr.io/aquasecurity/trivy-java-db:1 --scanners vuln --severity HIGH,CRITICAL --exit-code 1 target/bom.json
+                /tmp/trivy sbom --scanners license --severity HIGH,CRITICAL --exit-code 1 --license-full target/bom.json
+                cd ..
+                /tmp/trivy fs --skip-version-check --db-repository ghcr.io/aquasecurity/trivy-db:2 --java-db-repository ghcr.io/aquasecurity/trivy-java-db:1 --scanners vuln,secret --severity HIGH,CRITICAL --exit-code 1 --skip-dirs .git --skip-dirs admin-web/node_modules .
+                /tmp/trivy config --skip-version-check --checks-bundle-repository ghcr.io/aquasecurity/trivy-checks:2 --severity HIGH,CRITICAL --exit-code 1 .
+          security_artifact_step:
+            name: "上传安全扫描输入"
+            step: ArtifactUpload
+            with:
+              uploadType: flowPublic
+              artifact: t0-security-sbom
+              filePath:
+                - server/target/bom.json
+                - server/target/bom.xml

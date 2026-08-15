@@ -13,7 +13,7 @@
 | Flutter POS | 锁文件、analyze、test | 通过 |
 | Flutter/Kotlin 适配器 | 锁文件、analyze、3 个 Dart 测试 | 通过 |
 
-CI 会重新生成服务端 SBOM 和前端许可证清单，并把它们作为短期构建制品保存。依赖评审在 Pull Request 上阻断 high/critical 漏洞以及 GPL-3.0、AGPL-3.0 许可证；Dependabot 每周检查 Maven、npm、Pub、GitHub Actions 和 Docker 基线。
+CI 会重新生成服务端 SBOM 和前端许可证清单，并把它们作为短期构建制品保存。正式 Codeup/云效 Flow 使用 Trivy 0.72.0 阻断 high/critical 漏洞、高风险许可证、密钥与高风险 IaC 配置，并由前端门禁显式阻断 GPL-3.0、AGPL-3.0；GitHub 镜像工作流继续保留 dependency-review 和 Dependabot 配置。
 
 ## 约束与待办
 
