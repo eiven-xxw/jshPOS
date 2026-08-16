@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.jingshanghui.example/t2/gate3a/payment-intent-command.v1.schema.json",
+  "title": "Gate 3A payment intent command",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["paymentId", "orderId", "storeId", "terminalId", "amountMinor", "currency", "occurredAt"],
+  "properties": {
+    "paymentId": {"$ref": "#/$defs/ulid"},
+    "orderId": {"$ref": "#/$defs/ulid"},
+    "storeId": {"$ref": "#/$defs/platformId"},
+    "terminalId": {"$ref": "#/$defs/ulid"},
+    "amountMinor": {"type": "integer", "minimum": 1, "maximum": 9007199254740991},
+    "currency": {"type": "string", "pattern": "^[A-Z]{3}$"},
+    "occurredAt": {"type": "string", "format": "date-time"}
+  },
+  "$defs": {
+    "ulid": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "platformId": {"type": "string", "pattern": "^[1-9][0-9]{0,18}$"}
+  }
+}

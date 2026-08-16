@@ -1,0 +1,123 @@
+openapi: 3.1.0
+info:
+  title: JSH POS Provider-neutral Payment Core API
+  version: 1.0.0-gate3a
+  description: >-
+    Provider-neutral payment, original-order refund and reconciliation API. Tenant
+    authority is derived from the authenticated server context. This API contains
+    no provider callback path, provider credential or provider network operation.
+x-requirement-ids: [T2-PAY-001, T2-PAY-003, T2-REF-001, T2-REC-001]
+x-provider-network-calls-allowed: 0
+x-external-evidence: {sandbox: 0, realDevice: 0, pilot: 0}
+servers:
+  - url: /api/v1
+security:
+  - bearerAuth: []
+paths:
+  /payments/intents:
+    post:
+      operationId: createPaymentIntent
+      summary: Create one provider-neutral payment intent from an authoritative order snapshot
+      parameters:
+        - $ref: '#/components/parameters/CommandId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: './schemas/payment-intent-command.v1.schema.json'}
+      responses:
+        '200': {description: Created or idempotently replayed payment intent}
+        '409': {description: Order, amount, state or idempotency conflict}
+  /payments/intents/{paymentId}:
+    get:
+      operationId: getPaymentIntent
+      summary: Read a payment intent in the trusted tenant and store scope
+      parameters:
+        - $ref: '#/components/parameters/PaymentId'
+      responses:
+        '200': {description: Payment intent and current state}
+        '404': {description: Resource is absent or not visible}
+  /payments/intents/{paymentId}/attempts:
+    post:
+      operationId: createPaymentAttempt
+      summary: Create a provider-neutral attempt without executing provider network traffic
+      parameters:
+        - $ref: '#/components/parameters/PaymentId'
+        - $ref: '#/components/parameters/CommandId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '200': {description: Attempt created; provider dispatch remains unavailable in Gate 3A}
+        '409': {description: UNKNOWN or terminal state forbids a new attempt}
+  /refunds:
+    post:
+      operationId: createOriginalOrderRefund
+      summary: Create an original-order refund within amount and quantity reservations
+      parameters:
+        - $ref: '#/components/parameters/CommandId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: './schemas/refund-command.v1.schema.json'}
+      responses:
+        '200': {description: Refund created or idempotently replayed}
+        '409': {description: Payment state or refundable limit conflict}
+  /refunds/{refundId}/approve:
+    post:
+      operationId: approveRefund
+      summary: Approve a refund with requester/approver separation
+      parameters:
+        - name: refundId
+          in: path
+          required: true
+          schema: {$ref: '#/components/schemas/Ulid'}
+        - $ref: '#/components/parameters/CommandId'
+      responses:
+        '204': {description: Refund moved to PROCESSING without provider network traffic}
+        '409': {description: State or duty-separation conflict}
+  /reconciliation/runs:
+    post:
+      operationId: runReconciliation
+      summary: Persist a controlled statement source and produce immutable difference cases
+      parameters:
+        - $ref: '#/components/parameters/CommandId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '200': {description: Reconciliation run summary}
+        '413': {description: More than 10000 statement entries}
+  /reconciliation/cases/{caseId}/transition:
+    post:
+      operationId: transitionReconciliationCase
+      summary: Investigate, resolve, approve or close a difference without mutating funds
+      parameters:
+        - name: caseId
+          in: path
+          required: true
+          schema: {$ref: '#/components/schemas/Ulid'}
+        - $ref: '#/components/parameters/CommandId'
+      responses:
+        '204': {description: Case transition and audit are durable}
+        '409': {description: Illegal state transition or duty-separation conflict}
+components:
+  securitySchemes:
+    bearerAuth: {type: http, scheme: bearer}
+  schemas:
+    Ulid: {type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'}
+  parameters:
+    CommandId:
+      name: X-Command-Id
+      in: header
+      required: true
+      schema: {$ref: '#/components/schemas/Ulid'}
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema: {type: string, minLength: 16, maxLength: 128}
+    PaymentId:
+      name: paymentId
+      in: path
+      required: true
+      schema: {$ref: '#/components/schemas/Ulid'}

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.jingshanghui.example/t2/gate3a/reconciliation-entry.v1.schema.json",
+  "title": "Gate 3A provider statement entry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["entryId", "providerCode", "providerTransactionNo", "businessType", "status", "amountMinor", "currency", "occurredAt", "payloadHash"],
+  "properties": {
+    "entryId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "providerCode": {"type": "string", "pattern": "^[A-Z0-9_-]{2,32}$"},
+    "providerTransactionNo": {"type": "string", "minLength": 1, "maxLength": 96},
+    "businessType": {"enum": ["PAYMENT", "REFUND"]},
+    "status": {"enum": ["SUCCEEDED", "FAILED", "UNKNOWN"]},
+    "amountMinor": {"type": "integer", "minimum": 0, "maximum": 9007199254740991},
+    "currency": {"type": "string", "pattern": "^[A-Z]{3}$"},
+    "occurredAt": {"type": "string", "format": "date-time"},
+    "payloadHash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  }
+}

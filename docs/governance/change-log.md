@@ -51,5 +51,7 @@
 | CR-T2S3-003 | 2026-08-16 | VERIFIED_AWAITING_CLOSURE_CI | T2-SYN-001 的服务端 Inbox/事实/ACK/游标、POS Outbox/Inbox/SQLite V2、真实 loopback HTTP、重试/死信/恢复和人工修复实现完成；技术候选 `9a00beb` 在 GitHub Actions `31946989640` 十个 Job 全绿，127 文件证据索引通过，需求由 IN_PROGRESS 更新为 VERIFIED | T2-SYN-001、ADR-021 | 不代表 ACCEPTED；迁移已封印并要求 closure 全门禁复跑；Gate 3 仍 DRAFT/BLOCKED，外部证据为 0 |
 | CR-T2S3-004 | 2026-08-16 | VERIFIED_AWAITING_CONFIRMATION | 迁移校验和、RTM VERIFIED、周门禁报告和 Gate 3 解阻清单纳入候选 `8d46ef1`；GitHub Actions `31947779682` 在 closure 模式一次执行十个 Job 全绿，建议 T2-SYN-001 CONDITIONAL PASS 并等待项目发起人确认 | T2-SYN-001、ADR-021 | 不代表 ACCEPTED；Gate 3 四项保持 DRAFT、T2-PAY-002 保持 BLOCKED，支付网络和外部证据仍为 0 |
 | CR-DEV-001 | 2026-08-16 | APPROVED | 项目发起人提出并批准后端持久化、成熟组件复用和中文注释三项规范；明确简单 SQL 使用 MyBatis-Plus、复杂 SQL 使用 Mapper XML，允许按需复用 Hutool/成熟组件，并要求核心代码与实体具备有效中文注释 | AGENTS.md、技术架构与开发规范 10.2、backend-development-standards.md | 属于工程治理增强，不改变 S3 需求状态，不准入 Gate 3 运行时或支付网络调用 |
+| CR-T2G3A-001 | 2026-08-16 | APPROVED | 项目发起人确认 S3 周门禁报告、接受 T2-SYN-001 CONDITIONAL PASS 并授权更新为 ACCEPTED；按 CONDITIONAL GO 启动 Gate 3A 四项 Provider 无关支付核心需求 | T2-SYN-001、T2-PAY-001、T2-PAY-003、T2-REF-001、T2-REC-001、ADR-022 | T2-PAY-002 保持 BLOCKED；Provider 网络、SANDBOX、真实资金均为0 |
+| CR-T2G3A-002 | 2026-08-16 | IN_PROGRESS | Gate 3A 四项完成数据主权、状态机、不变量、权限、审计、API/事件、Flyway、容量、回退、Fake 向量和 CI 设计准入，由 DRAFT 经 READY 进入 IN_PROGRESS | T2-PAY-001、T2-PAY-003、T2-REF-001、T2-REC-001、ADR-022 | 只准入 jshpos-payment Provider 无关运行时；禁止 Provider HTTP/SDK、外部回调端点和账单下载器 |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。

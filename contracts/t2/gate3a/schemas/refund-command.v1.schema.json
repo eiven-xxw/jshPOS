@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.jingshanghui.example/t2/gate3a/refund-command.v1.schema.json",
+  "title": "Gate 3A original-order refund command",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["refundId", "paymentId", "orderId", "amountMinor", "currency", "reasonCode", "lines", "occurredAt"],
+  "properties": {
+    "refundId": {"$ref": "#/$defs/ulid"},
+    "paymentId": {"$ref": "#/$defs/ulid"},
+    "orderId": {"$ref": "#/$defs/ulid"},
+    "amountMinor": {"type": "integer", "minimum": 1, "maximum": 9007199254740991},
+    "currency": {"type": "string", "pattern": "^[A-Z]{3}$"},
+    "reasonCode": {"type": "string", "pattern": "^[A-Z0-9_]{2,32}$"},
+    "lines": {"type": "array", "minItems": 1, "maxItems": 200, "items": {"$ref": "#/$defs/line"}},
+    "occurredAt": {"type": "string", "format": "date-time"}
+  },
+  "$defs": {
+    "ulid": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "quantity": {"type": "string", "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,6})?$"},
+    "line": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["orderLineId", "quantity", "amountMinor"],
+      "properties": {
+        "orderLineId": {"$ref": "#/$defs/ulid"},
+        "quantity": {"$ref": "#/$defs/quantity"},
+        "amountMinor": {"type": "integer", "minimum": 0, "maximum": 9007199254740991}
+      }
+    }
+  }
+}

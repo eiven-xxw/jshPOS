@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "1.0",
+  "evidenceLevel": "FAKE_CONTRACT",
+  "providerNetworkCallsAllowed": 0,
+  "fixedVectors": [
+    {"seed": "PAY-CREATE-IDEMPOTENT-001", "requirement": "T2-PAY-001", "expected": "same result and one aggregate"},
+    {"seed": "PAY-IDEMPOTENCY-HASH-CONFLICT-002", "requirement": "T2-PAY-001", "expected": "reject conflict"},
+    {"seed": "PAY-UNKNOWN-NO-SECOND-ATTEMPT-003", "requirement": "T2-PAY-001", "expected": "reject new attempt"},
+    {"seed": "PAY-LATE-SUCCESS-004", "requirement": "T2-PAY-003", "expected": "converge to SUCCEEDED with audit"},
+    {"seed": "PAY-SUCCESS-NO-REGRESSION-005", "requirement": "T2-PAY-003", "expected": "remain SUCCEEDED"},
+    {"seed": "OBS-DUPLICATE-006", "requirement": "T2-PAY-003", "expected": "one observation effect"},
+    {"seed": "OBS-SAME-ID-DIFFERENT-HASH-007", "requirement": "T2-PAY-003", "expected": "isolate conflict"},
+    {"seed": "OBS-AMOUNT-CURRENCY-MISMATCH-008", "requirement": "T2-PAY-003", "expected": "isolate without state change"},
+    {"seed": "REF-PARTIAL-009", "requirement": "T2-REF-001", "expected": "reserve exact amount and quantities"},
+    {"seed": "REF-AMOUNT-OVERFLOW-010", "requirement": "T2-REF-001", "expected": "reject"},
+    {"seed": "REF-QUANTITY-OVERFLOW-011", "requirement": "T2-REF-001", "expected": "reject"},
+    {"seed": "REF-UNKNOWN-RESERVES-012", "requirement": "T2-REF-001", "expected": "keep reservation"},
+    {"seed": "REC-INTERNAL-ONLY-013", "requirement": "T2-REC-001", "expected": "open INTERNAL_ONLY"},
+    {"seed": "REC-PROVIDER-ONLY-014", "requirement": "T2-REC-001", "expected": "open PROVIDER_ONLY"},
+    {"seed": "REC-AMOUNT-STATUS-CURRENCY-015", "requirement": "T2-REC-001", "expected": "classify three differences"},
+    {"seed": "TENANT-CROSS-ATTACK-016", "requirement": "T2-PAY-001", "expected": "fail closed"}
+  ]
+}

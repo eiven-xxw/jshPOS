@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.jingshanghui.example/t2/gate3a/provider-observation.v1.schema.json",
+  "title": "Gate 3A verified provider-neutral observation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["observationId", "paymentId", "attemptId", "source", "observedStatus", "amountMinor", "currency", "providerCode", "providerRequestNo", "observedAt", "payloadHash"],
+  "properties": {
+    "observationId": {"$ref": "#/$defs/ulid"},
+    "paymentId": {"$ref": "#/$defs/ulid"},
+    "attemptId": {"$ref": "#/$defs/ulid"},
+    "source": {"enum": ["SYNC_RESPONSE", "QUERY", "CALLBACK", "STATEMENT", "FAKE_TEST"]},
+    "observedStatus": {"enum": ["PROCESSING", "UNKNOWN", "SUCCEEDED", "FAILED", "CANCELLED", "CLOSED"]},
+    "amountMinor": {"type": "integer", "minimum": 1, "maximum": 9007199254740991},
+    "currency": {"type": "string", "pattern": "^[A-Z]{3}$"},
+    "providerCode": {"type": "string", "pattern": "^[A-Z0-9_-]{2,32}$"},
+    "providerRequestNo": {"type": "string", "minLength": 1, "maxLength": 96},
+    "providerTransactionNo": {"type": "string", "minLength": 1, "maxLength": 96},
+    "observedAt": {"type": "string", "format": "date-time"},
+    "payloadHash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  },
+  "$defs": {"ulid": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"}}
+}

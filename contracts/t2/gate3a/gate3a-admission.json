@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "1.0",
+  "phase": "T2-GATE3A",
+  "branchStart": "60828acbbe18c30914a076709905eeb525ffeb5f",
+  "admittedRequirements": ["T2-PAY-001", "T2-PAY-003", "T2-REF-001", "T2-REC-001"],
+  "blockedRequirements": ["T2-PAY-002"],
+  "runtimeBoundary": {
+    "module": "jshpos-payment",
+    "providerNeutralCoreAllowed": true,
+    "providerHttpAdaptersAllowed": false,
+    "providerSdkAllowed": false,
+    "externalCallbackControllersAllowed": false,
+    "providerCredentialConfigurationAllowed": false,
+    "providerNetworkCallsAllowed": 0
+  },
+  "evidence": {
+    "maximumLevel": "STATIC+UNIT+MYSQL_INTEGRATION+FAKE_CONTRACT",
+    "sandbox": 0,
+    "realDevice": 0,
+    "pilot": 0
+  }
+}
