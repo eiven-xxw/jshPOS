@@ -61,7 +61,7 @@ class PaymentMigrationMySqlIT {
                 }
             }
             try (var rows = statement.executeQuery(
-                "SELECT COUNT(*) FROM sys_menu WHERE menu_id BETWEEN 9200300 AND 9200309")) {
+                "SELECT COUNT(*) FROM sys_menu WHERE menu_id BETWEEN 9200400 AND 9200409")) {
                 assertThat(rows.next()).isTrue();
                 assertThat(rows.getInt(1)).isEqualTo(10);
             }
