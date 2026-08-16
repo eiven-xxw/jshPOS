@@ -284,7 +284,7 @@ final class PosSyncCoordinator {
     SyncPushResponse response,
   ) {
     if (response.batchId != batch.batchId) {
-      return _failClaimedBatch(
+      final counts = _failClaimedBatch(
         batch,
         const SyncTransportException(
           'SYNC_BATCH_ACK_MISMATCH',
@@ -292,17 +292,27 @@ final class PosSyncCoordinator {
           retryable: false,
         ),
       );
+      return (
+        acked: 0,
+        retrying: counts.retrying,
+        deadLetters: counts.deadLetters,
+      );
     }
     final byId = <String, SyncEventAck>{};
     for (final ack in response.acks) {
       if (byId.putIfAbsent(ack.eventId, () => ack) != ack) {
-        return _failClaimedBatch(
+        final counts = _failClaimedBatch(
           batch,
           const SyncTransportException(
             'SYNC_DUPLICATE_ACK',
             'response contains duplicate event ACKs',
             retryable: false,
           ),
+        );
+        return (
+          acked: 0,
+          retrying: counts.retrying,
+          deadLetters: counts.deadLetters,
         );
       }
     }
