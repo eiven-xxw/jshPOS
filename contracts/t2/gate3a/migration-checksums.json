@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "1.0",
+  "phase": "T2-GATE3A",
+  "sealedAt": "2026-08-16",
+  "policy": "published Gate 3A payment, refund, reconciliation and permission migrations are append-only after verification",
+  "files": [
+    {
+      "path": "server/ruoyi-modules/jshpos-payment/src/main/resources/db/migration/V202608160009__gate3a_payment_refund_reconciliation.sql",
+      "sha256": "65e4fc03d2affcf671660a32fa4726c6c96b12bf49fbdd299d990fd9c254664b"
+    },
+    {
+      "path": "server/ruoyi-modules/jshpos-payment/src/main/resources/db/migration/V202608160010__gate3a_payment_permissions.sql",
+      "sha256": "52ff57bebb076a2c1c52bfe647e4785458fa1fa17c5134f75a88ff7a7cf30cd3"
+    }
+  ]
+}
