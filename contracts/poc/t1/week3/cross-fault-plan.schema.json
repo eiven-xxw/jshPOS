@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jshpos.example/contracts/poc/t1/week3/cross-fault-plan.schema.json",
+  "title": "T1 Week 3 synthetic cross-fault plan",
+  "type": "object",
+  "required": ["fixtureVersion", "evidenceLevel", "synthetic", "domain", "seeds", "faults"],
+  "properties": {
+    "fixtureVersion": {"const": "3.0"},
+    "evidenceLevel": {"const": "FAKE"},
+    "synthetic": {"const": true},
+    "domain": {"enum": ["SYNC_CROSS_FAULT", "PAYMENT_CONVERGENCE", "PACKAGE_RECOVERY", "UPGRADE_COMPATIBILITY"]},
+    "seeds": {
+      "type": "array",
+      "minItems": 5,
+      "uniqueItems": true,
+      "items": {"type": "integer", "minimum": 1}
+    },
+    "faults": {
+      "type": "array",
+      "minItems": 3,
+      "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]+$"}
+    }
+  },
+  "additionalProperties": true
+}

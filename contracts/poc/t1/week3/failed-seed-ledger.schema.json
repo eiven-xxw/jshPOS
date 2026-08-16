@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jshpos.example/contracts/poc/t1/week3/failed-seed-ledger.schema.json",
+  "title": "T1 Week 3 failed seed regression ledger",
+  "type": "object",
+  "required": ["ledgerVersion", "evidenceLevel", "synthetic", "adversarialSeeds", "observedFailedSeeds", "fixedFailedSeeds", "policy"],
+  "properties": {
+    "ledgerVersion": {"const": "3.0"},
+    "evidenceLevel": {"const": "FAKE"},
+    "synthetic": {"const": true},
+    "adversarialSeeds": {"type": "array", "minItems": 5, "uniqueItems": true, "items": {"type": "integer", "minimum": 1}},
+    "observedFailedSeeds": {"type": "array", "uniqueItems": true, "items": {"type": "integer", "minimum": 1}},
+    "fixedFailedSeeds": {"type": "array", "uniqueItems": true, "items": {"type": "integer", "minimum": 1}},
+    "policy": {"type": "string", "minLength": 20}
+  },
+  "additionalProperties": false
+}

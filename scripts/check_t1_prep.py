@@ -128,10 +128,17 @@ def allowed_prep_path(name: str) -> bool:
         return True
     if normalized.startswith("poc/t1-week2/"):
         return True
+    if normalized.startswith("docs/t1-week3/"):
+        return True
+    if normalized.startswith("contracts/poc/t1/week3/"):
+        return True
+    if normalized.startswith("poc/t1-week3/"):
+        return True
     if normalized in {
         ".gitignore",
         ".github/workflows/t1-week1.yml",
         ".github/workflows/t1-week2.yml",
+        ".github/workflows/t1-week3.yml",
         "docs/governance/rtm.csv",
         "docs/governance/change-log.md",
         "docs/adr/README.md",
@@ -139,6 +146,7 @@ def allowed_prep_path(name: str) -> bool:
         "scripts/check_t1_prep.py",
         "scripts/check_t1_week1.py",
         "scripts/check_t1_week2.py",
+        "scripts/check_t1_week3.py",
         "scripts/check_contracts.py",
     }:
         return True

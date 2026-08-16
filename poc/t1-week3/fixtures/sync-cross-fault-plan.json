@@ -1,0 +1,19 @@
+{
+  "fixtureVersion": "3.0",
+  "evidenceLevel": "FAKE",
+  "synthetic": true,
+  "domain": "SYNC_CROSS_FAULT",
+  "eventCount": 5000,
+  "batchSize": 127,
+  "seeds": [31001, 31013, 31019, 31033, 31039, 31051, 31063, 31069, 31079, 31091, 31121, 31139],
+  "faults": [
+    "AFTER_CLAIM_BEFORE_SEND",
+    "SERVER_ACCEPTED_ACK_LOST",
+    "AFTER_ACK_BEFORE_LOCAL_COMMIT",
+    "NETWORK_JITTER_REORDER",
+    "DUPLICATE_DELIVERY",
+    "PROCESS_RESTART"
+  ],
+  "maxDrainRounds": 200,
+  "requirements": ["T1-OFF-001", "T1-SYN-001"]
+}

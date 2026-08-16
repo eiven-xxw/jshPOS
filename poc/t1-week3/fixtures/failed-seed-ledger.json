@@ -1,0 +1,9 @@
+{
+  "ledgerVersion": "3.0",
+  "evidenceLevel": "FAKE",
+  "synthetic": true,
+  "adversarialSeeds": [31001, 31013, 31019, 31033, 31039, 31051, 31063, 31069, 31079, 31091, 31121, 31139, 32003, 32009, 32027, 32029, 32051, 33013, 33023, 33029, 33037, 33049, 33071, 34019, 34031, 34039, 34057, 34061],
+  "observedFailedSeeds": [],
+  "fixedFailedSeeds": [],
+  "policy": "任何新观察到的失败 seed 必须先进入 observedFailedSeeds，缺陷修复并通过相同故障计划后再进入 fixedFailedSeeds；CI 拒绝未跟踪失败。"
+}

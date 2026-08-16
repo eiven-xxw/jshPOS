@@ -2,8 +2,8 @@
 
 > 基线：annotated tag `t0-baseline-2026-08-16`
 > 准备分支：`t1/prep-20260816`
-> 阶段：T1 Week 2（项目发起人已确认 Week 1 报告并按 `CONDITIONAL GO` 授权）
-> 当前许可：仅执行 RTM 已准入的 SQLite/Inbox、虚构租户、合成数据包、虚构升级和支付 Fake 内部探针；任何情况下均不得借 T1 开发正式商业业务。
+> 阶段：T1 Week 3（项目发起人已确认 Week 2 报告并按 `CONDITIONAL GO` 授权）
+> 当前许可：仅执行 RTM 已准入的 Outbox/Inbox、支付 Fake、合成数据包、虚构升级、安全与证据交叉故障探针；任何情况下均不得借 T1 开发正式商业业务。
 
 ## 文档清单
 
@@ -37,8 +37,8 @@
 ## 当前状态摘要
 
 - T1-Prep 文档和 RTM：项目发起人已于 2026-08-16 确认 `CONDITIONAL GO`。
-- Week 1：已授权七类 PoC 的 STATIC/FAKE 契约、故障夹具和 CI；结束后必须提交周门禁报告等待再次确认。
+- Week 1：契约、故障夹具和 CI 已完成并确认；Week 2：内部单域风险探针已完成并确认；Week 3：仅交叉故障与稳定恢复探针获准执行。
 - `BLOCKED`：主认证机及 SDK、全套外设、至少一家支付沙箱、5 家设计伙伴/3 家试点意愿。
 - `DEFERRED`：鲸熵汇真实接口资料；三项受限许可证的商业发布处置。
-- T1 PoC 编码：仅 RTM 中已准入的 Week 1 STATIC/FAKE 为 `GO`；实机和沙箱仍 `NO-GO`。
+- T1 PoC 编码：仅 RTM 中已准入的 Week 3 STATIC/FAKE 为 `GO`；实机和沙箱仍 `NO-GO`。
 - T2 正式商业开发：`NO-GO`。

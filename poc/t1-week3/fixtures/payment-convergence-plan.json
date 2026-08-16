@@ -1,0 +1,22 @@
+{
+  "fixtureVersion": "3.0",
+  "evidenceLevel": "FAKE",
+  "synthetic": true,
+  "domain": "PAYMENT_CONVERGENCE",
+  "seeds": [32003, 32009, 32027, 32029, 32051],
+  "faults": [
+    "PAYMENT_UNKNOWN_QUERY",
+    "PAYMENT_UNKNOWN_CALLBACK",
+    "CALLBACK_DUPLICATE",
+    "CALLBACK_OUT_OF_ORDER",
+    "CALLBACK_PAYLOAD_CONFLICT",
+    "REFUND_UNKNOWN_QUERY",
+    "REFUND_UNKNOWN_CALLBACK",
+    "RECONCILIATION_DIFFERENCE"
+  ],
+  "casesPerProviderPerSeed": 8,
+  "minimumProviders": 5,
+  "networkAllowed": false,
+  "credentialReadsAllowed": false,
+  "requirements": ["T1-PAY-001"]
+}

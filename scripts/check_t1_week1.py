@@ -119,6 +119,7 @@ def check_baseline_and_scope() -> None:
         ".gitignore",
         ".github/workflows/t1-week1.yml",
         ".github/workflows/t1-week2.yml",
+        ".github/workflows/t1-week3.yml",
         "docs/governance/rtm.csv",
         "docs/governance/change-log.md",
         "docs/adr/README.md",
@@ -126,15 +127,18 @@ def check_baseline_and_scope() -> None:
         "scripts/check_t1_prep.py",
         "scripts/check_t1_week1.py",
         "scripts/check_t1_week2.py",
+        "scripts/check_t1_week3.py",
         "scripts/check_contracts.py",
     }
     prefixes = (
         "docs/t1-prep/",
         "docs/t1-week1/",
         "docs/t1-week2/",
+        "docs/t1-week3/",
         "contracts/poc/t1/",
         "poc/t1-week1/",
         "poc/t1-week2/",
+        "poc/t1-week3/",
     )
     unexpected = sorted(
         name for name in changed

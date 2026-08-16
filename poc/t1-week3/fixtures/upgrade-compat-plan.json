@@ -1,0 +1,17 @@
+{
+  "fixtureVersion": "3.0",
+  "evidenceLevel": "FAKE",
+  "synthetic": true,
+  "domain": "UPGRADE_COMPATIBILITY",
+  "seeds": [34019, 34031, 34039, 34057, 34061],
+  "faults": [
+    "PENDING_SYNC_COMPATIBLE_UPGRADE",
+    "PENDING_SYNC_INCOMPATIBLE_BLOCK",
+    "MIGRATION_FAIL_APP_ROLLBACK",
+    "OLD_APP_NEW_SCHEMA_WINDOW",
+    "FORWARD_REPAIR_REENTRY"
+  ],
+  "repetitionsPerSeed": 6,
+  "schemaRollbackAllowed": false,
+  "requirements": ["T1-UPG-001", "T1-OFF-001"]
+}
