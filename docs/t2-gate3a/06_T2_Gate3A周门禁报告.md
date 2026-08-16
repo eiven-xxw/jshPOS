@@ -7,11 +7,13 @@
 > Gate 3A 分支起点：`60828acbbe18c30914a076709905eeb525ffeb5f`
 > 技术候选：`f987af9d7293b91027e890326cafc8c101b89920`
 > 技术候选 CI：[T2 Gate 3A Quality Gates #31953461656](https://github.com/eiven-xxw/jshPOS/actions/runs/31953461656)
+> Closure 候选：`35dff3c0972bcb419fd74f4a47cb31ec4421d293`
+> Closure CI：[T2 Gate 3A Quality Gates #31954539407](https://github.com/eiven-xxw/jshPOS/actions/runs/31954539407)
 > 当前结论：`CONDITIONAL PASS / VERIFIED / AWAITING CONFIRMATION`
 
 ## 1. 管理结论
 
-Gate 3A 获准的 Provider 无关支付核心、查询/观察合并、原单退款和支付/退款/账单对账四项需求已完成设计、实现和内部验证。技术候选在 GitHub Ubuntu、Windows、MySQL 8.4.6 干净执行器运行十个 Job，全部通过；证据聚合器核验 157 个文件并形成 SHA-256 索引。
+Gate 3A 获准的 Provider 无关支付核心、查询/观察合并、原单退款和支付/退款/账单对账四项需求已完成设计、实现和内部验证。技术候选与包含迁移封印、RTM `VERIFIED`、周门禁报告的 closure 候选，均在 GitHub Ubuntu、Windows、MySQL 8.4.6 干净执行器运行十个 Job 并全部通过；closure 证据聚合器核验 157 个文件并形成 SHA-256 索引。
 
 本轮形成的是 Provider 无关资金事实内核。正式运行时没有 Provider HTTP/SDK、外部回调 Controller、渠道凭据、账单下载器或网络调用；所有渠道观察和账单均为固定合成向量。因此建议将 `T2-PAY-001`、`T2-PAY-003`、`T2-REF-001`、`T2-REC-001` 保持为 `VERIFIED` 并提交 `CONDITIONAL PASS`，但不自行更新为 `ACCEPTED`。
 
@@ -67,25 +69,25 @@ Gate 3A 获准的 Provider 无关支付核心、查询/观察合并、原单退�
 证据摘要：
 
 ```text
-T2-GATE3A EVIDENCE OK: stage=admitted files=157 serverTests=164 flutterLinux=38 flutterWindows=38 serverBranch=0.9479 flutterLine=0.9094
+T2-GATE3A EVIDENCE OK: stage=closure files=157 serverTests=164 flutterLinux=38 flutterWindows=38 serverBranch=0.9479 flutterLine=0.9094
 ```
 
 ## 6. GitHub Actions
 
-技术候选运行时间：2026-08-16 22:41:50—22:55:46（Asia/Shanghai），`run_attempt=1`，总结果 `success`。
+技术候选运行 #31953461656 与 closure 运行 #31954539407 均为 `run_attempt=1`、总结果 `success`。Closure 运行时间为 2026-08-16 23:04:01—23:12:10（Asia/Shanghai）；下表列示 closure Job。
 
 | Job | Job ID | 结果 | 主要证据 |
 |---|---:|---|---|
-| [governance](https://github.com/eiven-xxw/jshPOS/actions/runs/31953461656/job/95180433671) | 95180433671 | PASS | 基线祖先、RTM、ADR、契约、范围和依赖差异 |
-| [server](https://github.com/eiven-xxw/jshPOS/actions/runs/31953461656/job/95180433697) | 95180433697 | PASS | 164 测试、覆盖率、Admin JAR、聚合 SBOM |
-| [mysql-migration](https://github.com/eiven-xxw/jshPOS/actions/runs/31953461656/job/95180433758) | 95180433758 | PASS | MySQL 8.4.6、V1—V10、复合外键和不可变约束 |
-| [tenant-security](https://github.com/eiven-xxw/jshPOS/actions/runs/31953461656/job/95180433698) | 95180433698 | PASS | 可信上下文、Mapper 与 12 面租户攻击 |
-| [payment-fake](https://github.com/eiven-xxw/jshPOS/actions/runs/31953461656/job/95180433714) | 95180433714 | PASS | 16 个固定支付/退款/对账 Fake 向量 |
-| [pos-linux](https://github.com/eiven-xxw/jshPOS/actions/runs/31953461656/job/95180433666) | 95180433666 | PASS | 38 测试、覆盖率、Kotlin、APK、Flutter SBOM/许可证 |
-| [pos-windows](https://github.com/eiven-xxw/jshPOS/actions/runs/31953461656/job/95180433685) | 95180433685 | PASS | Windows 38 测试与独立 SQLite/HTTP 回归 |
-| [admin-web](https://github.com/eiven-xxw/jshPOS/actions/runs/31953461656/job/95180433719) | 95180433719 | PASS | audit/build/lint/typecheck/测试/许可证 |
-| [security-sbom-license](https://github.com/eiven-xxw/jshPOS/actions/runs/31953461656/job/95181491776) | 95181491776 | PASS | Trivy、双 SBOM、漏洞/Secret/IaC/许可证 |
-| [evidence](https://github.com/eiven-xxw/jshPOS/actions/runs/31953461656/job/95181935495) | 95181935495 | PASS | 九类证据和 157 文件 SHA-256 索引 |
+| [governance](https://github.com/eiven-xxw/jshPOS/actions/runs/31954539407/job/95183021741) | 95183021741 | PASS | 基线祖先、RTM、ADR、契约、范围和依赖差异 |
+| [server](https://github.com/eiven-xxw/jshPOS/actions/runs/31954539407/job/95183021726) | 95183021726 | PASS | 164 测试、覆盖率、Admin JAR、聚合 SBOM |
+| [mysql-migration](https://github.com/eiven-xxw/jshPOS/actions/runs/31954539407/job/95183021699) | 95183021699 | PASS | MySQL 8.4.6、V1—V10、复合外键和不可变约束 |
+| [tenant-security](https://github.com/eiven-xxw/jshPOS/actions/runs/31954539407/job/95183021723) | 95183021723 | PASS | 可信上下文、Mapper 与 12 面租户攻击 |
+| [payment-fake](https://github.com/eiven-xxw/jshPOS/actions/runs/31954539407/job/95183021688) | 95183021688 | PASS | 16 个固定支付/退款/对账 Fake 向量 |
+| [pos-linux](https://github.com/eiven-xxw/jshPOS/actions/runs/31954539407/job/95183021724) | 95183021724 | PASS | 38 测试、覆盖率、Kotlin、APK、Flutter SBOM/许可证 |
+| [pos-windows](https://github.com/eiven-xxw/jshPOS/actions/runs/31954539407/job/95183021684) | 95183021684 | PASS | Windows 38 测试与独立 SQLite/HTTP 回归 |
+| [admin-web](https://github.com/eiven-xxw/jshPOS/actions/runs/31954539407/job/95183021680) | 95183021680 | PASS | audit/build/lint/typecheck/测试/许可证 |
+| [security-sbom-license](https://github.com/eiven-xxw/jshPOS/actions/runs/31954539407/job/95183854275) | 95183854275 | PASS | Trivy、双 SBOM、漏洞/Secret/IaC/许可证 |
+| [evidence](https://github.com/eiven-xxw/jshPOS/actions/runs/31954539407/job/95183938270) | 95183938270 | PASS | 九类证据和 157 文件 SHA-256 索引 |
 
 Workflow 不含 `continue-on-error`，没有自动 retry、失败测试跳过、阈值降低或绿色占位。
 
@@ -93,16 +95,16 @@ Workflow 不含 `continue-on-error`，没有自动 retry、失败测试跳过、
 
 | Artifact | ID | 大小（B） | GitHub digest |
 |---|---:|---:|---|
-| `t2-gate3a-provider-neutral-payment-evidence-bundle` | 9265464339 | 456519364 | `sha256:04c726b97b003066fae9be800a53cd04ab090a031c577fc85baa60a425b29b1d` |
-| `t2-gate3a-security` | 9265417148 | 228236774 | `sha256:1cb4b7242e0161bb35208d2ffbec74020ddee446e7e1919333385510aad8a51b` |
-| `t2-gate3a-server` | 9265406207 | 153326997 | `sha256:6506d5a06da691e6f1ed63c801f979715286bcf6842f8511c2937bafc662c0ba` |
-| `t2-gate3a-pos-linux` | 9265378167 | 74828581 | `sha256:e0a87dc8e67776f5e41cd753603e91ab2312890b60460f266c0cc7f308eb0877` |
-| `t2-gate3a-pos-windows` | 9265350232 | 3071 | `sha256:f2a1d9a2604dd52a181b3ff0b0d6460d9fa621e68ae057748c7ef7c4b4bc7b7c` |
-| `t2-gate3a-tenant` | 9265349309 | 26774 | `sha256:d0b7de96d52b2f318d56411b33c3cd8124f102a904651c94a06b08b33fad9fd5` |
-| `t2-gate3a-mysql` | 9265347156 | 5823 | `sha256:03e8234f9bc28b841732e76fcaffaf81e959b158d261d80aa665525543bcf824` |
-| `t2-gate3a-web` | 9265311809 | 79788 | `sha256:52dd6022095583e16857dce55288a5ad175c90124ae1bff8390b2e0f5a99c336` |
-| `t2-gate3a-fake` | 9265295622 | 1334 | `sha256:1682699030326be202babb5a603e91ab2312890b60460f266c0cc7f308eb0877` |
-| `t2-gate3a-governance` | 9265295446 | 1023 | `sha256:2b9d2d3187bd2f413418e77b20b04a80b49d4a6dfcf818d445e3be31ccd0cf86` |
+| `t2-gate3a-provider-neutral-payment-evidence-bundle` | 9265678601 | 456519323 | `sha256:860432d689f2100de3cb1f1a98b4b4260cd66d556d1c6c6b469be5e170d5c152` |
+| `t2-gate3a-security` | 9265668149 | 228236766 | `sha256:cdf323361dda8a7057802b16334d52af6220ed6536fc7cc367e6c9d2eebad6f7` |
+| `t2-gate3a-pos-linux` | 9265658628 | 74828581 | `sha256:bee50c2c5d73852d2cba3e51566ff96eb31ad0655fcfe72483fef199c6b123e6` |
+| `t2-gate3a-server` | 9265648777 | 153326974 | `sha256:c28826ca65bedbb4df1582e4873af340ee257185fc996f43f5c3766ee663bc03` |
+| `t2-gate3a-pos-windows` | 9265600718 | 3068 | `sha256:89a58a5fa6a159ff869039ffcb6e137db78b7315aece4fc22d6e1cee66120dec` |
+| `t2-gate3a-web` | 9265587188 | 79790 | `sha256:d9da53aee4cd72c1263baf052c4df54446c227dd88fb6a53db9c84ae5f534bd9` |
+| `t2-gate3a-mysql` | 9265584944 | 5815 | `sha256:798cd36934df6a2d2b48be4d523f0f9ba85802dc172f5e39bb39dabfea771cd9` |
+| `t2-gate3a-tenant` | 9265577674 | 26779 | `sha256:df3746da8a322003b8d26f1a53b102a68bbcc12ba830f305f92710ec0d9e3758` |
+| `t2-gate3a-governance` | 9265570142 | 1018 | `sha256:a3bb5232e36451c7163b15d49ec142b9a9af830c133fdc563c3b70096efb9c94` |
+| `t2-gate3a-fake` | 9265569677 | 1334 | `sha256:18a66b5d2f8a2e8c4ac277b990a7d26647c90cb2c59df707424c0f9889f6ce8a` |
 
 ## 8. 发现问题与修复记录
 
