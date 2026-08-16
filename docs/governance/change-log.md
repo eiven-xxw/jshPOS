@@ -38,5 +38,8 @@
 | CR-T2G1-003 | 2026-08-16 | VERIFIED_AWAITING_CI | 七项 Gate 1 商品、条码单位、导入、分类品牌属性、基础门店价、价格版本和正式服务端数据包切片完成本地实现与分级验证，由 IN_PROGRESS 更新为 VERIFIED；GitHub 干净执行器、MySQL 8.4、安全供应链和证据汇总仍待运行 | T2-PRD-001、T2-PRD-002、T2-PRD-003、T2-PRD-004、T2-PRC-001、T2-PRC-002、T2-DPK-001 | 不代表 ACCEPTED；不得进入 Gate 2 或宣称 Alpha、试点、商用 |
 | CR-T2G1-004 | 2026-08-16 | IMPLEMENTED_AWAITING_RETEST | GitHub Actions `31936005932` 的 MySQL 8.4.6 首轮迁移在 `cat_import_record.row_number` 处失败；确认 `ROW_NUMBER` 为保留关键字后，将两张导入表列改为 `source_row_no` 并更新 Mapper 与迁移摘要，其他门禁不降级 | T2-PRD-003、T2-MIG-001 | 首轮失败不计为通过；要求新提交完整重跑七个 Job |
 | CR-T2G1-005 | 2026-08-16 | VERIFIED_AWAITING_CONFIRMATION | 修复后 GitHub Actions `31936276008` 七个 Job 全绿；MySQL 8.4 四版迁移、78 项服务端测试、9 项租户专项、8 项 Web、97.00% 行/91.77% 分支覆盖率、安全供应链和 90 文件证据索引通过 | T2-PRD-001、T2-PRD-002、T2-PRD-003、T2-PRD-004、T2-PRC-001、T2-PRC-002、T2-DPK-001 | 等待项目发起人确认周门禁报告；不得自行 ACCEPTED 或进入下一 Gate |
+| CR-T2G1-006 | 2026-08-16 | ACCEPTED | 项目发起人确认《T2 Gate 1 / Sprint S1 周门禁报告》并接受 Gate 1 CONDITIONAL PASS，授权七项 Gate 1 需求由 VERIFIED 转为 ACCEPTED | T2-PRD-001、T2-PRD-002、T2-PRD-003、T2-PRD-004、T2-PRC-001、T2-PRC-002、T2-DPK-001 | 项目发起人 2026-08-16 明确确认 |
+| CR-T2G2-001 | 2026-08-16 | APPROVED | 以封存 tag 为唯一不可变基线、以 `6a94bc6` 为分支起点，按 CONDITIONAL GO 启动 Gate 2 / Sprint S2 八项 POS、班次、订单、现金与正式 SQLite 需求；T2-SYN-001 只允许设计 | T2-POS-001..005、T2-ORD-001..002、T2-OFF-001、T2-SYN-001、ADR-020 | 项目发起人 2026-08-16 明确确认 |
+| CR-T2G2-002 | 2026-08-16 | IN_PROGRESS | 八项 Gate 2 的数据主权、状态与冻结点、金额不变量、权限、审计、API/事件、SQLite/Flyway、容量、回退和测试准入经 `check_t2_gate2.py --stage design` 机器校验 8/8 通过，由 DRAFT 经 READY 进入 IN_PROGRESS；远程同步运行时仍为 0 | T2-POS-001..005、T2-ORD-001..002、T2-OFF-001 | 按项目发起人逐项准入规则执行；T2-SYN-001 保持 DRAFT |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。

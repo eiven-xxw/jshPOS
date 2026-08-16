@@ -1,0 +1,39 @@
+specification: jshpos-pos-sync-design-only
+version: 1.0.0-gate2-s2
+requirement: T2-SYN-001
+runtimeAllowed: false
+transportCallsAllowed: 0
+identity:
+  tenantSource: trusted-device-session-only
+  clientTenantOverride: forbidden
+outbox:
+  states: [PENDING, SENDING, RETRY, ACKED, FINAL_REJECTED]
+  immutableFields: [eventId, deviceSequence, stream, eventType, aggregateId, aggregateVersion, payloadHash, payload]
+  sendingRecovery: original-event-and-hash-to-RETRY-after-timeout
+ackResults:
+  ACCEPTED: mark-acked
+  ACCEPTED_PENDING: retain-identity-and-query-later
+  DUPLICATE: mark-acked-after-reference-check
+  REJECTED_RETRYABLE: retain-and-backoff
+  REJECTED_FINAL: stop-and-require-operator
+  CONFLICT: apply-domain-matrix-never-last-write-wins
+  DEVICE_BLOCKED: stop-all-new-transactions
+conflicts:
+  sameEventSameHash: DUPLICATE
+  sameEventDifferentHash: EVENT_HASH_MISMATCH_AND_BLOCK
+  staleAggregateVersion: CONFLICT_STALE
+  futureAggregateVersion: ACCEPTED_WITH_GAP_OR_RETRY
+  crossTenantOrDevice: RESOURCE_NOT_VISIBLE_AND_SECURITY_AUDIT
+faultVectors:
+  - duplicate
+  - out-of-order
+  - ack-loss
+  - process-restart
+  - sending-timeout
+  - device-sequence-gap
+  - payload-tamper
+  - cross-tenant
+limitations:
+  - no HTTP WebSocket worker timer push pull ack inbox cursor or network retry runtime in Sprint S2
+  - no Fake result can change SANDBOX REAL_DEVICE or PILOT status
+

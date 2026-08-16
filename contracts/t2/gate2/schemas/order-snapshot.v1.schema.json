@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.jingshanghui.example/t2/gate2/order-snapshot.v1.schema.json",
+  "title": "Gate 2 immutable cash order snapshot",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "orderId", "storeId", "terminalId", "shiftId", "cashierId", "businessDate", "currency", "grossAmountMinor", "discountAmountMinor", "surchargeAmountMinor", "receivableAmountMinor", "catalogVersion", "priceVersion", "industryTemplateVersion", "lines"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "orderId": {"$ref": "#/$defs/ulid"},
+    "storeId": {"$ref": "#/$defs/ulid"},
+    "terminalId": {"$ref": "#/$defs/ulid"},
+    "shiftId": {"$ref": "#/$defs/ulid"},
+    "cashierId": {"type": "string", "minLength": 1, "maxLength": 64},
+    "businessDate": {"type": "string", "format": "date"},
+    "storeTimezone": {"type": "string", "minLength": 1, "maxLength": 64},
+    "currency": {"const": "CNY"},
+    "grossAmountMinor": {"type": "integer", "minimum": 0, "maximum": 9007199254740991},
+    "discountAmountMinor": {"const": 0},
+    "surchargeAmountMinor": {"const": 0},
+    "receivableAmountMinor": {"type": "integer", "minimum": 0, "maximum": 9007199254740991},
+    "catalogVersion": {"type": "integer", "minimum": 1},
+    "priceVersion": {"type": "integer", "minimum": 1},
+    "industryTemplateVersion": {"type": "string", "pattern": "^[A-Z0-9._-]{1,32}$"},
+    "lines": {"type": "array", "minItems": 1, "maxItems": 500, "items": {"$ref": "#/$defs/line"}}
+  },
+  "$defs": {
+    "ulid": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "quantity": {"type": "string", "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,6})?$"},
+    "line": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["lineId", "lineNo", "skuId", "skuCode", "productName", "unitCode", "quantity", "unitPriceMinor", "grossAmountMinor", "discountAmountMinor", "surchargeAmountMinor", "payableAmountMinor", "priceSource"],
+      "properties": {
+        "lineId": {"$ref": "#/$defs/ulid"},
+        "lineNo": {"type": "integer", "minimum": 1, "maximum": 500},
+        "skuId": {"$ref": "#/$defs/ulid"},
+        "skuCode": {"type": "string", "minLength": 1, "maxLength": 64},
+        "barcode": {"type": "string", "pattern": "^[0-9A-Za-z._-]{1,64}$"},
+        "productName": {"type": "string", "minLength": 1, "maxLength": 200},
+        "unitCode": {"type": "string", "pattern": "^[A-Z0-9_-]{1,32}$"},
+        "quantity": {"$ref": "#/$defs/quantity"},
+        "unitPriceMinor": {"type": "integer", "minimum": 0, "maximum": 9007199254740991},
+        "grossAmountMinor": {"type": "integer", "minimum": 0, "maximum": 9007199254740991},
+        "discountAmountMinor": {"const": 0},
+        "surchargeAmountMinor": {"const": 0},
+        "payableAmountMinor": {"type": "integer", "minimum": 0, "maximum": 9007199254740991},
+        "priceSource": {"enum": ["TENANT_BASE", "STORE_OVERRIDE"]}
+      }
+    }
+  }
+}
+

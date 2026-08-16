@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.jingshanghui.example/t2/gate2/local-outbox-event.v1.schema.json",
+  "title": "Gate 2 local outbox event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "eventId", "stream", "eventType", "aggregateId", "aggregateVersion", "deviceSequence", "occurredAt", "correlationId", "payloadHash", "payload"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "eventId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "stream": {"enum": ["order.command", "shift.event"]},
+    "eventType": {"enum": ["shift.opened.v1", "order.submitted.v1", "cash.received.v1", "order.completed.v1", "order.suspended.v1", "order.resumed.v1", "shift.closed.v1"]},
+    "aggregateId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "aggregateVersion": {"type": "integer", "minimum": 1},
+    "deviceSequence": {"type": "integer", "minimum": 1},
+    "occurredAt": {"type": "string", "format": "date-time"},
+    "correlationId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "payloadHash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "payload": {"type": "object"}
+  }
+}
+

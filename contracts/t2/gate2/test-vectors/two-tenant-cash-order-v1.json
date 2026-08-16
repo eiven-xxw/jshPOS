@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "1.0",
+  "seed": 20260816,
+  "syntheticOnly": true,
+  "tenants": [
+    {
+      "tenantRef": "TENANT_A",
+      "industry": "CONVENIENCE",
+      "stores": ["01K2A000000000000000000001", "01K2A000000000000000000002"],
+      "terminals": ["01K2A000000000000000000011", "01K2A000000000000000000012"],
+      "cashiers": ["A-CASHIER-01", "A-SUPERVISOR-01"],
+      "timezone": "Asia/Shanghai"
+    },
+    {
+      "tenantRef": "TENANT_B",
+      "industry": "DISCOUNT_AND_COMMUNITY",
+      "stores": ["01K2B000000000000000000001", "01K2B000000000000000000002"],
+      "terminals": ["01K2B000000000000000000011"],
+      "cashiers": ["B-CASHIER-01", "B-SUPERVISOR-01"],
+      "timezone": "Asia/Shanghai"
+    }
+  ],
+  "quantities": ["1", "0.125", "1.000000", "999999.999999"],
+  "moneyCases": [
+    {"name": "exact-cash", "receivableMinor": 1299, "tenderedMinor": 1299, "changeMinor": 0},
+    {"name": "cash-change", "receivableMinor": 1299, "tenderedMinor": 2000, "changeMinor": 701},
+    {"name": "insufficient", "receivableMinor": 1299, "tenderedMinor": 1298, "error": "CASH_TENDER_INSUFFICIENT"}
+  ],
+  "boundaryCases": [
+    "same-idempotency-same-hash",
+    "same-idempotency-different-hash",
+    "cross-tenant-order-id",
+    "cross-store-shift",
+    "business-date-midnight",
+    "difference-threshold-equal",
+    "difference-threshold-exceeded",
+    "write-failure-before-each-fact",
+    "kill-before-commit",
+    "reopen-after-commit"
+  ],
+  "externalEvidence": {"sandbox": 0, "realDevice": 0, "pilot": 0}
+}

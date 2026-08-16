@@ -136,6 +136,18 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
 - 订单、支付、退款、库存、采购、成本、促销及 T2 后续 Gate 继续禁止；真实支付、生产密钥、未脱敏数据、SANDBOX、REAL_DEVICE 和 PILOT 状态不得因 Gate 1 内部证据改变。
 - Gate 1 完成后必须提交周门禁报告并等待项目发起人确认；不得自动启动 Gate 2，不得宣称系统完成 Alpha、可试点或可商用。
 
+## 4.10 当前 T2 Gate 2 / Sprint S2 条件准入
+
+- 项目发起人已于 2026-08-16 确认《T2 Gate 1 / Sprint S1 周门禁报告》，接受 Gate 1 `CONDITIONAL PASS`，并授权从 Gate 1 封板提交 `6a94bc6af2938fba6b9a1af123eb94b6312af9b2` 建立 `t2/gate2-sprint2-20260816`。
+- Gate 1 的 `T2-PRD-001..004`、`T2-PRC-001..002`、`T2-DPK-001` 可按本次确认更新为 `ACCEPTED`。
+- Gate 2 正式实现只允许 `T2-POS-001..005`、`T2-ORD-001..002`、`T2-OFF-001`；每项必须先完成数据主权、状态与冻结点、金额不变量、权限审计、API/事件、SQLite/Flyway、容量、回退和测试准入，才可从 `DRAFT` 更新为 `READY/IN_PROGRESS`。
+- `T2-SYN-001` 本 Sprint 仅允许 Inbox/Outbox 同步契约、冲突矩阵、测试向量和故障恢复方案，状态保持 `DRAFT`；不得实现网络 Worker、Push/Pull/Ack、服务端 Sync Inbox 或正式远程同步运行时。
+- Gate 2 使用独立 `jshpos-order` 服务端模块与 Flutter `features/checkout`/`features/shift`/`infrastructure/local_database` 边界；可依赖 Gate 0/1 的可信上下文、组织门店与商品价格契约，不得把交易规则写入 Controller、通用工具类、RuoYi 系统模块或设备适配插件。
+- POS 正式 SQLite 模型必须重新设计并使用 `local_*` 正式表，严禁复制、迁移或引用 T1 `syn_*` 探针表；本地现金成交的订单、订单行、成交快照、现金事实、班次现金流水、打印任务、Outbox 与幂等结果必须在一个 SQLite 事务中提交。
+- 金额使用最小货币单位整数，数量和单位换算使用精确十进制或整数分数；订单快照一经提交不可覆盖，现金收款必须绑定可信租户、门店、终端、员工、班次和业务日快照。
+- 本 Sprint 只准入现金，不准入第三方/聚合支付、退款、库存、采购、成本、促销或后续 Gate；实机/外设、支付沙箱和设计伙伴继续 `BLOCKED`，鲸熵汇与商业许可证继续 `DEFERRED`。
+- Gate 2 完成后必须提交周门禁报告并等待项目发起人确认；不得自动启动 S3、正式同步或 Gate 3，不得宣称系统完成 Alpha、可试点或可商用。
+
 ## 5. 工程与测试规则
 
 - 服务端采用 RuoYi-Vue-Plus 模块化单体，不得把领域逻辑写入 Controller、通用工具类或框架系统模块。

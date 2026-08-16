@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.jingshanghui.example/t2/gate2/command-result.v1.schema.json",
+  "title": "Gate 2 idempotent command result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "commandId", "idempotencyKey", "requestHash", "resultCode", "aggregateId", "traceId"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "commandId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "idempotencyKey": {"type": "string", "minLength": 16, "maxLength": 128},
+    "requestHash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "resultCode": {"enum": ["CREATED", "DUPLICATE", "IDEMPOTENCY_KEY_REUSED"]},
+    "aggregateId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "traceId": {"type": "string", "minLength": 1, "maxLength": 64}
+  }
+}
+

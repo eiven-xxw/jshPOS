@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.jingshanghui.example/t2/gate2/events/cash.received.v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["paymentId", "orderId", "shiftId", "currency", "tenderedAmountMinor", "changeAmountMinor", "netAmountMinor"],
+  "properties": {
+    "paymentId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "orderId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "shiftId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "currency": {"const": "CNY"},
+    "tenderedAmountMinor": {"type": "integer", "minimum": 0},
+    "changeAmountMinor": {"type": "integer", "minimum": 0},
+    "netAmountMinor": {"type": "integer", "minimum": 0}
+  }
+}
+

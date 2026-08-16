@@ -49,6 +49,23 @@ def main() -> None:
         if token not in gate1_openapi:
             raise SystemExit(f"CONTRACT ERROR: Gate 1 formal OpenAPI missing {token}")
 
+    gate2_openapi = (ROOT / "contracts" / "t2" / "gate2" / "openapi-pos-order-v1.yaml").read_text(encoding="utf-8")
+    for requirement_id in (
+        "T2-POS-001", "T2-POS-002", "T2-POS-003", "T2-POS-005", "T2-ORD-001", "T2-ORD-002",
+    ):
+        if requirement_id not in gate2_openapi:
+            raise SystemExit(f"CONTRACT ERROR: Gate 2 OpenAPI missing {requirement_id}")
+    for token in ("version: 1.0.0-gate2", "/cash-orders:", "/shifts/{shiftId}/close:", "Idempotency-Key", "additionalProperties: false"):
+        if token not in gate2_openapi:
+            raise SystemExit(f"CONTRACT ERROR: Gate 2 formal OpenAPI missing {token}")
+    if "tenantId:" in gate2_openapi or "tenant_id:" in gate2_openapi:
+        raise SystemExit("CONTRACT ERROR: Gate 2 client contract exposes a tenant override")
+
+    sync_design = (ROOT / "contracts" / "t2" / "gate2" / "sync-design-only-v1.yaml").read_text(encoding="utf-8")
+    for token in ("requirement: T2-SYN-001", "runtimeAllowed: false", "transportCallsAllowed: 0"):
+        if token not in sync_design:
+            raise SystemExit(f"CONTRACT ERROR: Gate 2 sync design boundary missing {token}")
+
     print(f"CONTRACTS OK: {len(json_contracts)} JSON schemas and T0/T2 OpenAPI contracts")
 
 

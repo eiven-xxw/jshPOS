@@ -1,0 +1,215 @@
+openapi: 3.1.0
+info:
+  title: JSH POS Gate 2 Shift and Cash Order API
+  version: 1.0.0-gate2
+  description: >-
+    T2-POS-001..005 and T2-ORD-001..002 formal application API. Tenant identity is
+    derived exclusively from the authenticated trusted context and is never accepted in a payload.
+servers: []
+security:
+  - bearerAuth: []
+paths:
+  /shifts:
+    post:
+      operationId: openShift
+      x-requirement-ids: [T2-POS-001]
+      x-permission: pos:shift:open
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/CommandId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/OpenShiftRequest'}
+      responses:
+        '201': {$ref: '#/components/responses/ShiftResponse'}
+        '409': {$ref: '#/components/responses/Conflict'}
+  /shifts/{shiftId}/close:
+    post:
+      operationId: closeShift
+      x-requirement-ids: [T2-POS-005]
+      x-permission: pos:shift:close
+      parameters:
+        - $ref: '#/components/parameters/ShiftId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/CommandId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CloseShiftRequest'}
+      responses:
+        '200': {$ref: '#/components/responses/ShiftResponse'}
+        '409': {$ref: '#/components/responses/Conflict'}
+  /cash-orders:
+    post:
+      operationId: submitCashOrder
+      x-requirement-ids: [T2-POS-002, T2-POS-003, T2-ORD-001, T2-ORD-002]
+      x-permission: pos:cash:collect
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/CommandId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CashOrderRequest'}
+      responses:
+        '201': {$ref: '#/components/responses/OrderResponse'}
+        '200':
+          description: Same idempotency key and request hash; original result returned
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/OrderResult'}
+        '409': {$ref: '#/components/responses/Conflict'}
+  /orders/{orderId}:
+    get:
+      operationId: getOrder
+      x-requirement-ids: [T2-ORD-001]
+      x-permission: order:read
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema: {$ref: '#/components/schemas/Ulid'}
+      responses:
+        '200': {$ref: '#/components/responses/OrderResponse'}
+        '404': {$ref: '#/components/responses/NotVisible'}
+components:
+  securitySchemes:
+    bearerAuth: {type: http, scheme: bearer, bearerFormat: JWT}
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema: {type: string, minLength: 16, maxLength: 128}
+    CommandId:
+      name: X-Command-Id
+      in: header
+      required: true
+      schema: {$ref: '#/components/schemas/Ulid'}
+    ShiftId:
+      name: shiftId
+      in: path
+      required: true
+      schema: {$ref: '#/components/schemas/Ulid'}
+  schemas:
+    Ulid: {type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'}
+    MoneyMinor: {type: integer, format: int64, minimum: 0, maximum: 9007199254740991}
+    OpenShiftRequest:
+      type: object
+      additionalProperties: false
+      required: [storeId, terminalId, cashierId, storeTimezone, businessDate, openingCashMinor, currency, configVersion, occurredAt]
+      properties:
+        storeId: {$ref: '#/components/schemas/Ulid'}
+        terminalId: {$ref: '#/components/schemas/Ulid'}
+        cashierId: {type: string, minLength: 1, maxLength: 64}
+        storeTimezone: {type: string, minLength: 1, maxLength: 64}
+        businessDate: {type: string, format: date}
+        openingCashMinor: {$ref: '#/components/schemas/MoneyMinor'}
+        currency: {const: CNY}
+        configVersion: {type: integer, minimum: 1}
+        occurredAt: {type: string, format: date-time}
+    CloseShiftRequest:
+      type: object
+      additionalProperties: false
+      required: [actualCashMinor, expectedVersion, occurredAt]
+      properties:
+        actualCashMinor: {$ref: '#/components/schemas/MoneyMinor'}
+        expectedVersion: {type: integer, minimum: 1}
+        approvalId: {type: string, minLength: 1, maxLength: 64}
+        approvalReason: {type: string, minLength: 1, maxLength: 256}
+        occurredAt: {type: string, format: date-time}
+    CashOrderLine:
+      type: object
+      additionalProperties: false
+      required: [lineId, lineNo, skuId, skuCode, productName, unitCode, quantity, unitPriceMinor, grossAmountMinor, payableAmountMinor, priceSource]
+      properties:
+        lineId: {$ref: '#/components/schemas/Ulid'}
+        lineNo: {type: integer, minimum: 1, maximum: 500}
+        skuId: {$ref: '#/components/schemas/Ulid'}
+        skuCode: {type: string, minLength: 1, maxLength: 64}
+        barcode: {type: string, maxLength: 64}
+        productName: {type: string, minLength: 1, maxLength: 200}
+        unitCode: {type: string, pattern: '^[A-Z0-9_-]{1,32}$'}
+        quantity: {type: string, pattern: '^(0|[1-9][0-9]{0,12})(\.[0-9]{1,6})?$'}
+        unitPriceMinor: {$ref: '#/components/schemas/MoneyMinor'}
+        grossAmountMinor: {$ref: '#/components/schemas/MoneyMinor'}
+        payableAmountMinor: {$ref: '#/components/schemas/MoneyMinor'}
+        priceSource: {enum: [TENANT_BASE, STORE_OVERRIDE]}
+    CashOrderRequest:
+      type: object
+      additionalProperties: false
+      required: [orderId, localOrderNo, storeId, terminalId, shiftId, cashierId, businessDate, storeTimezone, currency, catalogVersion, priceVersion, industryTemplateVersion, grossAmountMinor, receivableAmountMinor, tenderedAmountMinor, lines, occurredAt]
+      properties:
+        orderId: {$ref: '#/components/schemas/Ulid'}
+        localOrderNo: {type: string, minLength: 1, maxLength: 40}
+        storeId: {$ref: '#/components/schemas/Ulid'}
+        terminalId: {$ref: '#/components/schemas/Ulid'}
+        shiftId: {$ref: '#/components/schemas/Ulid'}
+        cashierId: {type: string, minLength: 1, maxLength: 64}
+        businessDate: {type: string, format: date}
+        storeTimezone: {type: string, minLength: 1, maxLength: 64}
+        currency: {const: CNY}
+        catalogVersion: {type: integer, minimum: 1}
+        priceVersion: {type: integer, minimum: 1}
+        industryTemplateVersion: {type: string, pattern: '^[A-Z0-9._-]{1,32}$'}
+        grossAmountMinor: {$ref: '#/components/schemas/MoneyMinor'}
+        receivableAmountMinor: {$ref: '#/components/schemas/MoneyMinor'}
+        tenderedAmountMinor: {$ref: '#/components/schemas/MoneyMinor'}
+        lines: {type: array, minItems: 1, maxItems: 500, items: {$ref: '#/components/schemas/CashOrderLine'}}
+        occurredAt: {type: string, format: date-time}
+    ShiftResult:
+      type: object
+      additionalProperties: false
+      required: [shiftId, status, businessDate, theoreticalCashMinor, recordVersion, traceId]
+      properties:
+        shiftId: {$ref: '#/components/schemas/Ulid'}
+        status: {enum: [OPEN, CLOSING, CLOSED]}
+        businessDate: {type: string, format: date}
+        theoreticalCashMinor: {type: integer, format: int64}
+        actualCashMinor: {type: integer, format: int64}
+        differenceMinor: {type: integer, format: int64}
+        recordVersion: {type: integer, minimum: 1}
+        traceId: {type: string}
+    OrderResult:
+      type: object
+      additionalProperties: false
+      required: [orderId, paymentId, status, paymentStatus, receivableAmountMinor, tenderedAmountMinor, changeAmountMinor, currency, snapshotHash, recordVersion, traceId]
+      properties:
+        orderId: {$ref: '#/components/schemas/Ulid'}
+        paymentId: {$ref: '#/components/schemas/Ulid'}
+        status: {const: COMPLETED}
+        paymentStatus: {const: PAID}
+        receivableAmountMinor: {$ref: '#/components/schemas/MoneyMinor'}
+        tenderedAmountMinor: {$ref: '#/components/schemas/MoneyMinor'}
+        changeAmountMinor: {$ref: '#/components/schemas/MoneyMinor'}
+        currency: {const: CNY}
+        snapshotHash: {type: string, pattern: '^sha256:[0-9a-f]{64}$'}
+        recordVersion: {type: integer, minimum: 1}
+        traceId: {type: string}
+    Error:
+      type: object
+      additionalProperties: false
+      required: [code, message, traceId, commandId]
+      properties:
+        code: {type: string}
+        message: {type: string}
+        traceId: {type: string}
+        commandId: {$ref: '#/components/schemas/Ulid'}
+  responses:
+    ShiftResponse:
+      description: Shift command result
+      content: {application/json: {schema: {$ref: '#/components/schemas/ShiftResult'}}}
+    OrderResponse:
+      description: Cash order command result
+      content: {application/json: {schema: {$ref: '#/components/schemas/OrderResult'}}}
+    Conflict:
+      description: State, version, amount, approval or idempotency conflict
+      content: {application/json: {schema: {$ref: '#/components/schemas/Error'}}}
+    NotVisible:
+      description: Resource absent or outside the trusted tenant/data scope
+      content: {application/json: {schema: {$ref: '#/components/schemas/Error'}}}
+

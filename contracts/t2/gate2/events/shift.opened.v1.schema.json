@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.jingshanghui.example/t2/gate2/events/shift.opened.v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["shiftId", "storeId", "terminalId", "cashierId", "businessDate", "storeTimezone", "currency", "openingCashMinor"],
+  "properties": {
+    "shiftId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "storeId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "terminalId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "cashierId": {"type": "string", "minLength": 1, "maxLength": 64},
+    "businessDate": {"type": "string", "format": "date"},
+    "storeTimezone": {"type": "string", "minLength": 1, "maxLength": 64},
+    "currency": {"const": "CNY"},
+    "openingCashMinor": {"type": "integer", "minimum": 0}
+  }
+}
+

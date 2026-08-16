@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "1.0",
+  "phase": "T2-GATE2-S2",
+  "baselineTag": "t2-prep-baseline-2026-08-16",
+  "branchStart": "6a94bc6af2938fba6b9a1af123eb94b6312af9b2",
+  "decision": "CONDITIONAL_GO",
+  "admittedRequirements": [
+    "T2-POS-001",
+    "T2-POS-002",
+    "T2-POS-003",
+    "T2-POS-004",
+    "T2-POS-005",
+    "T2-ORD-001",
+    "T2-ORD-002",
+    "T2-OFF-001"
+  ],
+  "designOnlyRequirements": ["T2-SYN-001"],
+  "requiredAdmissionDimensions": [
+    "dataOwnership",
+    "stateMachine",
+    "invariants",
+    "permissions",
+    "audit",
+    "apiAndEvents",
+    "sqliteAndFlyway",
+    "capacity",
+    "rollback",
+    "tests"
+  ],
+  "frozenDecisions": {
+    "DEC-03": "store timezone and business date are frozen by the open shift",
+    "DEC-04": "no return or refund implementation in Sprint S2",
+    "DEC-05": "versioned threshold plus independent supervisor approval and audit",
+    "DEC-11": "new local_* SQLite model; T1 syn_* tables are forbidden"
+  },
+  "forbiddenRuntimeDomains": [
+    "third-party-payment",
+    "refund",
+    "inventory",
+    "procurement",
+    "cost",
+    "promotion",
+    "remote-sync"
+  ],
+  "externalEvidence": {
+    "sandbox": 0,
+    "realDevice": 0,
+    "pilot": 0
+  }
+}
+
