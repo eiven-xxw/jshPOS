@@ -53,5 +53,6 @@
 | CR-DEV-001 | 2026-08-16 | APPROVED | 项目发起人提出并批准后端持久化、成熟组件复用和中文注释三项规范；明确简单 SQL 使用 MyBatis-Plus、复杂 SQL 使用 Mapper XML，允许按需复用 Hutool/成熟组件，并要求核心代码与实体具备有效中文注释 | AGENTS.md、技术架构与开发规范 10.2、backend-development-standards.md | 属于工程治理增强，不改变 S3 需求状态，不准入 Gate 3 运行时或支付网络调用 |
 | CR-T2G3A-001 | 2026-08-16 | APPROVED | 项目发起人确认 S3 周门禁报告、接受 T2-SYN-001 CONDITIONAL PASS 并授权更新为 ACCEPTED；按 CONDITIONAL GO 启动 Gate 3A 四项 Provider 无关支付核心需求 | T2-SYN-001、T2-PAY-001、T2-PAY-003、T2-REF-001、T2-REC-001、ADR-022 | T2-PAY-002 保持 BLOCKED；Provider 网络、SANDBOX、真实资金均为0 |
 | CR-T2G3A-002 | 2026-08-16 | IN_PROGRESS | Gate 3A 四项完成数据主权、状态机、不变量、权限、审计、API/事件、Flyway、容量、回退、Fake 向量和 CI 设计准入，由 DRAFT 经 READY 进入 IN_PROGRESS | T2-PAY-001、T2-PAY-003、T2-REF-001、T2-REC-001、ADR-022 | 只准入 jshpos-payment Provider 无关运行时；禁止 Provider HTTP/SDK、外部回调端点和账单下载器 |
+| CR-DEV-002 | 2026-08-16 | APPROVED | 采纳内部方法参数对象规范：自研内部业务方法 5 个及以上业务参数默认使用不可变、内聚的具名参数对象；同类型易错参数、多个布尔开关或共同变化参数可提前触发，并明确分层命名、安全边界和合理例外 | AGENTS.md、技术架构与开发规范 10.2.4、backend-development-standards.md、CR-DEV-002 | 项目发起人提出并授权分析后采纳；仅增强工程治理，不改变 Gate 3A 范围、需求状态或支付网络边界 |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。
