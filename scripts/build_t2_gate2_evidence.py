@@ -52,6 +52,11 @@ def flutter_tests(root: Path) -> dict[str, int | bool]:
             event = json.loads(line)
         except json.JSONDecodeError:
             continue
+        # Flutter may interleave VM-service extension records as top-level
+        # JSON arrays (for example test.startedProcess). They are valid
+        # machine output but are not package:test protocol events.
+        if not isinstance(event, dict):
+            continue
         if event.get("type") == "testDone" and not event.get("hidden") and not event.get("skipped"):
             if event.get("result") != "success":
                 fail(f"Flutter test failed under {root}")
