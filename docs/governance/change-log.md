@@ -16,5 +16,6 @@
 | CR-T1P-003 | 2026-08-16 | APPROVED | 不升级 GitHub 套餐并沿用补偿控制；受限许可证事项不阻断 T1-Prep/PoC，但保留为商业发布前阻断项 | T1-CI-001、T1-LIC-001、ADR-015—017 | 项目发起人 2026-08-16 指令 |
 | CR-T1P-004 | 2026-08-16 | APPROVED | 支付候选池由不少于五家扩充为十家支付/聚合服务候选，并单列微信、支付宝、银联/云闪付三类首发支付能力；T1 从十家中评选五家做 Fake 契约，仍只准入一家真实沙箱，不扩大四周 PoC | T1-PAY-001、T1-PAY-002、ADR-017 | 项目发起人“支付候选多增加几个”指令 |
 | CR-T1-001 | 2026-08-16 | APPROVED | 确认《T1 启动评审报告》并按 `CONDITIONAL GO` 启动四周 T1 风险 PoC；Week 1 只允许 READY 且通过准入的 STATIC/FAKE 契约、故障夹具与 CI，Blocked 实证、正式业务和 T2 继续禁止 | T1-GOV-001、T1-SCP-001、T1-HWD-001、T1-OFF-001、T1-SYN-001、T1-TEN-001、T1-PAY-001、T1-DPK-001、T1-UPG-001、T1-SEC-001、T1-CI-001 | 项目发起人 2026-08-16 明确确认 |
+| CR-T1-002 | 2026-08-16 | IMPLEMENTED_AWAITING_CONFIRMATION | 将已通过准入的 9 个 Week 1 STATIC/FAKE 需求从 READY 转为 IN_PROGRESS，建立 8 份 PoC 契约、10 家支付候选/5 家 Fake、7 组故障夹具和 6-Job CI；仅回填 Week 1 分级证据，不解除任何实机、外设、支付沙箱或设计伙伴阻断 | T1-HWD-001、T1-OFF-001、T1-SYN-001、T1-TEN-001、T1-PAY-001、T1-DPK-001、T1-UPG-001、T1-SEC-001、T1-CI-001 | 待项目发起人确认 Week 1 周门禁报告 |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。
