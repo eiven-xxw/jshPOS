@@ -48,5 +48,6 @@
 | CR-T2G2-007 | 2026-08-16 | ACCEPTED | 项目发起人确认《T2 Gate 2 / Sprint S2 周门禁报告》并接受 Gate 2 CONDITIONAL PASS，授权八项 Gate 2 需求由 VERIFIED 转为 ACCEPTED | T2-POS-001..005、T2-ORD-001..002、T2-OFF-001 | 项目发起人 2026-08-16 明确确认；REAL_DEVICE、SANDBOX、PILOT 阻断不变 |
 | CR-T2S3-001 | 2026-08-16 | APPROVED | 以封存 tag 为唯一不可变基线、以 `968ae7b` 为分支起点，按 CONDITIONAL GO 启动 Sprint S3；仅准入 T2-SYN-001 正式远程同步，Gate 3 四项只做设计，T2-PAY-002 继续 BLOCKED | T2-SYN-001、T2-PAY-001、T2-PAY-002、T2-PAY-003、T2-REF-001、T2-REC-001、ADR-021 | 项目发起人 2026-08-16 明确确认；支付 Provider 网络调用保持 0 |
 | CR-T2S3-002 | 2026-08-16 | IN_PROGRESS | T2-SYN-001 的数据主权、事件状态、ACK、游标、冲突、权限、审计、API/Schema、迁移、容量、回退和测试准入经 `check_t2_sprint3.py --stage design` 校验通过，由 DRAFT 经 READY 进入 IN_PROGRESS | T2-SYN-001、ADR-021 | Gate 3 四项仍 DRAFT；T2-PAY-002 BLOCKED；支付 Provider 网络调用和外部证据均为 0 |
+| CR-T2S3-003 | 2026-08-16 | VERIFIED_AWAITING_CLOSURE_CI | T2-SYN-001 的服务端 Inbox/事实/ACK/游标、POS Outbox/Inbox/SQLite V2、真实 loopback HTTP、重试/死信/恢复和人工修复实现完成；技术候选 `9a00beb` 在 GitHub Actions `31946989640` 十个 Job 全绿，127 文件证据索引通过，需求由 IN_PROGRESS 更新为 VERIFIED | T2-SYN-001、ADR-021 | 不代表 ACCEPTED；迁移已封印并要求 closure 全门禁复跑；Gate 3 仍 DRAFT/BLOCKED，外部证据为 0 |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。

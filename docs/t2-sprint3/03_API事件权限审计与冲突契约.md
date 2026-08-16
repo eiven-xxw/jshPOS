@@ -35,7 +35,7 @@
 | 同 event ID + 异 hash | `DEVICE_BLOCKED` | P0 审计并停止新同步/交易 |
 | device sequence 缺口 | `ACCEPTED_PENDING` | 保存事件并标记 GAP，不伪造补号 |
 | 聚合旧版本且效果相同 | `DUPLICATE` | 不重复业务效果 |
-| 聚合未来版本 | `ACCEPTED_PENDING` | `PENDING_GAP` 等待前序/快照 |
+| 聚合未来版本 | `ACCEPTED`（仅 Sync 不可变事实） | Sync 不推导领域当前版本；后续由领域 Owner 应用端口判定 GAP，S3 不越权投影 |
 | 跨租户/门店/终端 | `RESOURCE_NOT_VISIBLE` | 统一不可见并安全审计 |
 | Schema N-1 | 按兼容规则处理 | 忽略未知可选字段 |
 | Schema 不支持必理解字段 | `REJECTED_FINAL` | 要求升级，不推进游标 |

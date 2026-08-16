@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "1.0",
+  "phase": "T2-GATE23-S3",
+  "sealedAt": "2026-08-16",
+  "policy": "published Sprint S3 Flyway migrations and the formal SQLite V2 schema are append-only after verification",
+  "files": [
+    {
+      "path": "server/ruoyi-modules/jshpos-sync/src/main/resources/db/migration/V202608160007__sprint3_pos_sync.sql",
+      "sha256": "fd697275b5ce1696b75ba527d58aec8eed96fc13f204f5703a1f9ff1cf8f28f8"
+    },
+    {
+      "path": "server/ruoyi-modules/jshpos-sync/src/main/resources/db/migration/V202608160008__sprint3_sync_permissions.sql",
+      "sha256": "626563754a6082bb52ba4ee963f3df89a141cd32e7103771b6ccc3056665e4e3"
+    },
+    {
+      "path": "pos-flutter/lib/infrastructure/local_database/s3_sync_schema.dart",
+      "sha256": "22fe5604a1f0b421c18064d4a0081b7853f8fccd171c9623c6619d1852f2d079"
+    }
+  ]
+}
