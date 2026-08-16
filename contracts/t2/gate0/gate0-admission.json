@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "1.0",
+  "phase": "T2-GATE0-S0",
+  "baselineTag": "t2-prep-baseline-2026-08-16",
+  "branchStart": "7fe4391069d8ee6c641d1b3e509d9f90050be5ef",
+  "requirements": {
+    "T2-IAM-001": {"source": true, "scope": true, "nonGoals": true, "owner": true, "invariants": true, "permissions": true, "audit": true, "api": true, "migration": true, "capacity": true, "rollback": true, "tests": true},
+    "T2-ORG-001": {"source": true, "scope": true, "nonGoals": true, "owner": true, "invariants": true, "permissions": true, "audit": true, "api": true, "migration": true, "capacity": true, "rollback": true, "tests": true},
+    "T2-RBAC-001": {"source": true, "scope": true, "nonGoals": true, "owner": true, "invariants": true, "permissions": true, "audit": true, "api": true, "migration": true, "capacity": true, "rollback": true, "tests": true},
+    "T2-CFG-001": {"source": true, "scope": true, "nonGoals": true, "owner": true, "invariants": true, "permissions": true, "audit": true, "api": true, "migration": true, "capacity": true, "rollback": true, "tests": true},
+    "T2-AUD-001": {"source": true, "scope": true, "nonGoals": true, "owner": true, "invariants": true, "permissions": true, "audit": true, "api": true, "migration": true, "capacity": true, "rollback": true, "tests": true},
+    "T2-SEC-001": {"source": true, "scope": true, "nonGoals": true, "owner": true, "invariants": true, "permissions": true, "audit": true, "api": true, "migration": true, "capacity": true, "rollback": true, "tests": true},
+    "T2-OBS-001": {"source": true, "scope": true, "nonGoals": true, "owner": true, "invariants": true, "permissions": true, "audit": true, "api": true, "migration": true, "capacity": true, "rollback": true, "tests": true},
+    "T2-MIG-001": {"source": true, "scope": true, "nonGoals": true, "owner": true, "invariants": true, "permissions": true, "audit": true, "api": true, "migration": true, "capacity": true, "rollback": true, "tests": true}
+  },
+  "gate1ContractOnly": ["T2-PRD-001", "T2-PRD-002", "T2-PRD-003", "T2-PRD-004", "T2-PRC-001", "T2-PRC-002", "T2-DPK-001"],
+  "forbiddenRuntimeDomains": ["order", "payment", "refund", "inventory", "procurement", "cost", "promotion", "product", "pricing"]
+}

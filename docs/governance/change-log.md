@@ -29,5 +29,6 @@
 | CR-T2P-003 | 2026-08-16 | IMPLEMENTED_AWAITING_CONFIRMATION | T2-Prep Ubuntu治理、Windows边界、安全和证据四个Job全部通过；退出包摘要与GitHub一致且包内索引复核无差异，正式业务目录依赖和tag变化均为0 | T2P-*、T2-* | 等待项目发起人确认启动评审和候选tag |
 | CR-T2P-004 | 2026-08-16 | APPROVED | 接受《T2正式开发启动评审报告》并授权创建 annotated tag `t2-prep-baseline-2026-08-16` 指向 `557ba270479935d6b44968cf70b47033f7d3d656`；仍禁止Gate 0/1和其他正式业务编码 | T2P-*、ADR-019 | 项目发起人2026-08-16明确确认 |
 | CR-T2P-005 | 2026-08-16 | SEALED | annotated tag已创建推送；本地远端peeled commit一致且GitHub API可见tagger与完整message；T1状态及T2业务DRAFT/BLOCKED/DEFERRED保持不变 | T2P-* | Tag封存证据待最终治理CI复核 |
+| CR-T2G0-001 | 2026-08-16 | APPROVED | 以封存 tag 为唯一不可变技术基线、以 `7fe4391` 为分支起点，按 CONDITIONAL GO 启动 Gate 0 / Sprint S0 八项平台基座需求；Gate 1 仅准入契约和测试准备，其他正式业务与外部实证继续禁止 | T2-IAM-001、T2-ORG-001、T2-RBAC-001、T2-CFG-001、T2-AUD-001、T2-SEC-001、T2-OBS-001、T2-MIG-001、ADR-019 | 项目发起人 2026-08-16 明确确认 |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。

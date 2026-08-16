@@ -2,7 +2,7 @@
 
 > 阶段：T2 核心 Alpha 正式开发启动准备  
 > 基线来源：T1 Week 4 最终封存提交 `962c4ed5e631bccd5c6fff737ed8e97fb665fd03`  
-> 当前结论：仅准入治理与设计准备，`T2 CODING NO-GO / AWAITING SP CONFIRMATION`
+> 当前结论：T2-Prep 已封存；Gate 0 / Sprint S0 已获限定 `CONDITIONAL GO`，Gate 1 仍为契约准备
 
 | 编号 | 文档 | 目的 |
 |---|---|---|
@@ -28,4 +28,4 @@
 - T2-Prep 不包含正式业务代码、Flyway 业务迁移、业务 API、正式 SQLite 表或生产连接器；
 - T1 Fake 只能作为设计输入，不能替代正式实现测试、支付沙箱、实机或商业验收；
 - 正式业务需求在本阶段保持 `DRAFT/BLOCKED/DEFERRED`；
-- `t2-prep-baseline-2026-08-16` 已按项目发起人授权封存；未经下一次 Gate 0/1 确认，仍不启动 T2 编码。
+- `t2-prep-baseline-2026-08-16` 已按项目发起人授权封存且不得移动；Gate 0 仅按 `docs/t2-gate0/` 的八项准入执行，Gate 1 正式编码仍需下一次确认。

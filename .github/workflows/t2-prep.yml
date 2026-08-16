@@ -11,7 +11,7 @@ on:
       - "scripts/check_t2_prep.py"
       - "scripts/build_t2_prep_evidence.py"
   push:
-    branches: ["t2/**"]
+    branches: ["t2/prep-*"]
     paths:
       - "AGENTS.md"
       - ".github/workflows/t2-prep.yml"
