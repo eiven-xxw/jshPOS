@@ -31,5 +31,6 @@
 | CR-T2P-005 | 2026-08-16 | SEALED | annotated tag已创建推送；本地远端peeled commit一致且GitHub API可见tagger与完整message；T1状态及T2业务DRAFT/BLOCKED/DEFERRED保持不变 | T2P-* | Tag封存证据待最终治理CI复核 |
 | CR-T2G0-001 | 2026-08-16 | APPROVED | 以封存 tag 为唯一不可变技术基线、以 `7fe4391` 为分支起点，按 CONDITIONAL GO 启动 Gate 0 / Sprint S0 八项平台基座需求；Gate 1 仅准入契约和测试准备，其他正式业务与外部实证继续禁止 | T2-IAM-001、T2-ORG-001、T2-RBAC-001、T2-CFG-001、T2-AUD-001、T2-SEC-001、T2-OBS-001、T2-MIG-001、ADR-019 | 项目发起人 2026-08-16 明确确认 |
 | CR-T2G0-002 | 2026-08-16 | IN_PROGRESS | 八项 Gate 0 的数据主权、不变量、权限、审计、API/事件、Flyway、容量、回退和测试清单经机器校验 8/8 通过，从 READY 进入限定实现；Gate 1 七项保持 DRAFT | T2-IAM-001、T2-ORG-001、T2-RBAC-001、T2-CFG-001、T2-AUD-001、T2-SEC-001、T2-OBS-001、T2-MIG-001 | 按项目发起人逐项准入规则执行 |
+| CR-T2G0-003 | 2026-08-16 | VERIFIED_AWAITING_CONFIRMATION | Gate 0 八项平台基座实现及 Gate 1 DRAFT 契约准备完成；GitHub Actions 31932706063 七个 Job 全绿，MySQL 8.4 实迁移、租户七面攻击、覆盖率、安全、SBOM、许可证和证据索引通过；未进入其他正式业务 | T2-IAM-001、T2-ORG-001、T2-RBAC-001、T2-CFG-001、T2-AUD-001、T2-SEC-001、T2-OBS-001、T2-MIG-001 | 等待项目发起人确认《T2 Gate 0 / Sprint S0 周门禁报告》；不得自行进入 Gate 1 编码 |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。
