@@ -6,13 +6,13 @@
 > 基线 peeled commit：`557ba270479935d6b44968cf70b47033f7d3d656`
 > Gate 0 封板起点：`cf2ef29bd74c5d0f8fa5845a689305ebb56c7ef2`
 > 实现提交：`af627f7`
-> 最终候选提交：`PENDING`
-> GitHub Actions：`PENDING`
-> 当前结论：`LOCAL VERIFIED / REMOTE CI PENDING`
+> 最终实现候选：`2b00aba29893f5dfbf54fafc4d5f6edb0c4a6705`
+> GitHub Actions：[T2 Gate 1 Sprint S1 Quality Gates #31936276008](https://github.com/eiven-xxw/jshPOS/actions/runs/31936276008)
+> 当前结论：`GATE1 CONDITIONAL PASS / AWAITING CONFIRMATION`
 
 ## 1. 管理结论
 
-Gate 1 获准的七项商品、价格和正式服务端数据包切片已完成实现及本地验证，RTM 从 `IN_PROGRESS` 更新为 `VERIFIED`，等待 GitHub 干净执行器完成 MySQL 8.4、供应链、安全和证据聚合后再形成最终 `CONDITIONAL PASS` 建议。
+Gate 1 获准的七项商品、价格和正式服务端数据包切片已完成实现及分级验证，RTM 从 `IN_PROGRESS` 更新为 `VERIFIED`。GitHub 干净执行器的七个 Job 全部通过；MySQL 8.4.6 实际执行四个 Flyway 版本、重复 migrate/validate 和租户数据库约束，安全 Job 以原阈值通过 HIGH/CRITICAL 漏洞、Secret、IaC 与许可证门禁，证据聚合器复核 90 个文件并生成 SHA-256 索引。
 
 本轮建立独立 `jshpos-catalog` 模块，未把领域逻辑放入 Controller、通用工具类或 RuoYi 系统模块；所有持久化入口显式接收可信上下文产生的 tenant_id，Mapper AOP 在可信主体缺失时 fail-closed。商品导入使用 staging 与活动批次指针；价格采用 CNY 最小货币单位整数、版本化发布与门店覆盖；数据包采用 canonical SHA-256、Ed25519 外部签名端口和租户对象命名空间。
 
@@ -53,9 +53,15 @@ Gate 1 获准的七项商品、价格和正式服务端数据包切片已完成�
 | 租户攻击 | PASS | 2 个虚构租户；9 个攻击面；6 个现存面通过且 3 个未准入面 fail-closed |
 | 合成容量 | PASS | seed 20260816；10k=11 ms；100k=103 ms |
 | 契约/RTM/范围 | PASS | 30 JSON Schema 及 T0/T2 OpenAPI；106 条 RTM；禁入运行时代码 0 |
-| MySQL 8.4 / 安全 / SBOM / 许可证 / 证据包 | PENDING | 等待 GitHub 干净执行器，不创建绿色占位 |
+| MySQL 8.4 / 安全 / SBOM / 许可证 / 证据包 | PASS | GitHub 七个 Job 全绿；90 文件证据索引 |
 
 容量时间只描述本次 Windows 开发机上的 canonical 预检算法，不包含 HTTP 解析、100k 行数据库落库、真实数据分布或 SLA，不能用作采购和商业承诺。
+
+远端证据聚合最终输出：
+
+```text
+T2-GATE1 EVIDENCE OK: files=90 serverTests=78 mysqlTests=1 tenantTests=9 webTests=8 line=0.9700 branch=0.9177 capacity=10k+100k
+```
 
 ## 5. 安全、隔离与回退
 
@@ -66,16 +72,45 @@ Gate 1 获准的七项商品、价格和正式服务端数据包切片已完成�
 - 数据包版本严格连续并引用数据库当前前版；损坏、错摘要、错签名、错身份和未知 Schema 拒收；
 - KMS/HSM 和对象存储正式端口缺失时返回 503，仓库不保存生产私钥。
 
-## 6. 风险与阻断
+## 6. GitHub Actions 与制品
 
-- `PENDING`：GitHub MySQL 8.4.6 首次迁移、重复 migrate/validate、租户复合外键和不可变触发器尚待本次远端 CI；
+运行时间：2026-08-16 16:22:03—16:30:30（Asia/Shanghai），`run_attempt=1`，总结果 `success`。
+
+| Job | Job ID | 结果 | 核验内容 |
+|---|---:|---|---|
+| [governance](https://github.com/eiven-xxw/jshPOS/actions/runs/31936276008/job/95138626067) | 95138626067 | PASS | 基线祖先、RTM、准入、契约、迁移摘要与禁入边界 |
+| [server](https://github.com/eiven-xxw/jshPOS/actions/runs/31936276008/job/95138626070) | 95138626070 | PASS | 34 模块 Admin Reactor、78 测试、覆盖率、JAR 与 CycloneDX SBOM |
+| [mysql-migration](https://github.com/eiven-xxw/jshPOS/actions/runs/31936276008/job/95138626102) | 95138626102 | PASS | 固定 MySQL 8.4.6 镜像、四版 Flyway、repeat=0、validate 与数据库不变量 |
+| [tenant-security-capacity](https://github.com/eiven-xxw/jshPOS/actions/runs/31936276008/job/95138626066) | 95138626066 | PASS | 双租户九面攻击、可信上下文、10k/100k 合成预检 |
+| [admin-web](https://github.com/eiven-xxw/jshPOS/actions/runs/31936276008/job/95138626035) | 95138626035 | PASS | frozen lock、audit、build、lint、typecheck、8 项 JUnit 与许可证 |
+| [security-sbom-license](https://github.com/eiven-xxw/jshPOS/actions/runs/31936276008/job/95139361279) | 95139361279 | PASS | Trivy 0.72.0、HIGH/CRITICAL 漏洞、Secret、IaC、14 个精确复核组件 |
+| [evidence](https://github.com/eiven-xxw/jshPOS/actions/runs/31936276008/job/95139421936) | 95139421936 | PASS | 测试/覆盖率/容量/RTM 分级复核和 90 文件 SHA-256 索引 |
+
+Workflow 不含 `continue-on-error`，没有自动 retry、阈值降低、跳过失败测试或绿色占位。
+
+| Artifact | ID | 大小（B） | GitHub archive SHA-256 | 到期时间（UTC） |
+|---|---:|---:|---|---|
+| `t2-gate1-sprint-s1-evidence-bundle` | 9260832091 | 305985377 | `8b6a198fa7f4b1574096a5d8e89735d08637f67613ce130ea709d95e7e206159` | 2026-09-15 08:30:16 |
+| `t2-gate1-security` | 9260826070 | 153026066 | `8b1298df16dc2f472d3decd583bb3f2c55da44eda400aec8d3b98ba6ad46aef4` | 2026-09-15 08:29:50 |
+| `t2-gate1-server` | 9260819371 | 152840456 | `6cda947828eb11cba7b9f2b87e5fea95aa791b715cb39f5303046604d09d7428` | 2026-09-15 08:29:17 |
+| `t2-gate1-web` | 9260750974 | 79793 | `325a15aad90f104e5e4b454f308e4681e213b2b519f0fc577bd637003d2d6220` | 2026-09-15 08:23:27 |
+| `t2-gate1-mysql` | 9260751613 | 5644 | `47f02fcf57bdfb03219ac3042a96a94381f852dee5c03eeefa88fa3009c6c26b` | 2026-09-15 08:23:31 |
+| `t2-gate1-tenant` | 9260746158 | 26316 | `832c0d74d549e81da21a8ca7a9126604686d966de9fcebfc6a8a97e53107c4c0` | 2026-09-15 08:23:02 |
+| `t2-gate1-governance` | 9260739344 | 1427 | `d4d5de39dcac09390a25873f8d7325e40f4e30efe7b6b6484dcb92eea1b8b0fe` | 2026-09-15 08:22:27 |
+
+## 7. 失败记录与修复
+
+首轮候选运行 [#31936005932](https://github.com/eiven-xxw/jshPOS/actions/runs/31936005932) 的 MySQL Job 在 `V202608160003` 创建导入明细表时失败。根因是 `row_number` 在 MySQL 8.4 中与 `ROW_NUMBER` 保留关键字冲突。修复提交 `2b00aba` 将两张导入表的列统一改为 `source_row_no`，同步 Mapper 和迁移 SHA-256 账本；没有跳过迁移、放宽 SQL 模式或降低门禁。首轮失败不计为通过，第二轮在新提交和新 MySQL 容器上完整执行且一次通过。
+
+## 8. 风险与阻断
+
 - P1：100k 当前使用请求内列表和逐行 staging，尚未实现流式上传/分批落库；进入真实试点前必须完成性能加固与数据库基准；
 - P1：生产 KMS/HSM、对象存储适配和密钥轮换方案尚未配置，当前只能验证端口契约和临时合成签名；
 - P2：Web 生产构建沿用既有大 chunk 警告；不影响本 Gate 正确性，但需在试点性能门禁前拆包；
 - `T2-HWD-001`、`T2-PAY-002`、`T2-PAR-001` 继续 `BLOCKED`；`T2-JSH-001`、`T2-LIC-001` 继续 `DEFERRED`。
 
-## 7. 不可宣称与退出条件
+## 9. 不可宣称与退出建议
 
 继续禁止订单、支付、退款、库存、采购、成本、促销及后续 Gate 编码；禁止真实支付、生产密钥和未脱敏数据；禁止用 Fake 解除 SANDBOX、REAL_DEVICE 或 PILOT 阻断。
 
-只有 GitHub 七个 Job 全部通过、证据聚合器复核测试/覆盖率/安全/许可证/摘要索引、报告回填最终 commit/run/artifact 后，才可建议 `GATE1 CONDITIONAL PASS / AWAITING CONFIRMATION`。项目发起人确认前七项需求不得更新为 `ACCEPTED`，也不得进入下一 Gate。
+GitHub 七个 Job 与证据聚合均已达到本 Gate 内部门槛，建议项目发起人接受 `GATE1 CONDITIONAL PASS`。项目发起人确认前七项需求不得更新为 `ACCEPTED`，不得进入下一 Gate；确认时仍应保留本报告列出的性能加固、生产 KMS/对象存储和所有外部阻断。
