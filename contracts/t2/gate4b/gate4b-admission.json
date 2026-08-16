@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "1.0",
+  "phase": "T2-GATE4B-SPRINT-S6",
+  "baselineTag": "t2-prep-baseline-2026-08-16",
+  "branchStart": "9557112a4eb573ec4a54ef30be477f1ab8f09d31",
+  "admittedRequirements": ["T2-INV-003", "T2-PUR-001"],
+  "designOnlyRequirements": ["T2-CST-001", "T2-TRF-001"],
+  "blockedRequirements": ["T2-PAY-002"],
+  "runtimeBoundary": {
+    "providerNetworkCallsAllowed": 0,
+    "stocktakeRuntimeAllowed": true,
+    "procurementRuntimeAllowed": true,
+    "costRuntimeAllowed": false,
+    "transferRuntimeAllowed": false,
+    "promotionRuntimeAllowed": false
+  },
+  "evidence": {"sandbox": 0, "realDevice": 0, "pilot": 0}
+}

@@ -1,6 +1,6 @@
 package com.jingshanghui.pos.inventory.domain;
 
-/** Gate 4A 库存移动、负库存策略和命令状态的封闭枚举。 */
+/** 库存移动、负库存策略和命令状态的封闭枚举。 */
 public final class InventoryStates {
 
     private InventoryStates() {
@@ -10,7 +10,15 @@ public final class InventoryStates {
         /** 已完成销售的可售库存出库。 */
         SALE_OUT,
         /** 已成功原单退款对应的可售库存退货入库。 */
-        SALE_RETURN_IN
+        SALE_RETURN_IN,
+        /** 盘点确认的盘盈入库。 */
+        STOCKTAKE_GAIN,
+        /** 盘点确认的盘亏出库。 */
+        STOCKTAKE_LOSS,
+        /** 已确认采购收货的入库。 */
+        PURCHASE_RECEIPT_IN,
+        /** 已批准原收货采购退货的出库。 */
+        PURCHASE_RETURN_OUT
     }
 
     public enum NegativeStockMode {

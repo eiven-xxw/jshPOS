@@ -7,6 +7,10 @@ import java.math.BigDecimal;
 
 import static com.jingshanghui.pos.inventory.domain.InventoryStates.MovementType.SALE_OUT;
 import static com.jingshanghui.pos.inventory.domain.InventoryStates.MovementType.SALE_RETURN_IN;
+import static com.jingshanghui.pos.inventory.domain.InventoryStates.MovementType.STOCKTAKE_GAIN;
+import static com.jingshanghui.pos.inventory.domain.InventoryStates.MovementType.STOCKTAKE_LOSS;
+import static com.jingshanghui.pos.inventory.domain.InventoryStates.MovementType.PURCHASE_RECEIPT_IN;
+import static com.jingshanghui.pos.inventory.domain.InventoryStates.MovementType.PURCHASE_RETURN_OUT;
 import static com.jingshanghui.pos.inventory.domain.InventoryStates.NegativeStockMode.ALLOW_AND_ALERT;
 import static com.jingshanghui.pos.inventory.domain.InventoryStates.NegativeStockMode.ALLOW_WITH_PERMISSION;
 import static com.jingshanghui.pos.inventory.domain.InventoryStates.NegativeStockMode.DENY;
@@ -24,6 +28,14 @@ class InventoryRulesTest {
             .isEqualByComparingTo("-2.500000");
         assertThat(InventoryRules.signedDelta(SALE_RETURN_IN, new BigDecimal("2.5")))
             .isEqualByComparingTo("2.500000");
+        assertThat(InventoryRules.signedDelta(STOCKTAKE_GAIN, new BigDecimal("2.5")))
+            .isEqualByComparingTo("2.500000");
+        assertThat(InventoryRules.signedDelta(STOCKTAKE_LOSS, new BigDecimal("2.5")))
+            .isEqualByComparingTo("-2.500000");
+        assertThat(InventoryRules.signedDelta(PURCHASE_RECEIPT_IN, new BigDecimal("2.5")))
+            .isEqualByComparingTo("2.500000");
+        assertThat(InventoryRules.signedDelta(PURCHASE_RETURN_OUT, new BigDecimal("2.5")))
+            .isEqualByComparingTo("-2.500000");
     }
 
     @Test
@@ -75,6 +87,20 @@ class InventoryRulesTest {
         assertThatThrownBy(() -> InventoryRules.requireUlid("bad", "id"))
             .isInstanceOf(ServiceException.class);
         assertThatThrownBy(() -> InventoryRules.requireUlid(null, "id"))
+            .isInstanceOf(ServiceException.class);
+    }
+
+    @Test
+    void permitsOnlyOwnerSourceMovementPairs() {
+        InventoryRules.requireOwnedMovement("STOCKTAKE", STOCKTAKE_GAIN);
+        InventoryRules.requireOwnedMovement("STOCKTAKE", STOCKTAKE_LOSS);
+        InventoryRules.requireOwnedMovement("PURCHASE_RECEIPT", PURCHASE_RECEIPT_IN);
+        InventoryRules.requireOwnedMovement("PURCHASE_RETURN", PURCHASE_RETURN_OUT);
+        assertThatThrownBy(() -> InventoryRules.requireOwnedMovement("STOCKTAKE", SALE_OUT))
+            .isInstanceOf(ServiceException.class);
+        assertThatThrownBy(() -> InventoryRules.requireOwnedMovement("PURCHASE_RECEIPT", PURCHASE_RETURN_OUT))
+            .isInstanceOf(ServiceException.class);
+        assertThatThrownBy(() -> InventoryRules.requireOwnedMovement("UNKNOWN", STOCKTAKE_GAIN))
             .isInstanceOf(ServiceException.class);
     }
 }

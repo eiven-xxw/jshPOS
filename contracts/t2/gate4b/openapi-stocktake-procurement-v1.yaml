@@ -1,0 +1,107 @@
+openapi: 3.1.0
+info:
+  title: 鲸熵汇 Gate 4B 盘点与采购 API
+  version: 1.0.0
+servers: []
+paths:
+  /api/v1/inventory/stocktakes:
+    post:
+      operationId: createStocktake
+      x-requirement-id: T2-INV-003
+      responses:
+        "200": {description: 已创建快照并进入计数}
+  /api/v1/inventory/stocktakes/{stocktakeId}/lines/{lineId}/counts:
+    post:
+      operationId: appendStocktakeCount
+      x-requirement-id: T2-INV-003
+      responses:
+        "200": {description: 不可变计数修订已保存}
+  /api/v1/inventory/stocktakes/{stocktakeId}/submit:
+    post:
+      operationId: submitStocktake
+      x-requirement-id: T2-INV-003
+      responses:
+        "200": {description: 已冻结截止序号并计算差异}
+  /api/v1/inventory/stocktakes/{stocktakeId}/review:
+    post:
+      operationId: reviewStocktake
+      x-requirement-id: T2-INV-003
+      responses:
+        "200": {description: 已复核}
+  /api/v1/inventory/stocktakes/{stocktakeId}/approve:
+    post:
+      operationId: approveAndPostStocktake
+      x-requirement-id: T2-INV-003
+      responses:
+        "200": {description: 已通过库存 Owner 入账}
+  /api/v1/procurement/suppliers:
+    post:
+      operationId: createSupplier
+      x-requirement-id: T2-PUR-001
+      responses:
+        "200": {description: 供应商已创建}
+  /api/v1/procurement/orders:
+    post:
+      operationId: createPurchaseOrder
+      x-requirement-id: T2-PUR-001
+      responses:
+        "200": {description: 采购订单草稿已创建}
+  /api/v1/procurement/orders/{orderId}/submit:
+    post:
+      operationId: submitPurchaseOrder
+      x-requirement-id: T2-PUR-001
+      responses:
+        "200": {description: 采购订单已提交}
+  /api/v1/procurement/orders/{orderId}/approve:
+    post:
+      operationId: approvePurchaseOrder
+      x-requirement-id: T2-PUR-001
+      responses:
+        "200": {description: 采购订单已批准}
+  /api/v1/procurement/orders/{orderId}/receipts:
+    post:
+      operationId: createReceipt
+      x-requirement-id: T2-PUR-001
+      responses:
+        "200": {description: 收货草稿已创建}
+  /api/v1/procurement/receipts/{receiptId}/confirm:
+    post:
+      operationId: confirmReceipt
+      x-requirement-id: T2-PUR-001
+      responses:
+        "200": {description: 已确认并同事务生成采购入库流水}
+  /api/v1/procurement/receipts/{receiptId}/returns:
+    post:
+      operationId: createPurchaseReturn
+      x-requirement-id: T2-PUR-001
+      responses:
+        "200": {description: 采购退货草稿已创建}
+  /api/v1/procurement/returns/{purchaseReturnId}/submit:
+    post:
+      operationId: submitPurchaseReturn
+      x-requirement-id: T2-PUR-001
+      responses:
+        "200": {description: 采购退货已提交审批}
+  /api/v1/procurement/returns/{purchaseReturnId}/approve:
+    post:
+      operationId: approvePurchaseReturn
+      x-requirement-id: T2-PUR-001
+      responses:
+        "200": {description: 已批准并同事务生成采购退货出库流水}
+components:
+  schemas:
+    PreciseQuantity:
+      type: string
+      pattern: "^[0-9]+\\.[0-9]{1,6}$"
+    Error:
+      type: object
+      required: [code, message, correlationId]
+      properties:
+        code: {type: string}
+        message: {type: string}
+        correlationId: {type: string}
+x-security-boundary:
+  tenantFromTrustedContextOnly: true
+  providerNetworkCallsAllowed: 0
+  costRuntimeAllowed: false
+  transferRuntimeAllowed: false

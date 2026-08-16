@@ -7,9 +7,10 @@
     <groupId>com.jingshanghui.pos</groupId>
     <artifactId>jshpos-inventory</artifactId>
     <name>jshpos-inventory</name>
-    <description>鲸熵汇收银系统 Gate 4A 不可变库存流水、余额和策略核心</description>
+    <description>鲸熵汇收银系统 Gate 4A/4B 不可变库存、盘点和策略核心</description>
     <dependencies>
         <dependency><groupId>com.jingshanghui.pos</groupId><artifactId>jshpos-foundation</artifactId></dependency>
+        <dependency><groupId>com.jingshanghui.pos</groupId><artifactId>jshpos-catalog</artifactId></dependency>
         <dependency><groupId>com.jingshanghui.pos</groupId><artifactId>jshpos-order</artifactId></dependency>
         <dependency><groupId>com.jingshanghui.pos</groupId><artifactId>jshpos-payment</artifactId></dependency>
         <dependency><groupId>com.jingshanghui.pos</groupId><artifactId>jshpos-sync</artifactId><scope>test</scope></dependency>

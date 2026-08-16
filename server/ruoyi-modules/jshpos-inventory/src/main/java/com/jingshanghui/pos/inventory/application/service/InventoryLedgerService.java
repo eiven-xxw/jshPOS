@@ -10,6 +10,8 @@ import com.jingshanghui.pos.inventory.application.model.InventoryCommands.ApplyR
 import com.jingshanghui.pos.inventory.application.model.InventoryCommands.ApplySale;
 import com.jingshanghui.pos.inventory.application.model.InventoryCommands.PublishPolicy;
 import com.jingshanghui.pos.inventory.application.model.InventoryCommands.RebuildBalance;
+import com.jingshanghui.pos.inventory.application.port.AuthoritativeInventoryMovementPort;
+import com.jingshanghui.pos.inventory.application.port.AuthoritativeInventoryMovementPort.OwnedMovement;
 import com.jingshanghui.pos.inventory.application.model.InventoryViews.ApplyResult;
 import com.jingshanghui.pos.inventory.application.model.InventoryViews.BalanceView;
 import com.jingshanghui.pos.inventory.application.model.InventoryViews.CommandView;
@@ -61,7 +63,7 @@ import java.util.Map;
  */
 @Service
 @RequiredArgsConstructor
-public class InventoryLedgerService {
+public class InventoryLedgerService implements AuthoritativeInventoryMovementPort {
 
     private final InventoryMapper mapper;
     private final TrustedTenantContext tenantContext;
@@ -78,9 +80,11 @@ public class InventoryLedgerService {
         validateSourceCommand(command.eventId(), command.orderId(), command.warehouseId(), command.correlationId());
         InventoryOrderSnapshot order = orderSnapshotPort.requireSnapshot(command.orderId());
         InventoryRules.requireSourceState("ORDER", order.status(), order.paymentStatus());
+        List<MovementLine> lines = order.lines().stream().map(line -> new MovementLine(line.orderLineId(),
+            line.skuId(), line.unitId(), line.quantity(), MovementType.SALE_OUT)).toList();
         return apply(new SourceApply(command.eventId(), "ORDER", order.orderId(), command.warehouseId(),
             command.correlationId(), order.storeId(), order.businessDate(), MovementType.SALE_OUT,
-            order.lines(), hashOrder(command, order)));
+            lines, hashOrder(command, order)));
     }
 
     /** 从权威成功原单退款快照生成 SALE_RETURN_IN，退货行必须与原订单行交叉一致。 */
@@ -104,9 +108,39 @@ public class InventoryLedgerService {
             returned.add(new InventoryLineSnapshot(original.orderLineId(), original.skuId(), original.unitId(),
                 InventoryRules.positive(line.quantity(), "returnQuantity")));
         });
+        List<MovementLine> lines = returned.stream().map(line -> new MovementLine(line.orderLineId(),
+            line.skuId(), line.unitId(), line.quantity(), MovementType.SALE_RETURN_IN)).toList();
         return apply(new SourceApply(command.eventId(), "REFUND", refund.refundId(), command.warehouseId(),
             command.correlationId(), refund.storeId(), order.businessDate(), MovementType.SALE_RETURN_IN,
-            returned, hashReturn(command, refund, returned)));
+            lines, hashReturn(command, refund, returned)));
+    }
+
+    /**
+     * 接收盘点或采购 Owner 已验证并持久化的数量事实。
+     *
+     * <p>该方法不是外部 API；同一调用事务内完成命令、流水、余额、审计和 Outbox。</p>
+     */
+    @Override
+    @Transactional
+    public ApplyResult applyOwnedMovement(OwnedMovement command) {
+        if (command == null || command.sourceType() == null || command.sourceType().isBlank()
+            || command.lines() == null) {
+            throw new ServiceException("INV-OWNER-001: Owner 库存命令主体或行数非法", 409);
+        }
+        validateSourceCommand(command.eventId(), command.sourceId(), command.warehouseId(), command.correlationId());
+        if (command.storeId() == null || command.storeId() <= 0 || command.businessDate() == null
+            || command.lines().isEmpty() || command.lines().size() > 500) {
+            throw new ServiceException("INV-OWNER-001: Owner 库存命令主体或行数非法", 409);
+        }
+        List<MovementLine> lines = command.lines().stream().map(line -> {
+            InventoryRules.requireUlid(line.sourceLineId(), "sourceLineId");
+            InventoryRules.requireOwnedMovement(command.sourceType(), line.movementType());
+            return new MovementLine(line.sourceLineId(), line.skuId(), line.baseUnitId(),
+                InventoryRules.positive(line.quantity(), "quantity"), line.movementType());
+        }).toList();
+        return apply(new SourceApply(command.eventId(), command.sourceType(), command.sourceId(),
+            command.warehouseId(), command.correlationId(), command.storeId(), command.businessDate(),
+            null, lines, hashOwned(command, lines)));
     }
 
     /** 发布后策略不可修改；便利店默认应首先发布 DENY 版本。 */
@@ -213,13 +247,13 @@ public class InventoryLedgerService {
             source.sourceType(), source.sourceId(), source.warehouseId(), source.storeId(), source.correlationId(),
             principal.userId(), at));
         boolean negative = false;
-        List<InventoryLineSnapshot> lines = source.lines().stream()
-            .sorted(Comparator.comparing(InventoryLineSnapshot::skuId).thenComparing(InventoryLineSnapshot::orderLineId))
+        List<MovementLine> lines = source.lines().stream()
+            .sorted(Comparator.comparing(MovementLine::skuId).thenComparing(MovementLine::sourceLineId))
             .toList();
         if (lines.isEmpty() || lines.size() > 500) {
             throw new ServiceException("INV-CMD-001: 库存命令行数必须为1至500", 409);
         }
-        for (InventoryLineSnapshot line : lines) {
+        for (MovementLine line : lines) {
             negative |= applyLine(new LineApply(principal, source, policy, mode, line, at));
         }
         if (mapper.completeCommand(new CommandApplied(principal.tenantId(), source.eventId(), lines.size(),
@@ -233,12 +267,12 @@ public class InventoryLedgerService {
     }
 
     private boolean applyLine(LineApply input) {
-        InventoryLineSnapshot line = input.line();
+        MovementLine line = input.line();
         requireSku(line.skuId());
-        if (line.unitId() == null || line.unitId() <= 0) {
+        if (line.baseUnitId() == null || line.baseUnitId() <= 0) {
             throw new ServiceException("INV-LINE-001: 基础单位非法", 409);
         }
-        BigDecimal delta = InventoryRules.signedDelta(input.source().movementType(), line.quantity());
+        BigDecimal delta = InventoryRules.signedDelta(line.movementType(), line.quantity());
         String tenantId = input.principal().tenantId();
         String dimension = InventoryHash.dimension(tenantId, input.source().warehouseId(), line.skuId());
         mapper.insertBalanceIfAbsent(new BalanceSeed(tenantId, dimension, input.source().warehouseId(), line.skuId()));
@@ -250,9 +284,9 @@ public class InventoryLedgerService {
         boolean negative = InventoryRules.requiresNegativeAlert(input.mode(), availableAfter);
         long sequence = before.lastLedgerSequence() + 1;
         mapper.insertLedger(new LedgerWrite(ulids.next(), tenantId, dimension, sequence,
-            input.source().warehouseId(), line.skuId(), line.unitId(), "SALEABLE",
-            input.source().movementType().name(), before.onHandQuantity(), delta, afterQuantity,
-            input.source().sourceType(), input.source().sourceId(), line.orderLineId(), input.source().eventId(),
+            input.source().warehouseId(), line.skuId(), line.baseUnitId(), "SALEABLE",
+            line.movementType().name(), before.onHandQuantity(), delta, afterQuantity,
+            input.source().sourceType(), input.source().sourceId(), line.sourceLineId(), input.source().eventId(),
             input.policy().policyVersionId(), input.source().businessDate(), input.principal().userId(),
             input.source().correlationId(), input.at()));
         if (mapper.updateBalance(new BalanceUpdate(tenantId, dimension, afterQuantity, sequence,
@@ -268,7 +302,7 @@ public class InventoryLedgerService {
         payload.put("schemaVersion", "1.0");
         payload.put("warehouseId", input.source().warehouseId());
         payload.put("skuId", line.skuId());
-        payload.put("movementType", input.source().movementType().name());
+        payload.put("movementType", line.movementType().name());
         payload.put("quantityDelta", delta.toPlainString());
         payload.put("quantityAfter", afterQuantity.toPlainString());
         payload.put("policyVersionId", input.policy().policyVersionId());
@@ -280,7 +314,7 @@ public class InventoryLedgerService {
                 input.source().correlationId(), payload, input.at());
         }
         mapper.insertAudit(new JournalWrite(ulids.next(), tenantId, input.source().storeId(),
-            "INVENTORY_" + input.source().movementType().name(), "STOCK_BALANCE", dimension,
+            "INVENTORY_" + line.movementType().name(), "STOCK_BALANCE", dimension,
             input.principal().userId(), input.source().eventId(), input.source().correlationId(),
             before.onHandQuantity().toPlainString(), afterQuantity.toPlainString(), input.source().requestHash(),
             negative ? "NEGATIVE_ALLOWED_ALERT" : "SOURCE_EFFECT", input.at()));
@@ -329,6 +363,16 @@ public class InventoryLedgerService {
         return InventoryHash.sha256(InventoryHash.canonical(values));
     }
 
+    private String hashOwned(OwnedMovement command, List<MovementLine> lines) {
+        List<Object> values = new ArrayList<>(List.of(command.eventId(), command.sourceType(), command.sourceId(),
+            command.warehouseId(), command.storeId(), command.businessDate()));
+        lines.stream().sorted(Comparator.comparing(MovementLine::sourceLineId)).forEach(line -> {
+            values.add(line.sourceLineId()); values.add(line.skuId()); values.add(line.baseUnitId());
+            values.add(line.quantity().toPlainString()); values.add(line.movementType().name());
+        });
+        return InventoryHash.sha256(InventoryHash.canonical(values));
+    }
+
     private void validateSourceCommand(String eventId, String sourceId, String warehouseId, String correlationId) {
         InventoryRules.requireUlid(eventId, "eventId");
         InventoryRules.requireUlid(sourceId, "sourceId");
@@ -361,7 +405,7 @@ public class InventoryLedgerService {
     /** 一次来源命令的不可变内部参数对象。 */
     private record SourceApply(String eventId, String sourceType, String sourceId, String warehouseId,
                                String correlationId, Long storeId, LocalDate businessDate,
-                               MovementType movementType, List<InventoryLineSnapshot> lines,
+                               MovementType movementType, List<MovementLine> lines,
                                String requestHash) {
         private SourceApply {
             lines = List.copyOf(lines);
@@ -370,6 +414,11 @@ public class InventoryLedgerService {
 
     /** 单行事务计算上下文，避免同类型参数错位。 */
     private record LineApply(TrustedPrincipal principal, SourceApply source, PolicyView policy,
-                             NegativeStockMode mode, InventoryLineSnapshot line, LocalDateTime at) {
+                             NegativeStockMode mode, MovementLine line, LocalDateTime at) {
+    }
+
+    /** 已规范化的内部库存移动行，数量始终为正，方向由 movementType 决定。 */
+    private record MovementLine(String sourceLineId, Long skuId, Long baseUnitId,
+                                BigDecimal quantity, MovementType movementType) {
     }
 }

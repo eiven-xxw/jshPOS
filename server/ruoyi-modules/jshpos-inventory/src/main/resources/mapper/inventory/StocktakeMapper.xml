@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jingshanghui.pos.inventory.infrastructure.persistence.mapper.StocktakeMapper">
+
+    <resultMap id="head" type="com.jingshanghui.pos.inventory.application.model.StocktakeViews$Head">
+        <constructor>
+            <arg column="stocktakeId" javaType="java.lang.String"/><arg column="storeId" javaType="java.lang.Long"/>
+            <arg column="warehouseId" javaType="java.lang.String"/><arg column="status" javaType="java.lang.String"/>
+            <arg column="blindCount" javaType="boolean"/><arg column="recountThreshold" javaType="java.math.BigDecimal"/>
+            <arg column="adjustmentEventId" javaType="java.lang.String"/><arg column="correlationId" javaType="java.lang.String"/>
+            <arg column="creatorUserId" javaType="java.lang.Long"/><arg column="reviewerUserId" javaType="java.lang.Long"/>
+            <arg column="approverUserId" javaType="java.lang.Long"/><arg column="snapshotAt" javaType="java.time.LocalDateTime"/>
+            <arg column="cutoffAt" javaType="java.time.LocalDateTime"/><arg column="postedAt" javaType="java.time.LocalDateTime"/>
+            <arg column="version" javaType="long"/>
+        </constructor>
+    </resultMap>
+    <resultMap id="line" type="com.jingshanghui.pos.inventory.application.model.StocktakeViews$Line">
+        <constructor>
+            <arg column="lineId" javaType="java.lang.String"/><arg column="stocktakeId" javaType="java.lang.String"/>
+            <arg column="dimensionKey" javaType="java.lang.String"/><arg column="warehouseId" javaType="java.lang.String"/>
+            <arg column="skuId" javaType="java.lang.Long"/><arg column="baseUnitId" javaType="java.lang.Long"/>
+            <arg column="snapshotQuantity" javaType="java.math.BigDecimal"/><arg column="snapshotLedgerSequence" javaType="long"/>
+            <arg column="countedQuantity" javaType="java.math.BigDecimal"/><arg column="adjustedBookQuantity" javaType="java.math.BigDecimal"/>
+            <arg column="cutoffLedgerSequence" javaType="long"/><arg column="varianceQuantity" javaType="java.math.BigDecimal"/>
+            <arg column="countRevision" javaType="int"/><arg column="lastCounterUserId" javaType="java.lang.Long"/>
+        </constructor>
+    </resultMap>
+
+    <sql id="headColumns">stocktake_id AS stocktakeId,store_id AS storeId,warehouse_id AS warehouseId,
+      status,blind_count AS blindCount,recount_threshold AS recountThreshold,adjustment_event_id AS adjustmentEventId,
+      correlation_id AS correlationId,creator_user_id AS creatorUserId,reviewer_user_id AS reviewerUserId,
+      approver_user_id AS approverUserId,snapshot_at AS snapshotAt,cutoff_at AS cutoffAt,posted_at AS postedAt,version</sql>
+    <sql id="lineColumns">line_id AS lineId,stocktake_id AS stocktakeId,stock_dimension_key AS dimensionKey,
+      warehouse_id AS warehouseId,sku_id AS skuId,base_unit_id AS baseUnitId,snapshot_quantity AS snapshotQuantity,
+      snapshot_ledger_sequence AS snapshotLedgerSequence,counted_quantity AS countedQuantity,
+      adjusted_book_quantity AS adjustedBookQuantity,cutoff_ledger_sequence AS cutoffLedgerSequence,
+      variance_quantity AS varianceQuantity,count_revision AS countRevision,last_counter_user_id AS lastCounterUserId</sql>
+
+    <insert id="insertHead">
+        INSERT INTO inv_stocktake(stocktake_id,tenant_id,store_id,warehouse_id,mode,scope_type,blind_count,status,
+          recount_threshold,correlation_id,creator_user_id,snapshot_at,version,created_at,updated_at)
+        VALUES(#{stocktakeId},#{tenantId},#{storeId},#{warehouseId},'DYNAMIC','SELECTED',#{blindCount},'COUNTING',
+          #{recountThreshold},#{correlationId},#{creatorUserId},#{snapshotAt},0,#{createdAt},#{createdAt})
+    </insert>
+    <insert id="insertLine">
+        INSERT INTO inv_stocktake_line(line_id,tenant_id,stocktake_id,stock_dimension_key,warehouse_id,sku_id,
+          base_unit_id,snapshot_quantity,snapshot_ledger_sequence,count_revision,created_at,updated_at)
+        VALUES(#{lineId},#{tenantId},#{stocktakeId},#{dimensionKey},#{warehouseId},#{skuId},#{baseUnitId},
+          #{snapshotQuantity},#{snapshotLedgerSequence},0,#{createdAt},#{createdAt})
+    </insert>
+    <select id="lockHead" resultMap="head">
+        SELECT <include refid="headColumns"/> FROM inv_stocktake
+        WHERE tenant_id=#{tenantId} AND stocktake_id=#{stocktakeId} FOR UPDATE
+    </select>
+    <select id="findHead" resultMap="head">
+        SELECT <include refid="headColumns"/> FROM inv_stocktake
+        WHERE tenant_id=#{tenantId} AND stocktake_id=#{stocktakeId}
+    </select>
+    <select id="lockLine" resultMap="line">
+        SELECT <include refid="lineColumns"/> FROM inv_stocktake_line
+        WHERE tenant_id=#{tenantId} AND stocktake_id=#{stocktakeId} AND line_id=#{lineId} FOR UPDATE
+    </select>
+    <select id="findLines" resultMap="line">
+        SELECT <include refid="lineColumns"/> FROM inv_stocktake_line
+        WHERE tenant_id=#{tenantId} AND stocktake_id=#{stocktakeId} ORDER BY sku_id,line_id
+    </select>
+    <insert id="insertCount">
+        INSERT INTO inv_stocktake_count(count_id,tenant_id,stocktake_id,line_id,revision_no,counted_quantity,
+          counter_user_id,device_id,reason,correlation_id,counted_at)
+        VALUES(#{countId},#{tenantId},#{stocktakeId},#{lineId},#{revisionNo},#{countedQuantity},
+          #{counterUserId},#{deviceId},#{reason},#{correlationId},#{countedAt})
+    </insert>
+    <update id="updateLineCount">
+        UPDATE inv_stocktake_line SET counted_quantity=#{countedQuantity},count_revision=count_revision+1,
+          last_counter_user_id=#{counterUserId},counted_at=#{countedAt},updated_at=#{countedAt}
+        WHERE tenant_id=#{tenantId} AND stocktake_id=#{stocktakeId} AND line_id=#{lineId}
+          AND count_revision=#{expectedRevision}
+    </update>
+    <update id="updateLineCutoff">
+        UPDATE inv_stocktake_line SET adjusted_book_quantity=#{adjustedBookQuantity},
+          cutoff_ledger_sequence=#{cutoffLedgerSequence},variance_quantity=#{varianceQuantity},updated_at=#{updatedAt}
+        WHERE tenant_id=#{tenantId} AND stocktake_id=#{stocktakeId} AND line_id=#{lineId}
+    </update>
+    <update id="updateHeadStatus">
+        UPDATE inv_stocktake SET status=#{nextStatus},version=version+1,
+          reviewer_user_id=COALESCE(#{reviewerUserId},reviewer_user_id),
+          approver_user_id=COALESCE(#{approverUserId},approver_user_id),
+          cutoff_at=COALESCE(#{cutoffAt},cutoff_at),posted_at=COALESCE(#{postedAt},posted_at),
+          adjustment_event_id=COALESCE(#{adjustmentEventId},adjustment_event_id),updated_at=#{updatedAt}
+        WHERE tenant_id=#{tenantId} AND stocktake_id=#{stocktakeId}
+          AND status=#{expectedStatus} AND version=#{expectedVersion}
+    </update>
+    <insert id="insertAdjustment">
+        INSERT INTO inv_stocktake_adjustment(adjustment_id,tenant_id,stocktake_id,line_id,source_event_id,
+          movement_type,quantity,signed_variance,created_at)
+        VALUES(#{adjustmentId},#{tenantId},#{stocktakeId},#{lineId},#{sourceEventId},#{movementType},
+          #{quantity},#{signedVariance},#{createdAt})
+    </insert>
+    <select id="countUncounted" resultType="int">
+        SELECT COUNT(*) FROM inv_stocktake_line
+        WHERE tenant_id=#{tenantId} AND stocktake_id=#{stocktakeId} AND counted_quantity IS NULL
+    </select>
+    <select id="countByUser" resultType="int">
+        SELECT COUNT(*) FROM inv_stocktake_count
+        WHERE tenant_id=#{tenantId} AND stocktake_id=#{stocktakeId} AND counter_user_id=#{userId}
+    </select>
+</mapper>

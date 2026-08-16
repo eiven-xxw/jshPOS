@@ -12,7 +12,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/** Gate 4A 在干净 MySQL 8.4 上执行 V1—V12 并验证两虚构租户库存约束。 */
+/** Gate 4B 在干净 MySQL 8.4 上执行 V1—V13 并验证两虚构租户库存与盘点约束。 */
 class InventoryMigrationMySqlIT {
 
     private final String url = required("GATE4A_MYSQL_JDBC_URL");
@@ -20,12 +20,12 @@ class InventoryMigrationMySqlIT {
     private final String password = required("GATE4A_MYSQL_PASSWORD");
 
     @Test
-    void migratesTwelveVersionsAndEnforcesTenantLedgerAndPolicyInvariants() throws Exception {
+    void migratesThirteenVersionsAndEnforcesTenantLedgerAndPolicyInvariants() throws Exception {
         createFrameworkMenuFixture();
         Flyway flyway = Flyway.configure().dataSource(url, username, password)
             .locations("classpath:db/migration").table("jshpos_flyway_schema_history")
             .baselineOnMigrate(true).baselineVersion("0").cleanDisabled(true).load();
-        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(12);
+        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(13);
         assertThat(flyway.migrate().migrationsExecuted).isZero();
         flyway.validate();
         assertTablesAndPermissions();
@@ -49,7 +49,8 @@ class InventoryMigrationMySqlIT {
 
     private void assertTablesAndPermissions() throws SQLException {
         Set<String> tables = Set.of("inv_stock_policy_version", "inv_stock_command", "inv_stock_balance",
-            "inv_stock_ledger", "inv_stock_anomaly", "inv_audit_event", "inv_event_outbox");
+            "inv_stock_ledger", "inv_stock_anomaly", "inv_audit_event", "inv_event_outbox",
+            "inv_stocktake", "inv_stocktake_line", "inv_stocktake_count", "inv_stocktake_adjustment");
         try (Connection connection = DriverManager.getConnection(url, username, password);
              Statement statement = connection.createStatement()) {
             for (String table : tables) {
@@ -62,6 +63,12 @@ class InventoryMigrationMySqlIT {
                 "SELECT COUNT(*) FROM sys_menu WHERE menu_id BETWEEN 9200500 AND 9200505")) {
                 assertThat(rows.next()).isTrue();
                 assertThat(rows.getInt(1)).isEqualTo(6);
+            }
+            try (var rows = statement.executeQuery(
+                "SELECT COUNT(*) FROM information_schema.triggers WHERE trigger_schema=DATABASE() " +
+                    "AND trigger_name IN ('trg_inv_stocktake_count_no_update','trg_inv_stocktake_posted_immutable')")) {
+                assertThat(rows.next()).isTrue();
+                assertThat(rows.getInt(1)).isEqualTo(2);
             }
             try (var rows = statement.executeQuery(
                 "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() " +

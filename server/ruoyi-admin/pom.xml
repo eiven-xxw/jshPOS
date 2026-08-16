@@ -105,6 +105,12 @@
             <artifactId>jshpos-inventory</artifactId>
         </dependency>
 
+        <!-- Gate 4B 供应商、采购单、收货与原收货退货模块 -->
+        <dependency>
+            <groupId>com.jingshanghui.pos</groupId>
+            <artifactId>jshpos-procurement</artifactId>
+        </dependency>
+
         <!-- Gate 0 服务端数据库版本治理 -->
         <dependency>
             <groupId>org.flywaydb</groupId>

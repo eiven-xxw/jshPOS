@@ -33,7 +33,24 @@ public final class InventoryRules {
 
     public static BigDecimal signedDelta(MovementType type, BigDecimal positiveQuantity) {
         BigDecimal quantity = positive(positiveQuantity, "quantity");
-        return type == MovementType.SALE_OUT ? quantity.negate() : quantity;
+        return switch (type) {
+            case SALE_OUT, STOCKTAKE_LOSS, PURCHASE_RETURN_OUT -> quantity.negate();
+            case SALE_RETURN_IN, STOCKTAKE_GAIN, PURCHASE_RECEIPT_IN -> quantity;
+        };
+    }
+
+    /** 只允许已准入的来源与移动类型组合，防止通用端口演变成任意调账入口。 */
+    public static void requireOwnedMovement(String sourceType, MovementType movementType) {
+        boolean allowed = switch (sourceType) {
+            case "STOCKTAKE" -> movementType == MovementType.STOCKTAKE_GAIN
+                || movementType == MovementType.STOCKTAKE_LOSS;
+            case "PURCHASE_RECEIPT" -> movementType == MovementType.PURCHASE_RECEIPT_IN;
+            case "PURCHASE_RETURN" -> movementType == MovementType.PURCHASE_RETURN_OUT;
+            default -> false;
+        };
+        if (!allowed) {
+            throw new ServiceException("INV-SOURCE-003: 来源与库存移动类型未准入", 409);
+        }
     }
 
     public static BigDecimal available(BigDecimal onHand, BigDecimal reserved,

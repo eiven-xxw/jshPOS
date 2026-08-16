@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.jingshanghui.example/inventory/cost-transfer-design.v1.schema.json",
+  "title": "Gate 4B cost and transfer design-only envelope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "contractType", "sourceId", "sourceLineId", "quantity"],
+  "properties": {
+    "schemaVersion": {"const": "1.0-design-only"},
+    "contractType": {"enum": ["COST_INPUT", "TRANSFER_OUT", "TRANSFER_IN"]},
+    "sourceId": {"type": "string"},
+    "sourceLineId": {"type": "string"},
+    "quantity": {"type": "string", "pattern": "^-?[0-9]+\\.[0-9]{6}$"}
+  },
+  "x-runtime-allowed": false,
+  "x-requirement-ids": ["T2-CST-001", "T2-TRF-001"]
+}

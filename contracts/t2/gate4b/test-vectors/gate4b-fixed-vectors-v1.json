@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "1.0",
+  "phase": "T2-GATE4B",
+  "fixedVectors": [
+    {"seed":"STK-BLIND-001","requirement":"T2-INV-003","expected":"snapshot hidden from counter"},
+    {"seed":"STK-REVISION-002","requirement":"T2-INV-003","expected":"count history append-only"},
+    {"seed":"STK-RECOUNT-003","requirement":"T2-INV-003","expected":"threshold requires recount"},
+    {"seed":"STK-SEPARATION-004","requirement":"T2-INV-003","expected":"creator reviewer approver distinct"},
+    {"seed":"STK-CROSSING-SALE-005","requirement":"T2-INV-003","expected":"cutoff variance preserves later sale"},
+    {"seed":"STK-ZERO-006","requirement":"T2-INV-003","expected":"post without ledger"},
+    {"seed":"STK-GAIN-007","requirement":"T2-INV-003","expected":"single STOCKTAKE_GAIN"},
+    {"seed":"STK-LOSS-008","requirement":"T2-INV-003","expected":"single STOCKTAKE_LOSS"},
+    {"seed":"STK-REPLAY-009","requirement":"T2-INV-003","expected":"no second effect"},
+    {"seed":"STK-TENANT-010","requirement":"T2-INV-003","expected":"fail closed"},
+    {"seed":"PUR-APPROVAL-011","requirement":"T2-PUR-001","expected":"creator cannot approve"},
+    {"seed":"PUR-PARTIAL-012","requirement":"T2-PUR-001","expected":"PARTIALLY_RECEIVED"},
+    {"seed":"PUR-REJECT-013","requirement":"T2-PUR-001","expected":"rejected quantity no stock"},
+    {"seed":"PUR-OVER-DENY-014","requirement":"T2-PUR-001","expected":"over receipt rejected"},
+    {"seed":"PUR-TOLERANCE-015","requirement":"T2-PUR-001","expected":"approved tolerance bounded"},
+    {"seed":"PUR-RECEIPT-REPLAY-016","requirement":"T2-PUR-001","expected":"no second stock effect"},
+    {"seed":"PUR-RETURN-LIMIT-017","requirement":"T2-PUR-001","expected":"return not above confirmed receipt"},
+    {"seed":"PUR-RETURN-REPLAY-018","requirement":"T2-PUR-001","expected":"no second stock effect"},
+    {"seed":"PUR-UNIT-019","requirement":"T2-PUR-001","expected":"exact frozen base conversion"},
+    {"seed":"PUR-TENANT-020","requirement":"T2-PUR-001","expected":"fail closed"}
+  ],
+  "providerNetworkCalls": 0,
+  "externalEvidence": {"sandbox":0,"realDevice":0,"pilot":0}
+}

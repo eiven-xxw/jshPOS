@@ -6,6 +6,7 @@ import com.jingshanghui.pos.catalog.application.model.CatalogViews.PackageView;
 import com.jingshanghui.pos.catalog.application.model.CatalogViews.PriceBookView;
 import com.jingshanghui.pos.catalog.application.model.CatalogViews.PriceCandidateView;
 import com.jingshanghui.pos.catalog.application.model.CatalogViews.ProductView;
+import com.jingshanghui.pos.catalog.application.port.InventoryCatalogSnapshotPort.SkuUnitSnapshot;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
@@ -16,6 +17,31 @@ import java.util.List;
 
 /** 所有原生 SQL 都显式携带可信 tenant_id；框架租户拦截器构成第二道防线。 */
 public interface CatalogMapper {
+
+    /** 读取启用 SKU 的基础单位快照，tenantId 必须来自可信上下文。 */
+    @Select("""
+        SELECT s.sku_id skuId,s.sku_code skuCode,u.unit_id unitId,u.unit_id baseUnitId,su.ratio_numerator numerator,
+               su.ratio_denominator denominator,su.primary_unit primaryUnit
+        FROM cat_sku s
+        JOIN cat_sku_unit su ON su.tenant_id=s.tenant_id AND su.sku_id=s.sku_id AND su.primary_unit=1
+        JOIN cat_unit u ON u.tenant_id=su.tenant_id AND u.unit_id=su.unit_id
+        WHERE s.tenant_id=#{tenantId} AND s.sku_id=#{skuId} AND s.status='ACTIVE' AND u.status='ACTIVE'
+        """)
+    SkuUnitSnapshot findInventoryPrimaryUnit(@Param("tenantId") String tenantId, @Param("skuId") Long skuId);
+
+    /** 读取指定采购单位的冻结换算快照。 */
+    @Select("""
+        SELECT s.sku_id skuId,s.sku_code skuCode,u.unit_id unitId,psu.unit_id baseUnitId,su.ratio_numerator numerator,
+               su.ratio_denominator denominator,su.primary_unit primaryUnit
+        FROM cat_sku s
+        JOIN cat_sku_unit su ON su.tenant_id=s.tenant_id AND su.sku_id=s.sku_id
+        JOIN cat_sku_unit psu ON psu.tenant_id=s.tenant_id AND psu.sku_id=s.sku_id AND psu.primary_unit=1
+        JOIN cat_unit u ON u.tenant_id=su.tenant_id AND u.unit_id=su.unit_id
+        WHERE s.tenant_id=#{tenantId} AND s.sku_id=#{skuId} AND u.unit_id=#{unitId}
+          AND s.status='ACTIVE' AND u.status='ACTIVE'
+        """)
+    SkuUnitSnapshot findInventorySkuUnit(@Param("tenantId") String tenantId, @Param("skuId") Long skuId,
+                                         @Param("unitId") Long unitId);
 
     @Insert("""
         INSERT INTO cat_event_outbox(outbox_id,tenant_id,event_type,aggregate_type,aggregate_id,aggregate_version,
