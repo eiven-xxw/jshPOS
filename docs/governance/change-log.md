@@ -32,5 +32,7 @@
 | CR-T2G0-001 | 2026-08-16 | APPROVED | 以封存 tag 为唯一不可变技术基线、以 `7fe4391` 为分支起点，按 CONDITIONAL GO 启动 Gate 0 / Sprint S0 八项平台基座需求；Gate 1 仅准入契约和测试准备，其他正式业务与外部实证继续禁止 | T2-IAM-001、T2-ORG-001、T2-RBAC-001、T2-CFG-001、T2-AUD-001、T2-SEC-001、T2-OBS-001、T2-MIG-001、ADR-019 | 项目发起人 2026-08-16 明确确认 |
 | CR-T2G0-002 | 2026-08-16 | IN_PROGRESS | 八项 Gate 0 的数据主权、不变量、权限、审计、API/事件、Flyway、容量、回退和测试清单经机器校验 8/8 通过，从 READY 进入限定实现；Gate 1 七项保持 DRAFT | T2-IAM-001、T2-ORG-001、T2-RBAC-001、T2-CFG-001、T2-AUD-001、T2-SEC-001、T2-OBS-001、T2-MIG-001 | 按项目发起人逐项准入规则执行 |
 | CR-T2G0-003 | 2026-08-16 | VERIFIED_AWAITING_CONFIRMATION | Gate 0 八项平台基座实现及 Gate 1 DRAFT 契约准备完成；GitHub Actions 31932706063 七个 Job 全绿，MySQL 8.4 实迁移、租户七面攻击、覆盖率、安全、SBOM、许可证和证据索引通过；未进入其他正式业务 | T2-IAM-001、T2-ORG-001、T2-RBAC-001、T2-CFG-001、T2-AUD-001、T2-SEC-001、T2-OBS-001、T2-MIG-001 | 等待项目发起人确认《T2 Gate 0 / Sprint S0 周门禁报告》；不得自行进入 Gate 1 编码 |
+| CR-T2G0-004 | 2026-08-16 | ACCEPTED | 项目发起人确认《T2 Gate 0 / Sprint S0 周门禁报告》并接受 Gate 0 CONDITIONAL PASS，授权八项 Gate 0 需求由 VERIFIED 转为 ACCEPTED | T2-IAM-001、T2-ORG-001、T2-RBAC-001、T2-CFG-001、T2-AUD-001、T2-SEC-001、T2-OBS-001、T2-MIG-001 | 项目发起人 2026-08-16 明确确认 |
+| CR-T2G1-001 | 2026-08-16 | APPROVED | 以封存 tag 为唯一不可变技术基线、以 `cf2ef29` 为分支起点，按 CONDITIONAL GO 启动 Gate 1 / Sprint S1 七项商品、价格和数据包需求；必须逐项设计准入后才可编码 | T2-PRD-001、T2-PRD-002、T2-PRD-003、T2-PRD-004、T2-PRC-001、T2-PRC-002、T2-DPK-001 | 项目发起人 2026-08-16 明确确认 |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。

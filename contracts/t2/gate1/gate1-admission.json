@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "1.0",
+  "phase": "T2-GATE1-S1",
+  "baselineTag": "t2-prep-baseline-2026-08-16",
+  "branchStart": "cf2ef29bd74c5d0f8fa5845a689305ebb56c7ef2",
+  "decisions": ["DEC-G1-01", "DEC-G1-02", "DEC-G1-03", "DEC-G1-04", "DEC-G1-05", "DEC-G1-06", "DEC-G1-07", "DEC-G1-08", "DEC-G1-09", "DEC-G1-10"],
+  "requirements": {
+    "T2-PRD-001": {"source": true, "scope": true, "nonGoals": true, "owner": true, "invariants": true, "permissions": true, "audit": true, "api": true, "migration": true, "capacity": true, "rollback": true, "tests": true},
+    "T2-PRD-002": {"source": true, "scope": true, "nonGoals": true, "owner": true, "invariants": true, "permissions": true, "audit": true, "api": true, "migration": true, "capacity": true, "rollback": true, "tests": true},
+    "T2-PRD-003": {"source": true, "scope": true, "nonGoals": true, "owner": true, "invariants": true, "permissions": true, "audit": true, "api": true, "migration": true, "capacity": true, "rollback": true, "tests": true},
+    "T2-PRD-004": {"source": true, "scope": true, "nonGoals": true, "owner": true, "invariants": true, "permissions": true, "audit": true, "api": true, "migration": true, "capacity": true, "rollback": true, "tests": true},
+    "T2-PRC-001": {"source": true, "scope": true, "nonGoals": true, "owner": true, "invariants": true, "permissions": true, "audit": true, "api": true, "migration": true, "capacity": true, "rollback": true, "tests": true},
+    "T2-PRC-002": {"source": true, "scope": true, "nonGoals": true, "owner": true, "invariants": true, "permissions": true, "audit": true, "api": true, "migration": true, "capacity": true, "rollback": true, "tests": true},
+    "T2-DPK-001": {"source": true, "scope": true, "nonGoals": true, "owner": true, "invariants": true, "permissions": true, "audit": true, "api": true, "migration": true, "capacity": true, "rollback": true, "tests": true}
+  },
+  "forbiddenRuntimeDomains": ["order", "payment", "refund", "inventory", "procurement", "cost", "promotion"],
+  "externalEvidence": {"sandbox": 0, "realDevice": 0, "pilot": 0}
+}
