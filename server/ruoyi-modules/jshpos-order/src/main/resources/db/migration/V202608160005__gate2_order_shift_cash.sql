@@ -1,6 +1,6 @@
 CREATE TABLE shf_shift (
     shift_id CHAR(26) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
-    tenant_id VARCHAR(20) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    tenant_id VARCHAR(20) NOT NULL,
     store_id BIGINT NOT NULL,
     terminal_id CHAR(26) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
     cashier_user_id BIGINT NOT NULL,
@@ -44,7 +44,7 @@ CREATE TABLE shf_shift (
 
 CREATE TABLE shf_shift_approval (
     approval_id CHAR(26) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
-    tenant_id VARCHAR(20) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    tenant_id VARCHAR(20) NOT NULL,
     shift_id CHAR(26) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
     approver_user_id BIGINT NOT NULL,
     reason_code VARCHAR(32) NOT NULL,
@@ -66,7 +66,7 @@ CREATE TABLE shf_shift_approval (
 
 CREATE TABLE ord_sales_order (
     order_id CHAR(26) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
-    tenant_id VARCHAR(20) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    tenant_id VARCHAR(20) NOT NULL,
     local_order_no VARCHAR(40) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
     store_id BIGINT NOT NULL,
     terminal_id CHAR(26) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
@@ -116,7 +116,7 @@ CREATE TABLE ord_sales_order (
 
 CREATE TABLE ord_order_line (
     line_id CHAR(26) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
-    tenant_id VARCHAR(20) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    tenant_id VARCHAR(20) NOT NULL,
     order_id CHAR(26) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
     line_no INT NOT NULL,
     sku_id BIGINT NOT NULL,
@@ -147,7 +147,7 @@ CREATE TABLE ord_order_line (
 
 CREATE TABLE ord_state_history (
     history_id CHAR(26) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
-    tenant_id VARCHAR(20) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    tenant_id VARCHAR(20) NOT NULL,
     order_id CHAR(26) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
     command_id CHAR(26) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
     from_status VARCHAR(24) NULL,
@@ -164,7 +164,7 @@ CREATE TABLE ord_state_history (
 
 CREATE TABLE ord_cash_payment (
     cash_payment_id CHAR(26) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
-    tenant_id VARCHAR(20) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    tenant_id VARCHAR(20) NOT NULL,
     order_id CHAR(26) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
     shift_id CHAR(26) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
     status VARCHAR(16) NOT NULL,
@@ -186,7 +186,7 @@ CREATE TABLE ord_cash_payment (
 
 CREATE TABLE shf_cash_ledger (
     cash_ledger_id CHAR(26) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
-    tenant_id VARCHAR(20) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    tenant_id VARCHAR(20) NOT NULL,
     shift_id CHAR(26) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
     order_id CHAR(26) CHARACTER SET ascii COLLATE ascii_bin NULL,
     cash_payment_id CHAR(26) CHARACTER SET ascii COLLATE ascii_bin NULL,
@@ -209,7 +209,7 @@ CREATE TABLE shf_cash_ledger (
 
 CREATE TABLE ord_print_job (
     print_job_id CHAR(26) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
-    tenant_id VARCHAR(20) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    tenant_id VARCHAR(20) NOT NULL,
     order_id CHAR(26) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
     status VARCHAR(16) NOT NULL DEFAULT 'PENDING',
     template_version VARCHAR(32) NOT NULL,
@@ -224,7 +224,7 @@ CREATE TABLE ord_print_job (
 
 CREATE TABLE ord_event_outbox (
     event_id CHAR(26) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
-    tenant_id VARCHAR(20) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    tenant_id VARCHAR(20) NOT NULL,
     stream_code VARCHAR(64) NOT NULL,
     event_type VARCHAR(96) NOT NULL,
     aggregate_type VARCHAR(32) NOT NULL,
@@ -246,7 +246,7 @@ CREATE TABLE ord_event_outbox (
 
 CREATE TABLE ord_idempotency (
     idempotency_id CHAR(26) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
-    tenant_id VARCHAR(20) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    tenant_id VARCHAR(20) NOT NULL,
     command_type VARCHAR(64) NOT NULL,
     command_id CHAR(26) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
     idempotency_key VARCHAR(128) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
@@ -264,7 +264,7 @@ CREATE TABLE ord_idempotency (
 
 CREATE TABLE ord_audit_event (
     audit_id CHAR(26) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
-    tenant_id VARCHAR(20) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    tenant_id VARCHAR(20) NOT NULL,
     action_code VARCHAR(64) NOT NULL,
     aggregate_type VARCHAR(32) NOT NULL,
     aggregate_id CHAR(26) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
