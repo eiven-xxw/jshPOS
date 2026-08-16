@@ -7,11 +7,13 @@
 > Gate 2 封板起点：`968ae7be34ab144c970e5c92fb7ffbddf60bf5e1`
 > 技术实现候选：`9a00bebced8ea9f3705b7d92f9440ff2b3534fd4`
 > 技术候选 CI：[T2 Sprint S3 Quality Gates #31946989640](https://github.com/eiven-xxw/jshPOS/actions/runs/31946989640)
-> 当前结论：`CLOSURE CANDIDATE / VERIFIED / AWAITING CLOSURE CI`
+> Closure 候选：`8d46ef1b812e2348e042d616cf1a7562e418f5dd`
+> Closure CI：[T2 Sprint S3 Quality Gates #31947779682](https://github.com/eiven-xxw/jshPOS/actions/runs/31947779682)
+> 当前结论：`CONDITIONAL PASS / VERIFIED / AWAITING CONFIRMATION`
 
 ## 1. 管理结论
 
-`T2-SYN-001` 正式 POS Inbox/Outbox 远程同步、逐事件 ACK、结果查询、不透明单调游标、冲突、重试、死信和恢复已完成实现。技术候选在同一 SHA 的 GitHub Ubuntu、Windows 和 MySQL 8.4.6 干净执行器上完成十个 Job，全部通过；证据聚合器验证 127 个文件并建立 SHA-256 索引。
+`T2-SYN-001` 正式 POS Inbox/Outbox 远程同步、逐事件 ACK、结果查询、不透明单调游标、冲突、重试、死信和恢复已完成实现。技术候选与纳入迁移封印、RTM、周门禁报告的 closure 候选，均在同一 SHA 的 GitHub Ubuntu、Windows 和 MySQL 8.4.6 干净执行器上完成十个 Job，全部通过；证据聚合器验证 127 个文件并建立 SHA-256 索引。
 
 本轮验证的是两个虚构租户、多门店/多终端和合成交易事实的正式同步工程基线。它没有使用支付 Provider、支付沙箱、生产密钥、真实资金、真实商户数据、实机、物理断电或设计伙伴试点。因此建议把 `T2-SYN-001` 保持为 `VERIFIED` 并提交 `CONDITIONAL PASS`，但不自行更新为 `ACCEPTED`。
 
@@ -86,20 +88,20 @@ SHA-256 = 8d16d031c043be6022f841f74628d35b240a76e0c7a91feaac10efb2dc17010d
 
 ## 7. GitHub Actions
 
-技术候选运行：2026-08-16 20:24:54—20:35:07（Asia/Shanghai），`run_attempt=1`，总结果 `success`。
+Closure 运行：2026-08-16 20:42:21—20:50:08（Asia/Shanghai），`run_attempt=1`，总结果 `success`。本次是包含迁移校验和、RTM `VERIFIED` 和退出材料的 closure 门禁；此前技术候选运行 `31946989640` 同样 10/10 全绿。
 
 | Job | Job ID | 结果 | 主要证据 |
 |---|---:|---|---|
-| [governance](https://github.com/eiven-xxw/jshPOS/actions/runs/31946989640/job/95164631730) | 95164631730 | PASS | 基线祖先、RTM、契约、范围和依赖差异 |
-| [server](https://github.com/eiven-xxw/jshPOS/actions/runs/31946989640/job/95164631680) | 95164631680 | PASS | 115 测试、覆盖率、Admin JAR、聚合 SBOM |
-| [mysql-migration](https://github.com/eiven-xxw/jshPOS/actions/runs/31946989640/job/95164631660) | 95164631660 | PASS | 固定 MySQL 8.4.6、八版迁移和数据库约束 |
-| [tenant-security](https://github.com/eiven-xxw/jshPOS/actions/runs/31946989640/job/95164631724) | 95164631724 | PASS | 可信设备/用户、Mapper 与 12 面租户攻击 |
-| [sync-fault](https://github.com/eiven-xxw/jshPOS/actions/runs/31946989640/job/95164631673) | 95164631673 | PASS | 14 个固定故障 seed 总账 |
-| [pos-linux](https://github.com/eiven-xxw/jshPOS/actions/runs/31946989640/job/95164631700) | 95164631700 | PASS | 38 测试、覆盖率、Kotlin、APK、Flutter SBOM/许可证 |
-| [pos-windows](https://github.com/eiven-xxw/jshPOS/actions/runs/31946989640/job/95164631746) | 95164631746 | PASS | Windows 38 测试与独立 HTTP/SQLite 回归 |
-| [admin-web](https://github.com/eiven-xxw/jshPOS/actions/runs/31946989640/job/95164631682) | 95164631682 | PASS | audit/build/lint/typecheck/8 测试/许可证 |
-| [security-sbom-license](https://github.com/eiven-xxw/jshPOS/actions/runs/31946989640/job/95165429840) | 95165429840 | PASS | Trivy 0.72.0、双 SBOM、漏洞/Secret/IaC/许可证 |
-| [evidence](https://github.com/eiven-xxw/jshPOS/actions/runs/31946989640/job/95165525875) | 95165525875 | PASS | 九类上游证据和 127 文件 SHA-256 索引 |
+| [governance](https://github.com/eiven-xxw/jshPOS/actions/runs/31947779682/job/95166430013) | 95166430013 | PASS | 基线祖先、RTM、契约、范围和依赖差异 |
+| [server](https://github.com/eiven-xxw/jshPOS/actions/runs/31947779682/job/95166429921) | 95166429921 | PASS | 115 测试、覆盖率、Admin JAR、聚合 SBOM |
+| [mysql-migration](https://github.com/eiven-xxw/jshPOS/actions/runs/31947779682/job/95166429901) | 95166429901 | PASS | 固定 MySQL 8.4.6、八版迁移和数据库约束 |
+| [tenant-security](https://github.com/eiven-xxw/jshPOS/actions/runs/31947779682/job/95166429962) | 95166429962 | PASS | 可信设备/用户、Mapper 与 12 面租户攻击 |
+| [sync-fault](https://github.com/eiven-xxw/jshPOS/actions/runs/31947779682/job/95166429996) | 95166429996 | PASS | 14 个固定故障 seed 总账 |
+| [pos-linux](https://github.com/eiven-xxw/jshPOS/actions/runs/31947779682/job/95166429928) | 95166429928 | PASS | 38 测试、覆盖率、Kotlin、APK、Flutter SBOM/许可证 |
+| [pos-windows](https://github.com/eiven-xxw/jshPOS/actions/runs/31947779682/job/95166429881) | 95166429881 | PASS | Windows 38 测试与独立 HTTP/SQLite 回归 |
+| [admin-web](https://github.com/eiven-xxw/jshPOS/actions/runs/31947779682/job/95166429984) | 95166429984 | PASS | audit/build/lint/typecheck/8 测试/许可证 |
+| [security-sbom-license](https://github.com/eiven-xxw/jshPOS/actions/runs/31947779682/job/95167133527) | 95167133527 | PASS | Trivy 0.72.0、双 SBOM、漏洞/Secret/IaC/许可证 |
+| [evidence](https://github.com/eiven-xxw/jshPOS/actions/runs/31947779682/job/95167206905) | 95167206905 | PASS | 九类上游证据和 127 文件 SHA-256 索引 |
 
 Workflow 无 `continue-on-error`，没有自动 retry、阈值降低、失败测试跳过或绿色占位。
 
@@ -107,16 +109,16 @@ Workflow 无 `continue-on-error`，没有自动 retry、阈值降低、失败测
 
 | Artifact | ID | 大小（B） | GitHub digest |
 |---|---:|---:|---|
-| `t2-sprint3-sync-gate3-prep-evidence-bundle` | 9263690316 | 455894994 | `sha256:3dd397474c585199dfa95db35ccb89a68cf401605dfcca73f5aa0a2c10611903` |
-| `t2-sprint3-security` | 9263679216 | 227930061 | `sha256:63ffd618fdf731273a63682ad9b698677dcba1b44b5c03ff44bf201061a96baa` |
-| `t2-sprint3-server` | 9263668866 | 153021385 | `sha256:6e8527c0e51a8a38b27b528394f6f87137df1196f62191810c51bacd8130c4d9` |
-| `t2-sprint3-pos-linux` | 9263656597 | 74828575 | `sha256:82c41a032980802b5f2635351ed7fa4768928787feced86119b109730abeb0e7` |
-| `t2-sprint3-pos-windows` | 9263626715 | 3071 | `sha256:18d6c53b3374da542841853262f2064b14477cd04ef8a8e0e758ed6ca97daad3` |
-| `t2-sprint3-mysql` | 9263599034 | 5745 | `sha256:8e9c565f109412a4e18213c150405db763ce0acd8b26dd26ebcf7399794e463d` |
-| `t2-sprint3-tenant` | 9263591596 | 16173 | `sha256:8c5739849ad1a8c1431fc228e9d924b60a428430aa8066ec5d004c6f405cce94` |
-| `t2-sprint3-web` | 9263600825 | 79791 | `sha256:bc653ccdd0c8fb57215a4934471547b0af95efc6082d30272e1f66f2cbf72ae3` |
-| `t2-sprint3-governance` | 9263582928 | 1015 | `sha256:88876dd712be567f0c968a7d6065d02179d5d2a088b4f2dc2d8a13e3cf5ec4b6` |
-| `t2-sprint3-fault` | 9263582134 | 1448 | `sha256:5320f1a5d73bf0130e75ad209b10f6b88fc8f5bf4861e7029ebc7c79afdb1ddc` |
+| `t2-sprint3-sync-gate3-prep-evidence-bundle` | 9263870239 | 455895244 | `sha256:17662e0f2ea016b16fa3dd1b61f895b4f69e054c7e69b9d7e6794ee93e6ca5ca` |
+| `t2-sprint3-security` | 9263860785 | 227930200 | `sha256:4e2a5a7dfc086311a35114aca5af5c6c58cec05c62a40eec2d363c17bf91c3f0` |
+| `t2-sprint3-server` | 9263843387 | 153021492 | `sha256:53375880c77a9df5dadedb168488d86f8030026eb3899b09767b89ddeb8763e4` |
+| `t2-sprint3-pos-linux` | 9263852746 | 74828576 | `sha256:f1c0cf2e418a9ee7e62bd5d0767e2d5973f513a135eb17167065c694ff101223` |
+| `t2-sprint3-pos-windows` | 9263828680 | 3053 | `sha256:f9313d96c02fd67b33a46822f893ea1a07145fc03fe8b2e4049d245692315da5` |
+| `t2-sprint3-mysql` | 9263792903 | 5747 | `sha256:dbb677f24a050e72a6242c21e2c2b1c4e393e9c33d5d1c9c2fa4c3a689c1c0c0` |
+| `t2-sprint3-tenant` | 9263784930 | 16171 | `sha256:23fc2fd04d287cd4faf6cbbfffe2a549baccd1666dd7ebf609d877624eff07f5` |
+| `t2-sprint3-web` | 9263795287 | 79797 | `sha256:543eda45ec3b2b7612783b5a01daa1cc114ec96d5e2e1c5946ce826f63aea290` |
+| `t2-sprint3-governance` | 9263779072 | 1036 | `sha256:d29baca830db2c19b982a1b51051352b414c9dbf9210f7389eb423d7ef34ac81` |
+| `t2-sprint3-fault` | 9263778861 | 1448 | `sha256:21c92d2c9e75277096560c01e94a878f64a036d4a35694bb42376f9c3b85e00c` |
 
 ## 9. 发现问题与修复记录
 
@@ -144,6 +146,6 @@ Provider 无关支付、查询/回调合并、原单退款和对账模型已完�
 
 ## 12. 退出建议
 
-本提交将封印 Sprint S3 两版 Flyway 和 SQLite V2，并以 `T2-SYN-001=VERIFIED` 运行 closure 质量门禁。closure 全绿后，建议项目发起人接受 `T2-SYN-001 CONDITIONAL PASS`，再以明确指令将其更新为 `ACCEPTED`。
+Sprint S3 两版 Flyway 和 SQLite V2 已按 SHA-256 封印，`T2-SYN-001=VERIFIED` 的 closure 质量门禁已 10/10 全绿。建议项目发起人接受 `T2-SYN-001 CONDITIONAL PASS`，再以明确指令将其更新为 `ACCEPTED`。
 
 项目发起人确认前，不得把 `T2-SYN-001` 改为 `ACCEPTED`，不得启动 Gate 3 正式支付编码或 Provider 网络调用，不得启动退款、库存、采购、成本、促销或后续 Gate，不得宣称 Alpha、可试点或可商用。
