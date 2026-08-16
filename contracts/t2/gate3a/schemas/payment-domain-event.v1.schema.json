@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.jingshanghui.example/t2/gate3a/payment-domain-event.v1.schema.json",
+  "title": "Gate 3A payment domain Outbox event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["eventId", "stream", "eventType", "aggregateType", "aggregateId", "aggregateVersion", "correlationId", "occurredAt", "payload", "payloadSha256"],
+  "properties": {
+    "eventId": {"$ref": "#/$defs/ulid"},
+    "stream": {"const": "payment.domain"},
+    "eventType": {
+      "enum": [
+        "payment.intent.created.v1",
+        "payment.attempt.created.v1",
+        "payment.status.changed.v1",
+        "refund.created.v1",
+        "refund.status.changed.v1",
+        "reconciliation.run.completed.v1",
+        "reconciliation.case.changed.v1",
+        "reconciliation.case.closed.v1"
+      ]
+    },
+    "aggregateType": {"enum": ["PAYMENT", "REFUND", "RECONCILIATION"]},
+    "aggregateId": {"$ref": "#/$defs/ulid"},
+    "aggregateVersion": {"type": "integer", "minimum": 1},
+    "correlationId": {"$ref": "#/$defs/ulid"},
+    "occurredAt": {"type": "string", "format": "date-time"},
+    "payload": {"type": "object"},
+    "payloadSha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  },
+  "$defs": {"ulid": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"}}
+}

@@ -3,6 +3,7 @@ package com.jingshanghui.pos.order.infrastructure.persistence.mapper;
 import com.jingshanghui.pos.order.application.model.OrderViews.ApprovalView;
 import com.jingshanghui.pos.order.application.model.OrderViews.IdempotencyView;
 import com.jingshanghui.pos.order.application.model.OrderViews.OrderView;
+import com.jingshanghui.pos.order.application.model.OrderViews.PaymentLineView;
 import com.jingshanghui.pos.order.application.model.OrderViews.ShiftView;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Param;
@@ -12,6 +13,7 @@ import org.apache.ibatis.annotations.Update;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /** 所有 SQL 显式携带可信 tenant_id；Aspect 在 Mapper 前再次要求可信主体。 */
 public interface OrderMapper {
@@ -226,4 +228,13 @@ public interface OrderMapper {
         FROM ord_sales_order WHERE tenant_id=#{tenantId} AND order_id=#{orderId}
         """)
     OrderView findOrder(@Param("tenantId") String tenantId, @Param("orderId") String orderId);
+
+    /** 查询原订单行的精确成交数量和金额，仅供受控支付只读端口使用。 */
+    @Select("""
+        SELECT line_id lineId,quantity,payable_amount_minor payableAmountMinor
+        FROM ord_order_line
+        WHERE tenant_id=#{tenantId} AND order_id=#{orderId}
+        ORDER BY line_no ASC
+        """)
+    List<PaymentLineView> findPaymentLines(@Param("tenantId") String tenantId, @Param("orderId") String orderId);
 }

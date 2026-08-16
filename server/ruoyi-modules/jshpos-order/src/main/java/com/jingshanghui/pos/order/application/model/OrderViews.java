@@ -1,5 +1,6 @@
 package com.jingshanghui.pos.order.application.model;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -36,5 +37,9 @@ public final class OrderViews {
     public record ApprovalView(String approvalId, String shiftId, Long approverUserId, String status,
                                long theoreticalCashMinor, long actualCashMinor, long differenceMinor,
                                long expectedShiftVersion) {
+    }
+
+    /** 支付领域只读端口使用的原订单行快照。 */
+    public record PaymentLineView(String lineId, BigDecimal quantity, long payableAmountMinor) {
     }
 }

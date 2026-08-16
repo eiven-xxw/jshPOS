@@ -14,6 +14,7 @@
         <module>jshpos-catalog</module>
         <module>jshpos-order</module>
         <module>jshpos-sync</module>
+        <module>jshpos-payment</module>
         <module>ruoyi-demo</module>
         <module>ruoyi-generator</module>
         <module>ruoyi-job</module>

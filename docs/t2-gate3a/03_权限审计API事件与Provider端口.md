@@ -24,7 +24,7 @@
 
 正式管理/应用 API 见 `contracts/t2/gate3a/openapi-payment-core-v1.yaml`。API 不包含 Provider 回调和网络调用。
 
-事件：`payment.intent.created.v1`、`payment.attempt.created.v1`、`payment.status.changed.v1`、`refund.created.v1`、`refund.status.changed.v1`、`reconciliation.case.opened.v1`、`reconciliation.case.closed.v1`。事件与领域状态、审计在同一事务写 Outbox。
+事件：`payment.intent.created.v1`、`payment.attempt.created.v1`、`payment.status.changed.v1`、`refund.created.v1`、`refund.status.changed.v1`、`reconciliation.run.completed.v1`、`reconciliation.case.changed.v1`、`reconciliation.case.closed.v1`。事件与领域状态、审计在同一事务写 Outbox，统一封装见 `payment-domain-event.v1.schema.json`；支付和退款观察分别使用独立 Schema，禁止混用字段或由未经验签的客户端直接提交。
 
 ## 4. Provider 端口
 

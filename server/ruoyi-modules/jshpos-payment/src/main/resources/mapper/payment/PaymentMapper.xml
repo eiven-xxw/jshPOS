@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jingshanghui.pos.payment.infrastructure.persistence.mapper.PaymentMapper">
+
+    <!-- 所有结果映射显式列字段，避免资金表增加列时静默改变应用语义。 -->
+    <resultMap id="paymentView" type="com.jingshanghui.pos.payment.application.model.PaymentViews$PaymentView">
+        <constructor>
+            <arg column="paymentId" javaType="java.lang.String"/>
+            <arg column="orderId" javaType="java.lang.String"/>
+            <arg column="storeId" javaType="java.lang.Long"/>
+            <arg column="terminalId" javaType="java.lang.String"/>
+            <arg column="status" javaType="java.lang.String"/>
+            <arg column="amountMinor" javaType="long"/>
+            <arg column="currency" javaType="java.lang.String"/>
+            <arg column="succeededRefundMinor" javaType="long"/>
+            <arg column="recordVersion" javaType="long"/>
+            <arg column="occurredAt" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+    <resultMap id="attemptView" type="com.jingshanghui.pos.payment.application.model.PaymentViews$AttemptView">
+        <constructor>
+            <arg column="attemptId" javaType="java.lang.String"/><arg column="paymentId" javaType="java.lang.String"/>
+            <arg column="providerCode" javaType="java.lang.String"/><arg column="providerRequestNo" javaType="java.lang.String"/>
+            <arg column="providerTransactionNo" javaType="java.lang.String"/><arg column="status" javaType="java.lang.String"/>
+            <arg column="amountMinor" javaType="long"/><arg column="currency" javaType="java.lang.String"/>
+            <arg column="recordVersion" javaType="long"/>
+        </constructor>
+    </resultMap>
+    <resultMap id="refundView" type="com.jingshanghui.pos.payment.application.model.PaymentViews$RefundView">
+        <constructor>
+            <arg column="refundId" javaType="java.lang.String"/><arg column="paymentId" javaType="java.lang.String"/>
+            <arg column="orderId" javaType="java.lang.String"/><arg column="storeId" javaType="java.lang.Long"/>
+            <arg column="status" javaType="java.lang.String"/><arg column="amountMinor" javaType="long"/>
+            <arg column="currency" javaType="java.lang.String"/><arg column="requesterUserId" javaType="java.lang.Long"/>
+            <arg column="approverUserId" javaType="java.lang.Long"/><arg column="providerCode" javaType="java.lang.String"/>
+            <arg column="providerRequestNo" javaType="java.lang.String"/><arg column="providerRefundNo" javaType="java.lang.String"/>
+            <arg column="recordVersion" javaType="long"/>
+        </constructor>
+    </resultMap>
+    <resultMap id="internalFact" type="com.jingshanghui.pos.payment.application.model.PaymentViews$InternalFactView">
+        <constructor>
+            <arg column="reference" javaType="java.lang.String"/><arg column="aggregateId" javaType="java.lang.String"/>
+            <arg column="businessType" javaType="java.lang.String"/><arg column="status" javaType="java.lang.String"/>
+            <arg column="amountMinor" javaType="long"/><arg column="currency" javaType="java.lang.String"/>
+            <arg column="occurredAt" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+    <resultMap id="caseView" type="com.jingshanghui.pos.payment.application.model.PaymentViews$ReconciliationCaseView">
+        <constructor>
+            <arg column="caseId" javaType="java.lang.String"/><arg column="runId" javaType="java.lang.String"/>
+            <arg column="differenceType" javaType="java.lang.String"/><arg column="internalReference" javaType="java.lang.String"/>
+            <arg column="providerReference" javaType="java.lang.String"/><arg column="status" javaType="java.lang.String"/>
+            <arg column="resolverUserId" javaType="java.lang.Long"/><arg column="approverUserId" javaType="java.lang.Long"/>
+            <arg column="recordVersion" javaType="long"/>
+        </constructor>
+    </resultMap>
+
+    <select id="findIdempotency" resultType="com.jingshanghui.pos.payment.application.model.PaymentViews$IdempotencyView">
+        SELECT command_type AS commandType, request_sha256 AS requestSha256,
+               aggregate_id AS aggregateId, result_json AS resultJson
+        FROM pay_idempotency
+        WHERE tenant_id=#{tenantId} AND command_type=#{commandType} AND idempotency_key=#{key}
+    </select>
+    <insert id="insertIdempotency">
+        INSERT INTO pay_idempotency(idempotency_id,tenant_id,command_type,command_id,idempotency_key,
+          request_sha256,aggregate_id,result_json,created_at)
+        VALUES(#{id},#{tenantId},#{commandType},#{commandId},#{key},#{requestHash},#{aggregateId},
+          CAST(#{resultJson} AS JSON),#{at})
+    </insert>
+
+    <insert id="insertPayment">
+        INSERT INTO pay_payment_intent(payment_id,tenant_id,order_id,store_id,terminal_id,status,
+          amount_minor,currency,succeeded_refund_minor,record_version,occurred_at)
+        VALUES(#{paymentId},#{tenantId},#{orderId},#{storeId},#{terminalId},'CREATED',
+          #{amount},#{currency},0,1,#{at})
+    </insert>
+    <select id="findPayment" resultMap="paymentView">
+        SELECT payment_id AS paymentId,order_id AS orderId,store_id AS storeId,terminal_id AS terminalId,
+          status,amount_minor AS amountMinor,currency,succeeded_refund_minor AS succeededRefundMinor,
+          record_version AS recordVersion,occurred_at AS occurredAt
+        FROM pay_payment_intent WHERE tenant_id=#{tenantId} AND payment_id=#{paymentId}
+    </select>
+    <select id="lockPayment" resultMap="paymentView">
+        SELECT payment_id AS paymentId,order_id AS orderId,store_id AS storeId,terminal_id AS terminalId,
+          status,amount_minor AS amountMinor,currency,succeeded_refund_minor AS succeededRefundMinor,
+          record_version AS recordVersion,occurred_at AS occurredAt
+        FROM pay_payment_intent WHERE tenant_id=#{tenantId} AND payment_id=#{paymentId} FOR UPDATE
+    </select>
+    <select id="countAttempts" resultType="int">
+        SELECT COUNT(1) FROM pay_payment_attempt WHERE tenant_id=#{tenantId} AND payment_id=#{paymentId}
+    </select>
+    <insert id="insertAttempt">
+        INSERT INTO pay_payment_attempt(attempt_id,tenant_id,payment_id,provider_code,provider_request_no,
+          status,amount_minor,currency,record_version,occurred_at)
+        VALUES(#{attemptId},#{tenantId},#{paymentId},#{providerCode},#{providerRequestNo},
+          'CREATED',#{amount},#{currency},1,#{at})
+    </insert>
+    <select id="findAttempt" resultMap="attemptView">
+        SELECT attempt_id AS attemptId,payment_id AS paymentId,provider_code AS providerCode,
+          provider_request_no AS providerRequestNo,provider_transaction_no AS providerTransactionNo,
+          status,amount_minor AS amountMinor,currency,record_version AS recordVersion
+        FROM pay_payment_attempt WHERE tenant_id=#{tenantId} AND attempt_id=#{attemptId}
+    </select>
+    <select id="lockAttempt" resultMap="attemptView">
+        SELECT attempt_id AS attemptId,payment_id AS paymentId,provider_code AS providerCode,
+          provider_request_no AS providerRequestNo,provider_transaction_no AS providerTransactionNo,
+          status,amount_minor AS amountMinor,currency,record_version AS recordVersion
+        FROM pay_payment_attempt WHERE tenant_id=#{tenantId} AND attempt_id=#{attemptId} FOR UPDATE
+    </select>
+    <select id="findSucceededAttempt" resultMap="attemptView">
+        SELECT attempt_id AS attemptId,payment_id AS paymentId,provider_code AS providerCode,
+          provider_request_no AS providerRequestNo,provider_transaction_no AS providerTransactionNo,
+          status,amount_minor AS amountMinor,currency,record_version AS recordVersion
+        FROM pay_payment_attempt
+        WHERE tenant_id=#{tenantId} AND payment_id=#{paymentId} AND status='SUCCEEDED'
+        ORDER BY occurred_at DESC,attempt_id DESC LIMIT 1
+    </select>
+    <update id="updateAttemptStatus">
+        UPDATE pay_payment_attempt
+        SET status=#{status},provider_transaction_no=COALESCE(#{providerTransactionNo},provider_transaction_no),
+            record_version=record_version+1
+        WHERE tenant_id=#{tenantId} AND attempt_id=#{attemptId} AND record_version=#{version}
+    </update>
+    <update id="updatePaymentStatus">
+        UPDATE pay_payment_intent SET status=#{status},record_version=record_version+1
+        WHERE tenant_id=#{tenantId} AND payment_id=#{paymentId} AND record_version=#{version}
+    </update>
+    <update id="updatePaymentRefund">
+        UPDATE pay_payment_intent
+        SET status=#{status},succeeded_refund_minor=#{succeededRefundMinor},record_version=record_version+1
+        WHERE tenant_id=#{tenantId} AND payment_id=#{paymentId} AND record_version=#{version}
+    </update>
+
+    <select id="findObservation" resultType="com.jingshanghui.pos.payment.application.model.PaymentViews$ObservationView">
+        SELECT observation_id AS observationId,aggregate_type AS aggregateType,aggregate_id AS aggregateId,
+          payload_sha256 AS payloadSha256,merge_result AS mergeResult
+        FROM pay_provider_observation WHERE tenant_id=#{tenantId} AND observation_id=#{observationId}
+    </select>
+    <insert id="insertObservation">
+        INSERT INTO pay_provider_observation(observation_id,tenant_id,aggregate_type,aggregate_id,attempt_id,
+          source,observed_status,provider_code,provider_request_no,provider_transaction_no,amount_minor,currency,
+          payload_sha256,merge_result,observed_at)
+        VALUES(#{observationId},#{tenantId},#{aggregateType},#{aggregateId},#{attemptId},#{source},
+          #{observedStatus},#{providerCode},#{providerRequestNo},#{providerTransactionNo},#{amount},#{currency},
+          #{payloadHash},#{mergeResult},#{observedAt})
+    </insert>
+    <insert id="insertDeadLetter">
+        INSERT INTO pay_observation_dead_letter(dead_letter_id,tenant_id,observation_id,aggregate_type,
+          aggregate_id,conflict_type,existing_sha256,received_sha256,reason_text,created_at)
+        VALUES(#{deadLetterId},#{tenantId},#{observationId},#{aggregateType},#{aggregateId},#{conflictType},
+          #{existingHash},#{receivedHash},#{reason},#{at})
+    </insert>
+
+    <insert id="insertRefund">
+        INSERT INTO pay_refund(refund_id,tenant_id,payment_id,order_id,store_id,status,amount_minor,currency,
+          reason_code,requester_user_id,provider_code,provider_request_no,record_version,occurred_at)
+        VALUES(#{refundId},#{tenantId},#{paymentId},#{orderId},#{storeId},#{status},#{amount},#{currency},
+          #{reasonCode},#{requesterId},#{providerCode},#{providerRequestNo},1,#{at})
+    </insert>
+    <insert id="insertRefundLine">
+        INSERT INTO pay_refund_line(refund_line_id,tenant_id,refund_id,order_line_id,quantity,amount_minor)
+        VALUES(#{refundLineId},#{tenantId},#{refundId},#{orderLineId},#{quantity},#{amount})
+    </insert>
+    <select id="findRefund" resultMap="refundView">
+        SELECT refund_id AS refundId,payment_id AS paymentId,order_id AS orderId,store_id AS storeId,status,
+          amount_minor AS amountMinor,currency,requester_user_id AS requesterUserId,
+          approver_user_id AS approverUserId,provider_code AS providerCode,
+          provider_request_no AS providerRequestNo,provider_refund_no AS providerRefundNo,
+          record_version AS recordVersion
+        FROM pay_refund WHERE tenant_id=#{tenantId} AND refund_id=#{refundId}
+    </select>
+    <select id="lockRefund" resultMap="refundView">
+        SELECT refund_id AS refundId,payment_id AS paymentId,order_id AS orderId,store_id AS storeId,status,
+          amount_minor AS amountMinor,currency,requester_user_id AS requesterUserId,
+          approver_user_id AS approverUserId,provider_code AS providerCode,
+          provider_request_no AS providerRequestNo,provider_refund_no AS providerRefundNo,
+          record_version AS recordVersion
+        FROM pay_refund WHERE tenant_id=#{tenantId} AND refund_id=#{refundId} FOR UPDATE
+    </select>
+    <select id="findRefundLines" resultType="com.jingshanghui.pos.payment.application.model.PaymentViews$RefundLineView">
+        SELECT order_line_id AS orderLineId,quantity,amount_minor AS amountMinor
+        FROM pay_refund_line
+        WHERE tenant_id=#{tenantId} AND refund_id=#{refundId}
+        ORDER BY order_line_id
+    </select>
+    <select id="sumReservedRefundAmount" resultType="long">
+        SELECT COALESCE(SUM(amount_minor),0) FROM pay_refund
+        WHERE tenant_id=#{tenantId} AND payment_id=#{paymentId} AND status IN ('PROCESSING','UNKNOWN','SUCCEEDED')
+    </select>
+    <select id="findReservedQuantities" resultType="com.jingshanghui.pos.payment.application.model.PaymentViews$ReservedQuantityView">
+        SELECT l.order_line_id AS orderLineId,COALESCE(SUM(l.quantity),0) AS reservedQuantity
+        FROM pay_refund_line l
+        JOIN pay_refund r ON r.tenant_id=l.tenant_id AND r.refund_id=l.refund_id
+        WHERE l.tenant_id=#{tenantId} AND r.payment_id=#{paymentId}
+          AND r.status IN ('PROCESSING','UNKNOWN','SUCCEEDED')
+        GROUP BY l.order_line_id ORDER BY l.order_line_id
+    </select>
+    <select id="sumSucceededRefundAmount" resultType="long">
+        SELECT COALESCE(SUM(amount_minor),0) FROM pay_refund
+        WHERE tenant_id=#{tenantId} AND payment_id=#{paymentId} AND status='SUCCEEDED'
+    </select>
+    <update id="updateRefundStatus">
+        UPDATE pay_refund
+        SET status=#{status},approver_user_id=COALESCE(#{approverId},approver_user_id),
+            provider_refund_no=COALESCE(#{providerRefundNo},provider_refund_no),record_version=record_version+1
+        WHERE tenant_id=#{tenantId} AND refund_id=#{refundId} AND record_version=#{version}
+    </update>
+
+    <insert id="insertHistory">
+        INSERT INTO pay_state_history(history_id,tenant_id,aggregate_type,aggregate_id,command_id,
+          from_status,to_status,aggregate_version,actor_user_id,reason_code,occurred_at)
+        VALUES(#{historyId},#{tenantId},#{aggregateType},#{aggregateId},#{commandId},#{fromStatus},#{toStatus},
+          #{version},#{actorId},#{reasonCode},#{at})
+    </insert>
+    <insert id="insertAudit">
+        INSERT INTO pay_audit_event(audit_id,tenant_id,store_id,action_code,aggregate_type,aggregate_id,
+          actor_user_id,approver_user_id,command_id,trace_id,before_status,after_status,amount_minor,currency,
+          request_sha256,reason_code,occurred_at)
+        VALUES(#{auditId},#{tenantId},#{storeId},#{action},#{aggregateType},#{aggregateId},#{actorId},
+          #{approverId},#{commandId},#{traceId},#{beforeStatus},#{afterStatus},#{amount},#{currency},
+          #{requestHash},#{reasonCode},#{at})
+    </insert>
+    <insert id="insertOutbox">
+        INSERT INTO pay_event_outbox(event_id,tenant_id,stream_code,event_type,aggregate_type,aggregate_id,
+          aggregate_version,correlation_id,payload_json,payload_sha256,delivery_state,available_at)
+        VALUES(#{eventId},#{tenantId},#{stream},#{eventType},#{aggregateType},#{aggregateId},#{version},
+          #{correlationId},CAST(#{payloadJson} AS JSON),#{payloadHash},'PENDING',#{at})
+    </insert>
+
+    <insert id="insertReconciliationRun">
+        INSERT INTO pay_reconciliation_run(run_id,tenant_id,provider_code,statement_date,status,entry_count,
+          case_count,actor_user_id,occurred_at)
+        VALUES(#{runId},#{tenantId},#{providerCode},#{statementDate},'PROCESSING',#{entryCount},0,#{actorId},#{at})
+    </insert>
+    <insert id="insertStatementEntry">
+        INSERT INTO pay_statement_entry(entry_id,tenant_id,run_id,provider_code,provider_transaction_no,
+          business_type,status,amount_minor,currency,occurred_at,payload_sha256)
+        VALUES(#{entryId},#{tenantId},#{runId},#{providerCode},#{providerTransactionNo},#{businessType},
+          #{status},#{amount},#{currency},#{occurredAt},#{payloadHash})
+    </insert>
+
+    <!-- 同一 Provider 引用同时检索支付与退款；应用层优先同类型，否则显式形成 REFUND_MISMATCH。 -->
+    <select id="findInternalFactsByReference" resultMap="internalFact">
+        SELECT a.provider_transaction_no AS reference,p.payment_id AS aggregateId,'PAYMENT' AS businessType,
+          CASE WHEN p.status IN ('SUCCEEDED','PARTIALLY_REFUNDED','REFUNDED') THEN 'SUCCEEDED' ELSE p.status END AS status,
+          p.amount_minor AS amountMinor,p.currency,p.occurred_at AS occurredAt
+        FROM pay_payment_attempt a
+        JOIN pay_payment_intent p ON p.tenant_id=a.tenant_id AND p.payment_id=a.payment_id
+        WHERE a.tenant_id=#{tenantId} AND a.provider_code=#{providerCode}
+          AND a.provider_transaction_no=#{reference}
+        UNION ALL
+        SELECT r.provider_refund_no AS reference,r.refund_id AS aggregateId,'REFUND' AS businessType,
+          r.status,r.amount_minor AS amountMinor,r.currency,r.occurred_at AS occurredAt
+        FROM pay_refund r
+        WHERE r.tenant_id=#{tenantId} AND r.provider_code=#{providerCode}
+          AND r.provider_refund_no=#{reference}
+        ORDER BY businessType,aggregateId
+    </select>
+
+    <!-- 账单日按 UTC 半开区间匹配，稳定排序用于可重复证据。 -->
+    <select id="findInternalFacts" resultMap="internalFact">
+        SELECT a.provider_transaction_no AS reference,p.payment_id AS aggregateId,'PAYMENT' AS businessType,
+          'SUCCEEDED' AS status,p.amount_minor AS amountMinor,p.currency,p.occurred_at AS occurredAt
+        FROM pay_payment_attempt a
+        JOIN pay_payment_intent p ON p.tenant_id=a.tenant_id AND p.payment_id=a.payment_id
+        WHERE a.tenant_id=#{tenantId} AND a.provider_code=#{providerCode} AND a.status='SUCCEEDED'
+          AND p.occurred_at &gt;=#{from} AND p.occurred_at &lt;#{to}
+        UNION ALL
+        SELECT r.provider_refund_no AS reference,r.refund_id AS aggregateId,'REFUND' AS businessType,
+          'SUCCEEDED' AS status,r.amount_minor AS amountMinor,r.currency,r.occurred_at AS occurredAt
+        FROM pay_refund r
+        WHERE r.tenant_id=#{tenantId} AND r.provider_code=#{providerCode} AND r.status='SUCCEEDED'
+          AND r.occurred_at &gt;=#{from} AND r.occurred_at &lt;#{to}
+        ORDER BY reference,businessType
+    </select>
+    <insert id="insertReconciliationCase">
+        INSERT INTO pay_reconciliation_case(case_id,tenant_id,run_id,difference_type,internal_reference,
+          provider_reference,status,record_version,created_at)
+        VALUES(#{caseId},#{tenantId},#{runId},#{differenceType},#{internalReference},#{providerReference},
+          'OPEN',1,#{at})
+    </insert>
+    <update id="completeReconciliationRun">
+        UPDATE pay_reconciliation_run SET status='COMPLETED',case_count=#{caseCount}
+        WHERE tenant_id=#{tenantId} AND run_id=#{runId} AND status='PROCESSING'
+    </update>
+    <select id="lockReconciliationCase" resultMap="caseView">
+        SELECT case_id AS caseId,run_id AS runId,difference_type AS differenceType,
+          internal_reference AS internalReference,provider_reference AS providerReference,status,
+          resolver_user_id AS resolverUserId,approver_user_id AS approverUserId,record_version AS recordVersion
+        FROM pay_reconciliation_case WHERE tenant_id=#{tenantId} AND case_id=#{caseId} FOR UPDATE
+    </select>
+    <update id="updateReconciliationCase">
+        UPDATE pay_reconciliation_case
+        SET status=#{status},resolver_user_id=COALESCE(#{resolverId},resolver_user_id),
+            approver_user_id=COALESCE(#{approverId},approver_user_id),
+            resolution_code=COALESCE(#{resolutionCode},resolution_code),
+            resolution_text=COALESCE(#{resolutionText},resolution_text),record_version=record_version+1
+        WHERE tenant_id=#{tenantId} AND case_id=#{caseId} AND record_version=#{version}
+    </update>
+</mapper>

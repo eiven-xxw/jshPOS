@@ -93,6 +93,12 @@
             <artifactId>jshpos-sync</artifactId>
         </dependency>
 
+        <!-- Gate 3A Provider 无关支付、退款与对账核心模块 -->
+        <dependency>
+            <groupId>com.jingshanghui.pos</groupId>
+            <artifactId>jshpos-payment</artifactId>
+        </dependency>
+
         <!-- Gate 0 服务端数据库版本治理 -->
         <dependency>
             <groupId>org.flywaydb</groupId>

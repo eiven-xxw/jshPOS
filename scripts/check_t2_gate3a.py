@@ -36,6 +36,8 @@ DESIGN_FILES = [
     "contracts/t2/gate3a/openapi-payment-core-v1.yaml",
     "contracts/t2/gate3a/schemas/payment-intent-command.v1.schema.json",
     "contracts/t2/gate3a/schemas/provider-observation.v1.schema.json",
+    "contracts/t2/gate3a/schemas/refund-observation.v1.schema.json",
+    "contracts/t2/gate3a/schemas/payment-domain-event.v1.schema.json",
     "contracts/t2/gate3a/schemas/refund-command.v1.schema.json",
     "contracts/t2/gate3a/schemas/reconciliation-entry.v1.schema.json",
     "contracts/t2/gate3a/test-vectors/payment-fake-vectors-v1.json",
