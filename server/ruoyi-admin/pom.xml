@@ -75,6 +75,12 @@
             <artifactId>jshpos-foundation</artifactId>
         </dependency>
 
+        <!-- Gate 1 商品、价格与正式数据包模块 -->
+        <dependency>
+            <groupId>com.jingshanghui.pos</groupId>
+            <artifactId>jshpos-catalog</artifactId>
+        </dependency>
+
         <!-- Gate 0 服务端数据库版本治理 -->
         <dependency>
             <groupId>org.flywaydb</groupId>

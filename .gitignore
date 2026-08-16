@@ -44,6 +44,7 @@ tmp/
 **/__pycache__/
 *.py[cod]
 admin-web/gate0-vitest-junit.xml
+admin-web/gate1-vitest-junit.xml
 admin-web/dependency-licenses.json
 
 # generated document QA caches already owned by documentation workflow

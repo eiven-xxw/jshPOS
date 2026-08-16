@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://contracts.jshpos.invalid/t2/gate1/data-package-manifest.v1.schema.json",
-  "title": "Gate 1 Draft Product Price Package Manifest",
+  "title": "Gate 1 Product Price Package Manifest v1",
   "type": "object",
   "additionalProperties": false,
   "required": ["packageId", "storeId", "packageVersion", "schemaVersion", "mode", "createdAt", "contentSha256", "signature", "chunks"],

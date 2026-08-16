@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://contracts.jshpos.invalid/t2/gate1/events/data-package.available.v1.schema.json",
-  "title": "Gate 1 Draft Data Package Available Event",
+  "title": "Gate 1 Data Package Available Event v1",
   "type": "object",
   "additionalProperties": false,
   "required": ["eventId", "eventType", "occurredAt", "aggregateId", "aggregateVersion", "correlationId", "data"],

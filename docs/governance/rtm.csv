@@ -58,13 +58,13 @@ T2-RBAC-001,T2,authorization,P0,V3-3.1.3与详细设计39-5,员工角色数据�
 T2-CFG-001,T2,configuration,P0,V3-3.1.4与3.1.8,门店和行业配置模板有版本范围Owner激活回退且不改写历史交易快照,ACCEPTED,docs/t2-gate0/03_领域数据主权状态与不变量.md;docs/t2-gate0/04_权限审计API与事件契约.md;docs/t2-gate0/07_T2_Gate0_SprintS0周门禁报告.md,GitHub Actions 31932706063 server/mysql-migration/evidence,产品与后端负责人,项目发起人已确认Gate0 CONDITIONAL PASS
 T2-AUD-001,T2,audit,P0,V3-3.1.7与详细设计31-12及39-12,关键配置改价退款现金差异权限数据修复均保存不可抵赖审计字段,ACCEPTED,docs/t2-gate0/03_领域数据主权状态与不变量.md;docs/t2-gate0/04_权限审计API与事件契约.md;docs/t2-gate0/07_T2_Gate0_SprintS0周门禁报告.md,GitHub Actions 31932706063 server/mysql-migration；审计脱敏及append-only约束,安全负责人,项目发起人已确认Gate0 CONDITIONAL PASS；交易域审计仍未准入
 T2-TRM-001,T2,terminal,P1,V3-3.15.1与详细设计31-9及36,终端登记激活吊销版本能力和门店绑定具备租户隔离和审计,DRAFT,,计划Gate0契约与模拟终端测试,设备与后端负责人,真实终端激活验收受T2-HWD-001阻断
-T2-PRD-001,T2,product,P0,V3-3.2.1与详细设计31-5,SKU名称分类品牌状态和销售属性形成唯一主数据且历史交易只引用快照,DRAFT,,计划Gate1单元数据库API测试,商品负责人,商业V1标准条码商品优先
-T2-PRD-002,T2,product-barcode-unit,P0,V3-3.2.1与详细设计31-5及33-2,条码多单位换算和主单位满足唯一性精度与可追溯变更,DRAFT,,计划Gate1属性和唯一约束测试,商品负责人,禁止浮点数量；DEC-02影响离线ID
-T2-PRD-003,T2,product-import,P0,V3-3.2.7与详细设计40-7,商品导入支持预检错误明细幂等提交和批次回退且跨租户污染为零,DRAFT,,计划Gate1 10k与100k合成导入测试,商品与QA负责人,真实迁移样本需伙伴授权
-T2-PRD-004,T2,product-lifecycle,P1,V3-3.2.5与详细设计31-5,商品启停和门店范围发布版本化且不得使历史订单或库存不可追溯,DRAFT,,计划Gate1状态迁移和兼容测试,商品负责人,
-T2-PRC-001,T2,pricing,P0,V3-3.3与详细设计31-5,基础价和门店价按版本生效且成交订单冻结价格来源和金额,DRAFT,,计划Gate1价格优先级与金额属性测试,价格负责人,金额最小货币单位整数
-T2-PRC-002,T2,price-publish,P0,V3-3.3.2与详细设计35,价格发布具备未来生效版本兼容摘要验签原子切换和安全回退,DRAFT,,计划Gate1数据包损坏兼容切换测试,价格与POS负责人,
-T2-DPK-001,T2,data-package,P0,详细设计35与T1-DPK-001,正式商品价格全量增量包验证租户版本摘要签名断点续传和原子切换,DRAFT,,计划Gate1正式Schema与10k100k测试,POS与后端负责人,T1 Fake仅作为风险输入不复用syn模型
+T2-PRD-001,T2,product,P0,V3-3.2.1与详细设计31-5,SKU名称分类品牌状态和销售属性形成唯一主数据且历史交易只引用快照,IN_PROGRESS,docs/t2-gate1/01_范围决策与逐项准入.md;docs/t2-gate1/02_数据主权状态与不变量.md;contracts/t2/gate1/gate1-admission.json,待Gate1单元数据库API与租户攻击测试,商品负责人,准入7/7通过；商业V1标准条码商品优先
+T2-PRD-002,T2,product-barcode-unit,P0,V3-3.2.1与详细设计31-5及33-2,条码多单位换算和主单位满足唯一性精度与可追溯变更,IN_PROGRESS,docs/t2-gate1/02_数据主权状态与不变量.md;docs/t2-gate1/03_权限审计API与事件.md;contracts/t2/gate1/gate1-admission.json,待Gate1属性和唯一约束测试,商品负责人,准入7/7通过；禁止浮点数量
+T2-PRD-003,T2,product-import,P0,V3-3.2.7与详细设计40-7,商品导入支持预检错误明细幂等提交和批次回退且跨租户污染为零,IN_PROGRESS,docs/t2-gate1/02_数据主权状态与不变量.md;docs/t2-gate1/04_Flyway容量兼容与回退.md;contracts/t2/gate1/gate1-admission.json,待Gate1 10k与100k合成导入测试,商品与QA负责人,准入7/7通过；真实迁移样本需伙伴授权
+T2-PRD-004,T2,product-lifecycle,P1,V3-3.2.5与详细设计31-5,商品启停和门店范围发布版本化且不得使历史订单或库存不可追溯,IN_PROGRESS,docs/t2-gate1/02_数据主权状态与不变量.md;docs/t2-gate1/03_权限审计API与事件.md;contracts/t2/gate1/gate1-admission.json,待Gate1状态迁移和兼容测试,商品负责人,准入7/7通过；仅商品生命周期
+T2-PRC-001,T2,pricing,P0,V3-3.3与详细设计31-5,基础价和门店价按版本生效且成交订单冻结价格来源和金额,IN_PROGRESS,docs/t2-gate1/01_范围决策与逐项准入.md;docs/t2-gate1/02_数据主权状态与不变量.md;contracts/t2/gate1/gate1-admission.json,待Gate1价格优先级与金额属性测试,价格负责人,准入7/7通过；金额为最小货币单位整数
+T2-PRC-002,T2,price-publish,P0,V3-3.3.2与详细设计35,价格发布具备未来生效版本兼容摘要验签原子切换和安全回退,IN_PROGRESS,docs/t2-gate1/03_权限审计API与事件.md;docs/t2-gate1/04_Flyway容量兼容与回退.md;contracts/t2/gate1/gate1-admission.json,待Gate1时间边界摘要切换回退测试,价格与POS负责人,准入7/7通过；本Gate仅服务端发布
+T2-DPK-001,T2,data-package,P0,详细设计35与T1-DPK-001,正式商品价格全量增量包验证租户版本摘要签名断点续传和原子切换,IN_PROGRESS,docs/t2-gate1/03_权限审计API与事件.md;docs/t2-gate1/04_Flyway容量兼容与回退.md;contracts/t2/gate1/gate1-admission.json,待Gate1正式Schema损坏拒收及10k100k测试,POS与后端负责人,准入7/7通过；T1 Fake不作为正式证据
 T2-POS-001,T2,shift,P0,V3-3.5.1与详细设计31-6,收银员按终端门店开班且记录期初现金业务日权限和审计,DRAFT,,计划Gate2状态机与E2E测试,POS负责人,DEC-03与DEC-05需先冻结
 T2-POS-002,T2,basket,P0,V3-3.5.2,扫码搜索数量单位和行操作在同一购物篮生成确定性金额且异常可恢复,DRAFT,,计划Gate2 Flutter单元与交互集成测试,POS负责人,设备扫码实机证据另行阻断
 T2-POS-003,T2,cash-payment,P0,V3-3.5.3与32-3.6,现金收款找零和撤销具备金额守恒权限审计并归入班次,DRAFT,,计划Gate2订单现金E2E和属性测试,POS与订单负责人,现金Alpha不得替代电子支付Alpha

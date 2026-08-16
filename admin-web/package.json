@@ -15,6 +15,7 @@
     "typecheck": "vue-tsc --noEmit",
     "test:unit": "vitest run",
     "test:unit:ci": "vitest run --reporter=default --reporter=junit --outputFile.junit=gate0-vitest-junit.xml",
+    "test:gate1:ci": "vitest run --reporter=default --reporter=junit --outputFile.junit=gate1-vitest-junit.xml",
     "preview": "vite preview",
     "lint:eslint": "eslint",
     "lint:eslint:fix": "eslint --fix",

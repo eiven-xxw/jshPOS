@@ -36,14 +36,18 @@ def main() -> None:
     for token in ("version: 1.0.0-gate0", "/org-units:", "/audit-events:", "SuccessEnvelope:"):
         if token not in gate0_openapi:
             raise SystemExit(f"CONTRACT ERROR: Gate 0 OpenAPI missing {token}")
-    gate1_openapi = (ROOT / "contracts" / "t2" / "gate1" / "openapi-product-price-draft.yaml").read_text(encoding="utf-8")
+    gate1_openapi = (ROOT / "contracts" / "t2" / "gate1" / "openapi-product-price-v1.yaml").read_text(encoding="utf-8")
     for requirement_id in (
-        "T2-PRD-001", "T2-PRD-003", "T2-PRC-001", "T2-PRC-002", "T2-DPK-001",
+        "T2-PRD-001", "T2-PRD-002", "T2-PRD-003", "T2-PRD-004",
+        "T2-PRC-001", "T2-PRC-002", "T2-DPK-001",
     ):
         if requirement_id not in gate1_openapi:
             raise SystemExit(f"CONTRACT ERROR: Gate 1 OpenAPI missing {requirement_id}")
     if "tenantId:" in gate0_openapi or "tenantId:" in gate1_openapi or "tenant_id:" in gate1_openapi:
         raise SystemExit("CONTRACT ERROR: client contract must not expose tenant override fields")
+    for token in ("version: 1.0.0-gate1", "additionalProperties: false", "amountMinor:", "/imports/{batchId}/rollback:"):
+        if token not in gate1_openapi:
+            raise SystemExit(f"CONTRACT ERROR: Gate 1 formal OpenAPI missing {token}")
 
     print(f"CONTRACTS OK: {len(json_contracts)} JSON schemas and T0/T2 OpenAPI contracts")
 

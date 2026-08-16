@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://contracts.jshpos.invalid/t2/gate1/product-import-batch.v1.schema.json",
-  "title": "Gate 1 Draft Product Import Batch",
+  "title": "Gate 1 Product Import Batch v1",
   "type": "object",
   "additionalProperties": false,
   "required": ["batchId", "sourceSha256", "state", "totalRows", "validRows", "invalidRows", "version"],

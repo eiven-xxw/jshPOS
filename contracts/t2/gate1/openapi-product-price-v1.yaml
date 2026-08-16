@@ -1,0 +1,240 @@
+openapi: 3.1.0
+info:
+  title: JSH POS Gate 1 Catalog and Price API
+  version: 1.0.0-gate1
+  description: T2 Gate 1 formal server contract. Tenant identity is derived only from trusted authentication context.
+servers:
+  - url: /api/v1/catalog
+security:
+  - saToken: []
+paths:
+  /categories:
+    post:
+      operationId: createCategory
+      x-requirement-id: T2-PRD-004
+      x-permission: catalog:definition:manage
+      requestBody: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/CreateCategory" } } } }
+      responses: { "200": { $ref: "#/components/responses/Success" } }
+  /brands:
+    post:
+      operationId: createBrand
+      x-requirement-id: T2-PRD-004
+      x-permission: catalog:definition:manage
+      requestBody: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/CreateDefinition" } } } }
+      responses: { "200": { $ref: "#/components/responses/Success" } }
+  /units:
+    post:
+      operationId: createUnit
+      x-requirement-id: T2-PRD-002
+      x-permission: catalog:definition:manage
+      requestBody: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/CreateUnit" } } } }
+      responses: { "200": { $ref: "#/components/responses/Success" } }
+  /products:
+    get:
+      operationId: listProducts
+      x-requirement-id: T2-PRD-001
+      x-permission: catalog:product:query
+      parameters:
+        - { name: status, in: query, required: false, schema: { enum: [DRAFT, ACTIVE, INACTIVE] } }
+        - { name: limit, in: query, required: false, schema: { type: integer, minimum: 1, maximum: 500, default: 100 } }
+      responses: { "200": { $ref: "#/components/responses/Success" } }
+    post:
+      operationId: createProduct
+      x-requirement-id: T2-PRD-001
+      x-permission: catalog:product:manage
+      requestBody: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/CreateProduct" } } } }
+      responses: { "200": { $ref: "#/components/responses/Success" } }
+  /products/{skuId}/state:
+    put:
+      operationId: changeProductState
+      x-requirement-id: T2-PRD-004
+      x-permission: catalog:product:manage
+      parameters: [{ $ref: "#/components/parameters/SkuId" }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/ChangeState" } } } }
+      responses: { "200": { $ref: "#/components/responses/Success" } }
+  /imports/preflight:
+    post:
+      operationId: preflightProductImport
+      x-requirement-id: T2-PRD-003
+      x-permission: catalog:import:preflight
+      requestBody: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/ImportPreflight" } } } }
+      responses: { "200": { $ref: "#/components/responses/Success" } }
+  /imports/{batchId}/publish:
+    post:
+      operationId: publishProductImport
+      x-requirement-id: T2-PRD-003
+      x-permission: catalog:import:publish
+      parameters: [{ $ref: "#/components/parameters/BatchId" }]
+      responses: { "200": { $ref: "#/components/responses/Success" } }
+  /imports/{batchId}/rollback:
+    post:
+      operationId: rollbackProductImport
+      x-requirement-id: T2-PRD-003
+      x-permission: catalog:import:publish
+      parameters: [{ $ref: "#/components/parameters/BatchId" }]
+      responses: { "200": { $ref: "#/components/responses/Success" } }
+  /price-books:
+    post:
+      operationId: createPriceBook
+      x-requirement-id: T2-PRC-001
+      x-permission: catalog:price:manage
+      requestBody: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/CreatePriceBook" } } } }
+      responses: { "200": { $ref: "#/components/responses/Success" } }
+  /price-books/{bookId}/items:
+    post:
+      operationId: addPriceItem
+      x-requirement-id: T2-PRC-001
+      x-permission: catalog:price:manage
+      parameters: [{ $ref: "#/components/parameters/BookId" }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/AddPriceItem" } } } }
+      responses: { "200": { $ref: "#/components/responses/Success" } }
+  /price-books/{bookId}/publish:
+    post:
+      operationId: publishPriceBook
+      x-requirement-id: T2-PRC-002
+      x-permission: catalog:price:publish
+      parameters: [{ $ref: "#/components/parameters/BookId" }]
+      responses: { "200": { $ref: "#/components/responses/Success" } }
+  /price-books/{bookId}/retire:
+    post:
+      operationId: retirePriceBook
+      x-requirement-id: T2-PRC-002
+      x-permission: catalog:price:publish
+      parameters: [{ $ref: "#/components/parameters/BookId" }]
+      responses: { "200": { $ref: "#/components/responses/Success" } }
+  /price-books/resolve:
+    get:
+      operationId: resolvePrice
+      x-requirement-id: T2-PRC-001
+      x-permission: catalog:price:query
+      parameters:
+        - { name: skuId, in: query, required: true, schema: { type: integer, format: int64, minimum: 1 } }
+        - { name: unitId, in: query, required: true, schema: { type: integer, format: int64, minimum: 1 } }
+        - { name: storeId, in: query, required: true, schema: { type: integer, format: int64, minimum: 1 } }
+        - { name: at, in: query, required: false, schema: { type: string, format: date-time } }
+      responses: { "200": { $ref: "#/components/responses/Success" } }
+  /packages:
+    post:
+      operationId: publishCatalogPackage
+      x-requirement-id: T2-DPK-001
+      x-permission: catalog:package:publish
+      requestBody: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/PublishPackage" } } } }
+      responses: { "200": { $ref: "#/components/responses/Success" } }
+  /packages/latest:
+    get:
+      operationId: latestCatalogPackage
+      x-requirement-id: T2-DPK-001
+      x-permission: catalog:package:query
+      parameters: [{ name: storeId, in: query, required: true, schema: { type: integer, format: int64, minimum: 1 } }]
+      responses: { "200": { $ref: "#/components/responses/Success" } }
+components:
+  securitySchemes:
+    saToken: { type: apiKey, in: header, name: Authorization }
+  parameters:
+    SkuId: { name: skuId, in: path, required: true, schema: { type: integer, format: int64, minimum: 1 } }
+    BatchId: { name: batchId, in: path, required: true, schema: { type: integer, format: int64, minimum: 1 } }
+    BookId: { name: bookId, in: path, required: true, schema: { type: integer, format: int64, minimum: 1 } }
+  schemas:
+    CreateCategory:
+      type: object
+      additionalProperties: false
+      required: [code, name, sortNo]
+      properties:
+        parentId: { type: [integer, "null"], format: int64, minimum: 1 }
+        code: { type: string, minLength: 1, maxLength: 64 }
+        name: { type: string, minLength: 1, maxLength: 200 }
+        sortNo: { type: integer }
+    CreateDefinition:
+      type: object
+      additionalProperties: false
+      required: [code, name]
+      properties:
+        code: { type: string, minLength: 1, maxLength: 64 }
+        name: { type: string, minLength: 1, maxLength: 200 }
+    CreateUnit:
+      allOf:
+        - $ref: "#/components/schemas/CreateDefinition"
+        - type: object
+          required: [decimalScale]
+          properties: { decimalScale: { type: integer, minimum: 0, maximum: 6 } }
+    CreateProduct:
+      type: object
+      additionalProperties: false
+      required: [spuCode, skuCode, name, categoryId, productType, units]
+      properties:
+        spuCode: { type: string, maxLength: 64 }
+        skuCode: { type: string, maxLength: 64 }
+        name: { type: string, maxLength: 200 }
+        categoryId: { type: integer, format: int64, minimum: 1 }
+        brandId: { type: [integer, "null"], format: int64, minimum: 1 }
+        productType: { enum: [STANDARD, WEIGHT, COUNT] }
+        attributes: { type: object }
+        units:
+          type: array
+          minItems: 1
+          maxItems: 50
+          items: { $ref: "#/components/schemas/UnitInput" }
+    UnitInput:
+      type: object
+      additionalProperties: false
+      required: [unitId, ratioNumerator, ratioDenominator, primary, barcodes]
+      properties:
+        unitId: { type: integer, format: int64, minimum: 1 }
+        ratioNumerator: { type: integer, format: int64, minimum: 1 }
+        ratioDenominator: { type: integer, format: int64, minimum: 1 }
+        primary: { type: boolean }
+        barcodes: { type: array, maxItems: 100, items: { type: string, maxLength: 64 } }
+    ChangeState:
+      type: object
+      additionalProperties: false
+      required: [state, version]
+      properties:
+        state: { enum: [DRAFT, ACTIVE, INACTIVE] }
+        version: { type: integer, minimum: 0 }
+    ImportPreflight:
+      type: object
+      additionalProperties: false
+      required: [idempotencyKey, rows]
+      properties:
+        idempotencyKey: { type: string, minLength: 8, maxLength: 128 }
+        rows: { type: array, minItems: 1, maxItems: 100000, items: { type: object } }
+    CreatePriceBook:
+      type: object
+      additionalProperties: false
+      required: [code, name, versionNo, scopeType]
+      properties:
+        code: { type: string, maxLength: 64 }
+        name: { type: string, maxLength: 200 }
+        versionNo: { type: integer, minimum: 1 }
+        scopeType: { enum: [TENANT_BASE, STORE] }
+        storeId: { type: [integer, "null"], format: int64, minimum: 1 }
+    AddPriceItem:
+      type: object
+      additionalProperties: false
+      required: [skuId, unitId, amountMinor, effectiveFrom]
+      properties:
+        skuId: { type: integer, format: int64, minimum: 1 }
+        unitId: { type: integer, format: int64, minimum: 1 }
+        amountMinor: { type: integer, format: int64, minimum: 0 }
+        effectiveFrom: { type: string, format: date-time }
+        effectiveTo: { type: [string, "null"], format: date-time }
+    PublishPackage:
+      type: object
+      additionalProperties: false
+      required: [storeId, packageVersion, previousVersion]
+      properties:
+        storeId: { type: integer, format: int64, minimum: 1 }
+        packageVersion: { type: integer, format: int64, minimum: 1 }
+        previousVersion: { type: integer, format: int64, minimum: 0 }
+  responses:
+    Success:
+      description: RuoYi success envelope; concrete data type is operation-specific.
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [code, msg, data]
+            properties:
+              code: { const: 200 }
+              msg: { type: string }
+              data: {}
