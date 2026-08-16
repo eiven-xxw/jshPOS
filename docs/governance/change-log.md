@@ -18,5 +18,6 @@
 | CR-T1-001 | 2026-08-16 | APPROVED | 确认《T1 启动评审报告》并按 `CONDITIONAL GO` 启动四周 T1 风险 PoC；Week 1 只允许 READY 且通过准入的 STATIC/FAKE 契约、故障夹具与 CI，Blocked 实证、正式业务和 T2 继续禁止 | T1-GOV-001、T1-SCP-001、T1-HWD-001、T1-OFF-001、T1-SYN-001、T1-TEN-001、T1-PAY-001、T1-DPK-001、T1-UPG-001、T1-SEC-001、T1-CI-001 | 项目发起人 2026-08-16 明确确认 |
 | CR-T1-002 | 2026-08-16 | IMPLEMENTED_AWAITING_CONFIRMATION | 将已通过准入的 9 个 Week 1 STATIC/FAKE 需求从 READY 转为 IN_PROGRESS，建立 8 份 PoC 契约、10 家支付候选/5 家 Fake、7 组故障夹具和 6-Job CI；仅回填 Week 1 分级证据，不解除任何实机、外设、支付沙箱或设计伙伴阻断 | T1-HWD-001、T1-OFF-001、T1-SYN-001、T1-TEN-001、T1-PAY-001、T1-DPK-001、T1-UPG-001、T1-SEC-001、T1-CI-001 | 待项目发起人确认 Week 1 周门禁报告 |
 | CR-T1-003 | 2026-08-16 | APPROVED | 确认《T1 Week 1 周门禁报告》并按 `CONDITIONAL GO` 进入 Week 2；只允许 SQLite/Inbox、虚构租户攻击、10k/100k 合成数据包、虚构升级回退和五家支付 Fake 回归，所有外部实证、正式业务、Week 3 和 T2 继续禁止 | T1-OFF-001、T1-SYN-001、T1-TEN-001、T1-DPK-001、T1-UPG-001、T1-PAY-001、T1-SEC-001、T1-CI-001 | 项目发起人 2026-08-16 明确确认 |
+| CR-T1-004 | 2026-08-16 | IMPLEMENTED_AWAITING_CONFIRMATION | 完成 Week 2 六类内部风险探针、2,879 条断言和 201,039 次核心迭代；GitHub Week 2 与 Week 1 回归全绿并封存 STATIC/FAKE 证据，未解除任何外部阻断 | T1-OFF-001、T1-SYN-001、T1-TEN-001、T1-DPK-001、T1-UPG-001、T1-PAY-001、T1-SEC-001、T1-CI-001 | 待项目发起人确认 Week 2 周门禁报告 |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。
