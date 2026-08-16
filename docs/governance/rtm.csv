@@ -44,3 +44,64 @@ T1-JSH-001,T1,connector,P1,CR-T1P-002与ADR-017,真实接口目录鉴权限流�
 T1-CI-001,T1,ci-evidence,P0,技术规范11-12与ADR-016,T1门禁区分FAKE SANDBOX REAL_DEVICE证据并保留可追溯制品摘要漏洞许可证和测试结果,IN_PROGRESS,.github/workflows/t1-week4.yml;contracts/poc/t1/week4/reproducibility.schema.json;scripts/run_t1_reproducibility.py,docs/t1-week4/04_T1_Week4周门禁暨退出评审准备报告.md;GitHub Actions 31925516509与artifact 9257902599,DevOps,Ubuntu Windows归一化摘要一致且首轮CRLF差异已修复重跑；外部Job无绿色占位
 T1-LIC-001,T1,license,P1,CR-T1P-003与ADR-015/017,Aviator simple-http MySQL Connector/J在商业发布前具备替换或法务结论和负责人,DEFERRED,docs/compliance/restricted-components.json;scripts/build_t1_poc_inventory.py,docs/t1-week4/04_T1_Week4周门禁暨退出评审准备报告.md;artifact 9257902599许可证摘要,法务与技术负责人,T1新增运行依赖0；三项组件继续阻断商业发布
 T1-UAT-001,T1,go-no-go,P0,技术规范16与详细设计40,T1七类PoC证据齐备P0P1为零外部实证不以Fake替代并由评审角色签署,READY,docs/t1-week4/01_T1证据总清单.md;docs/t1-week4/02_T1风险差距成本与T2建议.md,docs/t1-week4/04_T1_Week4周门禁暨退出评审准备报告.md;等待项目发起人签署,QA负责人,建议内部STATIC/FAKE CONDITIONAL PASS并仅准入T2-Prep；不是商业V1验收
+T2P-GOV-001,T2-Prep,governance,P0,项目发起人指令与AGENTS4.6,T2项目章程基线边界交付与退出条件完整且经机器校验,READY,docs/t2-prep/01_T2项目章程.md,待T2-Prep CI与项目发起人确认,项目经理,T2-Prep材料已编制；不等于T2编码获准
+T2P-SCP-001,T2-Prep,scope,P0,V3-1.8与11.5及项目发起人指令,便利店主样板和商业V1必选简化后置非目标均冻结且变更规则明确,READY,docs/t2-prep/02_T2范围与非目标.md;docs/t2-prep/04_三类业态边界与商业V1冻结清单.md,待T2-Prep CI与项目发起人确认,产品负责人,零食折扣与社区超市只作为行业模板对照
+T2P-RTM-001,T2-Prep,requirements,P0,技术规范15与详细设计40-5,T2P和T2需求具备唯一ID来源验收Owner状态与外部证据限制,READY,docs/governance/rtm.csv;docs/t2-prep/03_T2_RTM与需求准入.md,待scripts/check_t2_prep.py验证,QA负责人,正式T2需求在Prep仅DRAFT BLOCKED DEFERRED
+T2P-ARC-001,T2-Prep,architecture,P0,详细设计31至40与ADR-019,十份详细设计全部映射且六道模块门数据主权和编码前决策明确,READY,docs/t2-prep/05_模块准入与依赖图.md;docs/t2-prep/06_详细设计31至40复核与决策清单.md,待架构与项目发起人确认,架构负责人,ADR-019保持Proposed直到T2编码启动确认
+T2P-PLN-001,T2-Prep,planning,P0,技术规范16与V3-11.6,十四周七个双周Sprint及RACI职责分离资源降范围规则明确,READY,docs/t2-prep/07_T2迭代计划与RACI.md,待T2启动评审确认,项目经理,外部阻断可延长支付和硬件关键路径
+T2P-QLT-001,T2-Prep,quality,P0,技术规范11至13与详细设计39至40,环境迁移测试CI证据灰度回退和量化门禁完整,READY,docs/t2-prep/08_环境迁移测试与CI门禁.md;docs/t2-prep/09_灰度回退证据与运行手册.md,待T2-Prep CI验证,QA与DevOps,T2-Prep只启用治理边界契约安全静态门禁
+T2P-EXT-001,T2-Prep,external-unblock,P0,项目发起人指令与详细设计36至39,硬件支付伙伴鲸熵汇许可证各有输入截止证据等级和失约回退,READY,docs/t2-prep/10_外部依赖解阻计划.md,外部条目仍按BLOCKED或DEFERRED,项目经理,不得以Fake或现金闭环解除外部阻断
+T2P-REV-001,T2-Prep,go-no-go,P0,项目发起人指令与详细设计40,T2正式开发启动评审报告含CI证据风险tag候选和下一步授权边界,READY,docs/t2-prep/13_T2正式开发启动评审报告.md,等待T2-Prep最终CI和项目发起人签署,项目发起人,未经确认不创建tag不转业务需求READY
+T2-IAM-001,T2,tenant,P0,详细设计31-3与39-4,可信上下文注入tenant_id且两个虚构租户跨API Mapper SQL任务缓存导出存储泄漏为零,DRAFT,,计划Gate0租户攻击与集成证据,后端与安全负责人,准入候选；不得接受客户端tenant_id作为授权
+T2-ORG-001,T2,organization,P0,V3-3.1与详细设计31-3,租户组织门店层级和门店业务时区业务日具备权限与审计且不可跨租户引用,DRAFT,,计划Gate0数据库与API集成证据,后端负责人,DEC-03需Gate0冻结
+T2-RBAC-001,T2,authorization,P0,V3-3.1.3与详细设计39-5,员工角色数据范围和高风险动作由服务端授权且职责分离和审计完整,DRAFT,,计划Gate0权限矩阵和越权测试,安全负责人,UI路由不得作为最终授权
+T2-CFG-001,T2,configuration,P0,V3-3.1.4与3.1.8,门店和行业配置模板有版本范围Owner激活回退且不改写历史交易快照,DRAFT,,计划Gate0模板Schema与兼容测试,产品与后端负责人,三业态差异只能进入模板和批准扩展点
+T2-AUD-001,T2,audit,P0,V3-3.1.7与详细设计31-12及39-12,关键配置改价退款现金差异权限数据修复均保存不可抵赖审计字段,DRAFT,,计划Gate0审计集成和脱敏测试,安全负责人,审计不得记录Secret和完整敏感报文
+T2-TRM-001,T2,terminal,P1,V3-3.15.1与详细设计31-9及36,终端登记激活吊销版本能力和门店绑定具备租户隔离和审计,DRAFT,,计划Gate0契约与模拟终端测试,设备与后端负责人,真实终端激活验收受T2-HWD-001阻断
+T2-PRD-001,T2,product,P0,V3-3.2.1与详细设计31-5,SKU名称分类品牌状态和销售属性形成唯一主数据且历史交易只引用快照,DRAFT,,计划Gate1单元数据库API测试,商品负责人,商业V1标准条码商品优先
+T2-PRD-002,T2,product-barcode-unit,P0,V3-3.2.1与详细设计31-5及33-2,条码多单位换算和主单位满足唯一性精度与可追溯变更,DRAFT,,计划Gate1属性和唯一约束测试,商品负责人,禁止浮点数量；DEC-02影响离线ID
+T2-PRD-003,T2,product-import,P0,V3-3.2.7与详细设计40-7,商品导入支持预检错误明细幂等提交和批次回退且跨租户污染为零,DRAFT,,计划Gate1 10k与100k合成导入测试,商品与QA负责人,真实迁移样本需伙伴授权
+T2-PRD-004,T2,product-lifecycle,P1,V3-3.2.5与详细设计31-5,商品启停和门店范围发布版本化且不得使历史订单或库存不可追溯,DRAFT,,计划Gate1状态迁移和兼容测试,商品负责人,
+T2-PRC-001,T2,pricing,P0,V3-3.3与详细设计31-5,基础价和门店价按版本生效且成交订单冻结价格来源和金额,DRAFT,,计划Gate1价格优先级与金额属性测试,价格负责人,金额最小货币单位整数
+T2-PRC-002,T2,price-publish,P0,V3-3.3.2与详细设计35,价格发布具备未来生效版本兼容摘要验签原子切换和安全回退,DRAFT,,计划Gate1数据包损坏兼容切换测试,价格与POS负责人,
+T2-DPK-001,T2,data-package,P0,详细设计35与T1-DPK-001,正式商品价格全量增量包验证租户版本摘要签名断点续传和原子切换,DRAFT,,计划Gate1正式Schema与10k100k测试,POS与后端负责人,T1 Fake仅作为风险输入不复用syn模型
+T2-POS-001,T2,shift,P0,V3-3.5.1与详细设计31-6,收银员按终端门店开班且记录期初现金业务日权限和审计,DRAFT,,计划Gate2状态机与E2E测试,POS负责人,DEC-03与DEC-05需先冻结
+T2-POS-002,T2,basket,P0,V3-3.5.2,扫码搜索数量单位和行操作在同一购物篮生成确定性金额且异常可恢复,DRAFT,,计划Gate2 Flutter单元与交互集成测试,POS负责人,设备扫码实机证据另行阻断
+T2-POS-003,T2,cash-payment,P0,V3-3.5.3与32-3.6,现金收款找零和撤销具备金额守恒权限审计并归入班次,DRAFT,,计划Gate2订单现金E2E和属性测试,POS与订单负责人,现金Alpha不得替代电子支付Alpha
+T2-POS-004,T2,suspend-order,P1,V3-3.5.2与32-2.7,挂单取单保持订单快照版本终端门店权限和重复操作幂等,DRAFT,,计划Gate2状态迁移与并发测试,POS负责人,
+T2-POS-005,T2,shift-close,P0,V3-3.5.1与3.5.9,交班汇总现金应有实有差异并按阈值审批且结果可重算,DRAFT,,计划Gate2现金对账和权限测试,POS与财务负责人,现金策略在Gate2评审冻结
+T2-ORD-001,T2,order-snapshot,P0,详细设计31-6与32-2,订单提交冻结商品价格促销税收银上下文且金额行和支付摘要满足不变量,DRAFT,,计划Gate2状态机属性和数据库测试,订单负责人,DEC-01首批聚合需冻结
+T2-ORD-002,T2,order-submit,P0,详细设计32-2与6,订单命令幂等且提交事实Outbox原子持久化重复提交无第二业务效果,DRAFT,,计划Gate2并发幂等崩溃测试,订单与POS负责人,
+T2-OFF-001,T2,offline-local-transaction,P0,详细设计35与ADR-007,正式SQLite交易事实支付意图Outbox同事务且kill重启和物理断电无静默丢失,DRAFT,,计划Gate2桌面与Android分级故障证据,POS负责人,物理断电仍需REAL_DEVICE；不得复用T1 syn表
+T2-SYN-001,T2,sync,P0,详细设计35,Inbox Outbox在重复乱序ACK丢失游标恢复和冲突下最终收敛且业务效果唯一,DRAFT,,计划Gate2固定seed与集成故障测试,POS与后端负责人,
+T2-PRN-001,T2,printer-real,P0,详细设计36与40-12,内置厂商SDK和标准外置打印两条链路完成队列状态连续打印重印和恢复实机验收,BLOCKED,,缺主机SDK外置打印型号与REAL_DEVICE,设备负责人,BLOCKED：内部小票契约不得替代两条实机打印
+T2-PAY-001,T2,payment-core,P0,详细设计32与ADR-009,支付聚合尝试命令查询回调和UNKNOWN状态机与Provider无关且禁止自动二次扣款,DRAFT,,计划Gate3状态机属性与Fake契约回归,支付负责人,正式网络Provider仍受T2-PAY-002阻断
+T2-PAY-002,T2,payment-sandbox,P0,详细设计32与项目发起人指令,一个主支付合作方在授权沙箱覆盖成功失败超时UNKNOWN查询回调退款账单对账,BLOCKED,,缺沙箱商户终端接口文档技术联系人,支付负责人,BLOCKED：现金与Fake均不可替代SANDBOX
+T2-PAY-003,T2,payment-callback,P0,详细设计32-3.8与38-Webhook,查询与重复乱序回调按稳定优先级合并且冲突审计无重复资金效果,DRAFT,,计划Gate3集成与SANDBOX证据,支付负责人,外部验收依赖T2-PAY-002
+T2-REF-001,T2,refund,P0,详细设计32-4,原单退货退款校验可退金额数量优惠分摊和通道额度且UNKNOWN安全收敛,DRAFT,,计划Gate3状态机属性E2E与SANDBOX测试,支付与订单负责人,T2只准入原单退货；DEC-04待确认
+T2-REC-001,T2,reconciliation,P0,详细设计32-11与40-8,订单支付退款和合作方账单差异可分类追踪修复且无不可解释资金差异,DRAFT,,计划Gate3合成与SANDBOX对账证据,支付与财务负责人,合作方账单依赖T2-PAY-002
+T2-INV-001,T2,inventory-ledger,P0,详细设计33-3,库存流水不可变且余额按租户仓店SKU维度可重算重复来源单据无第二效果,DRAFT,,计划Gate4属性数据库并发测试,库存负责人,禁止直接覆盖余额作为唯一事实
+T2-INV-002,T2,sales-stock,P0,详细设计33-3与32-6,销售完成和退货分别生成幂等出入库流水且订单库存跨聚合最终一致,DRAFT,,计划Gate4订单库存故障集成测试,库存与订单负责人,
+T2-INV-003,T2,stocktake,P0,V3-3.8.5与详细设计33-8,盘点快照复核差异审批和调整流水完整且历史可追溯,DRAFT,,计划Gate4权限并发和重算测试,库存负责人,
+T2-INV-004,T2,stock-policy,P0,详细设计33-2与5,可用在手预占和负库存策略口径明确且按门店模板版本化,DRAFT,,计划Gate4策略边界和离线风险测试,库存与产品负责人,DEC-06与DEC-07需Gate4冻结
+T2-PUR-001,T2,procurement,P0,V3-3.9.2与详细设计31-7及33,供应商采购订单收货退货生成可审计单据和幂等库存流水,DRAFT,,计划Gate4采购收货E2E和并发测试,采购与库存负责人,商业V1只做购销
+T2-CST-001,T2,cost,P0,详细设计33-6,移动加权平均成本使用DECIMAL且采购销售退货更正和舍入可重算对账,DRAFT,,计划Gate4成本属性和重放测试,库存与财务负责人,
+T2-TRF-001,T2,transfer,P1,V3-1.8与3.8.4,基础调拨出入库和在途数量以幂等流水表达且双方可对账,DRAFT,,计划Gate4跨店调拨E2E,库存负责人,复杂配送WMS后置
+T2-PRM-001,T2,promotion-rule,P1,详细设计34,规则版本输入候选互斥顺序和命中解释确定且跨端使用同一向量,DRAFT,,计划Gate5规则属性与跨端测试,促销负责人,DEC-09冻结规则集合
+T2-PRM-002,T2,promotion-basic,P1,V3-1.8与详细设计34,手工改价整单折扣和抹零按权限阈值执行并保存成交快照,DRAFT,,计划Gate5权限金额和E2E测试,促销与POS负责人,
+T2-PRM-003,T2,discount-allocation,P0,详细设计34-优惠分摊,订单总优惠与行分摊金额守恒且退款按原快照和稳定余数顺序还原,DRAFT,,计划Gate5属性测试全排列和退款E2E,促销与订单负责人,DEC-10需冻结稳定排序
+T2-MEM-001,T2,member-profile,P1,V3-3.10与详细设计39-13,会员档案和身份识别最小化采集授权脱敏审计且可执行隐私请求,DRAFT,,计划Gate5权限脱敏和隐私测试,会员与安全负责人,Alpha禁止真实个人信息
+T2-MEM-002,T2,member-level-points,P1,V3-1.8与3.10,会员等级积分采用不可变权益账本且重复交易和退款可冲正重算,DRAFT,,计划Gate5账本属性与退款测试,会员负责人,资源不足时可从T2后置但商业V1需重新评审
+T2-RPT-001,T2,reporting,P1,V3-11.5与详细设计40,销售收银库存基础报表与权威事实逐日对账且权限脱敏和大数据导出安全,DRAFT,,计划Gate5事实对账与租户导出攻击测试,报表负责人,报表不得成为唯一事实源
+T2-RPT-002,T2,payment-report,P1,V3-11.5与详细设计32-11,支付退款对账报表展示差异状态处理人和审计且不覆盖支付事实,DRAFT,,计划Gate5合成与SANDBOX报表对账,支付与报表负责人,外部数据依赖T2-PAY-002
+T2-SEC-001,T2,security,P0,详细设计39,身份租户密钥加密脱敏审计供应链和高危严重漏洞门禁在Alpha范围通过,DRAFT,,计划每Gate安全门禁与证据包,安全负责人,等保测评不以内部扫描替代
+T2-OBS-001,T2,observability,P0,详细设计39-12与技术规范13,trace order payment tenant store device等关联标识指标日志告警和诊断包可定位且脱敏,DRAFT,,计划Gate0至6监控告警测试,SRE与安全负责人,
+T2-BAK-001,T2,backup-recovery,P0,详细设计39-16至18,数据库对象存储配置和证据备份可恢复且Alpha候选RPO15分钟RTO60分钟演练通过,DRAFT,,计划Gate6备份恢复演练,SRE负责人,DEC-12需批准；商业SLA后续确定
+T2-UPG-001,T2,upgrade-rollback,P0,ADR-010与详细设计35至36,服务端Web APK Schema和模板灰度升级健康检查应用回退与前向修复可验证,DRAFT,,计划Gate2至6兼容迁移和实机分级证据,发布负责人,APK实机升级受T2-HWD-001阻断
+T2-MIG-001,T2,data-migration,P0,详细设计31-14与40-19,Flyway和SQLite迁移采用Expand Contract兼容窗口校验对账和前向修复且不重写已发布脚本,DRAFT,,计划每Gate迁移校验与Gate6恢复证据,架构与SRE负责人,真实历史样本需伙伴授权
+T2-HWD-001,T2,hardware-real,P0,详细设计36与项目发起人指令,主认证Android和扫码电子秤钱箱客显按L1至L2矩阵完成能力恢复升级和长稳实机证据,BLOCKED,,缺厂商型号SDK固件样机及全部外设输入,设备负责人,BLOCKED：不创建绿色占位
+T2-PAR-001,T2,design-partner,P1,V3-11.2与项目发起人指令,五家目标伙伴至少三家书面试点意愿并具备合规脱敏样本和旧系统对账条件,BLOCKED,,缺伙伴名单意愿协议和数据授权,产品与商务负责人,BLOCKED：合成Alpha不替代试点
+T2-JSH-001,T2,connector,P1,V3-11.5与详细设计37,鲸熵汇真实目录鉴权限流沙箱回调数据主权验收和负责人齐备后准入最小闭环,DEFERRED,,待收银主体完成后项目发起人提供资料,连接器负责人,DEFERRED：不得猜测接口或提前接入
+T2-LIC-001,T2,license,P1,ADR-015与项目发起人指令,Aviator simple-http MySQL ConnectorJ在商业发布前具备法务批准或替换回归,DEFERRED,,T2-Prep与内部Alpha不阻断；商业发布强制阻断,安全与法务负责人,新增依赖仍需即时审查不享受普遍豁免
+T2-UAT-001,T2,alpha-acceptance,P0,详细设计40,T2核心Alpha在实验室完成租户商品订单现金主支付退款库存离线促销报表闭环且P0P1为零,DRAFT,,计划S6 Alpha证据包与联合签署,QA负责人,主支付未解阻时不得宣称T2完整Alpha通过
+T2-REL-001,T2,go-no-go,P0,详细设计40-25与本T2-Prep风险台账,T2退出证据风险外部阻断和T3建议经SP PO ARCH QA SEC SRE联合评审,DRAFT,,计划T2退出评审报告,项目发起人,T2通过不等于商业V1
