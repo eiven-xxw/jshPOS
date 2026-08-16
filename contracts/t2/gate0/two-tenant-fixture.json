@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "1.0",
+  "seed": "gate0-two-tenant-v1",
+  "syntheticOnly": true,
+  "tenants": [
+    {
+      "tenantAlias": "TENANT_A",
+      "organizations": [
+        { "orgUnitId": 100, "code": "A-HQ", "name": "虚构总部A", "parentId": null },
+        { "orgUnitId": 110, "code": "A-R1", "name": "虚构区域A1", "parentId": 100 }
+      ],
+      "stores": [
+        { "storeId": 101, "orgUnitId": 110, "code": "A101", "name": "虚构门店A101", "zoneId": "Asia/Shanghai" },
+        { "storeId": 102, "orgUnitId": 110, "code": "A102", "name": "虚构门店A102", "zoneId": "Asia/Shanghai" }
+      ],
+      "users": [
+        { "userId": 10, "role": "TENANT_ADMIN" },
+        { "userId": 11, "role": "REGION_MANAGER", "orgUnitId": 110 },
+        { "userId": 12, "role": "STORE_CLERK", "storeId": 101 }
+      ]
+    },
+    {
+      "tenantAlias": "TENANT_B",
+      "organizations": [
+        { "orgUnitId": 200, "code": "B-HQ", "name": "虚构总部B", "parentId": null },
+        { "orgUnitId": 210, "code": "B-R1", "name": "虚构区域B1", "parentId": 200 }
+      ],
+      "stores": [
+        { "storeId": 201, "orgUnitId": 210, "code": "B201", "name": "虚构门店B201", "zoneId": "Asia/Shanghai" },
+        { "storeId": 202, "orgUnitId": 210, "code": "B202", "name": "虚构门店B202", "zoneId": "Asia/Shanghai" }
+      ],
+      "users": [
+        { "userId": 20, "role": "TENANT_ADMIN" },
+        { "userId": 21, "role": "REGION_MANAGER", "orgUnitId": 210 },
+        { "userId": 22, "role": "STORE_CLERK", "storeId": 201 }
+      ]
+    }
+  ]
+}

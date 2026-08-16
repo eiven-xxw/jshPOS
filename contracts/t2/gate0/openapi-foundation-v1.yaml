@@ -1,0 +1,408 @@
+openapi: 3.1.0
+info:
+  title: JSH POS Foundation API
+  version: 1.0.0-gate0
+  description: Gate 0 only. Tenant identity is derived from the authenticated server context.
+servers:
+  - url: /api/v1/foundation
+security:
+  - saToken: []
+paths:
+  /org-units:
+    get:
+      operationId: listOrgUnits
+      x-permission: foundation:org:query
+      responses:
+        "200": { $ref: "#/components/responses/OrgUnitList" }
+    post:
+      operationId: createOrgUnit
+      x-permission: foundation:org:manage
+      requestBody:
+        required: true
+        content:
+          application/json: { schema: { $ref: "#/components/schemas/CreateOrgUnit" } }
+      responses:
+        "200": { $ref: "#/components/responses/OrgUnit" }
+  /org-units/{orgUnitId}:
+    put:
+      operationId: updateOrgUnit
+      x-permission: foundation:org:manage
+      parameters:
+        - $ref: "#/components/parameters/OrgUnitId"
+      requestBody:
+        required: true
+        content:
+          application/json: { schema: { $ref: "#/components/schemas/UpdateOrgUnit" } }
+      responses:
+        "200": { $ref: "#/components/responses/OrgUnit" }
+  /stores:
+    get:
+      operationId: listStores
+      x-permission: foundation:store:query
+      responses:
+        "200": { $ref: "#/components/responses/StoreList" }
+    post:
+      operationId: createStore
+      x-permission: foundation:store:manage
+      requestBody:
+        required: true
+        content:
+          application/json: { schema: { $ref: "#/components/schemas/CreateStore" } }
+      responses:
+        "200": { $ref: "#/components/responses/Store" }
+  /stores/{storeId}:
+    put:
+      operationId: updateStore
+      x-permission: foundation:store:manage
+      parameters:
+        - $ref: "#/components/parameters/StoreId"
+      requestBody:
+        required: true
+        content:
+          application/json: { schema: { $ref: "#/components/schemas/UpdateStore" } }
+      responses:
+        "200": { $ref: "#/components/responses/Store" }
+  /stores/{storeId}/business-date:
+    get:
+      operationId: getStoreBusinessDate
+      x-permission: foundation:store:query
+      parameters:
+        - $ref: "#/components/parameters/StoreId"
+        - name: at
+          in: query
+          required: false
+          schema: { type: string, format: date-time }
+      responses:
+        "200":
+          description: Store-local business date
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/BusinessDateEnvelope" } }
+  /staff-scopes/{userId}:
+    get:
+      operationId: listStaffScopes
+      x-permission: foundation:scope:query
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+      responses:
+        "200": { $ref: "#/components/responses/StaffScopeList" }
+    put:
+      operationId: replaceStaffScopes
+      x-permission: foundation:scope:grant
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [scopes]
+              properties:
+                scopes:
+                  type: array
+                  maxItems: 100
+                  items: { $ref: "#/components/schemas/StaffScopeInput" }
+      responses:
+        "200": { $ref: "#/components/responses/StaffScopeList" }
+  /config/templates:
+    get:
+      operationId: listConfigTemplates
+      x-permission: foundation:config:query
+      responses:
+        "200": { $ref: "#/components/responses/ConfigTemplateList" }
+    post:
+      operationId: createConfigTemplate
+      x-permission: foundation:config:manage
+      requestBody:
+        required: true
+        content:
+          application/json: { schema: { $ref: "#/components/schemas/CreateConfigTemplate" } }
+      responses:
+        "200": { $ref: "#/components/responses/ConfigTemplate" }
+  /config/templates/{templateId}/versions:
+    post:
+      operationId: createConfigVersion
+      x-permission: foundation:config:manage
+      parameters:
+        - $ref: "#/components/parameters/TemplateId"
+      requestBody:
+        required: true
+        content:
+          application/json: { schema: { $ref: "#/components/schemas/CreateConfigVersion" } }
+      responses:
+        "200": { $ref: "#/components/responses/ConfigVersion" }
+  /config/versions/{versionId}/publish:
+    post:
+      operationId: publishConfigVersion
+      x-permission: foundation:config:publish
+      parameters:
+        - $ref: "#/components/parameters/VersionId"
+      responses:
+        "200": { $ref: "#/components/responses/ConfigVersion" }
+  /config/bindings/activate:
+    post:
+      operationId: activateConfigVersion
+      x-permission: foundation:config:activate
+      requestBody:
+        required: true
+        content:
+          application/json: { schema: { $ref: "#/components/schemas/ActivateConfig" } }
+      responses:
+        "200": { $ref: "#/components/responses/ConfigBinding" }
+  /config/bindings/{bindingId}/rollback:
+    post:
+      operationId: rollbackConfigBinding
+      x-permission: foundation:config:activate
+      parameters:
+        - $ref: "#/components/parameters/BindingId"
+      responses:
+        "200": { $ref: "#/components/responses/ConfigBinding" }
+  /audit-events:
+    get:
+      operationId: listAuditEvents
+      x-permission: foundation:audit:query
+      parameters:
+        - name: occurredBefore
+          in: query
+          required: false
+          schema: { type: string, format: date-time }
+        - name: limit
+          in: query
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 200, default: 100 }
+      responses:
+        "200": { $ref: "#/components/responses/AuditEventList" }
+components:
+  securitySchemes:
+    saToken:
+      type: apiKey
+      in: header
+      name: Authorization
+  parameters:
+    OrgUnitId: { name: orgUnitId, in: path, required: true, schema: { type: integer, format: int64 } }
+    StoreId: { name: storeId, in: path, required: true, schema: { type: integer, format: int64 } }
+    UserId: { name: userId, in: path, required: true, schema: { type: integer, format: int64 } }
+    TemplateId: { name: templateId, in: path, required: true, schema: { type: integer, format: int64 } }
+    VersionId: { name: versionId, in: path, required: true, schema: { type: integer, format: int64 } }
+    BindingId: { name: bindingId, in: path, required: true, schema: { type: integer, format: int64 } }
+  schemas:
+    Status: { type: string, enum: [ACTIVE, INACTIVE] }
+    CreateOrgUnit:
+      type: object
+      additionalProperties: false
+      required: [code, name, type]
+      properties:
+        parentId: { type: [integer, "null"], format: int64 }
+        code: { type: string, pattern: "^[A-Z0-9][A-Z0-9_-]{1,31}$" }
+        name: { type: string, minLength: 1, maxLength: 100 }
+        type: { type: string, enum: [HEADQUARTERS, REGION, COMPANY, OTHER] }
+    UpdateOrgUnit:
+      allOf:
+        - $ref: "#/components/schemas/CreateOrgUnit"
+        - type: object
+          required: [version, status]
+          properties:
+            version: { type: integer, minimum: 0 }
+            status: { $ref: "#/components/schemas/Status" }
+    OrgUnit:
+      allOf:
+        - $ref: "#/components/schemas/UpdateOrgUnit"
+        - type: object
+          required: [orgUnitId, treeDepth]
+          properties:
+            orgUnitId: { type: integer, format: int64 }
+            treeDepth: { type: integer, minimum: 1, maximum: 8 }
+    CreateStore:
+      type: object
+      additionalProperties: false
+      required: [orgUnitId, code, name, zoneId, businessDayStart]
+      properties:
+        orgUnitId: { type: integer, format: int64 }
+        platformDeptId: { type: [integer, "null"], format: int64 }
+        code: { type: string, pattern: "^[A-Z0-9][A-Z0-9_-]{1,31}$" }
+        name: { type: string, minLength: 1, maxLength: 100 }
+        zoneId: { type: string, minLength: 1, maxLength: 64, examples: [Asia/Shanghai] }
+        businessDayStart: { type: string, pattern: "^([01][0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$" }
+    UpdateStore:
+      allOf:
+        - $ref: "#/components/schemas/CreateStore"
+        - type: object
+          required: [version, status]
+          properties:
+            version: { type: integer, minimum: 0 }
+            status: { type: string, enum: [PREPARING, ACTIVE, INACTIVE] }
+    Store:
+      allOf:
+        - $ref: "#/components/schemas/UpdateStore"
+        - type: object
+          required: [storeId]
+          properties: { storeId: { type: integer, format: int64 } }
+    BusinessDateResponse:
+      type: object
+      required: [storeId, zoneId, businessDayStart, instant, businessDate]
+      properties:
+        storeId: { type: integer, format: int64 }
+        zoneId: { type: string }
+        businessDayStart: { type: string }
+        instant: { type: string, format: date-time }
+        businessDate: { type: string, format: date }
+    StaffScopeInput:
+      type: object
+      additionalProperties: false
+      required: [scopeType]
+      properties:
+        scopeType: { type: string, enum: [TENANT, ORG_SUBTREE, STORE] }
+        orgUnitId: { type: [integer, "null"], format: int64 }
+        storeId: { type: [integer, "null"], format: int64 }
+    StaffScope:
+      allOf:
+        - $ref: "#/components/schemas/StaffScopeInput"
+        - type: object
+          required: [staffScopeId, userId, status, version]
+          properties:
+            staffScopeId: { type: integer, format: int64 }
+            userId: { type: integer, format: int64 }
+            status: { type: string, enum: [ACTIVE, REVOKED] }
+            version: { type: integer }
+    CreateConfigTemplate:
+      type: object
+      additionalProperties: false
+      required: [code, name, industry]
+      properties:
+        code: { type: string, pattern: "^[A-Z0-9][A-Z0-9_-]{1,31}$" }
+        name: { type: string, minLength: 1, maxLength: 100 }
+        industry: { type: string, enum: [CONVENIENCE, SNACK_DISCOUNT, COMMUNITY_SUPERMARKET] }
+    ConfigTemplate:
+      allOf:
+        - $ref: "#/components/schemas/CreateConfigTemplate"
+        - type: object
+          required: [templateId, status, version]
+          properties:
+            templateId: { type: integer, format: int64 }
+            status: { $ref: "#/components/schemas/Status" }
+            version: { type: integer }
+    CreateConfigVersion:
+      type: object
+      additionalProperties: false
+      required: [schemaVersion, content]
+      properties:
+        schemaVersion: { type: string, pattern: "^[1-9][0-9]*\\.[0-9]+$" }
+        content: { type: object, maxProperties: 256 }
+    ConfigVersion:
+      type: object
+      required: [configVersionId, templateId, versionNo, schemaVersion, state, contentSha256]
+      properties:
+        configVersionId: { type: integer, format: int64 }
+        templateId: { type: integer, format: int64 }
+        versionNo: { type: integer, minimum: 1 }
+        schemaVersion: { type: string }
+        state: { type: string, enum: [DRAFT, PUBLISHED, RETIRED] }
+        contentSha256: { type: string, pattern: "^[a-f0-9]{64}$" }
+    ActivateConfig:
+      type: object
+      additionalProperties: false
+      required: [templateId, configVersionId, targetType]
+      properties:
+        templateId: { type: integer, format: int64 }
+        configVersionId: { type: integer, format: int64 }
+        targetType: { type: string, enum: [TENANT, STORE] }
+        targetId: { type: [integer, "null"], format: int64 }
+    ConfigBinding:
+      type: object
+      required: [bindingId, templateId, currentVersionId, targetType, version]
+      properties:
+        bindingId: { type: integer, format: int64 }
+        templateId: { type: integer, format: int64 }
+        currentVersionId: { type: integer, format: int64 }
+        previousVersionId: { type: [integer, "null"], format: int64 }
+        targetType: { type: string, enum: [TENANT, STORE] }
+        targetId: { type: [integer, "null"], format: int64 }
+        version: { type: integer }
+    AuditEvent:
+      type: object
+      required: [auditId, correlationId, actionCode, targetType, targetId, result, occurredAt]
+      properties:
+        auditId: { type: integer, format: int64 }
+        correlationId: { type: string }
+        actionCode: { type: string }
+        targetType: { type: string }
+        targetId: { type: string }
+        result: { type: string, enum: [SUCCESS, FAILURE, DENIED] }
+        occurredAt: { type: string, format: date-time }
+        beforeSha256: { type: [string, "null"] }
+        afterSha256: { type: [string, "null"] }
+        summary: { type: [object, "null"] }
+    SuccessEnvelope:
+      type: object
+      required: [code, msg, data]
+      properties:
+        code: { type: integer, const: 200 }
+        msg: { type: string }
+        data: {}
+    OrgUnitEnvelope:
+      allOf:
+        - $ref: "#/components/schemas/SuccessEnvelope"
+        - type: object
+          properties: { data: { $ref: "#/components/schemas/OrgUnit" } }
+    OrgUnitListEnvelope:
+      allOf:
+        - $ref: "#/components/schemas/SuccessEnvelope"
+        - type: object
+          properties: { data: { type: array, items: { $ref: "#/components/schemas/OrgUnit" } } }
+    StoreEnvelope:
+      allOf:
+        - $ref: "#/components/schemas/SuccessEnvelope"
+        - type: object
+          properties: { data: { $ref: "#/components/schemas/Store" } }
+    StoreListEnvelope:
+      allOf:
+        - $ref: "#/components/schemas/SuccessEnvelope"
+        - type: object
+          properties: { data: { type: array, items: { $ref: "#/components/schemas/Store" } } }
+    BusinessDateEnvelope:
+      allOf:
+        - $ref: "#/components/schemas/SuccessEnvelope"
+        - type: object
+          properties: { data: { $ref: "#/components/schemas/BusinessDateResponse" } }
+    StaffScopeListEnvelope:
+      allOf:
+        - $ref: "#/components/schemas/SuccessEnvelope"
+        - type: object
+          properties: { data: { type: array, items: { $ref: "#/components/schemas/StaffScope" } } }
+    ConfigTemplateEnvelope:
+      allOf:
+        - $ref: "#/components/schemas/SuccessEnvelope"
+        - type: object
+          properties: { data: { $ref: "#/components/schemas/ConfigTemplate" } }
+    ConfigTemplateListEnvelope:
+      allOf:
+        - $ref: "#/components/schemas/SuccessEnvelope"
+        - type: object
+          properties: { data: { type: array, items: { $ref: "#/components/schemas/ConfigTemplate" } } }
+    ConfigVersionEnvelope:
+      allOf:
+        - $ref: "#/components/schemas/SuccessEnvelope"
+        - type: object
+          properties: { data: { $ref: "#/components/schemas/ConfigVersion" } }
+    ConfigBindingEnvelope:
+      allOf:
+        - $ref: "#/components/schemas/SuccessEnvelope"
+        - type: object
+          properties: { data: { $ref: "#/components/schemas/ConfigBinding" } }
+    AuditEventListEnvelope:
+      allOf:
+        - $ref: "#/components/schemas/SuccessEnvelope"
+        - type: object
+          properties: { data: { type: array, items: { $ref: "#/components/schemas/AuditEvent" } } }
+  responses:
+    OrgUnit: { description: Org unit envelope, content: { application/json: { schema: { $ref: "#/components/schemas/OrgUnitEnvelope" } } } }
+    OrgUnitList: { description: Org units, content: { application/json: { schema: { $ref: "#/components/schemas/OrgUnitListEnvelope" } } } }
+    Store: { description: Store envelope, content: { application/json: { schema: { $ref: "#/components/schemas/StoreEnvelope" } } } }
+    StoreList: { description: Stores, content: { application/json: { schema: { $ref: "#/components/schemas/StoreListEnvelope" } } } }
+    StaffScopeList: { description: Staff scopes, content: { application/json: { schema: { $ref: "#/components/schemas/StaffScopeListEnvelope" } } } }
+    ConfigTemplate: { description: Config template, content: { application/json: { schema: { $ref: "#/components/schemas/ConfigTemplateEnvelope" } } } }
+    ConfigTemplateList: { description: Config templates, content: { application/json: { schema: { $ref: "#/components/schemas/ConfigTemplateListEnvelope" } } } }
+    ConfigVersion: { description: Config version, content: { application/json: { schema: { $ref: "#/components/schemas/ConfigVersionEnvelope" } } } }
+    ConfigBinding: { description: Config binding, content: { application/json: { schema: { $ref: "#/components/schemas/ConfigBindingEnvelope" } } } }
+    AuditEventList: { description: Audit events, content: { application/json: { schema: { $ref: "#/components/schemas/AuditEventListEnvelope" } } } }

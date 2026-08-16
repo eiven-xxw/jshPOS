@@ -71,6 +71,21 @@
         </dependency>
 
         <dependency>
+            <groupId>com.jingshanghui.pos</groupId>
+            <artifactId>jshpos-foundation</artifactId>
+        </dependency>
+
+        <!-- Gate 0 服务端数据库版本治理 -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-mysql</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>org.dromara</groupId>
             <artifactId>ruoyi-job</artifactId>
         </dependency>

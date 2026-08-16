@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.jshpos.invalid/t2/gate1/product-import-batch.v1.schema.json",
+  "title": "Gate 1 Draft Product Import Batch",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["batchId", "sourceSha256", "state", "totalRows", "validRows", "invalidRows", "version"],
+  "properties": {
+    "batchId": { "type": "string", "format": "uuid" },
+    "sourceSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "state": { "enum": ["UPLOADED", "VALIDATED", "VALIDATION_FAILED", "COMMITTING", "COMMITTED", "ROLLED_BACK"] },
+    "totalRows": { "type": "integer", "minimum": 1, "maximum": 100000 },
+    "validRows": { "type": "integer", "minimum": 0 },
+    "invalidRows": { "type": "integer", "minimum": 0 },
+    "version": { "type": "integer", "minimum": 0 }
+  }
+}

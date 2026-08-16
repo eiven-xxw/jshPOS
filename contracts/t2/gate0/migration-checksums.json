@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1.0",
+  "policy": "Gate 0 published migration files are append-only; checksum changes require a new migration and ADR/RTM review.",
+  "files": [
+    {
+      "path": "server/ruoyi-modules/jshpos-foundation/src/main/resources/db/migration/V202608160001__gate0_foundation.sql",
+      "sha256": "a46e76a6826e2b384937b2a5f22e30c4b45f177bf61139915ef7e5e18f9bfa26"
+    },
+    {
+      "path": "server/ruoyi-modules/jshpos-foundation/src/main/resources/db/migration/V202608160002__gate0_foundation_permissions.sql",
+      "sha256": "88079ed48445b74360b6574c577702c43dc89eb36fbabb321a329a04a1c964ff"
+    }
+  ]
+}

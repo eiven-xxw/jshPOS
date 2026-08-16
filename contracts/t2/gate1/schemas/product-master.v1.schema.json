@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.jshpos.invalid/t2/gate1/product-master.v1.schema.json",
+  "title": "Gate 1 Draft Product Master",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["skuId", "code", "name", "status", "primaryUnitId", "units", "barcodes", "version"],
+  "properties": {
+    "skuId": { "type": "integer", "minimum": 1 },
+    "code": { "type": "string", "pattern": "^[A-Z0-9][A-Z0-9_-]{1,31}$" },
+    "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+    "categoryId": { "type": ["integer", "null"], "minimum": 1 },
+    "brandId": { "type": ["integer", "null"], "minimum": 1 },
+    "status": { "enum": ["DRAFT", "ACTIVE", "INACTIVE"] },
+    "primaryUnitId": { "type": "integer", "minimum": 1 },
+    "units": {
+      "type": "array", "minItems": 1, "maxItems": 32,
+      "items": { "$ref": "#/$defs/unit" }
+    },
+    "barcodes": {
+      "type": "array", "maxItems": 64,
+      "items": { "$ref": "#/$defs/barcode" }
+    },
+    "version": { "type": "integer", "minimum": 0 }
+  },
+  "$defs": {
+    "unit": {
+      "type": "object", "additionalProperties": false,
+      "required": ["unitId", "name", "conversionNumerator", "conversionDenominator", "allowFraction"],
+      "properties": {
+        "unitId": { "type": "integer", "minimum": 1 },
+        "name": { "type": "string", "minLength": 1, "maxLength": 20 },
+        "conversionNumerator": { "type": "integer", "minimum": 1 },
+        "conversionDenominator": { "type": "integer", "minimum": 1 },
+        "allowFraction": { "type": "boolean" }
+      }
+    },
+    "barcode": {
+      "type": "object", "additionalProperties": false,
+      "required": ["barcode", "unitId", "kind", "status"],
+      "properties": {
+        "barcode": { "type": "string", "pattern": "^[0-9A-Za-z_-]{4,64}$" },
+        "unitId": { "type": "integer", "minimum": 1 },
+        "kind": { "enum": ["STANDARD", "INTERNAL", "WEIGHT_RULE"] },
+        "status": { "enum": ["ACTIVE", "INACTIVE"] }
+      }
+    }
+  }
+}

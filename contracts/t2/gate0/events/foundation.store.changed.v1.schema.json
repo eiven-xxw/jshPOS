@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.jshpos.invalid/foundation.store.changed.v1.schema.json",
+  "title": "foundation.store.changed.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["eventId", "eventType", "schemaVersion", "occurredAt", "tenantId", "correlationId", "aggregateType", "aggregateId", "revision", "data"],
+  "properties": {
+    "eventId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "eventType": {"const": "foundation.store.changed.v1"},
+    "schemaVersion": {"const": "1.0"},
+    "occurredAt": {"type": "string", "format": "date-time"},
+    "tenantId": {"type": "string", "minLength": 1, "maxLength": 20},
+    "correlationId": {"type": "string", "minLength": 16, "maxLength": 64},
+    "aggregateType": {"const": "STORE"},
+    "aggregateId": {"type": "string", "pattern": "^[1-9][0-9]*$"},
+    "revision": {"type": "integer", "minimum": 0},
+    "data": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["changeType", "orgUnitId", "code", "status", "zoneId", "businessDayStart"],
+      "properties": {
+        "changeType": {"enum": ["CREATED", "UPDATED", "STATUS_CHANGED"]},
+        "orgUnitId": {"type": "integer"},
+        "code": {"type": "string"},
+        "status": {"enum": ["PREPARING", "ACTIVE", "INACTIVE"]},
+        "zoneId": {"type": "string"},
+        "businessDayStart": {"type": "string", "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$"}
+      }
+    }
+  }
+}

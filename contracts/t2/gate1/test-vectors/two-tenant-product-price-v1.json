@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "1.0",
+  "seed": "gate1-two-tenant-product-price-v1",
+  "evidenceLevel": "STATIC",
+  "syntheticOnly": true,
+  "tenants": [
+    {
+      "alias": "TENANT_A",
+      "storeId": 101,
+      "products": [
+        {
+          "skuId": 10001,
+          "code": "A-WATER-550",
+          "name": "虚构饮用水550ml",
+          "status": "ACTIVE",
+          "primaryUnitId": 50001,
+          "units": [{ "unitId": 50001, "name": "瓶", "conversionNumerator": 1, "conversionDenominator": 1, "allowFraction": false }],
+          "barcodes": [{ "barcode": "6900000000001", "unitId": 50001, "kind": "STANDARD", "status": "ACTIVE" }],
+          "version": 1
+        }
+      ],
+      "prices": [{ "skuId": 10001, "unitId": 50001, "tenantBaseMinor": 250, "storeMinor": 229, "expectedMinor": 229 }]
+    },
+    {
+      "alias": "TENANT_B",
+      "storeId": 201,
+      "products": [
+        {
+          "skuId": 20001,
+          "code": "B-SNACK-001",
+          "name": "虚构零食100g",
+          "status": "ACTIVE",
+          "primaryUnitId": 60001,
+          "units": [{ "unitId": 60001, "name": "袋", "conversionNumerator": 1, "conversionDenominator": 1, "allowFraction": false }],
+          "barcodes": [{ "barcode": "6900000000002", "unitId": 60001, "kind": "STANDARD", "status": "ACTIVE" }],
+          "version": 1
+        }
+      ],
+      "prices": [{ "skuId": 20001, "unitId": 60001, "tenantBaseMinor": 399, "storeMinor": null, "expectedMinor": 399 }]
+    }
+  ],
+  "attacks": [
+    { "id": "G1-TEN-API-001", "actor": "TENANT_A", "targetSkuId": 20001, "expected": "NOT_VISIBLE" },
+    { "id": "G1-TEN-BARCODE-001", "actor": "TENANT_A", "targetBarcode": "6900000000002", "expected": "NOT_VISIBLE" },
+    { "id": "G1-TEN-PACKAGE-001", "actor": "TENANT_A", "targetStoreId": 201, "expected": "REJECT_TENANT_MISMATCH" }
+  ]
+}

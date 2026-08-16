@@ -1,0 +1,177 @@
+openapi: 3.1.0
+info:
+  title: JSH POS Gate 1 Product Price API Draft
+  version: 0.1.0-draft
+  description: Contract preparation only; all mapped requirements remain DRAFT and no runtime implementation is authorized.
+servers:
+  - url: /api/v1/catalog
+security:
+  - saToken: []
+paths:
+  /products:
+    get:
+      operationId: listProductsDraft
+      x-requirement-id: T2-PRD-001
+      x-permission: catalog:product:query
+      responses: { "200": { $ref: "#/components/responses/ProductList" } }
+    post:
+      operationId: createProductDraft
+      x-requirement-id: T2-PRD-001
+      x-permission: catalog:product:manage
+      parameters: [{ $ref: "#/components/parameters/IdempotencyKey" }]
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/ProductCommand" } } }
+      responses: { "200": { $ref: "#/components/responses/Product" } }
+  /products/{skuId}:
+    put:
+      operationId: updateProductDraft
+      x-requirement-id: T2-PRD-001
+      x-permission: catalog:product:manage
+      parameters:
+        - $ref: "#/components/parameters/SkuId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/ProductUpdateCommand" } } }
+      responses: { "200": { $ref: "#/components/responses/Product" } }
+  /product-imports:
+    post:
+      operationId: createProductImportDraft
+      x-requirement-id: T2-PRD-003
+      x-permission: catalog:import:validate
+      parameters: [{ $ref: "#/components/parameters/IdempotencyKey" }]
+      requestBody:
+        required: true
+        content:
+          application/json: { schema: { $ref: "#/components/schemas/ImportCommand" } }
+      responses: { "202": { $ref: "#/components/responses/ImportBatch" } }
+  /product-imports/{batchId}/commit:
+    post:
+      operationId: commitProductImportDraft
+      x-requirement-id: T2-PRD-003
+      x-permission: catalog:import:commit
+      parameters:
+        - $ref: "#/components/parameters/BatchId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses: { "202": { $ref: "#/components/responses/ImportBatch" } }
+  /price-books:
+    post:
+      operationId: createPriceBookDraft
+      x-requirement-id: T2-PRC-001
+      x-permission: pricing:book:manage
+      parameters: [{ $ref: "#/components/parameters/IdempotencyKey" }]
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/PriceBookCommand" } } }
+      responses: { "200": { $ref: "#/components/responses/PriceBook" } }
+  /price-books/{priceBookId}/publish:
+    post:
+      operationId: publishPriceBookDraft
+      x-requirement-id: T2-PRC-002
+      x-permission: pricing:book:publish
+      parameters:
+        - $ref: "#/components/parameters/PriceBookId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/PublishCommand" } } }
+      responses: { "202": { $ref: "#/components/responses/PriceBook" } }
+  /data-packages/{storeId}/latest:
+    get:
+      operationId: getLatestDataPackageDraft
+      x-requirement-id: T2-DPK-001
+      x-permission: catalog:package:query
+      parameters:
+        - name: storeId
+          in: path
+          required: true
+          schema: { type: integer, format: int64, minimum: 1 }
+        - name: afterVersion
+          in: query
+          required: false
+          schema: { type: integer, minimum: 0 }
+      responses: { "200": { $ref: "#/components/responses/DataPackage" } }
+components:
+  securitySchemes:
+    saToken: { type: apiKey, in: header, name: Authorization }
+  parameters:
+    IdempotencyKey: { name: Idempotency-Key, in: header, required: true, schema: { type: string, format: uuid } }
+    SkuId: { name: skuId, in: path, required: true, schema: { type: integer, format: int64, minimum: 1 } }
+    BatchId: { name: batchId, in: path, required: true, schema: { type: string, format: uuid } }
+    PriceBookId: { name: priceBookId, in: path, required: true, schema: { type: integer, format: int64, minimum: 1 } }
+  schemas:
+    ProductCommand:
+      type: object
+      additionalProperties: false
+      required: [code, name, primaryUnit, units, barcodes]
+      properties:
+        code: { type: string, pattern: "^[A-Z0-9][A-Z0-9_-]{1,31}$" }
+        name: { type: string, minLength: 1, maxLength: 120 }
+        primaryUnit: { type: string, minLength: 1, maxLength: 20 }
+        units: { type: array, minItems: 1, maxItems: 32, items: { type: object } }
+        barcodes: { type: array, maxItems: 64, items: { type: object } }
+    ProductUpdateCommand:
+      allOf:
+        - $ref: "#/components/schemas/ProductCommand"
+        - type: object
+          required: [expectedVersion, status]
+          properties:
+            expectedVersion: { type: integer, minimum: 0 }
+            status: { enum: [DRAFT, ACTIVE, INACTIVE] }
+    ImportCommand:
+      type: object
+      additionalProperties: false
+      required: [sourceObjectKey, sourceSha256]
+      properties:
+        sourceObjectKey: { type: string, pattern: "^imports/[A-Za-z0-9/_-]{1,180}\\.(csv|xlsx)$" }
+        sourceSha256: { type: string, pattern: "^[a-f0-9]{64}$" }
+    PriceBookCommand:
+      type: object
+      additionalProperties: false
+      required: [scopeType, currency, effectiveFrom, items]
+      properties:
+        scopeType: { enum: [TENANT_BASE, STORE] }
+        storeId: { type: [integer, "null"], minimum: 1 }
+        currency: { const: CNY }
+        effectiveFrom: { type: string, format: date-time }
+        effectiveUntil: { type: [string, "null"], format: date-time }
+        items: { type: array, minItems: 1, maxItems: 100000, items: { type: object } }
+    PublishCommand:
+      type: object
+      additionalProperties: false
+      required: [expectedVersion]
+      properties: { expectedVersion: { type: integer, minimum: 0 } }
+    ProductView: { $ref: "./schemas/product-master.v1.schema.json" }
+    ImportBatchView: { $ref: "./schemas/product-import-batch.v1.schema.json" }
+    PriceBookView: { $ref: "./schemas/price-book.v1.schema.json" }
+    DataPackageView: { $ref: "./schemas/data-package-manifest.v1.schema.json" }
+    ProductListEnvelope:
+      type: object
+      required: [code, msg, data]
+      properties:
+        code: { const: 200 }
+        msg: { type: string }
+        data: { type: array, items: { $ref: "#/components/schemas/ProductView" } }
+    ProductEnvelope:
+      type: object
+      required: [code, msg, data]
+      properties: { code: { const: 200 }, msg: { type: string }, data: { $ref: "#/components/schemas/ProductView" } }
+    ImportBatchEnvelope:
+      type: object
+      required: [code, msg, data]
+      properties: { code: { const: 200 }, msg: { type: string }, data: { $ref: "#/components/schemas/ImportBatchView" } }
+    PriceBookEnvelope:
+      type: object
+      required: [code, msg, data]
+      properties: { code: { const: 200 }, msg: { type: string }, data: { $ref: "#/components/schemas/PriceBookView" } }
+    DataPackageEnvelope:
+      type: object
+      required: [code, msg, data]
+      properties: { code: { const: 200 }, msg: { type: string }, data: { $ref: "#/components/schemas/DataPackageView" } }
+  responses:
+    ProductList: { description: Draft product list, content: { application/json: { schema: { $ref: "#/components/schemas/ProductListEnvelope" } } } }
+    Product: { description: Draft product, content: { application/json: { schema: { $ref: "#/components/schemas/ProductEnvelope" } } } }
+    ImportBatch: { description: Draft import batch, content: { application/json: { schema: { $ref: "#/components/schemas/ImportBatchEnvelope" } } } }
+    PriceBook: { description: Draft price book, content: { application/json: { schema: { $ref: "#/components/schemas/PriceBookEnvelope" } } } }
+    DataPackage: { description: Draft data package, content: { application/json: { schema: { $ref: "#/components/schemas/DataPackageEnvelope" } } } }

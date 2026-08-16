@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
 import re
 import subprocess
@@ -18,6 +19,9 @@ EXPECTED_BRANCH = "t2/gate0-sprint0-20260816"
 ADMISSION = ROOT / "contracts" / "t2" / "gate0" / "gate0-admission.json"
 RTM = ROOT / "docs" / "governance" / "rtm.csv"
 DOC_DIR = ROOT / "docs" / "t2-gate0"
+GATE1_DOC_DIR = ROOT / "docs" / "t2-gate1-contracts"
+GATE1_CONTRACT_DIR = ROOT / "contracts" / "t2" / "gate1"
+MIGRATION_CHECKSUMS = ROOT / "contracts" / "t2" / "gate0" / "migration-checksums.json"
 
 GATE0_IDS = {
     "T2-IAM-001", "T2-ORG-001", "T2-RBAC-001", "T2-CFG-001",
@@ -36,6 +40,12 @@ REQUIRED_DOCS = {
     "04_权限审计API与事件契约.md",
     "05_Flyway容量兼容与回退设计.md",
     "06_测试矩阵CI与证据规范.md",
+}
+REQUIRED_GATE1_DOCS = {
+    "README.md",
+    "01_领域模型状态不变量与数据主权.md",
+    "02_API事件迁移容量与回退设计.md",
+    "03_合成向量与验收用例.md",
 }
 FORBIDDEN_RUNTIME_SEGMENTS = {
     "order", "payment", "refund", "inventory", "procurement", "cost", "promotion",
@@ -108,6 +118,39 @@ def check_docs_and_admission() -> dict[str, object]:
     return {"documents": len(REQUIRED_DOCS), "admitted": sorted(GATE0_IDS)}
 
 
+def check_gate1_contract_only() -> dict[str, object]:
+    actual_docs = {path.name for path in GATE1_DOC_DIR.glob("*.md")}
+    missing_docs = sorted(REQUIRED_GATE1_DOCS - actual_docs)
+    if missing_docs:
+        fail(f"missing Gate 1 contract-prep documents: {missing_docs}")
+    required_files = {
+        "openapi-product-price-draft.yaml",
+        "schemas/product-master.v1.schema.json",
+        "schemas/product-import-batch.v1.schema.json",
+        "schemas/price-book.v1.schema.json",
+        "schemas/data-package-manifest.v1.schema.json",
+        "events/product.changed.v1.schema.json",
+        "events/price-book.published.v1.schema.json",
+        "events/data-package.available.v1.schema.json",
+        "test-vectors/two-tenant-product-price-v1.json",
+    }
+    missing_files = sorted(
+        item for item in required_files if not (GATE1_CONTRACT_DIR / item).is_file()
+    )
+    if missing_files:
+        fail(f"missing Gate 1 contract-prep files: {missing_files}")
+    corpus = "\n".join(path.read_text(encoding="utf-8") for path in GATE1_DOC_DIR.glob("*.md"))
+    for requirement_id in sorted(GATE1_IDS):
+        if requirement_id not in corpus:
+            fail(f"Gate 1 contract-prep corpus missing {requirement_id}")
+    if "全部需求继续保持 `DRAFT`" not in corpus:
+        fail("Gate 1 contract preparation must explicitly remain DRAFT")
+    vector = json.loads((GATE1_CONTRACT_DIR / "test-vectors/two-tenant-product-price-v1.json").read_text(encoding="utf-8"))
+    if vector.get("syntheticOnly") is not True or len(vector.get("tenants", [])) != 2:
+        fail("Gate 1 test vector must contain exactly two synthetic tenants")
+    return {"documents": len(REQUIRED_GATE1_DOCS), "contracts": len(required_files), "status": "DRAFT"}
+
+
 def check_rtm() -> dict[str, object]:
     with RTM.open(encoding="utf-8-sig", newline="") as handle:
         rows = {row["requirement_id"]: row for row in csv.DictReader(handle)}
@@ -151,6 +194,22 @@ def check_runtime_scope() -> list[str]:
     return violations
 
 
+def check_migration_checksums() -> dict[str, str]:
+    ledger = json.loads(MIGRATION_CHECKSUMS.read_text(encoding="utf-8"))
+    results: dict[str, str] = {}
+    for item in ledger.get("files", []):
+        path = ROOT / item["path"]
+        if not path.is_file():
+            fail(f"migration checksum target missing: {item['path']}")
+        actual = hashlib.sha256(path.read_bytes()).hexdigest()
+        if actual != item["sha256"]:
+            fail(f"published migration changed: {item['path']}")
+        results[item["path"]] = actual
+    if len(results) != 2:
+        fail("Gate 0 requires exactly two sealed migration files")
+    return results
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=Path)
@@ -163,7 +222,9 @@ def main() -> None:
         "commitSha": git("rev-parse", "HEAD"),
         "baseline": check_baseline(),
         "design": check_docs_and_admission(),
+        "gate1ContractOnly": check_gate1_contract_only(),
         "requirements": check_rtm(),
+        "migrationChecksums": check_migration_checksums(),
         "forbiddenRuntimeViolations": check_runtime_scope(),
         "externalEvidence": {"sandbox": 0, "realDevice": 0, "pilot": 0},
     }
@@ -171,7 +232,7 @@ def main() -> None:
         output = args.output if args.output.is_absolute() else ROOT / args.output
         output.parent.mkdir(parents=True, exist_ok=True)
         output.write_text(json.dumps(evidence, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print("T2-GATE0 OK: baseline=sealed admission=8/8 gate1=DRAFT forbidden-runtime=0")
+    print("T2-GATE0 OK: baseline=sealed admission=8/8 gate1-contracts=DRAFT forbidden-runtime=0")
 
 
 if __name__ == "__main__":

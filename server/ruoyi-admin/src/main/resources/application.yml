@@ -207,6 +207,20 @@ springdoc:
       packages-to-scan: org.dromara.generator
     - group: 5.工作流模块
       packages-to-scan: org.dromara.workflow
+    - group: 6.鲸熵汇基础模块
+      packages-to-scan: com.jingshanghui.pos.foundation.interfaces.rest
+
+--- # Gate 0 Flyway 数据库版本治理
+spring:
+  flyway:
+    enabled: ${JSH_FLYWAY_ENABLED:true}
+    locations: classpath:db/migration
+    table: jshpos_flyway_schema_history
+    baseline-on-migrate: true
+    baseline-version: 0
+    validate-on-migrate: true
+    clean-disabled: true
+    out-of-order: false
 
 # 防止XSS攻击
 xss:

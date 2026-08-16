@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.jshpos.invalid/t2/gate1/events/product.changed.v1.schema.json",
+  "title": "Gate 1 Draft Product Changed Event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["eventId", "eventType", "occurredAt", "aggregateId", "aggregateVersion", "correlationId", "data"],
+  "properties": {
+    "eventId": { "type": "string", "format": "uuid" },
+    "eventType": { "const": "product.changed.v1" },
+    "occurredAt": { "type": "string", "format": "date-time" },
+    "aggregateId": { "type": "integer", "minimum": 1 },
+    "aggregateVersion": { "type": "integer", "minimum": 1 },
+    "correlationId": { "type": "string", "minLength": 8, "maxLength": 64 },
+    "data": {
+      "type": "object", "additionalProperties": false,
+      "required": ["changeType", "skuId", "status"],
+      "properties": {
+        "changeType": { "enum": ["CREATED", "UPDATED", "ACTIVATED", "INACTIVATED"] },
+        "skuId": { "type": "integer", "minimum": 1 },
+        "status": { "enum": ["DRAFT", "ACTIVE", "INACTIVE"] }
+      }
+    }
+  }
+}

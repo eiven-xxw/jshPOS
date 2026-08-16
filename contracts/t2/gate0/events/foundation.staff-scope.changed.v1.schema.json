@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.jshpos.invalid/foundation.staff-scope.changed.v1.schema.json",
+  "title": "foundation.staff-scope.changed.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["eventId", "eventType", "schemaVersion", "occurredAt", "tenantId", "correlationId", "aggregateType", "aggregateId", "revision", "data"],
+  "properties": {
+    "eventId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "eventType": {"const": "foundation.staff-scope.changed.v1"},
+    "schemaVersion": {"const": "1.0"},
+    "occurredAt": {"type": "string", "format": "date-time"},
+    "tenantId": {"type": "string", "minLength": 1, "maxLength": 20},
+    "correlationId": {"type": "string", "minLength": 16, "maxLength": 64},
+    "aggregateType": {"const": "STAFF_SCOPE"},
+    "aggregateId": {"type": "string", "pattern": "^[1-9][0-9]*$"},
+    "revision": {"type": "integer", "minimum": 0},
+    "data": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["changeType", "userId", "scopeType", "status"],
+      "properties": {
+        "changeType": {"enum": ["GRANTED", "REVOKED"]},
+        "userId": {"type": "integer"},
+        "scopeType": {"enum": ["TENANT", "ORG_SUBTREE", "STORE"]},
+        "orgUnitId": {"type": ["integer", "null"]},
+        "storeId": {"type": ["integer", "null"]},
+        "status": {"enum": ["ACTIVE", "REVOKED"]}
+      }
+    }
+  }
+}
