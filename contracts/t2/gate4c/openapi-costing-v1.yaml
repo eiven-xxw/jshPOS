@@ -1,0 +1,49 @@
+openapi: 3.1.0
+info:
+  title: 鲸熵汇 Gate 4C 成本查询与治理 API
+  version: 1.0.0
+  description: 成本写入仅由库存 Owner 进程内端口触发；本 API 不接受 tenant_id、单位成本或成本流水。
+paths:
+  /api/inventory/cost-policies:
+    post:
+      operationId: publishCostPolicy
+      x-requirement-id: T2-CST-001
+      security: [{bearerAuth: []}]
+      responses:
+        "200": {description: 不可变仓级成本策略已发布}
+        "409": {description: 策略、范围、货币或生效时间冲突}
+  /api/inventory/cost-balances/{warehouseId}/{skuId}:
+    get:
+      operationId: getCostBalance
+      x-requirement-id: T2-CST-001
+      security: [{bearerAuth: []}]
+      parameters:
+        - {name: warehouseId, in: path, required: true, schema: {type: string, pattern: "^[0-9A-HJKMNP-TV-Z]{26}$"}}
+        - {name: skuId, in: path, required: true, schema: {type: integer, format: int64, minimum: 1}}
+      responses:
+        "200": {description: 可由成本流水重建的仓级成本余额}
+        "404": {description: 不存在或对可信租户不可见}
+  /api/inventory/cost-ledgers/{warehouseId}/{skuId}:
+    get:
+      operationId: listCostLedger
+      x-requirement-id: T2-CST-001
+      security: [{bearerAuth: []}]
+      responses:
+        "200": {description: 按成本流水序号升序返回不可变流水}
+  /api/inventory/cost-balances/{warehouseId}/{skuId}/rebuild:
+    post:
+      operationId: rebuildCostBalance
+      x-requirement-id: T2-CST-001
+      security: [{bearerAuth: []}]
+      responses:
+        "200": {description: 已验证或原子切换重建投影}
+        "409": {description: 版本冲突、流水缺口或摘要不一致}
+components:
+  securitySchemes:
+    bearerAuth: {type: http, scheme: bearer}
+  schemas:
+    Decimal6:
+      type: string
+      pattern: "^-?[0-9]+\\.[0-9]{6}$"
+      description: 禁止 JSON Number；数量或以分计量的高精度成本。
+

@@ -55,4 +55,8 @@
 | CR-T2G3A-002 | 2026-08-16 | IN_PROGRESS | Gate 3A 四项完成数据主权、状态机、不变量、权限、审计、API/事件、Flyway、容量、回退、Fake 向量和 CI 设计准入，由 DRAFT 经 READY 进入 IN_PROGRESS | T2-PAY-001、T2-PAY-003、T2-REF-001、T2-REC-001、ADR-022 | 只准入 jshpos-payment Provider 无关运行时；禁止 Provider HTTP/SDK、外部回调端点和账单下载器 |
 | CR-DEV-002 | 2026-08-16 | APPROVED | 采纳内部方法参数对象规范：自研内部业务方法 5 个及以上业务参数默认使用不可变、内聚的具名参数对象；同类型易错参数、多个布尔开关或共同变化参数可提前触发，并明确分层命名、安全边界和合理例外 | AGENTS.md、技术架构与开发规范 10.2.4、backend-development-standards.md、CR-DEV-002 | 项目发起人提出并授权分析后采纳；仅增强工程治理，不改变 Gate 3A 范围、需求状态或支付网络边界 |
 
+| CR-T2G4B-001 | 2026-08-17 | ACCEPTED | 项目发起人确认《T2 Gate 4B / Sprint S6 周门禁报告》并接受 Gate 4B CONDITIONAL PASS，授权 `T2-INV-003`、`T2-PUR-001` 由 VERIFIED 转为 ACCEPTED | T2-INV-003、T2-PUR-001、ADR-024 | 项目发起人 2026-08-17 明确确认；REAL_DEVICE、SANDBOX、PILOT 阻断不变 |
+| CR-T2G4C-001 | 2026-08-17 | APPROVED | 以封存 tag 为唯一不可变基线、以 Gate 4B 最终报告提交 `02e1854` 为起点，按 CONDITIONAL GO 启动 Gate 4C / Sprint S7；仅准入仓级移动加权成本，调拨只做设计 | T2-CST-001、T2-TRF-001、ADR-025 | 项目发起人 2026-08-17 明确确认；支付 Provider 网络和后续 Gate 继续禁止 |
+| CR-T2G4C-002 | 2026-08-17 | IN_PROGRESS | T2-CST-001 完成数据主权、输入事实、单调顺序、成本不变量、权限、审计、API/事件、Flyway、容量、回退、固定向量和 CI 限定准入，由 DRAFT 经 READY 进入 IN_PROGRESS | T2-CST-001、ADR-025 | 只准入 jshpos-costing；T2-TRF-001 保持 DRAFT，外部证据为0 |
+
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。

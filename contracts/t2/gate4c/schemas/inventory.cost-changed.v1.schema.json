@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.jingshanghui.example/inventory/inventory.cost-changed.v1.schema.json",
+  "title": "inventory.cost.changed.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "eventId", "costLedgerId", "warehouseId", "skuId", "currencyCode", "inventoryLedgerId", "inventoryLedgerSequence", "movementType", "quantityDelta", "costAmountDeltaMinor", "costAmountAfterMinor", "avgUnitCostAfterMinor", "costEstimated", "varianceAmountMinor", "policyVersionId", "correlationId"],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "eventId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "costLedgerId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "warehouseId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "skuId": {"type": "integer", "minimum": 1},
+    "currencyCode": {"const": "CNY"},
+    "inventoryLedgerId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "inventoryLedgerSequence": {"type": "integer", "minimum": 1},
+    "movementType": {"enum": ["PURCHASE_RECEIPT_IN", "PURCHASE_RETURN_OUT", "SALE_OUT", "SALE_RETURN_IN", "STOCKTAKE_GAIN", "STOCKTAKE_LOSS", "REVERSAL"]},
+    "quantityDelta": {"type": "string", "pattern": "^-?[0-9]+\\.[0-9]{6}$"},
+    "unitCostMinor": {"type": "string", "pattern": "^[0-9]+\\.[0-9]{6}$"},
+    "costAmountDeltaMinor": {"type": "string", "pattern": "^-?[0-9]+\\.[0-9]{6}$"},
+    "costAmountAfterMinor": {"type": "string", "pattern": "^-?[0-9]+\\.[0-9]{6}$"},
+    "avgUnitCostAfterMinor": {"type": "string", "pattern": "^[0-9]+\\.[0-9]{6}$"},
+    "costEstimated": {"type": "boolean"},
+    "varianceAmountMinor": {"type": "string", "pattern": "^-?[0-9]+\\.[0-9]{6}$"},
+    "policyVersionId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "correlationId": {"type": "string", "minLength": 1, "maxLength": 96}
+  },
+  "x-requirement-id": "T2-CST-001"
+}
+

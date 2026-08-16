@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "1.0",
+  "phase": "T2-GATE4C-SPRINT-S7",
+  "baselineTag": "t2-prep-baseline-2026-08-16",
+  "branchStart": "02e1854a9b2a63a46323f27457bd61a708f740a9",
+  "admittedRequirements": ["T2-CST-001"],
+  "designOnlyRequirements": ["T2-TRF-001"],
+  "blockedRequirements": ["T2-PAY-002"],
+  "costPolicy": {
+    "scope": "WAREHOUSE",
+    "currency": "CNY",
+    "quantityScale": 6,
+    "costScale": 6,
+    "costUnit": "MINOR_CURRENCY_UNIT",
+    "roundingMode": "HALF_EVEN",
+    "zeroQuantityMode": "ZERO_AMOUNT_KEEP_LAST_UNIT_COST"
+  },
+  "runtimeBoundary": {
+    "providerNetworkCallsAllowed": 0,
+    "costRuntimeAllowed": true,
+    "transferRuntimeAllowed": false,
+    "promotionRuntimeAllowed": false,
+    "accountsPayableRuntimeAllowed": false,
+    "generalLedgerRuntimeAllowed": false
+  },
+  "evidence": {"sandbox": 0, "realDevice": 0, "pilot": 0}
+}
+

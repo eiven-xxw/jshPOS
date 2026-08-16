@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "1.0",
+  "phase": "T2-GATE4C-SPRINT-S7",
+  "tenants": ["TENANT_A", "TENANT_B"],
+  "fixedVectors": [
+    {"seed": "CST-FIRST-RECEIPT-001", "assertion": "first receipt establishes quantity amount and average"},
+    {"seed": "CST-WEIGHTED-RECEIPT-002", "assertion": "consecutive receipts use weighted average"},
+    {"seed": "CST-SALE-SNAPSHOT-003", "assertion": "partial sale freezes transaction average"},
+    {"seed": "CST-SALE-RETURN-004", "assertion": "sale return restores original sale cost"},
+    {"seed": "CST-PURCHASE-RETURN-005", "assertion": "purchase return uses related receipt cost"},
+    {"seed": "CST-ZERO-CLOSE-006", "assertion": "zero quantity closes amount and preserves last unit cost"},
+    {"seed": "CST-NEGATIVE-SALE-007", "assertion": "negative sale requires last cost and is estimated"},
+    {"seed": "CST-NEGATIVE-SETTLE-008", "assertion": "later receipt settles deficit and records variance"},
+    {"seed": "CST-NO-COST-009", "assertion": "outbound without any cost source fails closed"},
+    {"seed": "CST-STOCKTAKE-GAIN-010", "assertion": "stocktake gain uses last valid average"},
+    {"seed": "CST-STOCKTAKE-LOSS-011", "assertion": "stocktake loss uses current average"},
+    {"seed": "CST-REPLAY-012", "assertion": "duplicate inventory ledger returns original result"},
+    {"seed": "CST-IDEM-CONFLICT-013", "assertion": "same inventory ledger with another digest is rejected"},
+    {"seed": "CST-SEQUENCE-GAP-014", "assertion": "out of order sequence gap is rejected"},
+    {"seed": "CST-LATE-015", "assertion": "unknown late sequence requires rebuild"},
+    {"seed": "CST-CONCURRENT-016", "assertion": "balance row lock serializes concurrent cost effects"},
+    {"seed": "CST-ROUND-HALF-EVEN-017", "assertion": "six decimal half even rounding is stable"},
+    {"seed": "CST-REBUILD-018", "assertion": "ledger rebuild matches online projection"},
+    {"seed": "CST-ROLLBACK-019", "assertion": "cost failure rolls back source inventory transaction"},
+    {"seed": "CST-OUTBOX-020", "assertion": "cost ledger audit and outbox share transaction"},
+    {"seed": "CST-TENANT-021", "assertion": "cross tenant ledger and balance are invisible"},
+    {"seed": "CST-CURRENCY-022", "assertion": "non CNY or mixed currency is rejected"},
+    {"seed": "CST-REVERSAL-023", "assertion": "authoritative reversal appends exact inverse without history update"},
+    {"seed": "CST-MIGRATION-024", "assertion": "V16 V17 migrate validate and forward repair safely"}
+  ],
+  "providerNetworkCalls": 0,
+  "externalEvidence": {"sandbox": 0, "realDevice": 0, "pilot": 0}
+}
+
