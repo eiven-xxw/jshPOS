@@ -12,15 +12,9 @@ def main() -> None:
     json_contracts = [
         ROOT / "contracts" / "events" / "envelope.schema.json",
         ROOT / "contracts" / "connectors" / "manifest.schema.json",
-        ROOT / "contracts" / "poc" / "t1" / "provider-profile.schema.json",
-        ROOT / "contracts" / "poc" / "t1" / "payment-operation.schema.json",
-        ROOT / "contracts" / "poc" / "t1" / "device-operation.schema.json",
-        ROOT / "contracts" / "poc" / "t1" / "fault-script.schema.json",
-        ROOT / "contracts" / "poc" / "t1" / "sync-event.schema.json",
-        ROOT / "contracts" / "poc" / "t1" / "data-package.schema.json",
-        ROOT / "contracts" / "poc" / "t1" / "upgrade-case.schema.json",
-        ROOT / "contracts" / "poc" / "t1" / "evidence.schema.json",
     ]
+    json_contracts.extend(sorted((ROOT / "contracts" / "poc" / "t1").rglob("*.schema.json")))
+    schema_ids: set[str] = set()
     for path in json_contracts:
         with path.open(encoding="utf-8") as handle:
             document = json.load(handle)
@@ -28,6 +22,9 @@ def main() -> None:
             raise SystemExit(f"CONTRACT ERROR: {path} is not JSON Schema 2020-12")
         if not document.get("$id"):
             raise SystemExit(f"CONTRACT ERROR: {path} has no $id")
+        if document["$id"] in schema_ids:
+            raise SystemExit(f"CONTRACT ERROR: duplicate $id {document['$id']}")
+        schema_ids.add(document["$id"])
 
     openapi = (ROOT / "contracts" / "openapi" / "openapi.yaml").read_text(encoding="utf-8")
     for token in ("openapi: 3.1.0", "version: 0.0.0-t0", "/internal/health:"):

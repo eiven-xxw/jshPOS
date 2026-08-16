@@ -1,0 +1,12 @@
+{
+  "fixtureVersion": "2.0",
+  "evidenceLevel": "FAKE",
+  "synthetic": true,
+  "eventCount": 10000,
+  "seeds": [2101, 2102, 2103, 2104, 2105, 2106, 2107, 2108, 2109, 2110, 2111, 2112, 2113, 2114, 2115, 2116, 2117, 2118, 2119, 2120],
+  "duplicateCopiesMin": 1,
+  "duplicateCopiesMax": 3,
+  "conflictsPerSeed": 25,
+  "cursorCrashPoints": ["AFTER_INBOX_BEFORE_EFFECT", "AFTER_EFFECT_BEFORE_CURSOR", "AFTER_CURSOR_BEFORE_COMMIT"],
+  "expected": {"lost": 0, "effectsPerEvent": 1, "conflictsDetectedPercent": 100, "terminalCursor": 10000}
+}

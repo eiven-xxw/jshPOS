@@ -118,15 +118,24 @@ def check_baseline_and_scope() -> None:
         "AGENTS.md",
         ".gitignore",
         ".github/workflows/t1-week1.yml",
+        ".github/workflows/t1-week2.yml",
         "docs/governance/rtm.csv",
         "docs/governance/change-log.md",
         "docs/adr/README.md",
         "docs/adr/ADR-017-t1-risk-poc-scope-and-integration-depth.md",
         "scripts/check_t1_prep.py",
         "scripts/check_t1_week1.py",
+        "scripts/check_t1_week2.py",
         "scripts/check_contracts.py",
     }
-    prefixes = ("docs/t1-prep/", "docs/t1-week1/", "contracts/poc/t1/", "poc/t1-week1/")
+    prefixes = (
+        "docs/t1-prep/",
+        "docs/t1-week1/",
+        "docs/t1-week2/",
+        "contracts/poc/t1/",
+        "poc/t1-week1/",
+        "poc/t1-week2/",
+    )
     unexpected = sorted(
         name for name in changed
         if name.replace("\\", "/") not in exact

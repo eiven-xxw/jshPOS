@@ -2,8 +2,8 @@
 
 > 基线：annotated tag `t0-baseline-2026-08-16`
 > 准备分支：`t1/prep-20260816`
-> 阶段：T1 Week 1（项目发起人已按 `CONDITIONAL GO` 确认）
-> 当前许可：仅执行 RTM 已转为 `IN_PROGRESS` 的 `STATIC/FAKE` 契约、故障夹具和 CI 门禁；任何情况下均不得借 T1 开发正式商业业务。
+> 阶段：T1 Week 2（项目发起人已确认 Week 1 报告并按 `CONDITIONAL GO` 授权）
+> 当前许可：仅执行 RTM 已准入的 SQLite/Inbox、虚构租户、合成数据包、虚构升级和支付 Fake 内部探针；任何情况下均不得借 T1 开发正式商业业务。
 
 ## 文档清单
 

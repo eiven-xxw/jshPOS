@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jsh.example/contracts/poc/t1/week2/tenant-attack.schema.json",
+  "title": "T1 Week 2 synthetic tenant bypass attack",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["attackId", "entry", "actorTenant", "targetTenant", "vector", "expected", "synthetic"],
+  "properties": {
+    "attackId": {"type": "string", "pattern": "^TEN-W2-[A-Z0-9_-]+$"},
+    "entry": {"enum": ["API", "MAPPER", "RAW_SQL", "BACKGROUND_JOB", "CACHE", "EXPORT", "OBJECT_STORAGE"]},
+    "actorTenant": {"enum": ["TENANT_ALPHA", "TENANT_BETA", "NONE"]},
+    "targetTenant": {"enum": ["TENANT_ALPHA", "TENANT_BETA"]},
+    "vector": {"type": "string", "minLength": 1},
+    "expected": {"const": "DENY_AUDIT"},
+    "synthetic": {"const": true}
+  }
+}

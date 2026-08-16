@@ -1,0 +1,17 @@
+{
+  "fixtureVersion": "2.0",
+  "evidenceLevel": "FAKE",
+  "synthetic": true,
+  "tenants": ["TENANT_ALPHA", "TENANT_BETA"],
+  "repetitions": 3,
+  "entries": {
+    "API": ["header_tenant_swap", "body_tenant_swap", "path_tenant_swap", "id_guess"],
+    "MAPPER": ["missing_tenant_predicate", "join_cross_tenant", "aggregate_leak", "pagination_probe"],
+    "RAW_SQL": ["missing_bound_tenant", "injection_filter_bypass", "subquery_cross_tenant", "existence_probe"],
+    "BACKGROUND_JOB": ["missing_context", "default_tenant", "retry_context_swap", "batch_cross_tenant"],
+    "CACHE": ["key_collision", "poison_other_tenant", "lock_interference", "rate_limit_interference"],
+    "EXPORT": ["filter_tenant_swap", "job_context_swap", "download_token_swap", "expired_token"],
+    "OBJECT_STORAGE": ["prefix_swap", "path_traversal", "signed_path_swap", "cross_tenant_object_guess"]
+  },
+  "expected": "DENY_AUDIT"
+}

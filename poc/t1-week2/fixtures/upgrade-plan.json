@@ -1,0 +1,12 @@
+{
+  "fixtureVersion": "2.0",
+  "evidenceLevel": "FAKE",
+  "synthetic": true,
+  "repetitions": 20,
+  "normalUpgradeRepetitions": 30,
+  "supported": [
+    {"app": 1, "minSchema": 1, "maxSchema": 2},
+    {"app": 2, "minSchema": 2, "maxSchema": 3}
+  ],
+  "faults": ["DOWNLOAD_TRUNCATED", "BAD_DIGEST", "BAD_TEST_MAC", "SPACE_REJECTED", "MIGRATION_STEP1_KILL", "MIGRATION_STEP2_KILL", "MIGRATION_SQL_FAIL", "HEALTHCHECK_FAIL", "OLD_APP_NEW_SCHEMA"]
+}

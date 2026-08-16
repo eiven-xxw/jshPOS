@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jsh.example/contracts/poc/t1/week2/data-package-manifest.schema.json",
+  "title": "T1 Week 2 synthetic data package manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["manifestVersion", "packageId", "tenantId", "mode", "version", "baseVersion", "schemaVersion", "recordCount", "contentSha256", "testVectorMac", "signatureMode", "synthetic"],
+  "properties": {
+    "manifestVersion": {"const": "2.0"},
+    "packageId": {"type": "string", "pattern": "^SYN-PKG-[A-Z0-9_-]+$"},
+    "tenantId": {"enum": ["TENANT_ALPHA", "TENANT_BETA"]},
+    "mode": {"enum": ["FULL", "INCREMENTAL"]},
+    "version": {"type": "integer", "minimum": 1},
+    "baseVersion": {"type": ["integer", "null"], "minimum": 0},
+    "schemaVersion": {"type": "integer", "minimum": 1},
+    "recordCount": {"type": "integer", "minimum": 1, "maximum": 100000},
+    "contentSha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "testVectorMac": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "signatureMode": {"const": "HMAC_SHA256_FAKE_TEST_VECTOR_ONLY"},
+    "synthetic": {"const": true}
+  }
+}

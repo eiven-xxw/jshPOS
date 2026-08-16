@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jsh.example/contracts/poc/t1/week2/inbox-event.schema.json",
+  "title": "T1 Week 2 synthetic Inbox event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["eventId", "tenantId", "terminalId", "sequence", "kind", "payload", "synthetic"],
+  "properties": {
+    "eventId": {"type": "string", "pattern": "^SYN-W2-EVT-[0-9]{8}$"},
+    "tenantId": {"enum": ["TENANT_ALPHA", "TENANT_BETA"]},
+    "terminalId": {"type": "string", "pattern": "^SYN-TERM-[A-Z]+$"},
+    "sequence": {"type": "integer", "minimum": 1},
+    "kind": {"const": "SYNTHETIC_FACT"},
+    "payload": {"type": "object"},
+    "synthetic": {"const": true}
+  }
+}

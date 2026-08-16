@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jsh.example/contracts/poc/t1/week2/offline-probe.schema.json",
+  "title": "T1 Week 2 synthetic SQLite atomicity plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["fixtureVersion", "evidenceLevel", "synthetic", "repetitions", "pragmas", "crashPoints"],
+  "properties": {
+    "fixtureVersion": {"const": "2.0"},
+    "evidenceLevel": {"const": "FAKE"},
+    "synthetic": {"const": true},
+    "repetitions": {"type": "integer", "minimum": 20},
+    "pragmas": {
+      "type": "object",
+      "required": ["journalMode", "synchronous", "foreignKeys"],
+      "properties": {
+        "journalMode": {"const": "WAL"},
+        "synchronous": {"const": "FULL"},
+        "foreignKeys": {"const": true}
+      }
+    },
+    "crashPoints": {
+      "type": "array",
+      "minItems": 6,
+      "items": {"enum": ["BEFORE_BEGIN", "AFTER_FACT", "AFTER_INTENT", "AFTER_OUTBOX", "BEFORE_COMMIT", "AFTER_COMMIT"]}
+    }
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jsh.example/contracts/poc/t1/week2/upgrade-plan.schema.json",
+  "title": "T1 Week 2 synthetic App and SQLite upgrade plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["fixtureVersion", "evidenceLevel", "synthetic", "repetitions", "normalUpgradeRepetitions", "supported", "faults"],
+  "properties": {
+    "fixtureVersion": {"const": "2.0"},
+    "evidenceLevel": {"const": "FAKE"},
+    "synthetic": {"const": true},
+    "repetitions": {"type": "integer", "minimum": 20},
+    "normalUpgradeRepetitions": {"type": "integer", "minimum": 30},
+    "supported": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["app", "minSchema", "maxSchema"],
+        "properties": {
+          "app": {"type": "integer", "minimum": 1},
+          "minSchema": {"type": "integer", "minimum": 1},
+          "maxSchema": {"type": "integer", "minimum": 1}
+        }
+      }
+    },
+    "faults": {
+      "type": "array",
+      "items": {"enum": ["DOWNLOAD_TRUNCATED", "BAD_DIGEST", "BAD_TEST_MAC", "SPACE_REJECTED", "MIGRATION_STEP1_KILL", "MIGRATION_STEP2_KILL", "MIGRATION_SQL_FAIL", "HEALTHCHECK_FAIL", "OLD_APP_NEW_SCHEMA"]}
+    }
+  }
+}

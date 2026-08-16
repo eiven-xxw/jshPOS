@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jsh.example/contracts/poc/t1/week2/evidence.schema.json",
+  "title": "T1 Week 2 machine-readable evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "phase", "scope", "evidenceLevel", "generatedAt", "baselineTag", "commitSha", "results", "limitations"],
+  "properties": {
+    "schemaVersion": {"const": "2.0"},
+    "phase": {"const": "T1-WEEK2"},
+    "scope": {"const": "INTERNAL_SYNTHETIC_ONLY"},
+    "evidenceLevel": {"enum": ["STATIC", "FAKE"]},
+    "generatedAt": {"type": "string", "format": "date-time"},
+    "baselineTag": {"const": "t0-baseline-2026-08-16"},
+    "commitSha": {"type": "string", "pattern": "^[a-f0-9]{40}$"},
+    "results": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["requirementId", "domain", "result", "assertions", "iterations", "metrics", "fixtureDigests"],
+        "properties": {
+          "requirementId": {"type": "string", "pattern": "^T1-[A-Z]+-[0-9]{3}$"},
+          "domain": {"enum": ["SQLITE_ATOMIC", "INBOX_SYNC", "TENANT_ISOLATION", "DATA_PACKAGE", "UPGRADE_ROLLBACK", "PAYMENT_FAKE", "SECURITY", "CI_EVIDENCE"]},
+          "result": {"enum": ["PASS", "FAIL", "BLOCKED"]},
+          "assertions": {"type": "integer", "minimum": 0},
+          "iterations": {"type": "integer", "minimum": 0},
+          "metrics": {"type": "object"},
+          "fixtureDigests": {"type": "array", "items": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}}
+        }
+      }
+    },
+    "limitations": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+  }
+}

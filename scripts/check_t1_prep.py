@@ -122,15 +122,23 @@ def allowed_prep_path(name: str) -> bool:
         return True
     if normalized.startswith("docs/t1-week1/"):
         return True
+    if normalized.startswith("docs/t1-week2/"):
+        return True
+    if normalized.startswith("contracts/poc/t1/week2/"):
+        return True
+    if normalized.startswith("poc/t1-week2/"):
+        return True
     if normalized in {
         ".gitignore",
         ".github/workflows/t1-week1.yml",
+        ".github/workflows/t1-week2.yml",
         "docs/governance/rtm.csv",
         "docs/governance/change-log.md",
         "docs/adr/README.md",
         "docs/adr/ADR-017-t1-risk-poc-scope-and-integration-depth.md",
         "scripts/check_t1_prep.py",
         "scripts/check_t1_week1.py",
+        "scripts/check_t1_week2.py",
         "scripts/check_contracts.py",
     }:
         return True
@@ -273,7 +281,7 @@ def main() -> None:
         f"{len(REQUIRED_DOCS)} documents; {len(REQUIRED_T1_IDS)} unique requirements; "
         f"{len(EXPECTED_ACCEPTED)} ACCEPTED; {len(EXPECTED_IN_PROGRESS)} IN_PROGRESS; "
         f"{len(EXPECTED_BLOCKED)} BLOCKED; {len(EXPECTED_DEFERRED)} DEFERRED; "
-        "Week 1 STATIC/FAKE scope only"
+        "authorized T1 STATIC/FAKE scope only"
     )
 
 

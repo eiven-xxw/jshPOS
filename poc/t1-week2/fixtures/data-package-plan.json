@@ -1,0 +1,15 @@
+{
+  "fixtureVersion": "2.0",
+  "evidenceLevel": "FAKE",
+  "synthetic": true,
+  "tenantId": "TENANT_ALPHA",
+  "supportedSchemaVersion": 1,
+  "fullCounts": [10000, 100000],
+  "fullValidationRuns": {"10000": 10, "100000": 5},
+  "incrementalPackages": 20,
+  "incrementalRecords": 100,
+  "faultRepetitions": 30,
+  "atomicCrashRepetitions": 20,
+  "faults": ["TRUNCATED", "BAD_DIGEST", "BAD_TEST_MAC", "TENANT_SWAP", "UNKNOWN_SCHEMA", "OLD_REPLAY", "VERSION_GAP"],
+  "signatureMode": "HMAC_SHA256_FAKE_TEST_VECTOR_ONLY"
+}

@@ -1,0 +1,8 @@
+{
+  "fixtureVersion": "2.0",
+  "evidenceLevel": "FAKE",
+  "synthetic": true,
+  "repetitions": 20,
+  "pragmas": {"journalMode": "WAL", "synchronous": "FULL", "foreignKeys": true},
+  "crashPoints": ["BEFORE_BEGIN", "AFTER_FACT", "AFTER_INTENT", "AFTER_OUTBOX", "BEFORE_COMMIT", "AFTER_COMMIT"]
+}
