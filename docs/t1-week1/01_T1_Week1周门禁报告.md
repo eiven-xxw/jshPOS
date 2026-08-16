@@ -1,10 +1,10 @@
 # T1 Week 1 周门禁报告
 
-> 文档编号：JSH-POS-T1-W1-001  
-> 日期：2026-08-16  
-> 基线：annotated tag `t0-baseline-2026-08-16`  
-> 实现提交：`b960af4f32d896379c0b198f7ecdc354b63621ad`  
-> GitHub Actions：[T1 Week 1 STATIC FAKE Gates #31919845546](https://github.com/eiven-xxw/jshPOS/actions/runs/31919845546)  
+> 文档编号：JSH-POS-T1-W1-001
+> 日期：2026-08-16
+> 基线：annotated tag `t0-baseline-2026-08-16`
+> 实现提交：`b960af4f32d896379c0b198f7ecdc354b63621ad`
+> GitHub Actions：[T1 Week 1 STATIC FAKE Gates #31919845546](https://github.com/eiven-xxw/jshPOS/actions/runs/31919845546)
 > 结论：`WEEK1 CONDITIONAL PASS / AWAITING SP CONFIRMATION`
 
 ## 1. 管理结论
