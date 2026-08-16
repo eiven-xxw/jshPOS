@@ -1,12 +1,12 @@
 # T1 Week 3 周门禁报告
 
-> 文档编号：JSH-POS-T1-W3-001  
-> 日期：2026-08-16  
-> 基线：annotated tag `t0-baseline-2026-08-16`  
-> 实现提交：`045794b182fc15383db06771c3d10082b08e044d`  
-> Week 3 CI：[T1 Week 3 Internal STATIC FAKE Gates #31922149455](https://github.com/eiven-xxw/jshPOS/actions/runs/31922149455)  
-> Week 2 回归：[T1 Week 2 Internal STATIC FAKE Gates #31922149442](https://github.com/eiven-xxw/jshPOS/actions/runs/31922149442)  
-> Week 1 回归：[T1 Week 1 STATIC FAKE Gates #31922150040](https://github.com/eiven-xxw/jshPOS/actions/runs/31922150040)  
+> 文档编号：JSH-POS-T1-W3-001
+> 日期：2026-08-16
+> 基线：annotated tag `t0-baseline-2026-08-16`
+> 实现提交：`045794b182fc15383db06771c3d10082b08e044d`
+> Week 3 CI：[T1 Week 3 Internal STATIC FAKE Gates #31922149455](https://github.com/eiven-xxw/jshPOS/actions/runs/31922149455)
+> Week 2 回归：[T1 Week 2 Internal STATIC FAKE Gates #31922149442](https://github.com/eiven-xxw/jshPOS/actions/runs/31922149442)
+> Week 1 回归：[T1 Week 1 STATIC FAKE Gates #31922150040](https://github.com/eiven-xxw/jshPOS/actions/runs/31922150040)
 > 结论：`WEEK3 CONDITIONAL PASS / AWAITING SP CONFIRMATION`
 
 ## 1. 管理结论
