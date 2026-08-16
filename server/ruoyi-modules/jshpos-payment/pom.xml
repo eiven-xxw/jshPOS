@@ -15,6 +15,8 @@
     <dependencies>
         <dependency><groupId>com.jingshanghui.pos</groupId><artifactId>jshpos-foundation</artifactId></dependency>
         <dependency><groupId>com.jingshanghui.pos</groupId><artifactId>jshpos-order</artifactId></dependency>
+        <!-- 仅用于 MySQL V1-V10 迁移集成测试加载已封板的同步 V7/V8 资源，不形成生产运行时依赖。 -->
+        <dependency><groupId>com.jingshanghui.pos</groupId><artifactId>jshpos-sync</artifactId><scope>test</scope></dependency>
         <dependency><groupId>org.dromara</groupId><artifactId>ruoyi-common-core</artifactId></dependency>
         <dependency><groupId>org.dromara</groupId><artifactId>ruoyi-common-mybatis</artifactId></dependency>
         <dependency><groupId>org.dromara</groupId><artifactId>ruoyi-common-satoken</artifactId></dependency>
