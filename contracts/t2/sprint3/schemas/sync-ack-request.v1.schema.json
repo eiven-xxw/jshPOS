@@ -13,7 +13,7 @@
       "minItems": 1,
       "maxItems": 500,
       "uniqueItems": true,
-      "items": {"type": "string", "format": "uuid"}
+      "items": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"}
     },
     "pageDigest": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
   }

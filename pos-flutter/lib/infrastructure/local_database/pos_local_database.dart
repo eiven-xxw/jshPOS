@@ -5,6 +5,7 @@ import 'package:sqlite3/sqlite3.dart';
 
 import '../../features/checkout/domain/checkout_models.dart';
 import 'gate2_schema.dart';
+import 's3_sync_schema.dart';
 
 typedef FailureInjector = void Function(String checkpoint);
 
@@ -56,7 +57,7 @@ final class PosLocalDatabase {
     if (quick != 'ok') {
       throw StateError('LOCAL_DB_INTEGRITY_FAILED: $quick');
     }
-    final version =
+    var version =
         database.select('PRAGMA user_version').single.values.first! as int;
     if (version == 0) {
       transaction(() {
@@ -72,7 +73,27 @@ final class PosLocalDatabase {
         );
         database.execute('PRAGMA user_version=${Gate2Schema.version}');
       });
-    } else if (version != Gate2Schema.version) {
+      version = Gate2Schema.version;
+    }
+    if (version == Gate2Schema.version) {
+      transaction(() {
+        database.execute(S3SyncSchema.v2);
+        final checksum = sha256
+            .convert(utf8.encode(S3SyncSchema.v2))
+            .toString();
+        database.execute(
+          'INSERT INTO local_schema_history(version,description,checksum_sha256,installed_at) VALUES(2,?,?,?)',
+          [
+            'sprint3-formal-pos-sync',
+            checksum,
+            DateTime.now().toUtc().toIso8601String(),
+          ],
+        );
+        database.execute('PRAGMA user_version=${S3SyncSchema.version}');
+      });
+      version = S3SyncSchema.version;
+    }
+    if (version != S3SyncSchema.version) {
       throw StateError('LOCAL_SCHEMA_UNSUPPORTED: $version');
     }
     _verifySchemaChecksum();
@@ -80,13 +101,24 @@ final class PosLocalDatabase {
   }
 
   void _verifySchemaChecksum() {
-    final expected = sha256.convert(utf8.encode(Gate2Schema.v1)).toString();
-    final rows = database.select(
-      'SELECT checksum_sha256 FROM local_schema_history WHERE version=?',
-      [Gate2Schema.version],
-    );
-    if (rows.length != 1 || rows.single['checksum_sha256'] != expected) {
-      throw StateError('LOCAL_DB_INTEGRITY_FAILED: schema checksum mismatch');
+    final expected = <int, String>{
+      Gate2Schema.version: sha256
+          .convert(utf8.encode(Gate2Schema.v1))
+          .toString(),
+      S3SyncSchema.version: sha256
+          .convert(utf8.encode(S3SyncSchema.v2))
+          .toString(),
+    };
+    for (final entry in expected.entries) {
+      final rows = database.select(
+        'SELECT checksum_sha256 FROM local_schema_history WHERE version=?',
+        [entry.key],
+      );
+      if (rows.length != 1 || rows.single['checksum_sha256'] != entry.value) {
+        throw StateError(
+          'LOCAL_DB_INTEGRITY_FAILED: schema checksum mismatch at v${entry.key}',
+        );
+      }
     }
   }
 

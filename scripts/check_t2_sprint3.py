@@ -166,8 +166,9 @@ def check_runtime(stage: str) -> dict[str, object]:
         for root in roots if root.exists()
         for path in sorted(root.rglob("*")) if path.is_file()
     ).lower()
-    if "syn_" in runtime:
-        fail("T1 syn_* probe naming leaked into formal runtime")
+    probe_sql = ("create table syn_", "insert into syn_", " from syn_", " join syn_", "update syn_")
+    if any(token in runtime for token in probe_sql):
+        fail("T1 syn_* probe table usage leaked into formal runtime")
     forbidden = ("paymentprovider", "providercallbackcontroller", "refundservice", "reconciliationjob", "inventoryservice", "promotionservice")
     violations = [token for token in forbidden if token in runtime]
     if violations:

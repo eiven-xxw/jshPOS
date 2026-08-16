@@ -87,6 +87,12 @@
             <artifactId>jshpos-order</artifactId>
         </dependency>
 
+        <!-- Sprint S3 正式 POS Inbox/Outbox 同步模块 -->
+        <dependency>
+            <groupId>com.jingshanghui.pos</groupId>
+            <artifactId>jshpos-sync</artifactId>
+        </dependency>
+
         <!-- Gate 0 服务端数据库版本治理 -->
         <dependency>
             <groupId>org.flywaydb</groupId>

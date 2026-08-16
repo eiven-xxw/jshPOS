@@ -59,7 +59,7 @@ paths:
         - name: eventId
           in: path
           required: true
-          schema: {type: string, format: uuid}
+          schema: {type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'}
       responses:
         '200':
           description: Known event result
@@ -120,7 +120,7 @@ components:
       in: header
       required: true
       description: Claimed device identifier validated against the authenticated registry binding
-      schema: {type: string, format: uuid}
+      schema: {type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'}
     CorrelationId:
       name: X-Correlation-Id
       in: header
@@ -135,9 +135,9 @@ components:
       additionalProperties: false
       required: [deviceId, storeId, terminalId, protocolVersion, limits, cursors]
       properties:
-        deviceId: {type: string, format: uuid}
-        storeId: {type: string, format: uuid}
-        terminalId: {type: string, format: uuid}
+        deviceId: {type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'}
+        storeId: {type: string, pattern: '^[1-9][0-9]{0,18}$'}
+        terminalId: {type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'}
         protocolVersion: {type: string, const: '1.0'}
         compatibleClientVersions: {type: array, items: {type: string}}
         limits:
@@ -156,7 +156,7 @@ components:
       additionalProperties: false
       required: [eventId, status, payloadHash, updatedAt]
       properties:
-        eventId: {type: string, format: uuid}
+        eventId: {type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'}
         status:
           type: string
           enum: [ACCEPTED, ACCEPTED_PENDING, DUPLICATE, REJECTED_RETRYABLE, REJECTED_FINAL, CONFLICT, DEVICE_BLOCKED]

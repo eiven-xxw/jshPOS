@@ -6,7 +6,7 @@
   "additionalProperties": false,
   "required": ["batchId", "acks", "serverTime"],
   "properties": {
-    "batchId": {"type": "string", "format": "uuid"},
+    "batchId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
     "acks": {
       "type": "array",
       "minItems": 1,
@@ -16,7 +16,7 @@
         "additionalProperties": false,
         "required": ["eventId", "payloadHash", "status"],
         "properties": {
-          "eventId": {"type": "string", "format": "uuid"},
+          "eventId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
           "payloadHash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
           "status": {
             "type": "string",
