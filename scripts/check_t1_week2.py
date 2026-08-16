@@ -113,6 +113,7 @@ def check_baseline_and_scope() -> None:
     )
     exact = {
         "AGENTS.md",
+        ".gitattributes",
         ".gitignore",
         ".github/workflows/t1-week1.yml",
         ".github/workflows/t1-week2.yml",

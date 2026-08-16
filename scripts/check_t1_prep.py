@@ -114,6 +114,8 @@ def allowed_prep_path(name: str) -> bool:
     normalized = name.replace("\\", "/")
     if normalized == "AGENTS.md":
         return True
+    if normalized == ".gitattributes":
+        return True
     if normalized.startswith("docs/t1-prep/"):
         return True
     if normalized.startswith("contracts/poc/t1/"):

@@ -76,6 +76,7 @@ def input_tree_digest() -> tuple[str, int]:
         or (path.startswith("scripts/check_t1_") and path.endswith(".py"))
         or path in reproducibility_scripts
         or (path.startswith(".github/workflows/t1-week") and path.endswith(".yml"))
+        or path == ".gitattributes"
     )
     if not selected:
         fail("no tracked T1 reproducibility inputs found")

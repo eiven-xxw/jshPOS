@@ -51,7 +51,7 @@ def check_baseline_and_scope() -> None:
     changed = set(filter(None, git("-c", "core.quotepath=false", "diff", "--name-only", BASELINE_TAG).splitlines()))
     changed.update(filter(None, git("-c", "core.quotepath=false", "ls-files", "--others", "--exclude-standard").splitlines()))
     exact = {
-        "AGENTS.md", ".gitignore", ".github/workflows/t1-week1.yml", ".github/workflows/t1-week2.yml",
+        "AGENTS.md", ".gitignore", ".gitattributes", ".github/workflows/t1-week1.yml", ".github/workflows/t1-week2.yml",
         ".github/workflows/t1-week3.yml", ".github/workflows/t1-week4.yml",
         "docs/governance/rtm.csv", "docs/governance/change-log.md", "docs/adr/README.md",
         "docs/adr/ADR-017-t1-risk-poc-scope-and-integration-depth.md",
@@ -110,6 +110,10 @@ def check_docs_and_workflow() -> None:
             fail(f"Week 4 workflow missing {token}")
     if re.search(r"continue-on-error:\s*true", workflow, re.IGNORECASE) or "|| true" in workflow:
         fail("Week 4 workflow contains a gate bypass")
+    attributes = (ROOT / ".gitattributes").read_text(encoding="utf-8")
+    for token in ("poc/t1-week*/** text eol=lf", "contracts/poc/t1/** text eol=lf"):
+        if token not in attributes:
+            fail(f"cross-platform fixture line-ending control missing: {token}")
 
 
 def check_poc_boundaries() -> dict[str, int]:

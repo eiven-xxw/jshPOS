@@ -72,7 +72,7 @@ def check_baseline_and_scope() -> None:
     changed = set(filter(None, run_git("-c", "core.quotepath=false", "diff", "--name-only", BASELINE_TAG).splitlines()))
     changed.update(filter(None, run_git("-c", "core.quotepath=false", "ls-files", "--others", "--exclude-standard").splitlines()))
     exact = {
-        "AGENTS.md", ".gitignore", ".github/workflows/t1-week1.yml", ".github/workflows/t1-week2.yml",
+        "AGENTS.md", ".gitignore", ".gitattributes", ".github/workflows/t1-week1.yml", ".github/workflows/t1-week2.yml",
         ".github/workflows/t1-week3.yml", ".github/workflows/t1-week4.yml", "docs/governance/rtm.csv", "docs/governance/change-log.md",
         "docs/adr/README.md", "docs/adr/ADR-017-t1-risk-poc-scope-and-integration-depth.md",
         "docs/adr/ADR-018-t1-exit-and-t2-entry-recommendation.md",

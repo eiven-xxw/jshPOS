@@ -1,0 +1,4 @@
+# T1 risk PoC contracts and fixtures participate in cross-platform evidence hashes.
+# Force repository bytes to LF so Windows checkout cannot change fixtureDigests.
+poc/t1-week*/** text eol=lf
+contracts/poc/t1/** text eol=lf
