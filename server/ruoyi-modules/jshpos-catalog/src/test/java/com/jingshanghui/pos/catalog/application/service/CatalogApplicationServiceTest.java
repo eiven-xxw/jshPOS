@@ -73,5 +73,10 @@ class CatalogApplicationServiceTest {
             .isInstanceOf(ServiceException.class).hasMessageContaining("主单位");
         verify(mapper, never()).insertSpu(any(), any(), any(), any(), any(), any(), any());
         assertThatThrownBy(() -> service.listProducts("DELETED", 100)).isInstanceOf(ServiceException.class);
+
+        assertThatThrownBy(() -> service.createProduct(new CatalogApplicationService.CreateProduct(
+            "SPU-B", "SKU-B", "B", 101L, null, "STANDARD", Map.of("apiToken", "synthetic"),
+            List.of(new CatalogApplicationService.UnitInput(103L, 1L, 1L, true, List.of())))))
+            .isInstanceOf(ServiceException.class).hasMessageContaining("敏感凭据");
     }
 }

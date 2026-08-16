@@ -155,7 +155,7 @@ const productForm = reactive<CreateProductForm>({
   name: '',
   categoryId: '',
   productType: 'STANDARD',
-  attributes: {},
+  attributes: { schemaVersion: '1.0' },
   units: []
 });
 const importKey = ref('catalog-import-20260816-001');

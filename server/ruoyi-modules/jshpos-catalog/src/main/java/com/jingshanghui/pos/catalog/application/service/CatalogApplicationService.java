@@ -18,6 +18,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 @Service
 @RequiredArgsConstructor
@@ -169,8 +170,30 @@ public class CatalogApplicationService {
     }
 
     private String canonicalAttributes(Map<String, Object> attributes) {
+        TreeMap<String, Object> canonical = new TreeMap<>(attributes == null ? Map.of() : attributes);
+        canonical.putIfAbsent("schemaVersion", "1.0");
+        if (canonical.size() > 50) {
+            throw new ServiceException("CAT-PRD-039: 扩展属性最多允许 50 个键", 400);
+        }
+        for (String key : canonical.keySet()) {
+            if (key == null || !key.matches("^[A-Za-z][A-Za-z0-9_.-]{0,63}$")) {
+                throw new ServiceException("CAT-PRD-040: 扩展属性键格式无效", 400);
+            }
+            String normalized = key.toLowerCase();
+            if (normalized.contains("password") || normalized.contains("secret") || normalized.contains("token")) {
+                throw new ServiceException("CAT-PRD-041: 扩展属性禁止保存敏感凭据", 400);
+            }
+        }
+        Object schemaVersion = canonical.get("schemaVersion");
+        if (!(schemaVersion instanceof String version) || !version.matches("^[1-9][0-9]*\\.[0-9]+$")) {
+            throw new ServiceException("CAT-PRD-042: 扩展属性 schemaVersion 无效", 400);
+        }
         try {
-            return objectMapper.writeValueAsString(attributes == null ? Map.of() : new java.util.TreeMap<>(attributes));
+            String json = objectMapper.writeValueAsString(canonical);
+            if (json.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 16 * 1024) {
+                throw new ServiceException("CAT-PRD-043: 扩展属性超过 16 KiB", 400);
+            }
+            return json;
         } catch (JsonProcessingException exception) {
             throw new ServiceException("CAT-PRD-038: 扩展属性无法 canonical 序列化", 400);
         }
