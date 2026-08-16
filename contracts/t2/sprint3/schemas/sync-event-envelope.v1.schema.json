@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.jingshanghui.example/t2/sprint3/sync-event-envelope.v1.schema.json",
+  "title": "T2-SYN-001 immutable POS event envelope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "eventId", "eventType", "eventVersion", "aggregateId", "aggregateVersion",
+    "deviceId", "storeId", "terminalId", "sequenceNo", "occurredAt",
+    "idempotencyKey", "correlationId", "payloadHash", "payload"
+  ],
+  "properties": {
+    "eventId": {"type": "string", "format": "uuid"},
+    "eventType": {"type": "string", "pattern": "^[a-z][a-z0-9.-]{0,95}\\.v[1-9][0-9]*$"},
+    "eventVersion": {"type": "integer", "minimum": 1},
+    "aggregateId": {"type": "string", "format": "uuid"},
+    "aggregateVersion": {"type": "integer", "minimum": 1},
+    "deviceId": {"type": "string", "format": "uuid"},
+    "storeId": {"type": "string", "format": "uuid"},
+    "terminalId": {"type": "string", "format": "uuid"},
+    "sequenceNo": {"type": "integer", "minimum": 1},
+    "occurredAt": {"type": "string", "format": "date-time"},
+    "idempotencyKey": {"type": "string", "minLength": 16, "maxLength": 128},
+    "correlationId": {"type": "string", "minLength": 16, "maxLength": 64},
+    "payloadHash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "payload": {"type": "object"}
+  }
+}

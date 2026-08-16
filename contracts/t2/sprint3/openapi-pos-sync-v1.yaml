@@ -1,0 +1,166 @@
+openapi: 3.1.0
+info:
+  title: JSH POS Formal Synchronization API
+  version: 1.0.0-sprint3
+  description: >-
+    T2-SYN-001 formal at-least-once transport contract. Tenant authority is derived
+    from the authenticated device session and server registry. Payment provider
+    traffic is outside this API and is not permitted in Sprint S3.
+x-requirement-ids: [T2-SYN-001]
+x-external-evidence: {sandbox: 0, realDevice: 0, pilot: 0}
+servers:
+  - url: /api/pos/v1
+security:
+  - deviceBearer: []
+paths:
+  /sync/bootstrap:
+    post:
+      operationId: bootstrapSynchronization
+      summary: Bind a registered terminal session and return stream cursors and limits
+      parameters:
+        - $ref: '#/components/parameters/DeviceId'
+        - $ref: '#/components/parameters/CorrelationId'
+      responses:
+        '200':
+          description: Trusted device context and current stream cursors
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/BootstrapResponse'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '423': {$ref: '#/components/responses/DeviceBlocked'}
+  /sync/push:
+    post:
+      operationId: pushEvents
+      summary: Persist a batch into the server Inbox before returning per-event ACKs
+      parameters:
+        - $ref: '#/components/parameters/DeviceId'
+        - $ref: '#/components/parameters/CorrelationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: './schemas/sync-push-request.v1.schema.json'}
+      responses:
+        '200':
+          description: Per-event durable acceptance or explicit rejection
+          content:
+            application/json:
+              schema: {$ref: './schemas/sync-push-response.v1.schema.json'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '413': {description: Batch exceeds the published capacity limits}
+        '423': {$ref: '#/components/responses/DeviceBlocked'}
+  /sync/results/{eventId}:
+    get:
+      operationId: getEventResult
+      summary: Resolve client UNKNOWN with the original stable event identity
+      parameters:
+        - $ref: '#/components/parameters/DeviceId'
+        - $ref: '#/components/parameters/CorrelationId'
+        - name: eventId
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        '200':
+          description: Known event result
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/EventResult'}
+        '404': {description: Event has not been durably observed for this device}
+        '423': {$ref: '#/components/responses/DeviceBlocked'}
+  /sync/pull:
+    get:
+      operationId: pullChanges
+      summary: Pull an ordered stream after an opaque cursor
+      parameters:
+        - $ref: '#/components/parameters/DeviceId'
+        - $ref: '#/components/parameters/CorrelationId'
+        - name: stream
+          in: query
+          required: true
+          schema: {type: string, pattern: '^[a-z][a-z0-9.-]{0,63}$'}
+        - name: cursor
+          in: query
+          required: false
+          schema: {type: string, maxLength: 512}
+        - name: limit
+          in: query
+          required: false
+          schema: {type: integer, minimum: 1, maximum: 500, default: 100}
+      responses:
+        '200':
+          description: Ordered changes and a monotonic opaque next cursor
+          content:
+            application/json:
+              schema: {$ref: './schemas/sync-pull-response.v1.schema.json'}
+        '409': {description: Cursor is corrupt, belongs to another stream, or has expired}
+        '423': {$ref: '#/components/responses/DeviceBlocked'}
+  /sync/ack:
+    post:
+      operationId: acknowledgeChanges
+      summary: Record the highest atomically applied cursor for a stream
+      parameters:
+        - $ref: '#/components/parameters/DeviceId'
+        - $ref: '#/components/parameters/CorrelationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: './schemas/sync-ack-request.v1.schema.json'}
+      responses:
+        '204': {description: Cursor ACK is durable and monotonic}
+        '409': {description: Cursor regression or payload digest mismatch}
+        '423': {$ref: '#/components/responses/DeviceBlocked'}
+components:
+  securitySchemes:
+    deviceBearer: {type: http, scheme: bearer, bearerFormat: opaque-device-session}
+  parameters:
+    DeviceId:
+      name: X-Device-Id
+      in: header
+      required: true
+      description: Claimed device identifier validated against the authenticated registry binding
+      schema: {type: string, format: uuid}
+    CorrelationId:
+      name: X-Correlation-Id
+      in: header
+      required: true
+      schema: {type: string, minLength: 16, maxLength: 64}
+  responses:
+    Unauthorized: {description: Authenticated session or registered device binding is invalid}
+    DeviceBlocked: {description: Device is administratively or automatically blocked}
+  schemas:
+    BootstrapResponse:
+      type: object
+      additionalProperties: false
+      required: [deviceId, storeId, terminalId, protocolVersion, limits, cursors]
+      properties:
+        deviceId: {type: string, format: uuid}
+        storeId: {type: string, format: uuid}
+        terminalId: {type: string, format: uuid}
+        protocolVersion: {type: string, const: '1.0'}
+        compatibleClientVersions: {type: array, items: {type: string}}
+        limits:
+          type: object
+          additionalProperties: false
+          required: [maxBatchEvents, maxBatchBytes, maxEventBytes]
+          properties:
+            maxBatchEvents: {type: integer, const: 100}
+            maxBatchBytes: {type: integer, const: 2097152}
+            maxEventBytes: {type: integer, const: 262144}
+        cursors:
+          type: object
+          additionalProperties: {type: string, maxLength: 512}
+    EventResult:
+      type: object
+      additionalProperties: false
+      required: [eventId, status, payloadHash, updatedAt]
+      properties:
+        eventId: {type: string, format: uuid}
+        status:
+          type: string
+          enum: [ACCEPTED, ACCEPTED_PENDING, DUPLICATE, REJECTED_RETRYABLE, REJECTED_FINAL, CONFLICT, DEVICE_BLOCKED]
+        payloadHash: {type: string, pattern: '^[a-f0-9]{64}$'}
+        resultCode: {type: string, maxLength: 64}
+        retryAfterMs: {type: integer, minimum: 0, maximum: 86400000}
+        updatedAt: {type: string, format: date-time}

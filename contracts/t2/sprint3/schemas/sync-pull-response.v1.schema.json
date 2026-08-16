@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.jingshanghui.example/t2/sprint3/sync-pull-response.v1.schema.json",
+  "title": "T2-SYN-001 ordered downstream page",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["stream", "changes", "nextCursor", "hasMore"],
+  "properties": {
+    "stream": {"type": "string", "pattern": "^[a-z][a-z0-9.-]{0,63}$"},
+    "changes": {
+      "type": "array",
+      "maxItems": 500,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["changeId", "eventType", "aggregateId", "aggregateVersion", "payloadHash", "payload", "publishedAt"],
+        "properties": {
+          "changeId": {"type": "string", "format": "uuid"},
+          "eventType": {"type": "string", "pattern": "^[a-z][a-z0-9.-]{0,95}\\.v[1-9][0-9]*$"},
+          "aggregateId": {"type": "string", "format": "uuid"},
+          "aggregateVersion": {"type": "integer", "minimum": 1},
+          "payloadHash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+          "payload": {"type": "object"},
+          "publishedAt": {"type": "string", "format": "date-time"}
+        }
+      }
+    },
+    "nextCursor": {"type": "string", "minLength": 1, "maxLength": 512},
+    "hasMore": {"type": "boolean"}
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "1.0",
+  "phase": "T2-GATE23-S3",
+  "baselineTag": "t2-prep-baseline-2026-08-16",
+  "branchStart": "968ae7be34ab144c970e5c92fb7ffbddf60bf5e1",
+  "decision": "CONDITIONAL_GO",
+  "admittedRequirements": ["T2-SYN-001"],
+  "designOnlyRequirements": [
+    "T2-PAY-001",
+    "T2-PAY-003",
+    "T2-REF-001",
+    "T2-REC-001"
+  ],
+  "blockedRequirements": ["T2-PAY-002"],
+  "requiredAdmissionDimensions": [
+    "dataOwnership",
+    "eventState",
+    "ackSemantics",
+    "monotonicCursor",
+    "conflictMatrix",
+    "permissions",
+    "audit",
+    "apiAndSchema",
+    "migration",
+    "capacity",
+    "rollback",
+    "tests"
+  ],
+  "frozenDecisions": {
+    "tenantAuthority": "authenticated device session plus server-side registry; request payload is never authoritative",
+    "delivery": "at-least-once transport and exactly-once business effect",
+    "acceptance": "server Inbox is durable before ACCEPTED or DUPLICATE acknowledgement",
+    "eventIdentity": "same eventId and same hash is duplicate; same eventId and different hash blocks the device",
+    "unknown": "retry or query the original event; never regenerate the business command",
+    "cursor": "opaque stream-scoped monotonic token, committed atomically with local Inbox apply",
+    "migration": "append-only SQLite V2 and MySQL V7/V8 with forward repair and N/N-1 compatibility"
+  },
+  "forbiddenRuntimeDomains": [
+    "payment-provider",
+    "payment-sandbox",
+    "refund",
+    "reconciliation-job",
+    "inventory",
+    "procurement",
+    "cost",
+    "promotion"
+  ],
+  "externalEvidence": {
+    "sandbox": 0,
+    "realDevice": 0,
+    "pilot": 0
+  }
+}

@@ -66,6 +66,21 @@ def main() -> None:
         if token not in sync_design:
             raise SystemExit(f"CONTRACT ERROR: Gate 2 sync design boundary missing {token}")
 
+    sprint3_openapi = (ROOT / "contracts" / "t2" / "sprint3" / "openapi-pos-sync-v1.yaml").read_text(encoding="utf-8")
+    for token in (
+        "version: 1.0.0-sprint3", "T2-SYN-001", "/sync/bootstrap:", "/sync/push:",
+        "/sync/results/{eventId}:", "/sync/pull:", "/sync/ack:", "X-Device-Id",
+        "ACCEPTED_PENDING", "DEVICE_BLOCKED",
+    ):
+        if token not in sprint3_openapi:
+            raise SystemExit(f"CONTRACT ERROR: Sprint S3 formal sync OpenAPI missing {token}")
+    if "tenantId:" in sprint3_openapi or "tenant_id:" in sprint3_openapi or "X-Tenant" in sprint3_openapi:
+        raise SystemExit("CONTRACT ERROR: Sprint S3 client contract exposes a tenant override")
+    payment_prep = (ROOT / "contracts" / "t2" / "sprint3" / "payment-gate3-prep.yaml").read_text(encoding="utf-8")
+    for token in ("runtimeAllowed: false", "providerNetworkCallsAllowed: 0", "T2-PAY-002: BLOCKED"):
+        if token not in payment_prep:
+            raise SystemExit(f"CONTRACT ERROR: Gate 3 payment preparation boundary missing {token}")
+
     print(f"CONTRACTS OK: {len(json_contracts)} JSON schemas and T0/T2 OpenAPI contracts")
 
 

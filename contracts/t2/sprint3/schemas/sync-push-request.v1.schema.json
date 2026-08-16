@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.jingshanghui.example/t2/sprint3/sync-push-request.v1.schema.json",
+  "title": "T2-SYN-001 push batch",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["protocolVersion", "batchId", "events"],
+  "properties": {
+    "protocolVersion": {"type": "string", "const": "1.0"},
+    "batchId": {"type": "string", "format": "uuid"},
+    "events": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "items": {"$ref": "./sync-event-envelope.v1.schema.json"}
+    }
+  }
+}

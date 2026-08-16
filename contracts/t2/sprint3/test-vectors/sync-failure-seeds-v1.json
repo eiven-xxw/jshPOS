@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "1.0",
+  "requirement": "T2-SYN-001",
+  "tenants": ["000000", "100001"],
+  "storesPerTenant": 2,
+  "terminalsPerStore": 2,
+  "seeds": [
+    {"seed": 316001, "fault": "OUTBOX_CRASH_BEFORE_SEND", "expected": "original event remains retryable"},
+    {"seed": 316002, "fault": "SERVER_DURABLE_ACK_LOST", "expected": "same event and hash returns DUPLICATE"},
+    {"seed": 316003, "fault": "DUPLICATE_AND_REORDERED_BATCH", "expected": "one business effect and explicit per-event ACK"},
+    {"seed": 316004, "fault": "EVENT_ID_HASH_MISMATCH", "expected": "DEVICE_BLOCKED and immutable security audit"},
+    {"seed": 316005, "fault": "HTTP_TIMEOUT_AFTER_ACCEPT", "expected": "result query or original event retry converges"},
+    {"seed": 316006, "fault": "SENDING_LEASE_PROCESS_RESTART", "expected": "expired lease returns to RETRY without new event identity"},
+    {"seed": 316007, "fault": "CURSOR_CORRUPTION", "expected": "page is rejected and last durable cursor remains active"},
+    {"seed": 316008, "fault": "PULL_APPLY_CRASH_BEFORE_CURSOR", "expected": "replay is idempotent and cursor never skips"},
+    {"seed": 316009, "fault": "CURSOR_REGRESSION", "expected": "server rejects stale ACK"},
+    {"seed": 316010, "fault": "CROSS_TENANT_DEVICE_HEADER", "expected": "trusted registry wins and request is rejected"},
+    {"seed": 316011, "fault": "BACKLOG_RETRY_BUDGET_EXHAUSTED", "expected": "dead letter isolation and alert without silent drop"},
+    {"seed": 316012, "fault": "OLD_CLIENT_NEW_SERVER", "expected": "N-1 envelope is accepted within compatibility window"},
+    {"seed": 316013, "fault": "NEW_CLIENT_OLD_SCHEMA", "expected": "optional fields degrade safely and required unknown version is final reject"},
+    {"seed": 316014, "fault": "SQLITE_V2_MIGRATION_FAILURE", "expected": "old schema remains readable and forward repair is required"}
+  ]
+}

@@ -1,0 +1,27 @@
+schemaVersion: '1.0'
+phase: T2-GATE3-PREP
+runtimeAllowed: false
+providerNetworkCallsAllowed: 0
+databaseTablesAllowed: 0
+callbackEndpointsAllowed: 0
+designOnlyRequirements:
+  T2-PAY-001: DRAFT
+  T2-PAY-003: DRAFT
+  T2-REF-001: DRAFT
+  T2-REC-001: DRAFT
+blockedRequirements:
+  T2-PAY-002: BLOCKED
+frozenSemantics:
+  paymentUnknown: query the original attempt; never create an automatic second charge
+  observationMerge: verified provider result outranks arrival order; conflicts require audit
+  refundLimit: cumulative accepted and unknown amounts and quantities cannot exceed the original refundable snapshot
+  reconciliation: internal facts and provider statements remain separate immutable sources
+requiredUnblockEvidence:
+  - authorized sandbox merchant and terminal
+  - current signed interface documentation and SDK provenance
+  - callback ingress and source allow-list design
+  - sandbox keys in controlled secret storage
+  - technical and incident contacts
+  - test cases for success, failure, timeout, unknown, query, duplicate callback, refund, and statement
+  - a separate unblock review approved by the project sponsor
+externalEvidence: {sandbox: 0, realDevice: 0, pilot: 0}
