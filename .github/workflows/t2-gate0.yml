@@ -172,14 +172,14 @@ jobs:
       - name: Install exact lockfile
         working-directory: admin-web
         run: pnpm install --frozen-lockfile
-      - name: Audit, lint, typecheck, unit test and production build
+      - name: Audit, build declarations, lint, typecheck and unit test
         working-directory: admin-web
         run: |
           pnpm audit --registry https://registry.npmjs.org --audit-level high
+          pnpm build:prod
           pnpm lint:eslint
           pnpm typecheck
           pnpm test:unit:ci
-          pnpm build:prod
           pnpm licenses list --json > dependency-licenses.json
       - name: Enforce frontend license policy
         working-directory: admin-web
