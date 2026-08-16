@@ -1,13 +1,13 @@
 # T2 Gate 2 / Sprint S2 周门禁报告
 
-> 文档编号：JSH-POS-T2-G2-S2-006  
-> 日期：2026-08-16  
-> 唯一不可变技术基线：annotated tag `t2-prep-baseline-2026-08-16`  
-> 基线 peeled commit：`557ba270479935d6b44968cf70b47033f7d3d656`  
-> Gate 0 封板提交：`cf2ef29bd74c5d0f8fa5845a689305ebb56c7ef2`  
-> Gate 1 封板起点：`6a94bc6af2938fba6b9a1af123eb94b6312af9b2`  
-> 最终实现候选：`921306d99bbb97cc265b24d14298f6b79ab3741d`  
-> GitHub Actions：[T2 Gate 2 Sprint S2 Quality Gates #31942899817](https://github.com/eiven-xxw/jshPOS/actions/runs/31942899817)  
+> 文档编号：JSH-POS-T2-G2-S2-006
+> 日期：2026-08-16
+> 唯一不可变技术基线：annotated tag `t2-prep-baseline-2026-08-16`
+> 基线 peeled commit：`557ba270479935d6b44968cf70b47033f7d3d656`
+> Gate 0 封板提交：`cf2ef29bd74c5d0f8fa5845a689305ebb56c7ef2`
+> Gate 1 封板起点：`6a94bc6af2938fba6b9a1af123eb94b6312af9b2`
+> 最终实现候选：`921306d99bbb97cc265b24d14298f6b79ab3741d`
+> GitHub Actions：[T2 Gate 2 Sprint S2 Quality Gates #31942899817](https://github.com/eiven-xxw/jshPOS/actions/runs/31942899817)
 > 当前结论：`GATE2 CONDITIONAL PASS / AWAITING CONFIRMATION`
 
 ## 1. 管理结论
