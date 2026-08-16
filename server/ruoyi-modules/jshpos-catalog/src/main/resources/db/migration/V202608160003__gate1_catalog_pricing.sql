@@ -168,14 +168,14 @@ CREATE TABLE cat_import_record (
     import_record_id BIGINT NOT NULL,
     tenant_id VARCHAR(20) NOT NULL,
     import_batch_id BIGINT NOT NULL,
-    row_number INT NOT NULL,
+    source_row_no INT NOT NULL,
     sku_code VARCHAR(64) NOT NULL,
     canonical_json JSON NOT NULL,
     record_sha256 CHAR(64) NOT NULL,
     create_time DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
     PRIMARY KEY (import_record_id),
     UNIQUE KEY uk_cat_import_record_id (tenant_id, import_record_id),
-    UNIQUE KEY uk_cat_import_record_row (tenant_id, import_batch_id, row_number),
+    UNIQUE KEY uk_cat_import_record_row (tenant_id, import_batch_id, source_row_no),
     UNIQUE KEY uk_cat_import_record_sku (tenant_id, import_batch_id, sku_code),
     CONSTRAINT fk_cat_import_record_batch FOREIGN KEY (tenant_id, import_batch_id) REFERENCES cat_import_batch (tenant_id, import_batch_id),
     CONSTRAINT ck_cat_import_record_hash CHECK (record_sha256 REGEXP '^[a-f0-9]{64}$')
@@ -185,13 +185,13 @@ CREATE TABLE cat_import_error (
     import_error_id BIGINT NOT NULL,
     tenant_id VARCHAR(20) NOT NULL,
     import_batch_id BIGINT NOT NULL,
-    row_number INT NOT NULL,
+    source_row_no INT NOT NULL,
     field_code VARCHAR(32) NOT NULL,
     error_message VARCHAR(500) NOT NULL,
     create_time DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
     PRIMARY KEY (import_error_id),
     UNIQUE KEY uk_cat_import_error_id (tenant_id, import_error_id),
-    KEY idx_cat_import_error_batch (tenant_id, import_batch_id, row_number),
+    KEY idx_cat_import_error_batch (tenant_id, import_batch_id, source_row_no),
     CONSTRAINT fk_cat_import_error_batch FOREIGN KEY (tenant_id, import_batch_id) REFERENCES cat_import_batch (tenant_id, import_batch_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 

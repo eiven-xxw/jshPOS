@@ -1,13 +1,13 @@
 # T2 Gate 1 / Sprint S1 周门禁报告
 
-> 文档编号：JSH-POS-T2-G1-S1-006  
-> 日期：2026-08-16  
-> 唯一不可变技术基线：annotated tag `t2-prep-baseline-2026-08-16`  
-> 基线 peeled commit：`557ba270479935d6b44968cf70b47033f7d3d656`  
-> Gate 0 封板起点：`cf2ef29bd74c5d0f8fa5845a689305ebb56c7ef2`  
-> 实现提交：`af627f7`  
-> 最终候选提交：`PENDING`  
-> GitHub Actions：`PENDING`  
+> 文档编号：JSH-POS-T2-G1-S1-006
+> 日期：2026-08-16
+> 唯一不可变技术基线：annotated tag `t2-prep-baseline-2026-08-16`
+> 基线 peeled commit：`557ba270479935d6b44968cf70b47033f7d3d656`
+> Gate 0 封板起点：`cf2ef29bd74c5d0f8fa5845a689305ebb56c7ef2`
+> 实现提交：`af627f7`
+> 最终候选提交：`PENDING`
+> GitHub Actions：`PENDING`
 > 当前结论：`LOCAL VERIFIED / REMOTE CI PENDING`
 
 ## 1. 管理结论

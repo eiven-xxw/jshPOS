@@ -36,5 +36,6 @@
 | CR-T2G1-001 | 2026-08-16 | APPROVED | 以封存 tag 为唯一不可变技术基线、以 `cf2ef29` 为分支起点，按 CONDITIONAL GO 启动 Gate 1 / Sprint S1 七项商品、价格和数据包需求；必须逐项设计准入后才可编码 | T2-PRD-001、T2-PRD-002、T2-PRD-003、T2-PRD-004、T2-PRC-001、T2-PRC-002、T2-DPK-001 | 项目发起人 2026-08-16 明确确认 |
 | CR-T2G1-002 | 2026-08-16 | IN_PROGRESS | 七项 Gate 1 的数据主权、状态、不变量、权限、审计、API/事件、Flyway、容量、回退和测试准入经 `check_t2_gate1.py --stage design` 机器校验 7/7 通过，按限定范围由 DRAFT 经 READY 进入 IN_PROGRESS | T2-PRD-001、T2-PRD-002、T2-PRD-003、T2-PRD-004、T2-PRC-001、T2-PRC-002、T2-DPK-001 | 准入提交 `63fc8a6`；外部证据仍为 0，后续 Gate 继续禁止 |
 | CR-T2G1-003 | 2026-08-16 | VERIFIED_AWAITING_CI | 七项 Gate 1 商品、条码单位、导入、分类品牌属性、基础门店价、价格版本和正式服务端数据包切片完成本地实现与分级验证，由 IN_PROGRESS 更新为 VERIFIED；GitHub 干净执行器、MySQL 8.4、安全供应链和证据汇总仍待运行 | T2-PRD-001、T2-PRD-002、T2-PRD-003、T2-PRD-004、T2-PRC-001、T2-PRC-002、T2-DPK-001 | 不代表 ACCEPTED；不得进入 Gate 2 或宣称 Alpha、试点、商用 |
+| CR-T2G1-004 | 2026-08-16 | IMPLEMENTED_AWAITING_RETEST | GitHub Actions `31936005932` 的 MySQL 8.4.6 首轮迁移在 `cat_import_record.row_number` 处失败；确认 `ROW_NUMBER` 为保留关键字后，将两张导入表列改为 `source_row_no` 并更新 Mapper 与迁移摘要，其他门禁不降级 | T2-PRD-003、T2-MIG-001 | 首轮失败不计为通过；要求新提交完整重跑七个 Job |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。

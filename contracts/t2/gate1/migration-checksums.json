@@ -4,7 +4,7 @@
   "files": [
     {
       "path": "server/ruoyi-modules/jshpos-catalog/src/main/resources/db/migration/V202608160003__gate1_catalog_pricing.sql",
-      "sha256": "68cfdf2553074a18d207e3ec3ce76f5a793ad9e142276929490a07be0234aee8"
+      "sha256": "304c5cb4069eb14058095442609eb7e064c272b21459fb45a0f4ca37677ea613"
     },
     {
       "path": "server/ruoyi-modules/jshpos-catalog/src/main/resources/db/migration/V202608160004__gate1_catalog_permissions.sql",

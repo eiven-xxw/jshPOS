@@ -139,7 +139,7 @@ public interface CatalogMapper {
     ImportBatchView findImport(@Param("tenantId") String tenantId, @Param("batchId") Long batchId);
 
     @Insert("""
-        INSERT INTO cat_import_record(import_record_id,tenant_id,import_batch_id,row_number,sku_code,canonical_json,record_sha256)
+        INSERT INTO cat_import_record(import_record_id,tenant_id,import_batch_id,source_row_no,sku_code,canonical_json,record_sha256)
         VALUES(#{recordId},#{tenantId},#{batchId},#{rowNumber},#{skuCode},CAST(#{canonicalJson} AS JSON),#{recordHash})
         """)
     int insertImportRecord(@Param("tenantId") String tenantId, @Param("recordId") Long recordId,
@@ -148,7 +148,7 @@ public interface CatalogMapper {
                            @Param("recordHash") String recordHash);
 
     @Insert("""
-        INSERT INTO cat_import_error(import_error_id,tenant_id,import_batch_id,row_number,field_code,error_message)
+        INSERT INTO cat_import_error(import_error_id,tenant_id,import_batch_id,source_row_no,field_code,error_message)
         VALUES(#{errorId},#{tenantId},#{batchId},#{rowNumber},#{field},#{message})
         """)
     int insertImportError(@Param("tenantId") String tenantId, @Param("errorId") Long errorId,
