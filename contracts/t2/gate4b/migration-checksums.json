@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "1.0",
+  "phase": "T2-GATE4B",
+  "sealedAt": "2026-08-17",
+  "policy": "published Gate 4B stocktake procurement and permission migrations are append-only after verification",
+  "files": [
+    {
+      "path": "server/ruoyi-modules/jshpos-inventory/src/main/resources/db/migration/V202608170013__gate4b_stocktake.sql",
+      "sha256": "b0ef3ea091afbbaad3578907b7a97219d931d5366fe0130d9262a4c58458d60c"
+    },
+    {
+      "path": "server/ruoyi-modules/jshpos-procurement/src/main/resources/db/migration/V202608170014__gate4b_procurement.sql",
+      "sha256": "0975b9eaa57b0d13e9e55cdc02ff423ca60ba093c6b31a7eae51eb08b2074f96"
+    },
+    {
+      "path": "server/ruoyi-modules/jshpos-procurement/src/main/resources/db/migration/V202608170015__gate4b_permissions.sql",
+      "sha256": "9cc7c578535f5b3e6234eec74ffb25cfc9083517bc6a908a1c917011d435c12c"
+    }
+  ]
+}
