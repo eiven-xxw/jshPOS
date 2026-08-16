@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jshpos.example/contracts/poc/t1/week4/reproducibility.schema.json",
+  "title": "T1 Week 4 cross-platform reproducibility comparison",
+  "type": "object",
+  "required": ["schemaVersion", "phase", "evidenceLevel", "sourceEvidenceLevel", "baselineTag", "commitSha", "platforms", "reproducible", "normalizedEvidenceSha256", "inputTreeDigest", "failedSeedLedgerDigest", "limitations"],
+  "properties": {
+    "schemaVersion": {"const": "4.0"},
+    "phase": {"const": "T1-WEEK4"},
+    "evidenceLevel": {"const": "STATIC"},
+    "sourceEvidenceLevel": {"const": "FAKE"},
+    "baselineTag": {"const": "t0-baseline-2026-08-16"},
+    "commitSha": {"type": "string", "pattern": "^[a-f0-9]{40}$"},
+    "platforms": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "uniqueItems": true,
+      "items": {"enum": ["ubuntu", "windows"]}
+    },
+    "reproducible": {"const": true},
+    "normalizedEvidenceSha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "inputTreeDigest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "failedSeedLedgerDigest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "limitations": {"type": "array", "minItems": 3, "items": {"type": "string", "minLength": 10}}
+  },
+  "additionalProperties": true
+}

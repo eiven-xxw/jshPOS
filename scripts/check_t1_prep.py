@@ -134,19 +134,29 @@ def allowed_prep_path(name: str) -> bool:
         return True
     if normalized.startswith("poc/t1-week3/"):
         return True
+    if normalized.startswith("docs/t1-week4/"):
+        return True
+    if normalized.startswith("contracts/poc/t1/week4/"):
+        return True
     if normalized in {
         ".gitignore",
         ".github/workflows/t1-week1.yml",
         ".github/workflows/t1-week2.yml",
         ".github/workflows/t1-week3.yml",
+        ".github/workflows/t1-week4.yml",
         "docs/governance/rtm.csv",
         "docs/governance/change-log.md",
         "docs/adr/README.md",
         "docs/adr/ADR-017-t1-risk-poc-scope-and-integration-depth.md",
+        "docs/adr/ADR-018-t1-exit-and-t2-entry-recommendation.md",
         "scripts/check_t1_prep.py",
         "scripts/check_t1_week1.py",
         "scripts/check_t1_week2.py",
         "scripts/check_t1_week3.py",
+        "scripts/check_t1_week4.py",
+        "scripts/run_t1_reproducibility.py",
+        "scripts/compare_t1_reproducibility.py",
+        "scripts/build_t1_poc_inventory.py",
         "scripts/check_contracts.py",
     }:
         return True
