@@ -44,5 +44,6 @@
 | CR-T2G2-003 | 2026-08-16 | VERIFIED_AWAITING_CI | 八项 Gate 2 的班次、购物篮、现金、挂取、交班、订单快照、幂等 Outbox 与正式 SQLite 本地事务实现完成本地验证；补强挂取单班次/业务日冻结、版本化事件、独立差异审批和已提交快照防篡改，由 IN_PROGRESS 更新为 VERIFIED | T2-POS-001..005、T2-ORD-001..002、T2-OFF-001 | 不代表 ACCEPTED；等待 GitHub 干净执行器、MySQL 8.4、安全供应链和证据总包门禁 |
 | CR-T2G2-004 | 2026-08-16 | IMPLEMENTED_AWAITING_RETEST | GitHub Actions `31942057526` 首轮 MySQL 8.4 迁移发现 Gate 2 `tenant_id` 使用 ascii_bin 而 Gate 0/1 主权表使用 utf8mb4_0900_ai_ci，复合外键因列不兼容被拒绝；统一 Gate 2 租户列继承既有表字符集并更新迁移封印 | T2-MIG-001、T2-POS-001..005、T2-ORD-001..002 | 首轮失败不计为通过；要求完整九 Job 重跑且不得降低约束 |
 | CR-T2G2-005 | 2026-08-16 | IMPLEMENTED_AWAITING_RETEST | GitHub Actions `31942426693` 的八个生产与安全前置 Job 全部通过，证据聚合器因 Flutter machine 输出中的合法 VM-service JSON 数组误按对象解析而失败；聚合器改为只统计 package:test 协议对象，并使用该轮 Linux/Windows 原始制品各 24 项测试回归 | T2-SEC-001、T2-OBS-001、T2-POS-001..005、T2-ORD-001..002、T2-OFF-001 | 测试结果本身未失败；聚合失败仍不计为通过，要求完整九 Job 重跑且不得跳过证据门禁 |
+| CR-T2G2-006 | 2026-08-16 | VERIFIED_AWAITING_CONFIRMATION | 最终候选 `921306d` 在 GitHub Actions `31942899817` 的九个 Job 全部通过，证据聚合复核 111 个文件；八项 Gate 2 保持 VERIFIED 并提交周门禁报告等待项目发起人确认 | T2-POS-001..005、T2-ORD-001..002、T2-OFF-001 | 不代表 ACCEPTED；T2-SYN-001 仍 DRAFT，外部 BLOCKED/DEFERRED 与 sandbox/realDevice/pilot=0 不变 |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。
