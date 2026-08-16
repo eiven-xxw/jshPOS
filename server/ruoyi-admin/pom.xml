@@ -111,6 +111,12 @@
             <artifactId>jshpos-procurement</artifactId>
         </dependency>
 
+        <!-- Gate 4C 仓级移动加权成本账本与可重建投影模块 -->
+        <dependency>
+            <groupId>com.jingshanghui.pos</groupId>
+            <artifactId>jshpos-costing</artifactId>
+        </dependency>
+
         <!-- Gate 0 服务端数据库版本治理 -->
         <dependency>
             <groupId>org.flywaydb</groupId>

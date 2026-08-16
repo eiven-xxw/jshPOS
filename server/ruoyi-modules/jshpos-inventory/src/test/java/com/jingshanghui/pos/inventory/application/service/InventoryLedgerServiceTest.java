@@ -15,6 +15,7 @@ import com.jingshanghui.pos.inventory.application.model.InventoryViews.PolicyVie
 import com.jingshanghui.pos.inventory.infrastructure.persistence.InventoryPersistenceParams.AnomalyWrite;
 import com.jingshanghui.pos.inventory.infrastructure.persistence.InventoryPersistenceParams.BalanceUpdate;
 import com.jingshanghui.pos.inventory.infrastructure.persistence.mapper.InventoryMapper;
+import com.jingshanghui.pos.inventory.application.port.AuthoritativeCostPostingPort;
 import com.jingshanghui.pos.order.application.port.InventoryOrderSnapshotPort;
 import com.jingshanghui.pos.order.application.port.InventoryOrderSnapshotPort.InventoryLineSnapshot;
 import com.jingshanghui.pos.order.application.port.InventoryOrderSnapshotPort.InventoryOrderSnapshot;
@@ -59,6 +60,7 @@ class InventoryLedgerServiceTest {
     private final ScopeAuthorizationService authorization = mock(ScopeAuthorizationService.class);
     private final InventoryOrderSnapshotPort orders = mock(InventoryOrderSnapshotPort.class);
     private final InventoryRefundSnapshotPort refunds = mock(InventoryRefundSnapshotPort.class);
+    private final AuthoritativeCostPostingPort costing = mock(AuthoritativeCostPostingPort.class);
     private final Clock clock = Clock.fixed(NOW, ZoneOffset.UTC);
     private InventoryLedgerService service;
 
@@ -66,7 +68,7 @@ class InventoryLedgerServiceTest {
     void setUp() {
         when(tenantContext.requirePrincipal()).thenReturn(new TrustedPrincipal("TENANT_A", 101L, 1L, "alice"));
         when(tenantContext.requireTenantId()).thenReturn("TENANT_A");
-        service = new InventoryLedgerService(mapper, tenantContext, authorization, orders, refunds,
+        service = new InventoryLedgerService(mapper, tenantContext, authorization, orders, refunds, costing,
             new UlidGenerator(clock), clock, new ObjectMapper());
     }
 
@@ -85,8 +87,24 @@ class InventoryLedgerServiceTest {
         verify(mapper).updateBalance(update.capture());
         assertThat(update.getValue().onHandQuantity()).isEqualByComparingTo("8.000000");
         verify(mapper).insertLedger(any());
+        verify(costing).applyPostedLedger(any());
         verify(mapper).insertOutbox(any());
         verify(mapper, times(2)).insertAudit(any());
+    }
+
+    @Test
+    void costFailurePropagatesBeforeInventoryOutboxSoTransactionCanRollbackAtomically() {
+        saleSnapshot(new BigDecimal("2.000000"));
+        effectivePolicy("DENY");
+        balance(new BigDecimal("10.000000"));
+        when(costing.applyPostedLedger(any())).thenThrow(new ServiceException("CST-COST-MISSING", 409));
+
+        assertThatThrownBy(() -> service.applySale(new ApplySale(EVENT, ORDER, WAREHOUSE, "trace-rollback")))
+            .isInstanceOf(ServiceException.class).hasMessageContaining("CST-COST-MISSING");
+        verify(mapper).insertLedger(any());
+        verify(mapper).updateBalance(any());
+        verify(mapper, never()).insertOutbox(any());
+        verify(mapper, never()).insertAudit(any());
     }
 
     @Test

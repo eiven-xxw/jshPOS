@@ -9,6 +9,11 @@ paths:
       operationId: publishCostPolicy
       x-requirement-id: T2-CST-001
       security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/PublishCostPolicyRequest"}
       responses:
         "200": {description: 不可变仓级成本策略已发布}
         "409": {description: 策略、范围、货币或生效时间冲突}
@@ -28,6 +33,11 @@ paths:
       operationId: listCostLedger
       x-requirement-id: T2-CST-001
       security: [{bearerAuth: []}]
+      parameters:
+        - {name: warehouseId, in: path, required: true, schema: {type: string, pattern: "^[0-9A-HJKMNP-TV-Z]{26}$"}}
+        - {name: skuId, in: path, required: true, schema: {type: integer, format: int64, minimum: 1}}
+        - {name: afterSequence, in: query, required: false, schema: {type: integer, format: int64, minimum: 0, default: 0}}
+        - {name: limit, in: query, required: false, schema: {type: integer, minimum: 1, maximum: 500, default: 100}}
       responses:
         "200": {description: 按成本流水序号升序返回不可变流水}
   /api/inventory/cost-balances/{warehouseId}/{skuId}/rebuild:
@@ -35,6 +45,14 @@ paths:
       operationId: rebuildCostBalance
       x-requirement-id: T2-CST-001
       security: [{bearerAuth: []}]
+      parameters:
+        - {name: warehouseId, in: path, required: true, schema: {type: string, pattern: "^[0-9A-HJKMNP-TV-Z]{26}$"}}
+        - {name: skuId, in: path, required: true, schema: {type: integer, format: int64, minimum: 1}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/RebuildCostRequest"}
       responses:
         "200": {description: 已验证或原子切换重建投影}
         "409": {description: 版本冲突、流水缺口或摘要不一致}
@@ -46,4 +64,20 @@ components:
       type: string
       pattern: "^-?[0-9]+\\.[0-9]{6}$"
       description: 禁止 JSON Number；数量或以分计量的高精度成本。
-
+    PublishCostPolicyRequest:
+      type: object
+      additionalProperties: false
+      required: [policyVersionId, storeId, warehouseId, effectiveFrom, correlationId]
+      properties:
+        policyVersionId: {type: string, pattern: "^[0-9A-HJKMNP-TV-Z]{26}$"}
+        storeId: {type: string, pattern: "^[1-9][0-9]*$"}
+        warehouseId: {type: string, pattern: "^[0-9A-HJKMNP-TV-Z]{26}$"}
+        effectiveFrom: {type: string, format: date-time}
+        correlationId: {type: string, minLength: 1, maxLength: 96}
+    RebuildCostRequest:
+      type: object
+      additionalProperties: false
+      required: [rebuildId, correlationId]
+      properties:
+        rebuildId: {type: string, pattern: "^[0-9A-HJKMNP-TV-Z]{26}$"}
+        correlationId: {type: string, minLength: 1, maxLength: 96}

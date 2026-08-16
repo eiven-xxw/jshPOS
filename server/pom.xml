@@ -439,6 +439,12 @@
                 <version>${revision}</version>
             </dependency>
 
+            <dependency>
+                <groupId>com.jingshanghui.pos</groupId>
+                <artifactId>jshpos-costing</artifactId>
+                <version>${revision}</version>
+            </dependency>
+
             <!--  工作流模块  -->
             <dependency>
                 <groupId>org.dromara</groupId>

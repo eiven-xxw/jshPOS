@@ -281,9 +281,6 @@ public class ProcurementService {
                 receiptLine.baseUnitId(), receiptLine.baseQuantity(), MovementType.PURCHASE_RECEIPT_IN));
         }
         LocalDate businessDate = storeService.businessDate(order.storeId(), clock.instant()).businessDate();
-        movementPort.applyOwnedMovement(new OwnedMovement(command.eventId(), "PURCHASE_RECEIPT",
-            command.receiptId(), order.warehouseId(), order.storeId(), businessDate,
-            command.correlationId(), movements));
         String next = mapper.countIncompleteOrderLines(principal.tenantId(), order.orderId()) == 0
             ? "RECEIVED" : "PARTIALLY_RECEIVED";
         updateOrderState(order, next, null, null, at);
@@ -291,6 +288,10 @@ public class ProcurementService {
             command.eventId(), receipt.version(), at)) != 1) {
             throw new ServiceException("PUR-RECEIPT-004: 收货确认版本冲突", 409);
         }
+        // 先让已确认采购事实在当前事务内可见，再由库存 Owner 写数量与成本；任一步失败会整体回滚。
+        movementPort.applyOwnedMovement(new OwnedMovement(command.eventId(), "PURCHASE_RECEIPT",
+            command.receiptId(), order.warehouseId(), order.storeId(), businessDate,
+            command.correlationId(), movements));
         audit(principal, order.storeId(), "PURCHASE_RECEIPT_CONFIRMED", "PURCHASE_RECEIPT",
             command.receiptId(), command.eventId(), command.correlationId(), "DRAFT", "CONFIRMED",
             "INVENTORY_LEDGER_APPENDED", at);
@@ -396,13 +397,14 @@ public class ProcurementService {
                 input.baseQuantity(), MovementType.PURCHASE_RETURN_OUT));
         }
         LocalDate businessDate = storeService.businessDate(receipt.storeId(), clock.instant()).businessDate();
-        movementPort.applyOwnedMovement(new OwnedMovement(command.eventId(), "PURCHASE_RETURN",
-            command.purchaseReturnId(), receipt.warehouseId(), receipt.storeId(), businessDate,
-            command.correlationId(), movements));
         if (mapper.postReturn(new ReturnPost(principal.tenantId(), command.purchaseReturnId(), command.eventId(),
             principal.userId(), value.version(), at)) != 1) {
             throw new ServiceException("PUR-RETURN-005: 采购退货版本冲突", 409);
         }
+        // 退货先在当前事务内成为已入账权威事实，成本端口才能读取原收货关系；失败仍整体回滚。
+        movementPort.applyOwnedMovement(new OwnedMovement(command.eventId(), "PURCHASE_RETURN",
+            command.purchaseReturnId(), receipt.warehouseId(), receipt.storeId(), businessDate,
+            command.correlationId(), movements));
         audit(principal, receipt.storeId(), "PURCHASE_RETURN_POSTED", "PURCHASE_RETURN",
             command.purchaseReturnId(), command.eventId(), command.correlationId(), "PENDING_APPROVAL", "POSTED",
             "INVENTORY_LEDGER_APPENDED", at);

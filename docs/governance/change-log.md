@@ -58,5 +58,6 @@
 | CR-T2G4B-001 | 2026-08-17 | ACCEPTED | 项目发起人确认《T2 Gate 4B / Sprint S6 周门禁报告》并接受 Gate 4B CONDITIONAL PASS，授权 `T2-INV-003`、`T2-PUR-001` 由 VERIFIED 转为 ACCEPTED | T2-INV-003、T2-PUR-001、ADR-024 | 项目发起人 2026-08-17 明确确认；REAL_DEVICE、SANDBOX、PILOT 阻断不变 |
 | CR-T2G4C-001 | 2026-08-17 | APPROVED | 以封存 tag 为唯一不可变基线、以 Gate 4B 最终报告提交 `02e1854` 为起点，按 CONDITIONAL GO 启动 Gate 4C / Sprint S7；仅准入仓级移动加权成本，调拨只做设计 | T2-CST-001、T2-TRF-001、ADR-025 | 项目发起人 2026-08-17 明确确认；支付 Provider 网络和后续 Gate 继续禁止 |
 | CR-T2G4C-002 | 2026-08-17 | IN_PROGRESS | T2-CST-001 完成数据主权、输入事实、单调顺序、成本不变量、权限、审计、API/事件、Flyway、容量、回退、固定向量和 CI 限定准入，由 DRAFT 经 READY 进入 IN_PROGRESS | T2-CST-001、ADR-025 | 只准入 jshpos-costing；T2-TRF-001 保持 DRAFT，外部证据为0 |
+| CR-T2G4C-003 | 2026-08-17 | VERIFIED | T2-CST-001 已完成不可变成本流水、移动加权平均、采购/销售退货、冲正、负库存估值、可重建投影、租户攻击和固定向量验证，等待项目发起人验收 | T2-CST-001、ADR-025 | 仅内部 STATIC/UNIT/MYSQL_INTEGRATION/SYNTHETIC_VECTOR 证据；不得自行更新为 ACCEPTED；T2-TRF-001 保持 DRAFT，T2-PAY-002 保持 BLOCKED |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。

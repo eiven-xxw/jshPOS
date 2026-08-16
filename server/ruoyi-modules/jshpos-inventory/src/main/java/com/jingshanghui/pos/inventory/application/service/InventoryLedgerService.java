@@ -12,6 +12,8 @@ import com.jingshanghui.pos.inventory.application.model.InventoryCommands.Publis
 import com.jingshanghui.pos.inventory.application.model.InventoryCommands.RebuildBalance;
 import com.jingshanghui.pos.inventory.application.port.AuthoritativeInventoryMovementPort;
 import com.jingshanghui.pos.inventory.application.port.AuthoritativeInventoryMovementPort.OwnedMovement;
+import com.jingshanghui.pos.inventory.application.port.AuthoritativeCostPostingPort;
+import com.jingshanghui.pos.inventory.application.port.AuthoritativeCostPostingPort.PostedInventoryLedger;
 import com.jingshanghui.pos.inventory.application.model.InventoryViews.ApplyResult;
 import com.jingshanghui.pos.inventory.application.model.InventoryViews.BalanceView;
 import com.jingshanghui.pos.inventory.application.model.InventoryViews.CommandView;
@@ -70,6 +72,7 @@ public class InventoryLedgerService implements AuthoritativeInventoryMovementPor
     private final ScopeAuthorizationService authorizationService;
     private final InventoryOrderSnapshotPort orderSnapshotPort;
     private final InventoryRefundSnapshotPort refundSnapshotPort;
+    private final AuthoritativeCostPostingPort costPostingPort;
     private final UlidGenerator ulids;
     private final Clock clock;
     private final ObjectMapper objectMapper;
@@ -283,7 +286,8 @@ public class InventoryLedgerService implements AuthoritativeInventoryMovementPor
             before.frozenQuantity(), before.safetyStockQuantity());
         boolean negative = InventoryRules.requiresNegativeAlert(input.mode(), availableAfter);
         long sequence = before.lastLedgerSequence() + 1;
-        mapper.insertLedger(new LedgerWrite(ulids.next(), tenantId, dimension, sequence,
+        String inventoryLedgerId = ulids.next();
+        mapper.insertLedger(new LedgerWrite(inventoryLedgerId, tenantId, dimension, sequence,
             input.source().warehouseId(), line.skuId(), line.baseUnitId(), "SALEABLE",
             line.movementType().name(), before.onHandQuantity(), delta, afterQuantity,
             input.source().sourceType(), input.source().sourceId(), line.sourceLineId(), input.source().eventId(),
@@ -293,6 +297,12 @@ public class InventoryLedgerService implements AuthoritativeInventoryMovementPor
             before.recordVersion(), input.at())) != 1) {
             throw new ServiceException("INV-BALANCE-004: 库存余额并发冲突", 409);
         }
+        // 成本 Owner 必须在当前事务内消费刚写入的库存事实；失败时库存流水和余额一并回滚。
+        costPostingPort.applyPostedLedger(new PostedInventoryLedger(inventoryLedgerId, sequence, dimension,
+            input.source().warehouseId(), input.source().storeId(), line.skuId(), line.baseUnitId(),
+            line.movementType().name(), before.onHandQuantity(), delta, afterQuantity,
+            input.source().sourceType(), input.source().sourceId(), line.sourceLineId(),
+            input.source().eventId(), null, input.source().businessDate(), input.source().correlationId(), input.at()));
         if (negative) {
             mapper.insertAnomaly(new AnomalyWrite(ulids.next(), tenantId, input.source().storeId(),
                 input.source().warehouseId(), line.skuId(), "NEGATIVE_STOCK", availableAfter,

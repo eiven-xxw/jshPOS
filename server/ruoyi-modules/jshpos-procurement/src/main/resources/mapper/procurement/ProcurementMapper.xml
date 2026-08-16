@@ -47,6 +47,31 @@
       received_quantity AS receivedQuantity,base_quantity AS baseQuantity,returned_quantity AS returnedQuantity,
       conversion_numerator AS numerator,conversion_denominator AS denominator</sql>
 
+    <!-- 成本模块只能读取已确认收货，单价以采购单位的最小货币单位计量。 -->
+    <select id="findConfirmedReceiptCostSource"
+            resultType="com.jingshanghui.pos.procurement.application.port.ProcurementCostSourcePort$ReceiptCostSource">
+      SELECT rl.receipt_line_id AS receiptLineId,rl.receipt_id AS receiptId,rl.order_line_id AS orderLineId,
+        rl.sku_id AS skuId,rl.base_unit_id AS baseUnitId,rl.base_quantity AS baseQuantity,
+        ol.unit_price_minor AS purchaseUnitPriceMinor,rl.conversion_numerator AS conversionNumerator,
+        rl.conversion_denominator AS conversionDenominator,'CNY' AS currencyCode
+      FROM pur_receipt_line rl
+      INNER JOIN pur_receipt r ON r.tenant_id=rl.tenant_id AND r.receipt_id=rl.receipt_id
+      INNER JOIN pur_purchase_order_line ol ON ol.tenant_id=rl.tenant_id AND ol.order_line_id=rl.order_line_id
+      WHERE rl.tenant_id=#{tenantId} AND rl.receipt_line_id=#{receiptLineId} AND r.status='CONFIRMED'
+    </select>
+
+    <!-- 采购退货只暴露已入账事实及原收货行，不暴露调用方自报成本。 -->
+    <select id="findPostedReturnCostSource"
+            resultType="com.jingshanghui.pos.procurement.application.port.ProcurementCostSourcePort$ReturnCostSource">
+      SELECT prl.return_line_id AS returnLineId,prl.purchase_return_id AS purchaseReturnId,
+        prl.receipt_line_id AS originalReceiptLineId,prl.sku_id AS skuId,prl.base_unit_id AS baseUnitId,
+        prl.base_quantity AS baseQuantity,'CNY' AS currencyCode
+      FROM pur_purchase_return_line prl
+      INNER JOIN pur_purchase_return pr
+        ON pr.tenant_id=prl.tenant_id AND pr.purchase_return_id=prl.purchase_return_id
+      WHERE prl.tenant_id=#{tenantId} AND prl.return_line_id=#{returnLineId} AND pr.status='POSTED'
+    </select>
+
     <insert id="insertSupplier">INSERT INTO sup_supplier(supplier_id,tenant_id,supplier_code,supplier_name,status,version,creator_user_id,created_at,updated_at)
       VALUES(#{supplierId},#{tenantId},#{code},#{name},'ACTIVE',0,#{creatorUserId},#{at},#{at})</insert>
     <select id="findSupplier" resultType="com.jingshanghui.pos.procurement.application.model.ProcurementViews$Supplier">

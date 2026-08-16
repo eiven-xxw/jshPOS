@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jingshanghui.pos.costing.infrastructure.persistence.mapper.CostingMapper">
+
+    <!-- 显式构造映射，避免成本表扩列静默改变领域语义。 -->
+    <resultMap id="balanceView" type="com.jingshanghui.pos.costing.application.model.CostingViews$BalanceView">
+        <constructor>
+            <arg column="costDimensionKey" javaType="java.lang.String"/><arg column="costScopeId" javaType="java.lang.String"/>
+            <arg column="warehouseId" javaType="java.lang.String"/><arg column="storeId" javaType="java.lang.Long"/>
+            <arg column="skuId" javaType="java.lang.Long"/><arg column="currencyCode" javaType="java.lang.String"/>
+            <arg column="costQuantity" javaType="java.math.BigDecimal"/><arg column="costAmountMinor" javaType="java.math.BigDecimal"/>
+            <arg column="averageUnitCostMinor" javaType="java.math.BigDecimal"/><arg column="lastUnitCostMinor" javaType="java.math.BigDecimal"/>
+            <arg column="lastCostLedgerSequence" javaType="long"/><arg column="lastInventoryLedgerSequence" javaType="long"/>
+            <arg column="recordVersion" javaType="long"/>
+        </constructor>
+    </resultMap>
+    <resultMap id="ledgerView" type="com.jingshanghui.pos.costing.application.model.CostingViews$LedgerView">
+        <constructor>
+            <arg column="costLedgerId" javaType="java.lang.String"/><arg column="costLedgerSequence" javaType="long"/>
+            <arg column="inventoryLedgerId" javaType="java.lang.String"/><arg column="inventoryLedgerSequence" javaType="long"/>
+            <arg column="warehouseId" javaType="java.lang.String"/><arg column="skuId" javaType="java.lang.Long"/>
+            <arg column="currencyCode" javaType="java.lang.String"/><arg column="movementType" javaType="java.lang.String"/>
+            <arg column="quantityBefore" javaType="java.math.BigDecimal"/><arg column="quantityDelta" javaType="java.math.BigDecimal"/>
+            <arg column="quantityAfter" javaType="java.math.BigDecimal"/><arg column="costAmountBeforeMinor" javaType="java.math.BigDecimal"/>
+            <arg column="costAmountDeltaMinor" javaType="java.math.BigDecimal"/><arg column="costAmountAfterMinor" javaType="java.math.BigDecimal"/>
+            <arg column="unitCostMinor" javaType="java.math.BigDecimal"/><arg column="averageUnitCostAfterMinor" javaType="java.math.BigDecimal"/>
+            <arg column="valuationMethod" javaType="java.lang.String"/><arg column="costEstimated" javaType="boolean"/>
+            <arg column="varianceAmountMinor" javaType="java.math.BigDecimal"/><arg column="sourceType" javaType="java.lang.String"/>
+            <arg column="sourceId" javaType="java.lang.String"/><arg column="sourceLineId" javaType="java.lang.String"/>
+            <arg column="sourceSha256" javaType="java.lang.String"/><arg column="policyVersionId" javaType="java.lang.String"/>
+            <arg column="reversalOfCostLedgerId" javaType="java.lang.String"/><arg column="businessDate" javaType="java.time.LocalDate"/>
+            <arg column="occurredAt" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <sql id="balanceColumns">cost_dimension_key AS costDimensionKey,cost_scope_id AS costScopeId,
+      warehouse_id AS warehouseId,store_id AS storeId,sku_id AS skuId,currency_code AS currencyCode,
+      cost_quantity AS costQuantity,cost_amount_minor AS costAmountMinor,
+      avg_unit_cost_minor AS averageUnitCostMinor,last_unit_cost_minor AS lastUnitCostMinor,
+      last_cost_ledger_sequence AS lastCostLedgerSequence,
+      last_inventory_ledger_sequence AS lastInventoryLedgerSequence,record_version AS recordVersion</sql>
+    <sql id="ledgerColumns">cost_ledger_id AS costLedgerId,cost_ledger_sequence AS costLedgerSequence,
+      inventory_ledger_id AS inventoryLedgerId,inventory_ledger_sequence AS inventoryLedgerSequence,
+      warehouse_id AS warehouseId,sku_id AS skuId,currency_code AS currencyCode,movement_type AS movementType,
+      quantity_before AS quantityBefore,quantity_delta AS quantityDelta,quantity_after AS quantityAfter,
+      cost_amount_before_minor AS costAmountBeforeMinor,cost_amount_delta_minor AS costAmountDeltaMinor,
+      cost_amount_after_minor AS costAmountAfterMinor,unit_cost_minor AS unitCostMinor,
+      avg_unit_cost_after_minor AS averageUnitCostAfterMinor,valuation_method AS valuationMethod,
+      cost_estimated AS costEstimated,variance_amount_minor AS varianceAmountMinor,
+      source_type AS sourceType,source_id AS sourceId,source_line_id AS sourceLineId,
+      source_sha256 AS sourceSha256,policy_version_id AS policyVersionId,
+      reversal_of_cost_ledger_id AS reversalOfCostLedgerId,business_date AS businessDate,occurred_at AS occurredAt</sql>
+
+    <insert id="insertPolicy">
+      INSERT INTO inv_cost_policy_version(policy_version_id,tenant_id,store_id,warehouse_id,cost_scope_type,
+        currency_code,quantity_scale,cost_scale,rounding_mode,zero_quantity_mode,effective_from,
+        publisher_user_id,published_at)
+      VALUES(#{policyVersionId},#{tenantId},#{storeId},#{warehouseId},'WAREHOUSE','CNY',6,6,
+        'HALF_EVEN','ZERO_AMOUNT_KEEP_LAST_UNIT_COST',#{effectiveFrom},#{publisherUserId},#{publishedAt})
+    </insert>
+    <select id="findEffectivePolicy" resultType="com.jingshanghui.pos.costing.application.model.CostingViews$PolicyView">
+      SELECT policy_version_id AS policyVersionId,store_id AS storeId,warehouse_id AS warehouseId,
+        cost_scope_type AS scopeType,currency_code AS currencyCode,quantity_scale AS quantityScale,
+        cost_scale AS costScale,rounding_mode AS roundingMode,zero_quantity_mode AS zeroQuantityMode,
+        effective_from AS effectiveFrom
+      FROM inv_cost_policy_version
+      WHERE tenant_id=#{tenantId} AND warehouse_id=#{warehouseId} AND effective_from&lt;=#{effectiveAt}
+      ORDER BY effective_from DESC,policy_version_id DESC LIMIT 1
+    </select>
+
+    <insert id="insertBalanceIfAbsent">
+      INSERT IGNORE INTO inv_cost_balance(tenant_id,cost_dimension_key,cost_scope_id,warehouse_id,store_id,sku_id,
+        currency_code,cost_quantity,cost_amount_minor,avg_unit_cost_minor,last_unit_cost_minor,
+        last_cost_ledger_sequence,last_inventory_ledger_sequence,policy_version_id,record_version,updated_at)
+      VALUES(#{tenantId},#{costDimensionKey},#{costScopeId},#{warehouseId},#{storeId},#{skuId},#{currencyCode},
+        0,0,0,0,0,0,#{policyVersionId},0,#{updatedAt})
+    </insert>
+    <select id="lockBalance" resultMap="balanceView">
+      SELECT <include refid="balanceColumns"/> FROM inv_cost_balance
+      WHERE tenant_id=#{tenantId} AND cost_dimension_key=#{costDimensionKey} FOR UPDATE
+    </select>
+    <select id="findBalance" resultMap="balanceView">
+      SELECT <include refid="balanceColumns"/> FROM inv_cost_balance
+      WHERE tenant_id=#{tenantId} AND warehouse_id=#{warehouseId} AND sku_id=#{skuId} AND currency_code='CNY'
+    </select>
+    <update id="updateBalance">
+      UPDATE inv_cost_balance SET cost_quantity=#{costQuantity},cost_amount_minor=#{costAmountMinor},
+        avg_unit_cost_minor=#{averageUnitCostMinor},last_unit_cost_minor=#{lastUnitCostMinor},
+        last_cost_ledger_sequence=#{lastCostLedgerSequence},last_inventory_ledger_sequence=#{lastInventoryLedgerSequence},
+        policy_version_id=#{policyVersionId},record_version=record_version+1,updated_at=#{updatedAt}
+      WHERE tenant_id=#{tenantId} AND cost_dimension_key=#{costDimensionKey} AND record_version=#{expectedVersion}
+    </update>
+    <update id="rebuildBalance">
+      UPDATE inv_cost_balance SET cost_quantity=#{costQuantity},cost_amount_minor=#{costAmountMinor},
+        avg_unit_cost_minor=#{averageUnitCostMinor},last_unit_cost_minor=#{lastUnitCostMinor},
+        last_cost_ledger_sequence=#{lastCostLedgerSequence},last_inventory_ledger_sequence=#{lastInventoryLedgerSequence},
+        policy_version_id=#{policyVersionId},record_version=record_version+1,updated_at=#{updatedAt}
+      WHERE tenant_id=#{tenantId} AND cost_dimension_key=#{costDimensionKey} AND record_version=#{expectedVersion}
+    </update>
+
+    <select id="findLedgerByInventory" resultMap="ledgerView">
+      SELECT <include refid="ledgerColumns"/> FROM inv_cost_ledger
+      WHERE tenant_id=#{tenantId} AND inventory_ledger_id=#{inventoryLedgerId}
+    </select>
+    <select id="findLedgerById" resultMap="ledgerView">
+      SELECT <include refid="ledgerColumns"/> FROM inv_cost_ledger
+      WHERE tenant_id=#{tenantId} AND cost_ledger_id=#{costLedgerId}
+    </select>
+    <select id="findSourceLedger" resultMap="ledgerView">
+      SELECT <include refid="ledgerColumns"/> FROM inv_cost_ledger
+      WHERE tenant_id=#{tenantId} AND warehouse_id=#{warehouseId} AND sku_id=#{skuId}
+        AND source_type=#{sourceType} AND source_line_id=#{sourceLineId} AND movement_type=#{movementType}
+      ORDER BY cost_ledger_sequence ASC LIMIT 1
+    </select>
+    <insert id="insertLedger">
+      INSERT INTO inv_cost_ledger(cost_ledger_id,tenant_id,cost_dimension_key,cost_scope_id,cost_ledger_sequence,
+        inventory_ledger_id,inventory_ledger_sequence,warehouse_id,sku_id,currency_code,movement_type,
+        quantity_before,quantity_delta,quantity_after,cost_amount_before_minor,cost_amount_delta_minor,
+        cost_amount_after_minor,unit_cost_minor,avg_unit_cost_after_minor,valuation_method,cost_estimated,
+        variance_amount_minor,source_type,source_id,source_line_id,source_event_id,source_sha256,
+        policy_version_id,reversal_of_cost_ledger_id,business_date,actor_user_id,correlation_id,occurred_at)
+      VALUES(#{costLedgerId},#{tenantId},#{costDimensionKey},#{costScopeId},#{costLedgerSequence},
+        #{inventoryLedgerId},#{inventoryLedgerSequence},#{warehouseId},#{skuId},#{currencyCode},#{movementType},
+        #{quantityBefore},#{quantityDelta},#{quantityAfter},#{costAmountBeforeMinor},#{costAmountDeltaMinor},
+        #{costAmountAfterMinor},#{unitCostMinor},#{averageUnitCostAfterMinor},#{valuationMethod},#{costEstimated},
+        #{varianceAmountMinor},#{sourceType},#{sourceId},#{sourceLineId},#{sourceEventId},#{sourceSha256},
+        #{policyVersionId},#{reversalOfCostLedgerId},#{businessDate},#{actorUserId},#{correlationId},#{occurredAt})
+    </insert>
+    <select id="findLedger" resultMap="ledgerView">
+      SELECT <include refid="ledgerColumns"/> FROM inv_cost_ledger
+      WHERE tenant_id=#{tenantId} AND cost_dimension_key=#{costDimensionKey}
+        AND cost_ledger_sequence&gt;#{afterSequence}
+      ORDER BY cost_ledger_sequence ASC LIMIT #{limit}
+    </select>
+    <select id="aggregateLedger" resultType="com.jingshanghui.pos.costing.application.model.CostingViews$LedgerAggregate">
+      SELECT COALESCE(SUM(l.quantity_delta),0) AS quantity,
+        COALESCE(SUM(l.cost_amount_delta_minor),0) AS amountMinor,
+        COUNT(*) AS ledgerCount,COALESCE(MAX(l.cost_ledger_sequence),0) AS lastCostLedgerSequence,
+        COALESCE(MAX(l.inventory_ledger_sequence),0) AS lastInventoryLedgerSequence,
+        COALESCE((SELECT l2.avg_unit_cost_after_minor FROM inv_cost_ledger l2
+          WHERE l2.tenant_id=#{tenantId} AND l2.cost_dimension_key=#{costDimensionKey}
+          ORDER BY l2.cost_ledger_sequence DESC LIMIT 1),0) AS lastUnitCostMinor
+      FROM inv_cost_ledger l
+      WHERE l.tenant_id=#{tenantId} AND l.cost_dimension_key=#{costDimensionKey}
+    </select>
+
+    <insert id="insertRebuild">
+      INSERT INTO inv_cost_rebuild_run(rebuild_id,tenant_id,cost_dimension_key,warehouse_id,store_id,sku_id,
+        actor_user_id,correlation_id,previous_quantity,rebuilt_quantity,previous_amount_minor,
+        rebuilt_amount_minor,ledger_count,changed,status,completed_at)
+      VALUES(#{rebuildId},#{tenantId},#{costDimensionKey},#{warehouseId},#{storeId},#{skuId},#{actorUserId},
+        #{correlationId},#{previousQuantity},#{rebuiltQuantity},#{previousAmountMinor},#{rebuiltAmountMinor},
+        #{ledgerCount},#{changed},'COMPLETED',#{completedAt})
+    </insert>
+    <insert id="insertAudit">
+      INSERT INTO inv_cost_audit_event(audit_id,tenant_id,store_id,action_code,aggregate_type,aggregate_id,
+        actor_user_id,command_id,correlation_id,before_value,after_value,request_sha256,reason_code,occurred_at)
+      VALUES(#{auditId},#{tenantId},#{storeId},#{actionCode},#{aggregateType},#{aggregateId},#{actorUserId},
+        #{commandId},#{correlationId},#{beforeValue},#{afterValue},#{requestSha256},#{reasonCode},#{occurredAt})
+    </insert>
+    <insert id="insertOutbox">
+      INSERT INTO inv_cost_event_outbox(event_id,tenant_id,event_type,aggregate_id,aggregate_version,
+        correlation_id,payload_json,payload_sha256,delivery_state,available_at)
+      VALUES(#{eventId},#{tenantId},#{eventType},#{aggregateId},#{aggregateVersion},#{correlationId},
+        CAST(#{payloadJson} AS JSON),#{payloadSha256},'PENDING',#{availableAt})
+    </insert>
+</mapper>

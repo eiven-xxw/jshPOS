@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "1.0",
+  "sealedAt": "2026-08-17T00:00:00Z",
+  "rule": "已发布迁移禁止修改；任何修复必须新增前向迁移",
+  "files": [
+    {
+      "path": "server/ruoyi-modules/jshpos-costing/src/main/resources/db/migration/V202608170016__gate4c_costing.sql",
+      "sha256": "688e1ecbe51314f9b0289ed84edb07161285637b311af3e59f3c3f9c6734aafa"
+    },
+    {
+      "path": "server/ruoyi-modules/jshpos-costing/src/main/resources/db/migration/V202608170017__gate4c_permissions.sql",
+      "sha256": "93523fcd928ea0f4b2b5be12f8f12e733403d58f8a2a220c7481c175950a8bb6"
+    }
+  ]
+}

@@ -7,12 +7,22 @@ import com.jingshanghui.pos.procurement.application.model.ProcurementViews.Recei
 import com.jingshanghui.pos.procurement.application.model.ProcurementViews.ReturnHead;
 import com.jingshanghui.pos.procurement.application.model.ProcurementViews.Supplier;
 import com.jingshanghui.pos.procurement.infrastructure.persistence.ProcurementPersistenceParams.*;
+import com.jingshanghui.pos.procurement.application.port.ProcurementCostSourcePort.ReceiptCostSource;
+import com.jingshanghui.pos.procurement.application.port.ProcurementCostSourcePort.ReturnCostSource;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
 /** 采购复杂锁与聚合 SQL 边界；每个查询显式包含 tenant_id。 */
 public interface ProcurementMapper {
+
+    /** 只返回已确认收货与冻结采购价格，复杂关联 SQL 位于 XML。 */
+    ReceiptCostSource findConfirmedReceiptCostSource(@Param("tenantId") String tenantId,
+                                                      @Param("receiptLineId") String receiptLineId);
+
+    /** 只返回已入账原收货退货及其原收货行关系。 */
+    ReturnCostSource findPostedReturnCostSource(@Param("tenantId") String tenantId,
+                                                @Param("returnLineId") String returnLineId);
 
     int insertSupplier(SupplierWrite write);
     Supplier findSupplier(@Param("tenantId") String tenantId, @Param("supplierId") String supplierId);
