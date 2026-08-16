@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "1.0",
+  "phase": "T2-GATE4A",
+  "sealedAt": "2026-08-17",
+  "policy": "published Gate 4A inventory ledger and permission migrations are append-only after verification",
+  "files": [
+    {
+      "path": "server/ruoyi-modules/jshpos-inventory/src/main/resources/db/migration/V202608160011__gate4a_inventory_ledger.sql",
+      "sha256": "5c7125dcf6db3386c4771d3da1c21891d7dbdc7060ebd2fb2734c3232b5540f0"
+    },
+    {
+      "path": "server/ruoyi-modules/jshpos-inventory/src/main/resources/db/migration/V202608160012__gate4a_inventory_permissions.sql",
+      "sha256": "711558fe5c72b4705fb742f4dfaeedbf57144a52ad348ba24cce540273fc0f35"
+    }
+  ]
+}
