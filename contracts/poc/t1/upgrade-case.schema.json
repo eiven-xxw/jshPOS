@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jsh.example/contracts/poc/t1/upgrade-case.schema.json",
+  "title": "T1 synthetic app and schema compatibility case",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["fixtureVersion", "evidenceLevel", "cases"],
+  "properties": {
+    "fixtureVersion": {"const": "1.0"},
+    "evidenceLevel": {"const": "FAKE"},
+    "cases": {
+      "type": "array",
+      "minItems": 4,
+      "items": {
+        "type": "object",
+        "required": ["id", "fromApp", "fromSchema", "toApp", "toSchema", "fault", "expected"],
+        "properties": {
+          "id": {"type": "string"},
+          "fromApp": {"type": "integer", "minimum": 1},
+          "fromSchema": {"type": "integer", "minimum": 1},
+          "toApp": {"type": "integer", "minimum": 1},
+          "toSchema": {"type": "integer", "minimum": 1},
+          "fault": {"enum": ["NONE", "DOWNLOAD_CORRUPT", "MIGRATION_FAIL", "HEALTHCHECK_FAIL"]},
+          "expected": {"enum": ["ACTIVATE", "BLOCK", "ROLLBACK_APP_KEEP_SCHEMA"]}
+        }
+      }
+    }
+  }
+}

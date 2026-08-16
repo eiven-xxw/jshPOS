@@ -53,6 +53,14 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
 - Aviator、simple-http、MySQL Connector/J 的法务或替换事项不阻断 T1-Prep 和风险 PoC，但仍是商业发布前强制阻断项，不得静默关闭。
 - GitHub 不升级套餐；继续使用仓库自有依赖差异、SBOM、漏洞、许可证、密钥和 IaC 补偿门禁。
 
+## 4.2 当前 T1 Week 1 条件准入
+
+- 项目发起人已于 2026-08-16 确认 `CONDITIONAL GO`；只允许 RTM 中已经通过准入并转为 `IN_PROGRESS` 的 `STATIC/FAKE` 风险 PoC。
+- Week 1 仅允许稳定契约、合成数据、Fake Provider/Device、可复现故障夹具、隔离 PoC 探针、T1 CI 与证据；所有探针必须位于可整体删除的 `poc/`、测试或专用契约目录。
+- `T1-HWD-002`、`T1-PRN-001`、`T1-SCN-001`、`T1-SCL-001`、`T1-IO-001`、`T1-PAY-002`、`T1-PAR-001` 继续 `BLOCKED`，不得以模拟器/Fake 关闭。
+- 支付候选池为十家，T1 只从中评选五家运行 Fake 契约并最多准入一家真实沙箱；当前 Week 1 禁止沙箱调用和真实支付。
+- Week 1 完成后必须提交周门禁报告并再次等待项目发起人确认；不得自动进入 Week 2 或 T2。
+
 ## 5. 工程与测试规则
 
 - 服务端采用 RuoYi-Vue-Plus 模块化单体，不得把领域逻辑写入 Controller、通用工具类或框架系统模块。

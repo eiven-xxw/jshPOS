@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jsh.example/contracts/poc/t1/data-package.schema.json",
+  "title": "T1 synthetic data package case",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["fixtureVersion", "evidenceLevel", "activeVersion", "supportedSchemaVersion", "cases"],
+  "properties": {
+    "fixtureVersion": {"const": "1.0"},
+    "evidenceLevel": {"const": "FAKE"},
+    "activeVersion": {"type": "integer", "minimum": 1},
+    "supportedSchemaVersion": {"type": "integer", "minimum": 1},
+    "cases": {
+      "type": "array",
+      "minItems": 3,
+      "items": {
+        "type": "object",
+        "required": ["id", "version", "schemaVersion", "digestValid", "signatureValid", "expected"],
+        "properties": {
+          "id": {"type": "string"},
+          "version": {"type": "integer", "minimum": 1},
+          "schemaVersion": {"type": "integer", "minimum": 1},
+          "digestValid": {"type": "boolean"},
+          "signatureValid": {"type": "boolean"},
+          "expected": {"enum": ["ACTIVATE", "REJECT_KEEP_ACTIVE"]}
+        }
+      }
+    }
+  }
+}

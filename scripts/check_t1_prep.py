@@ -61,7 +61,19 @@ EXPECTED_BLOCKED = {
     "T1-PAR-001",
 }
 EXPECTED_DEFERRED = {"T1-JSH-001", "T1-LIC-001"}
-FORBIDDEN_ACTIVE_STATUSES = {"IN_PROGRESS", "IMPLEMENTED", "VERIFIED", "ACCEPTED"}
+EXPECTED_ACCEPTED = {"T1-GOV-001", "T1-SCP-001"}
+EXPECTED_IN_PROGRESS = {
+    "T1-HWD-001",
+    "T1-OFF-001",
+    "T1-SYN-001",
+    "T1-TEN-001",
+    "T1-PAY-001",
+    "T1-DPK-001",
+    "T1-UPG-001",
+    "T1-SEC-001",
+    "T1-CI-001",
+}
+EXPECTED_READY = {"T1-UAT-001"}
 
 
 def run_git(*args: str) -> str:
@@ -104,12 +116,22 @@ def allowed_prep_path(name: str) -> bool:
         return True
     if normalized.startswith("docs/t1-prep/"):
         return True
+    if normalized.startswith("contracts/poc/t1/"):
+        return True
+    if normalized.startswith("poc/t1-week1/"):
+        return True
+    if normalized.startswith("docs/t1-week1/"):
+        return True
     if normalized in {
+        ".gitignore",
+        ".github/workflows/t1-week1.yml",
         "docs/governance/rtm.csv",
         "docs/governance/change-log.md",
         "docs/adr/README.md",
         "docs/adr/ADR-017-t1-risk-poc-scope-and-integration-depth.md",
         "scripts/check_t1_prep.py",
+        "scripts/check_t1_week1.py",
+        "scripts/check_contracts.py",
     }:
         return True
     return False
@@ -201,17 +223,24 @@ def check_rtm() -> None:
     for requirement_id, row in t1_rows.items():
         if row["phase"] not in {"T1", "T1-Prep"}:
             fail(f"{requirement_id} has invalid phase {row['phase']!r}")
-        if row["status"] in FORBIDDEN_ACTIVE_STATUSES:
-            fail(f"{requirement_id} must not be active/accepted before startup review")
         if not row["acceptance"].strip() or not row["owner"].strip():
             fail(f"{requirement_id} lacks acceptance or owner")
 
     blocked = {key for key, row in t1_rows.items() if row["status"] == "BLOCKED"}
     deferred = {key for key, row in t1_rows.items() if row["status"] == "DEFERRED"}
+    accepted = {key for key, row in t1_rows.items() if row["status"] == "ACCEPTED"}
+    in_progress = {key for key, row in t1_rows.items() if row["status"] == "IN_PROGRESS"}
+    ready = {key for key, row in t1_rows.items() if row["status"] == "READY"}
     if blocked != EXPECTED_BLOCKED:
         fail(f"BLOCKED requirements mismatch: {sorted(blocked)}")
     if deferred != EXPECTED_DEFERRED:
         fail(f"DEFERRED requirements mismatch: {sorted(deferred)}")
+    if accepted != EXPECTED_ACCEPTED:
+        fail(f"ACCEPTED requirements mismatch: {sorted(accepted)}")
+    if in_progress != EXPECTED_IN_PROGRESS:
+        fail(f"IN_PROGRESS requirements mismatch: {sorted(in_progress)}")
+    if ready != EXPECTED_READY:
+        fail(f"READY requirements mismatch: {sorted(ready)}")
 
     for requirement_id in EXPECTED_BLOCKED:
         row = t1_rows[requirement_id]
@@ -242,8 +271,9 @@ def main() -> None:
     print(
         "T1-PREP OK: annotated baseline verified; "
         f"{len(REQUIRED_DOCS)} documents; {len(REQUIRED_T1_IDS)} unique requirements; "
+        f"{len(EXPECTED_ACCEPTED)} ACCEPTED; {len(EXPECTED_IN_PROGRESS)} IN_PROGRESS; "
         f"{len(EXPECTED_BLOCKED)} BLOCKED; {len(EXPECTED_DEFERRED)} DEFERRED; "
-        "no PoC/business implementation changes"
+        "Week 1 STATIC/FAKE scope only"
     )
 
 

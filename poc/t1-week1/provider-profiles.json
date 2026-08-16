@@ -1,0 +1,117 @@
+{
+  "fixtureVersion": "1.0",
+  "evidenceLevel": "STATIC",
+  "selectionRule": "公开资料可定位统一支付、查询、退款和通知语义；仅用于Fake，不构成商务排序",
+  "providers": [
+    {
+      "providerCode": "CHINA_UMS",
+      "providerName": "银联商务",
+      "publicDocs": ["https://saas.chinaums.com/saas-web/"],
+      "capabilities": {"wechat": "PUBLIC_DOC", "alipay": "PUBLIC_DOC", "unionpay": "PUBLIC_DOC", "query": "PUBLIC_DOC", "refund": "PUBLIC_DOC", "asyncNotify": "PUBLIC_DOC", "reversal": "PUBLIC_DOC"},
+      "selectedForFake": true,
+      "evidenceLevel": "STATIC",
+      "integrationStatus": "CANDIDATE_ONLY",
+      "sandboxStatus": "BLOCKED",
+      "assumptions": ["具体产品权限、接口版本、费率和沙箱须由合作方书面确认"]
+    },
+    {
+      "providerCode": "ALLINPAY",
+      "providerName": "通联支付",
+      "publicDocs": ["https://cloud.allinpay.com/", "https://prodoc.allinpay.com/doc/2615/"],
+      "capabilities": {"wechat": "PUBLIC_DOC", "alipay": "PUBLIC_DOC", "unionpay": "PUBLIC_DOC", "query": "PUBLIC_DOC", "refund": "PUBLIC_DOC", "asyncNotify": "PUBLIC_DOC", "reversal": "ASSUMPTION"},
+      "selectedForFake": true,
+      "evidenceLevel": "STATIC",
+      "integrationStatus": "CANDIDATE_ONLY",
+      "sandboxStatus": "BLOCKED",
+      "assumptions": ["开放文档不等于已取得目标商户产品权限"]
+    },
+    {
+      "providerCode": "LAKALA",
+      "providerName": "拉卡拉",
+      "publicDocs": ["https://i.lakala.com/doc/openapi/index.html"],
+      "capabilities": {"wechat": "PUBLIC_DOC", "alipay": "PUBLIC_DOC", "unionpay": "PUBLIC_DOC", "query": "PUBLIC_DOC", "refund": "PUBLIC_DOC", "asyncNotify": "PUBLIC_DOC", "reversal": "ASSUMPTION"},
+      "selectedForFake": true,
+      "evidenceLevel": "STATIC",
+      "integrationStatus": "CANDIDATE_ONLY",
+      "sandboxStatus": "BLOCKED",
+      "assumptions": ["终端形态、密钥注入和沙箱开通方式待确认"]
+    },
+    {
+      "providerCode": "YEEPAY",
+      "providerName": "易宝支付",
+      "publicDocs": ["https://open.yeepay.com/"],
+      "capabilities": {"wechat": "PUBLIC_DOC", "alipay": "PUBLIC_DOC", "unionpay": "ASSUMPTION", "query": "PUBLIC_DOC", "refund": "PUBLIC_DOC", "asyncNotify": "PUBLIC_DOC", "reversal": "UNKNOWN"},
+      "selectedForFake": true,
+      "evidenceLevel": "STATIC",
+      "integrationStatus": "CANDIDATE_ONLY",
+      "sandboxStatus": "BLOCKED",
+      "assumptions": ["首发渠道组合与商户行业准入待合作方确认"]
+    },
+    {
+      "providerCode": "HUIFU",
+      "providerName": "汇付天下",
+      "publicDocs": ["https://paas.huifu.com/"],
+      "capabilities": {"wechat": "PUBLIC_DOC", "alipay": "PUBLIC_DOC", "unionpay": "ASSUMPTION", "query": "PUBLIC_DOC", "refund": "PUBLIC_DOC", "asyncNotify": "PUBLIC_DOC", "reversal": "UNKNOWN"},
+      "selectedForFake": true,
+      "evidenceLevel": "STATIC",
+      "integrationStatus": "CANDIDATE_ONLY",
+      "sandboxStatus": "BLOCKED",
+      "assumptions": ["具体斗拱产品接口和验收环境待合作方确认"]
+    },
+    {
+      "providerCode": "FUIOU",
+      "providerName": "富友支付",
+      "publicDocs": ["https://open.fuioupay.com/"],
+      "capabilities": {"wechat": "PUBLIC_DOC", "alipay": "PUBLIC_DOC", "unionpay": "ASSUMPTION", "query": "PUBLIC_DOC", "refund": "PUBLIC_DOC", "asyncNotify": "PUBLIC_DOC", "reversal": "UNKNOWN"},
+      "selectedForFake": false,
+      "evidenceLevel": "STATIC",
+      "integrationStatus": "CANDIDATE_ONLY",
+      "sandboxStatus": "BLOCKED",
+      "assumptions": ["保留候选；待商务、沙箱和技术支持输入后重新评分"]
+    },
+    {
+      "providerCode": "SHOUQIANBA",
+      "providerName": "收钱吧",
+      "publicDocs": ["https://doc.shouqianba.com/zh-cn/"],
+      "capabilities": {"wechat": "PUBLIC_DOC", "alipay": "PUBLIC_DOC", "unionpay": "ASSUMPTION", "query": "PUBLIC_DOC", "refund": "PUBLIC_DOC", "asyncNotify": "PUBLIC_DOC", "reversal": "UNKNOWN"},
+      "selectedForFake": false,
+      "evidenceLevel": "STATIC",
+      "integrationStatus": "CANDIDATE_ONLY",
+      "sandboxStatus": "BLOCKED",
+      "assumptions": ["保留候选；服务商合作资格和接口权限待确认"]
+    },
+    {
+      "providerCode": "JLPAY",
+      "providerName": "嘉联支付",
+      "publicDocs": ["https://open.jlpay.com/", "https://help.jlpay.com/api/docs/index.html"],
+      "capabilities": {"wechat": "PUBLIC_DOC", "alipay": "PUBLIC_DOC", "unionpay": "ASSUMPTION", "query": "PUBLIC_DOC", "refund": "PUBLIC_DOC", "asyncNotify": "PUBLIC_DOC", "reversal": "UNKNOWN"},
+      "selectedForFake": false,
+      "evidenceLevel": "STATIC",
+      "integrationStatus": "CANDIDATE_ONLY",
+      "sandboxStatus": "BLOCKED",
+      "assumptions": ["保留候选；产品开通范围和联调支持待确认"]
+    },
+    {
+      "providerCode": "SANDPAY",
+      "providerName": "杉德支付",
+      "publicDocs": ["https://www.sandpay.com.cn/"],
+      "capabilities": {"wechat": "ASSUMPTION", "alipay": "ASSUMPTION", "unionpay": "ASSUMPTION", "query": "ASSUMPTION", "refund": "ASSUMPTION", "asyncNotify": "ASSUMPTION", "reversal": "UNKNOWN"},
+      "selectedForFake": false,
+      "evidenceLevel": "STATIC",
+      "integrationStatus": "CANDIDATE_ONLY",
+      "sandboxStatus": "BLOCKED",
+      "assumptions": ["公开产品入口不足以确认接口细节，必须取得正式技术资料"]
+    },
+    {
+      "providerCode": "VBILL",
+      "providerName": "随行付",
+      "publicDocs": ["https://www.vbill.cn/front/solution/pay_polymerize.html"],
+      "capabilities": {"wechat": "PUBLIC_DOC", "alipay": "PUBLIC_DOC", "unionpay": "ASSUMPTION", "query": "ASSUMPTION", "refund": "ASSUMPTION", "asyncNotify": "ASSUMPTION", "reversal": "UNKNOWN"},
+      "selectedForFake": false,
+      "evidenceLevel": "STATIC",
+      "integrationStatus": "CANDIDATE_ONLY",
+      "sandboxStatus": "BLOCKED",
+      "assumptions": ["聚合产品说明不替代接口、沙箱和回调验收资料"]
+    }
+  ]
+}

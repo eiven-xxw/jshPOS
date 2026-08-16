@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jsh.example/contracts/poc/t1/evidence.schema.json",
+  "title": "T1 Week 1 machine-readable evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "phase", "evidenceLevel", "generatedAt", "baselineTag", "results", "limitations"],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "phase": {"const": "T1-WEEK1"},
+    "evidenceLevel": {"enum": ["STATIC", "FAKE"]},
+    "generatedAt": {"type": "string", "format": "date-time"},
+    "baselineTag": {"const": "t0-baseline-2026-08-16"},
+    "results": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["requirementId", "result", "assertions", "fixtureDigests"],
+        "properties": {
+          "requirementId": {"type": "string", "pattern": "^T1-[A-Z]+-[0-9]{3}$"},
+          "result": {"enum": ["PASS", "FAIL", "BLOCKED"]},
+          "assertions": {"type": "integer", "minimum": 0},
+          "fixtureDigests": {"type": "array", "items": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}}
+        }
+      }
+    },
+    "limitations": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+  }
+}

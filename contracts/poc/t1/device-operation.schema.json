@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jsh.example/contracts/poc/t1/device-operation.schema.json",
+  "title": "T1 synthetic unified device operation result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contractVersion", "requestId", "capability", "operation", "deadlineMs", "idempotencyKey", "status", "errorCode", "retryable", "recoveryAction", "synthetic"],
+  "properties": {
+    "contractVersion": {"const": "1.0"},
+    "requestId": {"type": "string", "pattern": "^SYN-DEV-[A-Z0-9_-]+$"},
+    "capability": {"enum": ["receipt_printer", "barcode_scanner", "weighing_scale", "cash_drawer", "customer_display"]},
+    "operation": {"type": "string", "minLength": 1},
+    "deadlineMs": {"type": "integer", "minimum": 100, "maximum": 30000},
+    "idempotencyKey": {"type": "string", "pattern": "^SYN-IDEM-[A-Z0-9_-]+$"},
+    "status": {"enum": ["SUCCESS", "FAILED", "UNKNOWN"]},
+    "errorCode": {"enum": ["NONE", "TIMEOUT", "DISCONNECTED", "BUSY", "UNSUPPORTED", "UNKNOWN_RESULT"]},
+    "retryable": {"type": "boolean"},
+    "recoveryAction": {"enum": ["NONE", "RETRY_SAME_KEY", "RECONNECT_THEN_RETRY", "DO_NOT_RETRY", "RECONCILE"]},
+    "synthetic": {"const": true}
+  }
+}

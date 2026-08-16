@@ -1,0 +1,13 @@
+{
+  "fixtureVersion": "1.0",
+  "seed": 1103,
+  "evidenceLevel": "FAKE",
+  "domain": "OFFLINE",
+  "scenarios": [
+    {"id": "OFFLINE_CRASH_BEFORE_BEGIN", "fault": "crash before transaction", "crashAt": 0, "expected": "ZERO_OR_ALL"},
+    {"id": "OFFLINE_CRASH_AFTER_FACT", "fault": "crash after synthetic fact", "crashAt": 1, "expected": "ZERO_OR_ALL"},
+    {"id": "OFFLINE_CRASH_AFTER_INTENT", "fault": "crash after synthetic payment intent", "crashAt": 2, "expected": "ZERO_OR_ALL"},
+    {"id": "OFFLINE_CRASH_AFTER_OUTBOX", "fault": "crash before commit", "crashAt": 3, "expected": "ZERO_OR_ALL"},
+    {"id": "OFFLINE_CRASH_AFTER_COMMIT", "fault": "crash after commit", "crashAt": 4, "expected": "ZERO_OR_ALL"}
+  ]
+}

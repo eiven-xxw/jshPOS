@@ -1,0 +1,12 @@
+{
+  "fixtureVersion": "1.0",
+  "evidenceLevel": "FAKE",
+  "activeVersion": 100,
+  "supportedSchemaVersion": 1,
+  "cases": [
+    {"id": "PACKAGE_VALID", "version": 101, "schemaVersion": 1, "digestValid": true, "signatureValid": true, "expected": "ACTIVATE"},
+    {"id": "PACKAGE_BAD_DIGEST", "version": 102, "schemaVersion": 1, "digestValid": false, "signatureValid": true, "expected": "REJECT_KEEP_ACTIVE"},
+    {"id": "PACKAGE_BAD_SIGNATURE", "version": 102, "schemaVersion": 1, "digestValid": true, "signatureValid": false, "expected": "REJECT_KEEP_ACTIVE"},
+    {"id": "PACKAGE_NEW_SCHEMA", "version": 102, "schemaVersion": 2, "digestValid": true, "signatureValid": true, "expected": "REJECT_KEEP_ACTIVE"}
+  ]
+}

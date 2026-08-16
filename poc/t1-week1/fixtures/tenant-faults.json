@@ -1,0 +1,15 @@
+{
+  "fixtureVersion": "1.0",
+  "seed": 1105,
+  "evidenceLevel": "FAKE",
+  "domain": "TENANT",
+  "syntheticTenants": ["TENANT_ALPHA", "TENANT_BETA"],
+  "scenarios": [
+    {"id": "TENANT_MAPPER", "fault": "mapper requests another tenant", "actorTenant": "TENANT_ALPHA", "targetTenant": "TENANT_BETA", "expected": "DENY"},
+    {"id": "TENANT_RAW_SQL", "fault": "raw query omits tenant predicate", "actorTenant": "TENANT_ALPHA", "targetTenant": "TENANT_BETA", "expected": "DENY"},
+    {"id": "TENANT_JOB", "fault": "background job lacks explicit tenant context", "actorTenant": "NONE", "targetTenant": "TENANT_ALPHA", "expected": "DENY"},
+    {"id": "TENANT_CACHE", "fault": "cache key collides across tenants", "actorTenant": "TENANT_ALPHA", "targetTenant": "TENANT_BETA", "expected": "DENY"},
+    {"id": "TENANT_EXPORT", "fault": "export filter is tampered", "actorTenant": "TENANT_ALPHA", "targetTenant": "TENANT_BETA", "expected": "DENY"},
+    {"id": "TENANT_OBJECT", "fault": "object storage prefix is changed", "actorTenant": "TENANT_ALPHA", "targetTenant": "TENANT_BETA", "expected": "DENY"}
+  ]
+}

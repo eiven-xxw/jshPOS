@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jsh.example/contracts/poc/t1/sync-event.schema.json",
+  "title": "T1 synthetic sync event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["eventId", "tenantId", "sequence", "kind", "payload", "synthetic"],
+  "properties": {
+    "eventId": {"type": "string", "pattern": "^SYN-EVT-[0-9]{4}$"},
+    "tenantId": {"enum": ["TENANT_ALPHA", "TENANT_BETA"]},
+    "sequence": {"type": "integer", "minimum": 1},
+    "kind": {"enum": ["SYNTHETIC_FACT"]},
+    "payload": {"type": "object"},
+    "synthetic": {"const": true}
+  }
+}

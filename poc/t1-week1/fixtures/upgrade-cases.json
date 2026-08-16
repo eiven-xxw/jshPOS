@@ -1,0 +1,11 @@
+{
+  "fixtureVersion": "1.0",
+  "evidenceLevel": "FAKE",
+  "cases": [
+    {"id": "UPGRADE_OK", "fromApp": 1, "fromSchema": 1, "toApp": 2, "toSchema": 2, "fault": "NONE", "expected": "ACTIVATE"},
+    {"id": "UPGRADE_CORRUPT", "fromApp": 1, "fromSchema": 1, "toApp": 2, "toSchema": 2, "fault": "DOWNLOAD_CORRUPT", "expected": "BLOCK"},
+    {"id": "UPGRADE_MIGRATION_FAIL", "fromApp": 1, "fromSchema": 1, "toApp": 2, "toSchema": 2, "fault": "MIGRATION_FAIL", "expected": "BLOCK"},
+    {"id": "UPGRADE_HEALTH_FAIL", "fromApp": 1, "fromSchema": 1, "toApp": 2, "toSchema": 2, "fault": "HEALTHCHECK_FAIL", "expected": "ROLLBACK_APP_KEEP_SCHEMA"},
+    {"id": "FORWARD_COMPATIBILITY", "fromApp": 1, "fromSchema": 2, "toApp": 1, "toSchema": 2, "fault": "NONE", "expected": "ACTIVATE"}
+  ]
+}

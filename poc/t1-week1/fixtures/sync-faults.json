@@ -1,0 +1,19 @@
+{
+  "fixtureVersion": "1.0",
+  "seed": 1104,
+  "evidenceLevel": "FAKE",
+  "domain": "SYNC",
+  "scenarios": [
+    {"id": "SYNC_DUPLICATE", "fault": "duplicate and delayed delivery", "expected": "EFFECT_ONCE"},
+    {"id": "SYNC_OUT_OF_ORDER", "fault": "sequence 3 before sequence 2", "expected": "CONVERGE_IN_ORDER"},
+    {"id": "SYNC_ACK_LOST", "fault": "acknowledgement lost and resent", "expected": "EFFECT_ONCE"},
+    {"id": "SYNC_CURSOR_INTERRUPTED", "fault": "cursor interrupted and resumed", "expected": "NO_GAP"}
+  ],
+  "events": [
+    {"eventId": "SYN-EVT-0001", "tenantId": "TENANT_ALPHA", "sequence": 1, "kind": "SYNTHETIC_FACT", "payload": {"value": "A"}, "synthetic": true},
+    {"eventId": "SYN-EVT-0003", "tenantId": "TENANT_ALPHA", "sequence": 3, "kind": "SYNTHETIC_FACT", "payload": {"value": "C"}, "synthetic": true},
+    {"eventId": "SYN-EVT-0002", "tenantId": "TENANT_ALPHA", "sequence": 2, "kind": "SYNTHETIC_FACT", "payload": {"value": "B"}, "synthetic": true},
+    {"eventId": "SYN-EVT-0002", "tenantId": "TENANT_ALPHA", "sequence": 2, "kind": "SYNTHETIC_FACT", "payload": {"value": "B"}, "synthetic": true},
+    {"eventId": "SYN-EVT-0003", "tenantId": "TENANT_ALPHA", "sequence": 3, "kind": "SYNTHETIC_FACT", "payload": {"value": "C"}, "synthetic": true}
+  ]
+}

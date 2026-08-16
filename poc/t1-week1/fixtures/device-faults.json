@@ -1,0 +1,21 @@
+{
+  "fixtureVersion": "1.0",
+  "seed": 1102,
+  "evidenceLevel": "FAKE",
+  "domain": "DEVICE",
+  "virtualCapabilities": ["receipt_printer", "barcode_scanner", "weighing_scale", "cash_drawer", "customer_display"],
+  "operationResults": [
+    {"contractVersion": "1.0", "requestId": "SYN-DEV-PRINT-001", "capability": "receipt_printer", "operation": "print", "deadlineMs": 3000, "idempotencyKey": "SYN-IDEM-PRINT-001", "status": "FAILED", "errorCode": "TIMEOUT", "retryable": true, "recoveryAction": "RETRY_SAME_KEY", "synthetic": true},
+    {"contractVersion": "1.0", "requestId": "SYN-DEV-SCAN-001", "capability": "barcode_scanner", "operation": "read", "deadlineMs": 3000, "idempotencyKey": "SYN-IDEM-SCAN-001", "status": "FAILED", "errorCode": "DISCONNECTED", "retryable": true, "recoveryAction": "RECONNECT_THEN_RETRY", "synthetic": true},
+    {"contractVersion": "1.0", "requestId": "SYN-DEV-SCALE-001", "capability": "weighing_scale", "operation": "read_weight", "deadlineMs": 2000, "idempotencyKey": "SYN-IDEM-SCALE-001", "status": "FAILED", "errorCode": "BUSY", "retryable": true, "recoveryAction": "RETRY_SAME_KEY", "synthetic": true},
+    {"contractVersion": "1.0", "requestId": "SYN-DEV-DRAWER-001", "capability": "cash_drawer", "operation": "open", "deadlineMs": 1000, "idempotencyKey": "SYN-IDEM-DRAWER-001", "status": "FAILED", "errorCode": "UNSUPPORTED", "retryable": false, "recoveryAction": "DO_NOT_RETRY", "synthetic": true},
+    {"contractVersion": "1.0", "requestId": "SYN-DEV-DISPLAY-001", "capability": "customer_display", "operation": "present", "deadlineMs": 2000, "idempotencyKey": "SYN-IDEM-DISPLAY-001", "status": "UNKNOWN", "errorCode": "UNKNOWN_RESULT", "retryable": false, "recoveryAction": "RECONCILE", "synthetic": true}
+  ],
+  "scenarios": [
+    {"id": "DEVICE_TIMEOUT", "fault": "operation timeout", "expected": "TIMEOUT_RETRYABLE"},
+    {"id": "DEVICE_DISCONNECT", "fault": "transport disconnected", "expected": "DISCONNECTED_RECOVERABLE"},
+    {"id": "DEVICE_BUSY", "fault": "device busy", "expected": "BUSY_RETRYABLE"},
+    {"id": "DEVICE_UNSUPPORTED", "fault": "capability unavailable", "expected": "UNSUPPORTED_NO_RETRY"},
+    {"id": "DEVICE_UNKNOWN_RESULT", "fault": "result lost after dispatch", "expected": "UNKNOWN_RECONCILE"}
+  ]
+}

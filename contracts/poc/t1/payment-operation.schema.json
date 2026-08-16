@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jsh.example/contracts/poc/t1/payment-operation.schema.json",
+  "title": "T1 synthetic unified payment operation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contractVersion", "adapterId", "operation", "merchantRequestId", "idempotencyKey", "synthetic"],
+  "properties": {
+    "contractVersion": {"const": "1.0"},
+    "adapterId": {"type": "string", "pattern": "^[A-Z0-9_]+$"},
+    "operation": {"enum": ["CREATE", "QUERY", "REFUND", "NOTIFY"]},
+    "merchantRequestId": {"type": "string", "pattern": "^SYN-PAY-[A-Z0-9_-]+$"},
+    "idempotencyKey": {"type": "string", "pattern": "^SYN-IDEM-[A-Z0-9_-]+$"},
+    "amountMinor": {"type": "integer", "minimum": 0},
+    "currency": {"const": "CNY"},
+    "synthetic": {"const": true}
+  }
+}

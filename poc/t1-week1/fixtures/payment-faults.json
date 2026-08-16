@@ -1,0 +1,20 @@
+{
+  "fixtureVersion": "1.0",
+  "seed": 1101,
+  "evidenceLevel": "FAKE",
+  "domain": "PAYMENT",
+  "requiredOperations": ["CREATE", "QUERY", "REFUND", "NOTIFY"],
+  "commands": [
+    {"contractVersion": "1.0", "adapterId": "FAKE_ADAPTER", "operation": "CREATE", "merchantRequestId": "SYN-PAY-CREATE-001", "idempotencyKey": "SYN-IDEM-CREATE-001", "amountMinor": 100, "currency": "CNY", "synthetic": true},
+    {"contractVersion": "1.0", "adapterId": "FAKE_ADAPTER", "operation": "QUERY", "merchantRequestId": "SYN-PAY-QUERY-001", "idempotencyKey": "SYN-IDEM-QUERY-001", "synthetic": true},
+    {"contractVersion": "1.0", "adapterId": "FAKE_ADAPTER", "operation": "REFUND", "merchantRequestId": "SYN-PAY-REFUND-001", "idempotencyKey": "SYN-IDEM-REFUND-001", "amountMinor": 100, "currency": "CNY", "synthetic": true},
+    {"contractVersion": "1.0", "adapterId": "FAKE_ADAPTER", "operation": "NOTIFY", "merchantRequestId": "SYN-PAY-NOTIFY-001", "idempotencyKey": "SYN-IDEM-NOTIFY-001", "synthetic": true}
+  ],
+  "scenarios": [
+    {"id": "PAY_SUCCESS_DUP_NOTIFY", "fault": "duplicate success notification", "events": ["CREATE_ACCEPTED", "NOTIFY_SUCCESS", "NOTIFY_SUCCESS", "QUERY_SUCCESS"], "expected": "SUCCESS_ONCE"},
+    {"id": "PAY_CREATE_TIMEOUT_UNKNOWN", "fault": "create response timeout", "events": ["CREATE_TIMEOUT", "QUERY_PROCESSING", "QUERY_SUCCESS"], "expected": "SUCCESS_ONCE"},
+    {"id": "PAY_NOTIFY_BEFORE_RESPONSE", "fault": "notification arrives before create response", "events": ["NOTIFY_SUCCESS", "CREATE_ACCEPTED", "QUERY_SUCCESS"], "expected": "SUCCESS_ONCE"},
+    {"id": "PAY_FAILED", "fault": "provider rejects request", "events": ["CREATE_FAILED", "QUERY_FAILED"], "expected": "FAILED_NO_EFFECT"},
+    {"id": "PAY_REFUND_TIMEOUT", "fault": "refund response timeout", "events": ["CREATE_ACCEPTED", "QUERY_SUCCESS", "REFUND_TIMEOUT", "QUERY_REFUND_SUCCESS"], "expected": "REFUNDED_ONCE"}
+  ]
+}
