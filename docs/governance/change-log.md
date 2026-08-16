@@ -23,5 +23,6 @@
 | CR-T1-006 | 2026-08-16 | IMPLEMENTED_AWAITING_CONFIRMATION | 完成 Week 3 内部交叉故障与恢复探针，1,425 条 FAKE 断言和 180,332 次迭代；GitHub Week 3 与 Week 1/2 回归全绿，证据包摘要独立复核一致，未解除任何外部阻断 | T1-OFF-001、T1-SYN-001、T1-TEN-001、T1-DPK-001、T1-UPG-001、T1-PAY-001、T1-SEC-001、T1-CI-001 | 待项目发起人确认 Week 3 周门禁报告 |
 | CR-T1-007 | 2026-08-16 | APPROVED | 确认《T1 Week 3 周门禁报告》并按 `CONDITIONAL GO` 进入 Week 4；只允许 Ubuntu/Windows 重复验证、清理、安全与供应链摘要、证据总账和退出评审准备，所有外部实证、正式业务和 T2 继续禁止 | T1-*、ADR-018 | 项目发起人 2026-08-16 明确确认 |
 | CR-T1-008 | 2026-08-16 | IMPLEMENTED_AWAITING_RETEST | Week 4 首轮 Ubuntu/Windows 的所有探针均通过，但比较门禁识别 Windows checkout 将 JSON 夹具转换为 CRLF，造成 fixture digest 不一致；增加 T1 PoC/契约 LF 属性并要求完整双平台重跑，不忽略摘要、不减少 seed 或断言 | T1-CI-001、T1-SEC-001、ADR-018 | Week 4 授权范围内的可重复性缺陷修复 |
+| CR-T1-009 | 2026-08-16 | IMPLEMENTED_AWAITING_CONFIRMATION | Week 4 修复后完整重跑：Ubuntu/Windows 76 文件输入树、4,387 条断言、381,371 次迭代、失败 seed 总账和归一化证据摘要一致；六个 Week 4 Job 与 Week 1—3 回归全绿，证据包独立复核通过，外部阻断未解除 | T1-*、ADR-018 | 待项目发起人确认 Week 4 周门禁暨退出评审准备报告 |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。
