@@ -20,7 +20,7 @@ MAPPING = {
     "SENDING_LEASE_PROCESS_RESTART": "expired SENDING lease",
     "CURSOR_CORRUPTION": "tampered downstream page",
     "PULL_APPLY_CRASH_BEFORE_CURSOR": "kill before cursor",
-    "CURSOR_REGRESSION": "SYNC_CURSOR_REGRESSION",
+    "CURSOR_REGRESSION": "acknowledgeRefusesCursorRegression",
     "CROSS_TENANT_DEVICE_HEADER": "crossTenantMissingWrongUser",
     "BACKLOG_RETRY_BUDGET_EXHAUSTED": "retry budget exhaustion",
     "OLD_CLIENT_NEW_SERVER": "compatibleClientVersions",
@@ -43,6 +43,7 @@ def main() -> None:
         "server/ruoyi-modules/jshpos-sync/src/main/java/com/jingshanghui/pos/sync/application/service/SyncFactProcessor.java",
         "server/ruoyi-modules/jshpos-sync/src/test/java/com/jingshanghui/pos/sync/application/service/SyncDeviceContextServiceTest.java",
         "server/ruoyi-modules/jshpos-sync/src/test/java/com/jingshanghui/pos/sync/application/service/SyncInboxReceiverTest.java",
+        "server/ruoyi-modules/jshpos-sync/src/test/java/com/jingshanghui/pos/sync/application/service/PosSyncServiceCursorTest.java",
         "contracts/t2/sprint3/openapi-pos-sync-v1.yaml",
     ))
     results = []

@@ -167,7 +167,7 @@ public class PosSyncService {
         if (cursor != null && !cursor.isBlank()) {
             SyncRules.requireUlid(cursor, "cursor");
             PullPageRecord page = mapper.findPullPage(context.tenantId(), context.deviceId(), cursor);
-            if (page == null || !stream.equals(page.streamCode())) {
+            if (page == null || !stream.equals(page.streamCode()) || !"ACKED".equals(page.status())) {
                 throw new ServiceException("SYNC_CURSOR_INVALID: cursor is corrupt or belongs to another stream", 409);
             }
             return page.toSequence();

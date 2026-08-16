@@ -173,8 +173,10 @@ public interface SyncMapper {
     @Insert("""
         INSERT INTO pos_sync_cursor(tenant_id,device_id,stream_code,acked_sequence,acked_cursor_token,page_sha256)
         VALUES(#{tenantId},#{deviceId},#{stream},#{sequence},#{cursor},#{pageHash})
-        ON DUPLICATE KEY UPDATE acked_sequence=VALUES(acked_sequence),acked_cursor_token=VALUES(acked_cursor_token),
-          page_sha256=VALUES(page_sha256)
+        ON DUPLICATE KEY UPDATE
+          acked_cursor_token=IF(VALUES(acked_sequence)>=acked_sequence,VALUES(acked_cursor_token),acked_cursor_token),
+          page_sha256=IF(VALUES(acked_sequence)>=acked_sequence,VALUES(page_sha256),page_sha256),
+          acked_sequence=GREATEST(acked_sequence,VALUES(acked_sequence))
         """)
     int upsertCursor(@Param("tenantId") String tenantId, @Param("deviceId") String deviceId,
                      @Param("stream") String stream, @Param("sequence") long sequence,

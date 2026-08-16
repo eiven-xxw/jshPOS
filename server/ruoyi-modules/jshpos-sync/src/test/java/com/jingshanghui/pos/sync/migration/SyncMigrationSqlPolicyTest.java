@@ -1,7 +1,9 @@
 package com.jingshanghui.pos.sync.migration;
 
+import com.jingshanghui.pos.sync.infrastructure.persistence.mapper.SyncMapper;
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -19,5 +21,14 @@ class SyncMigrationSqlPolicyTest {
             "pos_sync_change_feed", "pos_sync_cursor", "pos_sync_dead_letter", "append-only");
         assertThat(sql).doesNotContain("create table syn_", "float", "double", "payment_provider",
             "refund", "inventory", "promotion");
+    }
+
+    @Test
+    void cursorUpsertIsMonotonicEvenDuringConcurrentFirstAck() throws Exception {
+        Method method = SyncMapper.class.getMethod("upsertCursor", String.class, String.class, String.class,
+            long.class, String.class, String.class);
+        String sql = method.getAnnotation(org.apache.ibatis.annotations.Insert.class).value()[0].toLowerCase();
+        assertThat(sql).contains("greatest(acked_sequence,values(acked_sequence))")
+            .contains("if(values(acked_sequence)>=acked_sequence");
     }
 }
