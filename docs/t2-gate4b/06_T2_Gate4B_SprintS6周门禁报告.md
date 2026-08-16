@@ -1,14 +1,14 @@
 # T2 Gate 4B / Sprint S6 周门禁报告
 
-> 文档编号：JSH-POS-T2-G4B-006  
-> 日期：2026-08-17  
-> 唯一不可变技术基线：annotated tag `t2-prep-baseline-2026-08-16`  
-> 基线 peeled commit：`557ba270479935d6b44968cf70b47033f7d3d656`  
-> Gate 4B 分支起点：`9557112a4eb573ec4a54ef30be477f1ab8f09d31`  
-> 技术候选：`72792d2b6073f75f5fda20005b4bf535a997e1f7`  
-> 技术候选 CI：[T2 Gate 4B Quality Gates #31961246460](https://github.com/eiven-xxw/jshPOS/actions/runs/31961246460)  
-> Closure 候选：`d7d58cf488d040700cbde77612789bc93317d765`  
-> Closure CI：[T2 Gate 4B Quality Gates #31961900319](https://github.com/eiven-xxw/jshPOS/actions/runs/31961900319)  
+> 文档编号：JSH-POS-T2-G4B-006
+> 日期：2026-08-17
+> 唯一不可变技术基线：annotated tag `t2-prep-baseline-2026-08-16`
+> 基线 peeled commit：`557ba270479935d6b44968cf70b47033f7d3d656`
+> Gate 4B 分支起点：`9557112a4eb573ec4a54ef30be477f1ab8f09d31`
+> 技术候选：`72792d2b6073f75f5fda20005b4bf535a997e1f7`
+> 技术候选 CI：[T2 Gate 4B Quality Gates #31961246460](https://github.com/eiven-xxw/jshPOS/actions/runs/31961246460)
+> Closure 候选：`d7d58cf488d040700cbde77612789bc93317d765`
+> Closure CI：[T2 Gate 4B Quality Gates #31961900319](https://github.com/eiven-xxw/jshPOS/actions/runs/31961900319)
 > 当前结论：`CONDITIONAL PASS / VERIFIED / AWAITING CONFIRMATION`
 
 ## 1. 管理结论

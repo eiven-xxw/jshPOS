@@ -1,7 +1,7 @@
 # Gate 4C 与 Gate 3B 下一步操作指令
 
-> 文档编号：JSH-POS-T2-G4B-NEXT-007  
-> 日期：2026-08-17  
+> 文档编号：JSH-POS-T2-G4B-NEXT-007
+> 日期：2026-08-17
 > 当前状态：`PREPARED / NOT ADMITTED`
 
 ## 1. 推荐路线
@@ -54,4 +54,3 @@ T2-TRF-001 本 Sprint 只允许补充领域模型、状态机、不变量、API/
 完成后提交《T2 Gate 4C / Sprint S7 周门禁报告》，等待我确认。
 完成后，为我整理下一步操作指令。
 ```
-
