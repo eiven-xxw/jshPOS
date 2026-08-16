@@ -44,14 +44,14 @@ T1-JSH-001,T1,connector,P1,CR-T1P-002与ADR-017,真实接口目录鉴权限流�
 T1-CI-001,T1,ci-evidence,P0,技术规范11-12与ADR-016,T1门禁区分FAKE SANDBOX REAL_DEVICE证据并保留可追溯制品摘要漏洞许可证和测试结果,IN_PROGRESS,.github/workflows/t1-week4.yml;contracts/poc/t1/week4/reproducibility.schema.json;scripts/run_t1_reproducibility.py,docs/t1-week4/04_T1_Week4周门禁暨退出评审准备报告.md;GitHub Actions 31925516509与artifact 9257902599,DevOps,Ubuntu Windows归一化摘要一致且首轮CRLF差异已修复重跑；外部Job无绿色占位
 T1-LIC-001,T1,license,P1,CR-T1P-003与ADR-015/017,Aviator simple-http MySQL Connector/J在商业发布前具备替换或法务结论和负责人,DEFERRED,docs/compliance/restricted-components.json;scripts/build_t1_poc_inventory.py,docs/t1-week4/04_T1_Week4周门禁暨退出评审准备报告.md;artifact 9257902599许可证摘要,法务与技术负责人,T1新增运行依赖0；三项组件继续阻断商业发布
 T1-UAT-001,T1,go-no-go,P0,技术规范16与详细设计40,T1七类PoC证据齐备P0P1为零外部实证不以Fake替代并由评审角色签署,READY,docs/t1-week4/01_T1证据总清单.md;docs/t1-week4/02_T1风险差距成本与T2建议.md,docs/t1-week4/04_T1_Week4周门禁暨退出评审准备报告.md;等待项目发起人签署,QA负责人,建议内部STATIC/FAKE CONDITIONAL PASS并仅准入T2-Prep；不是商业V1验收
-T2P-GOV-001,T2-Prep,governance,P0,项目发起人指令与AGENTS4.6,T2项目章程基线边界交付与退出条件完整且经机器校验,READY,docs/t2-prep/01_T2项目章程.md,待T2-Prep CI与项目发起人确认,项目经理,T2-Prep材料已编制；不等于T2编码获准
-T2P-SCP-001,T2-Prep,scope,P0,V3-1.8与11.5及项目发起人指令,便利店主样板和商业V1必选简化后置非目标均冻结且变更规则明确,READY,docs/t2-prep/02_T2范围与非目标.md;docs/t2-prep/04_三类业态边界与商业V1冻结清单.md,待T2-Prep CI与项目发起人确认,产品负责人,零食折扣与社区超市只作为行业模板对照
-T2P-RTM-001,T2-Prep,requirements,P0,技术规范15与详细设计40-5,T2P和T2需求具备唯一ID来源验收Owner状态与外部证据限制,READY,docs/governance/rtm.csv;docs/t2-prep/03_T2_RTM与需求准入.md,待scripts/check_t2_prep.py验证,QA负责人,正式T2需求在Prep仅DRAFT BLOCKED DEFERRED
-T2P-ARC-001,T2-Prep,architecture,P0,详细设计31至40与ADR-019,十份详细设计全部映射且六道模块门数据主权和编码前决策明确,READY,docs/t2-prep/05_模块准入与依赖图.md;docs/t2-prep/06_详细设计31至40复核与决策清单.md,待架构与项目发起人确认,架构负责人,ADR-019保持Proposed直到T2编码启动确认
-T2P-PLN-001,T2-Prep,planning,P0,技术规范16与V3-11.6,十四周七个双周Sprint及RACI职责分离资源降范围规则明确,READY,docs/t2-prep/07_T2迭代计划与RACI.md,待T2启动评审确认,项目经理,外部阻断可延长支付和硬件关键路径
-T2P-QLT-001,T2-Prep,quality,P0,技术规范11至13与详细设计39至40,环境迁移测试CI证据灰度回退和量化门禁完整,READY,docs/t2-prep/08_环境迁移测试与CI门禁.md;docs/t2-prep/09_灰度回退证据与运行手册.md,待T2-Prep CI验证,QA与DevOps,T2-Prep只启用治理边界契约安全静态门禁
-T2P-EXT-001,T2-Prep,external-unblock,P0,项目发起人指令与详细设计36至39,硬件支付伙伴鲸熵汇许可证各有输入截止证据等级和失约回退,READY,docs/t2-prep/10_外部依赖解阻计划.md,外部条目仍按BLOCKED或DEFERRED,项目经理,不得以Fake或现金闭环解除外部阻断
-T2P-REV-001,T2-Prep,go-no-go,P0,项目发起人指令与详细设计40,T2正式开发启动评审报告含CI证据风险tag候选和下一步授权边界,READY,docs/t2-prep/13_T2正式开发启动评审报告.md,等待T2-Prep最终CI和项目发起人签署,项目发起人,未经确认不创建tag不转业务需求READY
+T2P-GOV-001,T2-Prep,governance,P0,项目发起人指令与AGENTS4.6,T2项目章程基线边界交付与退出条件完整且经机器校验,READY,docs/t2-prep/01_T2项目章程.md,docs/t2-prep/13_T2正式开发启动评审报告.md;GitHub Actions 31928621540,项目经理,T2-Prep门禁通过待SP确认；不等于T2编码获准
+T2P-SCP-001,T2-Prep,scope,P0,V3-1.8与11.5及项目发起人指令,便利店主样板和商业V1必选简化后置非目标均冻结且变更规则明确,READY,docs/t2-prep/02_T2范围与非目标.md;docs/t2-prep/04_三类业态边界与商业V1冻结清单.md,docs/t2-prep/13_T2正式开发启动评审报告.md;GitHub Actions 31928621540,产品负责人,零食折扣与社区超市只作为行业模板对照
+T2P-RTM-001,T2-Prep,requirements,P0,技术规范15与详细设计40-5,T2P和T2需求具备唯一ID来源验收Owner状态与外部证据限制,READY,docs/governance/rtm.csv;docs/t2-prep/03_T2_RTM与需求准入.md,GitHub Actions 31928621540 governance与artifact 9258611437,QA负责人,正式T2需求在Prep仅DRAFT BLOCKED DEFERRED
+T2P-ARC-001,T2-Prep,architecture,P0,详细设计31至40与ADR-019,十份详细设计全部映射且六道模块门数据主权和编码前决策明确,READY,docs/t2-prep/05_模块准入与依赖图.md;docs/t2-prep/06_详细设计31至40复核与决策清单.md,docs/t2-prep/13_T2正式开发启动评审报告.md;GitHub Actions 31928621540,架构负责人,ADR-019保持Proposed直到T2编码启动确认
+T2P-PLN-001,T2-Prep,planning,P0,技术规范16与V3-11.6,十四周七个双周Sprint及RACI职责分离资源降范围规则明确,READY,docs/t2-prep/07_T2迭代计划与RACI.md,docs/t2-prep/13_T2正式开发启动评审报告.md;GitHub Actions 31928621540,项目经理,外部阻断可延长支付和硬件关键路径
+T2P-QLT-001,T2-Prep,quality,P0,技术规范11至13与详细设计39至40,环境迁移测试CI证据灰度回退和量化门禁完整,READY,docs/t2-prep/08_环境迁移测试与CI门禁.md;docs/t2-prep/09_灰度回退证据与运行手册.md,GitHub Actions 31928621540四Job与artifact 9258611437,QA与DevOps,T2-Prep只启用治理边界契约安全静态门禁
+T2P-EXT-001,T2-Prep,external-unblock,P0,项目发起人指令与详细设计36至39,硬件支付伙伴鲸熵汇许可证各有输入截止证据等级和失约回退,READY,docs/t2-prep/10_外部依赖解阻计划.md,docs/t2-prep/13_T2正式开发启动评审报告.md;外部证据仍为0,项目经理,不得以Fake或现金闭环解除外部阻断
+T2P-REV-001,T2-Prep,go-no-go,P0,项目发起人指令与详细设计40,T2正式开发启动评审报告含CI证据风险tag候选和下一步授权边界,READY,docs/t2-prep/13_T2正式开发启动评审报告.md,GitHub Actions 31928621540与artifact 9258611437；等待SP签署,项目发起人,未经确认不创建tag不转业务需求READY
 T2-IAM-001,T2,tenant,P0,详细设计31-3与39-4,可信上下文注入tenant_id且两个虚构租户跨API Mapper SQL任务缓存导出存储泄漏为零,DRAFT,,计划Gate0租户攻击与集成证据,后端与安全负责人,准入候选；不得接受客户端tenant_id作为授权
 T2-ORG-001,T2,organization,P0,V3-3.1与详细设计31-3,租户组织门店层级和门店业务时区业务日具备权限与审计且不可跨租户引用,DRAFT,,计划Gate0数据库与API集成证据,后端负责人,DEC-03需Gate0冻结
 T2-RBAC-001,T2,authorization,P0,V3-3.1.3与详细设计39-5,员工角色数据范围和高风险动作由服务端授权且职责分离和审计完整,DRAFT,,计划Gate0权限矩阵和越权测试,安全负责人,UI路由不得作为最终授权
