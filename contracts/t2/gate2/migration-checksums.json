@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "1.0",
+  "phase": "T2-GATE2-S2",
+  "sealedAt": "2026-08-16",
+  "policy": "published migrations and the formal SQLite V1 schema are append-only after Gate 2 verification",
+  "files": [
+    {
+      "path": "server/ruoyi-modules/jshpos-order/src/main/resources/db/migration/V202608160005__gate2_order_shift_cash.sql",
+      "sha256": "839ba1834cb41d5704b256054e9d1d515bba42e703b2692da424dde1c223d29a"
+    },
+    {
+      "path": "server/ruoyi-modules/jshpos-order/src/main/resources/db/migration/V202608160006__gate2_order_permissions.sql",
+      "sha256": "c12fe055def4e684051b67ceec8e3d241b9493647a91200c17a7bc05d7b57d56"
+    },
+    {
+      "path": "pos-flutter/lib/infrastructure/local_database/gate2_schema.dart",
+      "sha256": "724cdab99884a5e2377b325d1566f9e4b1d150e86b3d05875b0a9ff2ce351c9c"
+    }
+  ]
+}

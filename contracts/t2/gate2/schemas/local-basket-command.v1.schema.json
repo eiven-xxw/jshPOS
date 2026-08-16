@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.jingshanghui.example/t2/gate2/schemas/local-basket-command.v1.schema.json",
+  "title": "T2-POS-004 local-only basket suspend/resume command",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["commandId", "idempotencyKey", "operation", "orderId", "shiftId", "occurredAt"],
+  "properties": {
+    "commandId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "idempotencyKey": {"type": "string", "minLength": 16, "maxLength": 128, "pattern": "^[A-Za-z0-9._:-]+$"},
+    "operation": {"enum": ["SUSPEND", "RESUME"]},
+    "orderId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "shiftId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "occurredAt": {"type": "string", "format": "date-time"}
+  }
+}

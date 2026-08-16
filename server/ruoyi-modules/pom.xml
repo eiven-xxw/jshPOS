@@ -12,6 +12,7 @@
     <modules>
         <module>jshpos-foundation</module>
         <module>jshpos-catalog</module>
+        <module>jshpos-order</module>
         <module>ruoyi-demo</module>
         <module>ruoyi-generator</module>
         <module>ruoyi-job</module>

@@ -8,7 +8,7 @@
   "properties": {
     "schemaVersion": {"const": 1},
     "shiftId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
-    "storeId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "storeId": {"type": "string", "pattern": "^[1-9][0-9]{0,18}$"},
     "terminalId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
     "cashierId": {"type": "string", "minLength": 1, "maxLength": 64},
     "businessDate": {"type": "string", "format": "date"},
@@ -22,4 +22,3 @@
     "approvalId": {"type": ["string", "null"], "maxLength": 64}
   }
 }
-

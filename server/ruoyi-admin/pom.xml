@@ -81,6 +81,12 @@
             <artifactId>jshpos-catalog</artifactId>
         </dependency>
 
+        <!-- Gate 2 班次、现金订单与本地闭环服务端模块 -->
+        <dependency>
+            <groupId>com.jingshanghui.pos</groupId>
+            <artifactId>jshpos-order</artifactId>
+        </dependency>
+
         <!-- Gate 0 服务端数据库版本治理 -->
         <dependency>
             <groupId>org.flywaydb</groupId>

@@ -9,7 +9,7 @@
     "schemaVersion": {"const": 1},
     "eventId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
     "stream": {"enum": ["order.command", "shift.event"]},
-    "eventType": {"enum": ["shift.opened.v1", "order.submitted.v1", "cash.received.v1", "order.completed.v1", "order.suspended.v1", "order.resumed.v1", "shift.closed.v1"]},
+    "eventType": {"enum": ["shift.opened.v1", "shift.difference-approved.v1", "shift.closed.v1", "order.suspended.v1", "order.resumed.v1", "order.submitted.v1", "cash.received.v1", "order.completed.v1"]},
     "aggregateId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
     "aggregateVersion": {"type": "integer", "minimum": 1},
     "deviceSequence": {"type": "integer", "minimum": 1},
@@ -19,4 +19,3 @@
     "payload": {"type": "object"}
   }
 }
-

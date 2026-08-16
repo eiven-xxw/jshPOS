@@ -33,16 +33,23 @@ class _TechnicalBaselinePageState extends State<TechnicalBaselinePage> {
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  'T0 技术基线',
+                  'T2 Gate 2 本地现金闭环',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.headlineMedium,
                 ),
                 const SizedBox(height: 12),
                 const Text(
-                  '当前仅验证应用壳、构建链路和设备适配边界，尚未启用收银业务。',
+                  '班次、购物篮、现金订单、挂取单、交班核对和正式 SQLite 事务内核已装配。'
+                  '商户、门店、终端、员工和签名配置完成可信激活前，界面保持安全锁定；远程同步与第三方支付仍未启用。',
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 24),
+                const _BaselineStatus(
+                  label: '本地交易边界',
+                  value: '原子事务已装配 · 等待可信设备激活',
+                  color: Colors.orange,
+                ),
+                const SizedBox(height: 12),
                 FutureBuilder<DeviceSnapshot>(
                   future: _snapshot,
                   builder: (context, snapshot) {

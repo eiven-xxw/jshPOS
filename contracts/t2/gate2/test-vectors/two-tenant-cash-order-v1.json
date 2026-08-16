@@ -6,7 +6,7 @@
     {
       "tenantRef": "TENANT_A",
       "industry": "CONVENIENCE",
-      "stores": ["01K2A000000000000000000001", "01K2A000000000000000000002"],
+      "stores": ["1101", "1102"],
       "terminals": ["01K2A000000000000000000011", "01K2A000000000000000000012"],
       "cashiers": ["A-CASHIER-01", "A-SUPERVISOR-01"],
       "timezone": "Asia/Shanghai"
@@ -14,7 +14,7 @@
     {
       "tenantRef": "TENANT_B",
       "industry": "DISCOUNT_AND_COMMUNITY",
-      "stores": ["01K2B000000000000000000001", "01K2B000000000000000000002"],
+      "stores": ["2101", "2102"],
       "terminals": ["01K2B000000000000000000011"],
       "cashiers": ["B-CASHIER-01", "B-SUPERVISOR-01"],
       "timezone": "Asia/Shanghai"
@@ -26,6 +26,11 @@
     {"name": "cash-change", "receivableMinor": 1299, "tenderedMinor": 2000, "changeMinor": 701},
     {"name": "insufficient", "receivableMinor": 1299, "tenderedMinor": 1298, "error": "CASH_TENDER_INSUFFICIENT"}
   ],
+  "cashCommandGolden": {
+    "vectorId": "G2-CASH-CANONICAL-001",
+    "normalization": "UTF-8 length-prefix v1; quantity 1.000000 normalizes to 1",
+    "sha256": "60337986451e5a511783f4d77eaac27598fef47f997336a4bbb599c25fd68e5a"
+  },
   "boundaryCases": [
     "same-idempotency-same-hash",
     "same-idempotency-different-hash",

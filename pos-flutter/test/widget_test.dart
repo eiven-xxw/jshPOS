@@ -3,7 +3,7 @@ import 'package:jshpos_pos/app/jshpos_app.dart';
 import 'package:pos_device_adapter/pos_device_adapter.dart';
 
 void main() {
-  testWidgets('renders the T0 shell and device boundary status', (
+  testWidgets('renders the Gate 2 locked shell and device boundary status', (
     tester,
   ) async {
     const gateway = _FakeDeviceGateway();
@@ -12,7 +12,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('鲸熵汇收银系统'), findsOneWidget);
-    expect(find.text('T0 技术基线'), findsOneWidget);
+    expect(find.text('T2 Gate 2 本地现金闭环'), findsOneWidget);
+    expect(find.textContaining('等待可信设备激活'), findsOneWidget);
     expect(find.textContaining('ACME POS-01'), findsOneWidget);
   });
 }

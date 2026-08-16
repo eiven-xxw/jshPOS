@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.jingshanghui.example/t2/gate2/events/shift.difference-approved.v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["approvalId", "shiftId", "approverId", "reasonCode", "theoreticalCashMinor", "actualCashMinor", "differenceMinor"],
+  "properties": {
+    "approvalId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "shiftId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "approverId": {"type": "string", "pattern": "^[1-9][0-9]{0,18}$"},
+    "reasonCode": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]{1,31}$"},
+    "theoreticalCashMinor": {"type": "integer", "minimum": 0},
+    "actualCashMinor": {"type": "integer", "minimum": 0},
+    "differenceMinor": {"type": "integer"}
+  }
+}

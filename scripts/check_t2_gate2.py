@@ -41,7 +41,7 @@ DESIGN_FILES = [
     "docs/t2-gate2/03_权限审计API事件与同步契约.md",
     "docs/t2-gate2/04_SQLite迁移兼容故障与回退.md",
     "docs/t2-gate2/05_测试矩阵CI与证据.md",
-    "docs/ADR/ADR-020-gate2-local-order-cash-atomicity.md",
+    "docs/adr/ADR-020-gate2-local-order-cash-atomicity.md",
     "contracts/t2/gate2/gate2-admission.json",
     "contracts/t2/gate2/openapi-pos-order-v1.yaml",
     "contracts/t2/gate2/sync-design-only-v1.yaml",
@@ -85,7 +85,7 @@ def check_baseline() -> dict[str, object]:
 
 def check_design() -> dict[str, object]:
     contents = {name: require_file(name) for name in DESIGN_FILES}
-    adr = contents["docs/ADR/ADR-020-gate2-local-order-cash-atomicity.md"]
+    adr = contents["docs/adr/ADR-020-gate2-local-order-cash-atomicity.md"]
     if "状态：Accepted" not in adr or "T1 `syn_*`" not in adr:
         fail("ADR-020 is not accepted or does not prohibit T1 probe reuse")
     joined = "\n".join(contents.values())

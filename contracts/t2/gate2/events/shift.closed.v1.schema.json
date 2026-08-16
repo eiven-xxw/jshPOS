@@ -11,6 +11,6 @@
     "theoreticalCashMinor": {"type": "integer"},
     "actualCashMinor": {"type": "integer", "minimum": 0},
     "differenceMinor": {"type": "integer"},
-    "approvalId": {"type": ["string", "null"], "maxLength": 64}
+    "approvalId": {"type": ["string", "null"], "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"}
   }
 }

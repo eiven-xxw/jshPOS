@@ -1,0 +1,301 @@
+name: T2 Gate 2 Sprint S2 Quality Gates
+
+on:
+  push:
+    branches: ["t2/gate2-sprint2-20260816"]
+  pull_request:
+    paths:
+      - "AGENTS.md"
+      - ".github/workflows/t2-gate2.yml"
+      - "admin-web/**"
+      - "contracts/t2/**"
+      - "docs/governance/**"
+      - "docs/t2-gate2/**"
+      - "pos-flutter/**"
+      - "scripts/**t2_gate2*"
+      - "scripts/build_flutter_supply_chain.py"
+      - "scripts/check_flutter_gate2_coverage.py"
+      - "server/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: t2-gate2-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  governance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with: { python-version: "3.12" }
+      - name: Verify immutable ancestry, RTM, contracts, migration seals and scope
+        run: |
+          mkdir -p artifacts/t2/gate2/governance
+          python scripts/check_t0_structure.py
+          python scripts/check_rtm.py
+          python scripts/check_contracts.py
+          python scripts/check_t2_gate2.py --stage closure --output artifacts/t2/gate2/governance/gate2-governance.json
+          python scripts/review_dependency_diff.py 6a94bc6af2938fba6b9a1af123eb94b6312af9b2 "$(git rev-parse HEAD)" > artifacts/t2/gate2/governance/dependency-input-diff.json
+          git diff --check
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: t2-gate2-governance
+          path: artifacts/t2/gate2/governance
+          if-no-files-found: error
+          retention-days: 30
+
+  server:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with: { distribution: temurin, java-version: "21", cache: maven }
+      - name: Build admin application and execute Gate 0 through Gate 2 tests and coverage
+        working-directory: server
+        run: ./mvnw -pl ruoyi-admin -am clean verify -DskipTests=false
+      - name: Generate tested aggregate CycloneDX SBOM
+        working-directory: server
+        run: ./mvnw org.cyclonedx:cyclonedx-maven-plugin:2.9.1:makeAggregateBom
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: t2-gate2-server
+          path: |
+            server/ruoyi-modules/jshpos-foundation/target/surefire-reports/TEST-*.xml
+            server/ruoyi-modules/jshpos-catalog/target/surefire-reports/TEST-*.xml
+            server/ruoyi-modules/jshpos-order/target/surefire-reports/TEST-*.xml
+            server/ruoyi-modules/jshpos-order/target/site/jacoco/jacoco.xml
+            server/ruoyi-modules/jshpos-order/target/site/jacoco/jacoco.csv
+            server/ruoyi-modules/jshpos-order/target/jshpos-order-*.jar
+            server/ruoyi-admin/target/ruoyi-admin.jar
+            server/target/bom.json
+            server/target/bom.xml
+          if-no-files-found: error
+          retention-days: 30
+
+  mysql-migration:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4.6@sha256:869218921e61d6c3c89820955d63cca42971f0e3e6c1e2792247bbd944ebc6e9
+        env:
+          MYSQL_ROOT_PASSWORD: synthetic_gate2_root
+          MYSQL_DATABASE: jshpos_gate2
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -psynthetic_gate2_root"
+          --health-interval=10s --health-timeout=5s --health-retries=12
+    env:
+      GATE2_MYSQL_JDBC_URL: jdbc:mysql://127.0.0.1:3306/jshpos_gate2?useUnicode=true&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      GATE2_MYSQL_USERNAME: root
+      GATE2_MYSQL_PASSWORD: synthetic_gate2_root
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with: { distribution: temurin, java-version: "21", cache: maven }
+      - name: Run clean MySQL 8.4 six-version Flyway and tenant/cash constraints
+        working-directory: server
+        run: >-
+          ./mvnw -pl ruoyi-modules/jshpos-order -am test
+          -Dtest=OrderMigrationMySqlIT
+          -Dsurefire.failIfNoSpecifiedTests=false -DskipTests=false
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: t2-gate2-mysql
+          path: server/ruoyi-modules/jshpos-order/target/surefire-reports/TEST-*OrderMigrationMySqlIT.xml
+          if-no-files-found: error
+          retention-days: 30
+
+  tenant-security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with: { distribution: temurin, java-version: "21", cache: maven }
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with: { python-version: "3.12" }
+      - name: Execute trusted-context, actor, approval and Mapper guard tests
+        working-directory: server
+        run: >-
+          ./mvnw -pl ruoyi-modules/jshpos-order -am test
+          -Dtest=CashOrderServiceTest,ShiftServiceTest,OrderStrictTenantMapperGuardTest
+          -Dsurefire.failIfNoSpecifiedTests=false -DskipTests=false
+      - name: Build nine-surface two-tenant attack evidence
+        run: python scripts/run_t2_gate2_attacks.py --output artifacts/t2/gate2/tenant/tenant-attacks.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: t2-gate2-tenant
+          path: |
+            artifacts/t2/gate2/tenant
+            server/ruoyi-modules/jshpos-order/target/surefire-reports/TEST-*.xml
+          if-no-files-found: error
+          retention-days: 30
+
+  pos-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with: { distribution: temurin, java-version: "21" }
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with: { flutter-version: "3.47.0", channel: stable, cache: true }
+      - name: Resolve locked dependencies and analyze
+        working-directory: pos-flutter
+        run: |
+          flutter pub get --enforce-lockfile
+          flutter analyze --fatal-infos
+      - name: Execute Flutter/SQLite tests and enforce 90 percent Gate 2 line coverage
+        run: |
+          mkdir -p artifacts/t2/gate2/pos-linux
+          cd pos-flutter
+          flutter test --machine --coverage > ../artifacts/t2/gate2/pos-linux/flutter-tests.jsonl
+          cd ..
+          python scripts/check_flutter_gate2_coverage.py --input pos-flutter/coverage/lcov.info --minimum 0.90 --output artifacts/t2/gate2/pos-linux/flutter-coverage.json
+          cp pos-flutter/coverage/lcov.info artifacts/t2/gate2/pos-linux/lcov.info
+      - name: Execute real process-termination rollback and durability fixture
+        working-directory: pos-flutter
+        run: dart run tool/gate2_process_termination_fixture.dart | tee ../artifacts/t2/gate2/pos-linux/process-termination.txt
+      - name: Generate Flutter CycloneDX and license inventory
+        run: |
+          cd pos-flutter
+          flutter pub deps --json > ../artifacts/t2/gate2/pos-linux/flutter-dependencies.json
+          cd ..
+          python scripts/build_flutter_supply_chain.py --deps artifacts/t2/gate2/pos-linux/flutter-dependencies.json --package-config pos-flutter/.dart_tool/package_config.json --output-dir artifacts/t2/gate2/pos-linux
+      - name: Compile Kotlin boundary and build debug APK
+        run: |
+          cd pos-flutter/android
+          ./gradlew :app:compileDebugKotlin --no-daemon
+          cd ..
+          flutter build apk --debug
+          cp build/app/outputs/flutter-apk/app-debug.apk ../artifacts/t2/gate2/pos-linux/app-debug.apk
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: t2-gate2-pos-linux
+          path: artifacts/t2/gate2/pos-linux
+          if-no-files-found: error
+          retention-days: 30
+
+  pos-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with: { flutter-version: "3.47.0", channel: stable, cache: true }
+      - name: Execute locked clean-runner analysis, SQLite tests and termination fixture
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force artifacts/t2/gate2/pos-windows | Out-Null
+          Push-Location pos-flutter
+          flutter pub get --enforce-lockfile
+          flutter analyze --fatal-infos
+          flutter test --machine | Tee-Object -FilePath ../artifacts/t2/gate2/pos-windows/flutter-tests.jsonl
+          dart run tool/gate2_process_termination_fixture.dart | Tee-Object -FilePath ../artifacts/t2/gate2/pos-windows/process-termination.txt
+          Pop-Location
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: t2-gate2-pos-windows
+          path: artifacts/t2/gate2/pos-windows
+          if-no-files-found: error
+          retention-days: 30
+
+  admin-web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+        with: { version: 10.33.0 }
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with: { node-version: "24", cache: pnpm, cache-dependency-path: admin-web/pnpm-lock.yaml }
+      - name: Audit, build, lint, typecheck, regression contracts and licenses
+        working-directory: admin-web
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm audit --registry https://registry.npmjs.org --audit-level high
+          pnpm build:prod
+          pnpm lint:eslint
+          pnpm typecheck
+          pnpm test:gate1:ci
+          pnpm licenses list --json > dependency-licenses.json
+      - name: Enforce frontend license policy
+        working-directory: admin-web
+        run: >-
+          node -e "const x=require('./dependency-licenses.json');const bad=Object.keys(x).filter(k=>/(^|[ (])(AGPL|GPL)-?3([.]0)?(-only|-or-later)?($|[ )])/i.test(k));if(bad.length){console.error('Forbidden licenses: '+bad.join(','));process.exit(1)}"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: t2-gate2-web
+          path: |
+            admin-web/gate1-vitest-junit.xml
+            admin-web/dependency-licenses.json
+            admin-web/dist/index.html
+          if-no-files-found: error
+          retention-days: 30
+
+  security-sbom-license:
+    needs: [server, admin-web, pos-linux]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with: { python-version: "3.12" }
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with: { name: t2-gate2-server, path: artifacts/t2/gate2/security/server }
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with: { name: t2-gate2-pos-linux, path: artifacts/t2/gate2/security/pos }
+      - name: Install verified Trivy
+        run: |
+          curl -fsSL -o /tmp/trivy.tar.gz https://github.com/aquasecurity/trivy/releases/download/v0.72.0/trivy_0.72.0_Linux-64bit.tar.gz
+          echo "bbb64b9695866ce4a7a8f5c9592002c5961cab378577fa3f8a040df362b9b2ea  /tmp/trivy.tar.gz" | sha256sum --check
+          tar -xzf /tmp/trivy.tar.gz -C /tmp trivy
+          test "$(/tmp/trivy --version | awk '/Version:/ {print $2}')" = "0.72.0"
+      - name: Enforce vulnerability, Secret, IaC and license gates
+        run: |
+          server_sbom="$(find artifacts/t2/gate2/security/server -name bom.json -type f -print -quit)"
+          flutter_sbom="$(find artifacts/t2/gate2/security/pos -name flutter-cyclonedx.json -type f -print -quit)"
+          test -s "$server_sbom" && test -s "$flutter_sbom"
+          /tmp/trivy sbom --skip-version-check --db-repository ghcr.io/aquasecurity/trivy-db:2 --java-db-repository ghcr.io/aquasecurity/trivy-java-db:1 --scanners vuln --severity HIGH,CRITICAL --exit-code 1 --format json --output artifacts/t2/gate2/security/trivy-server-vuln.json "$server_sbom"
+          /tmp/trivy sbom --skip-version-check --db-repository ghcr.io/aquasecurity/trivy-db:2 --scanners vuln --severity HIGH,CRITICAL --exit-code 1 --format json --output artifacts/t2/gate2/security/trivy-flutter-vuln.json "$flutter_sbom"
+          python scripts/check_sbom_licenses.py "$server_sbom" docs/compliance/reviewed-license-allowlist.json | tee artifacts/t2/gate2/security/server-license-policy.txt
+          /tmp/trivy fs --skip-version-check --offline-scan --scanners secret --severity HIGH,CRITICAL --exit-code 1 --skip-dirs .git --format json --output artifacts/t2/gate2/security/trivy-secret.json .
+          /tmp/trivy config --skip-version-check --checks-bundle-repository ghcr.io/aquasecurity/trivy-checks:2 --severity HIGH,CRITICAL --exit-code 1 --format json --output artifacts/t2/gate2/security/trivy-config.json .github/workflows/t2-gate2.yml
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: t2-gate2-security
+          path: artifacts/t2/gate2/security
+          if-no-files-found: error
+          retention-days: 30
+
+  evidence:
+    needs: [governance, server, mysql-migration, tenant-security, pos-linux, pos-windows, admin-web, security-sbom-license]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with: { python-version: "3.12" }
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with: { name: t2-gate2-governance, path: artifacts/t2/gate2/bundle/governance }
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with: { name: t2-gate2-server, path: artifacts/t2/gate2/bundle/server }
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with: { name: t2-gate2-mysql, path: artifacts/t2/gate2/bundle/mysql }
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with: { name: t2-gate2-tenant, path: artifacts/t2/gate2/bundle/tenant }
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with: { name: t2-gate2-pos-linux, path: artifacts/t2/gate2/bundle/pos-linux }
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with: { name: t2-gate2-pos-windows, path: artifacts/t2/gate2/bundle/pos-windows }
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with: { name: t2-gate2-web, path: artifacts/t2/gate2/bundle/web }
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with: { name: t2-gate2-security, path: artifacts/t2/gate2/bundle/security }
+      - name: Verify all evidence and build SHA-256 index
+        run: python scripts/build_t2_gate2_evidence.py --bundle-dir artifacts/t2/gate2/bundle
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: t2-gate2-sprint-s2-evidence-bundle
+          path: artifacts/t2/gate2/bundle
+          if-no-files-found: error
+          retention-days: 30
