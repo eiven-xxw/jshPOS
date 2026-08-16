@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "1.0",
+  "evidenceLevel": "STATIC_FAKE",
+  "fixedVectors": [
+    {"seed": "INV-SALE-IDEMPOTENT-001", "requirement": "T2-INV-002", "expected": "one SALE_OUT effect"},
+    {"seed": "INV-EVENT-HASH-CONFLICT-002", "requirement": "T2-INV-001", "expected": "reject 409"},
+    {"seed": "INV-DENY-NEGATIVE-003", "requirement": "T2-INV-004", "expected": "whole command rolls back"},
+    {"seed": "INV-ALLOW-ALERT-004", "requirement": "T2-INV-004", "expected": "negative balance plus anomaly"},
+    {"seed": "INV-RETURN-IDEMPOTENT-005", "requirement": "T2-INV-002", "expected": "one SALE_RETURN_IN effect"},
+    {"seed": "INV-RETURN-NOT-SUCCEEDED-006", "requirement": "T2-INV-002", "expected": "reject"},
+    {"seed": "INV-ORDER-NOT-COMPLETED-007", "requirement": "T2-INV-002", "expected": "reject"},
+    {"seed": "INV-TENANT-CROSS-008", "requirement": "T2-INV-001", "expected": "not visible"},
+    {"seed": "INV-DECIMAL-SCALE-009", "requirement": "T2-INV-001", "expected": "reject over six decimals"},
+    {"seed": "INV-REBUILD-EQUAL-010", "requirement": "T2-INV-001", "expected": "projection equals ledger sum"},
+    {"seed": "INV-LEDGER-IMMUTABLE-011", "requirement": "T2-INV-001", "expected": "database rejects update delete"},
+    {"seed": "INV-ACK-LOST-REPLAY-012", "requirement": "T2-INV-002", "expected": "same stored result"},
+    {"seed": "INV-SOURCE-LINE-DUPLICATE-013", "requirement": "T2-INV-002", "expected": "database unique rejection"},
+    {"seed": "INV-MULTILINE-ATOMIC-014", "requirement": "T2-INV-002", "expected": "all or none"},
+    {"seed": "INV-POLICY-VERSION-015", "requirement": "T2-INV-004", "expected": "published version immutable"},
+    {"seed": "INV-FUTURE-RUNTIME-ABSENT-016", "requirement": "T2-INV-003", "expected": "no stocktake procurement cost transfer runtime"}
+  ],
+  "externalEvidence": {"sandbox": 0, "realDevice": 0, "pilot": 0}
+}

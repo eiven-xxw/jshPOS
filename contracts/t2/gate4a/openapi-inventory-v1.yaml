@@ -1,0 +1,46 @@
+openapi: 3.1.0
+info:
+  title: 鲸熵汇 Gate 4A 库存核心 API
+  version: 1.0.0
+x-requirement-ids: [T2-INV-001, T2-INV-002, T2-INV-004]
+paths:
+  /api/v1/inventory/sales/{orderId}/apply:
+    post:
+      summary: 从权威已完成订单快照幂等应用销售出库
+      parameters:
+        - {name: orderId, in: path, required: true, schema: {type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SourceCommand'}
+      responses: {'200': {description: 已应用或相同命令重放}, '409': {description: 来源、策略或库存冲突}}
+  /api/v1/inventory/returns/{refundId}/apply:
+    post:
+      summary: 从权威成功原单退款快照幂等应用退货入库
+      parameters:
+        - {name: refundId, in: path, required: true, schema: {type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SourceCommand'}
+      responses: {'200': {description: 已应用或相同命令重放}, '409': {description: 来源或数量冲突}}
+  /api/v1/inventory/balances/{warehouseId}/{skuId}:
+    get:
+      summary: 查询可信租户内库存投影
+      parameters:
+        - {name: warehouseId, in: path, required: true, schema: {type: string}}
+        - {name: skuId, in: path, required: true, schema: {type: integer, format: int64}}
+      responses: {'200': {description: 精确数量投影}}
+components:
+  schemas:
+    SourceCommand:
+      type: object
+      additionalProperties: false
+      required: [eventId, warehouseId, correlationId]
+      properties:
+        eventId: {type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'}
+        warehouseId: {type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'}
+        correlationId: {type: string, maxLength: 96}
+      description: 不接受 tenantId、SKU 或数量；业务事实从服务端 Owner 端口取得。

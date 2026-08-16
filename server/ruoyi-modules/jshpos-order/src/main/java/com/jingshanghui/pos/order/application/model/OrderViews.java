@@ -42,4 +42,8 @@ public final class OrderViews {
     /** 支付领域只读端口使用的原订单行快照。 */
     public record PaymentLineView(String lineId, BigDecimal quantity, long payableAmountMinor) {
     }
+
+    /** 库存领域只读端口使用的成交 SKU、基础单位和精确数量快照。 */
+    public record InventoryLineView(String lineId, Long skuId, Long unitId, BigDecimal quantity) {
+    }
 }

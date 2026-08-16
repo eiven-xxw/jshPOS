@@ -2,6 +2,7 @@ package com.jingshanghui.pos.order.infrastructure.persistence.mapper;
 
 import com.jingshanghui.pos.order.application.model.OrderViews.ApprovalView;
 import com.jingshanghui.pos.order.application.model.OrderViews.IdempotencyView;
+import com.jingshanghui.pos.order.application.model.OrderViews.InventoryLineView;
 import com.jingshanghui.pos.order.application.model.OrderViews.OrderView;
 import com.jingshanghui.pos.order.application.model.OrderViews.PaymentLineView;
 import com.jingshanghui.pos.order.application.model.OrderViews.ShiftView;
@@ -237,4 +238,14 @@ public interface OrderMapper {
         ORDER BY line_no ASC
         """)
     List<PaymentLineView> findPaymentLines(@Param("tenantId") String tenantId, @Param("orderId") String orderId);
+
+    /** 查询库存效果所需的不可变成交行；只读且显式携带可信 tenant_id。 */
+    @Select("""
+        SELECT line_id lineId,sku_id skuId,unit_id unitId,quantity
+        FROM ord_order_line
+        WHERE tenant_id=#{tenantId} AND order_id=#{orderId}
+        ORDER BY sku_id ASC,line_no ASC
+        """)
+    List<InventoryLineView> findInventoryLines(@Param("tenantId") String tenantId,
+                                               @Param("orderId") String orderId);
 }

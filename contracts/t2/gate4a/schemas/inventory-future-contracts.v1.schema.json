@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.jingshanghui.example/inventory/inventory-future-contracts.v1.schema.json",
+  "title": "Gate 4B design-only inventory command envelope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "commandType", "sourceId", "sourceLineId", "baseQuantity"],
+  "properties": {
+    "schemaVersion": {"const": "1.0-design-only"},
+    "commandType": {"enum": ["STOCKTAKE_POST", "PURCHASE_RECEIPT", "COST_APPLY", "TRANSFER_OUT", "TRANSFER_IN"]},
+    "sourceId": {"type": "string"},
+    "sourceLineId": {"type": "string"},
+    "baseQuantity": {"type": "string", "pattern": "^[0-9]+\\.[0-9]{6}$"}
+  },
+  "x-runtime-allowed": false,
+  "x-requirement-ids": ["T2-INV-003", "T2-PUR-001", "T2-CST-001", "T2-TRF-001"]
+}

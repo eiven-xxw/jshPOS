@@ -1,0 +1,36 @@
+package com.jingshanghui.pos.inventory.domain;
+
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.HexFormat;
+
+/** 库存维度、命令和事件使用的确定性 SHA-256 工具。 */
+public final class InventoryHash {
+
+    private InventoryHash() {
+    }
+
+    public static String canonical(Iterable<?> values) {
+        StringBuilder value = new StringBuilder();
+        for (Object item : values) {
+            String text = String.valueOf(item);
+            value.append(text.length()).append(':').append(text).append(';');
+        }
+        return value.toString();
+    }
+
+    public static String sha256(String value) {
+        try {
+            return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256")
+                .digest(value.getBytes(StandardCharsets.UTF_8)));
+        } catch (NoSuchAlgorithmException exception) {
+            throw new IllegalStateException(exception);
+        }
+    }
+
+    /** 当前 Gate 只处理可售库存，维度格式仍预留未来库存状态。 */
+    public static String dimension(String tenantId, String warehouseId, Long skuId) {
+        return sha256(canonical(java.util.List.of(tenantId, warehouseId, skuId, "SALEABLE")));
+    }
+}

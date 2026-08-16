@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jingshanghui.pos.inventory.infrastructure.persistence.mapper.InventoryMapper">
+
+    <!-- 显式列映射避免库存表扩列时静默改变应用语义。 -->
+    <resultMap id="balanceView" type="com.jingshanghui.pos.inventory.application.model.InventoryViews$BalanceView">
+        <constructor>
+            <arg column="dimensionKey" javaType="java.lang.String"/><arg column="warehouseId" javaType="java.lang.String"/>
+            <arg column="skuId" javaType="java.lang.Long"/><arg column="stockStatus" javaType="java.lang.String"/>
+            <arg column="onHandQuantity" javaType="java.math.BigDecimal"/><arg column="reservedQuantity" javaType="java.math.BigDecimal"/>
+            <arg column="frozenQuantity" javaType="java.math.BigDecimal"/><arg column="safetyStockQuantity" javaType="java.math.BigDecimal"/>
+            <arg column="lastLedgerSequence" javaType="long"/><arg column="recordVersion" javaType="long"/>
+        </constructor>
+    </resultMap>
+    <resultMap id="ledgerView" type="com.jingshanghui.pos.inventory.application.model.InventoryViews$LedgerView">
+        <constructor>
+            <arg column="ledgerId" javaType="java.lang.String"/><arg column="ledgerSequence" javaType="long"/>
+            <arg column="dimensionKey" javaType="java.lang.String"/><arg column="warehouseId" javaType="java.lang.String"/>
+            <arg column="skuId" javaType="java.lang.Long"/><arg column="movementType" javaType="java.lang.String"/>
+            <arg column="quantityBefore" javaType="java.math.BigDecimal"/><arg column="quantityDelta" javaType="java.math.BigDecimal"/>
+            <arg column="quantityAfter" javaType="java.math.BigDecimal"/><arg column="sourceType" javaType="java.lang.String"/>
+            <arg column="sourceId" javaType="java.lang.String"/><arg column="sourceLineId" javaType="java.lang.String"/>
+            <arg column="policyVersionId" javaType="java.lang.String"/><arg column="occurredAt" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <insert id="insertPolicy">
+        INSERT INTO inv_stock_policy_version(policy_version_id,tenant_id,store_id,warehouse_id,negative_stock_mode,
+          effective_from,publisher_user_id,published_at)
+        VALUES(#{policyVersionId},#{tenantId},#{storeId},#{warehouseId},#{negativeStockMode},
+          #{effectiveFrom},#{publisherUserId},#{publishedAt})
+    </insert>
+    <select id="findEffectivePolicy" resultType="com.jingshanghui.pos.inventory.application.model.InventoryViews$PolicyView">
+        SELECT policy_version_id AS policyVersionId,store_id AS storeId,warehouse_id AS warehouseId,
+          negative_stock_mode AS negativeStockMode,effective_from AS effectiveFrom
+        FROM inv_stock_policy_version
+        WHERE tenant_id=#{tenantId} AND store_id=#{storeId} AND warehouse_id=#{warehouseId}
+          AND effective_from&lt;=#{effectiveAt}
+        ORDER BY effective_from DESC,policy_version_id DESC LIMIT 1
+    </select>
+    <select id="findEffectivePolicyByWarehouse" resultType="com.jingshanghui.pos.inventory.application.model.InventoryViews$PolicyView">
+        SELECT policy_version_id AS policyVersionId,store_id AS storeId,warehouse_id AS warehouseId,
+          negative_stock_mode AS negativeStockMode,effective_from AS effectiveFrom
+        FROM inv_stock_policy_version
+        WHERE tenant_id=#{tenantId} AND warehouse_id=#{warehouseId} AND effective_from&lt;=#{effectiveAt}
+        ORDER BY effective_from DESC,policy_version_id DESC LIMIT 1
+    </select>
+
+    <select id="findCommand" resultType="com.jingshanghui.pos.inventory.application.model.InventoryViews$CommandView">
+        SELECT source_event_id AS eventId,request_sha256 AS requestSha256,source_type AS sourceType,
+          source_id AS sourceId,status,affected_lines AS affectedLines,negative_alert AS negativeAlert,
+          applied_at AS appliedAt
+        FROM inv_stock_command WHERE tenant_id=#{tenantId} AND source_event_id=#{eventId}
+    </select>
+    <insert id="insertCommand">
+        INSERT INTO inv_stock_command(source_event_id,tenant_id,request_sha256,source_type,source_id,
+          warehouse_id,store_id,correlation_id,actor_user_id,status,affected_lines,negative_alert,created_at)
+        VALUES(#{eventId},#{tenantId},#{requestSha256},#{sourceType},#{sourceId},#{warehouseId},#{storeId},
+          #{correlationId},#{actorUserId},'PROCESSING',0,0,#{createdAt})
+    </insert>
+    <update id="completeCommand">
+        UPDATE inv_stock_command SET status='APPLIED',affected_lines=#{affectedLines},
+          negative_alert=#{negativeAlert},applied_at=#{appliedAt}
+        WHERE tenant_id=#{tenantId} AND source_event_id=#{eventId} AND status='PROCESSING'
+    </update>
+
+    <insert id="insertBalanceIfAbsent">
+        INSERT IGNORE INTO inv_stock_balance(tenant_id,stock_dimension_key,warehouse_id,sku_id,stock_status,
+          on_hand_quantity,reserved_quantity,frozen_quantity,safety_stock_quantity,last_ledger_sequence,
+          record_version,updated_at)
+        VALUES(#{tenantId},#{dimensionKey},#{warehouseId},#{skuId},'SALEABLE',0,0,0,0,0,0,UTC_TIMESTAMP(3))
+    </insert>
+    <select id="lockBalance" resultMap="balanceView">
+        SELECT stock_dimension_key AS dimensionKey,warehouse_id AS warehouseId,sku_id AS skuId,
+          stock_status AS stockStatus,on_hand_quantity AS onHandQuantity,reserved_quantity AS reservedQuantity,
+          frozen_quantity AS frozenQuantity,safety_stock_quantity AS safetyStockQuantity,
+          last_ledger_sequence AS lastLedgerSequence,record_version AS recordVersion
+        FROM inv_stock_balance
+        WHERE tenant_id=#{tenantId} AND stock_dimension_key=#{dimensionKey} FOR UPDATE
+    </select>
+    <select id="findBalance" resultMap="balanceView">
+        SELECT stock_dimension_key AS dimensionKey,warehouse_id AS warehouseId,sku_id AS skuId,
+          stock_status AS stockStatus,on_hand_quantity AS onHandQuantity,reserved_quantity AS reservedQuantity,
+          frozen_quantity AS frozenQuantity,safety_stock_quantity AS safetyStockQuantity,
+          last_ledger_sequence AS lastLedgerSequence,record_version AS recordVersion
+        FROM inv_stock_balance
+        WHERE tenant_id=#{tenantId} AND warehouse_id=#{warehouseId} AND sku_id=#{skuId} AND stock_status='SALEABLE'
+    </select>
+    <update id="updateBalance">
+        UPDATE inv_stock_balance SET on_hand_quantity=#{onHandQuantity},last_ledger_sequence=#{lastLedgerSequence},
+          record_version=record_version+1,updated_at=#{updatedAt}
+        WHERE tenant_id=#{tenantId} AND stock_dimension_key=#{dimensionKey} AND record_version=#{expectedVersion}
+    </update>
+    <update id="rebuildBalance">
+        UPDATE inv_stock_balance SET on_hand_quantity=#{ledgerQuantity},last_ledger_sequence=#{ledgerSequence},
+          record_version=record_version+1,updated_at=#{updatedAt}
+        WHERE tenant_id=#{tenantId} AND stock_dimension_key=#{dimensionKey} AND record_version=#{expectedVersion}
+    </update>
+
+    <insert id="insertLedger">
+        INSERT INTO inv_stock_ledger(ledger_id,tenant_id,stock_dimension_key,ledger_sequence,warehouse_id,sku_id,
+          base_unit_id,stock_status,movement_type,quantity_before,quantity_delta,quantity_after,source_type,
+          source_id,source_line_id,source_event_id,policy_version_id,business_date,actor_user_id,correlation_id,
+          occurred_at)
+        VALUES(#{ledgerId},#{tenantId},#{dimensionKey},#{ledgerSequence},#{warehouseId},#{skuId},#{baseUnitId},
+          #{stockStatus},#{movementType},#{quantityBefore},#{quantityDelta},#{quantityAfter},#{sourceType},
+          #{sourceId},#{sourceLineId},#{sourceEventId},#{policyVersionId},#{businessDate},#{actorUserId},
+          #{correlationId},#{occurredAt})
+    </insert>
+    <select id="findLedger" resultMap="ledgerView">
+        SELECT ledger_id AS ledgerId,ledger_sequence AS ledgerSequence,stock_dimension_key AS dimensionKey,
+          warehouse_id AS warehouseId,sku_id AS skuId,movement_type AS movementType,
+          quantity_before AS quantityBefore,quantity_delta AS quantityDelta,quantity_after AS quantityAfter,
+          source_type AS sourceType,source_id AS sourceId,source_line_id AS sourceLineId,
+          policy_version_id AS policyVersionId,occurred_at AS occurredAt
+        FROM inv_stock_ledger
+        WHERE tenant_id=#{tenantId} AND stock_dimension_key=#{dimensionKey}
+        ORDER BY ledger_sequence ASC
+    </select>
+    <select id="aggregateLedger" resultType="com.jingshanghui.pos.inventory.application.model.InventoryViews$LedgerAggregate">
+        SELECT COALESCE(SUM(quantity_delta),0) AS ledgerQuantity,COUNT(*) AS ledgerCount,
+          COALESCE(MAX(ledger_sequence),0) AS lastLedgerSequence
+        FROM inv_stock_ledger WHERE tenant_id=#{tenantId} AND stock_dimension_key=#{dimensionKey}
+    </select>
+
+    <insert id="insertAudit">
+        INSERT INTO inv_audit_event(audit_id,tenant_id,store_id,action_code,aggregate_type,aggregate_id,
+          actor_user_id,command_id,correlation_id,before_value,after_value,request_sha256,reason_code,occurred_at)
+        VALUES(#{id},#{tenantId},#{storeId},#{actionCode},#{aggregateType},#{aggregateId},#{actorUserId},
+          #{commandId},#{correlationId},#{beforeValue},#{afterValue},#{requestSha256},#{reasonCode},#{occurredAt})
+    </insert>
+    <insert id="insertOutbox">
+        INSERT INTO inv_event_outbox(event_id,tenant_id,event_type,aggregate_id,aggregate_version,correlation_id,
+          payload_json,payload_sha256,delivery_state,available_at)
+        VALUES(#{eventId},#{tenantId},#{eventType},#{aggregateId},#{aggregateVersion},#{correlationId},
+          CAST(#{payloadJson} AS JSON),#{payloadSha256},'PENDING',#{availableAt})
+    </insert>
+    <insert id="insertAnomaly">
+        INSERT INTO inv_stock_anomaly(anomaly_id,tenant_id,store_id,warehouse_id,sku_id,anomaly_type,
+          observed_quantity,policy_version_id,source_event_id,status,occurred_at)
+        VALUES(#{anomalyId},#{tenantId},#{storeId},#{warehouseId},#{skuId},#{anomalyType},#{observedQuantity},
+          #{policyVersionId},#{sourceEventId},'OPEN',#{occurredAt})
+    </insert>
+</mapper>

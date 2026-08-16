@@ -99,6 +99,12 @@
             <artifactId>jshpos-payment</artifactId>
         </dependency>
 
+        <!-- Gate 4A 不可变库存流水、余额投影与版本化策略模块 -->
+        <dependency>
+            <groupId>com.jingshanghui.pos</groupId>
+            <artifactId>jshpos-inventory</artifactId>
+        </dependency>
+
         <!-- Gate 0 服务端数据库版本治理 -->
         <dependency>
             <groupId>org.flywaydb</groupId>

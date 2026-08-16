@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.jingshanghui.example/inventory/inventory-stock-changed.v1.schema.json",
+  "title": "inventory.stock.changed.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "eventId", "warehouseId", "skuId", "movementType", "quantityDelta", "quantityAfter", "policyVersionId", "correlationId"],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "eventId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "warehouseId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "skuId": {"type": "integer", "minimum": 1},
+    "movementType": {"enum": ["SALE_OUT", "SALE_RETURN_IN"]},
+    "quantityDelta": {"type": "string", "pattern": "^-?[0-9]+\\.[0-9]{6}$"},
+    "quantityAfter": {"type": "string", "pattern": "^-?[0-9]+\\.[0-9]{6}$"},
+    "policyVersionId": {"type": "string"},
+    "correlationId": {"type": "string", "maxLength": 96}
+  }
+}
