@@ -27,5 +27,7 @@
 | CR-T2P-001 | 2026-08-16 | APPROVED | 接受 T1 内部 STATIC/FAKE 风险基线 CONDITIONAL PASS，并仅按 CONDITIONAL GO 启动 T2-Prep；正式业务、tag 创建和商用声明继续禁止，外部阻断与许可证延期保持原状态 | T1-*、T2P-*、ADR-018—019 | 项目发起人 2026-08-16 明确确认 |
 | CR-T2P-002 | 2026-08-16 | IMPLEMENTED_AWAITING_CI | 从 Week 4 最终封存提交建立 T2-Prep 候选分支，编制商业V1冻结清单、106项总RTM、六道模块门、详细设计31—40复核、14周计划、迁移测试CI、灰度回退和外部解阻材料；未修改正式业务目录且未创建tag | T2P-*、T2-*、ADR-019 | 等待T2-Prep GitHub门禁和启动评审 |
 | CR-T2P-003 | 2026-08-16 | IMPLEMENTED_AWAITING_CONFIRMATION | T2-Prep Ubuntu治理、Windows边界、安全和证据四个Job全部通过；退出包摘要与GitHub一致且包内索引复核无差异，正式业务目录依赖和tag变化均为0 | T2P-*、T2-* | 等待项目发起人确认启动评审和候选tag |
+| CR-T2P-004 | 2026-08-16 | APPROVED | 接受《T2正式开发启动评审报告》并授权创建 annotated tag `t2-prep-baseline-2026-08-16` 指向 `557ba270479935d6b44968cf70b47033f7d3d656`；仍禁止Gate 0/1和其他正式业务编码 | T2P-*、ADR-019 | 项目发起人2026-08-16明确确认 |
+| CR-T2P-005 | 2026-08-16 | SEALED | annotated tag已创建推送；本地远端peeled commit一致且GitHub API可见tagger与完整message；T1状态及T2业务DRAFT/BLOCKED/DEFERRED保持不变 | T2P-* | Tag封存证据待最终治理CI复核 |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。

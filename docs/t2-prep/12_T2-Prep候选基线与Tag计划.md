@@ -9,7 +9,10 @@
 | 当前候选分支 | `t2/prep-20260816` |
 | 候选 tag 名称 | `t2-prep-baseline-2026-08-16` |
 | tag 类型 | annotated |
-| tag 状态 | `PREPARED_NOT_CREATED` |
+| tag 状态 | `SEALED` |
+| tag 对象 SHA | `e534c3b8765b1a8ca8585f84195ef160ae8d873f` |
+| peeled commit | `557ba270479935d6b44968cf70b47033f7d3d656` |
+| GitHub 可见时间 | 2026-08-16 13:31:27（Asia/Shanghai） |
 
 ## 2. Tag 目标规则
 
@@ -37,14 +40,14 @@ Tag 创建前必须验证：
 - Limitations: payment sandbox, real devices/peripherals, design partners remain BLOCKED; JSH/licensing remain DEFERRED
 ```
 
-## 4. 计划命令（当前禁止执行）
+## 4. 已执行命令记录
 
 ```powershell
-git tag -a t2-prep-baseline-2026-08-16 <SP_CONFIRMED_FINAL_SHA> -m "鲸熵汇收银系统 T2-Prep 基线"
+git tag -a t2-prep-baseline-2026-08-16 557ba270479935d6b44968cf70b47033f7d3d656 -m "鲸熵汇收银系统 T2-Prep 基线"
 git push origin refs/tags/t2-prep-baseline-2026-08-16
 ```
 
-这些命令仅用于评审说明。未经项目发起人确认不得执行，也不得创建轻量 tag 或本地占位 tag。
+命令已在项目发起人明确确认后执行。完整多段 message、tagger、对象 SHA 和远端证据记录于《T2-Prep Tag 封存报告》。已发布 tag 禁止移动或覆盖。
 
 ## 5. 创建后的核验计划
 
@@ -54,3 +57,5 @@ git push origin refs/tags/t2-prep-baseline-2026-08-16
 - tag message、tagger、时间和证据链接归档；
 - RTM/启动报告回填 tag；
 - 发现目标错误时停止，不强制移动已发布 tag，使用事故/更正流程。
+
+上述核验已全部完成，结果见 [Tag 封存报告](./14_T2-Prep_Tag封存报告.md)。

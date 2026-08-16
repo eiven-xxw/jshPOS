@@ -15,6 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 BASE_COMMIT = "962c4ed5e631bccd5c6fff737ed8e97fb665fd03"
 T0_TAG = "t0-baseline-2026-08-16"
 CANDIDATE_TAG = "t2-prep-baseline-2026-08-16"
+TAG_TARGET = "557ba270479935d6b44968cf70b47033f7d3d656"
 RTM = ROOT / "docs" / "governance" / "rtm.csv"
 DOC_DIR = ROOT / "docs" / "t2-prep"
 
@@ -33,6 +34,7 @@ REQUIRED_DOCS = {
     "11_风险台账与GoNoGo.md",
     "12_T2-Prep候选基线与Tag计划.md",
     "13_T2正式开发启动评审报告.md",
+    "14_T2-Prep_Tag封存报告.md",
 }
 
 T2P_IDS = {
@@ -120,8 +122,12 @@ def check_baseline_and_tag() -> None:
     if run_git("cat-file", "-t", T0_TAG) != "tag":
         fail(f"{T0_TAG} must remain annotated")
     candidate_ref = run_git("show-ref", "--verify", f"refs/tags/{CANDIDATE_TAG}", check=False)
-    if candidate_ref:
-        fail(f"candidate tag {CANDIDATE_TAG} must not exist before sponsor confirmation")
+    if not candidate_ref:
+        fail(f"sealed tag {CANDIDATE_TAG} is missing")
+    if run_git("cat-file", "-t", f"refs/tags/{CANDIDATE_TAG}") != "tag":
+        fail(f"{CANDIDATE_TAG} must be an annotated tag")
+    if run_git("rev-parse", f"{CANDIDATE_TAG}^{{}}") != TAG_TARGET:
+        fail(f"{CANDIDATE_TAG} does not peel to {TAG_TARGET}")
 
 
 def allowed_path(path: str) -> bool:
@@ -193,8 +199,8 @@ def check_docs() -> tuple[int, list[str]]:
     if decision_ids != [f"{number:02d}" for number in range(1, 13)]:
         fail(f"expected DEC-01..DEC-12, got {decision_ids}")
     report = (DOC_DIR / "13_T2正式开发启动评审报告.md").read_text(encoding="utf-8")
-    if "AWAITING SP CONFIRMATION" not in report or "T2 CODING NO-GO" not in report:
-        fail("startup review report must remain awaiting sponsor and coding NO-GO")
+    if "AWAITING GATE 0/1 CONFIRMATION" not in report or "T2 CODING NO-GO" not in report:
+        fail("startup review report must keep Gate 0/1 awaiting confirmation and coding NO-GO")
     return len(REQUIRED_DOCS), decision_ids
 
 
@@ -213,8 +219,8 @@ def check_rtm() -> dict[str, int]:
     all_t2_rows = {key: row for key, row in by_id.items() if key.startswith("T2-")}
     if set(all_t2_rows) != T2_IDS:
         fail(f"T2 ID mismatch: missing={sorted(T2_IDS - set(all_t2_rows))} extra={sorted(set(all_t2_rows) - T2_IDS)}")
-    if any(row["status"] != "READY" for row in t2p.values()):
-        fail("all T2P governance requirements must be READY awaiting sponsor confirmation")
+    if any(row["status"] != "ACCEPTED" for row in t2p.values()):
+        fail("all T2P governance requirements must be ACCEPTED after tag sealing")
     actual_draft = {key for key, row in t2.items() if row["status"] == "DRAFT"}
     actual_blocked = {key for key, row in t2.items() if row["status"] == "BLOCKED"}
     actual_deferred = {key for key, row in t2.items() if row["status"] == "DEFERRED"}
@@ -240,7 +246,7 @@ def check_rtm() -> dict[str, int]:
     if v1_bad:
         fail(f"commercial V1 epics changed from DRAFT: {v1_bad}")
     return {
-        "t2pReady": len(T2P_IDS),
+        "t2pAccepted": len(T2P_IDS),
         "t2Draft": len(T2_DRAFT_IDS),
         "t2Blocked": len(T2_BLOCKED_IDS),
         "t2Deferred": len(T2_DEFERRED_IDS),
@@ -292,7 +298,8 @@ def main() -> None:
         "baseCommit": BASE_COMMIT,
         "commitSha": run_git("rev-parse", "HEAD"),
         "candidateTag": CANDIDATE_TAG,
-        "candidateTagState": "PREPARED_NOT_CREATED",
+        "candidateTagState": "SEALED",
+        "candidateTagTarget": TAG_TARGET,
         "changedFiles": paths,
         "productionPathChanges": 0,
         "dependencyManifestChanges": 0,
@@ -314,9 +321,9 @@ def main() -> None:
     print(
         "T2-PREP OK: "
         f"base={BASE_COMMIT[:8]} docs={doc_count} designs=10 decisions={len(decisions)} "
-        f"T2P_READY={status_counts['t2pReady']} T2_DRAFT={status_counts['t2Draft']} "
+        f"T2P_ACCEPTED={status_counts['t2pAccepted']} T2_DRAFT={status_counts['t2Draft']} "
         f"T2_BLOCKED={status_counts['t2Blocked']} T2_DEFERRED={status_counts['t2Deferred']} "
-        "productionChanges=0 candidateTag=PREPARED_NOT_CREATED coding=NO-GO"
+        "productionChanges=0 candidateTag=SEALED coding=NO-GO"
     )
 
 
