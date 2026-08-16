@@ -20,5 +20,6 @@
 | CR-T1-003 | 2026-08-16 | APPROVED | 确认《T1 Week 1 周门禁报告》并按 `CONDITIONAL GO` 进入 Week 2；只允许 SQLite/Inbox、虚构租户攻击、10k/100k 合成数据包、虚构升级回退和五家支付 Fake 回归，所有外部实证、正式业务、Week 3 和 T2 继续禁止 | T1-OFF-001、T1-SYN-001、T1-TEN-001、T1-DPK-001、T1-UPG-001、T1-PAY-001、T1-SEC-001、T1-CI-001 | 项目发起人 2026-08-16 明确确认 |
 | CR-T1-004 | 2026-08-16 | IMPLEMENTED_AWAITING_CONFIRMATION | 完成 Week 2 六类内部风险探针、2,879 条断言和 201,039 次核心迭代；GitHub Week 2 与 Week 1 回归全绿并封存 STATIC/FAKE 证据，未解除任何外部阻断 | T1-OFF-001、T1-SYN-001、T1-TEN-001、T1-DPK-001、T1-UPG-001、T1-PAY-001、T1-SEC-001、T1-CI-001 | 待项目发起人确认 Week 2 周门禁报告 |
 | CR-T1-005 | 2026-08-16 | APPROVED | 确认《T1 Week 2 周门禁报告》并按 `CONDITIONAL GO` 进入 Week 3；只允许 Outbox/Inbox 交叉故障、支付 UNKNOWN/退款/对账 Fake、数据包恢复、升级兼容与前向修复、安全和失败 seed 回归，所有外部实证、正式业务、Week 4 和 T2 继续禁止 | T1-OFF-001、T1-SYN-001、T1-TEN-001、T1-DPK-001、T1-UPG-001、T1-PAY-001、T1-SEC-001、T1-CI-001 | 项目发起人 2026-08-16 明确确认 |
+| CR-T1-006 | 2026-08-16 | IMPLEMENTED_AWAITING_CONFIRMATION | 完成 Week 3 内部交叉故障与恢复探针，1,425 条 FAKE 断言和 180,332 次迭代；GitHub Week 3 与 Week 1/2 回归全绿，证据包摘要独立复核一致，未解除任何外部阻断 | T1-OFF-001、T1-SYN-001、T1-TEN-001、T1-DPK-001、T1-UPG-001、T1-PAY-001、T1-SEC-001、T1-CI-001 | 待项目发起人确认 Week 3 周门禁报告 |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。
