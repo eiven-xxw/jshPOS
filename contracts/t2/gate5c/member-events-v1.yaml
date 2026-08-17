@@ -1,0 +1,22 @@
+schemaVersion: '1.0'
+owner: Member
+inbound:
+  - type: order.completed.v2
+    purpose: 成交同步后异步入账
+    status: DRAFT_UNTIL_MEM002
+  - type: return.completed.v1
+    purpose: 引用原事实进行退货权益冲正
+    status: DRAFT_UNTIL_MEM002
+outbound:
+  - type: member.profile.changed.v1
+    pii: FORBIDDEN
+  - type: member.consent.changed.v1
+    pii: FORBIDDEN
+  - type: member.level.changed.v1
+    status: DRAFT_UNTIL_MEM002
+    pii: FORBIDDEN
+  - type: member.points.posted.v1
+    status: DRAFT_UNTIL_MEM002
+    pii: FORBIDDEN
+envelopeRequired: [eventId, tenantContext, schemaVersion, occurredAt, receivedAt, payloadSha256, correlationId]
+idempotency: same_event_same_hash_returns_original; same_event_different_hash_rejected

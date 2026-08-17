@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "1.0",
+  "phase": "T2-GATE5C",
+  "branchStart": "2b55ad6154b75bce1ff19c68a50e025afe7f1e93",
+  "sequence": ["T2-MEM-001", "T2-MEM-002"],
+  "activeRequirement": "T2-MEM-001",
+  "requirements": {
+    "T2-MEM-001": "IN_PROGRESS",
+    "T2-MEM-002": "DRAFT",
+    "T2-RPT-001": "DRAFT",
+    "T2-RPT-002": "DRAFT",
+    "T2-PAY-002": "BLOCKED"
+  },
+  "forbidden": ["REAL_PII", "PROVIDER_NETWORK", "PRODUCTION_KEY", "REPORTING_RUNTIME", "COUPON_RUNTIME", "STORED_VALUE_RUNTIME"],
+  "externalEvidence": {"sandbox": 0, "realDevice": 0, "pilot": 0}
+}

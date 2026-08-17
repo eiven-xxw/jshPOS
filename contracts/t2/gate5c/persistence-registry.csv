@@ -1,0 +1,9 @@
+requirement_id,owner,store,object,policy,reason,status
+T2-MEM-001,Member,MySQL,mbr_member/mbr_profile,XML_ONLY,含身份状态与去标识化条件不暴露通用CRUD,IN_PROGRESS
+T2-MEM-001,Member,MySQL,mbr_identity/mbr_consent_ledger,XML_ONLY,敏感索引与只追加同意事实,IN_PROGRESS
+T2-MEM-001,Member,MySQL,mbr_privacy_request/mbr_privacy_history,XML_ONLY,隐私工单状态条件与不可变历史,IN_PROGRESS
+T2-MEM-001,Member,MySQL,mbr_command/mbr_outbox/mbr_member_link_ledger,XML_ONLY,幂等和只追加事实,IN_PROGRESS
+T2-MEM-001,POS,SQLite,local_member_snapshot,EXPLICIT_SQL_CACHE,仅最小令牌脱敏快照可失效清理,IN_PROGRESS
+T2-MEM-002,MemberLedger,MySQL,mbr_level_history/mbr_points_ledger/mbr_points_account/mbr_points_lot,PLANNED_XML_ONLY,等级积分只追加事实及可重建投影,DRAFT
+T2-RPT-001,Reporting,NONE,NONE,DESIGN_ONLY,本Sprint禁止报表运行时,DRAFT
+T2-RPT-002,PaymentReporting,NONE,NONE,DESIGN_ONLY,外部账单仍被PAY-002阻断,DRAFT

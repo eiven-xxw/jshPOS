@@ -89,5 +89,8 @@
 | CR-T2G5B-011 | 2026-08-17 | VERIFIED_AWAITING_CONFIRMATION | Gate 5B 实现候选 097498a 在 GitHub Actions Run 32014486873 完成 10 个 Job 全绿；聚合 350 项服务端测试、Linux/Windows 各 67 项 Flutter、MySQL 8.4 到 V27、26 面攻击、双 SBOM/许可证/安全及 142 文件证据索引通过 | T2-POS-006、T2-ORD-003、T2-REF-002、ADR-029 | 三项继续 VERIFIED 等待项目发起人确认；T2-PAY-002 仍 BLOCKED，sandbox/realDevice/pilot 均为0 |
 | CR-T2G5B-012 | 2026-08-17 | ARTIFACT_CLEANUP_VERIFIED | 按项目发起人既有授权清理 Gate 5B 已结束失败/取消 Run 的 13 个非封板 Artifact，释放 229479523 字节；全绿证据索引 9283219140 已下载归档并核验 SHA-256 b619abb8405504423aa7135209af10b6360ccd659d3de2ad1bf1f242cd770a30 | GitHub Actions Artifact、Gate 5B 证据 | 只删除 Artifact；Workflow Run、日志、Git 提交、tag、报告和失败证据全部保留 |
 | CR-DEV-003 | 2026-08-17 | APPROVED | 采纳模型分型、持久化策略与数据库中文注释规范：新增表必须登记 MP_ENTITY/XML_ONLY/READ_PROJECTION；简单 CRUD 默认使用普通持久化实体与 MyBatis-Plus Lambda，核心事实使用 Repository 与 XML；Record、领域聚合和持久化实体分离，并强制 Java 与 Schema 中文注释 | AGENTS.md、技术架构与开发规范 10.2.5/10.4、JSH-POS-DEV-STD-002、ADR-027 | 项目发起人 2026-08-17 明确确认；仅登记工程治理，不修改业务代码、既有 Flyway、RTM 或 Gate 4D 状态，存量整改须另行准入 |
+| CR-T2G5B-013 | 2026-08-17 | ACCEPTED | 项目发起人确认 Gate 5B CONDITIONAL PASS，接受 POS 促销现金原子结算、服务端促销快照订单绑定和原单退货退款跨 Owner 收敛的内部证据 | T2-POS-006、T2-ORD-003、T2-REF-002、ADR-029 | 三项由 VERIFIED 更新为 ACCEPTED；实机、支付沙箱、试点与商业验收仍未解阻 |
+| CR-T2G5C-001 | 2026-08-17 | APPROVED | 项目发起人按 MEM-001→MEM-002 授权 Gate 5C / Sprint S11，首先准入会员最小档案、统一身份、同意、隐私请求和审计 | T2-MEM-001、T2-MEM-002、T2-RPT-001/002、ADR-030 | MEM-002 及报表继续 DRAFT；T2-PAY-002 保持 BLOCKED，Provider 网络为0 |
+| CR-T2G5C-002 | 2026-08-17 | IN_PROGRESS | T2-MEM-001 已冻结数据主权、身份/同意/隐私状态、PII 最小化、权限审计、API/事件、Flyway/SQLite、容量、兼容、回退和测试准入，依序进入实现 | T2-MEM-001、ADR-030 | MEM-002 仍 DRAFT，在 MEM-001 独立 VERIFIED 前禁止积分/等级运行时 |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。

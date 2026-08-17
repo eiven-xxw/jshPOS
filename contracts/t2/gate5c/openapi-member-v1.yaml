@@ -1,0 +1,42 @@
+openapi: 3.1.0
+info:
+  title: JSH POS Member Owner API
+  version: 1.0.0
+  description: >-
+    Gate 5C 会员最小档案、身份、同意、隐私请求和权益账本契约。
+    tenant_id 不得由请求传入；所有返回值默认脱敏。
+paths:
+  /api/v1/members:
+    post:
+      operationId: createMember
+      x-permission: member:profile:create
+      responses: {'200': {description: Created}}
+  /api/v1/members/resolve:
+    post:
+      operationId: resolveMemberIdentity
+      x-permission: member:profile:read
+      responses: {'200': {description: Masked member view}, '404': {description: Not found}}
+  /api/v1/members/{memberId}/identities:
+    post:
+      operationId: bindIdentity
+      x-permission: member:identity:bind
+      responses: {'200': {description: Bound}}
+  /api/v1/members/{memberId}/consents:
+    post:
+      operationId: recordConsent
+      x-permission: member:consent:record
+      responses: {'200': {description: Appended}}
+  /api/v1/members/{memberId}/privacy-requests:
+    post:
+      operationId: requestPrivacyRight
+      x-permission: member:privacy:request
+      responses: {'200': {description: Requested}}
+  /api/v1/member-events:
+    post:
+      operationId: consumeMemberOwnerEvent
+      x-internal-only: true
+      responses: {'202': {description: Idempotently accepted}}
+components:
+  securitySchemes:
+    bearerAuth: {type: http, scheme: bearer}
+security: [{bearerAuth: []}]
