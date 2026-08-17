@@ -8,13 +8,15 @@
 > 设计准入提交：`2596a1e0fe5c2203ab89972bcd95a4d61c19c06d`
 > 首轮技术候选：`f6ff3ea0c0540078e801ffc98a1b6215c38ef684`
 > 修复后候选：`94f6c48e56ab767c52302ffcc462786afae2d393`
+> 首次 closure 封板提交：`a096aac62dde573c9a1069c7e72bda65b25d8aa5`
 > 首轮失败 CI：[T2 Gate 4D Quality Gates #31987101249](https://github.com/eiven-xxw/jshPOS/actions/runs/31987101249)
 > 修复后候选 CI：[T2 Gate 4D Quality Gates #31987472677](https://github.com/eiven-xxw/jshPOS/actions/runs/31987472677)
+> closure 封板 CI：[T2 Gate 4D Quality Gates #31988486868](https://github.com/eiven-xxw/jshPOS/actions/runs/31988486868)
 > 当前结论：`CONDITIONAL PASS / VERIFIED / AWAITING CONFIRMATION`
 
 ## 1. 管理结论
 
-Gate 4D 获准的同租户、仓级基础调拨已经完成设计、正式实现和内部验证，覆盖申请、提交、审批、发出、在途、分次收货、差异处理、关闭、发出前取消，以及来源/目的库存和成本的幂等可对账闭环。修复后候选在 GitHub Ubuntu、Windows 与 MySQL 8.4.6 干净执行器运行十个 Job，全部通过；没有降低覆盖率或安全阈值、跳过失败测试、自动重跑掩盖 Flaky 或创建绿色占位。
+Gate 4D 获准的同租户、仓级基础调拨已经完成设计、正式实现和内部验证，覆盖申请、提交、审批、发出、在途、分次收货、差异处理、关闭、发出前取消，以及来源/目的库存和成本的幂等可对账闭环。closure 封板候选在 GitHub Ubuntu、Windows 与 MySQL 8.4.6 干净执行器运行十个 Job，全部通过；没有降低覆盖率或安全阈值、跳过失败测试、自动重跑掩盖 Flaky 或创建绿色占位。
 
 建议将 `T2-TRF-001` 保持为 `VERIFIED` 并提交 `CONDITIONAL PASS`，等待项目发起人确认后方可更新为 `ACCEPTED`。最高证据等级为 `STATIC + UNIT + MYSQL_INTEGRATION + FLUTTER_REGRESSION + SYNTHETIC_VECTOR`，不包含真实设备、物理断电、真实历史迁移、容量长稳、支付沙箱、设计伙伴或商业验收，不能宣称 Alpha、可试点或可商用。
 
@@ -73,20 +75,20 @@ Gate 4D 获准的同租户、仓级基础调拨已经完成设计、正式实现
 
 ## 7. GitHub Actions
 
-修复后候选运行 `#31987472677` 为 `run_attempt=1`、总结果 `success`、总时长 9m20s，共产生 10 个制品。
+closure 封板运行 `#31988486868` 为 `run_attempt=1`、总结果 `success`、总时长 8m17s，共产生 10 个制品。
 
 | Job | Job ID | 时长 | 结果 | 主要证据 |
 |---|---:|---:|---|---|
-| [governance](https://github.com/eiven-xxw/jshPOS/actions/runs/31987472677/job/95264882406) | 95264882406 | 7s | PASS | 基线祖先、RTM、ADR、契约、范围和未封存迁移规则 |
-| [server](https://github.com/eiven-xxw/jshPOS/actions/runs/31987472677/job/95264882267) | 95264882267 | 7m32s | PASS | 255 测试、Transfer 覆盖率、Admin JAR、聚合 SBOM |
-| [mysql-migration](https://github.com/eiven-xxw/jshPOS/actions/runs/31987472677/job/95264882245) | 95264882245 | 1m21s | PASS | MySQL 8.4.6、V18/V19、差异原因与不可变保护 |
-| [tenant-security](https://github.com/eiven-xxw/jshPOS/actions/runs/31987472677/job/95264882329) | 95264882329 | 1m01s | PASS | 可信上下文、双仓权限与 18 面租户攻击 |
-| [fixed-vectors](https://github.com/eiven-xxw/jshPOS/actions/runs/31987472677/job/95264882338) | 95264882338 | 9s | PASS | 28 个状态/数量/成本/故障固定向量 |
-| [pos-linux](https://github.com/eiven-xxw/jshPOS/actions/runs/31987472677/job/95264882296) | 95264882296 | 7m05s | PASS | Flutter、Kotlin、debug APK、SBOM/许可证 |
-| [pos-windows](https://github.com/eiven-xxw/jshPOS/actions/runs/31987472677/job/95264882402) | 95264882402 | 2m33s | PASS | Windows Flutter 干净执行器回归 |
-| [admin-web](https://github.com/eiven-xxw/jshPOS/actions/runs/31987472677/job/95264882387) | 95264882387 | 1m28s | PASS | audit/build/lint/typecheck/测试/许可证 |
-| [security-sbom-license](https://github.com/eiven-xxw/jshPOS/actions/runs/31987472677/job/95265845179) | 95265845179 | 39s | PASS | Trivy、双 SBOM、漏洞/Secret/IaC/许可证 |
-| [evidence](https://github.com/eiven-xxw/jshPOS/actions/runs/31987472677/job/95265941668) | 95265941668 | 43s | PASS | 九类上游证据、219 文件与 SHA-256 索引 |
+| [governance](https://github.com/eiven-xxw/jshPOS/actions/runs/31988486868/job/95267587786) | 95267587786 | 7s | PASS | 基线祖先、RTM VERIFIED、ADR、契约、范围和迁移封印 |
+| [server](https://github.com/eiven-xxw/jshPOS/actions/runs/31988486868/job/95267587348) | 95267587348 | 6m35s | PASS | 255 测试、Transfer 覆盖率、Admin JAR、聚合 SBOM |
+| [mysql-migration](https://github.com/eiven-xxw/jshPOS/actions/runs/31988486868/job/95267587371) | 95267587371 | 1m31s | PASS | MySQL 8.4.6、V18/V19、差异原因与不可变保护 |
+| [tenant-security](https://github.com/eiven-xxw/jshPOS/actions/runs/31988486868/job/95267587355) | 95267587355 | 1m06s | PASS | 可信上下文、双仓权限与 18 面租户攻击 |
+| [fixed-vectors](https://github.com/eiven-xxw/jshPOS/actions/runs/31988486868/job/95267587351) | 95267587351 | 8s | PASS | 28 个状态/数量/成本/故障固定向量 |
+| [pos-linux](https://github.com/eiven-xxw/jshPOS/actions/runs/31988486868/job/95267587328) | 95267587328 | 6m25s | PASS | Flutter、Kotlin、debug APK、SBOM/许可证 |
+| [pos-windows](https://github.com/eiven-xxw/jshPOS/actions/runs/31988486868/job/95267587359) | 95267587359 | 2m53s | PASS | Windows Flutter 干净执行器回归 |
+| [admin-web](https://github.com/eiven-xxw/jshPOS/actions/runs/31988486868/job/95267587393) | 95267587393 | 1m26s | PASS | audit/build/lint/typecheck/测试/许可证 |
+| [security-sbom-license](https://github.com/eiven-xxw/jshPOS/actions/runs/31988486868/job/95268496614) | 95268496614 | 49s | PASS | Trivy、双 SBOM、漏洞/Secret/IaC/许可证 |
+| [evidence](https://github.com/eiven-xxw/jshPOS/actions/runs/31988486868/job/95268610450) | 95268610450 | 45s | PASS | 九类上游证据、219 文件与 SHA-256 索引 |
 
 Workflow 不含 `continue-on-error`，没有自动 retry、失败测试跳过、阈值降低或绿色占位。GitHub 产生 14 条非阻断告警：部分固定 SHA 的 Action 以 Node 20 为目标并被平台强制在 Node 24 运行，以及 `setup-java@v4` 弃用提示；登记为 P2 供应链维护项，后续只可通过固定 SHA 依赖评审升级。
 
@@ -94,21 +96,21 @@ Workflow 不含 `continue-on-error`，没有自动 retry、失败测试跳过、
 
 | Artifact | ID | 大小 | GitHub digest |
 |---|---:|---:|---|
-| `t2-gate4d-transfer-evidence-bundle` | 9274332397 | 436 MB | `sha256:bfaecd98ddd761355ddcd8287aec8dff03a13e2298282fcbbd1dd815ca0d2860` |
-| `t2-gate4d-security` | 9274320984 | 218 MB | `sha256:683d7dee6f7defe0529c099c7966aca3ff21bd132d774047d5289430315d1a4a` |
-| `t2-gate4d-server` | 9274310568 | 147 MB | `sha256:63ba65b49d60a02c9d33564192fcd350c1a6f2a6e83243c7fd7e172b48f06a94` |
-| `t2-gate4d-pos-linux` | 9274303406 | 71.4 MB | `sha256:af5126dc4c8a97664c27598a18d4ee67559ee0dbd4bb038ebed0bdf1e09bb177` |
-| `t2-gate4d-pos-windows` | 9274240993 | 3 KB | `sha256:0040d3e05302804fdda2a931c966ecd290dd8cf5df5977f96e1ae15292365d1c` |
-| `t2-gate4d-tenant` | 9274219836 | 47.4 KB | `sha256:e85477c468f6ff9fd5901a012fb3db9b21ec60ebbaa08f2878272351afd91f60` |
-| `t2-gate4d-mysql` | 9274224471 | 5.91 KB | `sha256:ab879eae1a725fb5289e4fee239bf5bd914dce22780c0b696a4d26961b7e45e2` |
-| `t2-gate4d-web` | 9274226206 | 77.9 KB | `sha256:b4e551c8ad3e21b0a7d1f35f13ca774a909725e884134b254e08622faf4d4fd8` |
-| `t2-gate4d-vectors` | 9274207653 | 1.98 KB | `sha256:abf7618a7d8baeaa1daff1d2162372552cd86e3a80e09b2c2da2d425c06ba1c1` |
-| `t2-gate4d-governance` | 9274207224 | 1.01 KB | `sha256:15a784e85db17abebe4a5b34336e2317801281c5bcc253807fa5f7a8f68d985d` |
+| `t2-gate4d-transfer-evidence-bundle` | 9274645762 | 436 MB | `sha256:436127c0fbc845bc3c6dfe2b06e809fd703d26537b90ff771291c819552f927b` |
+| `t2-gate4d-security` | 9274634330 | 218 MB | `sha256:ae293ac960c5f2ef51e42af2690ab72095b6835d2172e1d790d527a0b4ba6a47` |
+| `t2-gate4d-server` | 9274620678 | 147 MB | `sha256:48bb13415576dbad2bd644dc86d139569a59fa057aa08ac6abcf6441cd766b6f` |
+| `t2-gate4d-pos-linux` | 9274618053 | 71.4 MB | `sha256:713189924958be58a8ca7f3e865eec0fedac49af073c67f2dd06798dc4fe2a4b` |
+| `t2-gate4d-pos-windows` | 9274562390 | 2.99 KB | `sha256:646bac3b88f1f859e808d03f1d20526b2520b356cc3c9e014bc8284899ac9bb1` |
+| `t2-gate4d-tenant` | 9274534606 | 47.4 KB | `sha256:20b423955ac115ebfd1c92eab4c300730a9894eb9fff42a9a8b01f6c9e54600c` |
+| `t2-gate4d-mysql` | 9274541278 | 5.92 KB | `sha256:ac029494619f1692e7588085d33c7e9731503b18d9b743d4a49efa9dca6aad6f` |
+| `t2-gate4d-web` | 9274539988 | 77.9 KB | `sha256:604b9f9426a7003d0d141e3d31312775c0854860022b66853b34da1ffa948a4a` |
+| `t2-gate4d-vectors` | 9274519260 | 1.97 KB | `sha256:896617022cc1f63f50bd15fd1bc418f4c3ced0812ac808c7c482497773e755e9` |
+| `t2-gate4d-governance` | 9274519615 | 1 KB | `sha256:8161b2e809897cbeac906a630f63efe4f72e8d888bdc0a07d249c07321906096` |
 
 证据聚合器核验九类上游制品并生成 SHA-256 索引，摘要为：
 
 ```text
-T2-GATE4D EVIDENCE OK: stage=admitted files=219 serverTests=255 vectors=28 paymentNetwork=0
+T2-GATE4D EVIDENCE OK: stage=closure files=219 serverTests=255 vectors=28 paymentNetwork=0
 ```
 
 ## 9. 风险、阻断与不可宣称
