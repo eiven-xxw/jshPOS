@@ -29,8 +29,22 @@ public final class CanonicalJson {
     }
 
     public static Result from(Map<String, Object> content) {
+        return from(content, MAX_BYTES);
+    }
+
+    /**
+     * 为受控大对象生成同一规范化 JSON；调用方必须声明并评审容量上限。
+     *
+     * @param content JSON对象
+     * @param maxBytes UTF-8最大字节数，范围1..1MiB
+     * @return 规范JSON与SHA-256
+     */
+    public static Result from(Map<String, Object> content, int maxBytes) {
         if (content == null) {
             throw new ServiceException("FND-CFG-001: 配置内容不能为空", 400);
+        }
+        if (maxBytes < 1 || maxBytes > 1024 * 1024) {
+            throw new ServiceException("FND-CFG-005: 规范JSON容量上限非法", 400);
         }
         Object normalized = normalize(content);
         String json;
@@ -39,8 +53,8 @@ public final class CanonicalJson {
         } catch (JsonProcessingException exception) {
             throw new ServiceException("FND-CFG-004: 配置无法序列化为 JSON", 400);
         }
-        if (json.getBytes(StandardCharsets.UTF_8).length > MAX_BYTES) {
-            throw new ServiceException("FND-CFG-002: 配置内容超过 64 KiB", 400);
+        if (json.getBytes(StandardCharsets.UTF_8).length > maxBytes) {
+            throw new ServiceException("FND-CFG-002: 规范JSON内容超过容量上限", 400);
         }
         return new Result(json, sha256(json));
     }

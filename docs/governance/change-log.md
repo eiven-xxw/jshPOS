@@ -80,6 +80,8 @@
 | CR-T2G5B-002 | 2026-08-17 | IN_PROGRESS | T2-POS-006 已冻结本地数据主权、状态冻结点、单事务边界、不变量、权限审计、SQLite V6、兼容回退和故障测试准入，按批准顺序首先进入实现 | T2-POS-006、ADR-029 | T2-ORD-003、T2-REF-002 继续 DRAFT；不得预建后续运行时 |
 | CR-T2G5B-003 | 2026-08-17 | VERIFIED_POS006 | T2-POS-006 完成 SQLite V6 促销成交绑定、报价与人工审批链校验、订单/快照/现金/班次/Outbox 单事务和固定故障注入；Flutter 全量 66 项通过 | T2-POS-006、ADR-029 | 独立验证后才允许准入 ORD-003；实机物理断电仍 BLOCKED，不代表 ACCEPTED |
 | CR-T2G5B-004 | 2026-08-17 | IN_PROGRESS | 在 POS-006 形成独立 VERIFIED 证据后，T2-ORD-003 完成数据主权、状态、不变量、只读快照端口、MySQL 前向迁移、容量、兼容、回退和测试准入 | T2-ORD-003、ADR-029 | T2-REF-002 继续 DRAFT；Order Owner 禁止复制促销算法或写促销表 |
+| CR-T2G5B-005 | 2026-08-17 | VERIFIED_ORD003 | T2-ORD-003 完成 order.submitted.v2 正式同步消费、Promotion Owner 只读快照核验、含优惠订单头行不变量、不可变绑定、Java/Dart 共用摘要向量和租户上下文攻击验证 | T2-ORD-003、ADR-029 | 独立提交形成后才允许准入 REF-002；MySQL 8.4 实迁移等待 CI，不代表 ACCEPTED |
+| CR-T2G5B-006 | 2026-08-17 | IN_PROGRESS | 在 POS-006 与 ORD-003 依序形成 VERIFIED 证据后，T2-REF-002 完成数据主权、累计上限、跨 Owner Saga、事件、迁移、容量、兼容、回退和故障测试准入 | T2-REF-002、ADR-029 | 只允许现金及既有 Provider 无关核心的内部合成闭环；T2-PAY-002 与 Provider 网络继续 BLOCKED |
 | CR-DEV-003 | 2026-08-17 | APPROVED | 采纳模型分型、持久化策略与数据库中文注释规范：新增表必须登记 MP_ENTITY/XML_ONLY/READ_PROJECTION；简单 CRUD 默认使用普通持久化实体与 MyBatis-Plus Lambda，核心事实使用 Repository 与 XML；Record、领域聚合和持久化实体分离，并强制 Java 与 Schema 中文注释 | AGENTS.md、技术架构与开发规范 10.2.5/10.4、JSH-POS-DEV-STD-002、ADR-027 | 项目发起人 2026-08-17 明确确认；仅登记工程治理，不修改业务代码、既有 Flyway、RTM 或 Gate 4D 状态，存量整改须另行准入 |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。

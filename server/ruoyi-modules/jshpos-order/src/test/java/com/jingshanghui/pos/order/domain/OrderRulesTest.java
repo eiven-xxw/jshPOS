@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -77,6 +78,24 @@ class OrderRulesTest {
         assertThatThrownBy(() -> OrderRules.requireMoney(-1, "amount")).isInstanceOf(ServiceException.class);
         assertThatThrownBy(() -> OrderRules.requireMoney(9_007_199_254_740_992L, "amount"))
             .isInstanceOf(ServiceException.class);
+    }
+
+    @Test
+    void validatesPromotedHeaderLinesAndSourceAllocation() {
+        var line = new OrderRules.PromotedLineAmount(LINE, 1, 701L, "2", 500,
+            1000, 100, 0, 900, "TENANT_BASE", Map.of("RULE:RULE-001", 100L));
+        assertThat(OrderRules.validatePromotedOrder(List.of(line), 1000, 100, 0, 900))
+            .isEqualTo(new OrderRules.PromotedTotals(1000, 100, 0, 900));
+        assertThatThrownBy(() -> OrderRules.validatePromotedOrder(List.of(
+            new OrderRules.PromotedLineAmount(LINE, 1, 701L, "2", 500,
+                1000, 100, 0, 901, "TENANT_BASE", Map.of("RULE:RULE-001", 100L))),
+            1000, 100, 0, 901)).hasMessageContaining("ORDER_AMOUNT_CHANGED");
+        assertThatThrownBy(() -> OrderRules.validatePromotedOrder(List.of(
+            new OrderRules.PromotedLineAmount(LINE, 1, 701L, "2", 500,
+                1000, 100, 0, 900, "TENANT_BASE", Map.of("RULE:RULE-001", 99L))),
+            1000, 100, 0, 900)).hasMessageContaining("source allocation");
+        assertThatThrownBy(() -> OrderRules.validatePromotedOrder(List.of(line), 1000, 99, 0, 901))
+            .hasMessageContaining("ORDER_AMOUNT_CHANGED");
     }
 
     @Test

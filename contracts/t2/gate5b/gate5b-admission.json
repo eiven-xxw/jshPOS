@@ -7,9 +7,9 @@
     "branchStart": "e947a229782865f7759525cfa3e2e90819ebfba5"
   },
   "sequence": ["T2-POS-006", "T2-ORD-003", "T2-REF-002"],
-  "verifiedRequirements": ["T2-POS-006"],
-  "admittedRequirements": ["T2-ORD-003"],
-  "draftRequirements": ["T2-REF-002", "T2-MEM-001", "T2-MEM-002", "T2-RPT-001", "T2-RPT-002"],
+  "verifiedRequirements": ["T2-POS-006", "T2-ORD-003"],
+  "admittedRequirements": ["T2-REF-002"],
+  "draftRequirements": ["T2-MEM-001", "T2-MEM-002", "T2-RPT-001", "T2-RPT-002"],
   "externalBlockedRequirements": {"T2-PAY-002": "BLOCKED"},
   "runtimeBoundary": {
     "cashAllowed": true,

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jingshanghui.pos.order.infrastructure.persistence.mapper.PromotedOrderMapper">
+    <insert id="insertOrder">
+        INSERT INTO ord_sales_order(
+          order_id,tenant_id,local_order_no,store_id,terminal_id,shift_id,cashier_user_id,business_date,
+          store_timezone,status,draft_disposition,payment_status,currency,gross_amount_minor,
+          discount_amount_minor,surcharge_amount_minor,receivable_amount_minor,received_amount_minor,
+          catalog_version,price_version,industry_template_version,snapshot_schema_version,snapshot_json,
+          snapshot_sha256,idempotency_key,request_sha256,occurred_at,record_version)
+        VALUES(
+          #{orderId},#{tenantId},#{localOrderNo},#{storeId},#{terminalId},#{shiftId},#{cashierUserId},
+          #{businessDate},#{storeTimezone},'COMPLETED','ACTIVE','PAID','CNY',#{grossAmountMinor},
+          #{discountAmountMinor},#{surchargeAmountMinor},#{receivableAmountMinor},#{receivableAmountMinor},
+          #{catalogVersion},#{priceVersion},#{industryTemplateVersion},2,CAST(#{snapshotJson} AS JSON),
+          #{snapshotSha256},#{idempotencyKey},#{requestSha256},#{occurredAt},4)
+    </insert>
+
+    <insert id="insertLine">
+        INSERT INTO ord_order_line(
+          line_id,tenant_id,order_id,line_no,sku_id,sku_code,barcode_value,product_name_snapshot,unit_id,
+          unit_code,quantity,unit_price_minor,gross_amount_minor,discount_amount_minor,surcharge_amount_minor,
+          payable_amount_minor,price_source)
+        VALUES(
+          #{lineId},#{tenantId},#{orderId},#{lineNo},#{skuId},#{skuCode},#{barcode},#{productName},
+          #{unitId},#{unitCode},#{quantity},#{unitPriceMinor},#{grossAmountMinor},#{discountAmountMinor},
+          #{surchargeAmountMinor},#{payableAmountMinor},#{priceSource})
+    </insert>
+
+    <insert id="insertPromotionBinding">
+        INSERT INTO ord_promotion_binding(
+          binding_id,tenant_id,order_id,promotion_snapshot_id,quote_id,store_id,terminal_id,business_date,
+          quote_fingerprint,settlement_fingerprint,package_version,promotion_snapshot_sha256,
+          order_snapshot_sha256,gross_amount_minor,discount_amount_minor,surcharge_amount_minor,
+          receivable_amount_minor,correlation_id,created_at)
+        VALUES(
+          #{bindingId},#{tenantId},#{orderId},#{promotionSnapshotId},#{quoteId},#{storeId},#{terminalId},
+          #{businessDate},#{quoteFingerprint},#{settlementFingerprint},#{packageVersion},
+          #{promotionSnapshotSha256},#{orderSnapshotSha256},#{grossAmountMinor},#{discountAmountMinor},
+          #{surchargeAmountMinor},#{receivableAmountMinor},#{correlationId},#{createdAt})
+    </insert>
+</mapper>

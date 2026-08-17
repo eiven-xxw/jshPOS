@@ -1,0 +1,60 @@
+{
+  "schemaVersion": "1.0",
+  "scenarios": [
+    {
+      "id": "basic-promoted-cash-order",
+      "binding": {
+        "tenantId": "TENANT_A",
+        "storeId": "1101",
+        "terminalId": "01K2A000000000000000000011",
+        "cashierId": "101",
+        "cashierName": "Synthetic Alice",
+        "storeTimezone": "Asia/Shanghai"
+      },
+      "command": {
+        "commandId": "01K5C000000000000000000001",
+        "idempotencyKey": "gate5b-order-vector-0001",
+        "orderId": "01K5N000000000000000000001",
+        "localOrderNo": "SYN-G5B-0001",
+        "shiftId": "01K5H000000000000000000001",
+        "businessDate": "2026-08-17",
+        "catalogVersion": 10,
+        "priceVersion": 20,
+        "industryTemplateVersion": "CONVENIENCE_V1",
+        "quoteId": "01K5Q000000000000000000001",
+        "quoteFingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "settlementFingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "packageVersion": 1,
+        "promotionSnapshotId": "01K5S000000000000000000001",
+        "promotionSnapshotSha256": "49b69219f2b00be394c60fab370c19daf219ad5610f4bc1d4284e1b415f72ef0",
+        "manualEventRefs": [],
+        "tenderedAmountMinor": 2000,
+        "occurredAt": "2026-08-17T06:00:00Z"
+      },
+      "lines": [
+        {
+          "lineId": "01K5R000000000000000000001",
+          "lineNo": 1,
+          "skuId": "101",
+          "skuCode": "SYN-SKU-101",
+          "productName": "Synthetic Milk",
+          "unitId": "201",
+          "unitCode": "PCS",
+          "quantity": "2",
+          "unitPriceMinor": 500,
+          "priceSource": "TENANT_BASE",
+          "discountAmountMinor": 100,
+          "surchargeAmountMinor": 0,
+          "sourceAllocations": {"RULE:RULE-001": 100}
+        }
+      ],
+      "expected": {
+        "grossAmountMinor": 1000,
+        "discountAmountMinor": 100,
+        "surchargeAmountMinor": 0,
+        "receivableAmountMinor": 900,
+        "orderSnapshotSha256": "695559db4732634871c3b4e2fc732155609def8486ccdde99a2947da0c05b4b3"
+      }
+    }
+  ]
+}

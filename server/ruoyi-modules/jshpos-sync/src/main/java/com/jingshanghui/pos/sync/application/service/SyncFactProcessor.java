@@ -26,6 +26,7 @@ public class SyncFactProcessor {
     private final ObjectMapper objectMapper;
     private final SyncIdGenerator ids;
     private final Clock clock;
+    private final PromotedOrderEventDispatcher promotedOrderEvents;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public EventAck apply(DeviceContext context, EventEnvelope event) {
@@ -47,6 +48,9 @@ public class SyncFactProcessor {
                 "AGGREGATE_VERSION_CONFLICT", now);
             return new EventAck(event.eventId(), event.payloadHash(), "CONFLICT",
                 "AGGREGATE_VERSION_CONFLICT", null);
+        }
+        if ("order.submitted.v2".equals(event.eventType())) {
+            promotedOrderEvents.apply(context, event);
         }
         mapper.insertBusinessFact(ids.next(), context.tenantId(), event.eventId(), event.stream(), event.eventType(),
             event.aggregateId(), event.aggregateVersion(), serialize(event), event.payloadHash(), now);

@@ -5,6 +5,7 @@ import org.dromara.common.core.exception.ServiceException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -96,6 +97,90 @@ public final class OrderRules {
         return total;
     }
 
+    /**
+     * 校验含促销订单的逐行金额和订单头守恒；不计算促销，只验证冻结结果。
+     *
+     * @param lines 已按成交快照冻结的行金额
+     * @param claimedGross 订单头原金额，单位分
+     * @param claimedDiscount 订单头优惠，单位分
+     * @param claimedSurcharge 订单头附加费，单位分
+     * @param claimedReceivable 订单头应收，单位分
+     * @return 已验证的订单金额汇总
+     */
+    public static PromotedTotals validatePromotedOrder(List<PromotedLineAmount> lines, long claimedGross,
+                                                        long claimedDiscount, long claimedSurcharge,
+                                                        long claimedReceivable) {
+        if (lines == null || lines.isEmpty() || lines.size() > 500) {
+            throw invalid("ORD-LINE-001", "order requires 1..500 promoted lines");
+        }
+        long gross = 0;
+        long discount = 0;
+        long surcharge = 0;
+        long receivable = 0;
+        Set<Integer> numbers = new java.util.HashSet<>();
+        Set<String> ids = new java.util.HashSet<>();
+        for (PromotedLineAmount line : lines) {
+            requireUlid(line.lineId(), "lineId");
+            if (!ids.add(line.lineId()) || line.skuId() == null || line.skuId() <= 0) {
+                throw invalid("ORD-LINE-003", "line or sku identity is invalid");
+            }
+            if (line.lineNo() < 1 || line.lineNo() > 500 || !numbers.add(line.lineNo())) {
+                throw invalid("ORD-LINE-002", "line numbers must be unique within 1..500");
+            }
+            BigDecimal quantity = requireQuantity(line.quantity());
+            if (!PRICE_SOURCES.contains(line.priceSource())) {
+                throw invalid("ORD-PRICE-001", "invalid price source");
+            }
+            long exactGross = lineGross(line.unitPriceMinor(), quantity);
+            requireMoney(line.discountAmountMinor(), "lineDiscountAmountMinor");
+            requireMoney(line.surchargeAmountMinor(), "lineSurchargeAmountMinor");
+            requireMoney(line.payableAmountMinor(), "linePayableAmountMinor");
+            long expectedPayable;
+            try {
+                expectedPayable = Math.addExact(Math.subtractExact(exactGross, line.discountAmountMinor()),
+                    line.surchargeAmountMinor());
+                gross = Math.addExact(gross, exactGross);
+                discount = Math.addExact(discount, line.discountAmountMinor());
+                surcharge = Math.addExact(surcharge, line.surchargeAmountMinor());
+                receivable = Math.addExact(receivable, line.payableAmountMinor());
+            } catch (ArithmeticException exception) {
+                throw invalid("ORDER_AMOUNT_CHANGED", "promoted order amount overflow");
+            }
+            if (line.grossAmountMinor() != exactGross || expectedPayable < 0
+                || line.payableAmountMinor() != expectedPayable) {
+                throw invalid("ORDER_AMOUNT_CHANGED", "promoted line amount is not conserved");
+            }
+            long allocated = 0;
+            if (line.sourceAllocations() == null) {
+                throw invalid("ORDER_AMOUNT_CHANGED", "promotion source allocation is required");
+            }
+            for (Map.Entry<String, Long> source : line.sourceAllocations().entrySet()) {
+                if (source.getKey() == null
+                    || !source.getKey().matches("^[A-Z][A-Z0-9_]{1,31}:[A-Za-z0-9_-]{1,64}$")
+                    || source.getValue() == null || source.getValue() <= 0) {
+                    throw invalid("ORDER_AMOUNT_CHANGED", "invalid promotion source allocation");
+                }
+                try {
+                    allocated = Math.addExact(allocated, source.getValue());
+                } catch (ArithmeticException exception) {
+                    throw invalid("ORDER_AMOUNT_CHANGED", "promotion source allocation overflow");
+                }
+            }
+            if (allocated != line.discountAmountMinor()) {
+                throw invalid("ORDER_AMOUNT_CHANGED", "promotion source allocation is not conserved");
+            }
+        }
+        requireMoney(claimedGross, "grossAmountMinor");
+        requireMoney(claimedDiscount, "discountAmountMinor");
+        requireMoney(claimedSurcharge, "surchargeAmountMinor");
+        requireMoney(claimedReceivable, "receivableAmountMinor");
+        if (gross != claimedGross || discount != claimedDiscount || surcharge != claimedSurcharge
+            || receivable != claimedReceivable || claimedReceivable != claimedGross - claimedDiscount + claimedSurcharge) {
+            throw invalid("ORDER_AMOUNT_CHANGED", "promoted order header does not equal line totals");
+        }
+        return new PromotedTotals(gross, discount, surcharge, receivable);
+    }
+
     public static CashAmounts cash(long receivableMinor, long tenderedMinor) {
         requireMoney(receivableMinor, "receivableAmountMinor");
         requireMoney(tenderedMinor, "tenderedAmountMinor");
@@ -131,6 +216,17 @@ public final class OrderRules {
     public record LineAmount(String lineId, int lineNo, Long skuId, String quantity,
                              long unitPriceMinor, long grossAmountMinor, long payableAmountMinor,
                              String priceSource) {
+    }
+
+    /** 含促销成交行的冻结金额，不包含任何促销计算行为。 */
+    public record PromotedLineAmount(String lineId, int lineNo, Long skuId, String quantity,
+                                     long unitPriceMinor, long grossAmountMinor, long discountAmountMinor,
+                                     long surchargeAmountMinor, long payableAmountMinor, String priceSource,
+                                     Map<String, Long> sourceAllocations) {
+    }
+
+    /** 含促销订单的已验证头部金额，全部使用最小货币单位。 */
+    public record PromotedTotals(long grossMinor, long discountMinor, long surchargeMinor, long receivableMinor) {
     }
 
     public record CashAmounts(long tenderedMinor, long changeMinor, long netMinor) {

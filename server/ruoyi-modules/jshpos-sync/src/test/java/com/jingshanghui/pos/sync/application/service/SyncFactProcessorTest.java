@@ -41,7 +41,7 @@ class SyncFactProcessorTest {
     @Test
     void rejectsUnsupportedVersionAndConflictingAggregateEffect() {
         SyncMapper unsupportedMapper = mock(SyncMapper.class);
-        assertThat(processor(unsupportedMapper).apply(context, event("order.completed.v2", id(82), 4)).status())
+        assertThat(processor(unsupportedMapper).apply(context, event("order.completed.v3", id(82), 4)).status())
             .isEqualTo("REJECTED_FINAL");
 
         SyncMapper conflictMapper = mock(SyncMapper.class);
@@ -60,11 +60,29 @@ class SyncFactProcessorTest {
         assertThat(processor(mapper).apply(context, event).status()).isEqualTo("DUPLICATE");
     }
 
+    @Test
+    void dispatchesSubmittedV2ToOrderOwnerBeforeMarkingFactApplied() {
+        SyncMapper mapper = mock(SyncMapper.class);
+        PromotedOrderEventDispatcher dispatcher = mock(PromotedOrderEventDispatcher.class);
+        EventEnvelope event = event("order.submitted.v2", id(85), 2);
+
+        assertThat(processor(mapper, dispatcher).apply(context, event).status()).isEqualTo("ACCEPTED");
+
+        verify(dispatcher).apply(context, event);
+        verify(mapper).insertBusinessFact(anyString(), eq("TENANT_A"), eq(id(85)), anyString(),
+            eq("order.submitted.v2"), anyString(), org.mockito.ArgumentMatchers.anyLong(), anyString(),
+            anyString(), any());
+    }
+
     private SyncFactProcessor processor(SyncMapper mapper) {
+        return processor(mapper, mock(PromotedOrderEventDispatcher.class));
+    }
+
+    private SyncFactProcessor processor(SyncMapper mapper, PromotedOrderEventDispatcher dispatcher) {
         SyncIdGenerator ids = mock(SyncIdGenerator.class);
         when(ids.next()).thenReturn(id(90));
         return new SyncFactProcessor(mapper, json, ids,
-            Clock.fixed(Instant.parse("2026-08-16T08:00:00Z"), ZoneOffset.UTC));
+            Clock.fixed(Instant.parse("2026-08-16T08:00:00Z"), ZoneOffset.UTC), dispatcher);
     }
 
     private EventEnvelope event(String type, String eventId, long version) {

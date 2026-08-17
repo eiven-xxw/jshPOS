@@ -20,16 +20,17 @@ class OrderMigrationMySqlIT {
     private final String password = required("GATE2_MYSQL_PASSWORD");
 
     @Test
-    void migratesAllSixVersionsAndEnforcesTenantCashAndAppendOnlyConstraints() throws Exception {
+    void migratesAllSevenVersionsAndEnforcesTenantCashAndAppendOnlyConstraints() throws Exception {
         createFrameworkMenuFixture();
         Flyway flyway = Flyway.configure().dataSource(url, username, password)
             .locations("classpath:db/migration").table("jshpos_flyway_schema_history")
             .baselineOnMigrate(true).baselineVersion("0").cleanDisabled(true).load();
-        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(6);
+        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(7);
         assertThat(flyway.migrate().migrationsExecuted).isZero();
         flyway.validate();
         assertTablesAndPermissions();
         assertTwoTenantCashConstraints();
+        assertPromotedOrderConstraints();
     }
 
     private void createFrameworkMenuFixture() throws SQLException {
@@ -50,7 +51,7 @@ class OrderMigrationMySqlIT {
     private void assertTablesAndPermissions() throws SQLException {
         Set<String> tables = Set.of("shf_shift", "shf_shift_approval", "ord_sales_order", "ord_order_line",
             "ord_state_history", "ord_cash_payment", "shf_cash_ledger", "ord_print_job",
-            "ord_event_outbox", "ord_idempotency", "ord_audit_event");
+            "ord_event_outbox", "ord_idempotency", "ord_audit_event", "ord_promotion_binding");
         try (Connection connection = DriverManager.getConnection(url, username, password);
              Statement statement = connection.createStatement()) {
             for (String table : tables) {
@@ -67,6 +68,26 @@ class OrderMigrationMySqlIT {
                 assertThat(rows.next()).isTrue();
                 assertThat(rows.getInt(1)).isZero();
             }
+        }
+    }
+
+    private void assertPromotedOrderConstraints() throws SQLException {
+        String order = "01K2A000000000000000000131";
+        String line = "01K2A000000000000000000141";
+        String binding = "01K2A000000000000000000151";
+        try (Connection connection = DriverManager.getConnection(url, username, password);
+             Statement statement = connection.createStatement()) {
+            statement.executeUpdate("INSERT INTO ord_sales_order(order_id,tenant_id,local_order_no,store_id,terminal_id,shift_id,cashier_user_id,business_date,store_timezone,status,draft_disposition,payment_status,currency,gross_amount_minor,discount_amount_minor,surcharge_amount_minor,receivable_amount_minor,received_amount_minor,catalog_version,price_version,industry_template_version,snapshot_schema_version,snapshot_json,snapshot_sha256,idempotency_key,request_sha256,occurred_at,record_version) VALUES('" + order + "','TENANT_A','A-PROMO-1',1101,'01K2A000000000000000000011','01K2A000000000000000000021',101,'2026-08-16','Asia/Shanghai','COMPLETED','ACTIVE','PAID','CNY',1299,200,1,1100,1100,1,1,'CONVENIENCE.1',2,JSON_OBJECT(),REPEAT('c',64),'promo-order-key-001',REPEAT('d',64),UTC_TIMESTAMP(3),4)");
+            statement.executeUpdate("INSERT INTO ord_order_line(line_id,tenant_id,order_id,line_no,sku_id,sku_code,product_name_snapshot,unit_id,unit_code,quantity,unit_price_minor,gross_amount_minor,discount_amount_minor,surcharge_amount_minor,payable_amount_minor,price_source) VALUES('" + line + "','TENANT_A','" + order + "',1,701,'A-SKU','A',301,'PCS',1.000000,1299,1299,200,1,1100,'PROMOTION_SNAPSHOT')");
+            statement.executeUpdate("INSERT INTO ord_promotion_binding(binding_id,tenant_id,order_id,promotion_snapshot_id,quote_id,store_id,terminal_id,business_date,quote_fingerprint,settlement_fingerprint,package_version,promotion_snapshot_sha256,order_snapshot_sha256,gross_amount_minor,discount_amount_minor,surcharge_amount_minor,receivable_amount_minor,correlation_id,created_at) VALUES('" + binding + "','TENANT_A','" + order + "','01K2A000000000000000000161','01K2A000000000000000000171',1101,'01K2A000000000000000000011','2026-08-16',REPEAT('1',64),REPEAT('2',64),1,REPEAT('3',64),REPEAT('4',64),1299,200,1,1100,'01K2A000000000000000000181',UTC_TIMESTAMP(3))");
+            assertThatThrownBy(() -> statement.executeUpdate("UPDATE ord_promotion_binding SET package_version=2 WHERE tenant_id='TENANT_A' AND binding_id='" + binding + "'"))
+                .isInstanceOf(SQLException.class).hasMessageContaining("immutable");
+            assertThatThrownBy(() -> statement.executeUpdate("DELETE FROM ord_promotion_binding WHERE tenant_id='TENANT_A' AND binding_id='" + binding + "'"))
+                .isInstanceOf(SQLException.class).hasMessageContaining("immutable");
+            assertThatThrownBy(() -> statement.executeUpdate("INSERT INTO ord_promotion_binding(binding_id,tenant_id,order_id,promotion_snapshot_id,quote_id,store_id,terminal_id,business_date,quote_fingerprint,settlement_fingerprint,package_version,promotion_snapshot_sha256,order_snapshot_sha256,gross_amount_minor,discount_amount_minor,surcharge_amount_minor,receivable_amount_minor,correlation_id,created_at) VALUES('01K2B000000000000000000151','TENANT_B','" + order + "','01K2B000000000000000000161','01K2B000000000000000000171',2101,'01K2B000000000000000000011','2026-08-16',REPEAT('1',64),REPEAT('2',64),1,REPEAT('3',64),REPEAT('4',64),1299,200,1,1100,'01K2B000000000000000000181',UTC_TIMESTAMP(3))"))
+                .isInstanceOf(SQLException.class);
+            assertThatThrownBy(() -> statement.executeUpdate("INSERT INTO ord_sales_order(order_id,tenant_id,local_order_no,store_id,terminal_id,shift_id,cashier_user_id,business_date,store_timezone,status,draft_disposition,payment_status,currency,gross_amount_minor,discount_amount_minor,surcharge_amount_minor,receivable_amount_minor,received_amount_minor,catalog_version,price_version,industry_template_version,snapshot_schema_version,snapshot_json,snapshot_sha256,idempotency_key,request_sha256,occurred_at,record_version) VALUES('01K2A000000000000000000199','TENANT_A','BAD-AMOUNT',1101,'01K2A000000000000000000011','01K2A000000000000000000021',101,'2026-08-16','Asia/Shanghai','COMPLETED','ACTIVE','PAID','CNY',100,10,0,100,100,1,1,'CONVENIENCE.1',2,JSON_OBJECT(),REPEAT('c',64),'promo-order-bad-001',REPEAT('d',64),UTC_TIMESTAMP(3),4)"))
+                .isInstanceOf(SQLException.class);
         }
     }
 

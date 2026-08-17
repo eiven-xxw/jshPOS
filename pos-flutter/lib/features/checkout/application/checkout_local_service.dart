@@ -7,6 +7,7 @@ import '../../../infrastructure/local_database/pos_local_database.dart';
 import '../../shift/domain/shift_models.dart';
 import '../domain/checkout_models.dart';
 import '../domain/exact_quantity.dart';
+import '../domain/promoted_order_snapshot_codec.dart';
 import '../domain/ulid_generator.dart';
 
 final class PosDomainException implements Exception {
@@ -668,15 +669,20 @@ final class CheckoutLocalService {
       localDatabase.checkpoint('promotion.inputs.verified');
 
       final promotionDocument = _promotionSnapshot(command);
-      final promotionJson = jsonEncode(promotionDocument);
+      final promotionJson = PromotedOrderSnapshotCodec.canonicalJson(
+        promotionDocument,
+      );
       final promotionHash = sha256
           .convert(utf8.encode(promotionJson))
           .toString();
-      final orderSnapshot = _promotedOrderSnapshot(
-        command,
-        promotionHash: promotionHash,
+      final orderSnapshot = PromotedOrderSnapshotCodec.document(
+        command: command,
+        binding: _binding,
+        promotionSnapshotSha256: promotionHash,
       );
-      final orderSnapshotJson = jsonEncode(orderSnapshot);
+      final orderSnapshotJson = PromotedOrderSnapshotCodec.canonicalJson(
+        orderSnapshot,
+      );
       final orderSnapshotHash = sha256
           .convert(utf8.encode(orderSnapshotJson))
           .toString();
@@ -851,17 +857,29 @@ final class CheckoutLocalService {
         payload: {
           'schemaVersion': '2.0',
           'orderId': command.basket.orderId,
+          'localOrderNo': command.basket.localOrderNo,
+          'storeId': _binding.storeId,
+          'terminalId': _binding.terminalId,
           'shiftId': command.shiftId,
+          'cashierId': _binding.cashierId,
+          'businessDate': command.businessDate,
+          'storeTimezone': _binding.storeTimezone,
+          'catalogVersion': command.catalogVersion,
+          'priceVersion': command.priceVersion,
+          'industryTemplateVersion': command.industryTemplateVersion,
           'grossAmountMinor': command.grossAmountMinor,
           'discountAmountMinor': command.discountAmountMinor,
           'surchargeAmountMinor': command.surchargeAmountMinor,
           'receivableAmountMinor': command.receivableAmountMinor,
+          'tenderedAmountMinor': command.tenderedAmountMinor,
           'promotionSnapshotId': command.promotionSnapshotId,
           'promotionSnapshotHash': 'sha256:$promotionHash',
           'quoteFingerprint': command.quoteFingerprint,
           'settlementFingerprint': command.settlementFingerprint,
           'packageVersion': command.packageVersion,
+          'manualEventRefs': command.manualEventRefs,
           'orderSnapshotHash': 'sha256:$orderSnapshotHash',
+          'lines': command.lines.map((line) => line.toSnapshot()).toList(),
         },
         occurredAt: at,
       );
@@ -1493,7 +1511,9 @@ final class CheckoutLocalService {
       ],
     );
     for (final promoted in command.lines) {
-      final sourceJson = jsonEncode(promoted.sourceAllocations);
+      final sourceJson = PromotedOrderSnapshotCodec.canonicalJson(
+        promoted.sourceAllocations,
+      );
       final sourceHash = sha256.convert(utf8.encode(sourceJson)).toString();
       _db.execute(
         'INSERT INTO local_promotion_transaction_allocation(allocation_id,tenant_id,snapshot_id,line_id,line_no,sku_id,quantity_decimal,gross_amount_minor,discount_amount_minor,payable_amount_minor,source_allocations_json,source_allocations_sha256) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)',
@@ -1565,35 +1585,6 @@ final class CheckoutLocalService {
     'discountAmountMinor': command.discountAmountMinor,
     'surchargeAmountMinor': command.surchargeAmountMinor,
     'receivableAmountMinor': command.receivableAmountMinor,
-    'lines': command.lines.map((line) => line.toSnapshot()).toList(),
-  };
-
-  Map<String, Object?> _promotedOrderSnapshot(
-    PromotedCashSaleCommand command, {
-    required String promotionHash,
-  }) => {
-    'schemaVersion': 2,
-    'orderId': command.basket.orderId,
-    'storeId': _binding.storeId,
-    'terminalId': _binding.terminalId,
-    'shiftId': command.shiftId,
-    'cashierId': _binding.cashierId,
-    'businessDate': command.businessDate,
-    'storeTimezone': _binding.storeTimezone,
-    'currency': 'CNY',
-    'grossAmountMinor': command.grossAmountMinor,
-    'discountAmountMinor': command.discountAmountMinor,
-    'surchargeAmountMinor': command.surchargeAmountMinor,
-    'receivableAmountMinor': command.receivableAmountMinor,
-    'catalogVersion': command.catalogVersion,
-    'priceVersion': command.priceVersion,
-    'industryTemplateVersion': command.industryTemplateVersion,
-    'promotionSnapshotId': command.promotionSnapshotId,
-    'promotionSnapshotHash': 'sha256:$promotionHash',
-    'quoteFingerprint': command.quoteFingerprint,
-    'settlementFingerprint': command.settlementFingerprint,
-    'promotionPackageVersion': command.packageVersion,
-    'manualEventRefs': command.manualEventRefs,
     'lines': command.lines.map((line) => line.toSnapshot()).toList(),
   };
 
