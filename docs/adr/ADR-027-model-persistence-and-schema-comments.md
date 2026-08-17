@@ -2,6 +2,7 @@
 
 - 状态：Accepted
 - 日期：2026-08-17
+- 持久化登记决策（第 3—4 项）：部分由 [ADR-033](ADR-033-persistence-access-strategy-and-sql-mode.md) 取代
 - 决策范围：CR-DEV-003、全部新增或实质修改的服务端模型与数据库 Schema
 
 ## 背景

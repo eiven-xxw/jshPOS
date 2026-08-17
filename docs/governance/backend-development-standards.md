@@ -3,6 +3,7 @@
 > 文档编号：JSH-POS-DEV-STD-001
 > 状态：Accepted
 > 生效日期：2026-08-16
+> 修订日期：2026-08-18（CR-DEV-004）
 > 适用范围：鲸熵汇收银系统全部新增或实质修改的服务端代码
 
 ## 1. 决策结论
@@ -13,11 +14,11 @@
 2. 可以按需复用 Hutool 和其他成熟稳定组件，避免重复制造通用轮子；
 3. 核心代码、领域实体和持久化实体必须具备有效中文注释；
 4. 内部方法参数达到维护风险阈值时，使用职责内聚的参数对象稳定方法签名；
-5. 区分领域聚合、持久化实体和 `record`，按表类型选择 MyBatis-Plus 或 XML，并把数据库中文注释作为 Schema 契约。
+5. 区分领域聚合、持久化实体和 `record`，按数据风险登记访问策略、按 SQL 复杂度选择 MyBatis-Plus/XML/HYBRID，并把数据库中文注释作为 Schema 契约。
 
 当前服务端基线已经通过 RuoYi-Vue-Plus 集成 MyBatis-Plus 和 Hutool，本决策不新增第二套 ORM 或工具体系，只统一未来代码的使用方式。依赖版本以服务端父 POM 和锁定的 SBOM 为准。
 
-模型分型、三类持久化策略、数据库中文注释和存量治理边界详见 `JSH-POS-DEV-STD-002` 与 `ADR-027`；本文件继续规定日常后端编码和评审底线。
+模型分型、数据访问策略、SQL 实现模式、数据库中文注释和存量治理边界详见 `JSH-POS-DEV-STD-002`、`ADR-027` 与 `ADR-033`；本文件继续规定日常后端编码和评审底线。
 
 ## 2. SQL 分流判定
 
@@ -32,6 +33,8 @@
 - 字段映射直接，能够保持类型安全和可读性。
 
 优先使用 Lambda 形式引用字段，避免字符串列名。分页必须有稳定排序；批量写入必须限制批次大小。核心状态更新仍须经过应用/领域不变量校验，不能把 `updateById` 当成状态机。
+
+`BaseMapper` 与 Mapper XML 不是互斥技术。同一个普通实体 Mapper 可以继承 `BaseMapper<T>` 处理简单 CRUD，同时声明由同 namespace XML 实现的复杂查询或专用批处理方法；此时该表 SQL 模式登记为 `HYBRID`。普通实体也可以因框架兼容或明确原因全部使用 XML，此时仍是 `CRUD_ENTITY + XML`。不得因为一张普通表存在少量复杂 SQL，就放弃其余简单 SQL 的 MyBatis-Plus 类型安全能力。
 
 ### 2.2 使用 Mapper XML
 
@@ -48,7 +51,8 @@ XML SQL 必须显式列字段、使用 `resultMap`、具备稳定排序，并说
 
 ### 2.3 分层与租户底线
 
-- 新增表必须先登记 `MP_ENTITY`、`XML_ONLY` 或 `READ_PROJECTION`，再选择实现；简单单表 CRUD 不得因省略持久化实体而退化为注解 SQL，核心不可变事实也不得因追求 MyBatis-Plus 使用率暴露通用更新或删除。
+- 新增表必须分别登记数据访问策略 `CRUD_ENTITY/CONTROLLED_WRITE/APPEND_ONLY/READ_PROJECTION` 与 SQL 模式 `MP/XML/HYBRID`。简单单表 CRUD 不得因省略持久化实体而退化为注解 SQL；复杂 SQL 可以与 `BaseMapper + Lambda` 共存；核心不可变事实也不得因追求 MyBatis-Plus 使用率暴露通用更新或删除。
+- `CRUD_ENTITY` 默认允许 `BaseMapper`；`CONTROLLED_WRITE` 只开放具名条件更新；严格 `APPEND_ONLY` 禁止任何覆盖更新和物理删除；`READ_PROJECTION` 对业务只读，仅允许 Projector/Rebuild 端口受控构建。Outbox/Inbox 若在同一行更新投递状态，必须登记为 `CONTROLLED_WRITE`，或拆分只追加载荷表与受控状态表。SQL 模式不能扩大访问策略授权，普通 `BaseMapper` 暴露的方法集超出后三类边界时不得继承。
 - MyBatis-Plus、XML Mapper 和 Persistence Object 属于基础设施层；领域层不得依赖它们。
 - Controller 只能调用应用服务，禁止直接调用 Mapper；应用服务通过领域 Repository 或应用查询端口访问持久化，禁止导入基础设施 Mapper。
 - 核心模块通过 Repository/应用端口封装持久化；禁止跨模块 Mapper 修改别的领域表。
@@ -153,8 +157,8 @@ XML SQL 必须显式列字段、使用 `resultMap`、具备稳定排序，并说
 ## 6. 代码评审核对表
 
 - [ ] SQL 已按简单/复杂标准正确选择 MyBatis-Plus 或 XML；
-- [ ] 新增表已登记 `MP_ENTITY`、`XML_ONLY` 或 `READ_PROJECTION`，选择理由、Owner、租户来源和更新/删除边界完整；
-- [ ] 简单 CRUD 已使用普通持久化实体、`BaseMapper` 和 Lambda Wrapper；核心事实未暴露危险的通用 CRUD；
+- [ ] 新增表已分别登记访问策略与 `MP/XML/HYBRID` SQL 模式，选择理由、Owner、租户来源和更新/删除边界完整；
+- [ ] 普通实体的简单 CRUD 已使用普通持久化实体、`BaseMapper` 和 Lambda Wrapper，复杂方法可由同一 Mapper XML 实现；核心事实未暴露危险的通用 CRUD；
 - [ ] 没有复杂注解 SQL、超长 Wrapper、`SELECT *` 或不稳定分页；
 - [ ] 应用/领域层未依赖基础设施 Mapper、Wrapper 或 Persistence Entity；
 - [ ] 可信租户、数据范围、权限和跨租户测试完整；

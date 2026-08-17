@@ -2,7 +2,7 @@
 
 连接器型、多租户、离线可营业的商业收银经营平台。
 
-当前阶段：**T0 技术基线**。本阶段只建立需求治理、架构决策、工程骨架、开发环境和持续集成，不实现正式交易业务。
+当前阶段：**T2 Gate 6A / Sprint S13 内部验证已完成，等待发起人验收**。`T2-TRM-001` 与 `T2-BAK-001` 保持 `VERIFIED`；`T2-UPG-001`、`T2-UAT-001`、`T2-REL-001` 保持 `DRAFT`，支付沙箱、真实硬件和设计伙伴仍为 `BLOCKED`。未经确认不得进入 Gate 6B，也不得宣称 Alpha、可试点或可商用。
 
 ## 工程
 
@@ -12,11 +12,11 @@
 - `packages/pos_device_adapter/`：Flutter/Kotlin 设备适配契约。
 - `contracts/`：OpenAPI、事件和连接器契约。
 - `infra/`：本地依赖与部署基线。
-- `.github/workflows/`：GitHub Actions 正式 T0 质量门禁。
+- `.github/workflows/`：GitHub Actions T0—T2 各阶段正式质量门禁。
 - `ci/codeup/`：Codeup / 云效 Flow 镜像与灾备参考配置。
 - `tests/`：契约、端到端、硬件和故障测试入口。
-- `docs/governance/`：RTM、变更控制和研发证据。
-- `docs/adr/`：架构决策记录。
+- `docs/governance/`：RTM、[研发治理基线](docs/governance/development-governance.md)、[后端开发规范](docs/governance/backend-development-standards.md)、[模型/持久化/数据库注释规范](docs/governance/model-persistence-database-comment-standards.md)、变更控制和研发证据。
+- `docs/adr/`：[架构决策目录](docs/adr/README.md)。
 
 ## 开始前
 

@@ -108,5 +108,6 @@
 | CR-T2G5D-009 | 2026-08-17 | ACCEPTED | 项目发起人确认 Gate 5D CONDITIONAL PASS，接受销售/收银/库存/成本可重建报表及 Provider 无关支付退款内部对账证据 | T2-RPT-001、T2-RPT-002、ADR-031 | 两项由 VERIFIED 更新为 ACCEPTED；真实 Provider 账单、支付沙箱、实机与试点仍未解阻 |
 | CR-T2G6A-001 | 2026-08-17 | APPROVED | 项目发起人按 `T2-TRM-001 → T2-BAK-001` 授权 Gate 6A / Sprint S13；UPG-001 只允许设计准备，UAT/REL 只允许退出材料模板 | T2-TRM-001、T2-BAK-001、T2-UPG-001、T2-UAT-001、T2-REL-001、ADR-032 | T2-PAY-002/HWD-001/PAR-001 保持 BLOCKED；禁止 Provider 网络、真实云资源写入、真实终端命令和 Alpha 声称 |
 | CR-T2G6A-002 | 2026-08-17 | IN_PROGRESS | T2-TRM-001 已冻结终端逻辑数据主权、激活/阻断/吊销/退役状态、一次性激活码与设备凭据摘要、版本能力快照、可信上下文、权限审计、V36迁移、容量、兼容回退和测试准入 | T2-TRM-001、ADR-032 | BAK-001 与 UPG-001 保持 DRAFT；只允许虚构终端与软件密钥，REAL_DEVICE=0 |
+| CR-DEV-004 | 2026-08-18 | APPROVED | 将新增表单列 `MP_ENTITY/XML_ONLY/READ_PROJECTION` 登记修订为数据访问策略 `CRUD_ENTITY/CONTROLLED_WRITE/APPEND_ONLY/READ_PROJECTION` 与 SQL 模式 `MP/XML/HYBRID` 两个维度；明确普通实体同一 Mapper 可以共用 `BaseMapper/Lambda` 和自定义 XML，`CRUD_ENTITY + XML` 同样合法；严格只追加对象不得原位迁移投递状态 | AGENTS.md、技术架构与开发规范 10.2.1/10.2.5、JSH-POS-DEV-STD-001/002、ADR-027、ADR-033 | 项目发起人 2026-08-18 正式确认；生效前已合法准入的旧登记（含进行中 Gate）兼容保留，新登记立即使用双维度；本次不修改业务代码、Mapper、Flyway、RTM 或 Gate 状态，不启动 Gate 6B |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。
