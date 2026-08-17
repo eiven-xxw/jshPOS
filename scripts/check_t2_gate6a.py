@@ -30,6 +30,7 @@ EXTERNAL = {
 }
 STAGES = {
     "design": {"T2-TRM-001": "IN_PROGRESS", "T2-BAK-001": "DRAFT"},
+    "trm-candidate": {"T2-TRM-001": "IN_PROGRESS", "T2-BAK-001": "DRAFT"},
     "trm": {"T2-TRM-001": "VERIFIED", "T2-BAK-001": "DRAFT"},
     "bak-admission": {"T2-TRM-001": "VERIFIED", "T2-BAK-001": "IN_PROGRESS"},
     "bak": {"T2-TRM-001": "VERIFIED", "T2-BAK-001": "IN_PROGRESS"},
@@ -130,15 +131,31 @@ def contracts(stage: str) -> dict[str, object]:
             fail(f"upgrade design boundary missing {marker}")
     for schema in ("terminal-activation.v1.schema.json", "backup-manifest.v1.schema.json", "restore-evidence.v1.schema.json"):
         json.loads(content[f"contracts/t2/gate6a/schemas/{schema}"])
+    registry = list(csv.DictReader(content["contracts/t2/gate6a/persistence-registry.csv"].splitlines()))
+    if not registry:
+        fail("persistence registry is empty")
+    required_columns = {"requirement_id", "owner", "store", "object", "access_strategy", "sql_mode", "reason", "status"}
+    if set(registry[0]) != required_columns:
+        fail("persistence registry must use access_strategy and sql_mode dimensions")
+    access_strategies = {"CRUD_ENTITY", "CONTROLLED_WRITE", "APPEND_ONLY", "READ_PROJECTION"}
+    sql_modes = {"MP", "XML", "HYBRID"}
+    for row in registry:
+        if row["access_strategy"] not in access_strategies:
+            fail(f"invalid persistence access strategy for {row['object']}")
+        if row["sql_mode"] not in sql_modes:
+            fail(f"invalid persistence SQL mode for {row['object']}")
+        if not row["reason"].strip():
+            fail(f"persistence decision lacks reason for {row['object']}")
     checksum = json.loads(content["contracts/t2/gate6a/migration-checksums.json"])
-    expected_count = 0 if stage == "design" else (2 if stage in {"trm", "bak-admission"} else 4)
+    expected_count = 0 if stage == "design" else (2 if stage in {"trm-candidate", "trm", "bak-admission"} else 4)
     if len(checksum.get("files", [])) != expected_count:
         fail(f"migration checksum ledger expected {expected_count} files")
     for item in checksum["files"]:
         path = ROOT / item["path"]
         if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != item["sha256"]:
             fail(f"published migration checksum mismatch {item['path']}")
-    return {"designFiles": len(content), "sequence": list(SEQUENCE), "publishedMigrations": expected_count}
+    return {"designFiles": len(content), "sequence": list(SEQUENCE), "persistenceEntries": len(registry),
+            "publishedMigrations": expected_count}
 
 
 def runtime_scope(stage: str) -> dict[str, int]:

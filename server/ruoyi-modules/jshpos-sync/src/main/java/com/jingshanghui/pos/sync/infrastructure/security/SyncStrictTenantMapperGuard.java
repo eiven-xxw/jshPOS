@@ -16,7 +16,7 @@ public class SyncStrictTenantMapperGuard {
 
     private final TrustedTenantContext tenantContext;
 
-    @Before("execution(* com.jingshanghui.pos.sync.infrastructure.persistence.mapper..*(..))")
+    @Before("execution(* com.jingshanghui.pos.sync.infrastructure.persistence.mapper.SyncMapper.*(..))")
     public void requireTrustedTenantBeforeMapperAccess() {
         tenantContext.requirePrincipal();
     }

@@ -70,6 +70,7 @@ paths:
       x-permission: terminal:credential:rotate
       parameters:
         - {$ref: '#/components/parameters/DeviceId'}
+        - {$ref: '#/components/parameters/IdempotencyKey'}
       responses: {'201': {description: 新凭据只显示一次}}
   /api/pos/v1/terminals/{deviceId}/capabilities:
     post:
@@ -90,6 +91,7 @@ components:
   parameters:
     ActivationId: {name: activationId, in: path, required: true, schema: {type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'}}
     DeviceId: {name: deviceId, in: path, required: true, schema: {type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'}}
+    IdempotencyKey: {name: Idempotency-Key, in: header, required: true, schema: {type: string, minLength: 16, maxLength: 64}}
   schemas:
     IssueActivationCommand:
       type: object
@@ -136,11 +138,12 @@ components:
         secretShownOnce: {type: boolean, enum: [true]}
     ChangeStatusCommand:
       type: object
-      required: [targetStatus, reason, idempotencyKey]
+      required: [targetStatus, reason, idempotencyKey, expectedVersion]
       properties:
         targetStatus: {type: string, enum: [ACTIVE, BLOCKED, REVOKED, RETIRED]}
         reason: {type: string, minLength: 4, maxLength: 256}
         idempotencyKey: {type: string, minLength: 16, maxLength: 64}
+        expectedVersion: {type: integer, format: int64, minimum: 1}
     CapabilityCommand:
       type: object
       required: [appVersion, protocolVersion, schemaVersion, clientTime, capability, idempotencyKey]

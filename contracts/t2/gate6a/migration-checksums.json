@@ -1,6 +1,15 @@
 {
   "schemaVersion": "1.0",
-  "published": false,
-  "stage": "design",
-  "files": []
+  "published": true,
+  "stage": "trm-candidate",
+  "files": [
+    {
+      "path": "server/ruoyi-modules/jshpos-sync/src/main/resources/db/migration/V202608160036__gate6a_terminal_registry.sql",
+      "sha256": "51474d7c9f91addff91c762ffc846cad644bf9450e31074275394f1e2c3869be"
+    },
+    {
+      "path": "server/ruoyi-modules/jshpos-sync/src/main/resources/db/migration/V202608160037__gate6a_terminal_permissions.sql",
+      "sha256": "b36fcb655ac8ff704b4fc83e4dbb80a95f8eb44ffb8b5f65db1dd90ea56d3ba0"
+    }
+  ]
 }

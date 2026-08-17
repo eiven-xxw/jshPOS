@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jingshanghui.pos.sync.infrastructure.persistence.mapper.TerminalRegistryMapper">
+  <resultMap id="activation" type="com.jingshanghui.pos.sync.application.model.TerminalModels$ActivationRecord">
+    <constructor>
+      <arg column="activationId" javaType="java.lang.String"/><arg column="tenantId" javaType="java.lang.String"/>
+      <arg column="orgUnitId" javaType="java.lang.Long"/><arg column="storeId" javaType="java.lang.Long"/>
+      <arg column="boundUserId" javaType="java.lang.Long"/><arg column="terminalProfileCode" javaType="java.lang.String"/>
+      <arg column="secretHmac" javaType="java.lang.String"/><arg column="status" javaType="java.lang.String"/>
+      <arg column="expiresAt" javaType="java.time.LocalDateTime"/><arg column="consumedDeviceId" javaType="java.lang.String"/>
+      <arg column="idempotencyKey" javaType="java.lang.String"/><arg column="requestSha256" javaType="java.lang.String"/>
+      <arg column="evidenceLevel" javaType="java.lang.String"/><arg column="createdBy" javaType="java.lang.Long"/>
+      <arg column="createdAt" javaType="java.time.LocalDateTime"/><arg column="recordVersion" javaType="java.lang.Long"/>
+    </constructor>
+  </resultMap>
+  <sql id="activationColumns">
+    activation_id activationId,tenant_id tenantId,org_unit_id orgUnitId,store_id storeId,
+    bound_user_id boundUserId,terminal_profile_code terminalProfileCode,secret_hmac secretHmac,
+    status,expires_at expiresAt,consumed_device_id consumedDeviceId,idempotency_key idempotencyKey,
+    request_sha256 requestSha256,evidence_level evidenceLevel,created_by createdBy,
+    created_at createdAt,record_version recordVersion
+  </sql>
+  <sql id="terminalColumns">
+    device_id deviceId,org_unit_id orgUnitId,store_id storeId,terminal_id terminalId,
+    bound_user_id boundUserId,status,terminal_profile_code terminalProfileCode,app_version appVersion,
+    min_protocol_version minProtocolVersion,max_protocol_version maxProtocolVersion,
+    schema_version schemaVersion,capability_sha256 capabilitySha256,credential_version credentialVersion,
+    activation_evidence_level evidenceLevel,record_version recordVersion,activated_at activatedAt,last_seen_at lastSeenAt
+  </sql>
+  <select id="findActivationByCommand" resultMap="activation">
+    SELECT <include refid="activationColumns"/> FROM dev_terminal_activation
+    WHERE tenant_id=#{tenantId} AND idempotency_key=#{idempotencyKey}
+  </select>
+  <select id="lockActivationById" resultMap="activation">
+    SELECT <include refid="activationColumns"/> FROM dev_terminal_activation
+    WHERE activation_id=#{activationId} FOR UPDATE
+  </select>
+  <insert id="insertActivation">
+    INSERT INTO dev_terminal_activation(activation_id,tenant_id,org_unit_id,store_id,bound_user_id,
+      terminal_profile_code,secret_hmac,status,expires_at,idempotency_key,request_sha256,evidence_level,
+      created_by,created_at)
+    VALUES(#{activationId},#{tenantId},#{orgUnitId},#{storeId},#{boundUserId},#{terminalProfileCode},
+      #{secretHmac},'ISSUED',#{expiresAt},#{idempotencyKey},#{requestSha256},#{evidenceLevel},#{createdBy},#{createdAt})
+  </insert>
+  <update id="cancelActivation">
+    UPDATE dev_terminal_activation SET status='CANCELLED',cancelled_at=#{at},record_version=record_version+1
+    WHERE tenant_id=#{tenantId} AND activation_id=#{activationId} AND status='ISSUED'
+  </update>
+  <update id="consumeActivation">
+    UPDATE dev_terminal_activation SET status='CONSUMED',consumed_device_id=#{deviceId},consumed_at=#{at},
+      record_version=record_version+1 WHERE activation_id=#{activationId} AND status='ISSUED'
+      AND record_version=#{expectedVersion} AND expires_at&gt;#{at}
+  </update>
+  <insert id="insertDevice">
+    INSERT INTO pos_sync_device(device_id,tenant_id,org_unit_id,store_id,terminal_id,bound_user_id,
+      activation_id,terminal_profile_code,fingerprint_sha256,public_key_sha256,credential_version,status,
+      min_protocol_version,max_protocol_version,app_version,schema_version,capability_sha256,
+      clock_skew_seconds,activation_evidence_level,activated_at)
+    VALUES(#{deviceId},#{tenantId},#{orgUnitId},#{storeId},#{terminalId},#{boundUserId},#{activationId},
+      #{terminalProfileCode},#{fingerprintSha256},#{publicKeySha256},#{credentialVersion},'ACTIVE',
+      #{protocolVersion},#{protocolVersion},#{appVersion},#{schemaVersion},#{capabilitySha256},
+      #{clockSkewSeconds},#{evidenceLevel},#{activatedAt})
+  </insert>
+  <select id="findDevice" resultType="com.jingshanghui.pos.sync.application.model.TerminalModels$TerminalView">
+    SELECT <include refid="terminalColumns"/> FROM pos_sync_device
+    WHERE tenant_id=#{tenantId} AND device_id=#{deviceId}
+  </select>
+  <select id="lockDevice" resultType="com.jingshanghui.pos.sync.application.model.TerminalModels$TerminalView">
+    SELECT <include refid="terminalColumns"/> FROM pos_sync_device
+    WHERE tenant_id=#{tenantId} AND device_id=#{deviceId} FOR UPDATE
+  </select>
+  <select id="lockDeviceForAuthentication" resultType="com.jingshanghui.pos.sync.application.model.TerminalModels$DeviceAuthRecord">
+    SELECT tenant_id tenantId,device_id deviceId,org_unit_id orgUnitId,store_id storeId,terminal_id terminalId,
+      bound_user_id boundUserId,status,fingerprint_sha256 fingerprintSha256,public_key_sha256 publicKeySha256,
+      app_version appVersion,min_protocol_version minProtocolVersion,max_protocol_version maxProtocolVersion,
+      schema_version schemaVersion,credential_version credentialVersion,record_version recordVersion
+    FROM pos_sync_device WHERE device_id=#{deviceId} FOR UPDATE
+  </select>
+  <select id="listDevices" resultType="com.jingshanghui.pos.sync.application.model.TerminalModels$TerminalView">
+    SELECT <include refid="terminalColumns"/> FROM pos_sync_device
+    WHERE tenant_id=#{tenantId}<if test="storeId != null"> AND store_id=#{storeId}</if>
+    ORDER BY activated_at DESC,device_id DESC LIMIT #{limit} OFFSET #{offset}
+  </select>
+  <select id="countDevices" resultType="long">
+    SELECT COUNT(*) FROM pos_sync_device WHERE tenant_id=#{tenantId}
+    <if test="storeId != null">AND store_id=#{storeId}</if>
+  </select>
+  <update id="changeStatus">
+    UPDATE pos_sync_device SET status=#{toStatus},blocked_reason=CASE WHEN #{toStatus}='BLOCKED' THEN #{reason} ELSE NULL END,
+      revoked_at=CASE WHEN #{toStatus}='REVOKED' THEN #{at} ELSE revoked_at END,
+      retired_at=CASE WHEN #{toStatus}='RETIRED' THEN #{at} ELSE retired_at END,record_version=record_version+1
+    WHERE tenant_id=#{tenantId} AND device_id=#{deviceId} AND status=#{fromStatus} AND record_version=#{expectedVersion}
+  </update>
+  <update id="updateCredentialVersion">
+    UPDATE pos_sync_device SET credential_version=#{toVersion},record_version=record_version+1
+    WHERE tenant_id=#{tenantId} AND device_id=#{deviceId} AND credential_version=#{fromVersion} AND status='ACTIVE'
+  </update>
+  <insert id="insertCredential">
+    INSERT INTO dev_terminal_credential(credential_id,tenant_id,device_id,credential_version,secret_hmac,
+      fingerprint_sha256,public_key_sha256,status,issued_at,expires_at)
+    VALUES(#{credentialId},#{tenantId},#{deviceId},#{credentialVersion},#{secretHmac},#{fingerprintSha256},
+      #{publicKeySha256},'ACTIVE',#{issuedAt},#{expiresAt})
+  </insert>
+  <select id="findActiveCredential" resultType="com.jingshanghui.pos.sync.application.model.TerminalModels$CredentialRecord">
+    SELECT credential_id credentialId,tenant_id tenantId,device_id deviceId,credential_version credentialVersion,
+      secret_hmac secretHmac,fingerprint_sha256 fingerprintSha256,public_key_sha256 publicKeySha256,status,expires_at expiresAt
+    FROM dev_terminal_credential WHERE tenant_id=#{tenantId} AND device_id=#{deviceId} AND status='ACTIVE'
+    ORDER BY credential_version DESC LIMIT 1
+  </select>
+  <update id="invalidateActiveCredential">
+    UPDATE dev_terminal_credential SET status=#{targetStatus},invalidated_at=#{at}
+    WHERE tenant_id=#{tenantId} AND device_id=#{deviceId} AND status='ACTIVE'
+  </update>
+  <select id="nextCapabilitySequence" resultType="long">
+    SELECT COALESCE(MAX(sequence_no),0)+1 FROM dev_capability_snapshot
+    WHERE tenant_id=#{tenantId} AND device_id=#{deviceId}
+  </select>
+  <select id="findCapabilityDigest" resultType="string">
+    SELECT capability_sha256 FROM dev_capability_snapshot
+    WHERE tenant_id=#{tenantId} AND device_id=#{deviceId} AND capability_sha256=#{capabilitySha256}
+  </select>
+  <insert id="insertCapability">
+    INSERT INTO dev_capability_snapshot(snapshot_id,tenant_id,device_id,sequence_no,app_version,
+      protocol_version,schema_version,capability_json,capability_sha256,client_time,clock_skew_seconds,reported_at)
+    VALUES(#{snapshotId},#{tenantId},#{deviceId},#{sequenceNo},#{appVersion},#{protocolVersion},#{schemaVersion},
+      CAST(#{capabilityJson} AS JSON),#{capabilitySha256},#{clientTime},#{clockSkewSeconds},#{reportedAt})
+  </insert>
+  <update id="updateDeviceCapability">
+    UPDATE pos_sync_device SET app_version=#{appVersion},schema_version=#{schemaVersion},
+      capability_sha256=#{capabilitySha256},clock_skew_seconds=#{clockSkewSeconds},last_seen_at=#{at},
+      record_version=record_version+1 WHERE tenant_id=#{tenantId} AND device_id=#{deviceId} AND status='ACTIVE'
+  </update>
+  <select id="findCommand" resultType="com.jingshanghui.pos.sync.application.model.TerminalModels$StoredCommand">
+    SELECT request_sha256 requestSha256,aggregate_id aggregateId,result_code resultCode,
+      CAST(result_json AS CHAR) resultJson,result_sha256 resultSha256 FROM dev_terminal_command_result
+    WHERE tenant_id=#{tenantId} AND command_type=#{commandType} AND idempotency_key=#{idempotencyKey}
+  </select>
+  <insert id="insertCommand">
+    INSERT INTO dev_terminal_command_result(command_result_id,tenant_id,command_type,idempotency_key,
+      request_sha256,aggregate_id,result_code,result_json,result_sha256,created_at)
+    VALUES(#{commandResultId},#{tenantId},#{commandType},#{idempotencyKey},#{requestSha256},#{aggregateId},
+      #{resultCode},CAST(#{resultJson} AS JSON),#{resultSha256},#{createdAt})
+  </insert>
+  <insert id="insertAudit">
+    INSERT INTO dev_terminal_audit(audit_event_id,tenant_id,device_id,store_id,action_code,before_status,
+      after_status,evidence_sha256,actor_type,actor_id,reason,correlation_id,occurred_at)
+    VALUES(#{auditEventId},#{tenantId},#{deviceId},#{storeId},#{actionCode},#{beforeStatus},#{afterStatus},
+      #{evidenceSha256},#{actorType},#{actorId},#{reason},#{correlationId},#{occurredAt})
+  </insert>
+</mapper>

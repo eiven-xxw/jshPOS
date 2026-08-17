@@ -15,21 +15,22 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 /** Executed by the Sprint S3 MySQL 8.4 quality gate with synthetic tenants only. */
 class SyncMigrationMySqlIT {
 
-    private final String url = required("SPRINT3_MYSQL_JDBC_URL");
-    private final String username = required("SPRINT3_MYSQL_USERNAME");
-    private final String password = required("SPRINT3_MYSQL_PASSWORD");
+    private final String url = required("GATE6A_MYSQL_JDBC_URL", "SPRINT3_MYSQL_JDBC_URL");
+    private final String username = required("GATE6A_MYSQL_USERNAME", "SPRINT3_MYSQL_USERNAME");
+    private final String password = required("GATE6A_MYSQL_PASSWORD", "SPRINT3_MYSQL_PASSWORD");
 
     @Test
-    void migratesAllEightVersionsAndEnforcesDeviceTenantAndFactUniqueness() throws Exception {
+    void migratesAllTenVersionsAndEnforcesTerminalTenantImmutabilityAndCapacity() throws Exception {
         createFrameworkMenuFixture();
         Flyway flyway = Flyway.configure().dataSource(url, username, password)
             .locations("classpath:db/migration").table("jshpos_flyway_schema_history")
             .baselineOnMigrate(true).baselineVersion("0").cleanDisabled(true).load();
-        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(8);
+        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(10);
         assertThat(flyway.migrate().migrationsExecuted).isZero();
         flyway.validate();
         assertTablesAndPermissions();
         assertTwoTenantDeviceAndBusinessFactConstraints();
+        assertTerminalRegistryConstraintsAndHundredThousandCapacity();
     }
 
     private void createFrameworkMenuFixture() throws SQLException {
@@ -50,7 +51,8 @@ class SyncMigrationMySqlIT {
     private void assertTablesAndPermissions() throws SQLException {
         Set<String> tables = Set.of("pos_sync_device", "pos_sync_inbox", "pos_sync_business_fact",
             "pos_sync_change_feed", "pos_sync_pull_page", "pos_sync_cursor", "pos_sync_dead_letter",
-            "pos_sync_security_event");
+            "pos_sync_security_event", "dev_terminal_activation", "dev_terminal_credential",
+            "dev_capability_snapshot", "dev_terminal_command_result", "dev_terminal_audit");
         try (Connection connection = DriverManager.getConnection(url, username, password);
              Statement statement = connection.createStatement()) {
             for (String table : tables) {
@@ -63,10 +65,48 @@ class SyncMigrationMySqlIT {
                 assertThat(rows.next()).isTrue();
                 assertThat(rows.getInt(1)).isEqualTo(4);
             }
+            try (var rows = statement.executeQuery("SELECT COUNT(*) FROM sys_menu WHERE menu_id BETWEEN 9201200 AND 9201207")) {
+                assertThat(rows.next()).isTrue();
+                assertThat(rows.getInt(1)).isEqualTo(8);
+            }
             try (var rows = statement.executeQuery("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name LIKE 'syn\\_%'")) {
                 assertThat(rows.next()).isTrue();
                 assertThat(rows.getInt(1)).isZero();
             }
+        }
+    }
+
+    private void assertTerminalRegistryConstraintsAndHundredThousandCapacity() throws SQLException {
+        String activation = "01K2A000000000000000000121";
+        String device = "01K2A000000000000000000122";
+        try (Connection connection = DriverManager.getConnection(url, username, password);
+             Statement statement = connection.createStatement()) {
+            statement.executeUpdate("INSERT INTO dev_terminal_activation(activation_id,tenant_id,org_unit_id,store_id,bound_user_id,terminal_profile_code,secret_hmac,status,expires_at,idempotency_key,request_sha256,evidence_level,created_by,created_at) VALUES('" + activation + "','TENANT_A',1001,1101,101,'ANDROID_POS_V1',REPEAT('a',64),'ISSUED',UTC_TIMESTAMP(3)+INTERVAL 1 HOUR,'terminal-activation-0001',REPEAT('b',64),'SYNTHETIC',101,UTC_TIMESTAMP(3))");
+            statement.executeUpdate("INSERT INTO pos_sync_device(device_id,tenant_id,org_unit_id,store_id,terminal_id,bound_user_id,activation_id,terminal_profile_code,fingerprint_sha256,public_key_sha256,credential_version,status,min_protocol_version,max_protocol_version,app_version,schema_version,capability_sha256,clock_skew_seconds,activation_evidence_level,activated_at) VALUES('" + device + "','TENANT_A',1001,1101,'" + device + "',101,'" + activation + "','ANDROID_POS_V1',REPEAT('c',64),REPEAT('d',64),1,'ACTIVE','1.0','1.0','1.0.0','1',REPEAT('e',64),0,'SYNTHETIC',UTC_TIMESTAMP(3))");
+            statement.executeUpdate("INSERT INTO dev_terminal_credential(credential_id,tenant_id,device_id,credential_version,secret_hmac,fingerprint_sha256,public_key_sha256,status,issued_at,expires_at) VALUES('01K2A000000000000000000123','TENANT_A','" + device + "',1,REPEAT('f',64),REPEAT('c',64),REPEAT('d',64),'ACTIVE',UTC_TIMESTAMP(3),UTC_TIMESTAMP(3)+INTERVAL 365 DAY)");
+            statement.executeUpdate("INSERT INTO dev_capability_snapshot(snapshot_id,tenant_id,device_id,sequence_no,app_version,protocol_version,schema_version,capability_json,capability_sha256,client_time,clock_skew_seconds,reported_at) VALUES('01K2A000000000000000000124','TENANT_A','" + device + "',1,'1.0.0','1.0','1',JSON_OBJECT('scanner',true),REPEAT('e',64),UTC_TIMESTAMP(3),0,UTC_TIMESTAMP(3))");
+            assertThatThrownBy(() -> statement.executeUpdate("UPDATE dev_capability_snapshot SET capability_sha256=REPEAT('0',64) WHERE snapshot_id='01K2A000000000000000000124'"))
+                .isInstanceOf(SQLException.class).hasMessageContaining("append-only");
+            statement.executeUpdate("INSERT INTO dev_terminal_audit(audit_event_id,tenant_id,device_id,store_id,action_code,evidence_sha256,actor_type,actor_id,correlation_id,occurred_at) VALUES('01K2A000000000000000000125','TENANT_A','" + device + "',1101,'TERMINAL_ACTIVATED',REPEAT('a',64),'DEVICE','" + device + "','01K2A000000000000000000126',UTC_TIMESTAMP(3))");
+            assertThatThrownBy(() -> statement.executeUpdate("DELETE FROM dev_terminal_audit WHERE audit_event_id='01K2A000000000000000000125'"))
+                .isInstanceOf(SQLException.class).hasMessageContaining("cannot be deleted");
+
+            long started = System.nanoTime();
+            statement.executeUpdate("""
+                INSERT INTO pos_sync_device(device_id,tenant_id,org_unit_id,store_id,terminal_id,bound_user_id,status)
+                SELECT CONCAT('Z',LPAD(ROW_NUMBER() OVER (),25,'0')),'TENANT_A',1001,1101,
+                  CONCAT('Z',LPAD(ROW_NUMBER() OVER (),25,'0')),101,'ACTIVE'
+                FROM (SELECT 0 d UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9) a
+                CROSS JOIN (SELECT 0 d UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9) b
+                CROSS JOIN (SELECT 0 d UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9) c
+                CROSS JOIN (SELECT 0 d UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9) d
+                CROSS JOIN (SELECT 0 d UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9) e
+                """);
+            try (var rows = statement.executeQuery("SELECT COUNT(*) FROM pos_sync_device WHERE tenant_id='TENANT_A' AND store_id=1101 AND status='ACTIVE'")) {
+                assertThat(rows.next()).isTrue();
+                assertThat(rows.getLong(1)).isGreaterThanOrEqualTo(100_000);
+            }
+            assertThat((System.nanoTime() - started) / 1_000_000_000L).isLessThan(60);
         }
     }
 
@@ -93,9 +133,10 @@ class SyncMigrationMySqlIT {
         }
     }
 
-    private static String required(String name) {
-        String value = System.getenv(name);
-        if (value == null || value.isBlank()) throw new IllegalStateException(name + " must be provided by CI");
+    private static String required(String primary, String fallback) {
+        String value = System.getenv(primary);
+        if (value == null || value.isBlank()) value = System.getenv(fallback);
+        if (value == null || value.isBlank()) throw new IllegalStateException(primary + " must be provided by CI");
         return value;
     }
 }

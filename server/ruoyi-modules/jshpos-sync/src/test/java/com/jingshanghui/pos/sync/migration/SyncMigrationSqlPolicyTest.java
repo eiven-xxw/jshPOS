@@ -31,4 +31,18 @@ class SyncMigrationSqlPolicyTest {
         assertThat(sql).contains("greatest(acked_sequence,values(acked_sequence))")
             .contains("if(values(acked_sequence)>=acked_sequence");
     }
+
+    @Test
+    void gate6aTerminalMigrationExpandsTheExistingOwnerAndProtectsSecretsAndHistory() throws Exception {
+        String sql;
+        try (var stream = getClass().getResourceAsStream("/db/migration/V202608160036__gate6a_terminal_registry.sql")) {
+            assertThat(stream).isNotNull();
+            sql = new String(stream.readAllBytes(), StandardCharsets.UTF_8).toLowerCase();
+        }
+        assertThat(sql).contains("alter table pos_sync_device", "dev_terminal_activation",
+            "dev_terminal_credential", "dev_capability_snapshot", "dev_terminal_audit",
+            "secret_hmac", "activation_evidence_level", "append-only");
+        assertThat(sql).doesNotContain("activation_secret", "device_credential varchar", "private_key",
+            "create table dev_terminal (");
+    }
 }

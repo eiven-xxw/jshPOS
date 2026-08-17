@@ -6,6 +6,7 @@ import com.jingshanghui.pos.foundation.application.security.ScopeAuthorizationSe
 import com.jingshanghui.pos.sync.application.model.SyncModels.DeviceContext;
 import com.jingshanghui.pos.sync.application.model.SyncModels.DeviceRecord;
 import com.jingshanghui.pos.sync.domain.SyncRules;
+import com.jingshanghui.pos.sync.domain.TerminalRules;
 import com.jingshanghui.pos.sync.infrastructure.persistence.mapper.SyncMapper;
 import lombok.RequiredArgsConstructor;
 import org.dromara.common.core.exception.ServiceException;
@@ -40,8 +41,8 @@ public class SyncDeviceContextService {
         if (!"ACTIVE".equals(device.status())) {
             throw new ServiceException("SYNC_DEVICE_NOT_AUTHORIZED: device is not active", 401);
         }
-        if (protocolVersion.compareTo(device.minProtocolVersion()) < 0
-            || protocolVersion.compareTo(device.maxProtocolVersion()) > 0) {
+        if (TerminalRules.compareVersion(protocolVersion, device.minProtocolVersion()) < 0
+            || TerminalRules.compareVersion(protocolVersion, device.maxProtocolVersion()) > 0) {
             throw new ServiceException("SYNC_PROTOCOL_UNSUPPORTED: device compatibility window rejected", 409);
         }
         authorizationService.requireStoreAccess(device.storeId());
