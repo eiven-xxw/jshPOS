@@ -33,6 +33,8 @@ import com.jingshanghui.pos.order.domain.UlidGenerator;
 import com.jingshanghui.pos.procurement.application.port.ProcurementCostSourcePort;
 import com.jingshanghui.pos.procurement.application.port.ProcurementCostSourcePort.ReceiptCostSource;
 import com.jingshanghui.pos.procurement.application.port.ProcurementCostSourcePort.ReturnCostSource;
+import com.jingshanghui.pos.transfer.application.port.TransferCostSourcePort;
+import com.jingshanghui.pos.transfer.application.port.TransferCostSourcePort.DispatchCostSource;
 import lombok.RequiredArgsConstructor;
 import org.dromara.common.core.exception.ServiceException;
 import org.springframework.stereotype.Service;
@@ -63,6 +65,7 @@ public class CostingService implements AuthoritativeCostPostingPort {
     private final TrustedTenantContext tenantContext;
     private final ScopeAuthorizationService authorizationService;
     private final ProcurementCostSourcePort procurementSourcePort;
+    private final TransferCostSourcePort transferSourcePort;
     private final UlidGenerator ulids;
     private final Clock clock;
     private final ObjectMapper objectMapper;
@@ -239,10 +242,39 @@ public class CostingService implements AuthoritativeCostPostingPort {
             case "PURCHASE_RECEIPT_IN" -> receiptSource(fact);
             case "PURCHASE_RETURN_OUT" -> returnSource(tenantId, fact);
             case "SALE_RETURN_IN" -> saleReturnSource(tenantId, fact);
+            case "TRANSFER_OUT" -> transferDispatchSource(fact);
+            case "TRANSFER_IN" -> transferReceiptSource(tenantId, fact);
             case "REVERSAL" -> reversalSource(tenantId, fact);
             case "SALE_OUT", "STOCKTAKE_GAIN", "STOCKTAKE_LOSS" -> ResolvedSource.current();
             default -> throw new ServiceException("CST-MOVEMENT-001: 成本移动类型未准入", 409);
         };
+    }
+
+    private ResolvedSource transferDispatchSource(PostedInventoryLedger fact) {
+        if (!"TRANSFER_DISPATCH".equals(fact.sourceType())) {
+            throw new ServiceException("CST-SOURCE-003: 调拨发出移动缺少权威调拨来源", 409);
+        }
+        DispatchCostSource source = transferSourcePort.requireDispatchLine(fact.sourceLineId());
+        validateTransferLine(fact, source.skuId(), source.baseUnitId(), source.baseQuantity(),
+            source.sourceWarehouseId(), source.currencyCode());
+        return new ResolvedSource(null, false, null, null, null,
+            List.of(source.dispatchId(), source.transferId(), source.sourceWarehouseId(),
+                source.destinationWarehouseId(), source.currencyCode()));
+    }
+
+    private ResolvedSource transferReceiptSource(String tenantId, PostedInventoryLedger fact) {
+        if (!"TRANSFER_RECEIPT".equals(fact.sourceType())) {
+            throw new ServiceException("CST-SOURCE-004: 调拨收货移动缺少权威调拨来源", 409);
+        }
+        TransferCostSourcePort.ReceiptCostSource source = transferSourcePort.requireReceiptLine(fact.sourceLineId());
+        validateTransferLine(fact, source.skuId(), source.baseUnitId(), source.baseQuantity(),
+            source.destinationWarehouseId(), source.currencyCode());
+        LedgerView dispatch = mapper.findSourceLedger(tenantId, source.sourceWarehouseId(), fact.skuId(),
+            "TRANSFER_DISPATCH", source.dispatchLineId(), "TRANSFER_OUT");
+        if (dispatch == null) throw new ServiceException("CST-COST-MISSING: 调拨收货缺少来源仓发出成本快照", 409);
+        return new ResolvedSource(dispatch.unitCostMinor(), dispatch.costEstimated(), null, null, null,
+            List.of(source.receiptId(), source.dispatchLineId(), dispatch.costLedgerId(),
+                source.sourceWarehouseId(), source.destinationWarehouseId(), source.currencyCode()));
     }
 
     private ResolvedSource receiptSource(PostedInventoryLedger fact) {
@@ -300,6 +332,15 @@ public class CostingService implements AuthoritativeCostPostingPort {
             || fact.quantityDelta().abs().compareTo(baseQuantity) != 0
             || !CostingRules.CURRENCY.equals(currency)) {
             throw new ServiceException("CST-SOURCE-MISMATCH: 采购来源与库存事实不一致", 409);
+        }
+    }
+
+    private void validateTransferLine(PostedInventoryLedger fact, Long skuId, Long baseUnitId,
+                                      BigDecimal baseQuantity, String expectedWarehouse, String currency) {
+        if (!fact.skuId().equals(skuId) || !fact.baseUnitId().equals(baseUnitId)
+            || fact.quantityDelta().abs().compareTo(baseQuantity) != 0
+            || !fact.warehouseId().equals(expectedWarehouse) || !CostingRules.CURRENCY.equals(currency)) {
+            throw new ServiceException("CST-SOURCE-MISMATCH: 调拨来源与库存事实不一致", 409);
         }
     }
 
@@ -373,6 +414,8 @@ public class CostingService implements AuthoritativeCostPostingPort {
             case "STOCKTAKE_GAIN", "STOCKTAKE_LOSS" -> "STOCKTAKE".equals(fact.sourceType());
             case "PURCHASE_RECEIPT_IN" -> "PURCHASE_RECEIPT".equals(fact.sourceType());
             case "PURCHASE_RETURN_OUT" -> "PURCHASE_RETURN".equals(fact.sourceType());
+            case "TRANSFER_OUT" -> "TRANSFER_DISPATCH".equals(fact.sourceType());
+            case "TRANSFER_IN" -> "TRANSFER_RECEIPT".equals(fact.sourceType());
             case "REVERSAL" -> "REVERSAL".equals(fact.sourceType());
             default -> false;
         };

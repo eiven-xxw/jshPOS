@@ -12,6 +12,7 @@
         <dependency><groupId>com.jingshanghui.pos</groupId><artifactId>jshpos-foundation</artifactId></dependency>
         <dependency><groupId>com.jingshanghui.pos</groupId><artifactId>jshpos-inventory</artifactId></dependency>
         <dependency><groupId>com.jingshanghui.pos</groupId><artifactId>jshpos-procurement</artifactId></dependency>
+        <dependency><groupId>com.jingshanghui.pos</groupId><artifactId>jshpos-transfer</artifactId></dependency>
         <dependency><groupId>com.jingshanghui.pos</groupId><artifactId>jshpos-sync</artifactId><scope>test</scope></dependency>
         <dependency><groupId>org.dromara</groupId><artifactId>ruoyi-common-core</artifactId></dependency>
         <dependency><groupId>org.dromara</groupId><artifactId>ruoyi-common-mybatis</artifactId></dependency>

@@ -18,7 +18,8 @@ public final class CostingRules {
     public static final String CURRENCY = "CNY";
     private static final BigDecimal ZERO = new BigDecimal("0.000000");
     private static final Set<String> SUPPORTED = Set.of("PURCHASE_RECEIPT_IN", "PURCHASE_RETURN_OUT",
-        "SALE_OUT", "SALE_RETURN_IN", "STOCKTAKE_GAIN", "STOCKTAKE_LOSS", "REVERSAL");
+        "SALE_OUT", "SALE_RETURN_IN", "STOCKTAKE_GAIN", "STOCKTAKE_LOSS",
+        "TRANSFER_OUT", "TRANSFER_IN", "REVERSAL");
 
     private CostingRules() {
     }
@@ -54,7 +55,7 @@ public final class CostingRules {
         boolean estimated = input.sourceEstimated();
         BigDecimal variance = ZERO;
         BigDecimal afterAmount;
-        if ("PURCHASE_RECEIPT_IN".equals(input.movementType())) {
+        if ("PURCHASE_RECEIPT_IN".equals(input.movementType()) || "TRANSFER_IN".equals(input.movementType())) {
             unit = requireUnitCost(input.sourceUnitCostMinor());
             if (beforeQuantity.signum() < 0) {
                 BigDecimal deficitUnit = usableUnit(beforeAverage, beforeLast, input.before().costKnown());
@@ -67,10 +68,12 @@ public final class CostingRules {
                 } else {
                     afterAmount = afterQuantity.multiply(unit).setScale(SCALE, ROUNDING);
                 }
-                method = "NEGATIVE_SETTLEMENT";
+                method = "TRANSFER_IN".equals(input.movementType())
+                    ? "TRANSFER_NEGATIVE_SETTLEMENT" : "NEGATIVE_SETTLEMENT";
             } else {
                 afterAmount = beforeAmount.add(delta.multiply(unit)).setScale(SCALE, ROUNDING);
-                method = "PURCHASE_FROZEN_PRICE";
+                method = "TRANSFER_IN".equals(input.movementType())
+                    ? "INHERITED_TRANSFER_COST" : "PURCHASE_FROZEN_PRICE";
             }
         } else if ("SALE_RETURN_IN".equals(input.movementType())) {
             unit = input.sourceUnitCostMinor() == null
@@ -102,11 +105,15 @@ public final class CostingRules {
             }
             unit = requireUnitCost(input.sourceUnitCostMinor());
             method = "ORIGINAL_RECEIPT_COST";
-        } else if ("SALE_OUT".equals(input.movementType()) || "STOCKTAKE_LOSS".equals(input.movementType())) {
+        } else if ("SALE_OUT".equals(input.movementType()) || "STOCKTAKE_LOSS".equals(input.movementType())
+            || "TRANSFER_OUT".equals(input.movementType())) {
             unit = usableUnit(beforeAverage, beforeLast, input.before().costKnown());
             estimated = estimated || beforeQuantity.signum() <= 0 || afterQuantity.signum() < 0;
-            method = "SALE_OUT".equals(input.movementType())
-                ? (estimated ? "LAST_COST_ESTIMATED" : "MOVING_AVERAGE") : "CURRENT_AVERAGE";
+            method = switch (input.movementType()) {
+                case "SALE_OUT" -> estimated ? "LAST_COST_ESTIMATED" : "MOVING_AVERAGE";
+                case "TRANSFER_OUT" -> estimated ? "TRANSFER_LAST_COST_ESTIMATED" : "TRANSFER_SOURCE_SNAPSHOT";
+                default -> "CURRENT_AVERAGE";
+            };
         } else {
             throw new ServiceException("CST-MOVEMENT-003: 负向成本移动类型与数量方向不一致", 409);
         }

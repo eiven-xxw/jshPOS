@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jingshanghui.pos.transfer.infrastructure.persistence.mapper.TransferMapper">
+    <insert id="insertOrder">INSERT INTO inv_transfer_order
+        (transfer_id,tenant_id,source_store_id,source_warehouse_id,destination_store_id,destination_warehouse_id,
+         status,request_sha256,reason,correlation_id,creator_user_id,version,created_at,updated_at)
+        VALUES (#{transferId},#{tenantId},#{sourceStoreId},#{sourceWarehouseId},#{destinationStoreId},
+        #{destinationWarehouseId},'DRAFT',#{requestSha256},#{reason},#{correlationId},#{creatorUserId},0,#{createdAt},#{createdAt})
+    </insert>
+    <insert id="insertLine">INSERT INTO inv_transfer_line
+        (transfer_line_id,tenant_id,transfer_id,sku_id,requested_unit_id,conversion_numerator,
+         conversion_denominator,input_quantity,base_unit_id,requested_quantity,dispatched_quantity,
+         received_quantity,difference_quantity,created_at,updated_at)
+        VALUES (#{transferLineId},#{tenantId},#{transferId},#{skuId},#{requestedUnitId},#{conversionNumerator},
+        #{conversionDenominator},#{inputQuantity},#{baseUnitId},#{requestedQuantity},0,0,0,#{createdAt},#{createdAt})</insert>
+
+    <sql id="headColumns">transfer_id,source_store_id,source_warehouse_id,destination_store_id,
+        destination_warehouse_id,status,reason,creator_user_id,approver_user_id,approved_at,dispatched_at,
+        closed_at,version</sql>
+    <select id="findOrder" resultType="com.jingshanghui.pos.transfer.application.model.TransferViews$TransferHead">
+        SELECT <include refid="headColumns"/> FROM inv_transfer_order
+        WHERE tenant_id=#{tenantId} AND transfer_id=#{transferId}
+    </select>
+    <select id="lockOrder" resultType="com.jingshanghui.pos.transfer.application.model.TransferViews$TransferHead">
+        SELECT <include refid="headColumns"/> FROM inv_transfer_order
+        WHERE tenant_id=#{tenantId} AND transfer_id=#{transferId} FOR UPDATE
+    </select>
+    <select id="findOrderRequestHash" resultType="string">SELECT request_sha256 FROM inv_transfer_order
+        WHERE tenant_id=#{tenantId} AND transfer_id=#{transferId}</select>
+    <select id="findLines" resultType="com.jingshanghui.pos.transfer.application.model.TransferViews$TransferLine">
+        SELECT transfer_line_id,transfer_id,sku_id,requested_unit_id,conversion_numerator,conversion_denominator,
+        input_quantity,base_unit_id,requested_quantity,dispatched_quantity,received_quantity,difference_quantity FROM inv_transfer_line
+        WHERE tenant_id=#{tenantId} AND transfer_id=#{transferId} ORDER BY transfer_line_id
+    </select>
+    <select id="lockLine" resultType="com.jingshanghui.pos.transfer.application.model.TransferViews$TransferLine">
+        SELECT transfer_line_id,transfer_id,sku_id,requested_unit_id,conversion_numerator,conversion_denominator,
+        input_quantity,base_unit_id,requested_quantity,dispatched_quantity,received_quantity,difference_quantity FROM inv_transfer_line
+        WHERE tenant_id=#{tenantId} AND transfer_id=#{transferId} AND transfer_line_id=#{transferLineId} FOR UPDATE
+    </select>
+    <update id="updateStatus">UPDATE inv_transfer_order SET status=#{nextStatus},version=version+1,
+        approver_user_id=COALESCE(#{approverUserId},approver_user_id),approved_at=COALESCE(#{approvedAt},approved_at),
+        dispatched_at=COALESCE(#{dispatchedAt},dispatched_at),closed_at=COALESCE(#{closedAt},closed_at),updated_at=#{updatedAt}
+        WHERE tenant_id=#{tenantId} AND transfer_id=#{transferId} AND status=#{expectedStatus} AND version=#{expectedVersion}</update>
+    <update id="updateLineProgress">UPDATE inv_transfer_line SET
+        dispatched_quantity=dispatched_quantity+#{dispatchedDelta},
+        received_quantity=received_quantity+#{receivedDelta},
+        difference_quantity=difference_quantity+#{differenceDelta},updated_at=#{updatedAt}
+        WHERE tenant_id=#{tenantId} AND transfer_line_id=#{transferLineId}
+        AND received_quantity+#{receivedDelta}+difference_quantity+#{differenceDelta}
+            &lt;= dispatched_quantity+#{dispatchedDelta}
+        AND dispatched_quantity+#{dispatchedDelta} &lt;= requested_quantity</update>
+
+    <insert id="insertCommand">INSERT INTO inv_transfer_command
+        (command_id,tenant_id,transfer_id,command_type,request_sha256,status,created_at)
+        VALUES (#{commandId},#{tenantId},#{transferId},#{commandType},#{requestSha256},#{status},#{createdAt})</insert>
+    <select id="findCommandHash" resultType="string">SELECT request_sha256 FROM inv_transfer_command
+        WHERE tenant_id=#{tenantId} AND command_id=#{commandId}</select>
+    <select id="findCommandStatus" resultType="string">SELECT status FROM inv_transfer_command
+        WHERE tenant_id=#{tenantId} AND command_id=#{commandId}</select>
+    <update id="markCommandApplied">UPDATE inv_transfer_command SET status=#{status},applied_at=#{appliedAt}
+        WHERE tenant_id=#{tenantId} AND command_id=#{commandId} AND status='PROCESSING'</update>
+
+    <insert id="insertDispatch">INSERT INTO inv_transfer_dispatch
+        (dispatch_id,tenant_id,transfer_id,source_event_id,status,business_date,correlation_id,posted_at)
+        VALUES (#{dispatchId},#{tenantId},#{transferId},#{sourceEventId},'POSTED',#{businessDate},#{correlationId},#{postedAt})</insert>
+    <insert id="insertDispatchLine">INSERT INTO inv_transfer_dispatch_line
+        (dispatch_line_id,tenant_id,dispatch_id,transfer_line_id,sku_id,base_unit_id,base_quantity,created_at)
+        VALUES (#{dispatchLineId},#{tenantId},#{dispatchId},#{transferLineId},#{skuId},#{baseUnitId},#{baseQuantity},#{createdAt})</insert>
+    <select id="findDispatchByTransfer" resultType="com.jingshanghui.pos.transfer.application.model.TransferViews$DispatchHead">
+        SELECT dispatch_id,transfer_id,source_event_id,status,business_date,posted_at FROM inv_transfer_dispatch
+        WHERE tenant_id=#{tenantId} AND transfer_id=#{transferId}</select>
+    <select id="findDispatchLines" resultType="com.jingshanghui.pos.transfer.application.model.TransferViews$DispatchLine">
+        SELECT dl.dispatch_line_id,dl.dispatch_id,dl.transfer_line_id,dl.sku_id,dl.base_unit_id,dl.base_quantity
+        FROM inv_transfer_dispatch_line dl JOIN inv_transfer_dispatch d
+          ON d.tenant_id=dl.tenant_id AND d.dispatch_id=dl.dispatch_id
+        WHERE dl.tenant_id=#{tenantId} AND d.transfer_id=#{transferId} ORDER BY dl.transfer_line_id</select>
+    <insert id="insertReceipt">INSERT INTO inv_transfer_receipt
+        (receipt_id,tenant_id,transfer_id,source_event_id,status,final_receipt,business_date,correlation_id,posted_at)
+        VALUES (#{receiptId},#{tenantId},#{transferId},#{sourceEventId},'POSTED',#{finalReceipt},#{businessDate},#{correlationId},#{postedAt})</insert>
+    <insert id="insertReceiptLine">INSERT INTO inv_transfer_receipt_line
+        (receipt_line_id,tenant_id,receipt_id,transfer_line_id,dispatch_line_id,sku_id,base_unit_id,base_quantity,created_at)
+        VALUES (#{receiptLineId},#{tenantId},#{receiptId},#{transferLineId},#{dispatchLineId},#{skuId},#{baseUnitId},#{baseQuantity},#{createdAt})</insert>
+    <select id="findReceipt" resultType="com.jingshanghui.pos.transfer.application.model.TransferViews$ReceiptHead">
+        SELECT receipt_id,transfer_id,source_event_id,status,final_receipt,business_date,posted_at
+        FROM inv_transfer_receipt WHERE tenant_id=#{tenantId} AND receipt_id=#{receiptId}</select>
+
+    <select id="findPostedDispatchCostSource" resultType="com.jingshanghui.pos.transfer.application.port.TransferCostSourcePort$DispatchCostSource">
+        SELECT dl.dispatch_line_id,d.dispatch_id,o.transfer_id,o.source_warehouse_id,o.destination_warehouse_id,
+               dl.sku_id,dl.base_unit_id,dl.base_quantity,'CNY' currency_code
+        FROM inv_transfer_dispatch_line dl
+        JOIN inv_transfer_dispatch d ON d.tenant_id=dl.tenant_id AND d.dispatch_id=dl.dispatch_id AND d.status='POSTED'
+        JOIN inv_transfer_order o ON o.tenant_id=d.tenant_id AND o.transfer_id=d.transfer_id
+        WHERE dl.tenant_id=#{tenantId} AND dl.dispatch_line_id=#{dispatchLineId}
+    </select>
+    <select id="findPostedReceiptCostSource" resultType="com.jingshanghui.pos.transfer.application.port.TransferCostSourcePort$ReceiptCostSource">
+        SELECT rl.receipt_line_id,r.receipt_id,rl.dispatch_line_id,o.source_warehouse_id,o.destination_warehouse_id,
+               rl.sku_id,rl.base_unit_id,rl.base_quantity,'CNY' currency_code
+        FROM inv_transfer_receipt_line rl
+        JOIN inv_transfer_receipt r ON r.tenant_id=rl.tenant_id AND r.receipt_id=rl.receipt_id AND r.status='POSTED'
+        JOIN inv_transfer_order o ON o.tenant_id=r.tenant_id AND o.transfer_id=r.transfer_id
+        WHERE rl.tenant_id=#{tenantId} AND rl.receipt_line_id=#{receiptLineId}
+    </select>
+
+    <insert id="insertTransit">INSERT INTO inv_transfer_transit_ledger
+        (transit_ledger_id,tenant_id,transfer_id,transfer_line_id,fact_type,source_fact_id,quantity,business_date,
+         reason_code,correlation_id,occurred_at) VALUES (#{transitLedgerId},#{tenantId},#{transferId},#{transferLineId},
+         #{factType},#{sourceFactId},#{quantity},#{businessDate},#{reasonCode},#{correlationId},#{occurredAt})</insert>
+    <select id="sumTransit" resultType="java.math.BigDecimal">SELECT COALESCE(SUM(quantity),0) FROM inv_transfer_transit_ledger
+        WHERE tenant_id=#{tenantId} AND transfer_line_id=#{transferLineId} AND fact_type=#{factType}</select>
+    <insert id="insertAudit">INSERT INTO inv_transfer_audit_event
+        (audit_id,tenant_id,store_id,action_code,aggregate_type,aggregate_id,actor_user_id,command_id,
+         correlation_id,before_value,after_value,content_sha256,reason_code,occurred_at)
+        VALUES (#{auditId},#{tenantId},#{storeId},#{action},#{aggregateType},#{aggregateId},#{actorUserId},
+        #{commandId},#{correlationId},#{beforeState},#{afterState},#{contentSha256},#{reason},#{createdAt})</insert>
+    <insert id="insertOutbox">INSERT INTO inv_transfer_event_outbox
+        (event_id,tenant_id,event_type,aggregate_id,aggregate_version,correlation_id,payload_json,payload_sha256,
+         delivery_state,available_at) VALUES (#{eventId},#{tenantId},#{eventType},#{aggregateId},#{aggregateVersion},
+         #{correlationId},#{payloadJson},#{payloadSha256},'PENDING',#{createdAt})</insert>
+</mapper>

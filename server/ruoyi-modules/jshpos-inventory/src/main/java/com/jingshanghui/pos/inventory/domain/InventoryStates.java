@@ -18,7 +18,11 @@ public final class InventoryStates {
         /** 已确认采购收货的入库。 */
         PURCHASE_RECEIPT_IN,
         /** 已批准原收货采购退货的出库。 */
-        PURCHASE_RETURN_OUT
+        PURCHASE_RETURN_OUT,
+        /** 已审批调拨从来源仓发出的出库。 */
+        TRANSFER_OUT,
+        /** 已发出调拨在目的仓确认收货的入库。 */
+        TRANSFER_IN
     }
 
     public enum NegativeStockMode {

@@ -1,0 +1,55 @@
+schemaVersion: 1.0-design-only
+phase: T2-GATE4D-SPRINT-S8
+requirementIds: [T2-PRM-001, T2-PRM-002, T2-PRM-003]
+runtimeAllowed: false
+networkCallsAllowed: 0
+stateMachine:
+  states: [DRAFT, VALIDATED, REJECTED, SCHEDULED, ACTIVE, SUSPENDED, EXPIRED, RETIRED]
+  publishedVersionMutable: false
+calculationOrder:
+  - BASE_OR_STORE_PRICE
+  - ITEM_PROMOTION
+  - BUNDLE_OR_THRESHOLD
+  - AUTHORIZED_MANUAL_PRICE
+  - ORDER_DISCOUNT
+  - ROUNDING
+money:
+  representation: MINOR_UNIT_INTEGER
+  allocation: PROPORTIONAL_LARGEST_REMAINDER
+  stableRemainderOrder: [order_line_no, sku_id]
+  invariants:
+    - sum_line_discount_equals_order_discount
+    - sum_line_payable_equals_order_payable
+    - line_payable_non_negative
+quantity:
+  representation: DECIMAL_BIGDECIMAL
+  floatingPointAllowed: false
+candidateApis:
+  - {method: POST, path: "/api/v1/promotions/rules/preflight", operation: preflightRule}
+  - {method: POST, path: "/api/v1/promotions/rules/{ruleId}/versions/{versionId}/publish", operation: publishRuleVersion}
+  - {method: POST, path: "/api/v1/promotions/quotes", operation: quoteBasket}
+  - {method: POST, path: "/api/v1/promotions/manual-price-authorizations", operation: authorizeManualPrice}
+  - {method: POST, path: "/api/v1/promotions/transaction-snapshots", operation: freezeTransactionSnapshot}
+candidateEvents:
+  - promotion.rule.published.v1
+  - promotion.rule.suspended.v1
+  - promotion.quote.calculated.v1
+  - promotion.snapshot.frozen.v1
+futureTables:
+  - prm_rule
+  - prm_rule_version
+  - prm_rule_scope
+  - prm_rule_condition
+  - prm_rule_benefit
+  - prm_quote
+  - prm_quote_line
+  - prm_transaction_snapshot
+  - prm_transaction_allocation
+  - prm_manual_price_audit
+  - prm_event_outbox
+migrationVersionAllocated: false
+evidence:
+  sandbox: 0
+  realDevice: 0
+  pilot: 0
+  note: Design-only contract and synthetic vectors are not runtime or commercial evidence.

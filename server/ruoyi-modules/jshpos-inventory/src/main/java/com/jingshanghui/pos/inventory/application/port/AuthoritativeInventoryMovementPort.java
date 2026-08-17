@@ -8,7 +8,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * 盘点与采购 Owner 提交库存数量事实的进程内受控端口。
+ * 盘点、采购与调拨 Owner 提交库存数量事实的进程内受控端口。
  *
  * <p>端口不接受 tenant_id；调用者必须先持久化并验证自己的权威单据，外部 Controller 不得直接暴露本端口。</p>
  */

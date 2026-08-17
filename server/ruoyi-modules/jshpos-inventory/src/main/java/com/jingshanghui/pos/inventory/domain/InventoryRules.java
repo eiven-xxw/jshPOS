@@ -34,8 +34,8 @@ public final class InventoryRules {
     public static BigDecimal signedDelta(MovementType type, BigDecimal positiveQuantity) {
         BigDecimal quantity = positive(positiveQuantity, "quantity");
         return switch (type) {
-            case SALE_OUT, STOCKTAKE_LOSS, PURCHASE_RETURN_OUT -> quantity.negate();
-            case SALE_RETURN_IN, STOCKTAKE_GAIN, PURCHASE_RECEIPT_IN -> quantity;
+            case SALE_OUT, STOCKTAKE_LOSS, PURCHASE_RETURN_OUT, TRANSFER_OUT -> quantity.negate();
+            case SALE_RETURN_IN, STOCKTAKE_GAIN, PURCHASE_RECEIPT_IN, TRANSFER_IN -> quantity;
         };
     }
 
@@ -46,6 +46,8 @@ public final class InventoryRules {
                 || movementType == MovementType.STOCKTAKE_LOSS;
             case "PURCHASE_RECEIPT" -> movementType == MovementType.PURCHASE_RECEIPT_IN;
             case "PURCHASE_RETURN" -> movementType == MovementType.PURCHASE_RETURN_OUT;
+            case "TRANSFER_DISPATCH" -> movementType == MovementType.TRANSFER_OUT;
+            case "TRANSFER_RECEIPT" -> movementType == MovementType.TRANSFER_IN;
             default -> false;
         };
         if (!allowed) {

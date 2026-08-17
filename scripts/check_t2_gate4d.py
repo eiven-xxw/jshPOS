@@ -37,9 +37,12 @@ DESIGN_FILES = [
     "docs/t2-gate4d/05_测试矩阵CI与证据.md",
     "contracts/t2/gate4d/gate4d-admission.json",
     "contracts/t2/gate4d/openapi-transfer-v1.yaml",
+    "contracts/t2/gate4d/promotion-gate5-design-v1.yaml",
     "contracts/t2/gate4d/schemas/inventory.transfer.changed.v1.schema.json",
     "contracts/t2/gate4d/schemas/promotion-design.v1.schema.json",
     "contracts/t2/gate4d/test-vectors/transfer-fixed-vectors-v1.json",
+    "contracts/t2/gate4d/test-vectors/promotion-fixed-vectors-design-v1.json",
+    "docs/t2-gate4d/06_促销Gate5设计契约与测试准备.md",
 ]
 LEDGER = ROOT / "contracts/t2/gate4d/migration-checksums.json"
 
@@ -113,6 +116,15 @@ def check_design() -> dict[str, object]:
     promo = json.loads(contents["contracts/t2/gate4d/schemas/promotion-design.v1.schema.json"])
     if promo.get("x-runtime-allowed"):
         fail("promotion runtime must remain disabled")
+    promotion_vectors = json.loads(contents[
+        "contracts/t2/gate4d/test-vectors/promotion-fixed-vectors-design-v1.json"])
+    if promotion_vectors.get("runtimeAllowed") or len(promotion_vectors.get("vectors", [])) != 24:
+        fail("promotion design vectors must remain twenty-four and runtime-disabled")
+    promotion_contract = contents["contracts/t2/gate4d/promotion-gate5-design-v1.yaml"]
+    for marker in ("runtimeAllowed: false", "networkCallsAllowed: 0",
+                   "migrationVersionAllocated: false", "PROPORTIONAL_LARGEST_REMAINDER"):
+        if marker not in promotion_contract:
+            fail(f"promotion design boundary missing: {marker}")
     prior_transfer = ROOT / "contracts/t2/gate4c/schemas/transfer-design.v2.schema.json"
     if json.loads(prior_transfer.read_text(encoding="utf-8")).get("x-runtime-allowed"):
         fail("sealed Gate 4C design contract was altered")
@@ -147,10 +159,18 @@ def java_text(root: Path) -> str:
     return "\n".join(path.read_text(encoding="utf-8", errors="replace") for path in sorted(root.rglob("*.java")))
 
 
+def resource_text(root: Path) -> str:
+    if not root.is_dir():
+        return ""
+    return "\n".join(path.read_text(encoding="utf-8", errors="replace")
+                     for path in sorted(root.rglob("*")) if path.is_file())
+
+
 def check_runtime(stage: str) -> dict[str, object]:
     transfer = ROOT / "server/ruoyi-modules/jshpos-transfer/src/main/java"
     text = "\n".join((
         java_text(transfer),
+        resource_text(ROOT / "server/ruoyi-modules/jshpos-transfer/src/main/resources"),
         java_text(ROOT / "server/ruoyi-modules/jshpos-inventory/src/main/java"),
         java_text(ROOT / "server/ruoyi-modules/jshpos-costing/src/main/java"),
     )).lower()
@@ -162,7 +182,8 @@ def check_runtime(stage: str) -> dict[str, object]:
         fail(f"forbidden Provider/later-Gate runtime found: {violations}")
     if stage == "closure":
         for marker in ("transferservice", "transfercostsourceport", "authoritativeinventorymovementport",
-                       "inv_transfer_transit_ledger", "trustedtenantcontext", "transfer_out", "transfer_in"):
+                       "inv_transfer_transit_ledger", "trustedtenantcontext", "transfer_out", "transfer_in",
+                       "reconciletransit", "reason_code"):
             if marker not in text:
                 fail(f"formal transfer runtime marker missing: {marker}")
     return {"transferPresent": transfer.is_dir(), "providerNetworkCalls": 0, "forbiddenRuntime": 0}

@@ -4,7 +4,7 @@
   "tenants": ["TENANT_A", "TENANT_B"],
   "businessProfiles": ["CONVENIENCE", "DISCOUNT_SNACK", "COMMUNITY_SUPERMARKET"],
   "fixedVectors": [
-    {"seed": "TRF-CREATE-001", "assertion": "draft freezes warehouses business date and exact lines"},
+    {"seed": "TRF-CREATE-001", "assertion": "draft freezes route, original unit conversion and exact base lines; posting derives business date"},
     {"seed": "TRF-DUPLICATE-LINE-002", "assertion": "duplicate sku and unit line is rejected"},
     {"seed": "TRF-SAME-WAREHOUSE-003", "assertion": "source and destination warehouse must differ"},
     {"seed": "TRF-SUBMIT-004", "assertion": "draft submits once with optimistic version"},

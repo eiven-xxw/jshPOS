@@ -69,6 +69,25 @@ class CostingRulesTest {
     }
 
     @Test
+    void freezesTransferOutAndInheritsExactlyAtDestination() {
+        CostTransition outbound = calculate("TRANSFER_OUT", "10", "1000", "100", "90",
+            "-3", null, false);
+        assertTransition(outbound, "7.000000", "700.000000", "100.000000",
+            "TRANSFER_SOURCE_SNAPSHOT", false);
+
+        CostTransition inbound = calculate("TRANSFER_IN", "2", "220", "110", "110",
+            "3", "100", false);
+        assertTransition(inbound, "5.000000", "520.000000", "104.000000",
+            "INHERITED_TRANSFER_COST", false);
+
+        CostTransition negative = calculate("TRANSFER_IN", "-2", "-180", "90", "90",
+            "3", "100", false);
+        assertTransition(negative, "1.000000", "100.000000", "100.000000",
+            "TRANSFER_NEGATIVE_SETTLEMENT", false);
+        assertThat(negative.varianceAmountMinor()).isEqualByComparingTo("20.000000");
+    }
+
+    @Test
     void freezesOutboundCostAndClosesRoundingResidueAtZero() {
         CostTransition sale = calculate("SALE_OUT", "3", "301", "100.333333", "100", "-1", null, false);
         assertTransition(sale, "2.000000", "200.666667", "100.333334", "MOVING_AVERAGE", false);

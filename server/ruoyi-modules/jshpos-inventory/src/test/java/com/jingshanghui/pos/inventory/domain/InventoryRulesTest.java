@@ -11,6 +11,8 @@ import static com.jingshanghui.pos.inventory.domain.InventoryStates.MovementType
 import static com.jingshanghui.pos.inventory.domain.InventoryStates.MovementType.STOCKTAKE_LOSS;
 import static com.jingshanghui.pos.inventory.domain.InventoryStates.MovementType.PURCHASE_RECEIPT_IN;
 import static com.jingshanghui.pos.inventory.domain.InventoryStates.MovementType.PURCHASE_RETURN_OUT;
+import static com.jingshanghui.pos.inventory.domain.InventoryStates.MovementType.TRANSFER_IN;
+import static com.jingshanghui.pos.inventory.domain.InventoryStates.MovementType.TRANSFER_OUT;
 import static com.jingshanghui.pos.inventory.domain.InventoryStates.NegativeStockMode.ALLOW_AND_ALERT;
 import static com.jingshanghui.pos.inventory.domain.InventoryStates.NegativeStockMode.ALLOW_WITH_PERMISSION;
 import static com.jingshanghui.pos.inventory.domain.InventoryStates.NegativeStockMode.DENY;
@@ -36,6 +38,10 @@ class InventoryRulesTest {
             .isEqualByComparingTo("2.500000");
         assertThat(InventoryRules.signedDelta(PURCHASE_RETURN_OUT, new BigDecimal("2.5")))
             .isEqualByComparingTo("-2.500000");
+        assertThat(InventoryRules.signedDelta(TRANSFER_OUT, new BigDecimal("2.5")))
+            .isEqualByComparingTo("-2.500000");
+        assertThat(InventoryRules.signedDelta(TRANSFER_IN, new BigDecimal("2.5")))
+            .isEqualByComparingTo("2.500000");
     }
 
     @Test
@@ -96,11 +102,15 @@ class InventoryRulesTest {
         InventoryRules.requireOwnedMovement("STOCKTAKE", STOCKTAKE_LOSS);
         InventoryRules.requireOwnedMovement("PURCHASE_RECEIPT", PURCHASE_RECEIPT_IN);
         InventoryRules.requireOwnedMovement("PURCHASE_RETURN", PURCHASE_RETURN_OUT);
+        InventoryRules.requireOwnedMovement("TRANSFER_DISPATCH", TRANSFER_OUT);
+        InventoryRules.requireOwnedMovement("TRANSFER_RECEIPT", TRANSFER_IN);
         assertThatThrownBy(() -> InventoryRules.requireOwnedMovement("STOCKTAKE", SALE_OUT))
             .isInstanceOf(ServiceException.class);
         assertThatThrownBy(() -> InventoryRules.requireOwnedMovement("PURCHASE_RECEIPT", PURCHASE_RETURN_OUT))
             .isInstanceOf(ServiceException.class);
         assertThatThrownBy(() -> InventoryRules.requireOwnedMovement("UNKNOWN", STOCKTAKE_GAIN))
+            .isInstanceOf(ServiceException.class);
+        assertThatThrownBy(() -> InventoryRules.requireOwnedMovement("TRANSFER_DISPATCH", TRANSFER_IN))
             .isInstanceOf(ServiceException.class);
     }
 }

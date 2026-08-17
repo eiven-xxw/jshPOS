@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "1.0-design-only",
+  "phase": "T2-GATE4D-SPRINT-S8",
+  "requirementIds": ["T2-PRM-001", "T2-PRM-002", "T2-PRM-003"],
+  "runtimeAllowed": false,
+  "vectors": [
+    {"seed": "PRM-ITEM-001", "assertion": "single item fixed price uses the eligible store price basis"},
+    {"seed": "PRM-SECOND-002", "assertion": "second-item benefit handles odd quantities deterministically"},
+    {"seed": "PRM-THRESHOLD-003", "assertion": "threshold discount evaluates only eligible line amounts"},
+    {"seed": "PRM-BUNDLE-004", "assertion": "bundle quantities consume candidates in stable line order"},
+    {"seed": "PRM-EXCLUSIVE-005", "assertion": "exclusive group retains one stable highest-priority candidate"},
+    {"seed": "PRM-STACK-006", "assertion": "explicit stack policy controls cross-layer composition"},
+    {"seed": "PRM-TIE-007", "assertion": "priority ties resolve by rule version id"},
+    {"seed": "PRM-FUTURE-008", "assertion": "future version is inactive before store-local effective instant"},
+    {"seed": "PRM-BIZDAY-009", "assertion": "business-day cutover uses trusted store timezone"},
+    {"seed": "PRM-MANUAL-AUTH-010", "assertion": "manual price requires explicit permission and reason"},
+    {"seed": "PRM-MANUAL-LIMIT-011", "assertion": "manual price below authorized floor fails closed"},
+    {"seed": "PRM-ORDER-DISCOUNT-012", "assertion": "order discount never exceeds eligible payable amount"},
+    {"seed": "PRM-ROUNDING-013", "assertion": "rounding is applied only after order discount"},
+    {"seed": "PRM-ALLOCATE-014", "assertion": "largest remainder allocation conserves order discount"},
+    {"seed": "PRM-REMAINDER-TIE-015", "assertion": "allocation remainder ties use line number then sku id"},
+    {"seed": "PRM-ZERO-LINE-016", "assertion": "zero-payable line receives no excess allocation"},
+    {"seed": "PRM-SNAPSHOT-017", "assertion": "transaction snapshot freezes rule versions and allocations"},
+    {"seed": "PRM-REFUND-018", "assertion": "refund restores discount from original frozen snapshot"},
+    {"seed": "PRM-PARTIAL-REFUND-019", "assertion": "cumulative partial refunds cannot exceed original line quantity or amount"},
+    {"seed": "PRM-IDEMPOTENT-020", "assertion": "same command and digest returns the original result"},
+    {"seed": "PRM-DIGEST-CONFLICT-021", "assertion": "same command with another digest is rejected"},
+    {"seed": "PRM-BUDGET-RACE-022", "assertion": "concurrent limited budget requires atomic reservation"},
+    {"seed": "PRM-TENANT-023", "assertion": "cross-tenant rule, store and snapshot ids are invisible"},
+    {"seed": "PRM-MIGRATION-024", "assertion": "migration failure uses additive forward repair without editing history"}
+  ],
+  "evidence": {"sandbox": 0, "realDevice": 0, "pilot": 0}
+}

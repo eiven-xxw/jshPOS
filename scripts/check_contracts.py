@@ -81,6 +81,19 @@ def main() -> None:
         if token not in payment_prep:
             raise SystemExit(f"CONTRACT ERROR: Gate 3 payment preparation boundary missing {token}")
 
+    gate4d_openapi = (ROOT / "contracts" / "t2" / "gate4d" / "openapi-transfer-v1.yaml").read_text(encoding="utf-8")
+    for token in (
+        "version: 1.0.0", "T2-TRF-001", "/inventory/transfers:",
+        "/inventory/transfers/{transferId}/transit-reconciliation:",
+        "differenceReason:", "TransitReconciliation:", "additionalProperties: false",
+    ):
+        if token not in gate4d_openapi:
+            raise SystemExit(f"CONTRACT ERROR: Gate 4D formal transfer OpenAPI missing {token}")
+    if "tenantId:" in gate4d_openapi or "tenant_id:" in gate4d_openapi or "X-Tenant" in gate4d_openapi:
+        raise SystemExit("CONTRACT ERROR: Gate 4D client contract exposes a tenant override")
+    if "businessDate:" in gate4d_openapi:
+        raise SystemExit("CONTRACT ERROR: Gate 4D client contract exposes server-owned businessDate")
+
     print(f"CONTRACTS OK: {len(json_contracts)} JSON schemas and T0/T2 OpenAPI contracts")
 
 

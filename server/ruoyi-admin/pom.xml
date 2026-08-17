@@ -116,6 +116,10 @@
             <groupId>com.jingshanghui.pos</groupId>
             <artifactId>jshpos-costing</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.jingshanghui.pos</groupId>
+            <artifactId>jshpos-transfer</artifactId>
+        </dependency>
 
         <!-- Gate 0 服务端数据库版本治理 -->
         <dependency>

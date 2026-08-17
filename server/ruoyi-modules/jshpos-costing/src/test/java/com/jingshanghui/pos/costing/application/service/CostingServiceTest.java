@@ -19,6 +19,8 @@ import com.jingshanghui.pos.inventory.domain.InventoryHash;
 import com.jingshanghui.pos.order.domain.UlidGenerator;
 import com.jingshanghui.pos.procurement.application.port.ProcurementCostSourcePort;
 import com.jingshanghui.pos.procurement.application.port.ProcurementCostSourcePort.ReceiptCostSource;
+import com.jingshanghui.pos.transfer.application.port.TransferCostSourcePort;
+import com.jingshanghui.pos.transfer.application.port.TransferCostSourcePort.DispatchCostSource;
 import org.dromara.common.core.exception.ServiceException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -55,6 +57,7 @@ class CostingServiceTest {
     private final TrustedTenantContext tenantContext = mock(TrustedTenantContext.class);
     private final ScopeAuthorizationService authorization = mock(ScopeAuthorizationService.class);
     private final ProcurementCostSourcePort procurement = mock(ProcurementCostSourcePort.class);
+    private final TransferCostSourcePort transfer = mock(TransferCostSourcePort.class);
     private final Clock clock = Clock.fixed(NOW, ZoneOffset.UTC);
     private CostingService service;
 
@@ -62,7 +65,7 @@ class CostingServiceTest {
     void setUp() {
         when(tenantContext.requirePrincipal()).thenReturn(new TrustedPrincipal("TENANT_A", 101L, 1L, "alice"));
         when(tenantContext.requireTenantId()).thenReturn("TENANT_A");
-        service = new CostingService(mapper, tenantContext, authorization, procurement,
+        service = new CostingService(mapper, tenantContext, authorization, procurement, transfer,
             new UlidGenerator(clock), clock, new ObjectMapper());
     }
 
@@ -144,6 +147,58 @@ class CostingServiceTest {
     }
 
     @Test
+    void validatesTransferOwnerAndFreezesSourceWarehouseCostSnapshot() {
+        when(transfer.requireDispatchLine(LINE)).thenReturn(new DispatchCostSource(LINE, SOURCE,
+            "01K2A000000000000000000007", WAREHOUSE, "01K2A000000000000000000011",
+            701L, 301L, BigDecimal.ONE, "CNY"));
+        when(mapper.findEffectivePolicy(any(), any(), any())).thenReturn(policy());
+        when(mapper.lockBalance(any(), any())).thenReturn(balance("2", "200", 0, 0));
+        when(mapper.updateBalance(any())).thenReturn(1);
+
+        service.applyPostedLedger(transferFact("TRANSFER_OUT", "TRANSFER_DISPATCH", "2", "-1", "1"));
+
+        ArgumentCaptor<LedgerWrite> write = ArgumentCaptor.forClass(LedgerWrite.class);
+        verify(mapper).insertLedger(write.capture());
+        assertThat(write.getValue().unitCostMinor()).isEqualByComparingTo("100.000000");
+        assertThat(write.getValue().valuationMethod()).isEqualTo("TRANSFER_SOURCE_SNAPSHOT");
+    }
+
+    @Test
+    void rejectsTransferReceiptWithoutOriginalDispatchCostSnapshot() {
+        String sourceWarehouse = "01K2A000000000000000000011";
+        when(transfer.requireReceiptLine(LINE)).thenReturn(new TransferCostSourcePort.ReceiptCostSource(
+            LINE, SOURCE, "01K2A000000000000000000008", sourceWarehouse, WAREHOUSE,
+            701L, 301L, BigDecimal.ONE, "CNY"));
+        assertThatThrownBy(() -> service.applyPostedLedger(
+            transferFact("TRANSFER_IN", "TRANSFER_RECEIPT", "0", "1", "1")))
+            .isInstanceOf(ServiceException.class).hasMessageContaining("调拨收货缺少来源仓发出成本快照");
+        verify(mapper).findSourceLedger("TENANT_A", sourceWarehouse, 701L,
+            "TRANSFER_DISPATCH", "01K2A000000000000000000008", "TRANSFER_OUT");
+    }
+
+    @Test
+    void partialTransferReceiptInheritsOriginalDispatchCost() {
+        String sourceWarehouse = "01K2A000000000000000000011";
+        String dispatchLine = "01K2A000000000000000000008";
+        when(transfer.requireReceiptLine(LINE)).thenReturn(new TransferCostSourcePort.ReceiptCostSource(
+            LINE, SOURCE, dispatchLine, sourceWarehouse, WAREHOUSE,
+            701L, 301L, BigDecimal.ONE, "CNY"));
+        when(mapper.findSourceLedger("TENANT_A", sourceWarehouse, 701L,
+            "TRANSFER_DISPATCH", dispatchLine, "TRANSFER_OUT")).thenReturn(view(ledgerWrite("a".repeat(64))));
+        when(mapper.findEffectivePolicy(any(), any(), any())).thenReturn(policy());
+        when(mapper.lockBalance(any(), any())).thenReturn(balance("2", "220", 0, 0));
+        when(mapper.updateBalance(any())).thenReturn(1);
+
+        service.applyPostedLedger(transferFact("TRANSFER_IN", "TRANSFER_RECEIPT", "2", "1", "3"));
+
+        ArgumentCaptor<LedgerWrite> write = ArgumentCaptor.forClass(LedgerWrite.class);
+        verify(mapper).insertLedger(write.capture());
+        assertThat(write.getValue().unitCostMinor()).isEqualByComparingTo("100.000000");
+        assertThat(write.getValue().valuationMethod()).isEqualTo("INHERITED_TRANSFER_COST");
+        assertThat(write.getValue().averageUnitCostAfterMinor()).isEqualByComparingTo("106.666667");
+    }
+
+    @Test
     void publishesFrozenPolicyAndRebuildsProjectionFromLedgerOnly() {
         var published = service.publishPolicy(new PublishPolicy(POLICY, 1101L, WAREHOUSE, NOW, "trace-policy"));
         assertThat(published.currencyCode()).isEqualTo("CNY");
@@ -188,6 +243,15 @@ class CostingServiceTest {
             "PURCHASE_RECEIPT_IN", new BigDecimal(before), BigDecimal.ONE,
             new BigDecimal(after), "PURCHASE_RECEIPT", SOURCE, LINE, EVENT, null,
             LocalDate.of(2026, 8, 17), correlation, LocalDateTime.ofInstant(NOW, ZoneOffset.UTC));
+    }
+
+    private PostedInventoryLedger transferFact(String movementType, String sourceType,
+                                                String before, String delta, String after) {
+        return new PostedInventoryLedger(INVENTORY, 1,
+            InventoryHash.dimension("TENANT_A", WAREHOUSE, 701L), WAREHOUSE, 1101L, 701L, 301L,
+            movementType, new BigDecimal(before), new BigDecimal(delta), new BigDecimal(after),
+            sourceType, SOURCE, LINE, EVENT, null, LocalDate.of(2026, 8, 17),
+            "trace-transfer-cost", LocalDateTime.ofInstant(NOW, ZoneOffset.UTC));
     }
 
     private PolicyView policy() {
