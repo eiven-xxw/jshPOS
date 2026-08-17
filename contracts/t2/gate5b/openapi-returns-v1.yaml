@@ -1,0 +1,132 @@
+openapi: 3.1.0
+info:
+  title: 鲸熵汇原单退货退款 API
+  version: 1.0.0
+  description: T2-REF-002 公开契约；tenant_id 与操作者身份只能来自服务端可信上下文。
+servers:
+  - url: /api/v1
+paths:
+  /returns:
+    post:
+      operationId: requestOriginalReturn
+      summary: 创建原单退货退款申请
+      description: 只创建待独立审批事实；不直接调用 Payment、Inventory 或 Promotion Owner。
+      security: [{ bearerAuth: [] }]
+      x-permission: return:request:create
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateReturn' }
+      responses:
+        '200': { $ref: '#/components/responses/ReturnResult' }
+        '409': { description: 幂等冲突、数量超限、原订单或状态不满足 }
+  /returns/{returnId}/approve:
+    post:
+      operationId: approveOriginalReturn
+      summary: 独立审批退货退款
+      description: 申请人与审批人必须不同；成功后只写 Return Owner Outbox。
+      security: [{ bearerAuth: [] }]
+      x-permission: return:request:approve
+      parameters:
+        - $ref: '#/components/parameters/ReturnId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ApproveReturn' }
+      responses:
+        '200': { $ref: '#/components/responses/ReturnResult' }
+        '409': { description: 职责分离、关联标识或状态冲突 }
+  /returns/{returnId}:
+    get:
+      operationId: getOriginalReturn
+      summary: 查询退货退款检查点
+      security: [{ bearerAuth: [] }]
+      x-permission: return:request:read
+      parameters:
+        - $ref: '#/components/parameters/ReturnId'
+      responses:
+        '200': { $ref: '#/components/responses/ReturnResult' }
+        '404': { description: 当前可信租户及门店范围内不可见 }
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer }
+  parameters:
+    ReturnId:
+      name: returnId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Ulid' }
+  responses:
+    ReturnResult:
+      description: 退货退款 Saga 当前不可变检查点投影
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [code, data]
+            properties:
+              code: { type: integer }
+              data: { $ref: '#/components/schemas/ReturnView' }
+  schemas:
+    Ulid: { type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$' }
+    PositiveId: { type: string, pattern: '^[1-9][0-9]{0,18}$' }
+    CreateReturn:
+      type: object
+      additionalProperties: false
+      required: [commandId, idempotencyKey, returnId, orderId, storeId, terminalId, refundShiftId,
+        warehouseId, businessDate, settlementKind, reasonCode, lines, correlationId, occurredAt]
+      properties:
+        commandId: { $ref: '#/components/schemas/Ulid' }
+        idempotencyKey: { type: string, minLength: 1, maxLength: 96 }
+        returnId: { $ref: '#/components/schemas/Ulid' }
+        orderId: { $ref: '#/components/schemas/Ulid' }
+        storeId: { $ref: '#/components/schemas/PositiveId' }
+        terminalId: { $ref: '#/components/schemas/Ulid' }
+        refundShiftId: { $ref: '#/components/schemas/Ulid' }
+        warehouseId: { $ref: '#/components/schemas/Ulid' }
+        businessDate: { type: string, format: date }
+        settlementKind: { type: string, enum: [CASH, PROVIDER_NEUTRAL] }
+        paymentId: { $ref: '#/components/schemas/Ulid' }
+        reasonCode: { type: string, pattern: '^[A-Z0-9_]{2,32}$' }
+        lines:
+          type: array
+          minItems: 1
+          maxItems: 500
+          items:
+            type: object
+            additionalProperties: false
+            required: [orderLineId, quantity]
+            properties:
+              orderLineId: { $ref: '#/components/schemas/Ulid' }
+              quantity: { type: number, exclusiveMinimum: 0, multipleOf: 0.000001 }
+        correlationId: { $ref: '#/components/schemas/Ulid' }
+        occurredAt: { type: string, format: date-time }
+    ApproveReturn:
+      type: object
+      additionalProperties: false
+      required: [commandId, reasonCode, correlationId, occurredAt]
+      properties:
+        commandId: { $ref: '#/components/schemas/Ulid' }
+        reasonCode: { type: string, pattern: '^[A-Z0-9_]{2,32}$' }
+        correlationId: { $ref: '#/components/schemas/Ulid' }
+        occurredAt: { type: string, format: date-time }
+    ReturnView:
+      type: object
+      required: [returnId, orderId, storeId, settlementKind, status, recordVersion, lines, duplicate]
+      properties:
+        returnId: { $ref: '#/components/schemas/Ulid' }
+        orderId: { $ref: '#/components/schemas/Ulid' }
+        storeId: { type: integer, format: int64 }
+        settlementKind: { type: string, enum: [CASH, PROVIDER_NEUTRAL] }
+        status:
+          type: string
+          enum: [PENDING_APPROVAL, PROMOTION_PENDING, CASH_REFUND_PENDING, PAYMENT_PENDING,
+            PAYMENT_UNKNOWN, INVENTORY_PENDING, COMPLETED, FAILED]
+        grossAmountMinor: { type: [integer, 'null'], format: int64 }
+        recoveredDiscountMinor: { type: [integer, 'null'], format: int64 }
+        refundableAmountMinor: { type: [integer, 'null'], format: int64 }
+        recordVersion: { type: integer, format: int64, minimum: 1 }
+        lines: { type: array, items: { type: object } }
+        duplicate: { type: boolean }

@@ -127,6 +127,12 @@
             <artifactId>jshpos-promotion</artifactId>
         </dependency>
 
+        <!-- Gate 5B 原单退货退款跨Owner可恢复Saga -->
+        <dependency>
+            <groupId>com.jingshanghui.pos</groupId>
+            <artifactId>jshpos-returns</artifactId>
+        </dependency>
+
         <!-- Gate 0 服务端数据库版本治理 -->
         <dependency>
             <groupId>org.flywaydb</groupId>

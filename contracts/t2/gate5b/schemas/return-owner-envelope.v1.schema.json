@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.jingshanghui.example/t2/gate5b/return-owner-envelope.v1.schema.json",
+  "title": "Return Owner cross-owner outbox envelope v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["eventId", "eventType", "aggregateId", "aggregateVersion", "correlationId", "payloadSha256", "payload"],
+  "properties": {
+    "eventId": { "type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$" },
+    "eventType": {
+      "enum": [
+        "return.promotion.allocate.requested.v1",
+        "return.cash.refund.requested.v1",
+        "return.payment.refund.requested.v1",
+        "return.inventory.receipt.requested.v1"
+      ]
+    },
+    "aggregateId": { "type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$" },
+    "aggregateVersion": { "type": "integer", "minimum": 1 },
+    "correlationId": { "type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$" },
+    "payloadSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "payload": {
+      "type": "object",
+      "required": ["schemaVersion", "returnId"],
+      "properties": {
+        "schemaVersion": { "const": "1.0" },
+        "returnId": { "type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$" },
+        "amountMinor": { "type": "integer", "minimum": 0 },
+        "warehouseId": { "type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$" }
+      }
+    }
+  }
+}

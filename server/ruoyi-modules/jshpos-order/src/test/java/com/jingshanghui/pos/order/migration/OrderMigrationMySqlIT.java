@@ -20,12 +20,12 @@ class OrderMigrationMySqlIT {
     private final String password = required("GATE2_MYSQL_PASSWORD");
 
     @Test
-    void migratesAllSevenVersionsAndEnforcesTenantCashAndAppendOnlyConstraints() throws Exception {
+    void migratesAllEightVersionsAndEnforcesTenantCashAndAppendOnlyConstraints() throws Exception {
         createFrameworkMenuFixture();
         Flyway flyway = Flyway.configure().dataSource(url, username, password)
             .locations("classpath:db/migration").table("jshpos_flyway_schema_history")
             .baselineOnMigrate(true).baselineVersion("0").cleanDisabled(true).load();
-        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(7);
+        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(8);
         assertThat(flyway.migrate().migrationsExecuted).isZero();
         flyway.validate();
         assertTablesAndPermissions();
@@ -51,7 +51,8 @@ class OrderMigrationMySqlIT {
     private void assertTablesAndPermissions() throws SQLException {
         Set<String> tables = Set.of("shf_shift", "shf_shift_approval", "ord_sales_order", "ord_order_line",
             "ord_state_history", "ord_cash_payment", "shf_cash_ledger", "ord_print_job",
-            "ord_event_outbox", "ord_idempotency", "ord_audit_event", "ord_promotion_binding");
+            "ord_event_outbox", "ord_idempotency", "ord_audit_event", "ord_promotion_binding",
+            "ord_cash_refund");
         try (Connection connection = DriverManager.getConnection(url, username, password);
              Statement statement = connection.createStatement()) {
             for (String table : tables) {

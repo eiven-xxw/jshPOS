@@ -46,6 +46,7 @@ public final class InventoryRules {
                 || movementType == MovementType.STOCKTAKE_LOSS;
             case "PURCHASE_RECEIPT" -> movementType == MovementType.PURCHASE_RECEIPT_IN;
             case "PURCHASE_RETURN" -> movementType == MovementType.PURCHASE_RETURN_OUT;
+            case "REFUND" -> movementType == MovementType.SALE_RETURN_IN;
             case "TRANSFER_DISPATCH" -> movementType == MovementType.TRANSFER_OUT;
             case "TRANSFER_RECEIPT" -> movementType == MovementType.TRANSFER_IN;
             default -> false;

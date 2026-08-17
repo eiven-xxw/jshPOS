@@ -82,6 +82,7 @@
 | CR-T2G5B-004 | 2026-08-17 | IN_PROGRESS | 在 POS-006 形成独立 VERIFIED 证据后，T2-ORD-003 完成数据主权、状态、不变量、只读快照端口、MySQL 前向迁移、容量、兼容、回退和测试准入 | T2-ORD-003、ADR-029 | T2-REF-002 继续 DRAFT；Order Owner 禁止复制促销算法或写促销表 |
 | CR-T2G5B-005 | 2026-08-17 | VERIFIED_ORD003 | T2-ORD-003 完成 order.submitted.v2 正式同步消费、Promotion Owner 只读快照核验、含优惠订单头行不变量、不可变绑定、Java/Dart 共用摘要向量和租户上下文攻击验证 | T2-ORD-003、ADR-029 | 独立提交形成后才允许准入 REF-002；MySQL 8.4 实迁移等待 CI，不代表 ACCEPTED |
 | CR-T2G5B-006 | 2026-08-17 | IN_PROGRESS | 在 POS-006 与 ORD-003 依序形成 VERIFIED 证据后，T2-REF-002 完成数据主权、累计上限、跨 Owner Saga、事件、迁移、容量、兼容、回退和故障测试准入 | T2-REF-002、ADR-029 | 只允许现金及既有 Provider 无关核心的内部合成闭环；T2-PAY-002 与 Provider 网络继续 BLOCKED |
+| CR-T2G5B-007 | 2026-08-17 | VERIFIED_REF002 | T2-REF-002 完成原单锁定、累计数量与金额上限、原成交优惠快照恢复、现金或 Provider 无关退款、退货入库、审计及跨 Owner 检查点最终收敛；独立本地门禁确认 24 项 Returns 测试、4 组 Java/Dart 退款向量、26 个攻击面及覆盖率达标 | T2-REF-002、ADR-029 | 三项按独立提交顺序形成 VERIFIED 证据；不代表 ACCEPTED，MySQL 8.4、双平台 Flutter、安全供应链和总证据仍等待 CI |
 | CR-DEV-003 | 2026-08-17 | APPROVED | 采纳模型分型、持久化策略与数据库中文注释规范：新增表必须登记 MP_ENTITY/XML_ONLY/READ_PROJECTION；简单 CRUD 默认使用普通持久化实体与 MyBatis-Plus Lambda，核心事实使用 Repository 与 XML；Record、领域聚合和持久化实体分离，并强制 Java 与 Schema 中文注释 | AGENTS.md、技术架构与开发规范 10.2.5/10.4、JSH-POS-DEV-STD-002、ADR-027 | 项目发起人 2026-08-17 明确确认；仅登记工程治理，不修改业务代码、既有 Flyway、RTM 或 Gate 4D 状态，存量整改须另行准入 |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。

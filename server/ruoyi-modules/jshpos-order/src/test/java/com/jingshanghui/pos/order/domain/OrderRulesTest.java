@@ -4,6 +4,7 @@ import org.dromara.common.core.exception.ServiceException;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -13,6 +14,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class OrderRulesTest {
 
     private static final String LINE = "01K2A000000000000000000041";
+    private static final String LINE_2 = "01K2A000000000000000000042";
 
     @Test
     void validatesUlidsIdempotencyAndExactQuantities() {
@@ -82,8 +84,8 @@ class OrderRulesTest {
 
     @Test
     void validatesPromotedHeaderLinesAndSourceAllocation() {
-        var line = new OrderRules.PromotedLineAmount(LINE, 1, 701L, "2", 500,
-            1000, 100, 0, 900, "TENANT_BASE", Map.of("RULE:RULE-001", 100L));
+        var line = promotedLine(LINE, 1, 701L, 1000, 100, 0, 900,
+            "TENANT_BASE", Map.of("RULE:RULE-001", 100L));
         assertThat(OrderRules.validatePromotedOrder(List.of(line), 1000, 100, 0, 900))
             .isEqualTo(new OrderRules.PromotedTotals(1000, 100, 0, 900));
         assertThatThrownBy(() -> OrderRules.validatePromotedOrder(List.of(
@@ -99,6 +101,85 @@ class OrderRulesTest {
     }
 
     @Test
+    void rejectsPromotedAggregateBoundsAndLineIdentityTampering() {
+        var valid = promotedLine(LINE, 1, 701L, 1000, 100, 0, 900,
+            "TENANT_BASE", Map.of("RULE:RULE-001", 100L));
+        assertThatThrownBy(() -> OrderRules.validatePromotedOrder(null, 0, 0, 0, 0))
+            .hasMessageContaining("ORD-LINE-001");
+        assertThatThrownBy(() -> OrderRules.validatePromotedOrder(List.of(), 0, 0, 0, 0))
+            .hasMessageContaining("ORD-LINE-001");
+        assertThatThrownBy(() -> OrderRules.validatePromotedOrder(
+            java.util.Collections.nCopies(501, valid), 0, 0, 0, 0)).hasMessageContaining("ORD-LINE-001");
+        assertThatThrownBy(() -> OrderRules.validatePromotedOrder(List.of(valid,
+            promotedLine(LINE, 2, 702L, 1000, 100, 0, 900,
+                "TENANT_BASE", Map.of("RULE:RULE-002", 100L))), 2000, 200, 0, 1800))
+            .hasMessageContaining("ORD-LINE-003");
+        for (Long skuId : java.util.Arrays.asList(null, 0L)) {
+            assertThatThrownBy(() -> OrderRules.validatePromotedOrder(List.of(
+                promotedLine(LINE, 1, skuId, 1000, 100, 0, 900,
+                    "TENANT_BASE", Map.of("RULE:RULE-001", 100L))), 1000, 100, 0, 900))
+                .hasMessageContaining("ORD-LINE-003");
+        }
+        for (int lineNo : List.of(0, 501)) {
+            assertThatThrownBy(() -> OrderRules.validatePromotedOrder(List.of(
+                promotedLine(LINE, lineNo, 701L, 1000, 100, 0, 900,
+                    "TENANT_BASE", Map.of("RULE:RULE-001", 100L))), 1000, 100, 0, 900))
+                .hasMessageContaining("ORD-LINE-002");
+        }
+        assertThatThrownBy(() -> OrderRules.validatePromotedOrder(List.of(valid,
+            promotedLine(LINE_2, 1, 702L, 1000, 100, 0, 900,
+                "TENANT_BASE", Map.of("RULE:RULE-002", 100L))), 2000, 200, 0, 1800))
+            .hasMessageContaining("ORD-LINE-002");
+        assertThatThrownBy(() -> OrderRules.validatePromotedOrder(List.of(
+            promotedLine(LINE, 1, 701L, 1000, 100, 0, 900,
+                "CLIENT_OVERRIDE", Map.of("RULE:RULE-001", 100L))), 1000, 100, 0, 900))
+            .hasMessageContaining("ORD-PRICE-001");
+    }
+
+    @Test
+    void rejectsPromotedLineMoneyAndAllocationTampering() {
+        assertThatThrownBy(() -> OrderRules.validatePromotedOrder(List.of(
+            promotedLine(LINE, 1, 701L, 999, 100, 0, 900,
+                "TENANT_BASE", Map.of("RULE:RULE-001", 100L))), 999, 100, 0, 900))
+            .hasMessageContaining("promoted line amount");
+        assertThatThrownBy(() -> OrderRules.validatePromotedOrder(List.of(
+            promotedLine(LINE, 1, 701L, 1000, 1100, 0, 0,
+                "TENANT_BASE", Map.of("RULE:RULE-001", 1100L))), 1000, 1100, 0, 0))
+            .hasMessageContaining("promoted line amount");
+        assertThatThrownBy(() -> OrderRules.validatePromotedOrder(List.of(
+            promotedLine(LINE, 1, 701L, 1000, 100, 0, 900,
+                "TENANT_BASE", null)), 1000, 100, 0, 900))
+            .hasMessageContaining("source allocation is required");
+
+        Map<String, Long> nullKey = new HashMap<>();
+        nullKey.put(null, 100L);
+        Map<String, Long> nullValue = new HashMap<>();
+        nullValue.put("RULE:RULE-001", null);
+        for (Map<String, Long> invalid : List.of(
+            nullKey, Map.of("bad", 100L), nullValue, Map.of("RULE:RULE-001", 0L))) {
+            assertThatThrownBy(() -> OrderRules.validatePromotedOrder(List.of(
+                promotedLine(LINE, 1, 701L, 1000, 100, 0, 900,
+                    "TENANT_BASE", invalid)), 1000, 100, 0, 900))
+                .hasMessageContaining("invalid promotion source allocation");
+        }
+    }
+
+    @Test
+    void rejectsEveryPromotedHeaderMismatchIndependently() {
+        var line = promotedLine(LINE, 1, 701L, 1000, 100, 0, 900,
+            "TENANT_BASE", Map.of("RULE:RULE-001", 100L));
+        for (long[] header : List.of(
+            new long[]{999, 100, 0, 900},
+            new long[]{1000, 99, 0, 900},
+            new long[]{1000, 100, 1, 900},
+            new long[]{1000, 100, 0, 899})) {
+            assertThatThrownBy(() -> OrderRules.validatePromotedOrder(
+                List.of(line), header[0], header[1], header[2], header[3]))
+                .hasMessageContaining("promoted order header");
+        }
+    }
+
+    @Test
     void permitsOnlyTheFrozenOrderStatePath() {
         OrderRules.requireTransition("DRAFT", "PENDING_PAYMENT");
         OrderRules.requireTransition("PENDING_PAYMENT", "CONFIRMED");
@@ -106,5 +187,13 @@ class OrderRulesTest {
         OrderRules.requireTransition("DRAFT", "CANCELLED");
         assertThatThrownBy(() -> OrderRules.requireTransition("COMPLETED", "DRAFT"))
             .isInstanceOf(ServiceException.class).hasMessageContaining("ORDER_STATE_CONFLICT");
+    }
+
+    private static OrderRules.PromotedLineAmount promotedLine(String lineId, int lineNo, Long skuId,
+                                                               long gross, long discount, long surcharge,
+                                                               long payable, String priceSource,
+                                                               Map<String, Long> sourceAllocations) {
+        return new OrderRules.PromotedLineAmount(lineId, lineNo, skuId, "2", 500,
+            gross, discount, surcharge, payable, priceSource, sourceAllocations);
     }
 }

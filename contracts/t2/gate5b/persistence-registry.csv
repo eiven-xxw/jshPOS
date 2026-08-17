@@ -1,8 +1,10 @@
 requirement_id,owner,store,object,policy,reason,status
 T2-POS-006,POS,SQLite,local_checkout_settlement,EXPLICIT_SQL_IMMUTABLE,离线成交单事务事实与不可变触发器,VERIFIED
 T2-POS-006,POS,SQLite,local_promotion_transaction_snapshot,EXPLICIT_SQL_IMMUTABLE,复用Gate5A正式快照表并在成交事务写入,VERIFIED
-T2-ORD-003,Order,MySQL,ord_promotion_binding,XML_ONLY,不可变订单快照绑定且需摘要条件查询,IN_PROGRESS
-T2-REF-002,ReturnOrchestrator,MySQL,ret_return_saga,XML_ONLY,跨Owner步骤状态与乐观版本,DRAFT
-T2-REF-002,ReturnOrchestrator,MySQL,ret_inbox/ret_outbox,XML_ONLY,幂等事件与只追加外发事实,DRAFT
+T2-ORD-003,Order,MySQL,ord_promotion_binding,XML_ONLY,不可变订单快照绑定且需摘要条件查询,VERIFIED
+T2-REF-002,ReturnOrchestrator,MySQL,ret_return_saga,XML_ONLY,跨Owner步骤状态与乐观版本,VERIFIED
+T2-REF-002,ReturnOrchestrator,MySQL,ret_inbox/ret_outbox,XML_ONLY,幂等事件与只追加外发事实,VERIFIED
 T2-MEM-001,Member,NONE,NONE,DESIGN_ONLY,本Sprint禁止运行时,DRAFT
+T2-MEM-002,MemberLedger,NONE,NONE,DESIGN_ONLY,本Sprint禁止运行时,DRAFT
 T2-RPT-001,Reporting,NONE,NONE,DESIGN_ONLY,本Sprint禁止运行时,DRAFT
+T2-RPT-002,PaymentReporting,NONE,NONE,DESIGN_ONLY,本Sprint禁止运行时,DRAFT

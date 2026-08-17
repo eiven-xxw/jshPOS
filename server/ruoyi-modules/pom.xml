@@ -20,6 +20,7 @@
         <module>jshpos-transfer</module>
         <module>jshpos-costing</module>
         <module>jshpos-promotion</module>
+        <module>jshpos-returns</module>
         <module>ruoyi-demo</module>
         <module>ruoyi-generator</module>
         <module>ruoyi-job</module>

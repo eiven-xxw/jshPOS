@@ -1,0 +1,36 @@
+schemaVersion: '1.0'
+requirementId: T2-REF-002
+transport: AT_LEAST_ONCE_OUTBOX_INBOX
+tenantAuthority: TRUSTED_SERVER_CONTEXT_ONLY
+events:
+  - eventType: return.promotion.allocate.requested.v1
+    sourceOwner: RETURN
+    targetOwner: PROMOTION
+    stableKey: promotionEventId
+    requiredPayload: [returnId, orderId, promotionSnapshotId, promotionSnapshotHash, lines]
+    resultPort: ReturnPromotionAllocationPort
+  - eventType: return.cash.refund.requested.v1
+    sourceOwner: RETURN
+    targetOwner: ORDER
+    stableKey: paymentEventId
+    requiredPayload: [returnId, amountMinor]
+    resultPort: CashRefundOwnerPort
+  - eventType: return.payment.refund.requested.v1
+    sourceOwner: RETURN
+    targetOwner: PAYMENT
+    stableKey: paymentEventId
+    requiredPayload: [returnId, amountMinor]
+    resultPort: ReturnPaymentRefundPort
+    networkPolicy: PROVIDER_NETWORK_FORBIDDEN_WHILE_T2_PAY_002_BLOCKED
+  - eventType: return.inventory.receipt.requested.v1
+    sourceOwner: RETURN
+    targetOwner: INVENTORY
+    stableKey: inventoryEventId
+    requiredPayload: [returnId, warehouseId]
+    resultPort: AuthoritativeInventoryMovementPort
+replayRules:
+  sameEventSameHash: RETURN_STORED_RESULT_OR_CONTINUE_CHECKPOINT
+  sameEventDifferentHash: REJECT_409
+  unknownPayment: QUERY_OR_TRUSTED_OBSERVATION_ONLY
+  regenerateBusinessCommand: FORBIDDEN
+  ownerFailure: KEEP_CURRENT_CHECKPOINT_AND_REUSE_EVENT_ID

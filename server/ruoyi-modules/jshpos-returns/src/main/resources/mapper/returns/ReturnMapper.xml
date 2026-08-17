@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jingshanghui.pos.returns.infrastructure.persistence.mapper.ReturnMapper">
+    <insert id="insertOrderGuard">
+        INSERT IGNORE INTO ret_order_guard(tenant_id,order_id) VALUES(#{tenantId},#{orderId})
+    </insert>
+    <select id="lockOrderGuard" resultType="string">
+        SELECT order_id FROM ret_order_guard
+        WHERE tenant_id=#{tenantId} AND order_id=#{orderId}
+        FOR UPDATE
+    </select>
+    <select id="findIdempotency" resultType="com.jingshanghui.pos.returns.infrastructure.persistence.mapper.ReturnMapper$IdempotencyRow">
+        SELECT request_sha256 AS requestSha256,aggregate_id AS aggregateId
+        FROM ret_idempotency
+        WHERE tenant_id=#{tenantId} AND command_type=#{commandType} AND idempotency_key=#{idempotencyKey}
+    </select>
+    <insert id="insertIdempotency">
+        INSERT INTO ret_idempotency(tenant_id,command_type,idempotency_key,request_sha256,aggregate_id,created_at)
+        VALUES(#{tenantId},#{commandType},#{idempotencyKey},#{requestSha256},#{aggregateId},#{createdAt})
+    </insert>
+    <insert id="insertReturn">
+        INSERT INTO ret_return(return_id,tenant_id,idempotency_key,request_sha256,order_id,store_id,terminal_id,
+          refund_shift_id,warehouse_id,business_date,settlement_kind,payment_id,original_cash_payment_id,
+          promotion_snapshot_id,promotion_snapshot_sha256,status,reason_code,requester_user_id,correlation_id,
+          occurred_at,record_version)
+        VALUES(#{returnId},#{tenantId},#{idempotencyKey},#{requestSha256},#{orderId},#{storeId},#{terminalId},
+          #{refundShiftId},#{warehouseId},#{businessDate},#{settlementKind},#{paymentId},#{originalCashPaymentId},
+          #{promotionSnapshotId},#{promotionSnapshotSha256},'PENDING_APPROVAL',#{reasonCode},#{requesterUserId},
+          #{correlationId},#{occurredAt},1)
+    </insert>
+    <insert id="insertLine">
+        INSERT INTO ret_return_line(return_line_id,tenant_id,return_id,order_line_id,sku_id,unit_id,requested_quantity)
+        VALUES(#{returnLineId},#{tenantId},#{returnId},#{orderLineId},#{skuId},#{unitId},#{requestedQuantity})
+    </insert>
+    <sql id="returnColumns">
+        return_id AS returnId,request_sha256 AS requestSha256,order_id AS orderId,store_id AS storeId,
+        terminal_id AS terminalId,refund_shift_id AS refundShiftId,warehouse_id AS warehouseId,
+        business_date AS businessDate,settlement_kind AS settlementKind,payment_id AS paymentId,
+        original_cash_payment_id AS originalCashPaymentId,promotion_snapshot_id AS promotionSnapshotId,
+        promotion_snapshot_sha256 AS promotionSnapshotSha256,status,gross_amount_minor AS grossAmountMinor,
+        recovered_discount_minor AS recoveredDiscountMinor,refundable_amount_minor AS refundableAmountMinor,
+        promotion_event_id AS promotionEventId,payment_event_id AS paymentEventId,
+        inventory_event_id AS inventoryEventId,requester_user_id AS requesterUserId,
+        approver_user_id AS approverUserId,reason_code AS reasonCode,correlation_id AS correlationId,
+        record_version AS recordVersion,updated_at AS updatedAt
+    </sql>
+    <select id="findReturn" resultType="com.jingshanghui.pos.returns.infrastructure.persistence.mapper.ReturnMapper$ReturnRow">
+        SELECT <include refid="returnColumns"/> FROM ret_return
+        WHERE tenant_id=#{tenantId} AND return_id=#{returnId}
+    </select>
+    <select id="lockReturn" resultType="com.jingshanghui.pos.returns.infrastructure.persistence.mapper.ReturnMapper$ReturnRow">
+        SELECT <include refid="returnColumns"/> FROM ret_return
+        WHERE tenant_id=#{tenantId} AND return_id=#{returnId}
+        FOR UPDATE
+    </select>
+    <select id="listLines" resultType="com.jingshanghui.pos.returns.infrastructure.persistence.mapper.ReturnMapper$LineRow">
+        SELECT return_line_id AS returnLineId,order_line_id AS orderLineId,sku_id AS skuId,unit_id AS unitId,
+               requested_quantity AS requestedQuantity,gross_amount_minor AS grossAmountMinor,
+               recovered_discount_minor AS recoveredDiscountMinor,refundable_amount_minor AS refundableAmountMinor,
+               cumulative_quantity AS cumulativeQuantity,cumulative_payable_amount_minor AS cumulativePayableAmountMinor
+        FROM ret_return_line
+        WHERE tenant_id=#{tenantId} AND return_id=#{returnId}
+        ORDER BY order_line_id
+    </select>
+    <select id="sumReservedQuantities" resultType="com.jingshanghui.pos.returns.infrastructure.persistence.mapper.ReturnMapper$ReservedQuantityRow">
+        SELECT l.order_line_id AS orderLineId,SUM(l.requested_quantity) AS reservedQuantity
+        FROM ret_return_line l
+        JOIN ret_return r ON r.tenant_id=l.tenant_id AND r.return_id=l.return_id
+        WHERE r.tenant_id=#{tenantId} AND r.order_id=#{orderId} AND r.status&lt;&gt;'FAILED'
+        GROUP BY l.order_line_id
+    </select>
+    <update id="approve">
+        UPDATE ret_return SET status='PROMOTION_PENDING',approver_user_id=#{approverUserId},
+          promotion_event_id=#{promotionEventId},record_version=record_version+1,updated_at=#{occurredAt}
+        WHERE tenant_id=#{tenantId} AND return_id=#{returnId} AND status='PENDING_APPROVAL'
+          AND record_version=#{expectedVersion}
+    </update>
+    <update id="applyPromotionHeader">
+        UPDATE ret_return SET status=#{nextStatus},gross_amount_minor=#{grossAmountMinor},
+          recovered_discount_minor=#{recoveredDiscountMinor},refundable_amount_minor=#{refundableAmountMinor},
+          payment_event_id=#{paymentEventId},inventory_event_id=#{inventoryEventId},
+          record_version=record_version+1,updated_at=#{occurredAt}
+        WHERE tenant_id=#{tenantId} AND return_id=#{returnId} AND status='PROMOTION_PENDING'
+          AND record_version=#{expectedVersion}
+    </update>
+    <update id="updateAllocation">
+        UPDATE ret_return_line SET gross_amount_minor=#{grossAmountMinor},
+          recovered_discount_minor=#{recoveredDiscountMinor},refundable_amount_minor=#{refundableAmountMinor},
+          cumulative_quantity=#{cumulativeQuantity},cumulative_payable_amount_minor=#{cumulativePayableAmountMinor}
+        WHERE tenant_id=#{tenantId} AND return_id=#{returnId} AND order_line_id=#{orderLineId}
+          AND gross_amount_minor IS NULL
+    </update>
+    <update id="advancePayment">
+        UPDATE ret_return SET status=#{nextStatus},inventory_event_id=COALESCE(inventory_event_id,#{inventoryEventId}),
+          record_version=record_version+1,updated_at=#{occurredAt}
+        WHERE tenant_id=#{tenantId} AND return_id=#{returnId} AND status=#{expectedStatus}
+          AND record_version=#{expectedVersion}
+    </update>
+    <update id="completeInventory">
+        UPDATE ret_return SET status='COMPLETED',record_version=record_version+1,updated_at=#{occurredAt}
+        WHERE tenant_id=#{tenantId} AND return_id=#{returnId} AND status='INVENTORY_PENDING'
+          AND record_version=#{expectedVersion}
+    </update>
+    <select id="findInbox" resultType="com.jingshanghui.pos.returns.infrastructure.persistence.mapper.ReturnMapper$InboxRow">
+        SELECT event_id AS eventId,owner_code AS ownerCode,aggregate_id AS aggregateId,
+               payload_sha256 AS payloadSha256
+        FROM ret_inbox WHERE tenant_id=#{tenantId} AND event_id=#{eventId}
+    </select>
+    <insert id="insertInbox">
+        INSERT INTO ret_inbox(event_id,tenant_id,owner_code,aggregate_id,payload_sha256,received_at)
+        VALUES(#{eventId},#{tenantId},#{ownerCode},#{aggregateId},#{payloadSha256},#{receivedAt})
+    </insert>
+    <insert id="insertHistory">
+        INSERT INTO ret_state_history(history_id,tenant_id,return_id,event_id,from_status,to_status,
+          aggregate_version,actor_user_id,reason_code,occurred_at)
+        VALUES(#{historyId},#{tenantId},#{returnId},#{eventId},#{fromStatus},#{toStatus},
+          #{aggregateVersion},#{actorUserId},#{reasonCode},#{occurredAt})
+    </insert>
+    <insert id="insertOutbox">
+        INSERT INTO ret_outbox(event_id,tenant_id,event_type,aggregate_id,aggregate_version,correlation_id,
+          payload_json,payload_sha256,delivery_state,available_at)
+        VALUES(#{eventId},#{tenantId},#{eventType},#{aggregateId},#{aggregateVersion},#{correlationId},
+          CAST(#{payloadJson} AS JSON),#{payloadSha256},'PENDING',#{availableAt})
+    </insert>
+    <update id="markOutboxDelivered">
+        UPDATE ret_outbox SET delivery_state='DELIVERED',delivered_at=#{deliveredAt}
+        WHERE tenant_id=#{tenantId} AND event_id=#{eventId} AND delivery_state IN ('PENDING','DELIVERED')
+    </update>
+</mapper>

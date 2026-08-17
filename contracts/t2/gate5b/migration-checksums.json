@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0",
+  "phase": "T2-GATE5B",
+  "immutabilityPolicy": "PUBLISHED_FILES_MUST_NOT_CHANGE; repairs use a new forward migration",
+  "files": [
+    {
+      "path": "server/ruoyi-modules/jshpos-order/src/main/resources/db/migration/V202608170024__gate5b_order_promotion_binding.sql",
+      "sha256": "ced27e5f1f4a6daff67f9f19009aa74ceed20058d18561e740458ecfaf854e17",
+      "requirementId": "T2-ORD-003"
+    },
+    {
+      "path": "server/ruoyi-modules/jshpos-order/src/main/resources/db/migration/V202608170025__gate5b_cash_refund_owner.sql",
+      "sha256": "943ce78868be4b1793cbd7a4cc6e3725e4ce2dd25a7a9e14b7576d8edd238b9e",
+      "requirementId": "T2-REF-002"
+    },
+    {
+      "path": "server/ruoyi-modules/jshpos-returns/src/main/resources/db/migration/V202608170026__gate5b_return_refund_saga.sql",
+      "sha256": "f412c4e17ece22be45271870743dd029002c9a702b1808aafab345b9e36777c5",
+      "requirementId": "T2-REF-002"
+    },
+    {
+      "path": "server/ruoyi-modules/jshpos-returns/src/main/resources/db/migration/V202608170027__gate5b_return_permissions.sql",
+      "sha256": "dfc884c43885aed042a2f0a035b59afb32609c1c757f1c51ee078dba6a518338",
+      "requirementId": "T2-REF-002"
+    },
+    {
+      "path": "pos-flutter/lib/infrastructure/local_database/s10_settlement_schema.dart",
+      "sha256": "fd4a923845fc2ec736e3c8a3e613889c788a7e1c9f6b81fa03ca55ff5cbb0d9b",
+      "requirementId": "T2-POS-006"
+    }
+  ]
+}
