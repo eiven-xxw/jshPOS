@@ -93,5 +93,6 @@
 | CR-T2G5C-001 | 2026-08-17 | APPROVED | 项目发起人按 MEM-001→MEM-002 授权 Gate 5C / Sprint S11，首先准入会员最小档案、统一身份、同意、隐私请求和审计 | T2-MEM-001、T2-MEM-002、T2-RPT-001/002、ADR-030 | MEM-002 及报表继续 DRAFT；T2-PAY-002 保持 BLOCKED，Provider 网络为0 |
 | CR-T2G5C-002 | 2026-08-17 | IN_PROGRESS | T2-MEM-001 已冻结数据主权、身份/同意/隐私状态、PII 最小化、权限审计、API/事件、Flyway/SQLite、容量、兼容、回退和测试准入，依序进入实现 | T2-MEM-001、ADR-030 | MEM-002 仍 DRAFT，在 MEM-001 独立 VERIFIED 前禁止积分/等级运行时 |
 | CR-T2G5C-003 | 2026-08-17 | VERIFIED_MEM001 | T2-MEM-001 完成会员最小主体、HMAC 精确检索、版本化 AES-GCM 身份、同意与隐私请求历史、可逆合并别名、去敏 Outbox、MySQL V28/V29 和 POS SQLite V7 最小令牌摘要缓存；Member 17 项测试、核心域覆盖率、既有服务端完整回归及 Admin 装配编译通过 | T2-MEM-001、ADR-030 | 仅 STATIC/UNIT/LOCAL_REGRESSION 证据；MySQL 8.4、Flutter 双平台与安全供应链等待最终 CI；MEM-002 至此仍 DRAFT |
+| CR-T2G5C-004 | 2026-08-17 | IN_PROGRESS | 在 MEM-001 独立 VERIFIED 提交 `5b3ffad` 形成后，T2-MEM-002 完成等级历史、积分账本、批次 FEFO、余额投影、事件幂等、退货冲正、精度容量与回退设计准入，依序进入实现 | T2-MEM-002、ADR-030 | 仅服务端消费已完成订单/退货事件；禁止 POS 离线积分消费、优惠券、储值及报表运行时 |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。

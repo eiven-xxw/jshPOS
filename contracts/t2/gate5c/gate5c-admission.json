@@ -3,10 +3,10 @@
   "phase": "T2-GATE5C",
   "branchStart": "2b55ad6154b75bce1ff19c68a50e025afe7f1e93",
   "sequence": ["T2-MEM-001", "T2-MEM-002"],
-  "activeRequirement": "T2-MEM-001",
+  "activeRequirement": "T2-MEM-002",
   "requirements": {
     "T2-MEM-001": "VERIFIED",
-    "T2-MEM-002": "DRAFT",
+    "T2-MEM-002": "IN_PROGRESS",
     "T2-RPT-001": "DRAFT",
     "T2-RPT-002": "DRAFT",
     "T2-PAY-002": "BLOCKED"
