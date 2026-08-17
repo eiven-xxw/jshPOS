@@ -27,6 +27,6 @@
     "evidenceSha256": {"$ref": "#/$defs/sha256"}
   },
   "$defs": {"sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}},
-  "x-runtime-status": "IN_PROGRESS",
+  "x-runtime-status": "VERIFIED",
   "x-evidence-limitation": "Local synthetic exercise; not production KMS, cloud cross-region DR, REAL_DEVICE, PILOT or commercial SLA."
 }

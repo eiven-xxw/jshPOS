@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0",
   "published": true,
-  "stage": "bak-candidate",
+  "stage": "gate6a-verified",
   "files": [
     {
       "path": "server/ruoyi-modules/jshpos-sync/src/main/resources/db/migration/V202608160036__gate6a_terminal_registry.sql",

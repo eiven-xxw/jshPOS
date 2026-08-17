@@ -4,8 +4,8 @@ T2-TRM-001,TerminalRegistry,MySQL,dev_terminal_activation,CONTROLLED_WRITE,XML,�
 T2-TRM-001,TerminalRegistry,MySQL,dev_terminal_credential,CONTROLLED_WRITE,XML,凭据只存HMAC摘要且仅允许轮换吊销和过期状态迁移,VERIFIED
 T2-TRM-001,TerminalRegistry,MySQL,dev_capability_snapshot/dev_terminal_command_result,APPEND_ONLY,XML,能力快照与命令幂等结果只追加且由数据库触发器保护,VERIFIED
 T2-TRM-001,TerminalRegistry,MySQL,dev_terminal_audit,APPEND_ONLY,XML,终端生命周期和认证拒绝审计只追加不可改删,VERIFIED
-T2-BAK-001,Resilience,MySQL,bak_backup_set/bak_restore_drill,CONTROLLED_WRITE,XML,备份与演练只开放具名条件状态迁移且冻结租户范围恢复点Schema密钥版本和幂等摘要,IN_PROGRESS
-T2-BAK-001,Resilience,MySQL,bak_backup_object/bak_restore_check,APPEND_ONLY,XML,对象目录与恢复校验只追加并由MySQL触发器禁止改删,IN_PROGRESS
-T2-BAK-001,Resilience,MySQL,bak_audit,APPEND_ONLY,XML,备份恢复生命周期审计只追加且不得保存异常原文密钥或PII,IN_PROGRESS
-T2-BAK-001,Resilience,ObjectStorage,backups/{scopeDigest}/{backupId}/{sha256}.aead,APPEND_ONLY,XML,对象按租户范围和摘要只追加并由保留策略保护；真实云对象存储和KMS继续阻断,IN_PROGRESS
+T2-BAK-001,Resilience,MySQL,bak_backup_set/bak_restore_drill,CONTROLLED_WRITE,XML,备份与演练只开放具名条件状态迁移且冻结租户范围恢复点Schema密钥版本和幂等摘要,VERIFIED
+T2-BAK-001,Resilience,MySQL,bak_backup_object/bak_restore_check,APPEND_ONLY,XML,对象目录与恢复校验只追加并由MySQL触发器禁止改删,VERIFIED
+T2-BAK-001,Resilience,MySQL,bak_audit,APPEND_ONLY,XML,备份恢复生命周期审计只追加且不得保存异常原文密钥或PII,VERIFIED
+T2-BAK-001,Resilience,ObjectStorage,backups/{scopeDigest}/{backupId}/{sha256}.aead,APPEND_ONLY,XML,对象按租户范围和摘要只追加并由保留策略保护；真实云对象存储和KMS继续阻断,VERIFIED
 T2-UPG-001,Upgrade,MySQL,upg_release/upg_rollout/upg_terminal_result,CONTROLLED_WRITE,XML,仅设计登记不得创建升级运行时,DRAFT

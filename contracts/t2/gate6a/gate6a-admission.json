@@ -3,10 +3,10 @@
   "phase": "T2-GATE6A",
   "branchStart": "1bd27f70d39dd2056ffecf3b25f07aa9c7953606",
   "sequence": ["T2-TRM-001", "T2-BAK-001"],
-  "activeRequirement": "T2-BAK-001",
+  "activeRequirement": null,
   "requirements": {
     "T2-TRM-001": "VERIFIED",
-    "T2-BAK-001": "IN_PROGRESS",
+    "T2-BAK-001": "VERIFIED",
     "T2-UPG-001": "DRAFT",
     "T2-UAT-001": "DRAFT",
     "T2-REL-001": "DRAFT",

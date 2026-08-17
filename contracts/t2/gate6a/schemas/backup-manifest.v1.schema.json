@@ -37,6 +37,6 @@
   },
   "$defs": {"sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}},
   "x-encryption": {"algorithm": "AES-256-GCM", "keyMaterialInManifest": false, "keySeparated": true},
-  "x-runtime-status": "IN_PROGRESS",
+  "x-runtime-status": "VERIFIED",
   "x-external-cloud-evidence": "BLOCKED"
 }

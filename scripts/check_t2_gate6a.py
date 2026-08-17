@@ -149,9 +149,11 @@ def contracts(stage: str) -> dict[str, object]:
         manifest = json.loads(content["contracts/t2/gate6a/schemas/backup-manifest.v1.schema.json"])
         restore = json.loads(content["contracts/t2/gate6a/schemas/restore-evidence.v1.schema.json"])
         vectors = json.loads(content["contracts/t2/gate6a/test-vectors/backup-design-vectors.json"])
-        if manifest.get("x-runtime-status") != "IN_PROGRESS" or restore.get("x-runtime-status") != "IN_PROGRESS":
+        expected_runtime_status = "VERIFIED" if stage == "closure" else "IN_PROGRESS"
+        if (manifest.get("x-runtime-status") != expected_runtime_status
+                or restore.get("x-runtime-status") != expected_runtime_status):
             fail("backup runtime schemas were not admitted")
-        if vectors.get("status") != "IN_PROGRESS" or vectors.get("runtimeAllowed") is not True:
+        if vectors.get("status") != expected_runtime_status or vectors.get("runtimeAllowed") is not True:
             fail("backup executable vectors were not admitted")
     registry = list(csv.DictReader(content["contracts/t2/gate6a/persistence-registry.csv"].splitlines()))
     if not registry:
