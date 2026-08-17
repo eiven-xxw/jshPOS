@@ -10,7 +10,7 @@
     },
     {
       "path": "server/ruoyi-modules/jshpos-order/src/main/resources/db/migration/V202608170025__gate5b_cash_refund_owner.sql",
-      "sha256": "943ce78868be4b1793cbd7a4cc6e3725e4ce2dd25a7a9e14b7576d8edd238b9e",
+      "sha256": "0f298ad1af2b7c87541c72138bb1a4a4aef143b03f20dc2634b5a7942ef6dd7a",
       "requirementId": "T2-REF-002"
     },
     {

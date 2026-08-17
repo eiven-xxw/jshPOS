@@ -32,11 +32,19 @@ CREATE TABLE ord_cash_refund (
 ) ENGINE=InnoDB COMMENT='Order Owner只追加现金退款事实';
 
 ALTER TABLE shf_cash_ledger
+  DROP FOREIGN KEY fk_cash_ledger_payment,
   DROP INDEX uk_cash_ledger_payment,
   DROP CHECK ck_cash_ledger_type,
   DROP CHECK ck_cash_ledger_amount,
   ADD COLUMN cash_refund_id CHAR(26) CHARACTER SET ascii COLLATE ascii_bin NULL COMMENT '现金退款事实ULID；销售收款为空' AFTER cash_payment_id,
+  ADD COLUMN sale_cash_payment_id CHAR(26) CHARACTER SET ascii COLLATE ascii_bin
+    GENERATED ALWAYS AS (CASE WHEN movement_type='SALE_RECEIPT' THEN cash_payment_id ELSE NULL END) STORED
+    COMMENT '销售现金收款唯一投影；退款流水为空' AFTER cash_refund_id,
+  ADD KEY idx_cash_ledger_payment (tenant_id,cash_payment_id),
+  ADD UNIQUE KEY uk_cash_ledger_sale_payment (tenant_id,sale_cash_payment_id),
   ADD UNIQUE KEY uk_cash_ledger_refund (tenant_id,cash_refund_id,movement_type),
+  ADD CONSTRAINT fk_cash_ledger_payment FOREIGN KEY (tenant_id,cash_payment_id)
+    REFERENCES ord_cash_payment(tenant_id,cash_payment_id),
   ADD CONSTRAINT fk_cash_ledger_refund FOREIGN KEY (tenant_id,cash_refund_id)
     REFERENCES ord_cash_refund(tenant_id,cash_refund_id),
   ADD CONSTRAINT ck_cash_ledger_type CHECK (movement_type IN ('SALE_RECEIPT','CASH_REFUND')),

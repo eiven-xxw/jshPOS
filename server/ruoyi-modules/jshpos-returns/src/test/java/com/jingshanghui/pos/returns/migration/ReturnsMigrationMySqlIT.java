@@ -28,6 +28,7 @@ class ReturnsMigrationMySqlIT {
         assertThat(flyway.migrate().migrationsExecuted).isZero();
         flyway.validate();
         assertTablesAndPermissions();
+        assertCashLedgerIndexRepair();
         assertImmutableOutboxAndGuards();
     }
 
@@ -66,6 +67,37 @@ class ReturnsMigrationMySqlIT {
                 + "WHERE table_schema=DATABASE() AND table_name LIKE 'syn\\_%'")) {
                 assertThat(rows.next()).isTrue();
                 assertThat(rows.getInt(1)).isZero();
+            }
+        }
+    }
+
+    /** 锁定 V25 的 MySQL 8.4 修复：外键有独立支撑索引，销售入账仍按原现金支付唯一。 */
+    private void assertCashLedgerIndexRepair() throws SQLException {
+        try (Connection connection = DriverManager.getConnection(url, username, password);
+             Statement statement = connection.createStatement()) {
+            try (var rows = statement.executeQuery("SELECT COUNT(*) FROM information_schema.statistics "
+                + "WHERE table_schema=DATABASE() AND table_name='shf_cash_ledger' "
+                + "AND index_name='idx_cash_ledger_payment' AND column_name IN ('tenant_id','cash_payment_id')")) {
+                assertThat(rows.next()).isTrue();
+                assertThat(rows.getInt(1)).isEqualTo(2);
+            }
+            try (var rows = statement.executeQuery("SELECT COUNT(*) FROM information_schema.statistics "
+                + "WHERE table_schema=DATABASE() AND table_name='shf_cash_ledger' "
+                + "AND index_name='uk_cash_ledger_sale_payment' AND non_unique=0")) {
+                assertThat(rows.next()).isTrue();
+                assertThat(rows.getInt(1)).isEqualTo(2);
+            }
+            try (var rows = statement.executeQuery("SELECT COUNT(*) FROM information_schema.referential_constraints "
+                + "WHERE constraint_schema=DATABASE() AND table_name='shf_cash_ledger' "
+                + "AND constraint_name='fk_cash_ledger_payment'")) {
+                assertThat(rows.next()).isTrue();
+                assertThat(rows.getInt(1)).isOne();
+            }
+            try (var rows = statement.executeQuery("SELECT extra FROM information_schema.columns "
+                + "WHERE table_schema=DATABASE() AND table_name='shf_cash_ledger' "
+                + "AND column_name='sale_cash_payment_id'")) {
+                assertThat(rows.next()).isTrue();
+                assertThat(rows.getString(1)).containsIgnoringCase("STORED GENERATED");
             }
         }
     }
