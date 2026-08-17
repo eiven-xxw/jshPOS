@@ -52,6 +52,7 @@ DESIGN_FILES = [
     "contracts/t2/gate5a/test-vectors/promotion-golden-vectors-v1.json",
 ]
 LEDGER = ROOT / "contracts/t2/gate5a/migration-checksums.json"
+WORKFLOW = ROOT / ".github/workflows/t2-gate5a.yml"
 
 
 def fail(message: str) -> None:
@@ -248,6 +249,32 @@ def check_migrations(stage: str) -> dict[str, object]:
     return {"sealed": True, "files": len(files)}
 
 
+def check_artifact_layout() -> dict[str, object]:
+    """防止安全扫描输入被二次上传，避免证据内容不变时重复消耗制品存储。"""
+    workflow = WORKFLOW.read_text(encoding="utf-8")
+    required = (
+        '${{ runner.temp }}/gate5a-security-input/server',
+        '${{ runner.temp }}/gate5a-security-input/pos',
+        '$RUNNER_TEMP/gate5a-security-input/server',
+        '$RUNNER_TEMP/gate5a-security-input/pos',
+        'name: t2-gate5a-security, path: artifacts/t2/gate5a/security',
+        'name: t2-gate5a-promotion-evidence-bundle, path: artifacts/t2/gate5a/bundle',
+    )
+    for marker in required:
+        if marker not in workflow:
+            fail(f"Gate 5A artifact layout marker missing: {marker}")
+    forbidden = (
+        "path: artifacts/t2/gate5a/security/server",
+        "path: artifacts/t2/gate5a/security/pos",
+        "find artifacts/t2/gate5a/security/server",
+        "find artifacts/t2/gate5a/security/pos",
+    )
+    for marker in forbidden:
+        if marker in workflow:
+            fail(f"security input would be uploaded twice: {marker}")
+    return {"securityInputs": "runner.temp", "securityUpload": "scan-output-only", "finalBundle": "complete"}
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--stage", choices=tuple(STAGE_STATUS), default="prm1")
@@ -260,6 +287,7 @@ def main() -> None:
         "design": check_design(args.stage), "requirements": check_requirements(args.stage),
         "persistence": check_registry(), "vectors": check_vectors(args.stage),
         "runtime": check_runtime(args.stage), "migrations": check_migrations(args.stage),
+        "artifactLayout": check_artifact_layout(),
         "externalEvidence": {"sandbox": 0, "realDevice": 0, "pilot": 0},
     }
     if args.output:
