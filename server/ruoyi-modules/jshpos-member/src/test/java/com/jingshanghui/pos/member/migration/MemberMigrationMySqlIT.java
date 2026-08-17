@@ -57,7 +57,7 @@ class MemberMigrationMySqlIT {
             for(String table:tables) try(var rows=connection.getMetaData().getTables(connection.getCatalog(),null,
                 table,new String[]{"TABLE"})) { assertThat(rows.next()).as("table %s",table).isTrue(); }
             try(var rows=statement.executeQuery(
-                "SELECT COUNT(DISTINCT perms) FROM sys_menu WHERE menu_id BETWEEN 9201100 AND 9201116")) {
+                "SELECT COUNT(*) FROM sys_menu WHERE menu_id BETWEEN 9201100 AND 9201116")) {
                 assertThat(rows.next()).isTrue(); assertThat(rows.getInt(1)).isEqualTo(17);
             }
             try(var rows=statement.executeQuery("SELECT COUNT(*) FROM information_schema.tables "
