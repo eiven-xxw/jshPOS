@@ -43,8 +43,6 @@ ALTER TABLE shf_cash_ledger
   ADD KEY idx_cash_ledger_payment (tenant_id,cash_payment_id),
   ADD UNIQUE KEY uk_cash_ledger_sale_payment (tenant_id,sale_cash_payment_id),
   ADD UNIQUE KEY uk_cash_ledger_refund (tenant_id,cash_refund_id,movement_type),
-  ADD CONSTRAINT fk_cash_ledger_payment FOREIGN KEY (tenant_id,cash_payment_id)
-    REFERENCES ord_cash_payment(tenant_id,cash_payment_id),
   ADD CONSTRAINT fk_cash_ledger_refund FOREIGN KEY (tenant_id,cash_refund_id)
     REFERENCES ord_cash_refund(tenant_id,cash_refund_id),
   ADD CONSTRAINT ck_cash_ledger_type CHECK (movement_type IN ('SALE_RECEIPT','CASH_REFUND')),
@@ -52,6 +50,11 @@ ALTER TABLE shf_cash_ledger
     (movement_type='SALE_RECEIPT' AND signed_amount_minor>=0 AND cash_refund_id IS NULL)
     OR (movement_type='CASH_REFUND' AND signed_amount_minor<0 AND cash_refund_id IS NOT NULL)
   );
+
+-- MySQL 8.4 不允许在同一 ALTER 中使用相同名称删除并重建外键，故在新支撑索引就绪后分步恢复。
+ALTER TABLE shf_cash_ledger
+  ADD CONSTRAINT fk_cash_ledger_payment FOREIGN KEY (tenant_id,cash_payment_id)
+    REFERENCES ord_cash_payment(tenant_id,cash_payment_id);
 
 DELIMITER $$
 CREATE TRIGGER trg_ord_cash_refund_no_update

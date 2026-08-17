@@ -84,6 +84,7 @@
 | CR-T2G5B-006 | 2026-08-17 | IN_PROGRESS | 在 POS-006 与 ORD-003 依序形成 VERIFIED 证据后，T2-REF-002 完成数据主权、累计上限、跨 Owner Saga、事件、迁移、容量、兼容、回退和故障测试准入 | T2-REF-002、ADR-029 | 只允许现金及既有 Provider 无关核心的内部合成闭环；T2-PAY-002 与 Provider 网络继续 BLOCKED |
 | CR-T2G5B-007 | 2026-08-17 | VERIFIED_REF002 | T2-REF-002 完成原单锁定、累计数量与金额上限、原成交优惠快照恢复、现金或 Provider 无关退款、退货入库、审计及跨 Owner 检查点最终收敛；独立本地门禁确认 24 项 Returns 测试、4 组 Java/Dart 退款向量、26 个攻击面及覆盖率达标 | T2-REF-002、ADR-029 | 三项按独立提交顺序形成 VERIFIED 证据；不代表 ACCEPTED，MySQL 8.4、双平台 Flutter、安全供应链和总证据仍等待 CI |
 | CR-T2G5B-008 | 2026-08-17 | IMPLEMENTED_AWAITING_RETEST | Gate 5B 首轮 CI Run 32012879249 在 MySQL 8.4 发现 shf_cash_ledger 旧唯一索引被外键依赖，V25 不能直接删除；修复为显式重建外键支撑索引，并以生成列唯一键保留“每笔现金支付仅一条销售入账”不变量，同时允许多次合法部分退款 | T2-REF-002、V202608170025 | 该失败 Run 及日志保留红色证据，禁止跳过 MySQL 门禁；修复后必须重跑完整 Gate 5B CI |
+| CR-T2G5B-009 | 2026-08-17 | IMPLEMENTED_AWAITING_RETEST | Gate 5B 第二轮 CI Run 32013960268 证明旧索引依赖已解除，同时暴露 MySQL 8.4 不允许在同一 ALTER 语句中以相同名称删除并重建外键；将外键恢复拆为新支撑索引就绪后的独立 ALTER | T2-REF-002、V202608170025 | 第二轮失败 Run 及日志继续保留；不允许局部重跑代替完整 Gate 5B CI |
 | CR-DEV-003 | 2026-08-17 | APPROVED | 采纳模型分型、持久化策略与数据库中文注释规范：新增表必须登记 MP_ENTITY/XML_ONLY/READ_PROJECTION；简单 CRUD 默认使用普通持久化实体与 MyBatis-Plus Lambda，核心事实使用 Repository 与 XML；Record、领域聚合和持久化实体分离，并强制 Java 与 Schema 中文注释 | AGENTS.md、技术架构与开发规范 10.2.5/10.4、JSH-POS-DEV-STD-002、ADR-027 | 项目发起人 2026-08-17 明确确认；仅登记工程治理，不修改业务代码、既有 Flyway、RTM 或 Gate 4D 状态，存量整改须另行准入 |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。
