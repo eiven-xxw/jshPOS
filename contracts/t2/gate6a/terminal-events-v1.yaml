@@ -1,0 +1,30 @@
+schemaVersion: '1.0'
+requirement: T2-TRM-001
+tenantAuthority: trusted_context_only
+rawSecretAtRestAllowed: false
+realDeviceEvidence: BLOCKED
+events:
+  - type: terminal.activation.issued.v1
+    owner: TerminalRegistry
+    aggregate: activation
+    data: [activationId, tenantId, orgUnitId, storeId, profileCode, expiresAt]
+  - type: terminal.activated.v1
+    owner: TerminalRegistry
+    aggregate: terminal
+    data: [deviceId, tenantId, orgUnitId, storeId, terminalId, fingerprintSha256, capabilitySha256]
+  - type: terminal.status.changed.v1
+    owner: TerminalRegistry
+    aggregate: terminal
+    data: [deviceId, fromStatus, toStatus, reason, occurredAt]
+  - type: terminal.credential.rotated.v1
+    owner: TerminalRegistry
+    aggregate: credential
+    data: [deviceId, oldVersion, newVersion, occurredAt]
+  - type: terminal.capability.reported.v1
+    owner: TerminalRegistry
+    aggregate: capability
+    data: [deviceId, sequence, appVersion, protocolVersion, schemaVersion, capabilitySha256]
+invariants:
+  - tenantId/orgUnitId/storeId 只能来自服务端激活绑定或已验证的终端上下文
+  - 原始激活秘密和设备秘密禁止进入事件、日志、审计和持久化
+  - 吊销、门店迁移、版本过旧、能力欺骗和凭据克隆必须失败关闭

@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "1.0",
+  "requirement": "T2-TRM-001",
+  "evidenceLevel": "SYNTHETIC",
+  "realDeviceEvidence": false,
+  "cases": [
+    {"id": "TRM-NORMAL-ACTIVATE", "expected": "ACTIVE"},
+    {"id": "TRM-DUPLICATE-SAME", "expected": "IDEMPOTENT"},
+    {"id": "TRM-SAME-KEY-DIFFERENT-CONTENT", "expected": "REJECT"},
+    {"id": "TRM-EXPIRED-ACTIVATION", "expected": "REJECT"},
+    {"id": "TRM-CLONED-CREDENTIAL", "expected": "REJECT_AND_AUDIT"},
+    {"id": "TRM-REVOKED-REPLAY", "expected": "REJECT_AND_AUDIT"},
+    {"id": "TRM-CROSS-TENANT", "expected": "REJECT_AND_AUDIT"},
+    {"id": "TRM-CROSS-STORE", "expected": "REJECT_AND_AUDIT"},
+    {"id": "TRM-OLD-VERSION", "expected": "REJECT_AND_AUDIT"},
+    {"id": "TRM-CAPABILITY-DOWNGRADE", "expected": "REJECT_AND_AUDIT"},
+    {"id": "TRM-CLOCK-SKEW", "expected": "REJECT_AND_AUDIT"},
+    {"id": "TRM-ROTATE", "expected": "OLD_REJECT_NEW_ACTIVE"}
+  ]
+}

@@ -105,5 +105,8 @@
 | CR-T2G5D-006 | 2026-08-17 | VERIFIED_RPT001 | 候选 `5884b95` 的 GitHub Actions Run `32034358131` 十个 Job 全绿：MySQL 8.4 到 V33 与百万行基线、424项服务端、Web、Flutter 双平台、40面攻击、安全/SBOM/许可证及证据 Artifact `9290294945` 均通过 | T2-RPT-001、ADR-031 | RPT-001 独立 VERIFIED 不代表 ACCEPTED；外部支付账单、SANDBOX、实机和试点证据仍为0 |
 | CR-T2G5D-007 | 2026-08-17 | IN_PROGRESS | 在 RPT-001 独立 VERIFIED 后，RPT-002 已冻结 Provider 无关事实、内部合成账单、确定性差异、处理审计、API/事件、V34/V35、容量、重建、兼容、回退与固定向量并依序准入 | T2-RPT-002、ADR-031 | 只允许内部合成对账；T2-PAY-002 保持 BLOCKED，Provider 网络/SDK/账单下载/密钥/真实资金为0 |
 | CR-T2G5D-008 | 2026-08-17 | VERIFIED_CLOSURE | 候选 `1474c12` 的 GitHub Actions Run `32037632203` 首次完整运行十个 Job 全绿：MySQL 8.4 到 V35、百万行经营投影、10万支付事实+10万合成账单+10万对账投影、437项服务端、Flutter 双平台、56面攻击、33个固定场景及安全/SBOM/许可证证据均通过 | T2-RPT-001、T2-RPT-002、T2-SEC-001、T2-CI-001、ADR-031 | 两项继续 VERIFIED 等待项目发起人确认；T2-PAY-002 与外部渠道账单继续 BLOCKED，network/sandbox/realDevice/pilot/真实PII均为0 |
+| CR-T2G5D-009 | 2026-08-17 | ACCEPTED | 项目发起人确认 Gate 5D CONDITIONAL PASS，接受销售/收银/库存/成本可重建报表及 Provider 无关支付退款内部对账证据 | T2-RPT-001、T2-RPT-002、ADR-031 | 两项由 VERIFIED 更新为 ACCEPTED；真实 Provider 账单、支付沙箱、实机与试点仍未解阻 |
+| CR-T2G6A-001 | 2026-08-17 | APPROVED | 项目发起人按 `T2-TRM-001 → T2-BAK-001` 授权 Gate 6A / Sprint S13；UPG-001 只允许设计准备，UAT/REL 只允许退出材料模板 | T2-TRM-001、T2-BAK-001、T2-UPG-001、T2-UAT-001、T2-REL-001、ADR-032 | T2-PAY-002/HWD-001/PAR-001 保持 BLOCKED；禁止 Provider 网络、真实云资源写入、真实终端命令和 Alpha 声称 |
+| CR-T2G6A-002 | 2026-08-17 | IN_PROGRESS | T2-TRM-001 已冻结终端逻辑数据主权、激活/阻断/吊销/退役状态、一次性激活码与设备凭据摘要、版本能力快照、可信上下文、权限审计、V36迁移、容量、兼容回退和测试准入 | T2-TRM-001、ADR-032 | BAK-001 与 UPG-001 保持 DRAFT；只允许虚构终端与软件密钥，REAL_DEVICE=0 |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。

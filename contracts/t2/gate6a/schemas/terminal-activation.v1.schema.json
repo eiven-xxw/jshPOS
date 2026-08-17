@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:jshpos:t2:gate6a:terminal-activation:v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["activationId", "activationSecret", "deviceFingerprintSha256", "publicKeySha256", "appVersion", "protocolVersion", "schemaVersion", "capability", "idempotencyKey"],
+  "properties": {
+    "activationId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "activationSecret": {"type": "string", "minLength": 32, "maxLength": 128},
+    "deviceFingerprintSha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "publicKeySha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "appVersion": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "protocolVersion": {"type": "string", "minLength": 1, "maxLength": 16},
+    "schemaVersion": {"type": "string", "minLength": 1, "maxLength": 16},
+    "capability": {"type": "object"},
+    "idempotencyKey": {"type": "string", "minLength": 16, "maxLength": 64}
+  }
+}

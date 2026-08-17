@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:jshpos:t2:gate6a:backup-manifest:v1",
+  "title": "T2-BAK-001 design-only backup manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["backupId", "scope", "pointInTime", "schemaVersion", "applicationVersion", "objects", "encryption", "retention", "manifestSha256"],
+  "properties": {
+    "backupId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "scope": {"type": "object", "required": ["tenantMode", "dataClasses"], "properties": {"tenantMode": {"enum": ["ALL_TENANTS", "TENANT_SET"]}, "tenantIds": {"type": "array", "items": {"type": "string"}}, "dataClasses": {"type": "array", "items": {"enum": ["MYSQL", "BUSINESS_OBJECT", "CONFIG", "TEMPLATE", "MIGRATION", "EVIDENCE"]}}}},
+    "pointInTime": {"type": "string", "format": "date-time"},
+    "schemaVersion": {"type": "string"},
+    "applicationVersion": {"type": "string"},
+    "objects": {"type": "array", "minItems": 1, "items": {"type": "object", "required": ["logicalName", "sizeBytes", "sha256", "mediaType"], "properties": {"logicalName": {"type": "string"}, "sizeBytes": {"type": "integer", "minimum": 0}, "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "mediaType": {"type": "string"}}}},
+    "encryption": {"type": "object", "required": ["algorithm", "keyVersion", "keySeparated"], "properties": {"algorithm": {"type": "string"}, "keyVersion": {"type": "string"}, "keySeparated": {"const": true}}},
+    "retention": {"type": "object", "required": ["immutableUntil", "policyVersion"], "properties": {"immutableUntil": {"type": "string", "format": "date-time"}, "policyVersion": {"type": "string"}}},
+    "manifestSha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  },
+  "x-runtime-status": "DRAFT"
+}

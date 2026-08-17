@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:jshpos:t2:gate6a:restore-evidence:v1",
+  "title": "T2-BAK-001 design-only restore evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["drillId", "backupId", "isolatedEnvironment", "startedAt", "endedAt", "rpoSeconds", "rtoSeconds", "checks", "result", "evidenceSha256"],
+  "properties": {
+    "drillId": {"type": "string"}, "backupId": {"type": "string"},
+    "isolatedEnvironment": {"type": "boolean", "const": true},
+    "startedAt": {"type": "string", "format": "date-time"}, "endedAt": {"type": "string", "format": "date-time"},
+    "rpoSeconds": {"type": "integer", "minimum": 0}, "rtoSeconds": {"type": "integer", "minimum": 0},
+    "checks": {"type": "array", "items": {"enum": ["MANIFEST", "SHA256", "ENCRYPTION", "FLYWAY_VALIDATE", "PROJECTION_REBUILD", "TENANT_RECONCILIATION", "BUSINESS_DAY_RECONCILIATION", "CURSOR", "AUDIT"]}},
+    "result": {"enum": ["PASS", "FAIL_CLOSED"]},
+    "evidenceSha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  },
+  "x-commercial-sla": false,
+  "x-runtime-status": "DRAFT"
+}

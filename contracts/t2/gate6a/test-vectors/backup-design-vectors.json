@@ -1,0 +1,7 @@
+{
+  "schemaVersion": "1.0",
+  "requirement": "T2-BAK-001",
+  "status": "DRAFT",
+  "runtimeAllowed": false,
+  "cases": ["INTERRUPTED_BACKUP", "PITR_BOUNDARY", "CORRUPT_OBJECT", "MISSING_PART", "WRONG_KEY", "CROSS_TENANT_REPLACEMENT", "INTERRUPTED_RESTORE", "MILLION_FACT_REBUILD", "CURSOR_RECONCILIATION", "RPO_RTO_TIMER"]
+}

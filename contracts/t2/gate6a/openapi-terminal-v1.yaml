@@ -1,0 +1,153 @@
+openapi: 3.0.3
+info:
+  title: 鲸熵汇终端登记与激活 API
+  version: 1.0.0
+  x-requirement: T2-TRM-001
+x-boundaries:
+  tenantAuthority: trusted_context_only
+  rawSecretAtRestAllowed: false
+  realDeviceEvidence: BLOCKED
+paths:
+  /api/v1/terminal-activations:
+    post:
+      operationId: issueTerminalActivation
+      summary: 签发一次性激活凭据
+      security: [{ bearerAuth: [] }]
+      x-permission: terminal:activation:issue
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/IssueActivationCommand'}
+      responses:
+        '201':
+          description: 原始凭据只在本次响应显示
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/IssuedActivation'}
+  /api/v1/terminal-activations/{activationId}/cancel:
+    post:
+      operationId: cancelTerminalActivation
+      security: [{ bearerAuth: [] }]
+      x-permission: terminal:activation:cancel
+      parameters:
+        - {$ref: '#/components/parameters/ActivationId'}
+      responses: {'204': {description: 已取消或幂等保持取消}}
+  /api/pos/v1/terminals/activate:
+    post:
+      operationId: activateTerminal
+      summary: 使用一次性凭据激活虚构或真实终端
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ActivateTerminalCommand'}
+      responses:
+        '201':
+          description: 设备凭据只在本次响应显示
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ActivatedTerminal'}
+        '409': {description: 重复、过期、同键异内容或凭据已消费}
+  /api/v1/terminals/{deviceId}/status:
+    put:
+      operationId: changeTerminalStatus
+      security: [{ bearerAuth: [] }]
+      x-permission: terminal:status:manage
+      parameters:
+        - {$ref: '#/components/parameters/DeviceId'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ChangeStatusCommand'}
+      responses: {'200': {description: 状态已按版本化命令更新}}
+  /api/v1/terminals/{deviceId}/credentials/rotate:
+    post:
+      operationId: rotateTerminalCredential
+      security: [{ bearerAuth: [] }]
+      x-permission: terminal:credential:rotate
+      parameters:
+        - {$ref: '#/components/parameters/DeviceId'}
+      responses: {'201': {description: 新凭据只显示一次}}
+  /api/pos/v1/terminals/{deviceId}/capabilities:
+    post:
+      operationId: reportTerminalCapabilities
+      security: [{ bearerAuth: [] }]
+      x-permission: pos:terminal:report
+      parameters:
+        - {$ref: '#/components/parameters/DeviceId'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CapabilityCommand'}
+      responses: {'202': {description: 能力快照已按摘要幂等接收}}
+components:
+  securitySchemes:
+    bearerAuth: {type: http, scheme: bearer}
+  parameters:
+    ActivationId: {name: activationId, in: path, required: true, schema: {type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'}}
+    DeviceId: {name: deviceId, in: path, required: true, schema: {type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'}}
+  schemas:
+    IssueActivationCommand:
+      type: object
+      required: [orgUnitId, storeId, boundUserId, terminalProfileCode, expiresInSeconds, idempotencyKey]
+      properties:
+        orgUnitId: {type: integer, format: int64}
+        storeId: {type: integer, format: int64}
+        boundUserId: {type: integer, format: int64}
+        terminalProfileCode: {type: string, maxLength: 64}
+        expiresInSeconds: {type: integer, minimum: 60, maximum: 86400}
+        idempotencyKey: {type: string, minLength: 16, maxLength: 64}
+    IssuedActivation:
+      type: object
+      required: [activationId, activationSecret, expiresAt, secretShownOnce]
+      properties:
+        activationId: {type: string}
+        activationSecret: {type: string, writeOnly: true}
+        expiresAt: {type: string, format: date-time}
+        secretShownOnce: {type: boolean, enum: [true]}
+    ActivateTerminalCommand:
+      type: object
+      required: [activationId, activationSecret, deviceFingerprintSha256, publicKeySha256, appVersion, protocolVersion, schemaVersion, capability, idempotencyKey]
+      properties:
+        activationId: {type: string}
+        activationSecret: {type: string, writeOnly: true}
+        deviceFingerprintSha256: {type: string, pattern: '^[a-f0-9]{64}$'}
+        publicKeySha256: {type: string, pattern: '^[a-f0-9]{64}$'}
+        appVersion: {type: string, pattern: '^[0-9]+\\.[0-9]+\\.[0-9]+$'}
+        protocolVersion: {type: string, maxLength: 16}
+        schemaVersion: {type: string, maxLength: 16}
+        capability: {type: object, additionalProperties: true}
+        idempotencyKey: {type: string, minLength: 16, maxLength: 64}
+    ActivatedTerminal:
+      type: object
+      required: [deviceId, tenantId, orgUnitId, storeId, terminalId, deviceCredential, credentialVersion, secretShownOnce]
+      properties:
+        deviceId: {type: string}
+        tenantId: {type: string}
+        orgUnitId: {type: integer, format: int64}
+        storeId: {type: integer, format: int64}
+        terminalId: {type: string}
+        deviceCredential: {type: string, writeOnly: true}
+        credentialVersion: {type: integer, format: int64}
+        secretShownOnce: {type: boolean, enum: [true]}
+    ChangeStatusCommand:
+      type: object
+      required: [targetStatus, reason, idempotencyKey]
+      properties:
+        targetStatus: {type: string, enum: [ACTIVE, BLOCKED, REVOKED, RETIRED]}
+        reason: {type: string, minLength: 4, maxLength: 256}
+        idempotencyKey: {type: string, minLength: 16, maxLength: 64}
+    CapabilityCommand:
+      type: object
+      required: [appVersion, protocolVersion, schemaVersion, clientTime, capability, idempotencyKey]
+      properties:
+        appVersion: {type: string}
+        protocolVersion: {type: string}
+        schemaVersion: {type: string}
+        clientTime: {type: string, format: date-time}
+        capability: {type: object, additionalProperties: true}
+        idempotencyKey: {type: string, minLength: 16, maxLength: 64}

@@ -1,0 +1,14 @@
+schemaVersion: '1.0'
+requirement: T2-UPG-001
+status: DRAFT
+runtimeAllowed: false
+realApkInstall: BLOCKED
+hardwareDependency: T2-HWD-001
+artifacts: [SERVER, WEB, SCHEMA, TEMPLATE, APK]
+states: [DRAFT, SIGNED, STAGED, CANARY, PAUSED, ROLLED_BACK, FORWARD_FIXED, COMPLETED]
+invariants:
+  - 包摘要和签名校验失败必须失败关闭
+  - 营业时段及存在待同步事实时禁止强制升级
+  - Schema迁移采用扩展迁移收缩和安全前向修复
+  - 厂商静默安装、固件兼容和实机回退证据保持BLOCKED
+syntheticVectors: [BAD_SIGNATURE, DIGEST_MISMATCH, CANARY_HEALTH_FAIL, PENDING_SYNC, BUSINESS_HOURS, MIGRATION_FAIL, APP_ROLLBACK, FORWARD_FIX]
