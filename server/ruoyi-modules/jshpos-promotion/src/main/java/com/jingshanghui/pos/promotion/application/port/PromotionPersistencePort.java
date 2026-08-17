@@ -42,6 +42,15 @@ public interface PromotionPersistencePort {
     List<ManualEvent> listAppliedManualEvents(String tenantId, String quoteId);
     ManualEvent findLatestManualEvent(String tenantId, String authorizationId);
     void insertManualEvent(ManualEventWrite value);
+    StoredSnapshot findSnapshotByQuote(String tenantId, String quoteId);
+    StoredSnapshot findSnapshotByOrder(String tenantId, String orderId);
+    StoredSnapshot lockSnapshot(String tenantId, String snapshotId);
+    List<StoredSnapshotLine> listSnapshotLines(String tenantId, String snapshotId);
+    ExistingRefund findRefund(String tenantId, String refundId);
+    List<RefundHistoryRow> listRefundHistory(String tenantId, String snapshotId);
+    void insertSnapshot(SnapshotWrite value);
+    void insertSnapshotLine(SnapshotLineWrite value);
+    void insertRefundAllocation(RefundAllocationWrite value);
 
     /**
      * 写入不可变规则版本。
@@ -180,6 +189,39 @@ public interface PromotionPersistencePort {
                             String reasonText, Long operatorUserId, Long approverUserId,
                             java.time.LocalDate businessDate, String correlationId, String resultJson,
                             String resultSha256, LocalDateTime occurredAt) { }
+    /** 已冻结成交优惠快照头。 */
+    record StoredSnapshot(String snapshotId, String orderId, String quoteId, Long storeId, String terminalId,
+                          java.time.LocalDate businessDate, String currency, String quoteFingerprint,
+                          String snapshotSha256, long grossAmountMinor, long discountAmountMinor,
+                          long payableAmountMinor) { }
+    /** 已冻结成交行及来源分摊摘要。 */
+    record StoredSnapshotLine(String lineId, int lineNo, Long skuId, java.math.BigDecimal quantity,
+                              long grossAmountMinor, long discountAmountMinor, long payableAmountMinor,
+                              String sourceAllocationsJson, String sourceAllocationsSha256) { }
+    /** 已存在退款标识，用于阻断同一业务退款标识对应不同命令。 */
+    record ExistingRefund(String snapshotId, String requestSha256) { }
+    /** 按成交行聚合的累计退款恢复事实。 */
+    record RefundHistoryRow(String lineId, java.math.BigDecimal quantity, long grossAmountMinor,
+                            long discountAmountMinor, long payableAmountMinor) { }
+    /** 成交快照头写入。 */
+    record SnapshotWrite(String tenantId, String snapshotId, String orderId, String quoteId, Long storeId,
+                         String terminalId, java.time.LocalDate businessDate, String currency,
+                         String quoteFingerprint, String snapshotSha256, long grossAmountMinor,
+                         long discountAmountMinor, long payableAmountMinor, Long actorUserId,
+                         String correlationId, LocalDateTime occurredAt) { }
+    /** 成交快照行写入。 */
+    record SnapshotLineWrite(String tenantId, String allocationId, String snapshotId, String lineId,
+                             int lineNo, Long skuId, java.math.BigDecimal quantity, long grossAmountMinor,
+                             long discountAmountMinor, long payableAmountMinor, String sourceAllocationsJson,
+                             String sourceAllocationsSha256) { }
+    /** 只追加退款分摊流水写入。 */
+    record RefundAllocationWrite(String tenantId, String refundAllocationId, String snapshotId,
+                                 String refundId, String lineId, String commandId, String requestSha256,
+                                 java.math.BigDecimal quantity, long grossAmountMinor, long discountAmountMinor,
+                                 long payableAmountMinor, java.math.BigDecimal cumulativeQuantity,
+                                 long cumulativeGrossAmountMinor, long cumulativeDiscountAmountMinor,
+                                 long cumulativePayableAmountMinor, Long actorUserId, String correlationId,
+                                 LocalDateTime occurredAt) { }
     /**
      * 已存命令的精确重放事实。
      * @param requestSha256 命令规范化摘要 @param aggregateId 聚合标识

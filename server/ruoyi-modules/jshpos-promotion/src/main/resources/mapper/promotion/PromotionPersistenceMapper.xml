@@ -290,4 +290,70 @@
           AND i.rule_content_sha256=v.content_sha256 AND p.state IN ('AVAILABLE','ACTIVE','RETIRED')
         ORDER BY i.ordinal_no ASC
     </select>
+    <select id="findSnapshotByQuote" resultType="com.jingshanghui.pos.promotion.application.port.PromotionPersistencePort$StoredSnapshot">
+        SELECT snapshot_id snapshotId,order_id orderId,quote_id quoteId,store_id storeId,terminal_id terminalId,
+          business_date businessDate,currency,quote_fingerprint quoteFingerprint,snapshot_sha256 snapshotSha256,
+          gross_amount_minor grossAmountMinor,discount_amount_minor discountAmountMinor,
+          payable_amount_minor payableAmountMinor
+        FROM prm_transaction_snapshot WHERE tenant_id=#{tenantId} AND quote_id=#{quoteId}
+    </select>
+    <select id="findSnapshotByOrder" resultType="com.jingshanghui.pos.promotion.application.port.PromotionPersistencePort$StoredSnapshot">
+        SELECT snapshot_id snapshotId,order_id orderId,quote_id quoteId,store_id storeId,terminal_id terminalId,
+          business_date businessDate,currency,quote_fingerprint quoteFingerprint,snapshot_sha256 snapshotSha256,
+          gross_amount_minor grossAmountMinor,discount_amount_minor discountAmountMinor,
+          payable_amount_minor payableAmountMinor
+        FROM prm_transaction_snapshot WHERE tenant_id=#{tenantId} AND order_id=#{orderId}
+    </select>
+    <select id="lockSnapshot" resultType="com.jingshanghui.pos.promotion.application.port.PromotionPersistencePort$StoredSnapshot">
+        SELECT snapshot_id snapshotId,order_id orderId,quote_id quoteId,store_id storeId,terminal_id terminalId,
+          business_date businessDate,currency,quote_fingerprint quoteFingerprint,snapshot_sha256 snapshotSha256,
+          gross_amount_minor grossAmountMinor,discount_amount_minor discountAmountMinor,
+          payable_amount_minor payableAmountMinor
+        FROM prm_transaction_snapshot WHERE tenant_id=#{tenantId} AND snapshot_id=#{snapshotId} FOR UPDATE
+    </select>
+    <select id="listSnapshotLines" resultType="com.jingshanghui.pos.promotion.application.port.PromotionPersistencePort$StoredSnapshotLine">
+        SELECT line_id lineId,line_no lineNo,sku_id skuId,quantity,gross_amount_minor grossAmountMinor,
+          discount_amount_minor discountAmountMinor,payable_amount_minor payableAmountMinor,
+          CAST(source_allocations_json AS CHAR) sourceAllocationsJson,
+          source_allocations_sha256 sourceAllocationsSha256
+        FROM prm_transaction_allocation WHERE tenant_id=#{tenantId} AND snapshot_id=#{snapshotId}
+        ORDER BY line_no ASC,sku_id ASC,line_id ASC
+    </select>
+    <select id="findRefund" resultType="com.jingshanghui.pos.promotion.application.port.PromotionPersistencePort$ExistingRefund">
+        SELECT snapshot_id snapshotId,request_sha256 requestSha256
+        FROM prm_refund_allocation_ledger WHERE tenant_id=#{tenantId} AND refund_id=#{refundId}
+        ORDER BY line_id ASC LIMIT 1
+    </select>
+    <select id="listRefundHistory" resultType="com.jingshanghui.pos.promotion.application.port.PromotionPersistencePort$RefundHistoryRow">
+        SELECT line_id lineId,SUM(quantity) quantity,SUM(gross_amount_minor) grossAmountMinor,
+          SUM(discount_amount_minor) discountAmountMinor,SUM(payable_amount_minor) payableAmountMinor
+        FROM prm_refund_allocation_ledger WHERE tenant_id=#{tenantId} AND snapshot_id=#{snapshotId}
+        GROUP BY line_id ORDER BY line_id ASC
+    </select>
+    <insert id="insertSnapshot">
+        INSERT INTO prm_transaction_snapshot(snapshot_id,tenant_id,order_id,quote_id,store_id,terminal_id,
+          business_date,currency,quote_fingerprint,snapshot_sha256,gross_amount_minor,discount_amount_minor,
+          payable_amount_minor,actor_user_id,correlation_id,occurred_at)
+        VALUES(#{snapshotId},#{tenantId},#{orderId},#{quoteId},#{storeId},#{terminalId},#{businessDate},#{currency},
+          #{quoteFingerprint},#{snapshotSha256},#{grossAmountMinor},#{discountAmountMinor},#{payableAmountMinor},
+          #{actorUserId},#{correlationId},#{occurredAt})
+    </insert>
+    <insert id="insertSnapshotLine">
+        INSERT INTO prm_transaction_allocation(allocation_id,tenant_id,snapshot_id,line_id,line_no,sku_id,quantity,
+          gross_amount_minor,discount_amount_minor,payable_amount_minor,source_allocations_json,
+          source_allocations_sha256)
+        VALUES(#{allocationId},#{tenantId},#{snapshotId},#{lineId},#{lineNo},#{skuId},#{quantity},
+          #{grossAmountMinor},#{discountAmountMinor},#{payableAmountMinor},CAST(#{sourceAllocationsJson} AS JSON),
+          #{sourceAllocationsSha256})
+    </insert>
+    <insert id="insertRefundAllocation">
+        INSERT INTO prm_refund_allocation_ledger(refund_allocation_id,tenant_id,snapshot_id,refund_id,line_id,
+          command_id,request_sha256,quantity,gross_amount_minor,discount_amount_minor,payable_amount_minor,
+          cumulative_quantity,cumulative_gross_amount_minor,cumulative_discount_amount_minor,
+          cumulative_payable_amount_minor,actor_user_id,correlation_id,occurred_at)
+        VALUES(#{refundAllocationId},#{tenantId},#{snapshotId},#{refundId},#{lineId},#{commandId},#{requestSha256},
+          #{quantity},#{grossAmountMinor},#{discountAmountMinor},#{payableAmountMinor},#{cumulativeQuantity},
+          #{cumulativeGrossAmountMinor},#{cumulativeDiscountAmountMinor},#{cumulativePayableAmountMinor},
+          #{actorUserId},#{correlationId},#{occurredAt})
+    </insert>
 </mapper>

@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "1.0",
+  "currentMilestone": "PRM3",
+  "snapshot": {
+    "grossAmountMinor": 1500,
+    "discountAmountMinor": 101,
+    "payableAmountMinor": 1399,
+    "lines": [
+      {"lineId": "01K5R000000000000000000001", "lineNo": 1, "skuId": "101", "quantity": "3.000000", "grossAmountMinor": 1000, "discountAmountMinor": 101, "payableAmountMinor": 899},
+      {"lineId": "01K5R000000000000000000002", "lineNo": 2, "skuId": "102", "quantity": "2.000000", "grossAmountMinor": 500, "discountAmountMinor": 0, "payableAmountMinor": 500}
+    ]
+  },
+  "refunds": [
+    {"id": "PRM3-PARTIAL-001", "lines": [{"lineId": "01K5R000000000000000000001", "quantity": "1.000000"}],
+      "expected": {"grossAmountMinor": 333, "recoveredDiscountMinor": 34, "refundableAmountMinor": 299}},
+    {"id": "PRM3-PARTIAL-002", "lines": [{"lineId": "01K5R000000000000000000001", "quantity": "1.000000"}],
+      "expected": {"grossAmountMinor": 334, "recoveredDiscountMinor": 33, "refundableAmountMinor": 301}},
+    {"id": "PRM3-RESIDUAL-003", "lines": [{"lineId": "01K5R000000000000000000001", "quantity": "1.000000"}],
+      "expected": {"grossAmountMinor": 333, "recoveredDiscountMinor": 34, "refundableAmountMinor": 299}},
+    {"id": "PRM3-DECIMAL-004", "lines": [{"lineId": "01K5R000000000000000000002", "quantity": "0.500000"}],
+      "expected": {"grossAmountMinor": 125, "recoveredDiscountMinor": 0, "refundableAmountMinor": 125}}
+  ]
+}

@@ -8,6 +8,7 @@ import 'gate2_schema.dart';
 import 's3_sync_schema.dart';
 import 's9_promotion_schema.dart';
 import 's9_manual_schema.dart';
+import 's9_transaction_schema.dart';
 
 typedef FailureInjector = void Function(String checkpoint);
 
@@ -103,7 +104,11 @@ final class PosLocalDatabase {
       _migrateToPromotionV4();
       version = S9ManualSchema.version;
     }
-    if (version != S9ManualSchema.version) {
+    if (version == S9ManualSchema.version) {
+      _migrateToPromotionV5();
+      version = S9TransactionSchema.version;
+    }
+    if (version != S9TransactionSchema.version) {
       throw StateError('LOCAL_SCHEMA_UNSUPPORTED: $version');
     }
     _verifySchemaChecksum();
@@ -123,6 +128,9 @@ final class PosLocalDatabase {
           .toString(),
       S9ManualSchema.version: sha256
           .convert(utf8.encode(S9ManualSchema.v4))
+          .toString(),
+      S9TransactionSchema.version: sha256
+          .convert(utf8.encode(S9TransactionSchema.v5))
           .toString(),
     };
     for (final entry in expected.entries) {
@@ -187,6 +195,30 @@ final class PosLocalDatabase {
     if (violations.isNotEmpty) {
       throw StateError(
         'LOCAL_DB_INTEGRITY_FAILED: foreign key violations after v4',
+      );
+    }
+  }
+
+  void _migrateToPromotionV5() {
+    transaction(() {
+      database.execute(S9TransactionSchema.v5);
+      final checksum = sha256
+          .convert(utf8.encode(S9TransactionSchema.v5))
+          .toString();
+      database.execute(
+        'INSERT INTO local_schema_history(version,description,checksum_sha256,installed_at) VALUES(5,?,?,?)',
+        [
+          'gate5a-transaction-allocation-refund',
+          checksum,
+          DateTime.now().toUtc().toIso8601String(),
+        ],
+      );
+      database.execute('PRAGMA user_version=${S9TransactionSchema.version}');
+    });
+    final violations = database.select('PRAGMA foreign_key_check');
+    if (violations.isNotEmpty) {
+      throw StateError(
+        'LOCAL_DB_INTEGRITY_FAILED: foreign key violations after v5',
       );
     }
   }

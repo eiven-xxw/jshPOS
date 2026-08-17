@@ -19,53 +19,50 @@ const binding = TrustedDeviceBinding(
 final fixedNow = DateTime.parse('2026-08-17T02:00:00Z');
 
 void main() {
-  test(
-    'SQLite V4 preserves signed package slots and adds manual audit schema',
-    () async {
-      final database = PosLocalDatabase.inMemory(binding);
-      addTearDown(database.close);
-      expect(
-        database.database.select('PRAGMA user_version').single.values.first,
-        4,
-      );
-      final keyPair = await Ed25519().newKeyPair();
-      final trustedKey = await keyPair.extractPublicKey();
-      final installer = PromotionPackageInstaller(
-        database,
-        trustedSigningKeys: {'SYNTHETIC_TEST_KEY': trustedKey},
-        utcNow: () => fixedNow,
-      );
-      final first = await installer.install(
-        await _envelope(keyPair, version: 1, previous: 0),
-      );
-      final second = await installer.install(
-        await _envelope(keyPair, version: 2, previous: 1),
-      );
-      expect(first.slot, 'A');
-      expect(second.slot, 'B');
-      expect(second.rules.single.ruleVersionId, '01K5R000000000000000000001');
-      expect(second.manualPolicy.policyVersionId, 31);
-      expect(second.manualPolicy.roundingMultiplesMinor, [1, 10]);
-      expect((await installer.requireActive()).packageVersion, 2);
-      final bindingRow = database.database
-          .select('SELECT * FROM local_promotion_package_binding')
-          .single;
-      expect(bindingRow['active_package_version'], 2);
-      expect(bindingRow['active_slot'], 'B');
-      expect(
-        database.database.select('SELECT * FROM local_promotion_package_slot'),
-        hasLength(2),
-      );
-      expect(
-        database.database
-            .select(
-              "SELECT state FROM local_promotion_package_slot WHERE slot_code='A'",
-            )
-            .single['state'],
-        'RETIRED',
-      );
-    },
-  );
+  test('SQLite V5 preserves signed packages and adds transaction allocation schema', () async {
+    final database = PosLocalDatabase.inMemory(binding);
+    addTearDown(database.close);
+    expect(
+      database.database.select('PRAGMA user_version').single.values.first,
+      5,
+    );
+    final keyPair = await Ed25519().newKeyPair();
+    final trustedKey = await keyPair.extractPublicKey();
+    final installer = PromotionPackageInstaller(
+      database,
+      trustedSigningKeys: {'SYNTHETIC_TEST_KEY': trustedKey},
+      utcNow: () => fixedNow,
+    );
+    final first = await installer.install(
+      await _envelope(keyPair, version: 1, previous: 0),
+    );
+    final second = await installer.install(
+      await _envelope(keyPair, version: 2, previous: 1),
+    );
+    expect(first.slot, 'A');
+    expect(second.slot, 'B');
+    expect(second.rules.single.ruleVersionId, '01K5R000000000000000000001');
+    expect(second.manualPolicy.policyVersionId, 31);
+    expect(second.manualPolicy.roundingMultiplesMinor, [1, 10]);
+    expect((await installer.requireActive()).packageVersion, 2);
+    final bindingRow = database.database
+        .select('SELECT * FROM local_promotion_package_binding')
+        .single;
+    expect(bindingRow['active_package_version'], 2);
+    expect(bindingRow['active_slot'], 'B');
+    expect(
+      database.database.select('SELECT * FROM local_promotion_package_slot'),
+      hasLength(2),
+    );
+    expect(
+      database.database
+          .select(
+            "SELECT state FROM local_promotion_package_slot WHERE slot_code='A'",
+          )
+          .single['state'],
+      'RETIRED',
+    );
+  });
 
   test(
     'digest signature tenant and version failures do not change active slot',

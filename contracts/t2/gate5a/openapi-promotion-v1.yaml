@@ -253,7 +253,7 @@ paths:
       operationId: allocatePromotionRefund
       summary: 按原成交快照和累计上限计算本次退款恢复
       x-requirement: T2-PRM-003
-      x-permission: promotion:refund:read
+      x-permission: promotion:refund:allocate
       parameters:
         - name: snapshotId
           in: path
@@ -271,6 +271,7 @@ paths:
             application/json:
               schema: {$ref: '#/components/schemas/RefundAllocationResponse'}
         '409': {$ref: '#/components/responses/Conflict'}
+        '422': {$ref: '#/components/responses/CapabilityRejected'}
 components:
   securitySchemes:
     bearerAuth:
@@ -493,16 +494,34 @@ components:
         correlationId: {$ref: '#/components/schemas/Ulid'}
     SnapshotResponse:
       type: object
-      required: [snapshotId, orderId, quoteId, snapshotHash, grossAmountMinor, discountAmountMinor, payableAmountMinor, allocations]
+      additionalProperties: false
+      required: [snapshotId, orderId, quoteId, storeId, currency, quoteFingerprint, snapshotHash, grossAmountMinor, discountAmountMinor, payableAmountMinor, allocations]
       properties:
         snapshotId: {$ref: '#/components/schemas/Ulid'}
         orderId: {$ref: '#/components/schemas/Ulid'}
         quoteId: {$ref: '#/components/schemas/Ulid'}
+        storeId: {type: integer, format: int64, minimum: 1}
+        currency: {type: string, enum: [CNY]}
+        quoteFingerprint: {type: string, pattern: '^[a-f0-9]{64}$'}
         snapshotHash: {type: string, pattern: '^[a-f0-9]{64}$'}
         grossAmountMinor: {$ref: '#/components/schemas/MinorAmount'}
         discountAmountMinor: {$ref: '#/components/schemas/MinorAmount'}
         payableAmountMinor: {$ref: '#/components/schemas/MinorAmount'}
-        allocations: {type: array, items: {$ref: '#/components/schemas/QuoteLineResult'}}
+        allocations: {type: array, items: {$ref: '#/components/schemas/SnapshotLineAllocation'}}
+    SnapshotLineAllocation:
+      type: object
+      additionalProperties: false
+      required: [lineId, lineNo, skuId, quantity, grossAmountMinor, discountAmountMinor, payableAmountMinor, sourceAllocationsJson, sourceAllocationsSha256]
+      properties:
+        lineId: {$ref: '#/components/schemas/Ulid'}
+        lineNo: {type: integer, minimum: 1, maximum: 500}
+        skuId: {type: integer, format: int64, minimum: 1}
+        quantity: {type: number, multipleOf: 0.000001, exclusiveMinimum: 0}
+        grossAmountMinor: {$ref: '#/components/schemas/MinorAmount'}
+        discountAmountMinor: {$ref: '#/components/schemas/MinorAmount'}
+        payableAmountMinor: {$ref: '#/components/schemas/MinorAmount'}
+        sourceAllocationsJson: {type: string, description: 规范化来源分摊JSON}
+        sourceAllocationsSha256: {type: string, pattern: '^[a-f0-9]{64}$'}
     RefundAllocationRequest:
       type: object
       additionalProperties: false
@@ -515,6 +534,7 @@ components:
           minItems: 1
           items:
             type: object
+            additionalProperties: false
             required: [lineId, quantity]
             properties:
               lineId: {$ref: '#/components/schemas/Ulid'}
@@ -522,22 +542,30 @@ components:
         correlationId: {$ref: '#/components/schemas/Ulid'}
     RefundAllocationResponse:
       type: object
-      required: [refundId, snapshotId, refundableAmountMinor, recoveredDiscountMinor, lines]
+      additionalProperties: false
+      required: [refundId, snapshotId, grossAmountMinor, refundableAmountMinor, recoveredDiscountMinor, lines]
       properties:
         refundId: {$ref: '#/components/schemas/Ulid'}
         snapshotId: {$ref: '#/components/schemas/Ulid'}
+        grossAmountMinor: {$ref: '#/components/schemas/MinorAmount'}
         refundableAmountMinor: {$ref: '#/components/schemas/MinorAmount'}
         recoveredDiscountMinor: {$ref: '#/components/schemas/MinorAmount'}
         lines:
           type: array
           items:
             type: object
-            required: [lineId, quantity, refundableAmountMinor, recoveredDiscountMinor]
+            additionalProperties: false
+            required: [lineId, quantity, grossAmountMinor, refundableAmountMinor, recoveredDiscountMinor, cumulativeQuantity, cumulativeGrossAmountMinor, cumulativeDiscountAmountMinor, cumulativePayableAmountMinor]
             properties:
               lineId: {$ref: '#/components/schemas/Ulid'}
-              quantity: {type: string}
+              quantity: {type: number, multipleOf: 0.000001, exclusiveMinimum: 0}
+              grossAmountMinor: {$ref: '#/components/schemas/MinorAmount'}
               refundableAmountMinor: {$ref: '#/components/schemas/MinorAmount'}
               recoveredDiscountMinor: {$ref: '#/components/schemas/MinorAmount'}
+              cumulativeQuantity: {type: number, multipleOf: 0.000001, minimum: 0}
+              cumulativeGrossAmountMinor: {$ref: '#/components/schemas/MinorAmount'}
+              cumulativeDiscountAmountMinor: {$ref: '#/components/schemas/MinorAmount'}
+              cumulativePayableAmountMinor: {$ref: '#/components/schemas/MinorAmount'}
     PromotionPackage:
       type: object
       required: [packageId, storeId, packageVersion, previousVersion, payloadSha256, signingKeyId, generatedAt, expiresAt]

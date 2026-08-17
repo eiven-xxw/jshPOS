@@ -144,4 +144,22 @@ public final class PromotionRequests {
                                 @NotBlank @Pattern(regexp="^[a-f0-9]{64}$") String expectedPreviewFingerprint,
                                 @NotBlank @Size(max=256) String reason,
                                 @NotBlank @Pattern(regexp=ULID) String correlationId) { }
+
+    /** 冻结不可变成交优惠快照。 */
+    public record FreezeSnapshot(@NotBlank @Pattern(regexp=ULID) String commandId,
+                                 @NotBlank @Pattern(regexp=ULID) String snapshotId,
+                                 @NotBlank @Pattern(regexp=ULID) String orderId,
+                                 @NotBlank @Pattern(regexp=ULID) String quoteId,
+                                 @NotBlank @Pattern(regexp="^[a-f0-9]{64}$") String quoteFingerprint,
+                                 @NotBlank @Pattern(regexp=ULID) String correlationId) { }
+
+    /** 按原成交快照追加退款优惠恢复。 */
+    public record AllocateRefund(@NotBlank @Pattern(regexp=ULID) String commandId,
+                                 @NotBlank @Pattern(regexp=ULID) String refundId,
+                                 @NotEmpty @Size(max=500) List<@Valid RefundLine> lines,
+                                 @NotBlank @Pattern(regexp=ULID) String correlationId) { }
+
+    /** 退款行只接受原成交行标识和精确数量。 */
+    public record RefundLine(@NotBlank @Pattern(regexp=ULID) String lineId,
+                             @NotBlank @Pattern(regexp="^[0-9]+(?:\\.[0-9]{1,6})?$") String quantity) { }
 }

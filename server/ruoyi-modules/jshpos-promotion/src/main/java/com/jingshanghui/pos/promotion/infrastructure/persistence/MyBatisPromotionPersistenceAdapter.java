@@ -86,6 +86,29 @@ public class MyBatisPromotionPersistenceAdapter implements PromotionPersistenceP
         return mapper.findLatestManualEvent(tenantId, authorizationId);
     }
     @Override public void insertManualEvent(ManualEventWrite value) { requireOne(mapper.insertManualEvent(value)); }
+    @Override public StoredSnapshot findSnapshotByQuote(String tenantId, String quoteId) {
+        return mapper.findSnapshotByQuote(tenantId, quoteId);
+    }
+    @Override public StoredSnapshot findSnapshotByOrder(String tenantId, String orderId) {
+        return mapper.findSnapshotByOrder(tenantId, orderId);
+    }
+    @Override public StoredSnapshot lockSnapshot(String tenantId, String snapshotId) {
+        return mapper.lockSnapshot(tenantId, snapshotId);
+    }
+    @Override public List<StoredSnapshotLine> listSnapshotLines(String tenantId, String snapshotId) {
+        return mapper.listSnapshotLines(tenantId, snapshotId);
+    }
+    @Override public ExistingRefund findRefund(String tenantId, String refundId) {
+        return mapper.findRefund(tenantId, refundId);
+    }
+    @Override public List<RefundHistoryRow> listRefundHistory(String tenantId, String snapshotId) {
+        return mapper.listRefundHistory(tenantId, snapshotId);
+    }
+    @Override public void insertSnapshot(SnapshotWrite value) { requireOne(mapper.insertSnapshot(value)); }
+    @Override public void insertSnapshotLine(SnapshotLineWrite value) { requireOne(mapper.insertSnapshotLine(value)); }
+    @Override public void insertRefundAllocation(RefundAllocationWrite value) {
+        requireOne(mapper.insertRefundAllocation(value));
+    }
     private void requireOne(int count) {
         if (count != 1) throw new ServiceException("PRM-STORE-002: 促销事实写入失败", 409);
     }

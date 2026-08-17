@@ -7,6 +7,7 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import com.jingshanghui.pos.promotion.domain.ManualAdjustmentEngine.ActionType;
 import com.jingshanghui.pos.promotion.domain.ManualAdjustmentEngine.PaymentMethod;
+import java.math.BigDecimal;
 
 /** 促销应用层命令；所有命令均刻意不包含 tenant_id。 */
 public final class PromotionCommands {
@@ -92,4 +93,17 @@ public final class PromotionCommands {
      */
     public record ManualApprove(String commandId, String authorizationId, String expectedPreviewFingerprint,
                                 String reason, String correlationId) { }
+
+    /** 冻结订单成交优惠快照；订单标识仅作跨 Owner 只读引用。 */
+    public record FreezeSnapshot(String commandId, String snapshotId, String orderId, String quoteId,
+                                 String quoteFingerprint, String correlationId) { }
+
+    /** 按原成交快照追加一次退款优惠恢复事实。 */
+    public record AllocateRefund(String commandId, String snapshotId, String refundId,
+                                 List<RefundLine> lines, String correlationId) {
+        public AllocateRefund { lines = lines == null ? List.of() : List.copyOf(lines); }
+    }
+
+    /** 退款行只声明原成交行和本次退回数量。 */
+    public record RefundLine(String lineId, BigDecimal quantity) { }
 }

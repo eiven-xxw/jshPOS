@@ -56,4 +56,15 @@ public interface PromotionPersistenceMapper {
     ManualEvent findLatestManualEvent(@Param("tenantId") String tenantId,
                                        @Param("authorizationId") String authorizationId);
     int insertManualEvent(ManualEventWrite value);
+    StoredSnapshot findSnapshotByQuote(@Param("tenantId") String tenantId, @Param("quoteId") String quoteId);
+    StoredSnapshot findSnapshotByOrder(@Param("tenantId") String tenantId, @Param("orderId") String orderId);
+    StoredSnapshot lockSnapshot(@Param("tenantId") String tenantId, @Param("snapshotId") String snapshotId);
+    List<StoredSnapshotLine> listSnapshotLines(@Param("tenantId") String tenantId,
+                                                @Param("snapshotId") String snapshotId);
+    ExistingRefund findRefund(@Param("tenantId") String tenantId, @Param("refundId") String refundId);
+    List<RefundHistoryRow> listRefundHistory(@Param("tenantId") String tenantId,
+                                              @Param("snapshotId") String snapshotId);
+    int insertSnapshot(SnapshotWrite value);
+    int insertSnapshotLine(SnapshotLineWrite value);
+    int insertRefundAllocation(RefundAllocationWrite value);
 }

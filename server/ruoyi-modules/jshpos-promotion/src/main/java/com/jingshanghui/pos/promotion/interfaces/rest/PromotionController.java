@@ -6,6 +6,7 @@ import com.jingshanghui.pos.promotion.application.model.PromotionViews.*;
 import com.jingshanghui.pos.promotion.application.service.PromotionService;
 import com.jingshanghui.pos.promotion.application.service.PromotionPackageService;
 import com.jingshanghui.pos.promotion.application.service.ManualPromotionService;
+import com.jingshanghui.pos.promotion.application.service.PromotionTransactionService;
 import com.jingshanghui.pos.promotion.domain.ManualAdjustmentEngine.ActionType;
 import com.jingshanghui.pos.promotion.domain.ManualAdjustmentEngine.PaymentMethod;
 import com.jingshanghui.pos.promotion.domain.PromotionModels.*;
@@ -39,6 +40,7 @@ public class PromotionController {
     private final PromotionService service;
     private final PromotionPackageService packages;
     private final ManualPromotionService manualPromotions;
+    private final PromotionTransactionService transactions;
 
     /** 创建规则身份和首版草稿。 */
     @PostMapping("/rules")
@@ -172,6 +174,30 @@ public class PromotionController {
         @Valid @RequestBody PromotionRequests.ManualApprove request) {
         return R.ok(manualPromotions.approve(new ManualApprove(request.commandId(), authorizationId,
             request.expectedPreviewFingerprint(), request.reason(), request.correlationId())));
+    }
+
+    /** 为订单冻结不可变成交优惠快照与逐行来源分摊。 */
+    @PostMapping("/snapshots")
+    @SaCheckPermission("promotion:snapshot:freeze")
+    @Log(title="冻结成交优惠快照", businessType=BusinessType.INSERT)
+    public R<SnapshotView> freezeSnapshot(@Valid @RequestBody PromotionRequests.FreezeSnapshot request) {
+        return R.ok(transactions.freeze(new FreezeSnapshot(request.commandId(), request.snapshotId(),
+            request.orderId(), request.quoteId(), request.quoteFingerprint(), request.correlationId())));
+    }
+
+    /** 按原成交快照和累计上限追加本次退款优惠恢复流水。 */
+    @PostMapping("/snapshots/{snapshotId}/refund-allocations")
+    @SaCheckPermission("promotion:refund:allocate")
+    @Log(title="计算退款优惠恢复", businessType=BusinessType.INSERT)
+    public R<RefundAllocationView> allocateRefund(
+        @PathVariable @Pattern(regexp=PromotionRequests.ULID) String snapshotId,
+        @Valid @RequestBody PromotionRequests.AllocateRefund request) {
+        List<com.jingshanghui.pos.promotion.application.model.PromotionCommands.RefundLine> lines =
+            request.lines().stream().map(line ->
+                new com.jingshanghui.pos.promotion.application.model.PromotionCommands.RefundLine(
+                    line.lineId(), new BigDecimal(line.quantity()))).toList();
+        return R.ok(transactions.allocateRefund(new AllocateRefund(request.commandId(), snapshotId,
+            request.refundId(), lines, request.correlationId())));
     }
 
     private StateCommand state(String ruleId, String versionId, PromotionRequests.State request) {

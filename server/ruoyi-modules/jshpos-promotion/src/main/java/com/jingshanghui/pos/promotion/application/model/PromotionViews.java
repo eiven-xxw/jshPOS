@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.jingshanghui.pos.promotion.domain.PromotionModels.QuoteResult;
 
 import java.time.LocalDateTime;
+import java.math.BigDecimal;
+import java.util.List;
 
 /** 促销应用层只读视图。 */
 public final class PromotionViews {
@@ -92,4 +94,30 @@ public final class PromotionViews {
                                            long policyVersionId, String beforeFingerprint,
                                            String previewFingerprint, long incrementalDiscountMinor,
                                            QuoteResult result) { }
+
+    /** 不可变成交优惠快照。 */
+    public record SnapshotView(String snapshotId, String orderId, String quoteId, Long storeId,
+                               String currency, String quoteFingerprint, String snapshotHash,
+                               long grossAmountMinor, long discountAmountMinor, long payableAmountMinor,
+                               List<SnapshotLineView> allocations) {
+        public SnapshotView { allocations = List.copyOf(allocations); }
+    }
+
+    /** 成交快照逐行守恒分摊及来源解释摘要。 */
+    public record SnapshotLineView(String lineId, int lineNo, Long skuId, BigDecimal quantity,
+                                   long grossAmountMinor, long discountAmountMinor, long payableAmountMinor,
+                                   String sourceAllocationsJson, String sourceAllocationsSha256) { }
+
+    /** 本次退款和执行后的累计优惠恢复结果。 */
+    public record RefundAllocationView(String refundId, String snapshotId, long grossAmountMinor,
+                                       long recoveredDiscountMinor, long refundableAmountMinor,
+                                       List<RefundLineView> lines) {
+        public RefundAllocationView { lines = List.copyOf(lines); }
+    }
+
+    /** 退款行本次金额和累计上限视图。 */
+    public record RefundLineView(String lineId, BigDecimal quantity, long grossAmountMinor,
+                                 long recoveredDiscountMinor, long refundableAmountMinor,
+                                 BigDecimal cumulativeQuantity, long cumulativeGrossAmountMinor,
+                                 long cumulativeDiscountAmountMinor, long cumulativePayableAmountMinor) { }
 }

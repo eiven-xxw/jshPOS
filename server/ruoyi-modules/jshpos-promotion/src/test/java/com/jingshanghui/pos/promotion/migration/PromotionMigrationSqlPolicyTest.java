@@ -8,7 +8,7 @@ import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/** 静态确认 PRM-001 十二张表、中文注释、租户复合键、守恒约束和不可变触发器。 */
+/** 静态确认 PRM-001—003 中文注释、租户复合键、守恒约束和不可变触发器。 */
 class PromotionMigrationSqlPolicyTest {
     @Test
     void migrationOwnsPromotionFactsAndCommentsEveryColumn() throws Exception {
@@ -59,6 +59,21 @@ class PromotionMigrationSqlPolicyTest {
             .doesNotContain("prm_transaction_snapshot")
             .doesNotContain("prm_transaction_allocation")
             .doesNotContain("prm_refund_allocation_ledger")
+            .doesNotContain("update ord_").doesNotContain("update inv_").doesNotContain("update pay_");
+    }
+
+    @Test
+    void prm3MigrationAddsOnlyThreeImmutableAllocationFactsAndThreePermissions() throws Exception {
+        String sql = resource("/db/migration/V202608170023__gate5a_transaction_allocation.sql");
+        assertThat(count(sql, "create table prm_")).isEqualTo(3);
+        assertThat(sql).contains("create table prm_transaction_snapshot")
+            .contains("create table prm_transaction_allocation")
+            .contains("create table prm_refund_allocation_ledger")
+            .contains("gross_amount_minor=discount_amount_minor+payable_amount_minor")
+            .contains("cumulative_gross_amount_minor=cumulative_discount_amount_minor+cumulative_payable_amount_minor")
+            .contains("trg_prm_snapshot_no_update").contains("trg_prm_allocation_no_update")
+            .contains("trg_prm_refund_alloc_no_update").contains("promotion:snapshot:freeze")
+            .contains("promotion:refund:allocate").contains("promotion:snapshot:read")
             .doesNotContain("update ord_").doesNotContain("update inv_").doesNotContain("update pay_");
     }
 

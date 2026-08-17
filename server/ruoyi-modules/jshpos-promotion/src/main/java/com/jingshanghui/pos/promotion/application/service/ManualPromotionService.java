@@ -59,6 +59,7 @@ public class ManualPromotionService {
         if (replay != null) return replay;
         StoredQuote quote = requireLockedQuote(principal.tenantId(), command.quoteId());
         authorization.requireStoreAccess(quote.storeId());
+        requireUnfrozen(principal.tenantId(), quote.quoteId());
         if (persistence.findPendingManualEvent(principal.tenantId(), quote.quoteId()) != null) {
             throw new ServiceException("PRM-AUTH-004: 报价存在待复核人工优惠", 409);
         }
@@ -99,6 +100,7 @@ public class ManualPromotionService {
         }
         authorization.requireStoreAccess(candidate.storeId());
         StoredQuote quote = requireLockedQuote(approver.tenantId(), candidate.quoteId());
+        requireUnfrozen(approver.tenantId(), quote.quoteId());
         ManualEvent pending = persistence.findLatestManualEvent(approver.tenantId(), command.authorizationId());
         if (pending == null || !"PENDING_APPROVAL".equals(pending.state())) {
             throw new ServiceException("PRM-AUTH-006: 待复核人工优惠不存在或状态已变化", 409);
@@ -268,6 +270,12 @@ public class ManualPromotionService {
         StoredQuote value = persistence.lockQuote(tenantId, quoteId);
         if (value == null) throw new ServiceException("PRM-AUTH-018: 原始报价不存在或不可见", 404);
         return value;
+    }
+
+    private void requireUnfrozen(String tenantId, String quoteId) {
+        if (persistence.findSnapshotByQuote(tenantId, quoteId) != null) {
+            throw new ServiceException("PRM-AUTH-021: 报价已冻结成交快照，不得继续追加人工优惠", 409);
+        }
     }
 
     private CanonicalJson.Result canonicalAuthorize(ManualAuthorize value) {
