@@ -32,7 +32,7 @@ CREATE TABLE prm_manual_price_audit (
   result_json JSON NOT NULL COMMENT '预检或已应用确定性报价JSON',
   result_sha256 CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '结果规范化摘要',
   occurred_at DATETIME(3) NOT NULL COMMENT '事件发生时间UTC',
-  created_at DATETIME(3) NOT NULL DEFAULT UTC_TIMESTAMP(3) COMMENT '入库时间UTC',
+  created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '入库时间UTC',
   PRIMARY KEY (tenant_id,manual_event_id),
   UNIQUE KEY uk_prm_manual_command (tenant_id,command_id),
   UNIQUE KEY uk_prm_manual_sequence (tenant_id,authorization_id,event_sequence),

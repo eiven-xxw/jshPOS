@@ -6,7 +6,7 @@
   "files": [
     {
       "path": "server/ruoyi-modules/jshpos-promotion/src/main/resources/db/migration/V202608170020__gate5a_promotion.sql",
-      "sha256": "b4cff8a91b7923f3bda82e47545ffe7cdfc2629603ed7d68ec793b377da707bc"
+      "sha256": "9276603e5573a3d15c5683658e792dab02aadd7370682223ea32495db769dc98"
     },
     {
       "path": "server/ruoyi-modules/jshpos-promotion/src/main/resources/db/migration/V202608170021__gate5a_permissions.sql",
@@ -14,11 +14,11 @@
     },
     {
       "path": "server/ruoyi-modules/jshpos-promotion/src/main/resources/db/migration/V202608170022__gate5a_manual_promotion.sql",
-      "sha256": "42757a427a5a6ac0ae09ac53f920306ab524565b86bfdb39fb8fd48f469b1663"
+      "sha256": "03db781ab26cb40e29835c51527eeb2e835f5bebf515c528ba75b9c5e151eddb"
     },
     {
       "path": "server/ruoyi-modules/jshpos-promotion/src/main/resources/db/migration/V202608170023__gate5a_transaction_allocation.sql",
-      "sha256": "014322c0387d7e56a9aada5b13dbf012311b7e85f453c0c2d14a0236ec855b35"
+      "sha256": "96acb65a2aa972b0877b505588df5ce2c74e1c3b8625143792ddde4ed08731f0"
     },
     {
       "path": "pos-flutter/lib/infrastructure/local_database/s9_promotion_schema.dart",
