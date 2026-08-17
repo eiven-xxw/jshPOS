@@ -19,12 +19,12 @@ const binding = TrustedDeviceBinding(
 final fixedNow = DateTime.parse('2026-08-17T02:00:00Z');
 
 void main() {
-  test('SQLite V6 preserves signed packages and transaction allocation schema', () async {
+  test('SQLite V7 preserves signed packages and transaction allocation schema', () async {
     final database = PosLocalDatabase.inMemory(binding);
     addTearDown(database.close);
     expect(
       database.database.select('PRAGMA user_version').single.values.first,
-      6,
+      7,
     );
     final keyPair = await Ed25519().newKeyPair();
     final trustedKey = await keyPair.extractPublicKey();
