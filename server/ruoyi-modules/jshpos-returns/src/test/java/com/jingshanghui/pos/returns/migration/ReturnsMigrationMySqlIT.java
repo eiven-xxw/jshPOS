@@ -12,21 +12,23 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/** Gate 5B CI 在干净 MySQL 8.4 中验证 V1—V27、JSON 不可变触发器与权限。 */
+/** Gate 5B CI 在干净 MySQL 8.4 中验证 19 个实际迁移文件到最高版本 V27、JSON 不可变触发器与权限。 */
 class ReturnsMigrationMySqlIT {
     private final String url = required("GATE5B_MYSQL_JDBC_URL");
     private final String username = required("GATE5B_MYSQL_USERNAME");
     private final String password = required("GATE5B_MYSQL_PASSWORD");
 
     @Test
-    void migratesAllTwentySevenVersionsAndEnforcesReturnAppendOnlyConstraints() throws Exception {
+    void migratesAllNineteenFilesThroughV27AndEnforcesReturnAppendOnlyConstraints() throws Exception {
         createFrameworkMenuFixture();
         Flyway flyway = Flyway.configure().dataSource(url, username, password)
             .locations("classpath:db/migration").table("jshpos_flyway_schema_history")
             .baselineOnMigrate(true).baselineVersion("0").cleanDisabled(true).load();
-        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(27);
+        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(19);
         assertThat(flyway.migrate().migrationsExecuted).isZero();
         flyway.validate();
+        assertThat(flyway.info().current()).isNotNull();
+        assertThat(flyway.info().current().getVersion().toString()).isEqualTo("202608170027");
         assertTablesAndPermissions();
         assertCashLedgerIndexRepair();
         assertImmutableOutboxAndGuards();
