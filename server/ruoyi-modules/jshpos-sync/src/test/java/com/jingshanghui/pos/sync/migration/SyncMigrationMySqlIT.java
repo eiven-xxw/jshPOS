@@ -7,7 +7,9 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Arrays;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -15,17 +17,29 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 /** Executed by the Sprint S3 MySQL 8.4 quality gate with synthetic tenants only. */
 class SyncMigrationMySqlIT {
 
+    /** Gate 6A 同步模块必须组合执行的已发布迁移版本，防止只校验数量而漏装或错装迁移。 */
+    private static final Set<String> EXPECTED_MIGRATION_VERSIONS = Set.of(
+        "202608160001", "202608160002", "202608160003", "202608160004",
+        "202608160005", "202608160006", "202608160007", "202608160008",
+        "202608170024", "202608170025", "202608160036", "202608160037"
+    );
+
     private final String url = required("GATE6A_MYSQL_JDBC_URL", "SPRINT3_MYSQL_JDBC_URL");
     private final String username = required("GATE6A_MYSQL_USERNAME", "SPRINT3_MYSQL_USERNAME");
     private final String password = required("GATE6A_MYSQL_PASSWORD", "SPRINT3_MYSQL_PASSWORD");
 
     @Test
-    void migratesAllTenVersionsAndEnforcesTerminalTenantImmutabilityAndCapacity() throws Exception {
+    void migratesExpectedVersionsAndEnforcesTerminalTenantImmutabilityAndCapacity() throws Exception {
         createFrameworkMenuFixture();
         Flyway flyway = Flyway.configure().dataSource(url, username, password)
             .locations("classpath:db/migration").table("jshpos_flyway_schema_history")
             .baselineOnMigrate(true).baselineVersion("0").cleanDisabled(true).load();
-        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(10);
+        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(EXPECTED_MIGRATION_VERSIONS.size());
+        Set<String> appliedVersions = Arrays.stream(flyway.info().applied())
+            .map(info -> info.getVersion().getVersion())
+            .collect(Collectors.toSet());
+        assertThat(appliedVersions).containsExactlyInAnyOrderElementsOf(EXPECTED_MIGRATION_VERSIONS);
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("202608170025");
         assertThat(flyway.migrate().migrationsExecuted).isZero();
         flyway.validate();
         assertTablesAndPermissions();
