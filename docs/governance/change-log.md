@@ -68,6 +68,9 @@
 | CR-T2G4D-006 | 2026-08-17 | ACCEPTED | 项目发起人确认《T2 Gate 4D / Sprint S8 周门禁报告》并接受 Gate 4D CONDITIONAL PASS，授权 `T2-TRF-001` 由 VERIFIED 更新为 ACCEPTED | T2-TRF-001、ADR-026 | 项目发起人 2026-08-17 明确确认；外部阻断不变 |
 | CR-T2G5A-001 | 2026-08-17 | APPROVED | 从治理提交 `63537b5` 启动 Gate 5A / Sprint S9，仅按 PRM-001→002→003 顺序准入确定性基础促销、人工优惠、快照分摊与退款恢复 | T2-PRM-001..003、ADR-028 | 券、积分、储值、会员、预算、报表、支付网络和后续 Gate 继续禁止 |
 | CR-T2G5A-002 | 2026-08-17 | IN_PROGRESS | T2-PRM-001 完成数据主权、状态、规则原语、顺序、不变量、权限、审计、API/事件、Flyway、离线包、容量、回退和测试准入，按顺序首先进入实现 | T2-PRM-001、ADR-028 | T2-PRM-002/003 继续 DRAFT；Provider 网络和外部证据为0 |
+| CR-T2G5A-003 | 2026-08-17 | VERIFIED_PRM1 | T2-PRM-001 完成版本化确定性规则、解释、签名离线包、Java/Dart 同向量和独立门禁后更新为 VERIFIED；随后才准入 PRM-002 | T2-PRM-001、ADR-028 | 独立提交 `0012ebc`；不代表 ACCEPTED，PRM-003 当时仍 DRAFT |
+| CR-T2G5A-004 | 2026-08-17 | VERIFIED_PRM2 | T2-PRM-002 完成受权人工改价、整单折扣、抹零、职责分离、只追加审计、SQLite V4 和同向量验证后更新为 VERIFIED；随后才准入 PRM-003 | T2-PRM-002、ADR-028 | 独立提交 `ee4165f`；Provider 网络和外部证据仍为0 |
+| CR-T2G5A-005 | 2026-08-17 | VERIFIED_AWAITING_CI | T2-PRM-003 完成成交快照、来源分摊、金额守恒、原快照累计退款恢复、SQLite V5、Java/Dart 同向量和一万组固定 seed 验证后更新为 VERIFIED | T2-PRM-003、ADR-028 | 独立提交 `caddb2a`；三项只等待 Gate 5A 总门禁，不代表 ACCEPTED |
 | CR-DEV-003 | 2026-08-17 | APPROVED | 采纳模型分型、持久化策略与数据库中文注释规范：新增表必须登记 MP_ENTITY/XML_ONLY/READ_PROJECTION；简单 CRUD 默认使用普通持久化实体与 MyBatis-Plus Lambda，核心事实使用 Repository 与 XML；Record、领域聚合和持久化实体分离，并强制 Java 与 Schema 中文注释 | AGENTS.md、技术架构与开发规范 10.2.5/10.4、JSH-POS-DEV-STD-002、ADR-027 | 项目发起人 2026-08-17 明确确认；仅登记工程治理，不修改业务代码、既有 Flyway、RTM 或 Gate 4D 状态，存量整改须另行准入 |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。

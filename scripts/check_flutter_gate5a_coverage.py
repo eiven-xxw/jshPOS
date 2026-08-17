@@ -8,6 +8,8 @@ from pathlib import Path
 PREFIXES = (
     "lib/features/promotion/",
     "lib/infrastructure/local_database/s9_promotion_schema.dart",
+    "lib/infrastructure/local_database/s9_manual_schema.dart",
+    "lib/infrastructure/local_database/s9_transaction_schema.dart",
 )
 
 

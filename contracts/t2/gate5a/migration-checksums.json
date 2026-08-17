@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "1.0",
+  "phase": "T2-GATE5A-SPRINT-S9",
+  "sealedAt": "2026-08-17",
+  "policy": "已封存迁移禁止修改；任何修复只能新增前向迁移",
+  "files": [
+    {
+      "path": "server/ruoyi-modules/jshpos-promotion/src/main/resources/db/migration/V202608170020__gate5a_promotion.sql",
+      "sha256": "b4cff8a91b7923f3bda82e47545ffe7cdfc2629603ed7d68ec793b377da707bc"
+    },
+    {
+      "path": "server/ruoyi-modules/jshpos-promotion/src/main/resources/db/migration/V202608170021__gate5a_permissions.sql",
+      "sha256": "5d689ca58960807db3815893a83a9b0e785f0118e92d33d18992b66447008803"
+    },
+    {
+      "path": "server/ruoyi-modules/jshpos-promotion/src/main/resources/db/migration/V202608170022__gate5a_manual_promotion.sql",
+      "sha256": "42757a427a5a6ac0ae09ac53f920306ab524565b86bfdb39fb8fd48f469b1663"
+    },
+    {
+      "path": "server/ruoyi-modules/jshpos-promotion/src/main/resources/db/migration/V202608170023__gate5a_transaction_allocation.sql",
+      "sha256": "014322c0387d7e56a9aada5b13dbf012311b7e85f453c0c2d14a0236ec855b35"
+    },
+    {
+      "path": "pos-flutter/lib/infrastructure/local_database/s9_promotion_schema.dart",
+      "sha256": "036ba1db99cb3f8ca0e58a2c4b73bb82c52dceffb4e6195d036331e41baeb705"
+    },
+    {
+      "path": "pos-flutter/lib/infrastructure/local_database/s9_manual_schema.dart",
+      "sha256": "bd5939099a7a350a15d49b2202dd619e6cc200196d44e7462f586d2776f076e2"
+    },
+    {
+      "path": "pos-flutter/lib/infrastructure/local_database/s9_transaction_schema.dart",
+      "sha256": "5dad753e70f3b985cbe1d316902b3a30b1886637dfa574431b00a67ee0ca8ab9"
+    }
+  ]
+}

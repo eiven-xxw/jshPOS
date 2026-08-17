@@ -225,8 +225,22 @@ def check_migrations(stage: str) -> dict[str, object]:
     if not LEDGER.is_file():
         fail("Gate 5A migration checksum ledger missing")
     files = json.loads(LEDGER.read_text(encoding="utf-8")).get("files", [])
-    if len(files) not in (2, 3):
-        fail("Gate 5A must seal server V20/V21 and POS V3 migration artifacts")
+    expected_paths = {
+        "server/ruoyi-modules/jshpos-promotion/src/main/resources/db/migration/"
+        "V202608170020__gate5a_promotion.sql",
+        "server/ruoyi-modules/jshpos-promotion/src/main/resources/db/migration/"
+        "V202608170021__gate5a_permissions.sql",
+        "server/ruoyi-modules/jshpos-promotion/src/main/resources/db/migration/"
+        "V202608170022__gate5a_manual_promotion.sql",
+        "server/ruoyi-modules/jshpos-promotion/src/main/resources/db/migration/"
+        "V202608170023__gate5a_transaction_allocation.sql",
+        "pos-flutter/lib/infrastructure/local_database/s9_promotion_schema.dart",
+        "pos-flutter/lib/infrastructure/local_database/s9_manual_schema.dart",
+        "pos-flutter/lib/infrastructure/local_database/s9_transaction_schema.dart",
+    }
+    actual_paths = {item.get("path") for item in files}
+    if len(files) != 7 or actual_paths != expected_paths:
+        fail("Gate 5A must seal server V20-V23 and POS SQLite V3-V5 migration artifacts")
     for item in files:
         path = ROOT / item["path"]
         if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != item["sha256"]:
