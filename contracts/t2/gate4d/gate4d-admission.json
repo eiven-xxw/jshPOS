@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0",
+  "phase": "T2-GATE4D-SPRINT-S8",
+  "baselineTag": "t2-prep-baseline-2026-08-16",
+  "branchStart": "b84555ee7af02c650a47146426f6c9e4029827b5",
+  "admittedRequirements": ["T2-TRF-001"],
+  "designOnlyRequirements": ["T2-PRM-001", "T2-PRM-002", "T2-PRM-003"],
+  "blockedRequirements": ["T2-PAY-002"],
+  "transferPolicy": {
+    "scope": "SAME_TENANT_WAREHOUSE",
+    "currency": "CNY",
+    "quantityScale": 6,
+    "costScale": 6,
+    "roundingMode": "HALF_EVEN",
+    "dispatchMode": "FULL_ONCE",
+    "receiptMode": "PARTIAL_ALLOWED",
+    "postDispatchCancelMode": "REJECT_REQUIRE_REVERSE_FLOW",
+    "overReceiptMode": "REJECT"
+  },
+  "runtimeBoundary": {
+    "providerNetworkCallsAllowed": 0,
+    "transferRuntimeAllowed": true,
+    "promotionRuntimeAllowed": false,
+    "memberRuntimeAllowed": false,
+    "reportRuntimeAllowed": false,
+    "accountsPayableRuntimeAllowed": false,
+    "generalLedgerRuntimeAllowed": false,
+    "batchCostRuntimeAllowed": false,
+    "complexWmsRuntimeAllowed": false
+  },
+  "evidence": {"sandbox": 0, "realDevice": 0, "pilot": 0}
+}

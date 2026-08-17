@@ -1,0 +1,258 @@
+openapi: 3.0.3
+info:
+  title: 鲸熵汇基础调拨 API
+  version: 1.0.0
+  description: T2-TRF-001 Gate 4D 同租户基础调拨；tenant_id、库存前后量和成本均不得由客户端提交。
+servers:
+  - url: /api/v1
+paths:
+  /inventory/transfers:
+    post:
+      operationId: createTransfer
+      summary: 创建调拨草稿
+      x-requirement-id: T2-TRF-001
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CreateTransferRequest'}
+      responses:
+        '200': {$ref: '#/components/responses/TransferResponse'}
+        '409': {$ref: '#/components/responses/Conflict'}
+  /inventory/transfers/{transferId}:
+    get:
+      operationId: getTransfer
+      summary: 查询调拨及在途摘要
+      x-requirement-id: T2-TRF-001
+      security: [{bearerAuth: []}]
+      parameters:
+        - {$ref: '#/components/parameters/TransferId'}
+      responses:
+        '200': {$ref: '#/components/responses/TransferResponse'}
+        '404': {$ref: '#/components/responses/NotFound'}
+  /inventory/transfers/{transferId}/submit:
+    post:
+      operationId: submitTransfer
+      summary: 提交调拨
+      x-requirement-id: T2-TRF-001
+      security: [{bearerAuth: []}]
+      parameters: [{$ref: '#/components/parameters/TransferId'}]
+      requestBody: {$ref: '#/components/requestBodies/StateCommand'}
+      responses:
+        '200': {$ref: '#/components/responses/TransferResponse'}
+        '409': {$ref: '#/components/responses/Conflict'}
+  /inventory/transfers/{transferId}/approve:
+    post:
+      operationId: approveTransfer
+      summary: 审批调拨
+      x-requirement-id: T2-TRF-001
+      security: [{bearerAuth: []}]
+      parameters: [{$ref: '#/components/parameters/TransferId'}]
+      requestBody: {$ref: '#/components/requestBodies/StateCommand'}
+      responses:
+        '200': {$ref: '#/components/responses/TransferResponse'}
+        '409': {$ref: '#/components/responses/Conflict'}
+  /inventory/transfers/{transferId}/dispatch:
+    post:
+      operationId: dispatchTransfer
+      summary: 来源仓整单发出
+      x-requirement-id: T2-TRF-001
+      security: [{bearerAuth: []}]
+      parameters: [{$ref: '#/components/parameters/TransferId'}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/DispatchRequest'}
+      responses:
+        '200': {$ref: '#/components/responses/TransferResponse'}
+        '409': {$ref: '#/components/responses/Conflict'}
+  /inventory/transfers/{transferId}/receipts:
+    post:
+      operationId: receiveTransfer
+      summary: 目的仓部分或最终收货
+      x-requirement-id: T2-TRF-001
+      security: [{bearerAuth: []}]
+      parameters: [{$ref: '#/components/parameters/TransferId'}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ReceiptRequest'}
+      responses:
+        '200': {$ref: '#/components/responses/TransferResponse'}
+        '409': {$ref: '#/components/responses/Conflict'}
+  /inventory/transfers/{transferId}/difference:
+    post:
+      operationId: resolveTransferDifference
+      summary: 审批并结清少收差异
+      x-requirement-id: T2-TRF-001
+      security: [{bearerAuth: []}]
+      parameters: [{$ref: '#/components/parameters/TransferId'}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/DifferenceRequest'}
+      responses:
+        '200': {$ref: '#/components/responses/TransferResponse'}
+        '409': {$ref: '#/components/responses/Conflict'}
+  /inventory/transfers/{transferId}/cancel:
+    post:
+      operationId: cancelTransfer
+      summary: 发出前取消调拨
+      x-requirement-id: T2-TRF-001
+      security: [{bearerAuth: []}]
+      parameters: [{$ref: '#/components/parameters/TransferId'}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CancelRequest'}
+      responses:
+        '200': {$ref: '#/components/responses/TransferResponse'}
+        '409': {$ref: '#/components/responses/Conflict'}
+components:
+  securitySchemes:
+    bearerAuth: {type: http, scheme: bearer}
+  parameters:
+    TransferId:
+      name: transferId
+      in: path
+      required: true
+      schema: {$ref: '#/components/schemas/Ulid'}
+  requestBodies:
+    StateCommand:
+      required: true
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/StateCommandRequest'}
+  responses:
+    TransferResponse:
+      description: 调拨聚合视图
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/TransferView'}
+    Conflict:
+      description: 状态、幂等、数量、范围或权威来源冲突
+    NotFound:
+      description: 不存在或数据范围不可见
+  schemas:
+    Ulid:
+      type: string
+      pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+    DecimalQuantity:
+      type: string
+      pattern: '^[0-9]{1,13}(\.[0-9]{1,6})?$'
+    CommandBase:
+      type: object
+      required: [commandId, correlationId, expectedVersion]
+      properties:
+        commandId: {$ref: '#/components/schemas/Ulid'}
+        correlationId: {type: string, minLength: 1, maxLength: 96}
+        expectedVersion: {type: integer, format: int64, minimum: 0}
+    TransferLineInput:
+      type: object
+      additionalProperties: false
+      required: [lineId, skuId, baseUnitId, quantity]
+      properties:
+        lineId: {$ref: '#/components/schemas/Ulid'}
+        skuId: {type: integer, format: int64, minimum: 1}
+        baseUnitId: {type: integer, format: int64, minimum: 1}
+        quantity: {$ref: '#/components/schemas/DecimalQuantity'}
+    CreateTransferRequest:
+      type: object
+      additionalProperties: false
+      required: [commandId, transferId, sourceStoreId, destinationStoreId, sourceWarehouseId, destinationWarehouseId, businessDate, correlationId, lines]
+      properties:
+        commandId: {$ref: '#/components/schemas/Ulid'}
+        transferId: {$ref: '#/components/schemas/Ulid'}
+        sourceStoreId: {type: integer, format: int64, minimum: 1}
+        destinationStoreId: {type: integer, format: int64, minimum: 1}
+        sourceWarehouseId: {$ref: '#/components/schemas/Ulid'}
+        destinationWarehouseId: {$ref: '#/components/schemas/Ulid'}
+        businessDate: {type: string, format: date}
+        correlationId: {type: string, minLength: 1, maxLength: 96}
+        reasonCode: {type: string, minLength: 1, maxLength: 32}
+        lines: {type: array, minItems: 1, maxItems: 500, items: {$ref: '#/components/schemas/TransferLineInput'}}
+    StateCommandRequest:
+      allOf:
+        - {$ref: '#/components/schemas/CommandBase'}
+    DispatchRequest:
+      allOf:
+        - {$ref: '#/components/schemas/CommandBase'}
+        - type: object
+          required: [dispatchId, eventId, businessDate]
+          properties:
+            dispatchId: {$ref: '#/components/schemas/Ulid'}
+            eventId: {$ref: '#/components/schemas/Ulid'}
+            businessDate: {type: string, format: date}
+    ReceiptLineInput:
+      type: object
+      additionalProperties: false
+      required: [receiptLineId, transferLineId, quantity]
+      properties:
+        receiptLineId: {$ref: '#/components/schemas/Ulid'}
+        transferLineId: {$ref: '#/components/schemas/Ulid'}
+        quantity: {$ref: '#/components/schemas/DecimalQuantity'}
+    ReceiptRequest:
+      allOf:
+        - {$ref: '#/components/schemas/CommandBase'}
+        - type: object
+          required: [receiptId, eventId, businessDate, finalReceipt, lines]
+          properties:
+            receiptId: {$ref: '#/components/schemas/Ulid'}
+            eventId: {$ref: '#/components/schemas/Ulid'}
+            businessDate: {type: string, format: date}
+            finalReceipt: {type: boolean}
+            lines: {type: array, minItems: 1, maxItems: 500, items: {$ref: '#/components/schemas/ReceiptLineInput'}}
+    DifferenceLineInput:
+      type: object
+      additionalProperties: false
+      required: [transferLineId, quantity, reasonCode]
+      properties:
+        transferLineId: {$ref: '#/components/schemas/Ulid'}
+        quantity: {$ref: '#/components/schemas/DecimalQuantity'}
+        reasonCode: {enum: [SHORTAGE, DAMAGED, REJECTED, TRANSIT_LOSS]}
+    DifferenceRequest:
+      allOf:
+        - {$ref: '#/components/schemas/CommandBase'}
+        - type: object
+          required: [resolutionId, lines]
+          properties:
+            resolutionId: {$ref: '#/components/schemas/Ulid'}
+            reason: {type: string, minLength: 1, maxLength: 256}
+            lines: {type: array, minItems: 1, maxItems: 500, items: {$ref: '#/components/schemas/DifferenceLineInput'}}
+    CancelRequest:
+      allOf:
+        - {$ref: '#/components/schemas/CommandBase'}
+        - type: object
+          required: [reason]
+          properties:
+            reason: {type: string, minLength: 1, maxLength: 256}
+    TransferLineView:
+      type: object
+      required: [transferLineId, skuId, baseUnitId, requestedQuantity, dispatchedQuantity, receivedQuantity, openTransitQuantity, differenceQuantity]
+      properties:
+        transferLineId: {$ref: '#/components/schemas/Ulid'}
+        skuId: {type: integer, format: int64}
+        baseUnitId: {type: integer, format: int64}
+        requestedQuantity: {$ref: '#/components/schemas/DecimalQuantity'}
+        dispatchedQuantity: {$ref: '#/components/schemas/DecimalQuantity'}
+        receivedQuantity: {$ref: '#/components/schemas/DecimalQuantity'}
+        openTransitQuantity: {$ref: '#/components/schemas/DecimalQuantity'}
+        differenceQuantity: {$ref: '#/components/schemas/DecimalQuantity'}
+    TransferView:
+      type: object
+      required: [transferId, state, sourceStoreId, destinationStoreId, sourceWarehouseId, destinationWarehouseId, aggregateVersion, duplicate, lines]
+      properties:
+        transferId: {$ref: '#/components/schemas/Ulid'}
+        state: {enum: [DRAFT, SUBMITTED, APPROVED, IN_TRANSIT, PARTIALLY_RECEIVED, DIFFERENCE_PENDING, CLOSED, CANCELLED]}
+        sourceStoreId: {type: integer, format: int64}
+        destinationStoreId: {type: integer, format: int64}
+        sourceWarehouseId: {$ref: '#/components/schemas/Ulid'}
+        destinationWarehouseId: {$ref: '#/components/schemas/Ulid'}
+        aggregateVersion: {type: integer, format: int64}
+        duplicate: {type: boolean}
+        lines: {type: array, items: {$ref: '#/components/schemas/TransferLineView'}}

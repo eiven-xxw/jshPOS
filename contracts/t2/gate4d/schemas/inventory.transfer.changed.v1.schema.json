@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.jingshanghui.example/inventory/inventory.transfer.changed.v1.schema.json",
+  "title": "Inventory transfer state event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "eventId", "eventType", "aggregateId", "aggregateVersion", "state", "sourceWarehouseId", "destinationWarehouseId", "correlationId"],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "eventId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "eventType": {"enum": ["inventory.transfer.created.v1", "inventory.transfer.submitted.v1", "inventory.transfer.approved.v1", "inventory.transfer.dispatched.v1", "inventory.transfer.received.v1", "inventory.transfer.difference-opened.v1", "inventory.transfer.difference-resolved.v1", "inventory.transfer.cancelled.v1"]},
+    "aggregateId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "aggregateVersion": {"type": "integer", "minimum": 1},
+    "state": {"enum": ["DRAFT", "SUBMITTED", "APPROVED", "IN_TRANSIT", "PARTIALLY_RECEIVED", "DIFFERENCE_PENDING", "CLOSED", "CANCELLED"]},
+    "sourceWarehouseId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "destinationWarehouseId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "quantitySummary": {"type": "string", "pattern": "^-?[0-9]{1,13}\\.[0-9]{6}$"},
+    "businessDate": {"type": "string", "format": "date"},
+    "correlationId": {"type": "string", "minLength": 1, "maxLength": 96}
+  },
+  "x-requirement-id": "T2-TRF-001"
+}

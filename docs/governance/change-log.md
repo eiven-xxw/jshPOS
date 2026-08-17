@@ -60,5 +60,7 @@
 | CR-T2G4C-002 | 2026-08-17 | IN_PROGRESS | T2-CST-001 完成数据主权、输入事实、单调顺序、成本不变量、权限、审计、API/事件、Flyway、容量、回退、固定向量和 CI 限定准入，由 DRAFT 经 READY 进入 IN_PROGRESS | T2-CST-001、ADR-025 | 只准入 jshpos-costing；T2-TRF-001 保持 DRAFT，外部证据为0 |
 | CR-T2G4C-003 | 2026-08-17 | VERIFIED | T2-CST-001 已完成不可变成本流水、移动加权平均、采购/销售退货、冲正、负库存估值、可重建投影、租户攻击和固定向量验证，等待项目发起人验收 | T2-CST-001、ADR-025 | 仅内部 STATIC/UNIT/MYSQL_INTEGRATION/SYNTHETIC_VECTOR 证据；不得自行更新为 ACCEPTED；T2-TRF-001 保持 DRAFT，T2-PAY-002 保持 BLOCKED |
 | CR-T2G4C-004 | 2026-08-17 | CONDITIONAL_PASS | Gate 4C 技术候选在 GitHub Ubuntu、Windows 与 MySQL 8.4.6 干净执行器十个 Job 一次通过，形成周门禁报告并等待项目发起人确认 | T2-CST-001、ADR-025 | GitHub Actions 31965458348；T2-CST-001 保持 VERIFIED；支付网络、实机和试点证据均为0 |
+| CR-T2G4D-001 | 2026-08-17 | APPROVED | 项目发起人接受 Gate 4C CONDITIONAL PASS，将 T2-CST-001 更新为 ACCEPTED，并从 Gate 4C 封板提交启动 Gate 4D / Sprint S8 | T2-CST-001、T2-TRF-001、ADR-026 | 仅正式准入基础调拨；T2-PRM-001..003 设计准备；T2-PAY-002 保持 BLOCKED |
+| CR-T2G4D-002 | 2026-08-17 | IN_PROGRESS | T2-TRF-001 已冻结数据主权、状态、不变量、权限、审计、API/事件、Flyway、容量、回退、固定向量和 CI 后进入实现 | T2-TRF-001、ADR-026 | 发出/收货双事实、在途只追加、目的仓继承发出成本；支付网络和外部证据为0 |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。

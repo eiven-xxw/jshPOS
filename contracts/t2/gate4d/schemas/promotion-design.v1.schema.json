@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.jingshanghui.example/promotion/promotion-design.v1.schema.json",
+  "title": "Gate 4D promotion design-only contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "ruleVersionId", "candidateOrder", "allocation"],
+  "properties": {
+    "schemaVersion": {"const": "1.0-design-only"},
+    "ruleVersionId": {"type": "string"},
+    "candidateOrder": {"type": "array", "items": {"type": "string"}},
+    "exclusiveGroups": {"type": "array", "items": {"type": "string"}},
+    "manualPricePermission": {"type": "string"},
+    "transactionDiscountMinor": {"type": "integer", "minimum": 0},
+    "roundingMinor": {"type": "integer"},
+    "allocation": {
+      "type": "object",
+      "required": ["method", "stableRemainderOrder", "amountConservation"],
+      "properties": {
+        "method": {"const": "PROPORTIONAL_LARGEST_REMAINDER"},
+        "stableRemainderOrder": {"const": "order_line_no,sku_id"},
+        "amountConservation": {"const": "sum(line_discount_minor)=order_discount_minor"}
+      }
+    },
+    "refundMode": {"const": "RESTORE_ORIGINAL_TRANSACTION_SNAPSHOT"}
+  },
+  "x-runtime-allowed": false,
+  "x-requirement-ids": ["T2-PRM-001", "T2-PRM-002", "T2-PRM-003"]
+}
