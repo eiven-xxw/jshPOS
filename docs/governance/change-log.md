@@ -65,5 +65,6 @@
 | CR-T2G4D-003 | 2026-08-17 | IMPLEMENTED_AWAITING_RETEST | GitHub Actions `31987101249` 首轮 MySQL 8.4.6 实迁移发现差异原因 CHECK 对 `NULL` 求值为 `UNKNOWN` 并被 MySQL 接受；V18 收紧为差异待处理时 `reason_code IS NOT NULL`，未降低约束、阈值或跳过测试 | T2-TRF-001、T2-MIG-001、ADR-026 | 首轮失败不计为通过；要求修复后完整十 Job 重跑 |
 | CR-T2G4D-004 | 2026-08-17 | VERIFIED_AWAITING_CONFIRMATION | 修复候选 `94f6c48` 在 GitHub Actions `31987472677` 十个 Job 全绿；255 项服务端测试、28 个调拨固定向量、18 个租户攻击面、MySQL 实迁移、Flutter 双平台、APK/Kotlin、安全、SBOM、许可证和 219 文件证据索引通过，T2-TRF-001 更新为 VERIFIED | T2-TRF-001、ADR-026 | 不代表 ACCEPTED；T2-PRM-001..003 保持 DRAFT，T2-PAY-002 保持 BLOCKED，支付网络和外部证据均为0 |
 | CR-T2G4D-005 | 2026-08-17 | VERIFIED_AWAITING_CONFIRMATION | 迁移摘要、RTM VERIFIED、周门禁报告和下一步指令纳入封板提交 `a096aac`；GitHub Actions `31988486868` 在 closure 模式十个 Job 全绿，证据聚合复核 219 文件、255 项服务端测试和 28 个向量 | T2-TRF-001、ADR-026 | 不代表 ACCEPTED；等待项目发起人确认，三项促销保持 DRAFT、T2-PAY-002 保持 BLOCKED，外部证据为0 |
+| CR-DEV-003 | 2026-08-17 | APPROVED | 采纳模型分型、持久化策略与数据库中文注释规范：新增表必须登记 MP_ENTITY/XML_ONLY/READ_PROJECTION；简单 CRUD 默认使用普通持久化实体与 MyBatis-Plus Lambda，核心事实使用 Repository 与 XML；Record、领域聚合和持久化实体分离，并强制 Java 与 Schema 中文注释 | AGENTS.md、技术架构与开发规范 10.2.5/10.4、JSH-POS-DEV-STD-002、ADR-027 | 项目发起人 2026-08-17 明确确认；仅登记工程治理，不修改业务代码、既有 Flyway、RTM 或 Gate 4D 状态，存量整改须另行准入 |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。
