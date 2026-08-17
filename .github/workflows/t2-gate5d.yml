@@ -34,7 +34,7 @@ jobs:
       - name: Verify ancestry RTM sequence contracts migrations and scope
         run: |
           mkdir -p artifacts/t2/gate5d/governance
-          stage=$(python -c "import csv; r={x['requirement_id']:x for x in csv.DictReader(open('docs/governance/rtm.csv',encoding='utf-8-sig'))}; print('closure' if r['T2-RPT-002']['status']=='VERIFIED' else 'rpt1')")
+          stage=$(python -c "import csv,json; r={x['requirement_id']:x for x in csv.DictReader(open('docs/governance/rtm.csv',encoding='utf-8-sig'))}; s=r['T2-RPT-002']['status']; n=len(json.load(open('contracts/t2/gate5d/migration-checksums.json',encoding='utf-8'))['files']); print('closure' if s=='VERIFIED' else ('rpt1' if s=='DRAFT' else ('rpt2' if n==4 else 'rpt2-admission')))")
           python scripts/check_t0_structure.py
           python scripts/check_rtm.py
           python scripts/check_contracts.py

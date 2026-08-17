@@ -29,7 +29,8 @@ EXTERNAL = {"T2-HWD-001": "BLOCKED", "T2-PAY-002": "BLOCKED", "T2-PAR-001": "BLO
 STAGES = {
     "design": {"T2-RPT-001": "IN_PROGRESS", "T2-RPT-002": "DRAFT"},
     "rpt1": {"T2-RPT-001": "VERIFIED", "T2-RPT-002": "DRAFT"},
-    "rpt2": {"T2-RPT-001": "VERIFIED", "T2-RPT-002": "VERIFIED"},
+    "rpt2-admission": {"T2-RPT-001": "VERIFIED", "T2-RPT-002": "IN_PROGRESS"},
+    "rpt2": {"T2-RPT-001": "VERIFIED", "T2-RPT-002": "IN_PROGRESS"},
     "closure": {"T2-RPT-001": "VERIFIED", "T2-RPT-002": "VERIFIED"},
 }
 DESIGN_FILES = (
@@ -45,6 +46,9 @@ DESIGN_FILES = (
     "contracts/t2/gate5d/openapi-reporting-v1.yaml",
     "contracts/t2/gate5d/reporting-events-v1.yaml",
     "contracts/t2/gate5d/test-vectors/rpt001-vectors.json",
+    "contracts/t2/gate5d/test-vectors/rpt002-vectors.json",
+    "contracts/t2/gate5d/schemas/payment-reconciliation-fact.v1.schema.json",
+    "contracts/t2/gate5d/schemas/internal-synthetic-bill-entry.v1.schema.json",
 )
 
 
@@ -120,7 +124,7 @@ def contracts(stage: str) -> dict[str, object]:
         if marker not in events:
             fail(f"Reporting event boundary missing {marker}")
     checksum = json.loads(content["contracts/t2/gate5d/migration-checksums.json"])
-    expected_count = 2 if stage in {"design", "rpt1"} else 4
+    expected_count = 2 if stage in {"design", "rpt1", "rpt2-admission"} else 4
     if len(checksum.get("files", [])) != expected_count:
         fail(f"migration checksum ledger expected {expected_count} files")
     for item in checksum["files"]:
@@ -143,7 +147,7 @@ def scope(stage: str) -> dict[str, int]:
     for owner_prefix in ("ORD_", "PAY_", "REF_", "INV_", "CST_", "PRM_", "MBR_"):
         if f" FROM {owner_prefix}" in xml or f" JOIN {owner_prefix}" in xml or f"UPDATE {owner_prefix}" in xml:
             fail(f"cross-owner SQL detected {owner_prefix}")
-    if stage in {"design", "rpt1"}:
+    if stage in {"design", "rpt1", "rpt2-admission"}:
         for token in ("PaymentReconciliationService", "rpt_payment_reconciliation", "rpt_internal_bill"):
             if token.lower() in lowered:
                 fail(f"RPT-002 runtime appeared before RPT-001 verification: {token}")

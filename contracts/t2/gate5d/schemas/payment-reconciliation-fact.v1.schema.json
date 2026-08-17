@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jingshanghui.example/contracts/t2/gate5d/payment-reconciliation-fact.v1.schema.json",
+  "title": "Gate 5D Provider-neutral Payment or Refund Fact",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["sourceEventId", "sourceOwner", "sourceSequence", "partitionKey", "schemaVersion", "contentSha256", "occurredAt", "businessDate", "orgId", "storeId", "terminalId", "factType", "reconciliationKey", "orderId", "amountMinor", "currency", "lifecycleStatus", "correlationId"],
+  "properties": {
+    "sourceEventId": { "$ref": "#/$defs/ulid" },
+    "sourceOwner": { "enum": ["PAYMENT", "REFUND"] },
+    "sourceSequence": { "type": "integer", "minimum": 1 },
+    "partitionKey": { "type": "string", "pattern": "^[A-Za-z0-9._:-]{1,96}$" },
+    "schemaVersion": { "const": "1.0" },
+    "contentSha256": { "$ref": "#/$defs/sha256" },
+    "occurredAt": { "type": "string", "format": "date-time" },
+    "businessDate": { "type": "string", "format": "date" },
+    "orgId": { "type": "integer", "minimum": 1 },
+    "storeId": { "type": "integer", "minimum": 1 },
+    "terminalId": { "type": "string", "minLength": 1, "maxLength": 64 },
+    "factType": { "enum": ["PAYMENT", "REFUND"] },
+    "reconciliationKey": { "type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$" },
+    "orderId": { "$ref": "#/$defs/ulid" },
+    "amountMinor": { "type": "integer", "minimum": 0, "maximum": 9000000000000000000 },
+    "currency": { "const": "CNY" },
+    "lifecycleStatus": { "enum": ["SUCCEEDED", "FAILED", "UNKNOWN"] },
+    "correlationId": { "$ref": "#/$defs/ulid" }
+  },
+  "allOf": [
+    { "if": { "properties": { "sourceOwner": { "const": "PAYMENT" } } }, "then": { "properties": { "factType": { "const": "PAYMENT" } } } },
+    { "if": { "properties": { "sourceOwner": { "const": "REFUND" } } }, "then": { "properties": { "factType": { "const": "REFUND" } } } }
+  ],
+  "$defs": {
+    "ulid": { "type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$" },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

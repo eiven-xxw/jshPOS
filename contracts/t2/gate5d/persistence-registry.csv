@@ -4,4 +4,6 @@ T2-RPT-001,Reporting,MySQL,rpt_projection_lineage/rpt_sales_daily/rpt_inventory_
 T2-RPT-001,Reporting,MySQL,rpt_difference/rpt_projection_rebuild,XML_ONLY,差异与重建状态不覆盖权威事实,VERIFIED
 T2-RPT-001,Reporting,MySQL,rpt_export_request/rpt_export_artifact,XML_ONLY,独立审批、租户对象键和单次令牌,VERIFIED
 T2-RPT-001,Reporting,FileSystemOrObjectStorage,reporting/{tenant}/{export}/{sha256}.csv,ARTIFACT_PORT,服务端生成租户命名空间且到期清理,VERIFIED
-T2-RPT-002,PaymentReporting,NONE,NONE,DESIGN_ONLY,本阶段尚未通过RPT-001独立验证,DRAFT
+T2-RPT-002,PaymentReporting,MySQL,rpt_payment_fact_inbox/rpt_internal_bill_inbox,XML_ONLY,Provider无关事实与内部合成账单只追加幂等且同键异摘要拒绝,IN_PROGRESS
+T2-RPT-002,PaymentReporting,MySQL,rpt_payment_reconciliation,READ_PROJECTION,双边匹配差异投影可丢弃并从Inbox重建,IN_PROGRESS
+T2-RPT-002,PaymentReporting,MySQL,rpt_reconciliation_audit,XML_ONLY,差异处理人与状态审计链只追加不可改,IN_PROGRESS

@@ -12,6 +12,10 @@
 | `report:export:generate` | 受控任务生成 | 可信任务上下文与租户命名空间 |
 | `report:export:download` | 获取短期单次下载 | 绑定用户、租户、制品、过期时间 |
 | `report:repair:manage` | 处理差异/修复任务 | 只能更改 Reporting 修复状态 |
+| `report:payment:ingest` | 消费 Provider 无关支付/退款事实 | 仅受控内部执行器；禁止 Provider 网络 |
+| `report:bill:synthetic-import` | 导入内部合成账单 | 必须显式 synthetic；独立权限与审计 |
+| `report:payment-reconciliation:read` | 查询支付退款内部对账 | 可信租户、门店范围与字段脱敏 |
+| `report:payment-reconciliation:manage` | 分派或处理差异 | 只写 Reporting 状态与审计链 |
 
 路由权限只控制展示，应用服务仍调用 `TrustedTenantContext` 和 `ScopeAuthorizationService`。查询多个门店时逐项校验；空门店集合不代表全租户。
 
@@ -23,12 +27,18 @@
 - `POST /api/v1/reporting/rebuilds`：创建并执行受控重建。
 - `POST /api/v1/report-exports`、`/{id}/approve`、`/{id}/generate`、`/{id}/download-token`、`/{id}/expire`。
 - `GET /api/v1/reporting/differences` 与 `POST /{id}/transitions`。
+- `POST /api/v1/reporting/payment-facts`：消费 Provider 无关支付/退款冻结事实。
+- `POST /api/v1/reporting/internal-synthetic-bills`：导入显式内部合成账单条目。
+- `GET /api/v1/reports/payment-reconciliation`：按业务日、门店、差异和处理状态查询。
+- `POST /api/v1/reporting/payment-reconciliation/{id}/transitions`：分派、解决或忽略差异并追加审计。
 
 所有写接口使用稳定幂等键、请求摘要和关联标识；错误码统一前缀 `RPT-G5D-*`。
 
 ## 3. 审计
 
 必须记录来源冲突、缺口、晚到补算、重建开始/完成/失败/切换、查询越权、导出申请/审批/拒绝/生成/下载/过期、差异状态迁移。审计只保存 ID、枚举、范围、数量、摘要和结果，不保存原始业务明细或 PII。
+
+RPT-002 另行记录支付/退款事实接收、合成账单导入、匹配结论变化、差异分派/解决/忽略和全量重建。审计不得出现 Provider 密钥、签名、账号、原始回调或真实支付敏感数据；`synthetic=true` 与 `externalEvidence=0` 必须可查。
 
 ## 4. 安全导出
 
@@ -38,6 +48,8 @@
 4. 路径：对象键固定为 `reporting/{tenantId}/{exportId}/{artifactSha256}.csv`；拒绝 `..`、反斜杠、绝对路径和客户端对象键。
 5. 下载：只返回随机高熵令牌的摘要；令牌绑定租户、申请人/获准下载人、制品和 10 分钟有效期，首次成功消费后失效。
 6. 清理：临时文件写入受控 Runner/应用临时根目录，异常和成功后均删除；过期任务清除对象并追加审计，元数据保留。
+
+RPT-002 导出复用同一申请、独立审批、字段白名单、CSV 防注入、租户对象键、单次短期令牌和到期清理链路；只允许对账 ID、业务日、门店、类型、金额、币种、差异/处理状态和处理人，不允许任何支付敏感字段。
 
 ## 5. 端口
 

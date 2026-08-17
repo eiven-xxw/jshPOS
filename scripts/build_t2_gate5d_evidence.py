@@ -84,11 +84,17 @@ def requirement_state() -> tuple[str, dict[str, str]]:
     if rows["T2-RPT-001"]["status"] != "VERIFIED":
         fail("T2-RPT-001 must be VERIFIED pending sponsor confirmation")
     rpt2 = rows["T2-RPT-002"]["status"]
-    if rpt2 not in {"DRAFT", "VERIFIED"}:
+    if rpt2 not in {"DRAFT", "IN_PROGRESS", "VERIFIED"}:
         fail(f"T2-RPT-002 invalid evidence-stage status {rpt2}")
     if rows["T2-PAY-002"]["status"] != "BLOCKED":
         fail("T2-PAY-002 must remain BLOCKED")
-    stage = "rpt1" if rpt2 == "DRAFT" else "closure"
+    if rpt2 == "DRAFT":
+        stage = "rpt1"
+    elif rpt2 == "VERIFIED":
+        stage = "closure"
+    else:
+        checksum = json.loads((ROOT / "contracts/t2/gate5d/migration-checksums.json").read_text(encoding="utf-8"))
+        stage = "rpt2" if len(checksum.get("files", [])) == 4 else "rpt2-admission"
     return stage, {"T2-RPT-001": "VERIFIED", "T2-RPT-002": rpt2, "T2-PAY-002": "BLOCKED"}
 
 

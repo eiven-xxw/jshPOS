@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "1.0",
+  "syntheticOnly": true,
+  "providerNetworkCalls": 0,
+  "externalEvidence": { "sandbox": 0, "realDevice": 0, "pilot": 0 },
+  "tenants": ["tenant_alpha", "tenant_beta"],
+  "scenarios": [
+    { "id": "payment-matched", "expected": "MATCHED" },
+    { "id": "refund-matched", "expected": "MATCHED" },
+    { "id": "fact-before-bill", "expected": "MISSING_BILL_THEN_MATCHED" },
+    { "id": "bill-before-fact", "expected": "MISSING_INTERNAL_THEN_MATCHED" },
+    { "id": "amount-mismatch", "expected": "AMOUNT_MISMATCH" },
+    { "id": "status-mismatch", "expected": "STATUS_MISMATCH" },
+    { "id": "business-date-mismatch", "expected": "BUSINESS_DATE_MISMATCH" },
+    { "id": "unknown-is-not-success", "expected": "STATUS_MISMATCH" },
+    { "id": "duplicate-same-hash", "expected": "IDEMPOTENT" },
+    { "id": "duplicate-different-hash", "expected": "REJECTED" },
+    { "id": "cross-tenant-key", "expected": "ISOLATED" },
+    { "id": "assignment-audit", "expected": "APPEND_ONLY" },
+    { "id": "late-convergence-keeps-audit", "expected": "MATCHED_WITH_HISTORY" },
+    { "id": "full-rebuild", "expected": "DIGEST_EQUAL" },
+    { "id": "synthetic-not-sandbox", "expected": "EXTERNAL_EVIDENCE_ZERO" }
+  ]
+}

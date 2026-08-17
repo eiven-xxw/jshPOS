@@ -3,10 +3,10 @@
   "phase": "T2-GATE5D",
   "branchStart": "12c916c7a4b956a0bdca09ebc3ee6b4e19f9cf63",
   "sequence": ["T2-RPT-001", "T2-RPT-002"],
-  "activeRequirement": "T2-RPT-001",
+  "activeRequirement": "T2-RPT-002",
   "requirements": {
     "T2-RPT-001": "VERIFIED",
-    "T2-RPT-002": "DRAFT",
+    "T2-RPT-002": "IN_PROGRESS",
     "T2-PAY-002": "BLOCKED"
   },
   "forbidden": [

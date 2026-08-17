@@ -3,7 +3,8 @@ info:
   title: JSH POS Reporting Owner API
   version: 1.0.0-gate5d
   description: >-
-    T2-RPT-001 销售收银库存成本可重建投影与安全导出契约。
+    T2-RPT-001 销售收银库存成本可重建投影与安全导出，以及
+    T2-RPT-002 Provider 无关支付退款内部合成对账契约。
     tenant_id 只从可信认证或受控任务上下文注入，接口不得接受租户覆盖。
 paths:
   /api/v1/reporting/source-events:
@@ -116,6 +117,57 @@ paths:
       x-permission: report:repair:manage
       responses:
         "200": { description: 仅 Reporting 差异与修复状态，不覆盖业务事实 }
+  /api/v1/reporting/payment-facts:
+    post:
+      operationId: ingestProviderNeutralPaymentFact
+      x-requirement: T2-RPT-002
+      x-permission: report:payment:ingest
+      x-provider-network-calls: 0
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "./schemas/payment-reconciliation-fact.v1.schema.json" }
+      responses:
+        "200": { description: Provider 无关支付或退款事实已幂等应用 }
+        "409": { description: 同事实标识异摘要或匹配键冲突 }
+  /api/v1/reporting/internal-synthetic-bills:
+    post:
+      operationId: ingestInternalSyntheticBillEntry
+      x-requirement: T2-RPT-002
+      x-permission: report:bill:synthetic-import
+      x-evidence-level: SYNTHETIC_INTERNAL_ONLY
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "./schemas/internal-synthetic-bill-entry.v1.schema.json" }
+      responses:
+        "200": { description: 内部合成账单条目已幂等应用且不构成 SANDBOX 证据 }
+        "409": { description: 同账单条目标识异摘要 }
+  /api/v1/reports/payment-reconciliation:
+    get:
+      operationId: queryPaymentReconciliation
+      x-requirement: T2-RPT-002
+      x-permission: report:payment-reconciliation:read
+      parameters:
+        - { $ref: "#/components/parameters/FromDate" }
+        - { $ref: "#/components/parameters/ToDate" }
+        - { $ref: "#/components/parameters/StoreId" }
+        - { name: differenceType, in: query, schema: { type: string, enum: [MATCHED, MISSING_BILL, MISSING_INTERNAL, AMOUNT_MISMATCH, CURRENCY_MISMATCH, STATUS_MISMATCH, BUSINESS_DATE_MISMATCH] } }
+        - { name: handlingState, in: query, schema: { type: string, enum: [MATCHED, OPEN, ASSIGNED, RESOLVED, IGNORED] } }
+      responses:
+        "200": { description: 可信租户和门店范围内的 Provider 无关内部合成对账投影 }
+  /api/v1/reporting/payment-reconciliation/{reconciliationId}/transitions:
+    post:
+      operationId: transitionPaymentReconciliation
+      x-requirement: T2-RPT-002
+      x-permission: report:payment-reconciliation:manage
+      parameters:
+        - { $ref: "#/components/parameters/ReconciliationId" }
+      responses:
+        "200": { description: 差异处理状态已更新并追加审计链 }
+        "409": { description: 非法状态迁移或乐观锁冲突 }
 components:
   securitySchemes:
     bearerAuth: { type: http, scheme: bearer }
@@ -124,6 +176,7 @@ components:
     ToDate: { name: toDate, in: query, required: true, schema: { type: string, format: date } }
     StoreId: { name: storeId, in: query, required: true, schema: { type: integer, format: int64, minimum: 1 } }
     ExportId: { name: exportId, in: path, required: true, schema: { $ref: "#/components/schemas/Ulid" } }
+    ReconciliationId: { name: reconciliationId, in: path, required: true, schema: { $ref: "#/components/schemas/Ulid" } }
   schemas:
     Ulid: { type: string, pattern: "^[0-9A-HJKMNP-TV-Z]{26}$" }
 security: [{ bearerAuth: [] }]

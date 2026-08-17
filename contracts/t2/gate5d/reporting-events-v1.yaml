@@ -7,8 +7,13 @@ inbound:
   - { owner: Promotion, families: [SALES], schemas: [promotion.snapshot.bound.v1] }
   - { owner: Inventory, families: [INVENTORY_COST], schemas: [inventory.ledger.posted.v1] }
   - { owner: Costing, families: [INVENTORY_COST], schemas: [cost.ledger.posted.v1] }
-  - { owner: Payment, families: [PAYMENT_RECONCILIATION], status: DRAFT_RPT002 }
-  - { owner: Refund, families: [PAYMENT_RECONCILIATION], status: DRAFT_RPT002 }
+  - { owner: Payment, families: [PAYMENT_RECONCILIATION], schemas: [payment.reconciliation-fact.v1], status: ADMITTED_RPT002 }
+  - { owner: Refund, families: [PAYMENT_RECONCILIATION], schemas: [refund.reconciliation-fact.v1], status: ADMITTED_RPT002 }
+internalSyntheticBill:
+  schema: internal.synthetic-bill-entry.v1
+  evidenceLevel: SYNTHETIC_INTERNAL_ONLY
+  sourceType: INTERNAL_SYNTHETIC
+  providerAcceptanceEquivalent: false
 requiredEnvelope:
   [sourceEventId, sourceOwner, sourceAggregateId, sourceSequence, schemaVersion,
    projectionVersion, contentSha256, occurredAt, businessDate, orgId, storeId, metricFamily]
