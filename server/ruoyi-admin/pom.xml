@@ -133,6 +133,12 @@
             <artifactId>jshpos-returns</artifactId>
         </dependency>
 
+        <!-- Gate 5C 会员身份、隐私与权益账本模块 -->
+        <dependency>
+            <groupId>com.jingshanghui.pos</groupId>
+            <artifactId>jshpos-member</artifactId>
+        </dependency>
+
         <!-- Gate 0 服务端数据库版本治理 -->
         <dependency>
             <groupId>org.flywaydb</groupId>

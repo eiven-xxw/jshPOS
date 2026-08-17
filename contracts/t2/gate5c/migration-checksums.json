@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "1.0",
+  "phase": "T2-GATE5C",
+  "immutabilityPolicy": "PUBLISHED_FILES_MUST_NOT_CHANGE; repairs use a new forward migration",
+  "files": [
+    {
+      "path": "server/ruoyi-modules/jshpos-member/src/main/resources/db/migration/V202608170028__gate5c_member_privacy.sql",
+      "sha256": "cdd9ed21d3155295c8bb290c4d21d0bd01b28d058189295f2fefd46224da5eb9",
+      "requirementId": "T2-MEM-001"
+    },
+    {
+      "path": "server/ruoyi-modules/jshpos-member/src/main/resources/db/migration/V202608170029__gate5c_member_permissions.sql",
+      "sha256": "b066f84bdcf2410204a32001368098e6c3909cad8983537f0f4a8d3c11585abe",
+      "requirementId": "T2-MEM-001"
+    },
+    {
+      "path": "pos-flutter/lib/infrastructure/local_database/s11_member_schema.dart",
+      "sha256": "9a66b0fb35a17f8e1a7b175eac2bea13436ef41a5004700cce7957793b70f470",
+      "requirementId": "T2-MEM-001"
+    }
+  ]
+}

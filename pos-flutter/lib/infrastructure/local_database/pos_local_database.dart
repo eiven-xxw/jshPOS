@@ -10,6 +10,7 @@ import 's9_promotion_schema.dart';
 import 's9_manual_schema.dart';
 import 's9_transaction_schema.dart';
 import 's10_settlement_schema.dart';
+import 's11_member_schema.dart';
 
 typedef FailureInjector = void Function(String checkpoint);
 
@@ -113,7 +114,11 @@ final class PosLocalDatabase {
       _migrateToSettlementV6();
       version = S10SettlementSchema.version;
     }
-    if (version != S10SettlementSchema.version) {
+    if (version == S10SettlementSchema.version) {
+      _migrateToMemberV7();
+      version = S11MemberSchema.version;
+    }
+    if (version != S11MemberSchema.version) {
       throw StateError('LOCAL_SCHEMA_UNSUPPORTED: $version');
     }
     _verifySchemaChecksum();
@@ -139,6 +144,9 @@ final class PosLocalDatabase {
           .toString(),
       S10SettlementSchema.version: sha256
           .convert(utf8.encode(S10SettlementSchema.v6))
+          .toString(),
+      S11MemberSchema.version: sha256
+          .convert(utf8.encode(S11MemberSchema.v7))
           .toString(),
     };
     for (final entry in expected.entries) {
@@ -252,6 +260,31 @@ final class PosLocalDatabase {
     if (violations.isNotEmpty) {
       throw StateError(
         'LOCAL_DB_INTEGRITY_FAILED: foreign key violations after v6',
+      );
+    }
+  }
+
+  /// 追加 Gate 5C 去敏会员令牌缓存；失败时迁移事务整体回滚。
+  void _migrateToMemberV7() {
+    transaction(() {
+      database.execute(S11MemberSchema.v7);
+      final checksum = sha256
+          .convert(utf8.encode(S11MemberSchema.v7))
+          .toString();
+      database.execute(
+        'INSERT INTO local_schema_history(version,description,checksum_sha256,installed_at) VALUES(7,?,?,?)',
+        [
+          'gate5c-minimal-member-token-cache',
+          checksum,
+          DateTime.now().toUtc().toIso8601String(),
+        ],
+      );
+      database.execute('PRAGMA user_version=${S11MemberSchema.version}');
+    });
+    final violations = database.select('PRAGMA foreign_key_check');
+    if (violations.isNotEmpty) {
+      throw StateError(
+        'LOCAL_DB_INTEGRITY_FAILED: foreign key violations after v7',
       );
     }
   }

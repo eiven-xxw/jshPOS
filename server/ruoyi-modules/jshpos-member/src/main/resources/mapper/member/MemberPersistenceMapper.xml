@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jingshanghui.pos.member.infrastructure.persistence.mapper.MemberPersistenceMapper">
+  <insert id="insertMember">
+    INSERT INTO mbr_member(member_id,tenant_id,state,display_alias,created_by)
+    VALUES(#{memberId},#{tenantId},'ACTIVE',#{displayName},#{createdBy})
+  </insert>
+  <select id="findMember" resultType="com.jingshanghui.pos.member.application.model.MemberViews$MemberView">
+    SELECT member_id memberId,state,display_alias displayName,version,created_at createdAt
+    FROM mbr_member WHERE tenant_id=#{tenantId} AND member_id=#{memberId}
+  </select>
+  <select id="lockMember" resultType="com.jingshanghui.pos.member.application.model.MemberViews$MemberView">
+    SELECT member_id memberId,state,display_alias displayName,version,created_at createdAt
+    FROM mbr_member WHERE tenant_id=#{tenantId} AND member_id=#{memberId} FOR UPDATE
+  </select>
+  <update id="changeMemberState">
+    UPDATE mbr_member SET state=#{toState},version=version+1,updated_at=UTC_TIMESTAMP(3)
+    WHERE tenant_id=#{tenantId} AND member_id=#{memberId} AND state=#{fromState} AND version=#{expectedVersion}
+  </update>
+  <insert id="insertIdentity">
+    INSERT INTO mbr_identity(identity_id,tenant_id,member_id,identity_type,lookup_hmac,cipher_text,
+      masked_value,key_version,state,bound_by,bound_at)
+    VALUES(#{identityId},#{tenantId},#{memberId},#{identityType},#{lookupHmac},#{cipherText},
+      #{maskedValue},#{keyVersion},'ACTIVE',#{actorUserId},#{occurredAt})
+  </insert>
+  <select id="findIdentityByLookup" resultType="com.jingshanghui.pos.member.application.model.MemberViews$IdentityView">
+    SELECT identity_id identityId,member_id memberId,identity_type identityType,masked_value maskedValue,
+      state,key_version keyVersion,bound_at createdAt FROM mbr_identity
+    WHERE tenant_id=#{tenantId} AND identity_type=#{identityType} AND lookup_hmac=#{lookupHmac} AND state='ACTIVE'
+  </select>
+  <select id="findIdentity" resultType="com.jingshanghui.pos.member.application.model.MemberViews$IdentityView">
+    SELECT identity_id identityId,member_id memberId,identity_type identityType,masked_value maskedValue,
+      state,key_version keyVersion,bound_at createdAt FROM mbr_identity
+    WHERE tenant_id=#{tenantId} AND identity_id=#{identityId}
+  </select>
+  <update id="revokeIdentity">
+    UPDATE mbr_identity SET state='REVOKED',revoked_by=#{actorUserId},revoked_at=#{occurredAt}
+    WHERE tenant_id=#{tenantId} AND identity_id=#{identityId} AND member_id=#{memberId} AND state='ACTIVE'
+  </update>
+  <insert id="insertConsent">
+    INSERT INTO mbr_consent_ledger(consent_ledger_id,tenant_id,consent_id,member_id,purpose_code,
+      policy_version,state,evidence_sha256,actor_user_id,correlation_id,occurred_at)
+    VALUES(#{consentLedgerId},#{tenantId},#{consentId},#{memberId},#{purposeCode},#{policyVersion},
+      #{state},#{evidenceSha256},#{actorUserId},#{correlationId},#{occurredAt})
+  </insert>
+  <select id="findConsent" resultType="com.jingshanghui.pos.member.application.model.MemberViews$ConsentView">
+    SELECT consent_id consentId,member_id memberId,purpose_code purposeCode,policy_version policyVersion,
+      state,evidence_sha256 evidenceSha256,occurred_at occurredAt FROM mbr_consent_ledger
+    WHERE tenant_id=#{tenantId} AND consent_id=#{consentId}
+  </select>
+  <insert id="insertPrivacyRequest">
+    INSERT INTO mbr_privacy_request(request_id,tenant_id,member_id,request_type,state,reason,submitted_by,
+      correlation_id,submitted_at)
+    VALUES(#{requestId},#{tenantId},#{memberId},#{requestType},#{state},#{reason},#{actorUserId},
+      #{correlationId},#{occurredAt})
+  </insert>
+  <select id="findPrivacyRequest" resultType="com.jingshanghui.pos.member.application.model.MemberViews$PrivacyRequestView">
+    SELECT request_id requestId,member_id memberId,request_type requestType,state,version,
+      submitted_at submittedAt,completed_at completedAt FROM mbr_privacy_request
+    WHERE tenant_id=#{tenantId} AND request_id=#{requestId}
+  </select>
+  <select id="lockPrivacyRequest" resultType="com.jingshanghui.pos.member.application.model.MemberViews$PrivacyRequestView">
+    SELECT request_id requestId,member_id memberId,request_type requestType,state,version,
+      submitted_at submittedAt,completed_at completedAt FROM mbr_privacy_request
+    WHERE tenant_id=#{tenantId} AND request_id=#{requestId} FOR UPDATE
+  </select>
+  <update id="changePrivacyState">
+    UPDATE mbr_privacy_request SET state=#{toState},version=version+1,completed_at=#{completedAt}
+    WHERE tenant_id=#{tenantId} AND request_id=#{requestId} AND state=#{fromState} AND version=#{expectedVersion}
+  </update>
+  <insert id="insertPrivacyHistory">
+    INSERT INTO mbr_privacy_history(history_id,tenant_id,request_id,from_state,to_state,reason,
+      actor_user_id,correlation_id,occurred_at)
+    VALUES(#{historyId},#{tenantId},#{requestId},#{fromState},#{toState},#{reason},
+      #{actorUserId},#{correlationId},#{occurredAt})
+  </insert>
+  <insert id="insertMemberLink">
+    INSERT INTO mbr_member_link_ledger(link_ledger_id,tenant_id,link_id,source_member_id,target_member_id,
+      action,reason,actor_user_id,correlation_id,occurred_at)
+    VALUES(#{linkLedgerId},#{tenantId},#{linkId},#{sourceMemberId},#{targetMemberId},#{action},#{reason},
+      #{actorUserId},#{correlationId},#{occurredAt})
+  </insert>
+  <select id="findLatestMemberLink" resultType="com.jingshanghui.pos.member.application.model.MemberViews$MemberLinkView">
+    SELECT link_id linkId,source_member_id sourceMemberId,target_member_id targetMemberId,action,
+      occurred_at occurredAt FROM mbr_member_link_ledger WHERE tenant_id=#{tenantId} AND link_id=#{linkId}
+    ORDER BY occurred_at DESC,link_ledger_id DESC LIMIT 1
+  </select>
+  <select id="findLatestMemberLinkForSource" resultType="com.jingshanghui.pos.member.application.model.MemberViews$MemberLinkView">
+    SELECT link_id linkId,source_member_id sourceMemberId,target_member_id targetMemberId,action,
+      occurred_at occurredAt FROM mbr_member_link_ledger
+    WHERE tenant_id=#{tenantId} AND source_member_id=#{sourceMemberId}
+    ORDER BY occurred_at DESC,link_ledger_id DESC LIMIT 1
+  </select>
+  <select id="findCommand" resultType="com.jingshanghui.pos.member.application.port.MemberPersistencePort$StoredCommand">
+    SELECT request_sha256 requestSha256,aggregate_id aggregateId,result_sha256 resultSha256,
+      CAST(result_json AS CHAR) resultJson FROM mbr_command_result
+    WHERE tenant_id=#{tenantId} AND command_type=#{commandType} AND idempotency_key=#{idempotencyKey}
+  </select>
+  <insert id="insertCommand">
+    INSERT INTO mbr_command_result(command_result_id,tenant_id,command_type,idempotency_key,request_sha256,
+      aggregate_type,aggregate_id,result_sha256,result_json)
+    VALUES(#{commandResultId},#{tenantId},#{commandType},#{idempotencyKey},#{requestSha256},
+      #{aggregateType},#{aggregateId},#{resultSha256},CAST(#{resultJson} AS JSON))
+  </insert>
+  <insert id="insertOutbox">
+    INSERT INTO mbr_event_outbox(outbox_id,tenant_id,event_type,aggregate_id,aggregate_version,
+      payload_json,payload_sha256,delivery_state,available_at)
+    VALUES(#{outboxId},#{tenantId},#{eventType},#{aggregateId},#{aggregateVersion},
+      CAST(#{payloadJson} AS JSON),#{payloadSha256},'NEW',#{availableAt})
+  </insert>
+</mapper>

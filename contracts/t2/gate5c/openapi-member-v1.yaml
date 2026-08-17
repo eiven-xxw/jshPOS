@@ -3,40 +3,291 @@ info:
   title: JSH POS Member Owner API
   version: 1.0.0
   description: >-
-    Gate 5C 会员最小档案、身份、同意、隐私请求和权益账本契约。
-    tenant_id 不得由请求传入；所有返回值默认脱敏。
+    T2-MEM-001 会员最小主体、加密身份、同意、隐私请求和可逆合并契约。
+    tenant_id 只从认证上下文注入；请求体禁止 tenant_id，响应禁止身份明文和完整密文。
 paths:
   /api/v1/members:
     post:
       operationId: createMember
       x-permission: member:profile:create
-      responses: {'200': {description: Created}}
+      x-audit-request-body: FORBIDDEN
+      requestBody: {$ref: '#/components/requestBodies/CreateMember'}
+      responses:
+        '200': {$ref: '#/components/responses/Member'}
+        '409': {description: 身份已绑定或幂等键异内容}
   /api/v1/members/resolve:
     post:
       operationId: resolveMemberIdentity
       x-permission: member:profile:read
-      responses: {'200': {description: Masked member view}, '404': {description: Not found}}
+      x-cache-control: no-store
+      requestBody: {$ref: '#/components/requestBodies/ResolveIdentity'}
+      responses:
+        '200':
+          description: 合并别名解析后的脱敏会员
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ResolvedMember'}
+        '404': {description: 身份不存在或已撤销}
   /api/v1/members/{memberId}/identities:
     post:
       operationId: bindIdentity
       x-permission: member:identity:bind
-      responses: {'200': {description: Bound}}
+      x-audit-request-body: FORBIDDEN
+      parameters: [{$ref: '#/components/parameters/MemberId'}]
+      requestBody: {$ref: '#/components/requestBodies/BindIdentity'}
+      responses:
+        '200': {$ref: '#/components/responses/Identity'}
+        '409': {description: 身份已被其他主体绑定}
+  /api/v1/members/{memberId}/identities/{identityId}/revoke:
+    post:
+      operationId: revokeIdentity
+      x-permission: member:identity:revoke
+      x-audit-request-body: FORBIDDEN
+      parameters:
+        - {$ref: '#/components/parameters/MemberId'}
+        - {$ref: '#/components/parameters/IdentityId'}
+      requestBody: {$ref: '#/components/requestBodies/ReasonCommand'}
+      responses:
+        '200': {$ref: '#/components/responses/Identity'}
   /api/v1/members/{memberId}/consents:
     post:
       operationId: recordConsent
       x-permission: member:consent:record
-      responses: {'200': {description: Appended}}
+      parameters: [{$ref: '#/components/parameters/MemberId'}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ConsentCommand'}
+      responses:
+        '200':
+          description: 只追加同意事实
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Consent'}
   /api/v1/members/{memberId}/privacy-requests:
     post:
       operationId: requestPrivacyRight
       x-permission: member:privacy:request
-      responses: {'200': {description: Requested}}
-  /api/v1/member-events:
+      x-audit-request-body: FORBIDDEN
+      parameters: [{$ref: '#/components/parameters/MemberId'}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/PrivacyCommand'}
+      responses:
+        '200': {$ref: '#/components/responses/Privacy'}
+  /api/v1/privacy-requests/{requestId}/transitions:
     post:
-      operationId: consumeMemberOwnerEvent
-      x-internal-only: true
-      responses: {'202': {description: Idempotently accepted}}
+      operationId: transitionPrivacyRequest
+      x-permission: member:privacy:process
+      x-requires-tenant-admin: true
+      x-audit-request-body: FORBIDDEN
+      parameters: [{$ref: '#/components/parameters/RequestId'}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/PrivacyTransition'}
+      responses:
+        '200': {$ref: '#/components/responses/Privacy'}
+        '409': {description: 非法状态迁移或乐观锁冲突}
+  /api/v1/members/merge:
+    post:
+      operationId: mergeMember
+      x-permission: member:identity:merge
+      x-requires-tenant-admin: true
+      requestBody: {$ref: '#/components/requestBodies/MemberLink'}
+      responses:
+        '200': {$ref: '#/components/responses/MemberLink'}
+  /api/v1/members/split:
+    post:
+      operationId: splitMember
+      x-permission: member:identity:split
+      x-requires-tenant-admin: true
+      requestBody: {$ref: '#/components/requestBodies/MemberLink'}
+      responses:
+        '200': {$ref: '#/components/responses/MemberLink'}
 components:
   securitySchemes:
     bearerAuth: {type: http, scheme: bearer}
+  parameters:
+    MemberId: {name: memberId, in: path, required: true, schema: {$ref: '#/components/schemas/Ulid'}}
+    IdentityId: {name: identityId, in: path, required: true, schema: {$ref: '#/components/schemas/Ulid'}}
+    RequestId: {name: requestId, in: path, required: true, schema: {$ref: '#/components/schemas/Ulid'}}
+  requestBodies:
+    CreateMember:
+      required: true
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/CreateMember'}
+    ResolveIdentity:
+      required: true
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/ResolveIdentity'}
+    BindIdentity:
+      required: true
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/BindIdentity'}
+    ReasonCommand:
+      required: true
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/ReasonCommand'}
+    MemberLink:
+      required: true
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/MemberLinkCommand'}
+  responses:
+    Member:
+      description: 会员最小主体
+      content: {application/json: {schema: {$ref: '#/components/schemas/Member'}}}
+    Identity:
+      description: 脱敏身份
+      content: {application/json: {schema: {$ref: '#/components/schemas/Identity'}}}
+    Privacy:
+      description: 隐私请求
+      content: {application/json: {schema: {$ref: '#/components/schemas/PrivacyRequest'}}}
+    MemberLink:
+      description: 可逆会员关联事实
+      content: {application/json: {schema: {$ref: '#/components/schemas/MemberLink'}}}
+  schemas:
+    Ulid: {type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'}
+    Sha256: {type: string, pattern: '^[a-f0-9]{64}$'}
+    CommandBase:
+      type: object
+      required: [commandId, correlationId]
+      properties:
+        commandId: {$ref: '#/components/schemas/Ulid'}
+        correlationId: {$ref: '#/components/schemas/Ulid'}
+    CreateMember:
+      allOf:
+        - {$ref: '#/components/schemas/CommandBase'}
+        - type: object
+          required: [memberId, identityId, identityType, identityValue]
+          properties:
+            memberId: {$ref: '#/components/schemas/Ulid'}
+            identityId: {$ref: '#/components/schemas/Ulid'}
+            identityType: {$ref: '#/components/schemas/IdentityType'}
+            identityValue: {type: string, minLength: 1, maxLength: 128, writeOnly: true}
+    ResolveIdentity:
+      type: object
+      required: [identityType, identityValue]
+      properties:
+        identityType: {$ref: '#/components/schemas/IdentityType'}
+        identityValue: {type: string, minLength: 1, maxLength: 128, writeOnly: true}
+    BindIdentity:
+      allOf:
+        - {$ref: '#/components/schemas/CommandBase'}
+        - type: object
+          required: [identityId, identityType, identityValue, reason]
+          properties:
+            identityId: {$ref: '#/components/schemas/Ulid'}
+            identityType: {$ref: '#/components/schemas/IdentityType'}
+            identityValue: {type: string, minLength: 1, maxLength: 128, writeOnly: true}
+            reason: {type: string, maxLength: 256, writeOnly: true}
+    ReasonCommand:
+      allOf:
+        - {$ref: '#/components/schemas/CommandBase'}
+        - type: object
+          required: [reason]
+          properties: {reason: {type: string, maxLength: 256, writeOnly: true}}
+    ConsentCommand:
+      allOf:
+        - {$ref: '#/components/schemas/CommandBase'}
+        - type: object
+          required: [consentId, purposeCode, policyVersion, state, evidenceSha256]
+          properties:
+            consentId: {$ref: '#/components/schemas/Ulid'}
+            purposeCode: {type: string, pattern: '^[A-Z][A-Z0-9_]{0,63}$'}
+            policyVersion: {type: string, maxLength: 64}
+            state: {enum: [GRANTED, REVOKED]}
+            evidenceSha256: {$ref: '#/components/schemas/Sha256'}
+    PrivacyCommand:
+      allOf:
+        - {$ref: '#/components/schemas/CommandBase'}
+        - type: object
+          required: [requestId, requestType, reason]
+          properties:
+            requestId: {$ref: '#/components/schemas/Ulid'}
+            requestType: {enum: [ACCESS, EXPORT, CORRECT, DELETE]}
+            reason: {type: string, maxLength: 256, writeOnly: true}
+    PrivacyTransition:
+      allOf:
+        - {$ref: '#/components/schemas/CommandBase'}
+        - type: object
+          required: [toState, expectedVersion, reason]
+          properties:
+            toState: {enum: [IDENTITY_VERIFIED, IN_PROGRESS, FULFILLED, PARTIALLY_FULFILLED, REJECTED]}
+            expectedVersion: {type: integer, minimum: 0}
+            reason: {type: string, maxLength: 256, writeOnly: true}
+    MemberLinkCommand:
+      allOf:
+        - {$ref: '#/components/schemas/CommandBase'}
+        - type: object
+          required: [sourceMemberId, targetMemberId, linkId, reason]
+          properties:
+            sourceMemberId: {$ref: '#/components/schemas/Ulid'}
+            targetMemberId: {$ref: '#/components/schemas/Ulid'}
+            linkId: {$ref: '#/components/schemas/Ulid'}
+            reason: {type: string, maxLength: 256, writeOnly: true}
+    IdentityType: {enum: [MOBILE, MEMBER_CODE, CARD, EXTERNAL_OPEN_ID]}
+    Member:
+      type: object
+      required: [memberId, state, displayName, version, createdAt]
+      properties:
+        memberId: {$ref: '#/components/schemas/Ulid'}
+        state: {enum: [ACTIVE, SUSPENDED, MERGED, ANONYMIZED]}
+        displayName: {type: string, description: 系统生成的非真实姓名脱敏别名}
+        version: {type: integer, minimum: 0}
+        createdAt: {type: string, format: date-time}
+    Identity:
+      type: object
+      required: [identityId, memberId, identityType, maskedValue, state, keyVersion, createdAt]
+      properties:
+        identityId: {$ref: '#/components/schemas/Ulid'}
+        memberId: {$ref: '#/components/schemas/Ulid'}
+        identityType: {$ref: '#/components/schemas/IdentityType'}
+        maskedValue: {type: string, maxLength: 32, readOnly: true}
+        state: {enum: [ACTIVE, REVOKED]}
+        keyVersion: {type: integer, minimum: 1}
+        createdAt: {type: string, format: date-time}
+    ResolvedMember:
+      type: object
+      required: [member, matchedIdentity]
+      properties:
+        member: {$ref: '#/components/schemas/Member'}
+        matchedIdentity: {$ref: '#/components/schemas/Identity'}
+    Consent:
+      type: object
+      properties:
+        consentId: {$ref: '#/components/schemas/Ulid'}
+        memberId: {$ref: '#/components/schemas/Ulid'}
+        purposeCode: {type: string}
+        policyVersion: {type: string}
+        state: {enum: [GRANTED, REVOKED]}
+        evidenceSha256: {$ref: '#/components/schemas/Sha256'}
+        occurredAt: {type: string, format: date-time}
+    PrivacyRequest:
+      type: object
+      properties:
+        requestId: {$ref: '#/components/schemas/Ulid'}
+        memberId: {$ref: '#/components/schemas/Ulid'}
+        requestType: {enum: [ACCESS, EXPORT, CORRECT, DELETE]}
+        state: {enum: [REQUESTED, IDENTITY_VERIFIED, IN_PROGRESS, FULFILLED, PARTIALLY_FULFILLED, REJECTED]}
+        version: {type: integer, minimum: 0}
+        submittedAt: {type: string, format: date-time}
+        completedAt: {type: [string, 'null'], format: date-time}
+    MemberLink:
+      type: object
+      properties:
+        linkId: {$ref: '#/components/schemas/Ulid'}
+        sourceMemberId: {$ref: '#/components/schemas/Ulid'}
+        targetMemberId: {$ref: '#/components/schemas/Ulid'}
+        action: {enum: [MERGE, SPLIT]}
+        occurredAt: {type: string, format: date-time}
 security: [{bearerAuth: []}]

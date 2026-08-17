@@ -5,7 +5,7 @@
   "sequence": ["T2-MEM-001", "T2-MEM-002"],
   "activeRequirement": "T2-MEM-001",
   "requirements": {
-    "T2-MEM-001": "IN_PROGRESS",
+    "T2-MEM-001": "VERIFIED",
     "T2-MEM-002": "DRAFT",
     "T2-RPT-001": "DRAFT",
     "T2-RPT-002": "DRAFT",
