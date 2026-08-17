@@ -1,13 +1,13 @@
 # T2 Gate 5C / Sprint S11 周门禁报告
 
-> 文档编号：JSH-POS-T2-G5C-007  
-> 日期：2026-08-17  
-> 唯一不可变技术基线：annotated tag `t2-prep-baseline-2026-08-16`  
-> 基线 peeled commit：`557ba270479935d6b44968cf70b47033f7d3d656`  
-> Gate 5C 分支起点：`2b55ad6154b75bce1ff19c68a50e025afe7f1e93`  
-> 顺序准入提交：`4c5dbdf` → `5b3ffad` → `d618213` → `a2e3ba4`  
-> 全绿实现候选：`96b826b64d463db73bad4a428fbe27c1c8c68160`  
-> 全绿 CI：[T2 Gate 5C Member Privacy Points Quality Gates #32025473259](https://github.com/eiven-xxw/jshPOS/actions/runs/32025473259)  
+> 文档编号：JSH-POS-T2-G5C-007
+> 日期：2026-08-17
+> 唯一不可变技术基线：annotated tag `t2-prep-baseline-2026-08-16`
+> 基线 peeled commit：`557ba270479935d6b44968cf70b47033f7d3d656`
+> Gate 5C 分支起点：`2b55ad6154b75bce1ff19c68a50e025afe7f1e93`
+> 顺序准入提交：`4c5dbdf` → `5b3ffad` → `d618213` → `a2e3ba4`
+> 全绿实现候选：`96b826b64d463db73bad4a428fbe27c1c8c68160`
+> 全绿 CI：[T2 Gate 5C Member Privacy Points Quality Gates #32025473259](https://github.com/eiven-xxw/jshPOS/actions/runs/32025473259)
 > 当前结论：`CONDITIONAL PASS / VERIFIED / AWAITING CONFIRMATION`
 
 ## 1. 管理结论

@@ -1,6 +1,6 @@
 # Gate 5D 与 Gate 3B 下一步操作指令
 
-> 文档编号：JSH-POS-T2-G5C-008  
+> 文档编号：JSH-POS-T2-G5C-008
 > 使用条件：项目发起人确认《T2 Gate 5C / Sprint S11 周门禁报告》后复制执行
 
 ## 1. 建议决策
