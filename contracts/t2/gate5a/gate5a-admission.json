@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "1.0",
+  "phase": "T2-GATE5A-SPRINT-S9",
+  "baseline": {
+    "tag": "t2-prep-baseline-2026-08-16",
+    "peeledCommit": "557ba270479935d6b44968cf70b47033f7d3d656",
+    "branchStart": "63537b5cb7ceeb1fe6b04107b53e2e68941b25ad"
+  },
+  "sequence": ["T2-PRM-001", "T2-PRM-002", "T2-PRM-003"],
+  "admittedRequirements": ["T2-PRM-001"],
+  "draftRequirements": ["T2-PRM-002", "T2-PRM-003"],
+  "externalBlockedRequirements": {"T2-PAY-002": "BLOCKED"},
+  "enginePolicy": {
+    "engineVersion": "promotion-engine-1.0.0",
+    "currency": "CNY",
+    "moneyRepresentation": "MINOR_UNIT_INT64",
+    "quantityScale": 6,
+    "rateScale": 8,
+    "percentageRounding": "HALF_UP",
+    "calculationOrder": [
+      "BASE_OR_STORE_PRICE",
+      "ITEM_PROMOTION",
+      "BUNDLE_OR_THRESHOLD",
+      "AUTHORIZED_MANUAL_PRICE",
+      "ORDER_DISCOUNT",
+      "ROUNDING",
+      "ALLOCATION_AND_SNAPSHOT"
+    ],
+    "candidateOrder": ["priority_desc", "rule_version_id_asc"],
+    "remainderOrder": ["remainder_desc", "line_no_asc", "sku_id_asc", "line_id_asc"]
+  },
+  "allowedRuleTypes": [
+    "SPECIAL_PRICE",
+    "PERCENT_OFF",
+    "AMOUNT_OFF",
+    "NTH_ITEM_DISCOUNT",
+    "BUNDLE_PRICE",
+    "THRESHOLD_AMOUNT_OFF",
+    "THRESHOLD_QUANTITY_OFF"
+  ],
+  "runtimeBoundary": {
+    "promotionCoreAllowed": true,
+    "manualDiscountAllowedAfterPrm1Verified": true,
+    "snapshotRefundAllowedAfterPrm2Verified": true,
+    "couponRuntimeAllowed": false,
+    "memberRuntimeAllowed": false,
+    "loyaltyRuntimeAllowed": false,
+    "storedValueRuntimeAllowed": false,
+    "budgetReservationAllowed": false,
+    "reportRuntimeAllowed": false,
+    "providerNetworkCallsAllowed": 0,
+    "externalEvidenceAllowed": 0
+  },
+  "evidence": {"sandbox": 0, "realDevice": 0, "pilot": 0}
+}

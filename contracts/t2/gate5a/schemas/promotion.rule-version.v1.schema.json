@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.jingshanghui.example/t2/gate5a/promotion.rule-version.v1.schema.json",
+  "title": "促销规则不可变版本",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["ruleId", "ruleVersionId", "ruleCode", "ruleType", "priority", "stackMode", "effectiveFrom", "effectiveTo", "scope", "benefit", "schemaVersion"],
+  "properties": {
+    "ruleId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "ruleVersionId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "ruleCode": {"type": "string", "pattern": "^[A-Z0-9][A-Z0-9_-]{0,63}$"},
+    "ruleType": {"enum": ["SPECIAL_PRICE", "PERCENT_OFF", "AMOUNT_OFF", "NTH_ITEM_DISCOUNT", "BUNDLE_PRICE", "THRESHOLD_AMOUNT_OFF", "THRESHOLD_QUANTITY_OFF"]},
+    "priority": {"type": "integer", "minimum": -100000, "maximum": 100000},
+    "stackMode": {"enum": ["STACKABLE", "EXCLUSIVE", "BEST_OF_GROUP", "STOP_AFTER_APPLY"]},
+    "exclusiveGroup": {"type": ["string", "null"], "maxLength": 64},
+    "effectiveFrom": {"type": "string", "format": "date-time"},
+    "effectiveTo": {"type": "string", "format": "date-time"},
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "storeIds": {"type": "array", "maxItems": 256, "items": {"type": "string", "pattern": "^[1-9][0-9]{0,18}$"}},
+        "channels": {"type": "array", "maxItems": 16, "items": {"enum": ["POS", "MOBILE_POS", "SELF_CHECKOUT"]}},
+        "skuIds": {"type": "array", "maxItems": 256, "items": {"type": "string", "pattern": "^[1-9][0-9]{0,18}$"}},
+        "categoryIds": {"type": "array", "maxItems": 256, "items": {"type": "string", "pattern": "^[1-9][0-9]{0,18}$"}},
+        "brandIds": {"type": "array", "maxItems": 256, "items": {"type": "string", "pattern": "^[1-9][0-9]{0,18}$"}}
+      }
+    },
+    "benefit": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "amountMinor": {"type": "integer", "minimum": 0},
+        "discountRate": {"type": "string", "pattern": "^(0|1)(\\.[0-9]{1,8})?$"},
+        "thresholdMinor": {"type": "integer", "minimum": 0},
+        "thresholdQuantity": {"type": "string", "pattern": "^[0-9]+(\\.[0-9]{1,6})?$"},
+        "nth": {"type": "integer", "minimum": 2, "maximum": 100},
+        "bundlePriceMinor": {"type": "integer", "minimum": 0},
+        "bundleComponents": {"type": "array", "maxItems": 32, "items": {"type": "object", "required": ["skuId", "quantity"], "properties": {"skuId": {"type": "string"}, "quantity": {"type": "string"}}}}
+      }
+    },
+    "schemaVersion": {"const": "1.0"}
+  }
+}

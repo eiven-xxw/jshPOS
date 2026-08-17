@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.jingshanghui.example/t2/gate5a/promotion.transaction-snapshot.v1.schema.json",
+  "title": "不可变成交优惠快照",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["snapshotId", "orderId", "quoteId", "engineVersion", "packageVersion", "quoteFingerprint", "snapshotHash", "grossAmountMinor", "discountAmountMinor", "roundingMinor", "payableAmountMinor", "lines", "allocations", "frozenAt"],
+  "properties": {
+    "snapshotId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "orderId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "quoteId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "engineVersion": {"type": "string"},
+    "packageVersion": {"type": "string"},
+    "quoteFingerprint": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "snapshotHash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "grossAmountMinor": {"type": "integer", "minimum": 0},
+    "discountAmountMinor": {"type": "integer", "minimum": 0},
+    "roundingMinor": {"type": "integer"},
+    "payableAmountMinor": {"type": "integer", "minimum": 0},
+    "lines": {"type": "array", "items": {"type": "object"}},
+    "allocations": {"type": "array", "items": {"type": "object"}},
+    "manualAuditRefs": {"type": "array", "items": {"type": "string"}},
+    "frozenAt": {"type": "string", "format": "date-time"}
+  }
+}

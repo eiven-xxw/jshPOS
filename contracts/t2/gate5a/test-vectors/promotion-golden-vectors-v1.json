@@ -1,0 +1,153 @@
+{
+  "schemaVersion": "1.0",
+  "phase": "T2-GATE5A-SPRINT-S9",
+  "engineVersion": "promotion-engine-1.0.0",
+  "quantityScale": 6,
+  "rateScale": 8,
+  "rounding": "HALF_UP",
+  "candidateOrder": ["priority_desc", "rule_version_id_asc"],
+  "remainderOrder": ["remainder_desc", "line_no_asc", "sku_id_asc", "line_id_asc"],
+  "currentMilestone": "PRM1",
+  "scenarios": [
+    {
+      "id": "PRM1-NO-RULE-001",
+      "businessTime": "2026-08-17T10:00:00+08:00",
+      "storeId": "1101",
+      "channel": "POS",
+      "lines": [{"lineId":"01K5A000000000000000000001","lineNo":1,"skuId":"101","categoryId":"11","brandId":"21","quantity":"1.000000","unitPriceMinor":1000}],
+      "rules": [],
+      "expected": {"grossAmountMinor":1000,"discountAmountMinor":0,"payableAmountMinor":1000,"lineDiscounts":{"01K5A000000000000000000001":0},"appliedRuleIds":[],"explanations":[]}
+    },
+    {
+      "id": "PRM1-SPECIAL-PRICE-002",
+      "businessTime": "2026-08-17T10:00:00+08:00",
+      "storeId": "1101","channel":"POS",
+      "lines": [{"lineId":"01K5A000000000000000000002","lineNo":1,"skuId":"101","categoryId":"11","brandId":"21","quantity":"2.000000","unitPriceMinor":500}],
+      "rules": [{"ruleVersionId":"01K5R000000000000000000002","ruleType":"SPECIAL_PRICE","priority":100,"stackMode":"EXCLUSIVE","effectiveFrom":"2026-08-17T00:00:00+08:00","effectiveTo":"2026-08-18T00:00:00+08:00","scope":{"skuIds":["101"]},"benefit":{"amountMinor":400}}],
+      "expected": {"grossAmountMinor":1000,"discountAmountMinor":200,"payableAmountMinor":800,"lineDiscounts":{"01K5A000000000000000000002":200},"appliedRuleIds":["01K5R000000000000000000002"],"explanations":[{"sourceId":"01K5R000000000000000000002","code":"APPLIED"}]}
+    },
+    {
+      "id": "PRM1-PERCENT-003",
+      "businessTime": "2026-08-17T10:00:00+08:00","storeId":"1101","channel":"POS",
+      "lines": [{"lineId":"01K5A000000000000000000003","lineNo":1,"skuId":"101","categoryId":"11","brandId":"21","quantity":"1.000000","unitPriceMinor":1000}],
+      "rules": [{"ruleVersionId":"01K5R000000000000000000003","ruleType":"PERCENT_OFF","priority":90,"stackMode":"STACKABLE","effectiveFrom":"2026-08-17T00:00:00+08:00","effectiveTo":"2026-08-18T00:00:00+08:00","scope":{"skuIds":["101"]},"benefit":{"discountRate":"0.20000000"}}],
+      "expected": {"grossAmountMinor":1000,"discountAmountMinor":200,"payableAmountMinor":800,"lineDiscounts":{"01K5A000000000000000000003":200},"appliedRuleIds":["01K5R000000000000000000003"],"explanations":[{"sourceId":"01K5R000000000000000000003","code":"APPLIED"}]}
+    },
+    {
+      "id": "PRM1-AMOUNT-OFF-004",
+      "businessTime": "2026-08-17T10:00:00+08:00","storeId":"1101","channel":"POS",
+      "lines": [{"lineId":"01K5A000000000000000000004","lineNo":1,"skuId":"101","categoryId":"11","brandId":"21","quantity":"1.000000","unitPriceMinor":1000}],
+      "rules": [{"ruleVersionId":"01K5R000000000000000000004","ruleType":"AMOUNT_OFF","priority":80,"stackMode":"EXCLUSIVE","effectiveFrom":"2026-08-17T00:00:00+08:00","effectiveTo":"2026-08-18T00:00:00+08:00","scope":{"skuIds":["101"]},"benefit":{"amountMinor":150}}],
+      "expected": {"grossAmountMinor":1000,"discountAmountMinor":150,"payableAmountMinor":850,"lineDiscounts":{"01K5A000000000000000000004":150},"appliedRuleIds":["01K5R000000000000000000004"],"explanations":[{"sourceId":"01K5R000000000000000000004","code":"APPLIED"}]}
+    },
+    {
+      "id": "PRM1-NTH-EVEN-005",
+      "businessTime": "2026-08-17T10:00:00+08:00","storeId":"1101","channel":"POS",
+      "lines": [{"lineId":"01K5A000000000000000000005","lineNo":1,"skuId":"101","categoryId":"11","brandId":"21","quantity":"2.000000","unitPriceMinor":500}],
+      "rules": [{"ruleVersionId":"01K5R000000000000000000005","ruleType":"NTH_ITEM_DISCOUNT","priority":80,"stackMode":"EXCLUSIVE","effectiveFrom":"2026-08-17T00:00:00+08:00","effectiveTo":"2026-08-18T00:00:00+08:00","scope":{"skuIds":["101"]},"benefit":{"nth":2,"discountRate":"0.50000000"}}],
+      "expected": {"grossAmountMinor":1000,"discountAmountMinor":250,"payableAmountMinor":750,"lineDiscounts":{"01K5A000000000000000000005":250},"appliedRuleIds":["01K5R000000000000000000005"],"explanations":[{"sourceId":"01K5R000000000000000000005","code":"APPLIED"}]}
+    },
+    {
+      "id": "PRM1-NTH-ODD-006",
+      "businessTime": "2026-08-17T10:00:00+08:00","storeId":"1101","channel":"POS",
+      "lines": [{"lineId":"01K5A000000000000000000006","lineNo":1,"skuId":"101","categoryId":"11","brandId":"21","quantity":"3.000000","unitPriceMinor":500}],
+      "rules": [{"ruleVersionId":"01K5R000000000000000000006","ruleType":"NTH_ITEM_DISCOUNT","priority":80,"stackMode":"EXCLUSIVE","effectiveFrom":"2026-08-17T00:00:00+08:00","effectiveTo":"2026-08-18T00:00:00+08:00","scope":{"skuIds":["101"]},"benefit":{"nth":2,"discountRate":"0.50000000"}}],
+      "expected": {"grossAmountMinor":1500,"discountAmountMinor":250,"payableAmountMinor":1250,"lineDiscounts":{"01K5A000000000000000000006":250},"appliedRuleIds":["01K5R000000000000000000006"],"explanations":[{"sourceId":"01K5R000000000000000000006","code":"APPLIED"}]}
+    },
+    {
+      "id": "PRM1-THRESHOLD-AMOUNT-007",
+      "businessTime": "2026-08-17T10:00:00+08:00","storeId":"1101","channel":"POS",
+      "lines": [
+        {"lineId":"01K5A000000000000000000071","lineNo":1,"skuId":"101","categoryId":"11","brandId":"21","quantity":"1.000000","unitPriceMinor":600},
+        {"lineId":"01K5A000000000000000000072","lineNo":2,"skuId":"102","categoryId":"11","brandId":"22","quantity":"1.000000","unitPriceMinor":500}
+      ],
+      "rules": [{"ruleVersionId":"01K5R000000000000000000007","ruleType":"THRESHOLD_AMOUNT_OFF","priority":70,"stackMode":"STACKABLE","effectiveFrom":"2026-08-17T00:00:00+08:00","effectiveTo":"2026-08-18T00:00:00+08:00","scope":{"categoryIds":["11"]},"benefit":{"thresholdMinor":1000,"amountMinor":200}}],
+      "expected": {"grossAmountMinor":1100,"discountAmountMinor":200,"payableAmountMinor":900,"lineDiscounts":{"01K5A000000000000000000071":109,"01K5A000000000000000000072":91},"appliedRuleIds":["01K5R000000000000000000007"],"explanations":[{"sourceId":"01K5R000000000000000000007","code":"APPLIED"}]}
+    },
+    {
+      "id": "PRM1-THRESHOLD-NOT-MET-008",
+      "businessTime": "2026-08-17T10:00:00+08:00","storeId":"1101","channel":"POS",
+      "lines": [{"lineId":"01K5A000000000000000000008","lineNo":1,"skuId":"101","categoryId":"11","brandId":"21","quantity":"1.000000","unitPriceMinor":999}],
+      "rules": [{"ruleVersionId":"01K5R000000000000000000008","ruleType":"THRESHOLD_AMOUNT_OFF","priority":70,"stackMode":"STACKABLE","effectiveFrom":"2026-08-17T00:00:00+08:00","effectiveTo":"2026-08-18T00:00:00+08:00","scope":{"categoryIds":["11"]},"benefit":{"thresholdMinor":1000,"amountMinor":200}}],
+      "expected": {"grossAmountMinor":999,"discountAmountMinor":0,"payableAmountMinor":999,"lineDiscounts":{"01K5A000000000000000000008":0},"appliedRuleIds":[],"explanations":[{"sourceId":"01K5R000000000000000000008","code":"THRESHOLD_NOT_MET"}]}
+    },
+    {
+      "id": "PRM1-THRESHOLD-QUANTITY-009",
+      "businessTime": "2026-08-17T10:00:00+08:00","storeId":"1101","channel":"POS",
+      "lines": [
+        {"lineId":"01K5A000000000000000000091","lineNo":1,"skuId":"101","categoryId":"11","brandId":"21","quantity":"2.000000","unitPriceMinor":150},
+        {"lineId":"01K5A000000000000000000092","lineNo":2,"skuId":"102","categoryId":"11","brandId":"22","quantity":"1.000000","unitPriceMinor":200}
+      ],
+      "rules": [{"ruleVersionId":"01K5R000000000000000000009","ruleType":"THRESHOLD_QUANTITY_OFF","priority":70,"stackMode":"STACKABLE","effectiveFrom":"2026-08-17T00:00:00+08:00","effectiveTo":"2026-08-18T00:00:00+08:00","scope":{"categoryIds":["11"]},"benefit":{"thresholdQuantity":"3.000000","amountMinor":150}}],
+      "expected": {"grossAmountMinor":500,"discountAmountMinor":150,"payableAmountMinor":350,"lineDiscounts":{"01K5A000000000000000000091":90,"01K5A000000000000000000092":60},"appliedRuleIds":["01K5R000000000000000000009"],"explanations":[{"sourceId":"01K5R000000000000000000009","code":"APPLIED"}]}
+    },
+    {
+      "id": "PRM1-BUNDLE-010",
+      "businessTime": "2026-08-17T10:00:00+08:00","storeId":"1101","channel":"POS",
+      "lines": [
+        {"lineId":"01K5A000000000000000000101","lineNo":1,"skuId":"101","categoryId":"11","brandId":"21","quantity":"1.000000","unitPriceMinor":700},
+        {"lineId":"01K5A000000000000000000102","lineNo":2,"skuId":"102","categoryId":"12","brandId":"22","quantity":"1.000000","unitPriceMinor":500}
+      ],
+      "rules": [{"ruleVersionId":"01K5R000000000000000000010","ruleType":"BUNDLE_PRICE","priority":75,"stackMode":"EXCLUSIVE","effectiveFrom":"2026-08-17T00:00:00+08:00","effectiveTo":"2026-08-18T00:00:00+08:00","scope":{},"benefit":{"bundlePriceMinor":1000,"bundleComponents":[{"skuId":"101","quantity":"1.000000"},{"skuId":"102","quantity":"1.000000"}]}}],
+      "expected": {"grossAmountMinor":1200,"discountAmountMinor":200,"payableAmountMinor":1000,"lineDiscounts":{"01K5A000000000000000000101":117,"01K5A000000000000000000102":83},"appliedRuleIds":["01K5R000000000000000000010"],"explanations":[{"sourceId":"01K5R000000000000000000010","code":"APPLIED"}]}
+    },
+    {
+      "id": "PRM1-CATEGORY-SCOPE-011",
+      "businessTime": "2026-08-17T10:00:00+08:00","storeId":"1101","channel":"POS",
+      "lines": [
+        {"lineId":"01K5A000000000000000000111","lineNo":1,"skuId":"101","categoryId":"11","brandId":"21","quantity":"1.000000","unitPriceMinor":1000},
+        {"lineId":"01K5A000000000000000000112","lineNo":2,"skuId":"102","categoryId":"12","brandId":"22","quantity":"1.000000","unitPriceMinor":500}
+      ],
+      "rules": [{"ruleVersionId":"01K5R000000000000000000011","ruleType":"PERCENT_OFF","priority":60,"stackMode":"STACKABLE","effectiveFrom":"2026-08-17T00:00:00+08:00","effectiveTo":"2026-08-18T00:00:00+08:00","scope":{"categoryIds":["11"]},"benefit":{"discountRate":"0.10000000"}}],
+      "expected": {"grossAmountMinor":1500,"discountAmountMinor":100,"payableAmountMinor":1400,"lineDiscounts":{"01K5A000000000000000000111":100,"01K5A000000000000000000112":0},"appliedRuleIds":["01K5R000000000000000000011"],"explanations":[{"sourceId":"01K5R000000000000000000011","code":"APPLIED"}]}
+    },
+    {
+      "id": "PRM1-BRAND-SCOPE-012",
+      "businessTime": "2026-08-17T10:00:00+08:00","storeId":"1101","channel":"POS",
+      "lines": [
+        {"lineId":"01K5A000000000000000000121","lineNo":1,"skuId":"101","categoryId":"11","brandId":"21","quantity":"1.000000","unitPriceMinor":300},
+        {"lineId":"01K5A000000000000000000122","lineNo":2,"skuId":"102","categoryId":"11","brandId":"22","quantity":"1.000000","unitPriceMinor":300}
+      ],
+      "rules": [{"ruleVersionId":"01K5R000000000000000000012","ruleType":"AMOUNT_OFF","priority":60,"stackMode":"STACKABLE","effectiveFrom":"2026-08-17T00:00:00+08:00","effectiveTo":"2026-08-18T00:00:00+08:00","scope":{"brandIds":["21"]},"benefit":{"amountMinor":100}}],
+      "expected": {"grossAmountMinor":600,"discountAmountMinor":100,"payableAmountMinor":500,"lineDiscounts":{"01K5A000000000000000000121":100,"01K5A000000000000000000122":0},"appliedRuleIds":["01K5R000000000000000000012"],"explanations":[{"sourceId":"01K5R000000000000000000012","code":"APPLIED"}]}
+    },
+    {
+      "id": "PRM1-STABLE-TIE-013",
+      "businessTime": "2026-08-17T10:00:00+08:00","storeId":"1101","channel":"POS",
+      "lines": [{"lineId":"01K5A000000000000000000013","lineNo":1,"skuId":"101","categoryId":"11","brandId":"21","quantity":"1.000000","unitPriceMinor":1000}],
+      "rules": [
+        {"ruleVersionId":"01K5R00000000000000000013B","ruleType":"SPECIAL_PRICE","priority":50,"stackMode":"BEST_OF_GROUP","exclusiveGroup":"G1","effectiveFrom":"2026-08-17T00:00:00+08:00","effectiveTo":"2026-08-18T00:00:00+08:00","scope":{"skuIds":["101"]},"benefit":{"amountMinor":700}},
+        {"ruleVersionId":"01K5R00000000000000000013A","ruleType":"SPECIAL_PRICE","priority":50,"stackMode":"BEST_OF_GROUP","exclusiveGroup":"G1","effectiveFrom":"2026-08-17T00:00:00+08:00","effectiveTo":"2026-08-18T00:00:00+08:00","scope":{"skuIds":["101"]},"benefit":{"amountMinor":700}}
+      ],
+      "expected": {"grossAmountMinor":1000,"discountAmountMinor":300,"payableAmountMinor":700,"lineDiscounts":{"01K5A000000000000000000013":300},"appliedRuleIds":["01K5R00000000000000000013A"],"explanations":[{"sourceId":"01K5R00000000000000000013A","code":"APPLIED"},{"sourceId":"01K5R00000000000000000013B","code":"LOWER_BENEFIT"}]}
+    },
+    {
+      "id": "PRM1-PRIORITY-EXCLUSIVE-014",
+      "businessTime": "2026-08-17T10:00:00+08:00","storeId":"1101","channel":"POS",
+      "lines": [{"lineId":"01K5A000000000000000000014","lineNo":1,"skuId":"101","categoryId":"11","brandId":"21","quantity":"1.000000","unitPriceMinor":1000}],
+      "rules": [
+        {"ruleVersionId":"01K5R000000000000000000141","ruleType":"AMOUNT_OFF","priority":100,"stackMode":"EXCLUSIVE","effectiveFrom":"2026-08-17T00:00:00+08:00","effectiveTo":"2026-08-18T00:00:00+08:00","scope":{"skuIds":["101"]},"benefit":{"amountMinor":100}},
+        {"ruleVersionId":"01K5R000000000000000000142","ruleType":"SPECIAL_PRICE","priority":90,"stackMode":"EXCLUSIVE","effectiveFrom":"2026-08-17T00:00:00+08:00","effectiveTo":"2026-08-18T00:00:00+08:00","scope":{"skuIds":["101"]},"benefit":{"amountMinor":500}}
+      ],
+      "expected": {"grossAmountMinor":1000,"discountAmountMinor":100,"payableAmountMinor":900,"lineDiscounts":{"01K5A000000000000000000014":100},"appliedRuleIds":["01K5R000000000000000000141"],"explanations":[{"sourceId":"01K5R000000000000000000141","code":"APPLIED"},{"sourceId":"01K5R000000000000000000142","code":"EXCLUSIVE_CONFLICT"}]}
+    },
+    {
+      "id": "PRM1-STACKABLE-015",
+      "businessTime": "2026-08-17T10:00:00+08:00","storeId":"1101","channel":"POS",
+      "lines": [{"lineId":"01K5A000000000000000000015","lineNo":1,"skuId":"101","categoryId":"11","brandId":"21","quantity":"1.000000","unitPriceMinor":1000}],
+      "rules": [
+        {"ruleVersionId":"01K5R000000000000000000151","ruleType":"PERCENT_OFF","priority":100,"stackMode":"STACKABLE","effectiveFrom":"2026-08-17T00:00:00+08:00","effectiveTo":"2026-08-18T00:00:00+08:00","scope":{"skuIds":["101"]},"benefit":{"discountRate":"0.10000000"}},
+        {"ruleVersionId":"01K5R000000000000000000152","ruleType":"AMOUNT_OFF","priority":90,"stackMode":"STACKABLE","effectiveFrom":"2026-08-17T00:00:00+08:00","effectiveTo":"2026-08-18T00:00:00+08:00","scope":{"skuIds":["101"]},"benefit":{"amountMinor":50}}
+      ],
+      "expected": {"grossAmountMinor":1000,"discountAmountMinor":150,"payableAmountMinor":850,"lineDiscounts":{"01K5A000000000000000000015":150},"appliedRuleIds":["01K5R000000000000000000151","01K5R000000000000000000152"],"explanations":[{"sourceId":"01K5R000000000000000000151","code":"APPLIED"},{"sourceId":"01K5R000000000000000000152","code":"APPLIED"}]}
+    },
+    {
+      "id": "PRM1-TIME-NOT-MATCHED-016",
+      "businessTime": "2026-08-17T10:00:00+08:00","storeId":"1101","channel":"POS",
+      "lines": [{"lineId":"01K5A000000000000000000016","lineNo":1,"skuId":"101","categoryId":"11","brandId":"21","quantity":"1.000000","unitPriceMinor":1000}],
+      "rules": [{"ruleVersionId":"01K5R000000000000000000016","ruleType":"AMOUNT_OFF","priority":100,"stackMode":"EXCLUSIVE","effectiveFrom":"2026-08-17T11:00:00+08:00","effectiveTo":"2026-08-18T00:00:00+08:00","scope":{"skuIds":["101"]},"benefit":{"amountMinor":100}}],
+      "expected": {"grossAmountMinor":1000,"discountAmountMinor":0,"payableAmountMinor":1000,"lineDiscounts":{"01K5A000000000000000000016":0},"appliedRuleIds":[],"explanations":[{"sourceId":"01K5R000000000000000000016","code":"TIME_NOT_MATCHED"}]}
+    }
+  ],
+  "evidence": {"sandbox": 0, "realDevice": 0, "pilot": 0}
+}

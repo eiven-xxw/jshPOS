@@ -1,0 +1,455 @@
+openapi: 3.0.3
+info:
+  title: 鲸熵汇 Gate 5A 确定性促销 API
+  version: 1.0.0
+  description: >-
+    T2-PRM-001/002/003 顺序准入契约。tenant_id 只来自可信认证上下文；
+    券、会员、积分、储值、预算和 Provider 网络能力不在本版本。
+servers:
+  - url: /api/v1
+paths:
+  /promotions/rules:
+    post:
+      operationId: createPromotionRule
+      summary: 创建规则身份与首个草稿版本
+      x-permission: promotion:rule:create
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CreateRuleRequest'}
+      responses:
+        '200': {$ref: '#/components/responses/RuleResponse'}
+        '409': {$ref: '#/components/responses/Conflict'}
+  /promotions/rules/{ruleId}/versions/{versionId}/validate:
+    post:
+      operationId: validatePromotionRuleVersion
+      summary: 静态预检规则版本和固定样例
+      x-permission: promotion:rule:validate
+      parameters:
+        - {$ref: '#/components/parameters/RuleId'}
+        - {$ref: '#/components/parameters/VersionId'}
+      responses:
+        '200': {$ref: '#/components/responses/RuleResponse'}
+  /promotions/rules/{ruleId}/versions/{versionId}/approve:
+    post:
+      operationId: approvePromotionRuleVersion
+      summary: 审批已经通过预检的规则版本
+      x-permission: promotion:rule:approve
+      parameters:
+        - {$ref: '#/components/parameters/RuleId'}
+        - {$ref: '#/components/parameters/VersionId'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/StateCommand'}
+      responses:
+        '200': {$ref: '#/components/responses/RuleResponse'}
+        '409': {$ref: '#/components/responses/Conflict'}
+  /promotions/rules/{ruleId}/versions/{versionId}/publish:
+    post:
+      operationId: publishPromotionRuleVersion
+      summary: 发布或计划生效不可变规则版本
+      x-permission: promotion:rule:publish
+      parameters:
+        - {$ref: '#/components/parameters/RuleId'}
+        - {$ref: '#/components/parameters/VersionId'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/PublishCommand'}
+      responses:
+        '200': {$ref: '#/components/responses/RuleResponse'}
+        '409': {$ref: '#/components/responses/Conflict'}
+  /promotions/rules/{ruleId}/versions/{versionId}/pause:
+    post:
+      operationId: pausePromotionRuleVersion
+      summary: 暂停新报价使用规则版本
+      x-permission: promotion:rule:publish
+      parameters:
+        - {$ref: '#/components/parameters/RuleId'}
+        - {$ref: '#/components/parameters/VersionId'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/StateCommand'}
+      responses:
+        '200': {$ref: '#/components/responses/RuleResponse'}
+  /promotions/packages/{packageVersion}:
+    get:
+      operationId: getPromotionPackage
+      summary: 获取可信门店范围的不可变离线规则包
+      x-permission: promotion:quote:calculate
+      parameters:
+        - name: packageVersion
+          in: path
+          required: true
+          schema: {type: string, minLength: 1, maxLength: 64}
+        - name: storeId
+          in: query
+          required: true
+          schema: {type: string, pattern: '^[1-9][0-9]{0,18}$'}
+      responses:
+        '200':
+          description: 规则包
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/PromotionPackage'}
+        '404': {$ref: '#/components/responses/NotFound'}
+  /promotions/quotes:
+    post:
+      operationId: calculatePromotionQuote
+      summary: 对冻结价格输入执行确定性促销试算
+      x-permission: promotion:quote:calculate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/QuoteRequest'}
+      responses:
+        '200':
+          description: 确定性报价
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/QuoteResponse'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        '422': {$ref: '#/components/responses/CapabilityRejected'}
+  /promotions/manual-authorizations:
+    post:
+      operationId: authorizeManualPromotion
+      summary: 记录并执行受权手工改价、整单优惠或抹零
+      x-requirement: T2-PRM-002
+      x-permission: promotion:manual:authorize
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ManualAuthorizationRequest'}
+      responses:
+        '200':
+          description: 人工优惠授权结果
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/QuoteResponse'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+  /promotions/snapshots:
+    post:
+      operationId: freezePromotionSnapshot
+      summary: 为订单冻结成交优惠快照和逐行分摊
+      x-requirement: T2-PRM-003
+      x-permission: promotion:snapshot:freeze
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/FreezeSnapshotRequest'}
+      responses:
+        '200':
+          description: 不可变成交快照
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SnapshotResponse'}
+        '409': {$ref: '#/components/responses/Conflict'}
+  /promotions/snapshots/{snapshotId}/refund-allocations:
+    post:
+      operationId: allocatePromotionRefund
+      summary: 按原成交快照和累计上限计算本次退款恢复
+      x-requirement: T2-PRM-003
+      x-permission: promotion:refund:read
+      parameters:
+        - name: snapshotId
+          in: path
+          required: true
+          schema: {$ref: '#/components/schemas/Ulid'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/RefundAllocationRequest'}
+      responses:
+        '200':
+          description: 本次及累计退款优惠恢复结果
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/RefundAllocationResponse'}
+        '409': {$ref: '#/components/responses/Conflict'}
+components:
+  parameters:
+    RuleId:
+      name: ruleId
+      in: path
+      required: true
+      schema: {$ref: '#/components/schemas/Ulid'}
+    VersionId:
+      name: versionId
+      in: path
+      required: true
+      schema: {$ref: '#/components/schemas/Ulid'}
+  schemas:
+    Ulid: {type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'}
+    MinorAmount: {type: integer, format: int64, minimum: 0}
+    CreateRuleRequest:
+      type: object
+      additionalProperties: false
+      required: [commandId, ruleId, ruleVersionId, ruleCode, name, definition, correlationId]
+      properties:
+        commandId: {$ref: '#/components/schemas/Ulid'}
+        ruleId: {$ref: '#/components/schemas/Ulid'}
+        ruleVersionId: {$ref: '#/components/schemas/Ulid'}
+        ruleCode: {type: string, pattern: '^[A-Z0-9][A-Z0-9_-]{0,63}$'}
+        name: {type: string, minLength: 1, maxLength: 128}
+        definition: {$ref: '#/components/schemas/RuleDefinition'}
+        correlationId: {$ref: '#/components/schemas/Ulid'}
+    RuleDefinition:
+      type: object
+      additionalProperties: false
+      required: [ruleType, priority, stackMode, effectiveFrom, effectiveTo, scope, benefit]
+      properties:
+        ruleType:
+          type: string
+          enum: [SPECIAL_PRICE, PERCENT_OFF, AMOUNT_OFF, NTH_ITEM_DISCOUNT, BUNDLE_PRICE, THRESHOLD_AMOUNT_OFF, THRESHOLD_QUANTITY_OFF]
+        priority: {type: integer, minimum: -100000, maximum: 100000}
+        stackMode: {type: string, enum: [STACKABLE, EXCLUSIVE, BEST_OF_GROUP, STOP_AFTER_APPLY]}
+        exclusiveGroup: {type: string, maxLength: 64, nullable: true}
+        effectiveFrom: {type: string, format: date-time}
+        effectiveTo: {type: string, format: date-time}
+        scope:
+          type: object
+          additionalProperties: false
+          properties:
+            storeIds: {type: array, maxItems: 256, items: {type: string, pattern: '^[1-9][0-9]{0,18}$'}}
+            channels: {type: array, maxItems: 16, items: {type: string, enum: [POS, MOBILE_POS, SELF_CHECKOUT]}}
+            skuIds: {type: array, maxItems: 256, items: {type: string, pattern: '^[1-9][0-9]{0,18}$'}}
+            categoryIds: {type: array, maxItems: 256, items: {type: string, pattern: '^[1-9][0-9]{0,18}$'}}
+            brandIds: {type: array, maxItems: 256, items: {type: string, pattern: '^[1-9][0-9]{0,18}$'}}
+        benefit:
+          type: object
+          additionalProperties: false
+          properties:
+            amountMinor: {type: integer, format: int64, minimum: 0}
+            discountRate: {type: string, pattern: '^0\.[0-9]{1,8}$|^1\.0{1,8}$'}
+            thresholdMinor: {type: integer, format: int64, minimum: 0}
+            thresholdQuantity: {type: string, pattern: '^[0-9]+(\.[0-9]{1,6})?$'}
+            nth: {type: integer, minimum: 2, maximum: 100}
+            bundlePriceMinor: {type: integer, format: int64, minimum: 0}
+            bundleComponents:
+              type: array
+              maxItems: 32
+              items:
+                type: object
+                additionalProperties: false
+                required: [skuId, quantity]
+                properties:
+                  skuId: {type: string, pattern: '^[1-9][0-9]{0,18}$'}
+                  quantity: {type: string, pattern: '^[0-9]+(\.[0-9]{1,6})?$'}
+    StateCommand:
+      type: object
+      additionalProperties: false
+      required: [commandId, expectedVersion, reason, correlationId]
+      properties:
+        commandId: {$ref: '#/components/schemas/Ulid'}
+        expectedVersion: {type: integer, format: int64, minimum: 1}
+        reason: {type: string, minLength: 1, maxLength: 256}
+        correlationId: {$ref: '#/components/schemas/Ulid'}
+    PublishCommand:
+      allOf:
+        - {$ref: '#/components/schemas/StateCommand'}
+        - type: object
+          required: [effectiveAt, packageVersion]
+          properties:
+            effectiveAt: {type: string, format: date-time}
+            packageVersion: {type: string, minLength: 1, maxLength: 64}
+    QuoteRequest:
+      type: object
+      additionalProperties: false
+      required: [pricingRequestId, storeId, channel, businessTime, currency, packageVersion, lines, correlationId]
+      properties:
+        pricingRequestId: {$ref: '#/components/schemas/Ulid'}
+        storeId: {type: string, pattern: '^[1-9][0-9]{0,18}$'}
+        channel: {type: string, enum: [POS, MOBILE_POS, SELF_CHECKOUT]}
+        businessTime: {type: string, format: date-time}
+        currency: {type: string, enum: [CNY]}
+        packageVersion: {type: string, minLength: 1, maxLength: 64}
+        lines:
+          type: array
+          minItems: 1
+          maxItems: 500
+          items: {$ref: '#/components/schemas/QuoteLineInput'}
+        correlationId: {$ref: '#/components/schemas/Ulid'}
+    QuoteLineInput:
+      type: object
+      additionalProperties: false
+      required: [lineId, lineNo, skuId, categoryId, brandId, quantity, unitPriceMinor]
+      properties:
+        lineId: {$ref: '#/components/schemas/Ulid'}
+        lineNo: {type: integer, minimum: 1, maximum: 500}
+        skuId: {type: string, pattern: '^[1-9][0-9]{0,18}$'}
+        categoryId: {type: string, pattern: '^[1-9][0-9]{0,18}$'}
+        brandId: {type: string, pattern: '^[1-9][0-9]{0,18}$'}
+        quantity: {type: string, pattern: '^[0-9]+(\.[0-9]{1,6})?$'}
+        unitPriceMinor: {$ref: '#/components/schemas/MinorAmount'}
+    QuoteResponse:
+      type: object
+      required: [quoteId, engineVersion, packageVersion, requestHash, fingerprint, grossAmountMinor, discountAmountMinor, roundingMinor, payableAmountMinor, lines, adjustments, explanations]
+      properties:
+        quoteId: {$ref: '#/components/schemas/Ulid'}
+        engineVersion: {type: string}
+        packageVersion: {type: string}
+        requestHash: {type: string, pattern: '^[a-f0-9]{64}$'}
+        fingerprint: {type: string, pattern: '^[a-f0-9]{64}$'}
+        grossAmountMinor: {$ref: '#/components/schemas/MinorAmount'}
+        discountAmountMinor: {$ref: '#/components/schemas/MinorAmount'}
+        roundingMinor: {type: integer, format: int64}
+        payableAmountMinor: {$ref: '#/components/schemas/MinorAmount'}
+        lines: {type: array, items: {$ref: '#/components/schemas/QuoteLineResult'}}
+        adjustments: {type: array, items: {$ref: '#/components/schemas/Adjustment'}}
+        explanations: {type: array, items: {$ref: '#/components/schemas/Explanation'}}
+    QuoteLineResult:
+      type: object
+      required: [lineId, lineNo, skuId, quantity, grossAmountMinor, discountAmountMinor, payableAmountMinor]
+      properties:
+        lineId: {$ref: '#/components/schemas/Ulid'}
+        lineNo: {type: integer}
+        skuId: {type: string}
+        quantity: {type: string}
+        grossAmountMinor: {$ref: '#/components/schemas/MinorAmount'}
+        discountAmountMinor: {$ref: '#/components/schemas/MinorAmount'}
+        payableAmountMinor: {$ref: '#/components/schemas/MinorAmount'}
+    Adjustment:
+      type: object
+      required: [adjustmentId, sourceType, sourceId, stage, amountMinor, allocations]
+      properties:
+        adjustmentId: {$ref: '#/components/schemas/Ulid'}
+        sourceType: {type: string, enum: [RULE, MANUAL_PRICE, ORDER_DISCOUNT, ROUNDING]}
+        sourceId: {type: string}
+        stage: {type: string}
+        amountMinor: {type: integer, format: int64}
+        allocations:
+          type: array
+          items:
+            type: object
+            required: [lineId, amountMinor]
+            properties:
+              lineId: {$ref: '#/components/schemas/Ulid'}
+              amountMinor: {type: integer, format: int64, minimum: 0}
+    Explanation:
+      type: object
+      required: [sourceId, code]
+      properties:
+        sourceId: {type: string}
+        code: {type: string}
+        detail: {type: string}
+    ManualAuthorizationRequest:
+      type: object
+      additionalProperties: false
+      required: [commandId, quoteId, actionType, amountOrRate, reasonCode, reasonText, expectedQuoteFingerprint, correlationId]
+      properties:
+        commandId: {$ref: '#/components/schemas/Ulid'}
+        quoteId: {$ref: '#/components/schemas/Ulid'}
+        lineId: {$ref: '#/components/schemas/Ulid'}
+        actionType: {type: string, enum: [LINE_FIXED_PRICE, ORDER_AMOUNT_OFF, ORDER_PERCENT_OFF, ROUNDING]}
+        amountOrRate: {type: string, minLength: 1, maxLength: 32}
+        reasonCode: {type: string, minLength: 1, maxLength: 32}
+        reasonText: {type: string, minLength: 1, maxLength: 256}
+        approverId: {type: string, maxLength: 64, nullable: true}
+        expectedQuoteFingerprint: {type: string, pattern: '^[a-f0-9]{64}$'}
+        correlationId: {$ref: '#/components/schemas/Ulid'}
+    FreezeSnapshotRequest:
+      type: object
+      additionalProperties: false
+      required: [commandId, snapshotId, orderId, quoteId, quoteFingerprint, correlationId]
+      properties:
+        commandId: {$ref: '#/components/schemas/Ulid'}
+        snapshotId: {$ref: '#/components/schemas/Ulid'}
+        orderId: {$ref: '#/components/schemas/Ulid'}
+        quoteId: {$ref: '#/components/schemas/Ulid'}
+        quoteFingerprint: {type: string, pattern: '^[a-f0-9]{64}$'}
+        correlationId: {$ref: '#/components/schemas/Ulid'}
+    SnapshotResponse:
+      type: object
+      required: [snapshotId, orderId, quoteId, snapshotHash, grossAmountMinor, discountAmountMinor, payableAmountMinor, allocations]
+      properties:
+        snapshotId: {$ref: '#/components/schemas/Ulid'}
+        orderId: {$ref: '#/components/schemas/Ulid'}
+        quoteId: {$ref: '#/components/schemas/Ulid'}
+        snapshotHash: {type: string, pattern: '^[a-f0-9]{64}$'}
+        grossAmountMinor: {$ref: '#/components/schemas/MinorAmount'}
+        discountAmountMinor: {$ref: '#/components/schemas/MinorAmount'}
+        payableAmountMinor: {$ref: '#/components/schemas/MinorAmount'}
+        allocations: {type: array, items: {$ref: '#/components/schemas/QuoteLineResult'}}
+    RefundAllocationRequest:
+      type: object
+      additionalProperties: false
+      required: [commandId, refundId, lines, correlationId]
+      properties:
+        commandId: {$ref: '#/components/schemas/Ulid'}
+        refundId: {$ref: '#/components/schemas/Ulid'}
+        lines:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [lineId, quantity]
+            properties:
+              lineId: {$ref: '#/components/schemas/Ulid'}
+              quantity: {type: string, pattern: '^[0-9]+(\.[0-9]{1,6})?$'}
+        correlationId: {$ref: '#/components/schemas/Ulid'}
+    RefundAllocationResponse:
+      type: object
+      required: [refundId, snapshotId, refundableAmountMinor, recoveredDiscountMinor, lines]
+      properties:
+        refundId: {$ref: '#/components/schemas/Ulid'}
+        snapshotId: {$ref: '#/components/schemas/Ulid'}
+        refundableAmountMinor: {$ref: '#/components/schemas/MinorAmount'}
+        recoveredDiscountMinor: {$ref: '#/components/schemas/MinorAmount'}
+        lines:
+          type: array
+          items:
+            type: object
+            required: [lineId, quantity, refundableAmountMinor, recoveredDiscountMinor]
+            properties:
+              lineId: {$ref: '#/components/schemas/Ulid'}
+              quantity: {type: string}
+              refundableAmountMinor: {$ref: '#/components/schemas/MinorAmount'}
+              recoveredDiscountMinor: {$ref: '#/components/schemas/MinorAmount'}
+    PromotionPackage:
+      type: object
+      required: [schemaVersion, engineMin, engineMax, packageVersion, promotionReleaseVersion, storeId, issuedAt, effectiveFrom, expiresAt, payloadSha256, signature, rules]
+      properties:
+        schemaVersion: {type: string, enum: ['1.0']}
+        engineMin: {type: string}
+        engineMax: {type: string}
+        packageVersion: {type: string}
+        promotionReleaseVersion: {type: string}
+        storeId: {type: string}
+        issuedAt: {type: string, format: date-time}
+        effectiveFrom: {type: string, format: date-time}
+        expiresAt: {type: string, format: date-time}
+        payloadSha256: {type: string, pattern: '^[a-f0-9]{64}$'}
+        signature: {type: string, minLength: 16}
+        rules: {type: array, maxItems: 5000, items: {$ref: '#/components/schemas/RuleDefinition'}}
+  responses:
+    RuleResponse:
+      description: 规则版本状态
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [ruleId, ruleVersionId, status, recordVersion, contentHash]
+            properties:
+              ruleId: {$ref: '#/components/schemas/Ulid'}
+              ruleVersionId: {$ref: '#/components/schemas/Ulid'}
+              status: {type: string}
+              recordVersion: {type: integer, format: int64}
+              contentHash: {type: string, pattern: '^[a-f0-9]{64}$'}
+    Conflict:
+      description: 状态、版本、幂等或金额冲突
+    Forbidden:
+      description: 权限、阈值或职责分离失败
+    NotFound:
+      description: 资源不存在或不在可信租户/门店范围
+    CapabilityRejected:
+      description: 包含未准入规则、会员、券、预算或外部能力

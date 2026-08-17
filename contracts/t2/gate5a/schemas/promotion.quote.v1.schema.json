@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.jingshanghui.example/t2/gate5a/promotion.quote.v1.schema.json",
+  "title": "确定性促销报价",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["quoteId", "engineVersion", "packageVersion", "requestHash", "fingerprint", "grossAmountMinor", "discountAmountMinor", "roundingMinor", "payableAmountMinor", "lines", "adjustments", "explanations"],
+  "properties": {
+    "quoteId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "engineVersion": {"const": "promotion-engine-1.0.0"},
+    "packageVersion": {"type": "string", "minLength": 1, "maxLength": 64},
+    "requestHash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "fingerprint": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "grossAmountMinor": {"type": "integer", "minimum": 0},
+    "discountAmountMinor": {"type": "integer", "minimum": 0},
+    "roundingMinor": {"type": "integer"},
+    "payableAmountMinor": {"type": "integer", "minimum": 0},
+    "lines": {"type": "array", "minItems": 1, "maxItems": 500, "items": {"type": "object", "required": ["lineId", "lineNo", "skuId", "quantity", "grossAmountMinor", "discountAmountMinor", "payableAmountMinor"], "properties": {"lineId": {"type": "string"}, "lineNo": {"type": "integer"}, "skuId": {"type": "string"}, "quantity": {"type": "string"}, "grossAmountMinor": {"type": "integer"}, "discountAmountMinor": {"type": "integer"}, "payableAmountMinor": {"type": "integer"}}}},
+    "adjustments": {"type": "array", "maxItems": 2000, "items": {"type": "object", "required": ["adjustmentId", "sourceType", "sourceId", "stage", "amountMinor", "allocations"], "properties": {"adjustmentId": {"type": "string"}, "sourceType": {"enum": ["RULE", "MANUAL_PRICE", "ORDER_DISCOUNT", "ROUNDING"]}, "sourceId": {"type": "string"}, "stage": {"type": "string"}, "amountMinor": {"type": "integer"}, "allocations": {"type": "array"}}}},
+    "explanations": {"type": "array", "items": {"type": "object", "required": ["sourceId", "code"], "properties": {"sourceId": {"type": "string"}, "code": {"type": "string"}, "detail": {"type": "string"}}}}
+  }
+}

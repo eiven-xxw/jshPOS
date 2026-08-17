@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.jingshanghui.example/t2/gate5a/promotion.event.v1.schema.json",
+  "title": "Gate 5A 促销事件标准包络",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["eventId", "eventType", "aggregateType", "aggregateId", "aggregateVersion", "occurredAt", "correlationId", "payloadHash", "payload"],
+  "properties": {
+    "eventId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "eventType": {"enum": ["promotion.rule.published.v1", "promotion.rule.paused.v1", "promotion.package.published.v1", "promotion.quote.calculated.v1", "promotion.snapshot.frozen.v1", "promotion.refund.allocation-recorded.v1"]},
+    "aggregateType": {"enum": ["PROMOTION_RULE", "PROMOTION_PACKAGE", "PROMOTION_QUOTE", "PROMOTION_SNAPSHOT", "PROMOTION_REFUND_ALLOCATION"]},
+    "aggregateId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "aggregateVersion": {"type": "integer", "minimum": 1},
+    "occurredAt": {"type": "string", "format": "date-time"},
+    "correlationId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "payloadHash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "payload": {"type": "object"}
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.jingshanghui.example/t2/gate5a/promotion.package.v1.schema.json",
+  "title": "POS 离线促销规则包",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "engineMin", "engineMax", "packageVersion", "promotionReleaseVersion", "storeId", "storeTimezone", "issuedAt", "effectiveFrom", "expiresAt", "payloadSha256", "signatureAlgorithm", "signature", "rules"],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "engineMin": {"type": "string"},
+    "engineMax": {"type": "string"},
+    "packageVersion": {"type": "string", "minLength": 1, "maxLength": 64},
+    "promotionReleaseVersion": {"type": "string", "minLength": 1, "maxLength": 64},
+    "storeId": {"type": "string", "pattern": "^[1-9][0-9]{0,18}$"},
+    "storeTimezone": {"type": "string", "minLength": 1, "maxLength": 64},
+    "issuedAt": {"type": "string", "format": "date-time"},
+    "effectiveFrom": {"type": "string", "format": "date-time"},
+    "expiresAt": {"type": "string", "format": "date-time"},
+    "revokedPackageVersions": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "payloadSha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "signatureAlgorithm": {"enum": ["ED25519_TEST_V1", "ED25519_PRODUCTION_V1"]},
+    "signature": {"type": "string", "minLength": 16},
+    "rules": {"type": "array", "maxItems": 5000, "items": {"$ref": "promotion.rule-version.v1.schema.json"}}
+  }
+}
