@@ -9,6 +9,7 @@ import 's3_sync_schema.dart';
 import 's9_promotion_schema.dart';
 import 's9_manual_schema.dart';
 import 's9_transaction_schema.dart';
+import 's10_settlement_schema.dart';
 
 typedef FailureInjector = void Function(String checkpoint);
 
@@ -108,7 +109,11 @@ final class PosLocalDatabase {
       _migrateToPromotionV5();
       version = S9TransactionSchema.version;
     }
-    if (version != S9TransactionSchema.version) {
+    if (version == S9TransactionSchema.version) {
+      _migrateToSettlementV6();
+      version = S10SettlementSchema.version;
+    }
+    if (version != S10SettlementSchema.version) {
       throw StateError('LOCAL_SCHEMA_UNSUPPORTED: $version');
     }
     _verifySchemaChecksum();
@@ -131,6 +136,9 @@ final class PosLocalDatabase {
           .toString(),
       S9TransactionSchema.version: sha256
           .convert(utf8.encode(S9TransactionSchema.v5))
+          .toString(),
+      S10SettlementSchema.version: sha256
+          .convert(utf8.encode(S10SettlementSchema.v6))
           .toString(),
     };
     for (final entry in expected.entries) {
@@ -219,6 +227,31 @@ final class PosLocalDatabase {
     if (violations.isNotEmpty) {
       throw StateError(
         'LOCAL_DB_INTEGRITY_FAILED: foreign key violations after v5',
+      );
+    }
+  }
+
+  /// 追加 Gate 5B 促销成交绑定表；失败时整个迁移事务回滚。
+  void _migrateToSettlementV6() {
+    transaction(() {
+      database.execute(S10SettlementSchema.v6);
+      final checksum = sha256
+          .convert(utf8.encode(S10SettlementSchema.v6))
+          .toString();
+      database.execute(
+        'INSERT INTO local_schema_history(version,description,checksum_sha256,installed_at) VALUES(6,?,?,?)',
+        [
+          'gate5b-promoted-cash-atomic-settlement',
+          checksum,
+          DateTime.now().toUtc().toIso8601String(),
+        ],
+      );
+      database.execute('PRAGMA user_version=${S10SettlementSchema.version}');
+    });
+    final violations = database.select('PRAGMA foreign_key_check');
+    if (violations.isNotEmpty) {
+      throw StateError(
+        'LOCAL_DB_INTEGRITY_FAILED: foreign key violations after v6',
       );
     }
   }

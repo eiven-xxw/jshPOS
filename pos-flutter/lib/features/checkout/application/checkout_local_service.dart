@@ -625,6 +625,328 @@ final class CheckoutLocalService {
     });
   }
 
+  /// POS-006 将促销快照、订单、现金、班次效果和 Outbox 原子提交。
+  PromotedCashSaleResult completePromotedCashSale(
+    PromotedCashSaleCommand command,
+  ) {
+    _requireCommand(command.commandId, command.idempotencyKey);
+    if (!UlidGenerator.isCanonical(command.basket.orderId) ||
+        !UlidGenerator.isCanonical(command.shiftId) ||
+        command.basket.lines.isEmpty ||
+        command.basket.suspended ||
+        command.catalogVersion <= 0 ||
+        command.priceVersion <= 0 ||
+        !_isCanonicalBusinessDate(command.businessDate)) {
+      throw const PosDomainException(
+        'ORDER_INPUT_INVALID',
+        'promoted cash order context is invalid',
+      );
+    }
+    MoneyRules.requireMinor(
+      command.receivableAmountMinor,
+      'receivableAmountMinor',
+    );
+    MoneyRules.requireMinor(command.tenderedAmountMinor, 'tenderedAmountMinor');
+    if (command.tenderedAmountMinor < command.receivableAmountMinor) {
+      throw const PosDomainException(
+        'CASH_TENDER_INSUFFICIENT',
+        'cash tender is below promoted receivable amount',
+      );
+    }
+    final requestHash = command.requestHash(_binding);
+    final basketInputHash = command.basketInputHash(_binding);
+    return localDatabase.transaction(() {
+      final duplicate = _idempotent<PromotedCashSaleResult>(
+        'SUBMIT_PROMOTED_CASH_ORDER',
+        command.idempotencyKey,
+        requestHash,
+        PromotedCashSaleResult.fromJson,
+      );
+      if (duplicate != null) return duplicate;
+      _requireOpenShift(command.shiftId, businessDate: command.businessDate);
+      _verifyPromotionSettlement(command);
+      localDatabase.checkpoint('promotion.inputs.verified');
+
+      final promotionDocument = _promotionSnapshot(command);
+      final promotionJson = jsonEncode(promotionDocument);
+      final promotionHash = sha256
+          .convert(utf8.encode(promotionJson))
+          .toString();
+      final orderSnapshot = _promotedOrderSnapshot(
+        command,
+        promotionHash: promotionHash,
+      );
+      final orderSnapshotJson = jsonEncode(orderSnapshot);
+      final orderSnapshotHash = sha256
+          .convert(utf8.encode(orderSnapshotJson))
+          .toString();
+      final existing = _db.select(
+        'SELECT * FROM local_order WHERE tenant_id=? AND order_id=?',
+        [_binding.tenantId, command.basket.orderId],
+      );
+      final at = command.occurredAt.toUtc().toIso8601String();
+      int submittedVersion;
+      int completedVersion;
+      if (existing.isEmpty) {
+        _insertPromotedCompletedOrder(
+          command,
+          orderSnapshotJson,
+          orderSnapshotHash,
+          requestHash,
+          at,
+        );
+        _insertPromotedLines(command);
+        _insertPromotedStateHistory(
+          command,
+          startingVersion: 1,
+          includeDraft: true,
+          at: at,
+        );
+        submittedVersion = 2;
+        completedVersion = 4;
+      } else {
+        if (existing.single['status'] != 'DRAFT' ||
+            existing.single['draft_disposition'] != 'ACTIVE' ||
+            !_matchesDraftContext(
+              existing.single,
+              command.shiftId,
+              command.basket.localOrderNo,
+              businessDate: command.businessDate,
+            )) {
+          throw const PosDomainException(
+            'ORDER_STATE_CONFLICT',
+            'existing order is not an active draft in the frozen context',
+          );
+        }
+        _verifyPersistedLines(command.basket);
+        _applyPromotedLineAmounts(command);
+        final priorVersion = existing.single['record_version']! as int;
+        _db.execute(
+          'UPDATE local_order SET status=\'COMPLETED\',payment_status=\'PAID\',gross_amount_minor=?,discount_amount_minor=?,surcharge_amount_minor=?,receivable_amount_minor=?,received_amount_minor=?,catalog_version=?,price_version=?,industry_template_version=?,snapshot_schema_version=2,snapshot_json=?,snapshot_sha256=?,idempotency_key=?,request_sha256=?,record_version=record_version+3 WHERE tenant_id=? AND order_id=? AND status=\'DRAFT\' AND draft_disposition=\'ACTIVE\' AND record_version=?',
+          [
+            command.grossAmountMinor,
+            command.discountAmountMinor,
+            command.surchargeAmountMinor,
+            command.receivableAmountMinor,
+            command.receivableAmountMinor,
+            command.catalogVersion,
+            command.priceVersion,
+            command.industryTemplateVersion,
+            orderSnapshotJson,
+            orderSnapshotHash,
+            command.idempotencyKey,
+            requestHash,
+            _binding.tenantId,
+            command.basket.orderId,
+            priorVersion,
+          ],
+        );
+        if (_db.updatedRows != 1) {
+          throw const PosDomainException(
+            'ORDER_VERSION_CONFLICT',
+            'promoted order completion conflict',
+          );
+        }
+        _insertPromotedStateHistory(
+          command,
+          startingVersion: priorVersion + 1,
+          includeDraft: false,
+          at: at,
+        );
+        submittedVersion = priorVersion + 1;
+        completedVersion = priorVersion + 3;
+      }
+      localDatabase.checkpoint('promoted.order.snapshot');
+
+      _insertPromotionSnapshot(command, promotionHash, at);
+      localDatabase.checkpoint('promotion.snapshot');
+      _db.execute(
+        'INSERT INTO local_checkout_settlement(settlement_id,tenant_id,order_id,promotion_snapshot_id,quote_id,store_id,terminal_id,shift_id,business_date,package_version,quote_fingerprint,settlement_fingerprint,manual_event_refs_json,basket_input_sha256,request_sha256,order_snapshot_sha256,promotion_snapshot_sha256,gross_amount_minor,discount_amount_minor,surcharge_amount_minor,receivable_amount_minor,status,occurred_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,\'COMMITTED\',?)',
+        [
+          command.commandId,
+          _binding.tenantId,
+          command.basket.orderId,
+          command.promotionSnapshotId,
+          command.quoteId,
+          _binding.storeId,
+          _binding.terminalId,
+          command.shiftId,
+          command.businessDate,
+          command.packageVersion,
+          command.quoteFingerprint,
+          command.settlementFingerprint,
+          jsonEncode(command.manualEventRefs),
+          basketInputHash,
+          requestHash,
+          orderSnapshotHash,
+          promotionHash,
+          command.grossAmountMinor,
+          command.discountAmountMinor,
+          command.surchargeAmountMinor,
+          command.receivableAmountMinor,
+          at,
+        ],
+      );
+      localDatabase.checkpoint('checkout.settlement');
+
+      final paymentId = ulids.next();
+      final change =
+          command.tenderedAmountMinor - command.receivableAmountMinor;
+      _db.execute(
+        'INSERT INTO local_cash_payment(payment_id,tenant_id,order_id,shift_id,status,currency,receivable_amount_minor,tendered_amount_minor,change_amount_minor,net_amount_minor,occurred_at) VALUES(?,?,?,?,\'SUCCEEDED\',\'CNY\',?,?,?,?,?)',
+        [
+          paymentId,
+          _binding.tenantId,
+          command.basket.orderId,
+          command.shiftId,
+          command.receivableAmountMinor,
+          command.tenderedAmountMinor,
+          change,
+          command.receivableAmountMinor,
+          at,
+        ],
+      );
+      localDatabase.checkpoint('promoted.cash.payment');
+      _db.execute(
+        'INSERT INTO local_cash_ledger(ledger_id,tenant_id,shift_id,order_id,payment_id,movement_type,signed_amount_minor,currency,business_date,occurred_at) VALUES(?,?,?,?,?,\'SALE_RECEIPT\',?,\'CNY\',?,?)',
+        [
+          ulids.next(),
+          _binding.tenantId,
+          command.shiftId,
+          command.basket.orderId,
+          paymentId,
+          command.receivableAmountMinor,
+          command.businessDate,
+          at,
+        ],
+      );
+      _db.execute(
+        'UPDATE local_shift SET theoretical_cash_minor=theoretical_cash_minor+?,record_version=record_version+1 WHERE tenant_id=? AND shift_id=? AND status=\'OPEN\'',
+        [command.receivableAmountMinor, _binding.tenantId, command.shiftId],
+      );
+      if (_db.updatedRows != 1) {
+        throw const PosDomainException(
+          'SHIFT_STATE_CONFLICT',
+          'shift changed during promoted cash sale',
+        );
+      }
+      localDatabase.checkpoint('promoted.cash.ledger');
+      _db.execute(
+        'INSERT INTO local_print_job(print_job_id,tenant_id,order_id,status,template_version,payload_sha256,created_at) VALUES(?,?,?,\'PENDING\',?,?,?)',
+        [
+          ulids.next(),
+          _binding.tenantId,
+          command.basket.orderId,
+          command.industryTemplateVersion,
+          orderSnapshotHash,
+          at,
+        ],
+      );
+      final submittedEvent = _appendOutbox(
+        stream: 'order.command',
+        eventType: 'order.submitted.v2',
+        aggregateId: command.basket.orderId,
+        aggregateVersion: submittedVersion,
+        correlationId: command.commandId,
+        payload: {
+          'schemaVersion': '2.0',
+          'orderId': command.basket.orderId,
+          'shiftId': command.shiftId,
+          'grossAmountMinor': command.grossAmountMinor,
+          'discountAmountMinor': command.discountAmountMinor,
+          'surchargeAmountMinor': command.surchargeAmountMinor,
+          'receivableAmountMinor': command.receivableAmountMinor,
+          'promotionSnapshotId': command.promotionSnapshotId,
+          'promotionSnapshotHash': 'sha256:$promotionHash',
+          'quoteFingerprint': command.quoteFingerprint,
+          'settlementFingerprint': command.settlementFingerprint,
+          'packageVersion': command.packageVersion,
+          'orderSnapshotHash': 'sha256:$orderSnapshotHash',
+        },
+        occurredAt: at,
+      );
+      _appendOutbox(
+        stream: 'order.command',
+        eventType: 'cash.received.v1',
+        aggregateId: paymentId,
+        aggregateVersion: 1,
+        correlationId: command.commandId,
+        payload: {
+          'paymentId': paymentId,
+          'orderId': command.basket.orderId,
+          'shiftId': command.shiftId,
+          'currency': 'CNY',
+          'tenderedAmountMinor': command.tenderedAmountMinor,
+          'changeAmountMinor': change,
+          'netAmountMinor': command.receivableAmountMinor,
+        },
+        occurredAt: at,
+      );
+      _appendOutbox(
+        stream: 'order.command',
+        eventType: 'order.completed.v2',
+        aggregateId: command.basket.orderId,
+        aggregateVersion: completedVersion,
+        correlationId: command.commandId,
+        payload: {
+          'schemaVersion': '2.0',
+          'orderId': command.basket.orderId,
+          'shiftId': command.shiftId,
+          'paymentId': paymentId,
+          'businessDate': command.businessDate,
+          'currency': 'CNY',
+          'grossAmountMinor': command.grossAmountMinor,
+          'discountAmountMinor': command.discountAmountMinor,
+          'surchargeAmountMinor': command.surchargeAmountMinor,
+          'receivableAmountMinor': command.receivableAmountMinor,
+          'promotionSnapshotId': command.promotionSnapshotId,
+          'promotionSnapshotHash': 'sha256:$promotionHash',
+          'quoteFingerprint': command.quoteFingerprint,
+          'settlementFingerprint': command.settlementFingerprint,
+          'packageVersion': command.packageVersion,
+          'aggregateVersion': completedVersion,
+          'orderSnapshotHash': 'sha256:$orderSnapshotHash',
+        },
+        occurredAt: at,
+      );
+      localDatabase.checkpoint('promoted.outbox.appended');
+      _audit(
+        'PROMOTED_CASH_ORDER_COMPLETED',
+        'ORDER',
+        command.basket.orderId,
+        command.commandId,
+        'DRAFT',
+        'COMPLETED',
+        command.receivableAmountMinor,
+        requestHash,
+        at,
+      );
+      localDatabase.checkpoint('promoted.audit.appended');
+      final result = PromotedCashSaleResult(
+        orderId: command.basket.orderId,
+        paymentId: paymentId,
+        promotionSnapshotId: command.promotionSnapshotId,
+        receivableAmountMinor: command.receivableAmountMinor,
+        tenderedAmountMinor: command.tenderedAmountMinor,
+        changeAmountMinor: change,
+        orderSnapshotHash: 'sha256:$orderSnapshotHash',
+        promotionSnapshotHash: 'sha256:$promotionHash',
+        outboxEventId: submittedEvent,
+      );
+      _saveIdempotency(
+        'SUBMIT_PROMOTED_CASH_ORDER',
+        command.commandId,
+        command.idempotencyKey,
+        requestHash,
+        command.basket.orderId,
+        result.toJson(),
+        at,
+      );
+      localDatabase.checkpoint('promoted.idempotency.saved');
+      return result;
+    });
+  }
+
   ShiftCloseApproval approveShiftDifference({
     required String commandId,
     required String idempotencyKey,
@@ -939,6 +1261,341 @@ final class CheckoutLocalService {
     );
     _insertLines(basket);
   }
+
+  void _verifyPromotionSettlement(PromotedCashSaleCommand command) {
+    final quoteRows = _db.select(
+      'SELECT * FROM local_promotion_quote WHERE tenant_id=? AND store_id=? AND terminal_id=? AND quote_id=?',
+      [
+        _binding.tenantId,
+        _binding.storeId,
+        _binding.terminalId,
+        command.quoteId,
+      ],
+    );
+    if (quoteRows.length != 1) {
+      throw const PosDomainException(
+        'PROMOTION_QUOTE_NOT_FOUND',
+        'quote is outside the trusted device context',
+      );
+    }
+    final quote = quoteRows.single;
+    final quoteDiscount = quote['discount_amount_minor']! as int;
+    if (!const {'CALCULATED', 'FROZEN'}.contains(quote['status']) ||
+        quote['package_version'] != command.packageVersion ||
+        quote['result_sha256'] != command.quoteFingerprint ||
+        quote['gross_amount_minor'] != command.grossAmountMinor) {
+      throw const PosDomainException(
+        'PROMOTION_QUOTE_MISMATCH',
+        'quote identity, package, fingerprint or gross amount differs',
+      );
+    }
+    final package = _db.select(
+      'SELECT 1 FROM local_promotion_package_slot WHERE tenant_id=? AND store_id=? AND package_version=? AND state IN (\'ACTIVE\',\'RETIRED\')',
+      [_binding.tenantId, _binding.storeId, command.packageVersion],
+    );
+    if (package.length != 1) {
+      throw const PosDomainException(
+        'PROMOTION_PACKAGE_UNAVAILABLE',
+        'the quoted package is not retained for settlement',
+      );
+    }
+    final quoteLines = _db.select(
+      'SELECT source_line_id,line_no,sku_id,quantity_decimal,unit_price_minor,gross_amount_minor,discount_amount_minor,payable_amount_minor FROM local_promotion_quote_line WHERE tenant_id=? AND quote_id=? ORDER BY line_no',
+      [_binding.tenantId, command.quoteId],
+    );
+    if (quoteLines.length != command.lines.length) {
+      throw const PosDomainException(
+        'PROMOTION_QUOTE_MISMATCH',
+        'quote line count differs from frozen basket',
+      );
+    }
+    var quotedLineDiscount = 0;
+    for (var index = 0; index < command.lines.length; index++) {
+      final actual = command.lines[index];
+      final quoted = quoteLines[index];
+      if (quoted['source_line_id'] != actual.basketLine.lineId ||
+          quoted['line_no'] != actual.basketLine.lineNo ||
+          quoted['sku_id'] != actual.basketLine.quote.skuId ||
+          quoted['quantity_decimal'] != actual.basketLine.quantity.canonical ||
+          quoted['unit_price_minor'] !=
+              actual.basketLine.quote.unitPriceMinor ||
+          quoted['gross_amount_minor'] != actual.basketLine.grossAmountMinor ||
+          actual.discountAmountMinor <
+              (quoted['discount_amount_minor']! as int)) {
+        throw const PosDomainException(
+          'PROMOTION_QUOTE_MISMATCH',
+          'quote line differs from settlement line',
+        );
+      }
+      quotedLineDiscount += quoted['discount_amount_minor']! as int;
+    }
+    if (quotedLineDiscount != quoteDiscount ||
+        command.discountAmountMinor < quoteDiscount) {
+      throw const PosDomainException(
+        'PROMOTION_AMOUNT_MISMATCH',
+        'quoted or settled discount is not conserved',
+      );
+    }
+    if (command.manualEventRefs.toSet().length !=
+        command.manualEventRefs.length) {
+      throw const PosDomainException(
+        'PROMOTION_MANUAL_CHAIN_INVALID',
+        'manual event references contain duplicates',
+      );
+    }
+    var fingerprint = command.quoteFingerprint;
+    var manualDiscount = 0;
+    for (final eventId in command.manualEventRefs) {
+      final events = _db.select(
+        'SELECT * FROM local_promotion_manual_event WHERE tenant_id=? AND store_id=? AND terminal_id=? AND quote_id=? AND manual_event_id=? AND state=\'APPLIED\'',
+        [
+          _binding.tenantId,
+          _binding.storeId,
+          _binding.terminalId,
+          command.quoteId,
+          eventId,
+        ],
+      );
+      if (events.length != 1 ||
+          events.single['package_version'] != command.packageVersion ||
+          events.single['before_fingerprint'] != fingerprint) {
+        throw const PosDomainException(
+          'PROMOTION_MANUAL_CHAIN_INVALID',
+          'manual approval chain is missing, stale or out of order',
+        );
+      }
+      fingerprint = events.single['preview_fingerprint']! as String;
+      manualDiscount += events.single['incremental_discount_minor']! as int;
+    }
+    if (fingerprint != command.settlementFingerprint ||
+        quoteDiscount + manualDiscount != command.discountAmountMinor ||
+        command.surchargeAmountMinor != 0 ||
+        command.grossAmountMinor - command.discountAmountMinor !=
+            command.receivableAmountMinor) {
+      throw const PosDomainException(
+        'PROMOTION_AMOUNT_MISMATCH',
+        'manual chain fingerprint or final amount differs',
+      );
+    }
+  }
+
+  void _insertPromotedCompletedOrder(
+    PromotedCashSaleCommand command,
+    String snapshotJson,
+    String snapshotHash,
+    String requestHash,
+    String at,
+  ) {
+    _db.execute(
+      'INSERT INTO local_order(order_id,tenant_id,local_order_no,store_id,terminal_id,shift_id,cashier_id,business_date,store_timezone,status,draft_disposition,payment_status,currency,gross_amount_minor,discount_amount_minor,surcharge_amount_minor,receivable_amount_minor,received_amount_minor,catalog_version,price_version,industry_template_version,snapshot_schema_version,snapshot_json,snapshot_sha256,idempotency_key,request_sha256,occurred_at,record_version) VALUES(?,?,?,?,?,?,?,?,?,\'COMPLETED\',\'ACTIVE\',\'PAID\',\'CNY\',?,?,?,?,?,?,?,?,2,?,?,?,?,?,4)',
+      [
+        command.basket.orderId,
+        _binding.tenantId,
+        command.basket.localOrderNo,
+        _binding.storeId,
+        _binding.terminalId,
+        command.shiftId,
+        _binding.cashierId,
+        command.businessDate,
+        _binding.storeTimezone,
+        command.grossAmountMinor,
+        command.discountAmountMinor,
+        command.surchargeAmountMinor,
+        command.receivableAmountMinor,
+        command.receivableAmountMinor,
+        command.catalogVersion,
+        command.priceVersion,
+        command.industryTemplateVersion,
+        snapshotJson,
+        snapshotHash,
+        command.idempotencyKey,
+        requestHash,
+        at,
+      ],
+    );
+  }
+
+  void _insertPromotedLines(PromotedCashSaleCommand command) {
+    for (final promoted in command.lines) {
+      final line = promoted.basketLine;
+      _db.execute(
+        'INSERT INTO local_order_line(line_id,tenant_id,order_id,line_no,sku_id,sku_code,barcode_value,product_name_snapshot,unit_id,unit_code,quantity_decimal,unit_price_minor,gross_amount_minor,discount_amount_minor,surcharge_amount_minor,payable_amount_minor,price_source) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+        [
+          line.lineId,
+          _binding.tenantId,
+          command.basket.orderId,
+          line.lineNo,
+          line.quote.skuId,
+          line.quote.skuCode,
+          line.quote.barcode,
+          line.quote.productName,
+          line.quote.unitId,
+          line.quote.unitCode,
+          line.quantity.canonical,
+          line.quote.unitPriceMinor,
+          line.grossAmountMinor,
+          promoted.discountAmountMinor,
+          promoted.surchargeAmountMinor,
+          promoted.receivableAmountMinor,
+          line.quote.priceSource,
+        ],
+      );
+    }
+  }
+
+  void _applyPromotedLineAmounts(PromotedCashSaleCommand command) {
+    for (final promoted in command.lines) {
+      _db.execute(
+        'UPDATE local_order_line SET discount_amount_minor=?,surcharge_amount_minor=?,payable_amount_minor=? WHERE tenant_id=? AND order_id=? AND line_id=? AND gross_amount_minor=?',
+        [
+          promoted.discountAmountMinor,
+          promoted.surchargeAmountMinor,
+          promoted.receivableAmountMinor,
+          _binding.tenantId,
+          command.basket.orderId,
+          promoted.basketLine.lineId,
+          promoted.basketLine.grossAmountMinor,
+        ],
+      );
+      if (_db.updatedRows != 1) {
+        throw const PosDomainException(
+          'ORDER_AMOUNT_CHANGED',
+          'draft line cannot be frozen with promoted amount',
+        );
+      }
+    }
+  }
+
+  void _insertPromotionSnapshot(
+    PromotedCashSaleCommand command,
+    String promotionHash,
+    String at,
+  ) {
+    _db.execute(
+      'INSERT INTO local_promotion_transaction_snapshot(snapshot_id,tenant_id,order_id,quote_id,store_id,terminal_id,business_date,currency,quote_fingerprint,snapshot_sha256,gross_amount_minor,discount_amount_minor,payable_amount_minor,actor_user_id,correlation_id,occurred_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+      [
+        command.promotionSnapshotId,
+        _binding.tenantId,
+        command.basket.orderId,
+        command.quoteId,
+        _binding.storeId,
+        _binding.terminalId,
+        command.businessDate,
+        'CNY',
+        command.settlementFingerprint,
+        promotionHash,
+        command.grossAmountMinor,
+        command.discountAmountMinor,
+        command.receivableAmountMinor,
+        _binding.cashierId,
+        command.commandId,
+        at,
+      ],
+    );
+    for (final promoted in command.lines) {
+      final sourceJson = jsonEncode(promoted.sourceAllocations);
+      final sourceHash = sha256.convert(utf8.encode(sourceJson)).toString();
+      _db.execute(
+        'INSERT INTO local_promotion_transaction_allocation(allocation_id,tenant_id,snapshot_id,line_id,line_no,sku_id,quantity_decimal,gross_amount_minor,discount_amount_minor,payable_amount_minor,source_allocations_json,source_allocations_sha256) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)',
+        [
+          ulids.next(),
+          _binding.tenantId,
+          command.promotionSnapshotId,
+          promoted.basketLine.lineId,
+          promoted.basketLine.lineNo,
+          promoted.basketLine.quote.skuId,
+          promoted.basketLine.quantity.canonical,
+          promoted.basketLine.grossAmountMinor,
+          promoted.discountAmountMinor,
+          promoted.receivableAmountMinor,
+          sourceJson,
+          sourceHash,
+        ],
+      );
+    }
+  }
+
+  void _insertPromotedStateHistory(
+    PromotedCashSaleCommand command, {
+    required int startingVersion,
+    required bool includeDraft,
+    required String at,
+  }) {
+    final states = includeDraft
+        ? <(String?, String)>[
+            (null, 'DRAFT'),
+            ('DRAFT', 'PENDING_PAYMENT'),
+            ('PENDING_PAYMENT', 'CONFIRMED'),
+            ('CONFIRMED', 'COMPLETED'),
+          ]
+        : <(String?, String)>[
+            ('DRAFT', 'PENDING_PAYMENT'),
+            ('PENDING_PAYMENT', 'CONFIRMED'),
+            ('CONFIRMED', 'COMPLETED'),
+          ];
+    var version = startingVersion;
+    for (final state in states) {
+      _db.execute(
+        'INSERT INTO local_order_state_history(history_id,tenant_id,order_id,command_id,from_status,to_status,aggregate_version,actor_id,reason_code,occurred_at) VALUES(?,?,?,?,?,?,?,?,\'PROMOTED_CASH_SALE\',?)',
+        [
+          ulids.next(),
+          _binding.tenantId,
+          command.basket.orderId,
+          command.commandId,
+          state.$1,
+          state.$2,
+          version++,
+          _binding.cashierId,
+          at,
+        ],
+      );
+    }
+  }
+
+  Map<String, Object?> _promotionSnapshot(PromotedCashSaleCommand command) => {
+    'schemaVersion': '1.0',
+    'snapshotId': command.promotionSnapshotId,
+    'orderId': command.basket.orderId,
+    'quoteId': command.quoteId,
+    'quoteFingerprint': command.quoteFingerprint,
+    'settlementFingerprint': command.settlementFingerprint,
+    'packageVersion': command.packageVersion,
+    'manualEventRefs': command.manualEventRefs,
+    'grossAmountMinor': command.grossAmountMinor,
+    'discountAmountMinor': command.discountAmountMinor,
+    'surchargeAmountMinor': command.surchargeAmountMinor,
+    'receivableAmountMinor': command.receivableAmountMinor,
+    'lines': command.lines.map((line) => line.toSnapshot()).toList(),
+  };
+
+  Map<String, Object?> _promotedOrderSnapshot(
+    PromotedCashSaleCommand command, {
+    required String promotionHash,
+  }) => {
+    'schemaVersion': 2,
+    'orderId': command.basket.orderId,
+    'storeId': _binding.storeId,
+    'terminalId': _binding.terminalId,
+    'shiftId': command.shiftId,
+    'cashierId': _binding.cashierId,
+    'businessDate': command.businessDate,
+    'storeTimezone': _binding.storeTimezone,
+    'currency': 'CNY',
+    'grossAmountMinor': command.grossAmountMinor,
+    'discountAmountMinor': command.discountAmountMinor,
+    'surchargeAmountMinor': command.surchargeAmountMinor,
+    'receivableAmountMinor': command.receivableAmountMinor,
+    'catalogVersion': command.catalogVersion,
+    'priceVersion': command.priceVersion,
+    'industryTemplateVersion': command.industryTemplateVersion,
+    'promotionSnapshotId': command.promotionSnapshotId,
+    'promotionSnapshotHash': 'sha256:$promotionHash',
+    'quoteFingerprint': command.quoteFingerprint,
+    'settlementFingerprint': command.settlementFingerprint,
+    'promotionPackageVersion': command.packageVersion,
+    'manualEventRefs': command.manualEventRefs,
+    'lines': command.lines.map((line) => line.toSnapshot()).toList(),
+  };
 
   void _insertCompletedOrder(
     CashSaleCommand command,

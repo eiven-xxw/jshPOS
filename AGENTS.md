@@ -233,6 +233,17 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
 - `T2-PAY-002` 继续 `BLOCKED`，Provider 网络调用为 0；会员、报表及后续 Gate 继续 `DRAFT`，仅允许两个虚构租户、多门店、多终端和三业态合成数据，`SANDBOX/REAL_DEVICE/PILOT` 不得由 Fake 替代。
 - 完成后必须提交《T2 Gate 5A / Sprint S9 周门禁报告》等待确认；不得自动进入会员、报表或后续 Gate，不得宣称 Alpha、可试点或可商用。
 
+## 4.18 当前 T2 Gate 5B / Sprint S10 条件准入
+
+- 项目发起人已于 2026-08-17 确认《T2 Gate 5A / Sprint S9 周门禁报告》，接受 `T2-PRM-001..003` 更新为 `ACCEPTED`，并授权在分支 `t2/gate5b-sprint10-20260817` 启动 Gate 5B。
+- 只允许按 `T2-POS-006 → T2-ORD-003 → T2-REF-002` 顺序准入和实现；前项未形成独立 `VERIFIED` 证据时，后项必须保持 `DRAFT`，不得通过预建绿色实现或占位测试绕过顺序。
+- POS 促销结算必须在同一 SQLite 事务冻结购物篮输入、规则包版本、报价 fingerprint、人工优惠审计引用、成交促销快照、订单/订单行、现金收款、班次现金效果和 Outbox。任一写入失败整体回滚；恢复只可复用原幂等键与原请求摘要，禁止按新规则重算。
+- Order Owner 只验证并绑定 Promotion Owner 的不可变快照，不得复制促销算法或写促销表。金额统一满足 `gross - discount + surcharge = receivable`，订单头与逐行合计必须一致。
+- 退货退款按原订单与原成交快照累计控制数量和金额，最后一次合法退款吸收余数。Promotion、Order/Refund、Payment、Inventory 和 Audit 各写自己的事实，只能通过受控端口、版本化事件与 Inbox/Outbox 协作；禁止跨模块 Mapper 更新其他 Owner 表。
+- 本 Sprint 只允许现金和既有 Provider 无关支付/退款核心的内部合成闭环。`T2-PAY-002` 继续 `BLOCKED`；Provider SDK/HTTP、真实回调端点、账单下载、终端、生产密钥与真实资金调用数必须为 0。
+- `T2-MEM-001/002`、`T2-RPT-001/002` 只允许领域模型、隐私/权限边界、API/事件、查询投影、合成向量和验收用例准备，状态必须保持 `DRAFT`，不得出现运行时 Controller、Job、表或写服务。
+- 仅允许两个虚构租户、多门店、多终端和三业态合成数据；`SANDBOX/REAL_DEVICE/PILOT` 不得由 Fake 替代。完成后提交《T2 Gate 5B / Sprint S10 周门禁报告》等待确认，不得自行进入后续 Gate 或宣称 Alpha、可试点或可商用。
+
 ## 5. 工程与测试规则
 
 - 服务端采用 RuoYi-Vue-Plus 模块化单体，不得把领域逻辑写入 Controller、通用工具类或框架系统模块。

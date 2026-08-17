@@ -242,6 +242,269 @@ final class CashSaleCommand {
       sha256.convert(utf8.encode(canonical(binding))).toString();
 }
 
+/// POS-006 成交行：保留商品快照，并冻结逐行优惠、附加费与优惠来源分摊。
+final class PromotedSettlementLine {
+  PromotedSettlementLine({
+    required this.basketLine,
+    required this.discountAmountMinor,
+    this.surchargeAmountMinor = 0,
+    Map<String, int> sourceAllocations = const {},
+  }) : sourceAllocations = Map.unmodifiable(
+         Map.fromEntries(
+           sourceAllocations.entries.toList()
+             ..sort((left, right) => left.key.compareTo(right.key)),
+         ),
+       ) {
+    MoneyRules.requireMinor(discountAmountMinor, 'discountAmountMinor');
+    MoneyRules.requireMinor(surchargeAmountMinor, 'surchargeAmountMinor');
+    if (discountAmountMinor > basketLine.grossAmountMinor ||
+        sourceAllocations.values.any((amount) => amount <= 0) ||
+        sourceAllocations.keys.any(
+          (source) =>
+              !RegExp(r'^[A-Z][A-Z0-9_]{1,31}:[A-Za-z0-9_-]{1,64}$')
+                  .hasMatch(source),
+        ) ||
+        sourceAllocations.values.fold<int>(0, (sum, amount) => sum + amount) !=
+            discountAmountMinor) {
+      throw const FormatException(
+        'POS-PROMOTION-001: invalid promoted line allocation',
+      );
+    }
+  }
+
+  final BasketLine basketLine;
+  final int discountAmountMinor;
+  final int surchargeAmountMinor;
+  final Map<String, int> sourceAllocations;
+
+  int get receivableAmountMinor =>
+      basketLine.grossAmountMinor - discountAmountMinor + surchargeAmountMinor;
+
+  Map<String, Object?> toSnapshot() => {
+    ...basketLine.toSnapshot(),
+    'discountAmountMinor': discountAmountMinor,
+    'surchargeAmountMinor': surchargeAmountMinor,
+    'payableAmountMinor': receivableAmountMinor,
+    'sourceAllocations': sourceAllocations,
+  };
+}
+
+/// POS-006 促销现金成交命令；可信租户/门店/终端仍由设备绑定注入。
+final class PromotedCashSaleCommand {
+  PromotedCashSaleCommand({
+    required this.commandId,
+    required this.idempotencyKey,
+    required this.basket,
+    required this.shiftId,
+    required this.businessDate,
+    required this.catalogVersion,
+    required this.priceVersion,
+    required this.industryTemplateVersion,
+    required this.quoteId,
+    required this.quoteFingerprint,
+    required this.settlementFingerprint,
+    required this.packageVersion,
+    required this.promotionSnapshotId,
+    required Iterable<PromotedSettlementLine> lines,
+    Iterable<String> manualEventRefs = const [],
+    required this.tenderedAmountMinor,
+    required this.occurredAt,
+  }) : lines = List.unmodifiable(
+         [...lines]..sort(
+           (left, right) =>
+               left.basketLine.lineNo.compareTo(right.basketLine.lineNo),
+         ),
+       ),
+       manualEventRefs = List.unmodifiable(manualEventRefs) {
+    if (!UlidGenerator.isCanonical(quoteId) ||
+        !UlidGenerator.isCanonical(promotionSnapshotId) ||
+        !RegExp(r'^[a-f0-9]{64}$').hasMatch(quoteFingerprint) ||
+        !RegExp(r'^[a-f0-9]{64}$').hasMatch(settlementFingerprint) ||
+        packageVersion <= 0 ||
+        this.lines.isEmpty ||
+        this.lines.length > 500 ||
+        this.manualEventRefs.length > 50 ||
+        this.manualEventRefs.any((id) => !UlidGenerator.isCanonical(id))) {
+      throw const FormatException(
+        'POS-PROMOTION-002: invalid promoted settlement context',
+      );
+    }
+    final basketIds = basket.lines.map((line) => line.lineId).toSet();
+    final settlementIds = this.lines
+        .map((line) => line.basketLine.lineId)
+        .toSet();
+    if (basketIds.length != basket.lines.length ||
+        settlementIds.length != this.lines.length ||
+        basketIds.length != settlementIds.length ||
+        !basketIds.containsAll(settlementIds)) {
+      throw const FormatException(
+        'POS-PROMOTION-003: settlement lines differ from basket',
+      );
+    }
+  }
+
+  final String commandId;
+  final String idempotencyKey;
+  final Basket basket;
+  final String shiftId;
+  final String businessDate;
+  final int catalogVersion;
+  final int priceVersion;
+  final String industryTemplateVersion;
+  final String quoteId;
+  final String quoteFingerprint;
+  final String settlementFingerprint;
+  final int packageVersion;
+  final String promotionSnapshotId;
+  final List<PromotedSettlementLine> lines;
+  final List<String> manualEventRefs;
+  final int tenderedAmountMinor;
+  final DateTime occurredAt;
+
+  int get grossAmountMinor => lines.fold(
+    0,
+    (sum, line) => MoneyRules.requireMinor(
+      (BigInt.from(sum) + BigInt.from(line.basketLine.grossAmountMinor))
+          .toInt(),
+      'grossAmountMinor',
+    ),
+  );
+  int get discountAmountMinor => lines.fold(
+    0,
+    (sum, line) => MoneyRules.requireMinor(
+      (BigInt.from(sum) + BigInt.from(line.discountAmountMinor)).toInt(),
+      'discountAmountMinor',
+    ),
+  );
+  int get surchargeAmountMinor => lines.fold(
+    0,
+    (sum, line) => MoneyRules.requireMinor(
+      (BigInt.from(sum) + BigInt.from(line.surchargeAmountMinor)).toInt(),
+      'surchargeAmountMinor',
+    ),
+  );
+  int get receivableAmountMinor =>
+      grossAmountMinor - discountAmountMinor + surchargeAmountMinor;
+
+  String basketInputHash(TrustedDeviceBinding binding) => sha256
+      .convert(
+        utf8.encode(
+          _canonicalValues([
+            basket.orderId,
+            basket.localOrderNo,
+            binding.tenantId,
+            binding.storeId,
+            binding.terminalId,
+            shiftId,
+            businessDate,
+            catalogVersion,
+            priceVersion,
+            ...basket.lines.expand(
+              (line) => [
+                line.lineId,
+                line.lineNo,
+                line.quote.skuId,
+                line.quote.unitId,
+                line.quantity.canonical,
+                line.quote.unitPriceMinor,
+                line.grossAmountMinor,
+              ],
+            ),
+          ]),
+        ),
+      )
+      .toString();
+
+  String requestHash(TrustedDeviceBinding binding) => sha256
+      .convert(
+        utf8.encode(
+          _canonicalValues([
+            basketInputHash(binding),
+            quoteId,
+            quoteFingerprint,
+            settlementFingerprint,
+            packageVersion,
+            promotionSnapshotId,
+            ...manualEventRefs,
+            grossAmountMinor,
+            discountAmountMinor,
+            surchargeAmountMinor,
+            receivableAmountMinor,
+            tenderedAmountMinor,
+            ...lines.expand(
+              (line) => [
+                line.basketLine.lineId,
+                line.discountAmountMinor,
+                line.surchargeAmountMinor,
+                jsonEncode(line.sourceAllocations),
+              ],
+            ),
+          ]),
+        ),
+      )
+      .toString();
+}
+
+/// POS-006 幂等成交结果，分别暴露订单和促销快照摘要。
+final class PromotedCashSaleResult {
+  const PromotedCashSaleResult({
+    required this.orderId,
+    required this.paymentId,
+    required this.promotionSnapshotId,
+    required this.receivableAmountMinor,
+    required this.tenderedAmountMinor,
+    required this.changeAmountMinor,
+    required this.orderSnapshotHash,
+    required this.promotionSnapshotHash,
+    required this.outboxEventId,
+    this.duplicate = false,
+  });
+
+  factory PromotedCashSaleResult.fromJson(
+    Map<String, Object?> json, {
+    bool duplicate = false,
+  }) => PromotedCashSaleResult(
+    orderId: json['orderId']! as String,
+    paymentId: json['paymentId']! as String,
+    promotionSnapshotId: json['promotionSnapshotId']! as String,
+    receivableAmountMinor: json['receivableAmountMinor']! as int,
+    tenderedAmountMinor: json['tenderedAmountMinor']! as int,
+    changeAmountMinor: json['changeAmountMinor']! as int,
+    orderSnapshotHash: json['orderSnapshotHash']! as String,
+    promotionSnapshotHash: json['promotionSnapshotHash']! as String,
+    outboxEventId: json['outboxEventId']! as String,
+    duplicate: duplicate,
+  );
+
+  final String orderId;
+  final String paymentId;
+  final String promotionSnapshotId;
+  final int receivableAmountMinor;
+  final int tenderedAmountMinor;
+  final int changeAmountMinor;
+  final String orderSnapshotHash;
+  final String promotionSnapshotHash;
+  final String outboxEventId;
+  final bool duplicate;
+
+  Map<String, Object?> toJson() => {
+    'orderId': orderId,
+    'paymentId': paymentId,
+    'promotionSnapshotId': promotionSnapshotId,
+    'receivableAmountMinor': receivableAmountMinor,
+    'tenderedAmountMinor': tenderedAmountMinor,
+    'changeAmountMinor': changeAmountMinor,
+    'orderSnapshotHash': orderSnapshotHash,
+    'promotionSnapshotHash': promotionSnapshotHash,
+    'outboxEventId': outboxEventId,
+  };
+}
+
+String _canonicalValues(Iterable<Object?> values) => values.map((value) {
+  final text = '$value';
+  return '${text.length}:$text;';
+}).join();
+
 final class CashSaleResult {
   const CashSaleResult({
     required this.orderId,

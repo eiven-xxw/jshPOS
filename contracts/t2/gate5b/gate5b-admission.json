@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "1.0",
+  "phase": "T2-GATE5B-SPRINT-S10",
+  "baseline": {
+    "tag": "t2-prep-baseline-2026-08-16",
+    "peeledCommit": "557ba270479935d6b44968cf70b47033f7d3d656",
+    "branchStart": "e947a229782865f7759525cfa3e2e90819ebfba5"
+  },
+  "sequence": ["T2-POS-006", "T2-ORD-003", "T2-REF-002"],
+  "verifiedRequirements": ["T2-POS-006"],
+  "admittedRequirements": ["T2-ORD-003"],
+  "draftRequirements": ["T2-REF-002", "T2-MEM-001", "T2-MEM-002", "T2-RPT-001", "T2-RPT-002"],
+  "externalBlockedRequirements": {"T2-PAY-002": "BLOCKED"},
+  "runtimeBoundary": {
+    "cashAllowed": true,
+    "providerNeutralInternalSyntheticAllowed": true,
+    "providerSdkAllowed": false,
+    "providerHttpAllowed": false,
+    "realCallbackAllowed": false,
+    "billDownloadAllowed": false,
+    "memberRuntimeAllowed": false,
+    "reportRuntimeAllowed": false,
+    "providerNetworkCallsAllowed": 0
+  },
+  "evidence": {"sandbox": 0, "realDevice": 0, "pilot": 0}
+}
