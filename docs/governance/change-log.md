@@ -97,5 +97,7 @@
 | CR-T2G5C-005 | 2026-08-17 | VERIFIED_MEM002 | T2-MEM-002 完成等级只追加历史、积分只追加流水、FEFO 批次、冻结原分配结算、显式债务、退货累计上限、精确 DECIMAL、门店业务日、操作/审批分离、重复/晚到失败关闭、乐观锁投影与全量重建；会员模块 33 项测试、34 面攻击静态门禁及 15 个固定场景通过 | T2-MEM-002、ADR-030 | 等待 GitHub MySQL 8.4、Flutter 双平台、安全/SBOM/许可证和最终证据索引；MEM-001/002 均保持 VERIFIED 等待发起人验收 |
 | CR-T2G5C-006 | 2026-08-17 | CI_FAILURE_FIXED | GitHub Run 32024927799 暴露旧 Flutter 回归仍断言 SQLite V6/6 条迁移，以及 MySQL 测试误将 17 个保留菜单 ID 当作 17 个不同权限字符串；分别修复为 V7/7 条与按保留 ID 行数断言，失败/取消 Run 和日志保留 | T2-MEM-001、T2-MIG-001、T2-CI-001 | 未重跑失败 Job、未降低阈值、未修改迁移或创建绿色占位；Run 32025300523 因后续修复推送按并发策略取消 |
 | CR-T2G5C-007 | 2026-08-17 | VERIFIED_CLOSURE | GitHub Run 32025473259 在提交 96b826b 上完成十个 Job 单次全绿：383 项服务端、MySQL 8.4 V31、Flutter 双平台各 71 项、Android、34 面攻击、15 个固定场景、安全/SBOM/许可证及 151 文件证据索引 | T2-MEM-001、T2-MEM-002、T2-SEC-001、T2-CI-001 | 两项继续 VERIFIED 等待发起人确认；T2-RPT-001/002 DRAFT、T2-PAY-002 BLOCKED，外部证据均为 0 |
+| CR-T2G5D-001 | 2026-08-17 | APPROVED | 项目发起人接受 Gate 5C CONDITIONAL PASS，将 T2-MEM-001/002 更新为 ACCEPTED，并从 Gate 5C 封板提交 12c916c 按 RPT-001→RPT-002 顺序启动 Gate 5D / Sprint S12 | T2-MEM-001、T2-MEM-002、T2-RPT-001、T2-RPT-002、ADR-031 | RPT-002 在 RPT-001 独立 VERIFIED 前保持 DRAFT；T2-PAY-002 保持 BLOCKED，Provider 网络调用为 0 |
+| CR-T2G5D-002 | 2026-08-17 | IN_PROGRESS | T2-RPT-001 已冻结 Reporting 数据主权、可丢弃投影、来源事件幂等、口径与业务日、权限脱敏、安全导出、Flyway、容量、重建、兼容、前向修复与测试准入 | T2-RPT-001、ADR-031 | 只准入销售、收银、库存和成本基础报表；T2-RPT-002 继续 DRAFT，不得预建支付报表运行时 |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。

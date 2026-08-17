@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jingshanghui.example/contracts/t2/gate5d/report-export-command.v1.schema.json",
+  "title": "Gate 5D Safe Report Export Command",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["exportId", "reportType", "fromDate", "toDate", "storeIds", "fields", "correlationId"],
+  "properties": {
+    "exportId": { "$ref": "#/$defs/ulid" },
+    "reportType": { "enum": ["SALES_DAILY", "INVENTORY_COST_DAILY"] },
+    "fromDate": { "type": "string", "format": "date" },
+    "toDate": { "type": "string", "format": "date" },
+    "storeIds": { "type": "array", "minItems": 1, "maxItems": 50, "uniqueItems": true, "items": { "type": "integer", "minimum": 1 } },
+    "fields": { "type": "array", "minItems": 1, "maxItems": 32, "uniqueItems": true, "items": { "type": "string", "pattern": "^[a-z][A-Za-z0-9]{0,63}$" } },
+    "correlationId": { "$ref": "#/$defs/ulid" }
+  },
+  "$defs": { "ulid": { "type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$" } }
+}

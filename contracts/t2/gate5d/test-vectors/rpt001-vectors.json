@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1.0",
+  "syntheticOnly": true,
+  "tenants": ["tenant_alpha", "tenant_beta"],
+  "scenarios": [
+    { "id": "sales-conservation", "family": "SALES", "expected": "gross-discount+surcharge=receivable" },
+    { "id": "duplicate-same-hash", "family": "SALES", "expected": "idempotent" },
+    { "id": "duplicate-different-hash", "family": "SALES", "expected": "rejected" },
+    { "id": "gap-late-convergence", "family": "INVENTORY_COST", "expected": "incomplete_then_current" },
+    { "id": "rebuild-digest", "family": "ALL", "expected": "equal" },
+    { "id": "cross-tenant-source", "family": "ALL", "expected": "rejected" },
+    { "id": "csv-formula-injection", "family": "EXPORT", "expected": "escaped" },
+    { "id": "download-token-replay", "family": "EXPORT", "expected": "rejected_after_first_use" }
+  ],
+  "providerNetworkCalls": 0,
+  "realPiiRecords": 0
+}

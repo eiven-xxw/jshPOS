@@ -1,0 +1,19 @@
+schemaVersion: "1.0"
+owner: Reporting
+requirements: [T2-RPT-001, T2-RPT-002]
+inbound:
+  - { owner: Order, families: [SALES], schemas: [order.completed.v2, order.cancelled.v1, return.completed.v1] }
+  - { owner: Shift, families: [SALES], schemas: [shift.cash-effect.v1, shift.closed.v1] }
+  - { owner: Promotion, families: [SALES], schemas: [promotion.snapshot.bound.v1] }
+  - { owner: Inventory, families: [INVENTORY_COST], schemas: [inventory.ledger.posted.v1] }
+  - { owner: Costing, families: [INVENTORY_COST], schemas: [cost.ledger.posted.v1] }
+  - { owner: Payment, families: [PAYMENT_RECONCILIATION], status: DRAFT_RPT002 }
+  - { owner: Refund, families: [PAYMENT_RECONCILIATION], status: DRAFT_RPT002 }
+requiredEnvelope:
+  [sourceEventId, sourceOwner, sourceAggregateId, sourceSequence, schemaVersion,
+   projectionVersion, contentSha256, occurredAt, businessDate, orgId, storeId, metricFamily]
+tenantAuthority: trusted_context_only
+idempotency: same_event_same_hash_returns_original; same_event_different_hash_rejected
+ordering: gaps_and_late_events_are_explicit_and_rebuildable
+providerNetworkCallsAllowed: 0
+T2-PAY-002: BLOCKED

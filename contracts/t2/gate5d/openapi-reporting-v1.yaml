@@ -1,0 +1,121 @@
+openapi: 3.1.0
+info:
+  title: JSH POS Reporting Owner API
+  version: 1.0.0-gate5d
+  description: >-
+    T2-RPT-001 销售收银库存成本可重建投影与安全导出契约。
+    tenant_id 只从可信认证或受控任务上下文注入，接口不得接受租户覆盖。
+paths:
+  /api/v1/reporting/source-events:
+    post:
+      operationId: ingestReportingSourceEvent
+      x-requirement: T2-RPT-001
+      x-permission: report:projection:ingest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "./schemas/report-source-event.v1.schema.json" }
+      responses:
+        "200": { description: 已应用或同摘要幂等返回 }
+        "409": { description: 同事件异摘要、来源序列或守恒冲突 }
+  /api/v1/reports/sales-daily:
+    get:
+      operationId: querySalesDailyReport
+      x-requirement: T2-RPT-001
+      x-permission: report:operation:read
+      parameters:
+        - { $ref: "#/components/parameters/FromDate" }
+        - { $ref: "#/components/parameters/ToDate" }
+        - { $ref: "#/components/parameters/StoreId" }
+        - { name: terminalId, in: query, schema: { type: string, maxLength: 64 } }
+        - { name: cashierId, in: query, schema: { type: integer, format: int64, minimum: 1 } }
+      responses:
+        "200": { description: 可信租户与门店范围内的销售收银日投影 }
+  /api/v1/reports/inventory-cost-daily:
+    get:
+      operationId: queryInventoryCostDailyReport
+      x-requirement: T2-RPT-001
+      x-permission: report:operation:read
+      parameters:
+        - { $ref: "#/components/parameters/FromDate" }
+        - { $ref: "#/components/parameters/ToDate" }
+        - { $ref: "#/components/parameters/StoreId" }
+        - { name: warehouseId, in: query, schema: { type: string, maxLength: 26 } }
+        - { name: skuId, in: query, schema: { type: integer, format: int64, minimum: 1 } }
+      responses:
+        "200": { description: 精确数量和成本日投影 }
+  /api/v1/reporting/rebuilds:
+    post:
+      operationId: rebuildReportingProjection
+      x-requirement: T2-RPT-001
+      x-permission: report:projection:rebuild
+      x-requires-tenant-admin: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [rebuildId, projectionVersion, fromDate, toDate, correlationId]
+              properties:
+                rebuildId: { $ref: "#/components/schemas/Ulid" }
+                projectionVersion: { type: string, pattern: "^[A-Za-z0-9._-]{1,32}$" }
+                fromDate: { type: string, format: date }
+                toDate: { type: string, format: date }
+                correlationId: { $ref: "#/components/schemas/Ulid" }
+      responses:
+        "200": { description: 重建完成且活动版本已安全切换 }
+        "409": { description: 重建摘要不一致或已有重建运行 }
+  /api/v1/report-exports:
+    post:
+      operationId: requestReportExport
+      x-requirement: T2-RPT-001
+      x-permission: report:export:request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "./schemas/report-export-command.v1.schema.json" }
+      responses:
+        "200": { description: 导出请求，可能等待独立审批 }
+  /api/v1/report-exports/{exportId}/approve:
+    post:
+      operationId: approveReportExport
+      x-permission: report:export:approve
+      parameters: [{ $ref: "#/components/parameters/ExportId" }]
+      responses:
+        "200": { description: 独立审批完成 }
+        "409": { description: 自我审批或非法状态迁移 }
+  /api/v1/report-exports/{exportId}/generate:
+    post:
+      operationId: generateReportExport
+      x-permission: report:export:generate
+      parameters: [{ $ref: "#/components/parameters/ExportId" }]
+      responses:
+        "200": { description: 安全 CSV 制品已生成 }
+  /api/v1/report-exports/{exportId}/download-token:
+    post:
+      operationId: issueReportDownloadToken
+      x-permission: report:export:download
+      parameters: [{ $ref: "#/components/parameters/ExportId" }]
+      responses:
+        "200": { description: 十分钟有效的单次下载令牌 }
+  /api/v1/reporting/differences:
+    get:
+      operationId: queryReportingDifferences
+      x-permission: report:repair:manage
+      responses:
+        "200": { description: 仅 Reporting 差异与修复状态，不覆盖业务事实 }
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer }
+  parameters:
+    FromDate: { name: fromDate, in: query, required: true, schema: { type: string, format: date } }
+    ToDate: { name: toDate, in: query, required: true, schema: { type: string, format: date } }
+    StoreId: { name: storeId, in: query, required: true, schema: { type: integer, format: int64, minimum: 1 } }
+    ExportId: { name: exportId, in: path, required: true, schema: { $ref: "#/components/schemas/Ulid" } }
+  schemas:
+    Ulid: { type: string, pattern: "^[0-9A-HJKMNP-TV-Z]{26}$" }
+security: [{ bearerAuth: [] }]

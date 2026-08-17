@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jingshanghui.example/contracts/t2/gate5d/report-source-event.v1.schema.json",
+  "title": "Gate 5D Reporting Source Event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["sourceEventId", "sourceOwner", "sourceAggregateId", "sourceSequence", "partitionKey", "schemaVersion", "projectionVersion", "contentSha256", "occurredAt", "businessDate", "orgId", "storeId", "metricFamily", "correlationId"],
+  "properties": {
+    "sourceEventId": { "$ref": "#/$defs/ulid" },
+    "sourceOwner": { "enum": ["ORDER", "SHIFT", "PROMOTION", "INVENTORY", "COSTING"] },
+    "sourceAggregateId": { "type": "string", "minLength": 1, "maxLength": 64 },
+    "sourceSequence": { "type": "integer", "minimum": 1 },
+    "partitionKey": { "type": "string", "pattern": "^[A-Za-z0-9._:-]{1,96}$" },
+    "schemaVersion": { "type": "string", "enum": ["1.0"] },
+    "projectionVersion": { "type": "string", "pattern": "^[A-Za-z0-9._-]{1,32}$" },
+    "contentSha256": { "$ref": "#/$defs/sha256" },
+    "occurredAt": { "type": "string", "format": "date-time" },
+    "businessDate": { "type": "string", "format": "date" },
+    "orgId": { "type": "integer", "minimum": 1 },
+    "storeId": { "type": "integer", "minimum": 1 },
+    "terminalId": { "type": ["string", "null"], "maxLength": 64 },
+    "cashierId": { "type": ["integer", "null"], "minimum": 1 },
+    "warehouseId": { "type": ["string", "null"], "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$" },
+    "skuId": { "type": ["integer", "null"], "minimum": 1 },
+    "currency": { "type": "string", "enum": ["CNY"] },
+    "metricFamily": { "enum": ["SALES", "INVENTORY_COST"] },
+    "sales": { "$ref": "#/$defs/sales" },
+    "inventoryCost": { "$ref": "#/$defs/inventoryCost" },
+    "correlationId": { "$ref": "#/$defs/ulid" }
+  },
+  "allOf": [
+    { "if": { "properties": { "metricFamily": { "const": "SALES" } } }, "then": { "required": ["terminalId", "cashierId", "currency", "sales"] } },
+    { "if": { "properties": { "metricFamily": { "const": "INVENTORY_COST" } } }, "then": { "required": ["warehouseId", "skuId", "currency", "inventoryCost"] } }
+  ],
+  "$defs": {
+    "ulid": { "type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$" },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "decimal": { "type": "string", "pattern": "^-?[0-9]{1,19}(\\.[0-9]{1,6})?$" },
+    "sales": {
+      "type": "object", "additionalProperties": false,
+      "required": ["orderCount", "cancelledOrderCount", "returnCount", "grossMinor", "discountMinor", "surchargeMinor", "receivableMinor", "refundMinor", "cashReceivedMinor", "cashRefundedMinor", "shiftDifferenceMinor", "promotionSnapshotCount"],
+      "properties": {
+        "orderCount": { "type": "integer" }, "cancelledOrderCount": { "type": "integer" }, "returnCount": { "type": "integer" },
+        "grossMinor": { "type": "integer" }, "discountMinor": { "type": "integer" }, "surchargeMinor": { "type": "integer" }, "receivableMinor": { "type": "integer" }, "refundMinor": { "type": "integer" },
+        "cashReceivedMinor": { "type": "integer" }, "cashRefundedMinor": { "type": "integer" }, "shiftDifferenceMinor": { "type": "integer" }, "promotionSnapshotCount": { "type": "integer" }
+      }
+    },
+    "inventoryCost": {
+      "type": "object", "additionalProperties": false,
+      "required": ["onHandDelta", "availableDelta", "reservedDelta", "ledgerQuantityDelta", "purchaseQuantityDelta", "stocktakeQuantityDelta", "transferQuantityDelta", "inventoryValueDeltaMinor", "cogsDeltaMinor", "purchaseCostDeltaMinor", "stocktakeCostDeltaMinor", "transferCostDeltaMinor"],
+      "properties": {
+        "onHandDelta": { "$ref": "#/$defs/decimal" }, "availableDelta": { "$ref": "#/$defs/decimal" }, "reservedDelta": { "$ref": "#/$defs/decimal" }, "ledgerQuantityDelta": { "$ref": "#/$defs/decimal" },
+        "purchaseQuantityDelta": { "$ref": "#/$defs/decimal" }, "stocktakeQuantityDelta": { "$ref": "#/$defs/decimal" }, "transferQuantityDelta": { "$ref": "#/$defs/decimal" },
+        "inventoryValueDeltaMinor": { "$ref": "#/$defs/decimal" }, "cogsDeltaMinor": { "$ref": "#/$defs/decimal" }, "purchaseCostDeltaMinor": { "$ref": "#/$defs/decimal" }, "stocktakeCostDeltaMinor": { "$ref": "#/$defs/decimal" }, "transferCostDeltaMinor": { "$ref": "#/$defs/decimal" }
+      }
+    }
+  }
+}
