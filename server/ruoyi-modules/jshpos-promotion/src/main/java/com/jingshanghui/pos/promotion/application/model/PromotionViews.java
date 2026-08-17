@@ -71,4 +71,25 @@ public final class PromotionViews {
         @Override public byte[] payload() { return payload.clone(); }
         @Override public byte[] signature() { return signature.clone(); }
     }
+
+    /**
+     * 人工优惠授权结果。
+     *
+     * @param authorizationId 授权 ULID
+     * @param state PENDING_APPROVAL 或 APPLIED
+     * @param quoteId 原始报价
+     * @param actionType 动作类型
+     * @param operatorUserId 操作人
+     * @param approverUserId 复核人
+     * @param policyVersionId 冻结阈值版本
+     * @param beforeFingerprint 应用前指纹
+     * @param previewFingerprint 预检或已应用结果指纹
+     * @param incrementalDiscountMinor 本动作新增优惠
+     * @param result 预检或已应用的确定性结果
+     */
+    public record ManualAuthorizationView(String authorizationId, String state, String quoteId,
+                                           String actionType, Long operatorUserId, Long approverUserId,
+                                           long policyVersionId, String beforeFingerprint,
+                                           String previewFingerprint, long incrementalDiscountMinor,
+                                           QuoteResult result) { }
 }

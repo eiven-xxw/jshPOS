@@ -38,6 +38,7 @@ public class PromotionPackageService {
     private final TenantResourceNamespace namespace;
     private final PromotionPersistencePort persistence;
     private final PromotionRuleDefinitionCodec definitionCodec;
+    private final ManualPolicyCodec manualPolicyCodec;
     private final ObjectProvider<SigningPort> signers;
     private final ObjectProvider<ObjectPort> objects;
     private final PromotionIdGenerator ids;
@@ -73,8 +74,12 @@ public class PromotionPackageService {
         frozenRules.sort(Comparator.comparing(FrozenRule::ruleVersionId));
         List<PromotionPackageCodec.Record> records = frozenRules.stream()
             .map(value -> new PromotionPackageCodec.Record(value.ruleVersionId(), value.canonicalRule())).toList();
+        var policyRow = persistence.findManualPolicy(tenantId, storeId);
+        manualPolicyCodec.decode(policyRow);
+        var manualPolicy = new PromotionPackageCodec.ManualPolicyRecord(policyRow.policyVersionId(),
+            policyRow.contentSha256(), policyRow.contentJson());
         var encoded = PromotionPackageCodec.encode(tenantId, storeId, packageVersion, previousVersion,
-            generatedAt, expiresAt, records);
+            generatedAt, expiresAt, records, manualPolicy);
         var signed = signer.sign(tenantId, encoded.payload());
         if (signed == null || signed.keyId() == null || signed.keyId().isBlank()
             || signed.signature().length != 64) {

@@ -30,12 +30,37 @@ final class InstalledPromotionPackage {
     required this.payloadSha256,
     required this.expiresAt,
     required this.rules,
+    required this.manualPolicy,
   });
   final String slot;
   final int packageVersion;
   final String payloadSha256;
   final DateTime expiresAt;
   final List<PromotionRule> rules;
+  final ManualPromotionPolicy manualPolicy;
+}
+
+/// 随签名包冻结的 PRM-002 人工优惠权限与金额阈值，不从客户端输入构造。
+final class ManualPromotionPolicy {
+  const ManualPromotionPolicy({
+    required this.policyVersionId,
+    required this.policySha256,
+    required this.withoutApprovalMinor,
+    required this.withApprovalMinor,
+    required this.minimumLinePayableMinor,
+    required this.maximumRoundingMinor,
+    required this.roundingMultiplesMinor,
+    required this.canonicalJson,
+  });
+
+  final int policyVersionId;
+  final String policySha256;
+  final int withoutApprovalMinor;
+  final int withApprovalMinor;
+  final int minimumLinePayableMinor;
+  final int maximumRoundingMinor;
+  final List<int> roundingMultiplesMinor;
+  final String canonicalJson;
 }
 
 /// 使用应用预置可信公钥验证并原子切换 SQLite A/B 槽的规则包安装器。
@@ -124,6 +149,7 @@ final class PromotionPackageInstaller {
           'STAGED',
         ],
       );
+      _installManualPolicy(metadata, now);
       if (activeSlot != null) {
         database.database.execute(
           "UPDATE local_promotion_package_slot SET state='RETIRED' WHERE tenant_id=? AND store_id=? AND slot_code=? AND state='ACTIVE'",
@@ -159,6 +185,7 @@ final class PromotionPackageInstaller {
       payloadSha256: actualHash,
       expiresAt: metadata.expiresAt,
       rules: List.unmodifiable(metadata.rules),
+      manualPolicy: metadata.manualPolicy,
     );
   }
 
@@ -206,7 +233,55 @@ final class PromotionPackageInstaller {
       payloadSha256: digest,
       expiresAt: metadata.expiresAt,
       rules: List.unmodifiable(metadata.rules),
+      manualPolicy: metadata.manualPolicy,
     );
+  }
+
+  void _installManualPolicy(_PackageMetadata metadata, String installedAt) {
+    final binding = database.binding;
+    final policy = metadata.manualPolicy;
+    database.database.execute(
+      '''INSERT INTO local_promotion_manual_policy(
+        tenant_id,store_id,package_version,policy_version_id,policy_sha256,
+        without_approval_minor,with_approval_minor,minimum_line_payable_minor,
+        maximum_rounding_minor,rounding_multiples_json,installed_at)
+        VALUES(?,?,?,?,?,?,?,?,?,?,?)
+        ON CONFLICT(tenant_id,store_id,package_version,policy_version_id) DO NOTHING''',
+      [
+        binding.tenantId,
+        binding.storeId,
+        metadata.packageVersion,
+        policy.policyVersionId,
+        policy.policySha256,
+        policy.withoutApprovalMinor,
+        policy.withApprovalMinor,
+        policy.minimumLinePayableMinor,
+        policy.maximumRoundingMinor,
+        jsonEncode(policy.roundingMultiplesMinor),
+        installedAt,
+      ],
+    );
+    final rows = database.database.select(
+      '''SELECT * FROM local_promotion_manual_policy
+         WHERE tenant_id=? AND store_id=? AND package_version=? AND policy_version_id=?''',
+      [
+        binding.tenantId,
+        binding.storeId,
+        metadata.packageVersion,
+        policy.policyVersionId,
+      ],
+    );
+    if (rows.length != 1 ||
+        rows.single['policy_sha256'] != policy.policySha256 ||
+        rows.single['without_approval_minor'] != policy.withoutApprovalMinor ||
+        rows.single['with_approval_minor'] != policy.withApprovalMinor ||
+        rows.single['minimum_line_payable_minor'] !=
+            policy.minimumLinePayableMinor ||
+        rows.single['maximum_rounding_minor'] != policy.maximumRoundingMinor ||
+        rows.single['rounding_multiples_json'] !=
+            jsonEncode(policy.roundingMultiplesMinor)) {
+      throw StateError('PRM-PKG-114: manual policy persistence mismatch');
+    }
   }
 
   _PackageMetadata _parseAndValidate(Uint8List payload) {
@@ -243,8 +318,16 @@ final class PromotionPackageInstaller {
     }
     final rules = <PromotionRule>[];
     String? previousRuleId;
+    ManualPromotionPolicy? manualPolicy;
     for (final row in lines.skip(1)) {
       if (row.isEmpty) continue;
+      if (row.startsWith('@MANUAL_POLICY|')) {
+        if (manualPolicy != null) {
+          throw StateError('PRM-PKG-115: duplicate manual policy record');
+        }
+        manualPolicy = _decodeManualPolicy(row);
+        continue;
+      }
       final separator = row.indexOf('|');
       final ruleId = separator < 0 ? '' : row.substring(0, separator);
       if (separator != 26 ||
@@ -265,6 +348,9 @@ final class PromotionPackageInstaller {
         throw StateError('PRM-PKG-108: malformed rule AST: $error');
       }
     }
+    if (manualPolicy == null) {
+      throw StateError('PRM-PKG-116: signed manual policy is missing');
+    }
     return _PackageMetadata(
       schemaVersion: header[1],
       engineVersion: header[2],
@@ -275,6 +361,74 @@ final class PromotionPackageInstaller {
       generatedAt: generated,
       expiresAt: expires,
       rules: rules,
+      manualPolicy: manualPolicy,
+    );
+  }
+
+  ManualPromotionPolicy _decodeManualPolicy(String row) {
+    final match = RegExp(
+      r'^@MANUAL_POLICY\|([1-9][0-9]*)\|([a-f0-9]{64})\|(.*)$',
+    ).firstMatch(row);
+    if (match == null) {
+      throw StateError('PRM-PKG-117: malformed manual policy record');
+    }
+    final version = int.parse(match.group(1)!);
+    final expectedHash = match.group(2)!;
+    final canonicalJson = _unescape(match.group(3)!);
+    final actualHash = sha256.convert(utf8.encode(canonicalJson)).toString();
+    if (!_constantTimeEquals(actualHash, expectedHash)) {
+      throw StateError('PRM-PKG-118: manual policy digest mismatch');
+    }
+    final content = jsonDecode(canonicalJson) as Map<String, Object?>;
+    const fields = {
+      'policyType',
+      'withoutApprovalMinor',
+      'withApprovalMinor',
+      'minimumLinePayableMinor',
+      'maximumRoundingMinor',
+      'roundingMultiplesMinor',
+    };
+    if (content.keys.toSet().difference(fields).isNotEmpty ||
+        fields.difference(content.keys.toSet()).isNotEmpty ||
+        content['policyType'] != 'PROMOTION_MANUAL_AUTHORITY') {
+      throw StateError('PRM-PKG-119: unsupported manual policy structure');
+    }
+    int integer(String key) {
+      final value = content[key];
+      if (value is! int) {
+        throw StateError('PRM-PKG-120: manual policy integer required');
+      }
+      return value;
+    }
+
+    final multiplesValue = content['roundingMultiplesMinor'];
+    if (multiplesValue is! List<Object?> ||
+        multiplesValue.any((value) => value is! int)) {
+      throw StateError('PRM-PKG-121: manual policy multiples invalid');
+    }
+    final multiples = multiplesValue.cast<int>();
+    final withoutApproval = integer('withoutApprovalMinor');
+    final withApproval = integer('withApprovalMinor');
+    final minimumLinePayable = integer('minimumLinePayableMinor');
+    final maximumRounding = integer('maximumRoundingMinor');
+    if (withoutApproval < 0 ||
+        withApproval < withoutApproval ||
+        minimumLinePayable < 0 ||
+        maximumRounding < 0 ||
+        maximumRounding > withApproval ||
+        multiples.isEmpty ||
+        multiples.any((value) => value <= 0 || value > 10000)) {
+      throw StateError('PRM-PKG-122: manual policy bounds invalid');
+    }
+    return ManualPromotionPolicy(
+      policyVersionId: version,
+      policySha256: expectedHash,
+      withoutApprovalMinor: withoutApproval,
+      withApprovalMinor: withApproval,
+      minimumLinePayableMinor: minimumLinePayable,
+      maximumRoundingMinor: maximumRounding,
+      roundingMultiplesMinor: List.unmodifiable(multiples),
+      canonicalJson: canonicalJson,
     );
   }
 
@@ -404,6 +558,7 @@ final class _PackageMetadata {
     required this.generatedAt,
     required this.expiresAt,
     required this.rules,
+    required this.manualPolicy,
   });
   final String schemaVersion;
   final String engineVersion;
@@ -414,4 +569,5 @@ final class _PackageMetadata {
   final DateTime generatedAt;
   final DateTime expiresAt;
   final List<PromotionRule> rules;
+  final ManualPromotionPolicy manualPolicy;
 }

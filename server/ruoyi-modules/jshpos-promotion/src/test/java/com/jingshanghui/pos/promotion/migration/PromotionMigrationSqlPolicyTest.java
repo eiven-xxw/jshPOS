@@ -45,6 +45,23 @@ class PromotionMigrationSqlPolicyTest {
             .doesNotContain("promotion:refund:read");
     }
 
+    @Test
+    void prm2MigrationAddsOnlyAppendOnlyManualFactsAndThreePermissions() throws Exception {
+        String sql = resource("/db/migration/V202608170022__gate5a_manual_promotion.sql");
+        assertThat(count(sql, "create table prm_")).isEqualTo(1);
+        assertThat(sql).contains("create table prm_manual_price_audit")
+            .contains("foreign key (tenant_id,quote_id)")
+            .contains("trg_prm_manual_no_update")
+            .contains("trg_prm_manual_no_delete")
+            .contains("promotion:manual:authorize")
+            .contains("promotion:manual:approve")
+            .contains("promotion:manual:audit:read")
+            .doesNotContain("prm_transaction_snapshot")
+            .doesNotContain("prm_transaction_allocation")
+            .doesNotContain("prm_refund_allocation_ledger")
+            .doesNotContain("update ord_").doesNotContain("update inv_").doesNotContain("update pay_");
+    }
+
     private String resource(String name) throws Exception {
         try (var stream = getClass().getResourceAsStream(name)) {
             assertThat(stream).isNotNull();

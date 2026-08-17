@@ -2,11 +2,15 @@ openapi: 3.0.3
 info:
   title: 鲸熵汇 Gate 5A 确定性促销 API
   version: 1.0.0
+  license:
+    name: Proprietary
   description: >-
     T2-PRM-001/002/003 顺序准入契约。tenant_id 只来自可信认证上下文；
     券、会员、积分、储值、预算和 Provider 网络能力不在本版本。
 servers:
   - url: /api/v1
+security:
+  - bearerAuth: []
 paths:
   /promotions/packages:
     post:
@@ -198,8 +202,34 @@ paths:
           description: 人工优惠授权结果
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/QuoteResponse'}
+              schema: {$ref: '#/components/schemas/ManualAuthorizationResponse'}
         '403': {$ref: '#/components/responses/Forbidden'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        '422': {$ref: '#/components/responses/CapabilityRejected'}
+  /promotions/manual-authorizations/{authorizationId}/approve:
+    post:
+      operationId: approveManualPromotion
+      summary: 由不同的当前认证主体复核超阈值人工优惠
+      x-requirement: T2-PRM-002
+      x-permission: promotion:manual:approve
+      parameters:
+        - name: authorizationId
+          in: path
+          required: true
+          schema: {$ref: '#/components/schemas/Ulid'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ManualApproveRequest'}
+      responses:
+        '200':
+          description: 已批准并冻结原预检结果
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ManualAuthorizationResponse'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '409': {$ref: '#/components/responses/Conflict'}
   /promotions/snapshots:
     post:
       operationId: freezePromotionSnapshot
@@ -242,6 +272,10 @@ paths:
               schema: {$ref: '#/components/schemas/RefundAllocationResponse'}
         '409': {$ref: '#/components/responses/Conflict'}
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
   parameters:
     RuleId:
       name: ruleId
@@ -408,18 +442,44 @@ components:
     ManualAuthorizationRequest:
       type: object
       additionalProperties: false
-      required: [commandId, quoteId, actionType, amountOrRate, reasonCode, reasonText, expectedQuoteFingerprint, correlationId]
+      required: [commandId, authorizationId, quoteId, actionType, amountOrRate, paymentMethod, reasonCode, reasonText, expectedQuoteFingerprint, correlationId]
       properties:
         commandId: {$ref: '#/components/schemas/Ulid'}
+        authorizationId: {$ref: '#/components/schemas/Ulid'}
         quoteId: {$ref: '#/components/schemas/Ulid'}
         lineId: {$ref: '#/components/schemas/Ulid'}
         actionType: {type: string, enum: [LINE_FIXED_PRICE, ORDER_AMOUNT_OFF, ORDER_PERCENT_OFF, ROUNDING]}
         amountOrRate: {type: string, minLength: 1, maxLength: 32}
+        paymentMethod: {type: string, enum: [CASH, NON_CASH]}
         reasonCode: {type: string, minLength: 1, maxLength: 32}
         reasonText: {type: string, minLength: 1, maxLength: 256}
-        approverId: {type: string, maxLength: 64, nullable: true}
         expectedQuoteFingerprint: {type: string, pattern: '^[a-f0-9]{64}$'}
         correlationId: {$ref: '#/components/schemas/Ulid'}
+    ManualApproveRequest:
+      type: object
+      additionalProperties: false
+      required: [commandId, expectedPreviewFingerprint, reason, correlationId]
+      properties:
+        commandId: {$ref: '#/components/schemas/Ulid'}
+        expectedPreviewFingerprint: {type: string, pattern: '^[a-f0-9]{64}$'}
+        reason: {type: string, minLength: 1, maxLength: 256}
+        correlationId: {$ref: '#/components/schemas/Ulid'}
+    ManualAuthorizationResponse:
+      type: object
+      additionalProperties: false
+      required: [authorizationId, state, quoteId, actionType, operatorUserId, policyVersionId, beforeFingerprint, previewFingerprint, incrementalDiscountMinor, result]
+      properties:
+        authorizationId: {$ref: '#/components/schemas/Ulid'}
+        state: {type: string, enum: [PENDING_APPROVAL, APPLIED]}
+        quoteId: {$ref: '#/components/schemas/Ulid'}
+        actionType: {type: string, enum: [LINE_FIXED_PRICE, ORDER_AMOUNT_OFF, ORDER_PERCENT_OFF, ROUNDING]}
+        operatorUserId: {type: integer, format: int64, minimum: 1}
+        approverUserId: {type: integer, format: int64, minimum: 1, nullable: true}
+        policyVersionId: {type: integer, format: int64, minimum: 1}
+        beforeFingerprint: {type: string, pattern: '^[a-f0-9]{64}$'}
+        previewFingerprint: {type: string, pattern: '^[a-f0-9]{64}$'}
+        incrementalDiscountMinor: {$ref: '#/components/schemas/MinorAmount'}
+        result: {$ref: '#/components/schemas/QuoteResult'}
     FreezeSnapshotRequest:
       type: object
       additionalProperties: false

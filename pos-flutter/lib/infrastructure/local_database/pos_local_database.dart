@@ -7,6 +7,7 @@ import '../../features/checkout/domain/checkout_models.dart';
 import 'gate2_schema.dart';
 import 's3_sync_schema.dart';
 import 's9_promotion_schema.dart';
+import 's9_manual_schema.dart';
 
 typedef FailureInjector = void Function(String checkpoint);
 
@@ -98,7 +99,11 @@ final class PosLocalDatabase {
       _migrateToPromotionV3();
       version = S9PromotionSchema.version;
     }
-    if (version != S9PromotionSchema.version) {
+    if (version == S9PromotionSchema.version) {
+      _migrateToPromotionV4();
+      version = S9ManualSchema.version;
+    }
+    if (version != S9ManualSchema.version) {
       throw StateError('LOCAL_SCHEMA_UNSUPPORTED: $version');
     }
     _verifySchemaChecksum();
@@ -115,6 +120,9 @@ final class PosLocalDatabase {
           .toString(),
       S9PromotionSchema.version: sha256
           .convert(utf8.encode(S9PromotionSchema.v3))
+          .toString(),
+      S9ManualSchema.version: sha256
+          .convert(utf8.encode(S9ManualSchema.v4))
           .toString(),
     };
     for (final entry in expected.entries) {
@@ -155,6 +163,30 @@ final class PosLocalDatabase {
     if (violations.isNotEmpty) {
       throw StateError(
         'LOCAL_DB_INTEGRITY_FAILED: foreign key violations after v3',
+      );
+    }
+  }
+
+  void _migrateToPromotionV4() {
+    transaction(() {
+      database.execute(S9ManualSchema.v4);
+      final checksum = sha256
+          .convert(utf8.encode(S9ManualSchema.v4))
+          .toString();
+      database.execute(
+        'INSERT INTO local_schema_history(version,description,checksum_sha256,installed_at) VALUES(4,?,?,?)',
+        [
+          'gate5a-manual-promotion-authorization',
+          checksum,
+          DateTime.now().toUtc().toIso8601String(),
+        ],
+      );
+      database.execute('PRAGMA user_version=${S9ManualSchema.version}');
+    });
+    final violations = database.select('PRAGMA foreign_key_check');
+    if (violations.isNotEmpty) {
+      throw StateError(
+        'LOCAL_DB_INTEGRITY_FAILED: foreign key violations after v4',
       );
     }
   }

@@ -93,17 +93,126 @@
           #{aggregateType},#{aggregateId},#{resultSha256},CAST(#{resultJson} AS JSON))
     </insert>
     <select id="findQuoteByKey" resultType="com.jingshanghui.pos.promotion.application.port.PromotionPersistencePort$StoredQuote">
-        SELECT quote_id quoteId,request_sha256 requestSha256,result_sha256 resultSha256,engine_version engineVersion,
+        SELECT quote_id quoteId,store_id storeId,terminal_id terminalId,business_time businessTime,currency,
+               request_sha256 requestSha256,result_sha256 resultSha256,engine_version engineVersion,
                package_version packageVersion,gross_amount_minor grossAmountMinor,
                discount_amount_minor discountAmountMinor,payable_amount_minor payableAmountMinor
         FROM prm_quote WHERE tenant_id=#{tenantId} AND store_id=#{storeId}
           AND terminal_id=#{terminalId} AND idempotency_key=#{key}
     </select>
     <select id="listQuoteLines" resultType="com.jingshanghui.pos.promotion.application.port.PromotionPersistencePort$StoredQuoteLine">
-        SELECT source_line_id sourceLineId,gross_amount_minor grossAmountMinor,
+        SELECT source_line_id sourceLineId,line_no lineNo,sku_id skuId,quantity,
+               gross_amount_minor grossAmountMinor,
                discount_amount_minor discountAmountMinor,payable_amount_minor payableAmountMinor
         FROM prm_quote_line WHERE tenant_id=#{tenantId} AND quote_id=#{quoteId} ORDER BY line_no
     </select>
+    <select id="findQuote" resultType="com.jingshanghui.pos.promotion.application.port.PromotionPersistencePort$StoredQuote">
+        SELECT quote_id quoteId,store_id storeId,terminal_id terminalId,business_time businessTime,currency,
+               request_sha256 requestSha256,result_sha256 resultSha256,engine_version engineVersion,
+               package_version packageVersion,gross_amount_minor grossAmountMinor,
+               discount_amount_minor discountAmountMinor,payable_amount_minor payableAmountMinor
+        FROM prm_quote WHERE tenant_id=#{tenantId} AND quote_id=#{quoteId}
+    </select>
+    <select id="lockQuote" resultType="com.jingshanghui.pos.promotion.application.port.PromotionPersistencePort$StoredQuote">
+        SELECT quote_id quoteId,store_id storeId,terminal_id terminalId,business_time businessTime,currency,
+               request_sha256 requestSha256,result_sha256 resultSha256,engine_version engineVersion,
+               package_version packageVersion,gross_amount_minor grossAmountMinor,
+               discount_amount_minor discountAmountMinor,payable_amount_minor payableAmountMinor
+        FROM prm_quote WHERE tenant_id=#{tenantId} AND quote_id=#{quoteId} FOR UPDATE
+    </select>
+    <select id="listQuoteAdjustments" resultType="com.jingshanghui.pos.promotion.application.port.PromotionPersistencePort$StoredAdjustment">
+        SELECT source_line_id sourceLineId,source_type sourceType,source_id sourceId,
+               calculation_stage calculationStage,amount_minor amountMinor,
+               explanation_code explanationCode,applied_flag appliedFlag,ordinal_no ordinalNo
+        FROM prm_adjustment WHERE tenant_id=#{tenantId} AND quote_id=#{quoteId}
+        ORDER BY ordinal_no ASC
+    </select>
+    <select id="findManualPolicy" resultType="com.jingshanghui.pos.promotion.application.port.PromotionPersistencePort$ManualPolicyRow">
+        SELECT v.config_version_id policyVersionId,v.content_sha256 contentSha256,
+               CAST(v.content_json AS CHAR) contentJson
+        FROM jsh_config_binding b
+        JOIN jsh_config_template t ON t.tenant_id=b.tenant_id AND t.template_id=b.template_id
+        JOIN jsh_config_template_version v ON v.tenant_id=b.tenant_id AND v.template_id=b.template_id
+          AND v.config_version_id=b.current_version_id
+        WHERE b.tenant_id=#{tenantId} AND t.template_code='PROMOTION_MANUAL_AUTHORITY'
+          AND t.status='ACTIVE' AND v.state='PUBLISHED'
+          AND ((b.target_type='STORE' AND b.target_id=#{storeId})
+            OR (b.target_type='TENANT' AND b.target_id IS NULL))
+        ORDER BY CASE WHEN b.target_type='STORE' THEN 0 ELSE 1 END,b.binding_id DESC LIMIT 1
+    </select>
+    <select id="findPendingManualEvent" resultType="com.jingshanghui.pos.promotion.application.port.PromotionPersistencePort$ManualEvent">
+        SELECT authorization_id authorizationId,event_sequence eventSequence,state,quote_id quoteId,
+          store_id storeId,terminal_id terminalId,action_type actionType,source_line_id sourceLineId,
+          amount_or_rate amountOrRate,payment_method paymentMethod,before_fingerprint beforeFingerprint,
+          preview_fingerprint previewFingerprint,incremental_discount_minor incrementalDiscountMinor,
+          policy_version_id policyVersionId,policy_sha256 policySha256,
+          without_approval_minor withoutApprovalMinor,with_approval_minor withApprovalMinor,
+          minimum_line_payable_minor minimumLinePayableMinor,maximum_rounding_minor maximumRoundingMinor,
+          CAST(rounding_multiples_json AS CHAR) roundingMultiplesJson,operator_user_id operatorUserId,
+          approver_user_id approverUserId,business_date businessDate,CAST(result_json AS CHAR) resultJson,
+          result_sha256 resultSha256
+        FROM prm_manual_price_audit e WHERE e.tenant_id=#{tenantId} AND e.quote_id=#{quoteId}
+          AND e.state='PENDING_APPROVAL'
+          AND NOT EXISTS (SELECT 1 FROM prm_manual_price_audit later WHERE later.tenant_id=e.tenant_id
+            AND later.authorization_id=e.authorization_id AND later.event_sequence&gt;e.event_sequence)
+        ORDER BY e.occurred_at DESC,e.authorization_id DESC LIMIT 1
+    </select>
+    <select id="findLatestAppliedManualEvent" resultType="com.jingshanghui.pos.promotion.application.port.PromotionPersistencePort$ManualEvent">
+        SELECT authorization_id authorizationId,event_sequence eventSequence,state,quote_id quoteId,
+          store_id storeId,terminal_id terminalId,action_type actionType,source_line_id sourceLineId,
+          amount_or_rate amountOrRate,payment_method paymentMethod,before_fingerprint beforeFingerprint,
+          preview_fingerprint previewFingerprint,incremental_discount_minor incrementalDiscountMinor,
+          policy_version_id policyVersionId,policy_sha256 policySha256,
+          without_approval_minor withoutApprovalMinor,with_approval_minor withApprovalMinor,
+          minimum_line_payable_minor minimumLinePayableMinor,maximum_rounding_minor maximumRoundingMinor,
+          CAST(rounding_multiples_json AS CHAR) roundingMultiplesJson,operator_user_id operatorUserId,
+          approver_user_id approverUserId,business_date businessDate,CAST(result_json AS CHAR) resultJson,
+          result_sha256 resultSha256
+        FROM prm_manual_price_audit WHERE tenant_id=#{tenantId} AND quote_id=#{quoteId} AND state='APPLIED'
+        ORDER BY occurred_at DESC,authorization_id DESC,event_sequence DESC LIMIT 1
+    </select>
+    <select id="listAppliedManualEvents" resultType="com.jingshanghui.pos.promotion.application.port.PromotionPersistencePort$ManualEvent">
+        SELECT authorization_id authorizationId,event_sequence eventSequence,state,quote_id quoteId,
+          store_id storeId,terminal_id terminalId,action_type actionType,source_line_id sourceLineId,
+          amount_or_rate amountOrRate,payment_method paymentMethod,before_fingerprint beforeFingerprint,
+          preview_fingerprint previewFingerprint,incremental_discount_minor incrementalDiscountMinor,
+          policy_version_id policyVersionId,policy_sha256 policySha256,
+          without_approval_minor withoutApprovalMinor,with_approval_minor withApprovalMinor,
+          minimum_line_payable_minor minimumLinePayableMinor,maximum_rounding_minor maximumRoundingMinor,
+          CAST(rounding_multiples_json AS CHAR) roundingMultiplesJson,operator_user_id operatorUserId,
+          approver_user_id approverUserId,business_date businessDate,CAST(result_json AS CHAR) resultJson,
+          result_sha256 resultSha256
+        FROM prm_manual_price_audit WHERE tenant_id=#{tenantId} AND quote_id=#{quoteId} AND state='APPLIED'
+        ORDER BY occurred_at ASC,authorization_id ASC,event_sequence ASC
+    </select>
+    <select id="findLatestManualEvent" resultType="com.jingshanghui.pos.promotion.application.port.PromotionPersistencePort$ManualEvent">
+        SELECT authorization_id authorizationId,event_sequence eventSequence,state,quote_id quoteId,
+          store_id storeId,terminal_id terminalId,action_type actionType,source_line_id sourceLineId,
+          amount_or_rate amountOrRate,payment_method paymentMethod,before_fingerprint beforeFingerprint,
+          preview_fingerprint previewFingerprint,incremental_discount_minor incrementalDiscountMinor,
+          policy_version_id policyVersionId,policy_sha256 policySha256,
+          without_approval_minor withoutApprovalMinor,with_approval_minor withApprovalMinor,
+          minimum_line_payable_minor minimumLinePayableMinor,maximum_rounding_minor maximumRoundingMinor,
+          CAST(rounding_multiples_json AS CHAR) roundingMultiplesJson,operator_user_id operatorUserId,
+          approver_user_id approverUserId,business_date businessDate,CAST(result_json AS CHAR) resultJson,
+          result_sha256 resultSha256
+        FROM prm_manual_price_audit WHERE tenant_id=#{tenantId} AND authorization_id=#{authorizationId}
+        ORDER BY event_sequence DESC LIMIT 1
+    </select>
+    <insert id="insertManualEvent">
+        INSERT INTO prm_manual_price_audit(manual_event_id,tenant_id,authorization_id,event_sequence,state,
+          command_id,request_sha256,quote_id,store_id,terminal_id,action_type,source_line_id,amount_or_rate,
+          payment_method,before_fingerprint,preview_fingerprint,incremental_discount_minor,policy_version_id,
+          policy_sha256,without_approval_minor,with_approval_minor,minimum_line_payable_minor,
+          maximum_rounding_minor,rounding_multiples_json,reason_code,reason_text,operator_user_id,
+          approver_user_id,business_date,correlation_id,result_json,result_sha256,occurred_at)
+        VALUES(#{eventId},#{tenantId},#{authorizationId},#{eventSequence},#{state},#{commandId},#{requestSha256},
+          #{quoteId},#{storeId},#{terminalId},#{actionType},#{sourceLineId},#{amountOrRate},#{paymentMethod},
+          #{beforeFingerprint},#{previewFingerprint},#{incrementalDiscountMinor},#{policyVersionId},#{policySha256},
+          #{withoutApprovalMinor},#{withApprovalMinor},#{minimumLinePayableMinor},#{maximumRoundingMinor},
+          CAST(#{roundingMultiplesJson} AS JSON),#{reasonCode},#{reasonText},#{operatorUserId},#{approverUserId},
+          #{businessDate},#{correlationId},CAST(#{resultJson} AS JSON),#{resultSha256},#{occurredAt})
+    </insert>
     <insert id="insertAudit">
         INSERT INTO prm_audit_event(audit_event_id,tenant_id,action_code,target_type,target_id,actor_user_id,
           correlation_id,before_sha256,after_sha256,summary_json,occurred_at)

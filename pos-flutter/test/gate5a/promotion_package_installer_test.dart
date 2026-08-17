@@ -20,13 +20,13 @@ final fixedNow = DateTime.parse('2026-08-17T02:00:00Z');
 
 void main() {
   test(
-    'SQLite V3 installs signed packages through alternating atomic slots',
+    'SQLite V4 preserves signed package slots and adds manual audit schema',
     () async {
       final database = PosLocalDatabase.inMemory(binding);
       addTearDown(database.close);
       expect(
         database.database.select('PRAGMA user_version').single.values.first,
-        3,
+        4,
       );
       final keyPair = await Ed25519().newKeyPair();
       final trustedKey = await keyPair.extractPublicKey();
@@ -44,6 +44,8 @@ void main() {
       expect(first.slot, 'A');
       expect(second.slot, 'B');
       expect(second.rules.single.ruleVersionId, '01K5R000000000000000000001');
+      expect(second.manualPolicy.policyVersionId, 31);
+      expect(second.manualPolicy.roundingMultiplesMinor, [1, 10]);
       expect((await installer.requireActive()).packageVersion, 2);
       final bindingRow = database.database
           .select('SELECT * FROM local_promotion_package_binding')
@@ -147,55 +149,61 @@ void main() {
     },
   );
 
-  test('untrusted key substitution and active SQLite tampering fail closed', () async {
-    final database = PosLocalDatabase.inMemory(binding);
-    addTearDown(database.close);
-    final trustedPair = await Ed25519().newKeyPair();
-    final attackerPair = await Ed25519().newKeyPair();
-    final trustedKey = await trustedPair.extractPublicKey();
-    final installer = PromotionPackageInstaller(
-      database,
-      trustedSigningKeys: {'SYNTHETIC_TEST_KEY': trustedKey},
-      utcNow: () => fixedNow,
-    );
-    await expectLater(
-      installer.install(
-        await _envelope(
-          attackerPair,
-          version: 1,
-          previous: 0,
-          signingKeyId: 'ATTACKER_KEY',
+  test(
+    'untrusted key substitution and active SQLite tampering fail closed',
+    () async {
+      final database = PosLocalDatabase.inMemory(binding);
+      addTearDown(database.close);
+      final trustedPair = await Ed25519().newKeyPair();
+      final attackerPair = await Ed25519().newKeyPair();
+      final trustedKey = await trustedPair.extractPublicKey();
+      final installer = PromotionPackageInstaller(
+        database,
+        trustedSigningKeys: {'SYNTHETIC_TEST_KEY': trustedKey},
+        utcNow: () => fixedNow,
+      );
+      await expectLater(
+        installer.install(
+          await _envelope(
+            attackerPair,
+            version: 1,
+            previous: 0,
+            signingKeyId: 'ATTACKER_KEY',
+          ),
         ),
-      ),
-      throwsStateError,
-    );
-    await installer.install(
-      await _envelope(trustedPair, version: 1, previous: 0),
-    );
-    database.database.execute(
-      "UPDATE local_promotion_package_slot SET payload_blob=? WHERE state='ACTIVE'",
-      [Uint8List.fromList(utf8.encode('tampered'))],
-    );
-    await expectLater(installer.requireActive(), throwsStateError);
-  });
+        throwsStateError,
+      );
+      await installer.install(
+        await _envelope(trustedPair, version: 1, previous: 0),
+      );
+      database.database.execute(
+        "UPDATE local_promotion_package_slot SET payload_blob=? WHERE state='ACTIVE'",
+        [Uint8List.fromList(utf8.encode('tampered'))],
+      );
+      await expectLater(installer.requireActive(), throwsStateError);
+    },
+  );
 
-  test('active package is revalidated against expiry on every transaction', () async {
-    final database = PosLocalDatabase.inMemory(binding);
-    addTearDown(database.close);
-    final keyPair = await Ed25519().newKeyPair();
-    final trustedKey = await keyPair.extractPublicKey();
-    var now = fixedNow;
-    final installer = PromotionPackageInstaller(
-      database,
-      trustedSigningKeys: {'SYNTHETIC_TEST_KEY': trustedKey},
-      utcNow: () => now,
-    );
-    await installer.install(
-      await _envelope(keyPair, version: 1, previous: 0),
-    );
-    now = fixedNow.add(const Duration(days: 2));
-    await expectLater(installer.requireActive(), throwsStateError);
-  });
+  test(
+    'active package is revalidated against expiry on every transaction',
+    () async {
+      final database = PosLocalDatabase.inMemory(binding);
+      addTearDown(database.close);
+      final keyPair = await Ed25519().newKeyPair();
+      final trustedKey = await keyPair.extractPublicKey();
+      var now = fixedNow;
+      final installer = PromotionPackageInstaller(
+        database,
+        trustedSigningKeys: {'SYNTHETIC_TEST_KEY': trustedKey},
+        utcNow: () => now,
+      );
+      await installer.install(
+        await _envelope(keyPair, version: 1, previous: 0),
+      );
+      now = fixedNow.add(const Duration(days: 2));
+      await expectLater(installer.requireActive(), throwsStateError);
+    },
+  );
 }
 
 Future<PromotionPackageEnvelope> _envelope(
@@ -207,6 +215,15 @@ Future<PromotionPackageEnvelope> _envelope(
 }) async {
   final generated = fixedNow;
   final expires = generated.add(const Duration(days: 1));
+  final policyJson = jsonEncode({
+    'maximumRoundingMinor': 9,
+    'minimumLinePayableMinor': 20,
+    'policyType': 'PROMOTION_MANUAL_AUTHORITY',
+    'roundingMultiplesMinor': [1, 10],
+    'withApprovalMinor': 1000,
+    'withoutApprovalMinor': 100,
+  });
+  final policySha = sha256.convert(utf8.encode(policyJson)).toString();
   final payload = Uint8List.fromList(
     utf8.encode(
       'JSHPRM|1.0|promotion-engine-1.0.0|$tenantId|1101|$version|$previous|${generated.toIso8601String()}|${expires.toIso8601String()}\n'
@@ -214,7 +231,8 @@ Future<PromotionPackageEnvelope> _envelope(
       '{"benefit":{"amountMinor":100},"effectiveFrom":"${generated.toIso8601String()}",'
       '"effectiveTo":"${expires.toIso8601String()}","priority":1,"ruleType":"AMOUNT_OFF",'
       '"ruleVersionId":"01K5R000000000000000000001","scope":{"skuIds":["101"]},'
-      '"stackMode":"STACKABLE"}\n',
+      '"stackMode":"STACKABLE"}\n'
+      '@MANUAL_POLICY|31|$policySha|$policyJson\n',
     ),
   );
   final algorithm = Ed25519();

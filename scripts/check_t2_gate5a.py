@@ -208,8 +208,8 @@ def check_runtime(stage: str) -> dict[str, object]:
     required = {
         "prm1": (),
         "prm2": ("promotionengine", "promotionruleentity", "trustedtenantcontext"),
-        "prm3": ("promotionengine", "manualprice", "transactionalloc", "trustedtenantcontext"),
-        "closure": ("promotionengine", "manualprice", "transactionalloc", "refundalloc", "trustedtenantcontext"),
+        "prm3": ("promotionengine", "manualpromotion", "trustedtenantcontext"),
+        "closure": ("promotionengine", "manualpromotion", "transactionalloc", "refundalloc", "trustedtenantcontext"),
     }[stage]
     for marker in required:
         if marker not in text:

@@ -43,4 +43,17 @@ public interface PromotionPersistenceMapper {
     List<PublishedRuleRow> listPackageRules(@Param("tenantId") String tenantId,
                                             @Param("storeId") Long storeId,
                                             @Param("packageVersion") long packageVersion);
+    StoredQuote findQuote(@Param("tenantId") String tenantId, @Param("quoteId") String quoteId);
+    StoredQuote lockQuote(@Param("tenantId") String tenantId, @Param("quoteId") String quoteId);
+    List<StoredAdjustment> listQuoteAdjustments(@Param("tenantId") String tenantId,
+                                                 @Param("quoteId") String quoteId);
+    ManualPolicyRow findManualPolicy(@Param("tenantId") String tenantId, @Param("storeId") Long storeId);
+    ManualEvent findPendingManualEvent(@Param("tenantId") String tenantId, @Param("quoteId") String quoteId);
+    ManualEvent findLatestAppliedManualEvent(@Param("tenantId") String tenantId,
+                                              @Param("quoteId") String quoteId);
+    List<ManualEvent> listAppliedManualEvents(@Param("tenantId") String tenantId,
+                                               @Param("quoteId") String quoteId);
+    ManualEvent findLatestManualEvent(@Param("tenantId") String tenantId,
+                                       @Param("authorizationId") String authorizationId);
+    int insertManualEvent(ManualEventWrite value);
 }

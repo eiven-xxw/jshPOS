@@ -1,6 +1,7 @@
 package com.jingshanghui.pos.promotion.config;
 
 import com.jingshanghui.pos.promotion.domain.PromotionEngine;
+import com.jingshanghui.pos.promotion.domain.ManualAdjustmentEngine;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -13,4 +14,6 @@ import org.springframework.context.annotation.ComponentScan;
 public class PromotionAutoConfiguration {
     /** 注册无状态促销引擎。 */
     @Bean public PromotionEngine promotionEngine() { return new PromotionEngine(); }
+    /** 注册无状态人工优惠引擎。 */
+    @Bean public ManualAdjustmentEngine manualAdjustmentEngine() { return new ManualAdjustmentEngine(); }
 }

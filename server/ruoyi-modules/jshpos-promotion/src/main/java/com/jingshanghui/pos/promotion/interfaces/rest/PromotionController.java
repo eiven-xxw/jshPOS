@@ -5,6 +5,9 @@ import com.jingshanghui.pos.promotion.application.model.PromotionCommands.*;
 import com.jingshanghui.pos.promotion.application.model.PromotionViews.*;
 import com.jingshanghui.pos.promotion.application.service.PromotionService;
 import com.jingshanghui.pos.promotion.application.service.PromotionPackageService;
+import com.jingshanghui.pos.promotion.application.service.ManualPromotionService;
+import com.jingshanghui.pos.promotion.domain.ManualAdjustmentEngine.ActionType;
+import com.jingshanghui.pos.promotion.domain.ManualAdjustmentEngine.PaymentMethod;
 import com.jingshanghui.pos.promotion.domain.PromotionModels.*;
 import com.jingshanghui.pos.promotion.interfaces.rest.dto.PromotionRequests;
 import jakarta.validation.Valid;
@@ -35,6 +38,7 @@ import java.util.Base64;
 public class PromotionController {
     private final PromotionService service;
     private final PromotionPackageService packages;
+    private final ManualPromotionService manualPromotions;
 
     /** 创建规则身份和首版草稿。 */
     @PostMapping("/rules")
@@ -145,6 +149,29 @@ public class PromotionController {
             .header("X-JSH-Signing-Key-Id", artifact.signingKeyId())
             .header("X-JSH-Signature", Base64.getEncoder().encodeToString(artifact.signature()))
             .body(artifact.payload());
+    }
+
+    /** 执行阈值内人工优惠或创建待独立复核申请。 */
+    @PostMapping("/manual-authorizations")
+    @SaCheckPermission("promotion:manual:authorize")
+    @Log(title="人工优惠授权", businessType=BusinessType.INSERT)
+    public R<ManualAuthorizationView> authorizeManual(
+        @Valid @RequestBody PromotionRequests.ManualAuthorize request) {
+        return R.ok(manualPromotions.authorize(new ManualAuthorize(request.commandId(), request.authorizationId(),
+            request.quoteId(), enumValue(ActionType.class, request.actionType(), "人工优惠动作"), request.lineId(),
+            request.amountOrRate(), enumValue(PaymentMethod.class, request.paymentMethod(), "支付方式"),
+            request.expectedQuoteFingerprint(), request.reasonCode(), request.reasonText(), request.correlationId())));
+    }
+
+    /** 由不同的当前认证主体批准超阈值人工优惠。 */
+    @PostMapping("/manual-authorizations/{authorizationId}/approve")
+    @SaCheckPermission("promotion:manual:approve")
+    @Log(title="复核人工优惠", businessType=BusinessType.UPDATE)
+    public R<ManualAuthorizationView> approveManual(
+        @PathVariable @Pattern(regexp=PromotionRequests.ULID) String authorizationId,
+        @Valid @RequestBody PromotionRequests.ManualApprove request) {
+        return R.ok(manualPromotions.approve(new ManualApprove(request.commandId(), authorizationId,
+            request.expectedPreviewFingerprint(), request.reason(), request.correlationId())));
     }
 
     private StateCommand state(String ruleId, String versionId, PromotionRequests.State request) {

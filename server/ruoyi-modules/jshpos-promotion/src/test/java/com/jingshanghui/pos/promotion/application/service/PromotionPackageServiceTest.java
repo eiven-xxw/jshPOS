@@ -5,6 +5,7 @@ import com.jingshanghui.pos.foundation.application.context.TrustedPrincipal;
 import com.jingshanghui.pos.foundation.application.context.TrustedTenantContext;
 import com.jingshanghui.pos.foundation.application.security.ScopeAuthorizationService;
 import com.jingshanghui.pos.foundation.application.security.TenantResourceNamespace;
+import com.jingshanghui.pos.foundation.domain.CanonicalJson;
 import com.jingshanghui.pos.promotion.application.model.PromotionViews.PackageView;
 import com.jingshanghui.pos.promotion.application.port.PromotionPackagePorts.ObjectPort;
 import com.jingshanghui.pos.promotion.application.port.PromotionPackagePorts.SigningPort;
@@ -23,6 +24,8 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -57,6 +60,7 @@ class PromotionPackageServiceTest {
             "01K5R000000000000000000104");
         when(persistence.listPackageRuleDefinitions(eq("TENANT_A"), eq(1101L), any(), any()))
             .thenReturn(List.of(row("01K5R000000000000000000012"), row("01K5R000000000000000000011")));
+        when(persistence.findManualPolicy("TENANT_A", 1101L)).thenReturn(policy());
         AtomicReference<byte[]> storedPayload = new AtomicReference<>();
         AtomicReference<byte[]> storedSignature = new AtomicReference<>();
         doAnswer(invocation -> {
@@ -72,7 +76,8 @@ class PromotionPackageServiceTest {
         when(objects.get("tenant/TENANT_A/object/promotion.jshpkg"))
             .thenAnswer(ignored -> new StoredObject(storedPayload.get(), storedSignature.get()));
         var service = new PromotionPackageService(tenants, authorization, namespace, persistence,
-            new PromotionRuleDefinitionCodec(new ObjectMapper()), signers, objectProviders, ids,
+            new PromotionRuleDefinitionCodec(new ObjectMapper()), new ManualPolicyCodec(new ObjectMapper()),
+            signers, objectProviders, ids,
             Clock.fixed(NOW, ZoneOffset.UTC));
 
         PackageView published = service.publish(1101L, 1, 0, NOW.plusSeconds(3600), CORRELATION);
@@ -89,6 +94,8 @@ class PromotionPackageServiceTest {
         ArgumentCaptor<byte[]> payload = ArgumentCaptor.forClass(byte[].class);
         verify(objects).put(startsWith("tenant/TENANT_A/object/"), payload.capture(), argThat(value -> value.length == 64));
         assertThat(service.download(1101L, 1).payload()).containsExactly(payload.getValue());
+        assertThat(new String(payload.getValue(), java.nio.charset.StandardCharsets.UTF_8))
+            .contains("@MANUAL_POLICY|31|");
         verify(persistence).insertAudit(any());
         verify(persistence).insertOutbox(any());
         verify(authorization, times(3)).requireStoreAccess(1101L);
@@ -103,7 +110,8 @@ class PromotionPackageServiceTest {
         var persistence = mock(PromotionPersistencePort.class);
         var service = new PromotionPackageService(tenants, mock(ScopeAuthorizationService.class),
             mock(TenantResourceNamespace.class), persistence,
-            new PromotionRuleDefinitionCodec(new ObjectMapper()), signers, objects,
+            new PromotionRuleDefinitionCodec(new ObjectMapper()), new ManualPolicyCodec(new ObjectMapper()),
+            signers, objects,
             mock(PromotionIdGenerator.class), Clock.fixed(NOW, ZoneOffset.UTC));
         assertThatThrownBy(() -> service.publish(1101L, 1, 0, NOW.plusSeconds(10), CORRELATION))
             .hasMessageContaining("PRM-PKG-010");
@@ -115,5 +123,17 @@ class PromotionPackageServiceTest {
             LocalDateTime.ofInstant(NOW.minusSeconds(60), ZoneOffset.UTC),
             LocalDateTime.ofInstant(NOW.plusSeconds(7200), ZoneOffset.UTC), "STORE:1101|CHANNEL:POS", 10L,
             null, null, null, null, null, "[]");
+    }
+
+    private static PromotionPersistencePort.ManualPolicyRow policy() {
+        Map<String, Object> content = new LinkedHashMap<>();
+        content.put("policyType", "PROMOTION_MANUAL_AUTHORITY");
+        content.put("withoutApprovalMinor", 100L);
+        content.put("withApprovalMinor", 1000L);
+        content.put("minimumLinePayableMinor", 20L);
+        content.put("maximumRoundingMinor", 9L);
+        content.put("roundingMultiplesMinor", List.of(1L, 10L));
+        CanonicalJson.Result canonical = CanonicalJson.from(content);
+        return new PromotionPersistencePort.ManualPolicyRow(31L, canonical.sha256(), canonical.json());
     }
 }

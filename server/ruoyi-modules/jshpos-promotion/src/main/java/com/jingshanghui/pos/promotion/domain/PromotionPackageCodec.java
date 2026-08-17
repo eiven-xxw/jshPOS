@@ -20,6 +20,13 @@ public final class PromotionPackageCodec {
     /** 构建门店绑定的不可变规则包。 */
     public static EncodedPackage encode(String tenantId, Long storeId, long version, long previousVersion,
                                         Instant generatedAt, Instant expiresAt, List<Record> records) {
+        return encode(tenantId, storeId, version, previousVersion, generatedAt, expiresAt, records, null);
+    }
+
+    /** 构建包含可选人工优惠策略快照的门店离线包。 */
+    public static EncodedPackage encode(String tenantId, Long storeId, long version, long previousVersion,
+                                        Instant generatedAt, Instant expiresAt, List<Record> records,
+                                        ManualPolicyRecord manualPolicy) {
         if (tenantId == null || tenantId.isBlank() || storeId == null || storeId <= 0 || version <= 0
             || previousVersion < 0 || previousVersion >= version || generatedAt == null || expiresAt == null
             || !expiresAt.isAfter(generatedAt)) {
@@ -41,6 +48,11 @@ public final class PromotionPackageCodec {
             .append('|').append(expiresAt).append('\n');
         sorted.forEach(record -> canonical.append(escape(record.ruleVersionId())).append('|')
             .append(escape(record.canonicalRule())).append('\n'));
+        if (manualPolicy != null) {
+            canonical.append("@MANUAL_POLICY|").append(manualPolicy.policyVersionId()).append('|')
+                .append(manualPolicy.policySha256()).append('|')
+                .append(escape(manualPolicy.canonicalPolicy())).append('\n');
+        }
         byte[] payload = canonical.toString().getBytes(StandardCharsets.UTF_8);
         return new EncodedPackage(payload, sha256(payload), sorted.size());
     }
@@ -87,6 +99,22 @@ public final class PromotionPackageCodec {
             if (ruleVersionId == null || !ruleVersionId.matches("^[0-9A-HJKMNP-TV-Z]{26}$")
                 || canonicalRule == null || canonicalRule.isBlank()) {
                 throw new ServiceException("PRM-PKG-003: 规则包记录无效", 400);
+            }
+        }
+    }
+
+    /**
+     * 随规则包签名并绑定门店及包版本的人工优惠策略快照。
+     *
+     * @param policyVersionId Gate 0 已发布配置版本
+     * @param policySha256 canonical 策略摘要
+     * @param canonicalPolicy canonical 策略 JSON
+     */
+    public record ManualPolicyRecord(long policyVersionId, String policySha256, String canonicalPolicy) {
+        public ManualPolicyRecord {
+            if (policyVersionId <= 0 || policySha256 == null || !policySha256.matches("^[a-f0-9]{64}$")
+                || canonicalPolicy == null || canonicalPolicy.isBlank()) {
+                throw new ServiceException("PRM-PKG-017: 人工优惠策略包记录无效", 400);
             }
         }
     }

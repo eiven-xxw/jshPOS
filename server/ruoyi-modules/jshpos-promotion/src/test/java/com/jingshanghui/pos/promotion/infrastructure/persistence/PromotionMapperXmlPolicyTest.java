@@ -16,8 +16,12 @@ class PromotionMapperXmlPolicyTest {
             assertThat(xml).doesNotContain("select *").contains("tenant_id=#{tenantid}")
                 .contains("insert into prm_rule_version").contains("insert into prm_quote")
                 .contains("insert into prm_adjustment").contains("insert into prm_audit_event")
-                .contains("insert into prm_event_outbox")
+                .contains("insert into prm_event_outbox").contains("insert into prm_manual_price_audit")
+                .contains("from jsh_config_binding b").contains("b.tenant_id=#{tenantid}")
+                .contains("from prm_manual_price_audit").contains("order by event_sequence")
+                .contains("<select id=\"lockquote\"").contains("for update")
                 .doesNotContain("update prm_quote").doesNotContain("update prm_transaction_snapshot")
+                .doesNotContain("update prm_manual_price_audit")
                 .doesNotContain("update prm_transaction_allocation").doesNotContain("update prm_refund_allocation_ledger")
                 .doesNotContain("update ord_").doesNotContain("update inv_").doesNotContain("update pay_");
         }

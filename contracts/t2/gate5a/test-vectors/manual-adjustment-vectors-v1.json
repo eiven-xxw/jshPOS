@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0",
+  "currentMilestone": "PRM2",
+  "policy": {
+    "policyVersionId": 31,
+    "policySha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "withoutApprovalMinor": 100,
+    "withApprovalMinor": 1000,
+    "minimumLinePayableMinor": 20,
+    "maximumRoundingMinor": 9,
+    "roundingMultiplesMinor": [1, 10]
+  },
+  "lines": [
+    {"lineId": "01K5R000000000000000000001", "lineNo": 1, "skuId": "101", "quantity": "2.000000", "unitPriceMinor": 300},
+    {"lineId": "01K5R000000000000000000002", "lineNo": 2, "skuId": "102", "quantity": "1.000000", "unitPriceMinor": 400}
+  ],
+  "base": {"grossAmountMinor": 1000, "discountAmountMinor": 100, "payableAmountMinor": 900,
+    "lineDiscounts": {"01K5R000000000000000000001": 60, "01K5R000000000000000000002": 40}},
+  "scenarios": [
+    {"id": "PRM2-LINE-FIXED-001", "actionType": "LINE_FIXED_PRICE", "lineId": "01K5R000000000000000000001",
+      "amountOrRate": "200", "paymentMethod": "NON_CASH",
+      "expected": {"incrementalDiscountMinor": 140, "requiresApproval": true, "payableAmountMinor": 760,
+        "lineDiscounts": {"01K5R000000000000000000001": 200, "01K5R000000000000000000002": 40}}},
+    {"id": "PRM2-ORDER-AMOUNT-001", "actionType": "ORDER_AMOUNT_OFF", "amountOrRate": "90", "paymentMethod": "NON_CASH",
+      "expected": {"incrementalDiscountMinor": 90, "requiresApproval": false, "payableAmountMinor": 810,
+        "lineDiscounts": {"01K5R000000000000000000001": 114, "01K5R000000000000000000002": 76}}},
+    {"id": "PRM2-ORDER-RATE-001", "actionType": "ORDER_PERCENT_OFF", "amountOrRate": "0.12500000", "paymentMethod": "NON_CASH",
+      "expected": {"incrementalDiscountMinor": 113, "requiresApproval": true, "payableAmountMinor": 787,
+        "lineDiscounts": {"01K5R000000000000000000001": 128, "01K5R000000000000000000002": 85}}}
+  ]
+}

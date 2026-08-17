@@ -7,8 +7,8 @@
     "branchStart": "63537b5cb7ceeb1fe6b04107b53e2e68941b25ad"
   },
   "sequence": ["T2-PRM-001", "T2-PRM-002", "T2-PRM-003"],
-  "admittedRequirements": ["T2-PRM-001", "T2-PRM-002"],
-  "draftRequirements": ["T2-PRM-003"],
+  "admittedRequirements": ["T2-PRM-001", "T2-PRM-002", "T2-PRM-003"],
+  "draftRequirements": [],
   "externalBlockedRequirements": {"T2-PAY-002": "BLOCKED"},
   "enginePolicy": {
     "engineVersion": "promotion-engine-1.0.0",

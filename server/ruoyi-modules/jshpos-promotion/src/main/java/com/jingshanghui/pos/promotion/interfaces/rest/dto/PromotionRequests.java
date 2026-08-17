@@ -115,4 +115,33 @@ public final class PromotionRequests {
                                  @Positive long packageVersion, @PositiveOrZero long previousVersion,
                                  @NotNull Instant expiresAt,
                                  @NotBlank @Pattern(regexp=ULID) String correlationId) { }
+
+    /**
+     * 人工优惠请求；审批人由后续独立认证请求确定。
+     * @param commandId 幂等命令 @param authorizationId 授权标识 @param quoteId 报价
+     * @param actionType 动作 @param lineId 行改价目标 @param amountOrRate 金额折扣率或抹零倍数
+     * @param paymentMethod 支付方式 @param expectedQuoteFingerprint 当前报价摘要
+     * @param reasonCode 原因码 @param reasonText 原因说明 @param correlationId 关联标识
+     */
+    public record ManualAuthorize(@NotBlank @Pattern(regexp=ULID) String commandId,
+                                  @NotBlank @Pattern(regexp=ULID) String authorizationId,
+                                  @NotBlank @Pattern(regexp=ULID) String quoteId,
+                                  @NotBlank String actionType,
+                                  @Pattern(regexp=ULID) String lineId,
+                                  @NotBlank @Size(max=32) String amountOrRate,
+                                  @NotBlank String paymentMethod,
+                                  @NotBlank @Pattern(regexp="^[a-f0-9]{64}$") String expectedQuoteFingerprint,
+                                  @NotBlank @Pattern(regexp="^[A-Z0-9_]{1,32}$") String reasonCode,
+                                  @NotBlank @Size(max=256) String reasonText,
+                                  @NotBlank @Pattern(regexp=ULID) String correlationId) { }
+
+    /**
+     * 超阈值人工优惠复核请求。
+     * @param commandId 幂等命令 @param expectedPreviewFingerprint 预检摘要
+     * @param reason 复核说明 @param correlationId 关联标识
+     */
+    public record ManualApprove(@NotBlank @Pattern(regexp=ULID) String commandId,
+                                @NotBlank @Pattern(regexp="^[a-f0-9]{64}$") String expectedPreviewFingerprint,
+                                @NotBlank @Size(max=256) String reason,
+                                @NotBlank @Pattern(regexp=ULID) String correlationId) { }
 }

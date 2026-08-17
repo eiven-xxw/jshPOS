@@ -16,7 +16,7 @@
 | `prm_quote` | jshpos-promotion | `XML_ONLY` | `QuoteWrite/View` / XML | TrustedTenantContext | 报价事实与请求摘要幂等，不物理删除 |
 | `prm_quote_line` | jshpos-promotion | `XML_ONLY` | `QuoteLineWrite/View` / XML | TrustedTenantContext | 逐行金额事实只追加 |
 | `prm_adjustment` | jshpos-promotion | `XML_ONLY` | `AdjustmentWrite/View` / XML | TrustedTenantContext | 命中/排除解释和调整只追加 |
-| `prm_manual_price_audit` | jshpos-promotion | `XML_ONLY` | `ManualAuditWrite/View` / XML | TrustedTenantContext | 人工优惠授权与审计不可修改 |
+| `prm_manual_price_audit` | jshpos-promotion | `XML_ONLY` | `ManualEventWrite/ManualEvent` / XML | TrustedTenantContext | 申请/批准均以递增事件只追加，数据库触发器禁止修改和删除 |
 | `prm_transaction_snapshot` | jshpos-promotion | `XML_ONLY` | `SnapshotWrite/View` / XML | TrustedTenantContext | 每订单冻结摘要，不可修改 |
 | `prm_transaction_allocation` | jshpos-promotion | `XML_ONLY` | `AllocationWrite/View` / XML | TrustedTenantContext | 优惠分摊只追加 |
 | `prm_refund_allocation_ledger` | jshpos-promotion | `XML_ONLY` | `RefundAllocationWrite/View` / XML | TrustedTenantContext | 累计退款恢复账本只追加、稳定幂等 |
@@ -34,9 +34,9 @@
 - 发布前在 MySQL 8.4.6 完整执行当时已准入的全部迁移、重复 validate/migrate、`information_schema` 中文注释、复合租户外键、不可变触发器和前向修复验证。
 - closure 时封存 V20—V23 和 POS V3—V5 的 SHA-256；封存后禁止修改，修复只能新增前向迁移。
 
-## 3. POS SQLite V3
+## 3. POS SQLite V3/V4
 
-V3 只新增 PRM-001 的双槽包、活动指针、报价、报价行和规则调整表；并以前向 rebuild 方式放宽 Gate 2 中“优惠恒为 0”的订单/行约束，改为金额守恒约束。PRM-002/003 验证前不得出现人工授权、成交快照、分摊或退款恢复表；其后分别通过 V4、V5 前向迁移加入。迁移先关闭外键、事务内复制和重建、恢复外键后执行 `foreign_key_check` 与快照摘要验证；任何失败保留原文件供恢复，不能半迁移启动收银。
+V3 只新增 PRM-001 的双槽包、活动指针、报价、报价行和规则调整表；并以前向 rebuild 方式放宽 Gate 2 中“优惠恒为 0”的订单/行约束，改为金额守恒约束。V4 新增按 `tenant + store + package_version + policy_version` 冻结的人工策略和只追加人工事件；策略只可由已绑定设备安装签名包时写入，人工事件以同一复合键引用策略。V5 只在 PRM-003 顺序准入后加入成交快照、分摊和退款恢复账本。迁移执行后必须校验 schema history checksum 与 `foreign_key_check`；任何失败不能半迁移启动收银。
 
 历史 V1/V2 字符串和校验和不得修改。V3 迁移必须支持空库、含挂单/完成单、进程终止前后和重复启动恢复测试。
 

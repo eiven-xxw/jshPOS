@@ -61,6 +61,31 @@ public class MyBatisPromotionPersistenceAdapter implements PromotionPersistenceP
     @Override public List<PublishedRuleRow> listPackageRules(String tenantId, Long storeId, long packageVersion) {
         return mapper.listPackageRules(tenantId, storeId, packageVersion);
     }
+    @Override public StoredQuote findQuote(String tenantId, String quoteId) {
+        return mapper.findQuote(tenantId, quoteId);
+    }
+    @Override public StoredQuote lockQuote(String tenantId, String quoteId) {
+        return mapper.lockQuote(tenantId, quoteId);
+    }
+    @Override public List<StoredAdjustment> listQuoteAdjustments(String tenantId, String quoteId) {
+        return mapper.listQuoteAdjustments(tenantId, quoteId);
+    }
+    @Override public ManualPolicyRow findManualPolicy(String tenantId, Long storeId) {
+        return mapper.findManualPolicy(tenantId, storeId);
+    }
+    @Override public ManualEvent findPendingManualEvent(String tenantId, String quoteId) {
+        return mapper.findPendingManualEvent(tenantId, quoteId);
+    }
+    @Override public ManualEvent findLatestAppliedManualEvent(String tenantId, String quoteId) {
+        return mapper.findLatestAppliedManualEvent(tenantId, quoteId);
+    }
+    @Override public List<ManualEvent> listAppliedManualEvents(String tenantId, String quoteId) {
+        return mapper.listAppliedManualEvents(tenantId, quoteId);
+    }
+    @Override public ManualEvent findLatestManualEvent(String tenantId, String authorizationId) {
+        return mapper.findLatestManualEvent(tenantId, authorizationId);
+    }
+    @Override public void insertManualEvent(ManualEventWrite value) { requireOne(mapper.insertManualEvent(value)); }
     private void requireOne(int count) {
         if (count != 1) throw new ServiceException("PRM-STORE-002: 促销事实写入失败", 409);
     }

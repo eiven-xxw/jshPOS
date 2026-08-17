@@ -7,7 +7,7 @@
   "rounding": "HALF_UP",
   "candidateOrder": ["priority_desc", "rule_version_id_asc"],
   "remainderOrder": ["remainder_desc", "line_no_asc", "sku_id_asc", "line_id_asc"],
-  "currentMilestone": "PRM2",
+  "currentMilestone": "PRM3",
   "scenarios": [
     {
       "id": "PRM1-NO-RULE-001",

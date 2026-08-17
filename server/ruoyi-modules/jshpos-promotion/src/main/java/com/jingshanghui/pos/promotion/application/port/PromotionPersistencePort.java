@@ -32,6 +32,16 @@ public interface PromotionPersistencePort {
     void insertPackage(PackageWrite value);
     void insertPackageItem(PackageItemWrite value);
     List<PublishedRuleRow> listPackageRules(String tenantId, Long storeId, long packageVersion);
+    StoredQuote findQuote(String tenantId, String quoteId);
+    /** 在人工优惠、成交冻结等串行事务中锁定报价聚合。 */
+    StoredQuote lockQuote(String tenantId, String quoteId);
+    List<StoredAdjustment> listQuoteAdjustments(String tenantId, String quoteId);
+    ManualPolicyRow findManualPolicy(String tenantId, Long storeId);
+    ManualEvent findPendingManualEvent(String tenantId, String quoteId);
+    ManualEvent findLatestAppliedManualEvent(String tenantId, String quoteId);
+    List<ManualEvent> listAppliedManualEvents(String tenantId, String quoteId);
+    ManualEvent findLatestManualEvent(String tenantId, String authorizationId);
+    void insertManualEvent(ManualEventWrite value);
 
     /**
      * 写入不可变规则版本。
@@ -122,7 +132,8 @@ public interface PromotionPersistencePort {
      * @param engineVersion 引擎版本 @param packageVersion 规则包版本 @param grossAmountMinor 原金额
      * @param discountAmountMinor 优惠金额 @param payableAmountMinor 应付金额
      */
-    record StoredQuote(String quoteId, String requestSha256, String resultSha256, String engineVersion,
+    record StoredQuote(String quoteId, Long storeId, String terminalId, LocalDateTime businessTime,
+                       String currency, String requestSha256, String resultSha256, String engineVersion,
                        long packageVersion, long grossAmountMinor, long discountAmountMinor,
                        long payableAmountMinor) { }
     /**
@@ -130,8 +141,45 @@ public interface PromotionPersistencePort {
      * @param sourceLineId 来源购物行ULID @param grossAmountMinor 原金额
      * @param discountAmountMinor 优惠金额 @param payableAmountMinor 应付金额
      */
-    record StoredQuoteLine(String sourceLineId, long grossAmountMinor, long discountAmountMinor,
-                           long payableAmountMinor) { }
+    record StoredQuoteLine(String sourceLineId, int lineNo, Long skuId, java.math.BigDecimal quantity,
+                           long grossAmountMinor, long discountAmountMinor, long payableAmountMinor) { }
+    /** 已存报价调整，用于不依赖当前规则重建不可变报价结果。 */
+    record StoredAdjustment(String sourceLineId, String sourceType, String sourceId, String calculationStage,
+                            long amountMinor, String explanationCode, boolean appliedFlag, int ordinalNo) { }
+    /** Gate 0 配置 Owner 提供的门店优先、租户回退人工优惠策略投影。 */
+    record ManualPolicyRow(long policyVersionId, String contentSha256, String contentJson) { }
+    /**
+     * 人工优惠只追加事件。
+     * @param authorizationId 授权 ULID @param eventSequence 事件序号 @param state 当前状态
+     * @param quoteId 原报价 @param storeId 门店 @param terminalId 终端 @param actionType 动作
+     * @param sourceLineId 目标行 @param amountOrRate 原始值 @param paymentMethod 支付方式
+     * @param beforeFingerprint 应用前摘要 @param previewFingerprint 预检结果摘要
+     * @param incrementalDiscountMinor 增量优惠 @param policyVersionId 策略版本
+     * @param policySha256 策略摘要 @param withoutApprovalMinor 免复核上限
+     * @param withApprovalMinor 复核硬上限 @param minimumLinePayableMinor 行底价
+     * @param maximumRoundingMinor 抹零上限 @param roundingMultiplesJson 抹零倍数快照
+     * @param operatorUserId 操作人 @param approverUserId 复核人 @param businessDate 业务日
+     * @param resultJson 规范化结果 @param resultSha256 结果摘要
+     */
+    record ManualEvent(String authorizationId, int eventSequence, String state, String quoteId, Long storeId,
+                       String terminalId, String actionType, String sourceLineId, String amountOrRate,
+                       String paymentMethod, String beforeFingerprint, String previewFingerprint,
+                       long incrementalDiscountMinor, long policyVersionId, String policySha256,
+                       long withoutApprovalMinor, long withApprovalMinor, long minimumLinePayableMinor,
+                       long maximumRoundingMinor, String roundingMultiplesJson, Long operatorUserId,
+                       Long approverUserId, java.time.LocalDate businessDate, String resultJson,
+                       String resultSha256) { }
+    /** 人工优惠事件写入模型；原因、命令和关联标识一并冻结。 */
+    record ManualEventWrite(String tenantId, String eventId, String authorizationId, int eventSequence,
+                            String state, String commandId, String requestSha256, String quoteId, Long storeId,
+                            String terminalId, String actionType, String sourceLineId, String amountOrRate,
+                            String paymentMethod, String beforeFingerprint, String previewFingerprint,
+                            long incrementalDiscountMinor, long policyVersionId, String policySha256,
+                            long withoutApprovalMinor, long withApprovalMinor, long minimumLinePayableMinor,
+                            long maximumRoundingMinor, String roundingMultiplesJson, String reasonCode,
+                            String reasonText, Long operatorUserId, Long approverUserId,
+                            java.time.LocalDate businessDate, String correlationId, String resultJson,
+                            String resultSha256, LocalDateTime occurredAt) { }
     /**
      * 已存命令的精确重放事实。
      * @param requestSha256 命令规范化摘要 @param aggregateId 聚合标识
