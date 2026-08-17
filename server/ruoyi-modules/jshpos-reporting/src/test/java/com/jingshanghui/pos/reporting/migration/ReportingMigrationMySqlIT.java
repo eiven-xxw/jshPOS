@@ -23,7 +23,9 @@ class ReportingMigrationMySqlIT {
         Flyway flyway=Flyway.configure().dataSource(url,username,password)
             .locations("classpath:db/migration").table("jshpos_flyway_schema_history")
             .baselineOnMigrate(true).baselineVersion("0").cleanDisabled(true).load();
-        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(25);
+        // 当前模块 classpath 明确包含 Gate 0 两个基线迁移与 Reporting V32/V33，
+        // 版本号不是连续文件数量，必须同时校验实际文件数和最高版本。
+        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(4);
         assertThat(flyway.migrate().migrationsExecuted).isZero();
         flyway.validate();
         assertThat(flyway.info().current()).isNotNull();

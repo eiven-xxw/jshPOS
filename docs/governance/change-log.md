@@ -101,5 +101,6 @@
 | CR-T2G5D-002 | 2026-08-17 | IN_PROGRESS | T2-RPT-001 已冻结 Reporting 数据主权、可丢弃投影、来源事件幂等、口径与业务日、权限脱敏、安全导出、Flyway、容量、重建、兼容、前向修复与测试准入 | T2-RPT-001、ADR-031 | 只准入销售、收银、库存和成本基础报表；T2-RPT-002 继续 DRAFT，不得预建支付报表运行时 |
 | CR-T2G5D-003 | 2026-08-17 | VERIFIED_RPT001_AWAITING_CI | T2-RPT-001 完成来源 Inbox、单调检查点、逐事件血缘、销售收银/库存成本日投影、缺口保守标记、影子重建、差异修复、白名单安全导出和 Web 工作台；报表模块39项、服务端全量424项、Web11项本地通过 | T2-RPT-001、ADR-031 | 独立候选证据不代表 ACCEPTED；RPT-002 仍 DRAFT；必须先通过 GitHub MySQL 8.4 百万行、双平台、安全与证据总门禁 |
 | CR-T2G5D-004 | 2026-08-17 | IMPLEMENTED_AWAITING_RETEST | GitHub Actions Run `32033071016` 首轮 MySQL 8.4 实迁移在 V32 第83行发现投影血缘表列注释误用 `COMMENT='…'`；在 RPT-001 迁移尚未发布或接受前统一修正为 MySQL 列定义语法 `COMMENT '…'`，并重算迁移摘要 | T2-RPT-001、T2-MIG-001、ADR-031 | 失败 Run 与日志保留红色证据；未降低容量、测试或安全阈值，RPT-002 继续 DRAFT，要求完整 Gate 5D CI 重跑 |
+| CR-T2G5D-005 | 2026-08-17 | IMPLEMENTED_AWAITING_RETEST | GitHub Actions Run `32033937246` 已在干净 MySQL 8.4 成功执行 Gate 0 与 Reporting 的4个实际 classpath 迁移并到达 V33，但测试误把历史版本序号当成连续文件数并期望25；修正为同时断言4个实际文件全部执行、二次执行为0、Flyway validate及最高版本V33 | T2-RPT-001、T2-MIG-001、ADR-031 | 修正计数语义不降低迁移门禁；第二轮失败 Run 与日志保留，RPT-002 继续 DRAFT，要求完整 Gate 5D CI 再次重跑 |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。
