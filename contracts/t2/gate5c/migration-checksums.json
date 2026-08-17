@@ -17,6 +17,16 @@
       "path": "pos-flutter/lib/infrastructure/local_database/s11_member_schema.dart",
       "sha256": "9a66b0fb35a17f8e1a7b175eac2bea13436ef41a5004700cce7957793b70f470",
       "requirementId": "T2-MEM-001"
+    },
+    {
+      "path": "server/ruoyi-modules/jshpos-member/src/main/resources/db/migration/V202608170030__gate5c_member_points.sql",
+      "sha256": "1476095bd63079bc2809a7cb383ba882bf6580c7584e492099364be9eb771eb8",
+      "requirementId": "T2-MEM-002"
+    },
+    {
+      "path": "server/ruoyi-modules/jshpos-member/src/main/resources/db/migration/V202608170031__gate5c_member_points_permissions.sql",
+      "sha256": "b1da0390af469e9abb45c6d81c77334d6c88c2aef60952ffeb93f0b98e2f2016",
+      "requirementId": "T2-MEM-002"
     }
   ]
 }

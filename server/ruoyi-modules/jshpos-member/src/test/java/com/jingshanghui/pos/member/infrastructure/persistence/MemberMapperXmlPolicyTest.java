@@ -29,4 +29,22 @@ class MemberMapperXmlPolicyTest {
         assertThat(source).doesNotContain("@Select").doesNotContain("@Insert")
             .doesNotContain("@Update").doesNotContain("@Delete");
     }
+
+    @Test void pointsMapperLocksProjectionsAndNeverUpdatesLedgerOrAllocation() throws Exception {
+        try(var stream=getClass().getResourceAsStream("/mapper/member/PointsPersistenceMapper.xml")) {
+            assertThat(stream).isNotNull();
+            String xml=new String(stream.readAllBytes(),StandardCharsets.UTF_8).toLowerCase();
+            assertThat(xml).doesNotContain("select *").contains("tenant_id=#{tenantid}")
+                .contains("for update").contains("insert into mbr_points_ledger")
+                .contains("insert into mbr_points_allocation").contains("insert into mbr_level_history")
+                .contains("business_date").contains("actor_user_id").contains("approval_ref")
+                .contains("case when expires_at is null then 1 else 0 end")
+                .doesNotContain("update mbr_points_ledger").doesNotContain("delete from mbr_points")
+                .doesNotContain("update mbr_points_allocation").doesNotContain("update mbr_level_history");
+        }
+        String source=Files.readString(Path.of(System.getProperty("user.dir"),
+            "src/main/java/com/jingshanghui/pos/member/infrastructure/persistence/mapper/PointsPersistenceMapper.java"));
+        assertThat(source).doesNotContain("@Select").doesNotContain("@Insert")
+            .doesNotContain("@Update").doesNotContain("@Delete");
+    }
 }

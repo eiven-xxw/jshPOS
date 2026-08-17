@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
 import subprocess
 from datetime import datetime, timezone
@@ -43,6 +44,7 @@ DESIGN_FILES = (
     "contracts/t2/gate5c/persistence-registry.csv",
     "contracts/t2/gate5c/openapi-member-v1.yaml",
     "contracts/t2/gate5c/member-events-v1.yaml",
+    "contracts/t2/gate5c/migration-checksums.json",
 )
 
 
@@ -121,6 +123,22 @@ def contracts(stage: str) -> dict[str, object]:
     for marker in ("member.profile.changed.v1", "member.consent.changed.v1", "pii: FORBIDDEN"):
         if marker not in events:
             fail(f"Member event contract missing {marker}")
+    if stage in {"mem2", "closure"}:
+        for marker in ("member:points:read", "member:points:freeze", "member:points:settle",
+                       "member:points:adjust", "member:level:manage", "member:points:rebuild"):
+            if marker not in openapi:
+                fail(f"Member points OpenAPI permission missing {marker}")
+        for marker in ("member.level.changed.v1", "member.points.posted.v1", "status: ACTIVE"):
+            if marker not in events:
+                fail(f"Member points event contract missing {marker}")
+    checksum = json.loads(content["contracts/t2/gate5c/migration-checksums.json"])
+    expected_count = 5 if stage in {"mem2", "closure"} else 3
+    if len(checksum.get("files", [])) != expected_count:
+        fail(f"migration checksum ledger expected {expected_count} files")
+    for item in checksum["files"]:
+        path = ROOT / item["path"]
+        if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != item["sha256"]:
+            fail(f"published migration checksum mismatch {item['path']}")
     return {"designFiles": len(content), "sequence": list(SEQUENCE), "providerNetworkCalls": 0}
 
 

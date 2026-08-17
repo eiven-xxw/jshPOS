@@ -1,12 +1,12 @@
-schemaVersion: '1.0'
+schemaVersion: "1.0"
 owner: Member
 inbound:
   - type: order.completed.v2
     purpose: 成交同步后异步入账
-    status: DRAFT_UNTIL_MEM002
+    status: ACTIVE_INTERNAL_CONSUMER
   - type: return.completed.v1
     purpose: 引用原事实进行退货权益冲正
-    status: DRAFT_UNTIL_MEM002
+    status: ACTIVE_INTERNAL_CONSUMER
 outbound:
   - type: member.profile.changed.v1
     pii: FORBIDDEN
@@ -17,11 +17,42 @@ outbound:
   - type: member.privacy.changed.v1
     pii: FORBIDDEN
   - type: member.level.changed.v1
-    status: DRAFT_UNTIL_MEM002
+    status: ACTIVE
     pii: FORBIDDEN
   - type: member.points.posted.v1
-    status: DRAFT_UNTIL_MEM002
+    status: ACTIVE
     pii: FORBIDDEN
-outboundEnvelopeRequired: [eventId, tenantContext, schemaVersion, occurredAt, payloadSha256, correlationId]
-inboundEnvelopeRequired: [eventId, tenantContext, schemaVersion, occurredAt, receivedAt, payloadSha256, correlationId]
+outboundEnvelopeRequired:
+  [
+    eventId,
+    tenantContext,
+    schemaVersion,
+    occurredAt,
+    payloadSha256,
+    correlationId,
+  ]
+inboundEnvelopeRequired:
+  [
+    eventId,
+    tenantContext,
+    schemaVersion,
+    occurredAt,
+    receivedAt,
+    payloadSha256,
+    correlationId,
+  ]
 idempotency: same_event_same_hash_returns_original; same_event_different_hash_rejected
+memberPointsFactRequired:
+  [
+    ledgerId,
+    memberId,
+    storeId,
+    businessDate,
+    eventType,
+    reasonCode,
+    actorUserId,
+    policyVersion,
+    contentSha256,
+  ]
+manualApprovalRequired: [approvalUserId, approvalRef]
+businessDateAuthority: calculated_by_store_owner_timezone_and_day_cutoff

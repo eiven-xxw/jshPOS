@@ -12,7 +12,8 @@ public final class MemberRequests {
                          @NotBlank @Pattern(regexp="^(MOBILE|MEMBER_CODE|CARD|EXTERNAL_OPEN_ID)$") String identityType,
                          @NotBlank @Size(max=128) String identityValue,
                          @NotBlank @Pattern(regexp=ULID) String correlationId) { }
-    public record Resolve(@NotBlank @Pattern(regexp="^(MOBILE|MEMBER_CODE|CARD|EXTERNAL_OPEN_ID)$") String identityType,
+    public record Resolve(@NotNull @Positive Long storeId,
+                          @NotBlank @Pattern(regexp="^(MOBILE|MEMBER_CODE|CARD|EXTERNAL_OPEN_ID)$") String identityType,
                           @NotBlank @Size(max=128) String identityValue) { }
     public record BindIdentity(@NotBlank @Pattern(regexp=ULID) String commandId,
                                @NotBlank @Pattern(regexp=ULID) String identityId,

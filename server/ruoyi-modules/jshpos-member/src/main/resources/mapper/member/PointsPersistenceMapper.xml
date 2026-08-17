@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jingshanghui.pos.member.infrastructure.persistence.mapper.PointsPersistenceMapper">
+  <sql id="accountColumns">member_id memberId,available_points availablePoints,frozen_points frozenPoints,
+    debt_points debtPoints,version,last_ledger_id lastLedgerId</sql>
+  <sql id="ledgerColumns">ledger_id ledgerId,member_id memberId,event_type eventType,amount,
+    available_delta availableDelta,frozen_delta frozenDelta,debt_delta debtDelta,source_type sourceType,
+    source_id sourceId,original_ledger_id originalLedgerId,policy_version policyVersion,
+    store_id storeId,business_date businessDate,reason_code reasonCode,actor_user_id actorUserId,
+    approval_user_id approvalUserId,approval_ref approvalRef,
+    occurred_at occurredAt,expires_at expiresAt,request_sha256 requestSha256,content_sha256 contentSha256</sql>
+  <select id="lockAccount" resultType="com.jingshanghui.pos.member.application.model.PointsViews$AccountView">
+    SELECT <include refid="accountColumns"/> FROM mbr_points_account
+    WHERE tenant_id=#{tenantId} AND member_id=#{memberId} FOR UPDATE
+  </select>
+  <select id="findAccount" resultType="com.jingshanghui.pos.member.application.model.PointsViews$AccountView">
+    SELECT <include refid="accountColumns"/> FROM mbr_points_account
+    WHERE tenant_id=#{tenantId} AND member_id=#{memberId}
+  </select>
+  <insert id="insertAccount">
+    INSERT INTO mbr_points_account(member_id,tenant_id,available_points,frozen_points,debt_points,version,last_ledger_id)
+    VALUES(#{memberId},#{tenantId},#{availablePoints},#{frozenPoints},#{debtPoints},0,#{lastLedgerId})
+  </insert>
+  <update id="updateAccount">
+    UPDATE mbr_points_account SET available_points=#{availablePoints},frozen_points=#{frozenPoints},
+      debt_points=#{debtPoints},version=version+1,last_ledger_id=#{lastLedgerId},updated_at=UTC_TIMESTAMP(3)
+    WHERE tenant_id=#{tenantId} AND member_id=#{memberId} AND version=#{expectedVersion}
+  </update>
+  <update id="replaceAccountProjection">
+    UPDATE mbr_points_account SET available_points=#{availablePoints},frozen_points=#{frozenPoints},
+      debt_points=#{debtPoints},version=version+1,last_ledger_id=#{lastLedgerId},updated_at=UTC_TIMESTAMP(3)
+    WHERE tenant_id=#{tenantId} AND member_id=#{memberId} AND version=#{expectedVersion}
+  </update>
+  <insert id="insertLedger">
+    INSERT INTO mbr_points_ledger(ledger_id,tenant_id,member_id,event_type,amount,available_delta,frozen_delta,
+      debt_delta,source_type,source_id,original_ledger_id,policy_version,idempotency_key,request_sha256,
+      correlation_id,store_id,business_date,reason_code,actor_user_id,approval_user_id,approval_ref,
+      occurred_at,expires_at,content_sha256)
+    VALUES(#{ledgerId},#{tenantId},#{memberId},#{eventType},#{amount},#{availableDelta},#{frozenDelta},
+      #{debtDelta},#{sourceType},#{sourceId},#{originalLedgerId},#{policyVersion},#{idempotencyKey},
+      #{requestSha256},#{correlationId},#{storeId},#{businessDate},#{reasonCode},#{actorUserId},
+      #{approvalUserId},#{approvalRef},#{occurredAt},#{expiresAt},#{contentSha256})
+  </insert>
+  <select id="findLedger" resultType="com.jingshanghui.pos.member.application.model.PointsViews$LedgerView">
+    SELECT <include refid="ledgerColumns"/> FROM mbr_points_ledger
+    WHERE tenant_id=#{tenantId} AND ledger_id=#{ledgerId}
+  </select>
+  <select id="findLedgerByCommand" resultType="com.jingshanghui.pos.member.application.model.PointsViews$LedgerView">
+    SELECT <include refid="ledgerColumns"/> FROM mbr_points_ledger
+    WHERE tenant_id=#{tenantId} AND idempotency_key=#{idempotencyKey}
+  </select>
+  <select id="listLedgers" resultType="com.jingshanghui.pos.member.application.model.PointsViews$LedgerView">
+    SELECT <include refid="ledgerColumns"/> FROM mbr_points_ledger
+    WHERE tenant_id=#{tenantId} AND member_id=#{memberId} ORDER BY occurred_at,ledger_id
+  </select>
+  <insert id="insertLot">
+    INSERT INTO mbr_points_lot(lot_id,tenant_id,member_id,earn_ledger_id,original_points,available_points,
+      frozen_points,policy_version,expires_at,occurred_at)
+    VALUES(#{lotId},#{tenantId},#{memberId},#{earnLedgerId},#{originalPoints},#{availablePoints},
+      #{frozenPoints},#{policyVersion},#{expiresAt},#{occurredAt})
+  </insert>
+  <select id="lockLot" resultType="com.jingshanghui.pos.member.application.port.PointsPersistencePort$LotRow">
+    SELECT lot_id lotId,earn_ledger_id earnLedgerId,original_points originalPoints,
+      available_points availablePoints,frozen_points frozenPoints,policy_version policyVersion,
+      expires_at expiresAt,version FROM mbr_points_lot WHERE tenant_id=#{tenantId} AND lot_id=#{lotId} FOR UPDATE
+  </select>
+  <select id="listFefoAvailableLots" resultType="com.jingshanghui.pos.member.application.port.PointsPersistencePort$LotRow">
+    SELECT lot_id lotId,earn_ledger_id earnLedgerId,original_points originalPoints,
+      available_points availablePoints,frozen_points frozenPoints,policy_version policyVersion,
+      expires_at expiresAt,version FROM mbr_points_lot
+    WHERE tenant_id=#{tenantId} AND member_id=#{memberId} AND available_points>0
+      AND (expires_at IS NULL OR expires_at>#{occurredAt})
+    ORDER BY CASE WHEN expires_at IS NULL THEN 1 ELSE 0 END,expires_at,occurred_at,lot_id FOR UPDATE
+  </select>
+  <update id="updateLot">
+    UPDATE mbr_points_lot SET available_points=#{availablePoints},frozen_points=#{frozenPoints},
+      version=version+1,updated_at=UTC_TIMESTAMP(3)
+    WHERE tenant_id=#{tenantId} AND lot_id=#{lotId} AND version=#{expectedVersion}
+  </update>
+  <insert id="insertAllocation">
+    INSERT INTO mbr_points_allocation(allocation_id,tenant_id,ledger_id,lot_id,parent_ledger_id,points,
+      allocation_type,occurred_at)
+    VALUES(#{allocationId},#{tenantId},#{ledgerId},#{lotId},#{parentLedgerId},#{points},#{allocationType},#{occurredAt})
+  </insert>
+  <select id="listFrozenAllocations" resultType="com.jingshanghui.pos.member.application.port.PointsPersistencePort$FrozenAllocationRow">
+    SELECT original.lot_id lotId,original.points frozenPoints,COALESCE(SUM(released.points),0) releasedPoints,
+      lot.expires_at expiresAt FROM mbr_points_allocation original
+    JOIN mbr_points_lot lot ON lot.tenant_id=original.tenant_id AND lot.lot_id=original.lot_id
+    LEFT JOIN mbr_points_allocation released ON released.tenant_id=original.tenant_id
+      AND released.parent_ledger_id=original.ledger_id AND released.lot_id=original.lot_id
+      AND released.allocation_type IN ('SPEND','UNFREEZE')
+    WHERE original.tenant_id=#{tenantId} AND original.ledger_id=#{freezeLedgerId}
+      AND original.allocation_type='FREEZE'
+    GROUP BY original.lot_id,original.points,lot.expires_at
+    HAVING original.points>COALESCE(SUM(released.points),0)
+    ORDER BY CASE WHEN lot.expires_at IS NULL THEN 1 ELSE 0 END,lot.expires_at,original.lot_id
+  </select>
+  <select id="listSpendAllocations" resultType="com.jingshanghui.pos.member.application.port.PointsPersistencePort$SpendAllocationRow">
+    SELECT spent.lot_id lotId,spent.points spentPoints,COALESCE(SUM(restored.points),0) restoredPoints,
+      lot.expires_at sourceExpiresAt FROM mbr_points_allocation spent
+    JOIN mbr_points_lot lot ON lot.tenant_id=spent.tenant_id AND lot.lot_id=spent.lot_id
+    LEFT JOIN mbr_points_allocation restored ON restored.tenant_id=spent.tenant_id
+      AND restored.parent_ledger_id=spent.ledger_id AND restored.lot_id=spent.lot_id
+      AND restored.allocation_type='RETURN_SPEND_REVERSAL'
+    WHERE spent.tenant_id=#{tenantId} AND spent.ledger_id=#{spendLedgerId} AND spent.allocation_type='SPEND'
+    GROUP BY spent.lot_id,spent.points,lot.expires_at
+    HAVING spent.points>COALESCE(SUM(restored.points),0)
+    ORDER BY spent.lot_id
+  </select>
+  <select id="sumReversedAmount" resultType="java.math.BigDecimal">
+    SELECT COALESCE(SUM(amount),0) FROM mbr_points_ledger
+    WHERE tenant_id=#{tenantId} AND original_ledger_id=#{originalLedgerId} AND event_type=#{reversalType}
+  </select>
+  <insert id="insertLevel">
+    INSERT INTO mbr_level_history(history_id,tenant_id,member_id,level_code,policy_version,reason_code,
+      store_id,business_date,actor_user_id,approval_user_id,approval_ref,correlation_id,effective_at)
+    VALUES(#{historyId},#{tenantId},#{memberId},#{levelCode},#{policyVersion},#{reasonCode},
+      #{storeId},#{businessDate},#{actorUserId},#{approvalUserId},#{approvalRef},#{correlationId},#{effectiveAt})
+  </insert>
+  <select id="findCurrentLevel" resultType="com.jingshanghui.pos.member.application.model.PointsViews$LevelView">
+    SELECT history_id historyId,member_id memberId,level_code levelCode,policy_version policyVersion,
+      reason_code reasonCode,store_id storeId,business_date businessDate,actor_user_id actorUserId,
+      approval_user_id approvalUserId,approval_ref approvalRef,effective_at effectiveAt FROM mbr_level_history
+    WHERE tenant_id=#{tenantId} AND member_id=#{memberId} ORDER BY effective_at DESC,history_id DESC LIMIT 1
+  </select>
+</mapper>

@@ -77,9 +77,10 @@ class MemberProfileServiceTest {
         when(persistence.findLatestMemberLinkForSource(TENANT,MEMBER)).thenReturn(
             new MemberLinkView(LINK,MEMBER,TARGET,"MERGE",NOW));
         when(persistence.findMember(TENANT,TARGET)).thenReturn(member(TARGET,"ACTIVE",0));
-        ResolvedMemberView result=service.resolve("MOBILE","+8613800000000");
+        ResolvedMemberView result=service.resolve(1001L,"MOBILE","+8613800000000");
         assertThat(result.member().memberId()).isEqualTo(TARGET);
         assertThat(result.matchedIdentity().maskedValue()).isEqualTo("+86****0000");
+        verify(authorization).requireStoreAccess(1001L);
     }
 
     @Test void appendsConsentAndPrivacyHistoryThenEnforcesStateGraph() {

@@ -6,7 +6,7 @@
   "activeRequirement": "T2-MEM-002",
   "requirements": {
     "T2-MEM-001": "VERIFIED",
-    "T2-MEM-002": "IN_PROGRESS",
+    "T2-MEM-002": "VERIFIED",
     "T2-RPT-001": "DRAFT",
     "T2-RPT-002": "DRAFT",
     "T2-PAY-002": "BLOCKED"

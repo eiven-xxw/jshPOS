@@ -70,7 +70,9 @@ public class MemberProfileService {
 
     /** 使用标准化值的 HMAC 精确解析，仅返回脱敏身份；合并别名可路由到目标主体。 */
     @Transactional(readOnly = true)
-    public ResolvedMemberView resolve(String identityType, String identityValue) {
+    public ResolvedMemberView resolve(Long storeId, String identityType, String identityValue) {
+        if (storeId == null || storeId <= 0) throw new ServiceException("MEM-SCOPE-001: 门店标识无效", 400);
+        authorization.requireStoreAccess(storeId);
         String tenantId = tenantContext.requireTenantId();
         String normalized = MemberRules.normalizeIdentity(identityType, identityValue);
         IdentityView identity = persistence.findIdentityByLookup(tenantId, identityType,
@@ -133,7 +135,7 @@ public class MemberProfileService {
         if (persistence.revokeIdentity(principal.tenantId(), command.identityId(), command.memberId(),
             principal.userId(), now()) != 1) throw conflict();
         appendFacts(principal, "MEMBER_IDENTITY_REVOKED", command.memberId(), 0, command.correlationId(),
-            Map.of("identityId", command.identityId(), "reason", reason));
+            Map.of("identityId", command.identityId(), "reasonSha256", hash(Map.of("reason", reason))));
         writeCommand(principal.tenantId(), "REVOKE_IDENTITY", command.commandId(), requestHash,
             command.identityId(), 0);
         return requireIdentity(principal.tenantId(), command.identityId());

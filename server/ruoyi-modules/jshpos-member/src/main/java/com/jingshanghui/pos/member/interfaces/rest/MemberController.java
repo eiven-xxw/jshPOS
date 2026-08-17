@@ -34,7 +34,7 @@ public class MemberController {
     @PostMapping("/members/resolve")
     @SaCheckPermission("member:profile:read")
     public R<ResolvedMemberView> resolve(@Valid @RequestBody MemberRequests.Resolve request) {
-        return R.ok(service.resolve(request.identityType(), request.identityValue()));
+        return R.ok(service.resolve(request.storeId(), request.identityType(), request.identityValue()));
     }
 
     @PostMapping("/members/{memberId}/identities")
