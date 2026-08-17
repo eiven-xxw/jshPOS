@@ -43,7 +43,7 @@ def main() -> None:
         "ROTATE": ("updateCredentialVersion", "TRM-ROTATE"),
         "APPEND_ONLY": ("terminal capability snapshot is append-only", "dev_audit_no_update"),
         "HUNDRED_THOUSAND": ("assertTerminalRegistryConstraintsAndHundredThousandCapacity", "100_000"),
-        "FORWARD_MIGRATION": ("migratesAllTenVersions", "V202608160036"),
+        "FORWARD_MIGRATION": ("migratesExpectedVersions", "EXPECTED_MIGRATION_VERSIONS", "V202608160036"),
         "WEB_ONE_TIME_WARNING": ("关闭后无法再次查看", "不会再次显示"),
     }
     results = []
