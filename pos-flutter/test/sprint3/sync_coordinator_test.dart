@@ -19,14 +19,14 @@ const binding = TrustedDeviceBinding(
 );
 
 void main() {
-  test('SQLite V2 migrates repeatably without reusing T1 probe tables', () {
+  test('SQLite V3 preserves Sprint 3 sync while avoiding T1 probe tables', () {
     final fixture = SyncFixture();
     addTearDown(fixture.close);
     expect(
       fixture.db.database.select('PRAGMA user_version').single.values.first,
-      2,
+      3,
     );
-    expect(fixture.count('local_schema_history'), 2);
+    expect(fixture.count('local_schema_history'), 3);
     expect(fixture.count('local_inbox'), 0);
     expect(
       fixture.db.database
@@ -38,42 +38,48 @@ void main() {
     );
   });
 
-  test('ACK lost resends the original identity and converges as duplicate', () async {
-    final fixture = SyncFixture();
-    addTearDown(fixture.close);
-    final eventId = fixture.enqueue();
-    fixture.transport.pushFailures = 1;
-    fixture.transport.duplicateAfterAcceptedUnknown = true;
+  test(
+    'ACK lost resends the original identity and converges as duplicate',
+    () async {
+      final fixture = SyncFixture();
+      addTearDown(fixture.close);
+      final eventId = fixture.enqueue();
+      fixture.transport.pushFailures = 1;
+      fixture.transport.duplicateAfterAcceptedUnknown = true;
 
-    final first = await fixture.coordinator().runOnce();
-    expect(first.retrying, 1);
-    expect(fixture.status(eventId), 'RETRY');
-    fixture.advance(const Duration(minutes: 2));
+      final first = await fixture.coordinator().runOnce();
+      expect(first.retrying, 1);
+      expect(fixture.status(eventId), 'RETRY');
+      fixture.advance(const Duration(minutes: 2));
 
-    final second = await fixture.coordinator().runOnce();
-    expect(second.acked, 1);
-    expect(fixture.status(eventId), 'ACKED');
-    expect(fixture.transport.pushedEventIds, [eventId, eventId]);
-  });
+      final second = await fixture.coordinator().runOnce();
+      expect(second.acked, 1);
+      expect(fixture.status(eventId), 'ACKED');
+      expect(fixture.transport.pushedEventIds, [eventId, eventId]);
+    },
+  );
 
-  test('ACCEPTED_PENDING resolves by result query without a new command', () async {
-    final fixture = SyncFixture();
-    addTearDown(fixture.close);
-    final eventId = fixture.enqueue();
-    fixture.transport.pendingEvents.add(eventId);
+  test(
+    'ACCEPTED_PENDING resolves by result query without a new command',
+    () async {
+      final fixture = SyncFixture();
+      addTearDown(fixture.close);
+      final eventId = fixture.enqueue();
+      fixture.transport.pendingEvents.add(eventId);
 
-    final first = await fixture.coordinator().runOnce();
-    expect(first.retrying, 1);
-    expect(fixture.status(eventId), 'RETRY');
-    fixture.advance(const Duration(minutes: 2));
-    fixture.transport.pendingEvents.remove(eventId);
-    fixture.transport.resultStatuses[eventId] = 'ACCEPTED';
+      final first = await fixture.coordinator().runOnce();
+      expect(first.retrying, 1);
+      expect(fixture.status(eventId), 'RETRY');
+      fixture.advance(const Duration(minutes: 2));
+      fixture.transport.pendingEvents.remove(eventId);
+      fixture.transport.resultStatuses[eventId] = 'ACCEPTED';
 
-    await fixture.coordinator().runOnce();
-    expect(fixture.status(eventId), 'ACKED');
-    expect(fixture.transport.pushedEventIds, [eventId]);
-    expect(fixture.transport.resultQueries, [eventId]);
-  });
+      await fixture.coordinator().runOnce();
+      expect(fixture.status(eventId), 'ACKED');
+      expect(fixture.transport.pushedEventIds, [eventId]);
+      expect(fixture.transport.resultQueries, [eventId]);
+    },
+  );
 
   test('expired SENDING lease is recovered after process restart', () async {
     final fixture = SyncFixture();
@@ -93,65 +99,74 @@ void main() {
     expect(fixture.status(eventId), 'ACKED');
   });
 
-  test('final conflict enters isolated dead letter and is never silent', () async {
-    final fixture = SyncFixture();
-    addTearDown(fixture.close);
-    final eventId = fixture.enqueue();
-    fixture.transport.finalStatuses[eventId] = 'CONFLICT';
+  test(
+    'final conflict enters isolated dead letter and is never silent',
+    () async {
+      final fixture = SyncFixture();
+      addTearDown(fixture.close);
+      final eventId = fixture.enqueue();
+      fixture.transport.finalStatuses[eventId] = 'CONFLICT';
 
-    final result = await fixture.coordinator().runOnce();
-    expect(result.deadLetters, 1);
-    expect(fixture.status(eventId), 'FINAL_REJECTED');
-    expect(fixture.count('local_sync_dead_letter'), 1);
-  });
+      final result = await fixture.coordinator().runOnce();
+      expect(result.deadLetters, 1);
+      expect(fixture.status(eventId), 'FINAL_REJECTED');
+      expect(fixture.count('local_sync_dead_letter'), 1);
+    },
+  );
 
-  test('tampered local payload is isolated without sending a command', () async {
-    final fixture = SyncFixture();
-    addTearDown(fixture.close);
-    final eventId = fixture.enqueue();
-    fixture.db.database.execute(
-      'UPDATE local_outbox SET payload_json=? WHERE event_id=?',
-      ['{"orderId":"tampered"}', eventId],
-    );
+  test(
+    'tampered local payload is isolated without sending a command',
+    () async {
+      final fixture = SyncFixture();
+      addTearDown(fixture.close);
+      final eventId = fixture.enqueue();
+      fixture.db.database.execute(
+        'UPDATE local_outbox SET payload_json=? WHERE event_id=?',
+        ['{"orderId":"tampered"}', eventId],
+      );
 
-    final result = await fixture.coordinator().runOnce();
+      final result = await fixture.coordinator().runOnce();
 
-    expect(result.claimed, 0);
-    expect(fixture.status(eventId), 'FINAL_REJECTED');
-    expect(fixture.transport.pushedEventIds, isEmpty);
-    expect(fixture.count('local_sync_dead_letter'), 1);
-  });
+      expect(result.claimed, 0);
+      expect(fixture.status(eventId), 'FINAL_REJECTED');
+      expect(fixture.transport.pushedEventIds, isEmpty);
+      expect(fixture.count('local_sync_dead_letter'), 1);
+    },
+  );
 
-  test('downstream apply and cursor commit atomically then ACK retries', () async {
-    final fixture = SyncFixture();
-    addTearDown(fixture.close);
-    fixture.transport.pullPage = fixture.controlPage();
-    fixture.transport.ackFailures = 1;
+  test(
+    'downstream apply and cursor commit atomically then ACK retries',
+    () async {
+      final fixture = SyncFixture();
+      addTearDown(fixture.close);
+      fixture.transport.pullPage = fixture.controlPage();
+      fixture.transport.ackFailures = 1;
 
-    final first = await fixture.coordinator().runOnce();
-    expect(first.applied, 1);
-    expect(first.errorCode, 'SYNC_ACK_PENDING');
-    expect(fixture.count('local_inbox'), 1);
-    expect(fixture.count('local_sync_control'), 1);
-    expect(
-      fixture.db.database
-          .select('SELECT remote_acked_cursor FROM local_sync_cursor')
-          .single['remote_acked_cursor'],
-      isNull,
-    );
+      final first = await fixture.coordinator().runOnce();
+      expect(first.applied, 1);
+      expect(first.errorCode, 'SYNC_ACK_PENDING');
+      expect(fixture.count('local_inbox'), 1);
+      expect(fixture.count('local_sync_control'), 1);
+      expect(
+        fixture.db.database
+            .select('SELECT remote_acked_cursor FROM local_sync_cursor')
+            .single['remote_acked_cursor'],
+        isNull,
+      );
 
-    fixture.transport.pullPage = fixture.emptyPage();
-    final second = await fixture.coordinator().runOnce();
-    expect(second.errorCode, isNull);
-    expect(fixture.count('local_inbox'), 1);
-    expect(fixture.transport.ackCalls, 2);
-    expect(
-      fixture.db.database
-          .select('SELECT remote_acked_cursor FROM local_sync_cursor')
-          .single['remote_acked_cursor'],
-      isNotNull,
-    );
-  });
+      fixture.transport.pullPage = fixture.emptyPage();
+      final second = await fixture.coordinator().runOnce();
+      expect(second.errorCode, isNull);
+      expect(fixture.count('local_inbox'), 1);
+      expect(fixture.transport.ackCalls, 2);
+      expect(
+        fixture.db.database
+            .select('SELECT remote_acked_cursor FROM local_sync_cursor')
+            .single['remote_acked_cursor'],
+        isNotNull,
+      );
+    },
+  );
 
   test('kill before cursor rolls back Inbox and business projection', () async {
     final fixture = SyncFixture();
@@ -185,23 +200,26 @@ void main() {
     );
   });
 
-  test('tampered downstream page is refused before cursor advancement', () async {
-    final fixture = SyncFixture();
-    addTearDown(fixture.close);
-    final valid = fixture.controlPage();
-    fixture.transport.pullPage = SyncPullPage(
-      stream: valid.stream,
-      changes: valid.changes,
-      nextCursor: valid.nextCursor,
-      pageDigest: List.filled(64, 'f').join(),
-      hasMore: false,
-    );
+  test(
+    'tampered downstream page is refused before cursor advancement',
+    () async {
+      final fixture = SyncFixture();
+      addTearDown(fixture.close);
+      final valid = fixture.controlPage();
+      fixture.transport.pullPage = SyncPullPage(
+        stream: valid.stream,
+        changes: valid.changes,
+        nextCursor: valid.nextCursor,
+        pageDigest: List.filled(64, 'f').join(),
+        hasMore: false,
+      );
 
-    final result = await fixture.coordinator().runOnce();
-    expect(result.errorCode, 'PULL_PAGE_DIGEST_MISMATCH');
-    expect(fixture.count('local_inbox'), 0);
-    expect(fixture.count('local_sync_dead_letter'), 1);
-  });
+      final result = await fixture.coordinator().runOnce();
+      expect(result.errorCode, 'PULL_PAGE_DIGEST_MISMATCH');
+      expect(fixture.count('local_inbox'), 0);
+      expect(fixture.count('local_sync_dead_letter'), 1);
+    },
+  );
 
   test('retry budget exhaustion creates an outbound dead letter', () async {
     final fixture = SyncFixture();
@@ -218,28 +236,31 @@ void main() {
     expect(fixture.status(eventId), 'FINAL_REJECTED');
   });
 
-  test('backlog threshold opens and later resolves an operational alert', () async {
-    final fixture = SyncFixture();
-    addTearDown(fixture.close);
-    fixture.enqueue();
-    fixture.transport.pushFailures = 1;
-    final first = await fixture.coordinator(backlogThreshold: 1).runOnce();
-    expect(first.backlog, 1);
-    expect(
-      fixture.db.database
-          .select('SELECT status FROM local_sync_alert')
-          .single['status'],
-      'OPEN',
-    );
-    fixture.advance(const Duration(minutes: 2));
-    await fixture.coordinator(backlogThreshold: 1).runOnce();
-    expect(
-      fixture.db.database
-          .select('SELECT status FROM local_sync_alert')
-          .single['status'],
-      'RESOLVED',
-    );
-  });
+  test(
+    'backlog threshold opens and later resolves an operational alert',
+    () async {
+      final fixture = SyncFixture();
+      addTearDown(fixture.close);
+      fixture.enqueue();
+      fixture.transport.pushFailures = 1;
+      final first = await fixture.coordinator(backlogThreshold: 1).runOnce();
+      expect(first.backlog, 1);
+      expect(
+        fixture.db.database
+            .select('SELECT status FROM local_sync_alert')
+            .single['status'],
+        'OPEN',
+      );
+      fixture.advance(const Duration(minutes: 2));
+      await fixture.coordinator(backlogThreshold: 1).runOnce();
+      expect(
+        fixture.db.database
+            .select('SELECT status FROM local_sync_alert')
+            .single['status'],
+        'RESOLVED',
+      );
+    },
+  );
 }
 
 final class SyncFixture {
@@ -342,9 +363,9 @@ final class SyncFixture {
           as int;
 
   String status(String eventId) =>
-      db.database
-              .select('SELECT status FROM local_outbox WHERE event_id=?', [eventId])
-              .single['status']!
+      db.database.select('SELECT status FROM local_outbox WHERE event_id=?', [
+            eventId,
+          ]).single['status']!
           as String;
 
   void advance(Duration duration) => now = now.add(duration);
@@ -413,7 +434,8 @@ final class FakeSyncTransport implements PosSyncTransport {
       return SyncEventAck(
         eventId: event.eventId,
         payloadHash: event.payloadHash,
-        status: duplicateAfterAcceptedUnknown &&
+        status:
+            duplicateAfterAcceptedUnknown &&
                 acceptedUnknown.contains(event.eventId)
             ? 'DUPLICATE'
             : 'ACCEPTED',
@@ -462,10 +484,7 @@ final class FakeSyncTransport implements PosSyncTransport {
       );
 
   @override
-  Future<void> acknowledge(
-    SyncAckCommand command,
-    String correlationId,
-  ) async {
+  Future<void> acknowledge(SyncAckCommand command, String correlationId) async {
     ackCalls++;
     if (ackFailures > 0) {
       ackFailures--;

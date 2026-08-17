@@ -7,7 +7,7 @@
   "rounding": "HALF_UP",
   "candidateOrder": ["priority_desc", "rule_version_id_asc"],
   "remainderOrder": ["remainder_desc", "line_no_asc", "sku_id_asc", "line_id_asc"],
-  "currentMilestone": "PRM1",
+  "currentMilestone": "PRM2",
   "scenarios": [
     {
       "id": "PRM1-NO-RULE-001",
@@ -147,6 +147,16 @@
       "lines": [{"lineId":"01K5A000000000000000000016","lineNo":1,"skuId":"101","categoryId":"11","brandId":"21","quantity":"1.000000","unitPriceMinor":1000}],
       "rules": [{"ruleVersionId":"01K5R000000000000000000016","ruleType":"AMOUNT_OFF","priority":100,"stackMode":"EXCLUSIVE","effectiveFrom":"2026-08-17T11:00:00+08:00","effectiveTo":"2026-08-18T00:00:00+08:00","scope":{"skuIds":["101"]},"benefit":{"amountMinor":100}}],
       "expected": {"grossAmountMinor":1000,"discountAmountMinor":0,"payableAmountMinor":1000,"lineDiscounts":{"01K5A000000000000000000016":0},"appliedRuleIds":[],"explanations":[{"sourceId":"01K5R000000000000000000016","code":"TIME_NOT_MATCHED"}]}
+    },
+    {
+      "id": "PRM1-BUSINESS-DAY-017",
+      "businessTime": "2026-08-17T10:00:00+08:00","storeId":"1101","channel":"POS",
+      "lines": [{"lineId":"01K5A000000000000000000017","lineNo":1,"skuId":"101","categoryId":"11","brandId":"21","quantity":"1.000000","unitPriceMinor":1000}],
+      "rules": [
+        {"ruleVersionId":"01K5R000000000000000000171","ruleType":"AMOUNT_OFF","priority":100,"stackMode":"STACKABLE","effectiveFrom":"2026-08-17T00:00:00+08:00","effectiveTo":"2026-08-18T00:00:00+08:00","scope":{"skuIds":["101"],"businessDays":[1]},"benefit":{"amountMinor":100}},
+        {"ruleVersionId":"01K5R000000000000000000172","ruleType":"AMOUNT_OFF","priority":90,"stackMode":"STACKABLE","effectiveFrom":"2026-08-17T00:00:00+08:00","effectiveTo":"2026-08-18T00:00:00+08:00","scope":{"skuIds":["101"],"businessDays":[2]},"benefit":{"amountMinor":200}}
+      ],
+      "expected": {"grossAmountMinor":1000,"discountAmountMinor":100,"payableAmountMinor":900,"lineDiscounts":{"01K5A000000000000000000017":100},"appliedRuleIds":["01K5R000000000000000000171"],"explanations":[{"sourceId":"01K5R000000000000000000171","code":"APPLIED"}]}
     }
   ],
   "evidence": {"sandbox": 0, "realDevice": 0, "pilot": 0}

@@ -395,7 +395,7 @@ void main() {
     addTearDown(reopened.close);
     expect(
       reopened.database.select('PRAGMA user_version').single.values.first,
-      2,
+      3,
     );
     expect(
       reopened.database.select('PRAGMA quick_check').single.values.first,

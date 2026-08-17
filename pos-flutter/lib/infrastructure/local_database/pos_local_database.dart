@@ -6,6 +6,7 @@ import 'package:sqlite3/sqlite3.dart';
 import '../../features/checkout/domain/checkout_models.dart';
 import 'gate2_schema.dart';
 import 's3_sync_schema.dart';
+import 's9_promotion_schema.dart';
 
 typedef FailureInjector = void Function(String checkpoint);
 
@@ -93,7 +94,11 @@ final class PosLocalDatabase {
       });
       version = S3SyncSchema.version;
     }
-    if (version != S3SyncSchema.version) {
+    if (version == S3SyncSchema.version) {
+      _migrateToPromotionV3();
+      version = S9PromotionSchema.version;
+    }
+    if (version != S9PromotionSchema.version) {
       throw StateError('LOCAL_SCHEMA_UNSUPPORTED: $version');
     }
     _verifySchemaChecksum();
@@ -108,6 +113,9 @@ final class PosLocalDatabase {
       S3SyncSchema.version: sha256
           .convert(utf8.encode(S3SyncSchema.v2))
           .toString(),
+      S9PromotionSchema.version: sha256
+          .convert(utf8.encode(S9PromotionSchema.v3))
+          .toString(),
     };
     for (final entry in expected.entries) {
       final rows = database.select(
@@ -119,6 +127,35 @@ final class PosLocalDatabase {
           'LOCAL_DB_INTEGRITY_FAILED: schema checksum mismatch at v${entry.key}',
         );
       }
+    }
+  }
+
+  void _migrateToPromotionV3() {
+    database.execute('PRAGMA foreign_keys=OFF');
+    try {
+      transaction(() {
+        database.execute(S9PromotionSchema.v3);
+        final checksum = sha256
+            .convert(utf8.encode(S9PromotionSchema.v3))
+            .toString();
+        database.execute(
+          'INSERT INTO local_schema_history(version,description,checksum_sha256,installed_at) VALUES(3,?,?,?)',
+          [
+            'gate5a-promotion-package-quote-snapshot',
+            checksum,
+            DateTime.now().toUtc().toIso8601String(),
+          ],
+        );
+        database.execute('PRAGMA user_version=${S9PromotionSchema.version}');
+      });
+    } finally {
+      database.execute('PRAGMA foreign_keys=ON');
+    }
+    final violations = database.select('PRAGMA foreign_key_check');
+    if (violations.isNotEmpty) {
+      throw StateError(
+        'LOCAL_DB_INTEGRITY_FAILED: foreign key violations after v3',
+      );
     }
   }
 

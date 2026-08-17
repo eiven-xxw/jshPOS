@@ -8,6 +8,23 @@ info:
 servers:
   - url: /api/v1
 paths:
+  /promotions/packages:
+    post:
+      operationId: publishPromotionPackage
+      summary: 构建、签名并原子存储门店绑定规则包
+      x-permission: promotion:rule:publish
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/PublishPackageRequest'}
+      responses:
+        '200':
+          description: 已发布规则包
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/PromotionPackage'}
+        '503': {$ref: '#/components/responses/CapabilityRejected'}
   /promotions/rules:
     post:
       operationId: createPromotionRule
@@ -29,6 +46,11 @@ paths:
       parameters:
         - {$ref: '#/components/parameters/RuleId'}
         - {$ref: '#/components/parameters/VersionId'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/StateCommand'}
       responses:
         '200': {$ref: '#/components/responses/RuleResponse'}
   /promotions/rules/{ruleId}/versions/{versionId}/approve:
@@ -59,7 +81,7 @@ paths:
         required: true
         content:
           application/json:
-            schema: {$ref: '#/components/schemas/PublishCommand'}
+            schema: {$ref: '#/components/schemas/StateCommand'}
       responses:
         '200': {$ref: '#/components/responses/RuleResponse'}
         '409': {$ref: '#/components/responses/Conflict'}
@@ -78,16 +100,36 @@ paths:
             schema: {$ref: '#/components/schemas/StateCommand'}
       responses:
         '200': {$ref: '#/components/responses/RuleResponse'}
+  /promotions/rules/{ruleId}/versions/{versionId}/reject:
+    post:
+      operationId: rejectPromotionRuleVersion
+      summary: 驳回尚未发布的规则版本
+      x-permission: promotion:rule:approve
+      parameters: [{$ref: '#/components/parameters/RuleId'}, {$ref: '#/components/parameters/VersionId'}]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: '#/components/schemas/StateCommand'}}}
+      responses: {'200': {$ref: '#/components/responses/RuleResponse'}}
+  /promotions/rules/{ruleId}/versions/{versionId}/retire:
+    post:
+      operationId: retirePromotionRuleVersion
+      summary: 退役已发布或暂停的规则版本
+      x-permission: promotion:rule:publish
+      parameters: [{$ref: '#/components/parameters/RuleId'}, {$ref: '#/components/parameters/VersionId'}]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: '#/components/schemas/StateCommand'}}}
+      responses: {'200': {$ref: '#/components/responses/RuleResponse'}}
   /promotions/packages/{packageVersion}:
     get:
       operationId: getPromotionPackage
       summary: 获取可信门店范围的不可变离线规则包
-      x-permission: promotion:quote:calculate
+      x-permission: promotion:package:read
       parameters:
         - name: packageVersion
           in: path
           required: true
-          schema: {type: string, minLength: 1, maxLength: 64}
+          schema: {type: integer, format: int64, minimum: 1}
         - name: storeId
           in: query
           required: true
@@ -99,6 +141,29 @@ paths:
             application/json:
               schema: {$ref: '#/components/schemas/PromotionPackage'}
         '404': {$ref: '#/components/responses/NotFound'}
+  /promotions/packages/{packageVersion}/content:
+    get:
+      operationId: downloadPromotionPackageContent
+      summary: 下载 canonical 规则包载荷，摘要、密钥版本和 Ed25519 签名位于响应头
+      x-permission: promotion:package:read
+      parameters:
+        - name: packageVersion
+          in: path
+          required: true
+          schema: {type: integer, format: int64, minimum: 1}
+        - name: storeId
+          in: query
+          required: true
+          schema: {type: string, pattern: '^[1-9][0-9]{0,18}$'}
+      responses:
+        '200':
+          description: canonical 二进制载荷
+          headers:
+            X-JSH-Payload-Sha256: {schema: {type: string, pattern: '^[a-f0-9]{64}$'}}
+            X-JSH-Signing-Key-Id: {schema: {type: string, minLength: 1, maxLength: 64}}
+            X-JSH-Signature: {schema: {type: string, format: byte}}
+          content:
+            application/octet-stream: {schema: {type: string, format: binary}}
   /promotions/quotes:
     post:
       operationId: calculatePromotionQuote
@@ -190,7 +255,7 @@ components:
       schema: {$ref: '#/components/schemas/Ulid'}
   schemas:
     Ulid: {type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'}
-    MinorAmount: {type: integer, format: int64, minimum: 0}
+    MinorAmount: {type: integer, format: int64, minimum: 0, maximum: 9007199254740991}
     CreateRuleRequest:
       type: object
       additionalProperties: false
@@ -206,16 +271,16 @@ components:
     RuleDefinition:
       type: object
       additionalProperties: false
-      required: [ruleType, priority, stackMode, effectiveFrom, effectiveTo, scope, benefit]
+      required: [ruleType, priority, stackMode, effectiveFrom, scope, benefit]
       properties:
         ruleType:
           type: string
           enum: [SPECIAL_PRICE, PERCENT_OFF, AMOUNT_OFF, NTH_ITEM_DISCOUNT, BUNDLE_PRICE, THRESHOLD_AMOUNT_OFF, THRESHOLD_QUANTITY_OFF]
         priority: {type: integer, minimum: -100000, maximum: 100000}
-        stackMode: {type: string, enum: [STACKABLE, EXCLUSIVE, BEST_OF_GROUP, STOP_AFTER_APPLY]}
+        stackMode: {type: string, enum: [STACKABLE, EXCLUSIVE, BEST_OF_GROUP]}
         exclusiveGroup: {type: string, maxLength: 64, nullable: true}
         effectiveFrom: {type: string, format: date-time}
-        effectiveTo: {type: string, format: date-time}
+        effectiveTo: {type: string, format: date-time, nullable: true}
         scope:
           type: object
           additionalProperties: false
@@ -225,6 +290,7 @@ components:
             skuIds: {type: array, maxItems: 256, items: {type: string, pattern: '^[1-9][0-9]{0,18}$'}}
             categoryIds: {type: array, maxItems: 256, items: {type: string, pattern: '^[1-9][0-9]{0,18}$'}}
             brandIds: {type: array, maxItems: 256, items: {type: string, pattern: '^[1-9][0-9]{0,18}$'}}
+            businessDays: {type: array, maxItems: 7, uniqueItems: true, items: {type: integer, minimum: 1, maximum: 7}}
         benefit:
           type: object
           additionalProperties: false
@@ -251,38 +317,41 @@ components:
       required: [commandId, expectedVersion, reason, correlationId]
       properties:
         commandId: {$ref: '#/components/schemas/Ulid'}
-        expectedVersion: {type: integer, format: int64, minimum: 1}
+        expectedVersion: {type: integer, format: int64, minimum: 0}
         reason: {type: string, minLength: 1, maxLength: 256}
         correlationId: {$ref: '#/components/schemas/Ulid'}
-    PublishCommand:
-      allOf:
-        - {$ref: '#/components/schemas/StateCommand'}
-        - type: object
-          required: [effectiveAt, packageVersion]
-          properties:
-            effectiveAt: {type: string, format: date-time}
-            packageVersion: {type: string, minLength: 1, maxLength: 64}
     QuoteRequest:
       type: object
       additionalProperties: false
-      required: [pricingRequestId, storeId, channel, businessTime, currency, packageVersion, lines, correlationId]
+      required: [pricingRequestId, storeId, terminalId, channel, businessTime, currency, packageVersion, lines, correlationId]
       properties:
         pricingRequestId: {$ref: '#/components/schemas/Ulid'}
         storeId: {type: string, pattern: '^[1-9][0-9]{0,18}$'}
+        terminalId: {type: string, minLength: 1, maxLength: 64}
         channel: {type: string, enum: [POS, MOBILE_POS, SELF_CHECKOUT]}
         businessTime: {type: string, format: date-time}
         currency: {type: string, enum: [CNY]}
-        packageVersion: {type: string, minLength: 1, maxLength: 64}
+        packageVersion: {type: integer, format: int64, minimum: 1}
         lines:
           type: array
           minItems: 1
           maxItems: 500
           items: {$ref: '#/components/schemas/QuoteLineInput'}
         correlationId: {$ref: '#/components/schemas/Ulid'}
+    PublishPackageRequest:
+      type: object
+      additionalProperties: false
+      required: [storeId, packageVersion, previousVersion, expiresAt, correlationId]
+      properties:
+        storeId: {type: string, pattern: '^[1-9][0-9]{0,18}$'}
+        packageVersion: {type: integer, format: int64, minimum: 1}
+        previousVersion: {type: integer, format: int64, minimum: 0}
+        expiresAt: {type: string, format: date-time}
+        correlationId: {$ref: '#/components/schemas/Ulid'}
     QuoteLineInput:
       type: object
       additionalProperties: false
-      required: [lineId, lineNo, skuId, categoryId, brandId, quantity, unitPriceMinor]
+      required: [lineId, lineNo, skuId, quantity, unitPriceMinor]
       properties:
         lineId: {$ref: '#/components/schemas/Ulid'}
         lineNo: {type: integer, minimum: 1, maximum: 500}
@@ -293,48 +362,42 @@ components:
         unitPriceMinor: {$ref: '#/components/schemas/MinorAmount'}
     QuoteResponse:
       type: object
-      required: [quoteId, engineVersion, packageVersion, requestHash, fingerprint, grossAmountMinor, discountAmountMinor, roundingMinor, payableAmountMinor, lines, adjustments, explanations]
+      required: [quoteId, requestSha256, resultSha256, engineVersion, packageVersion, result]
       properties:
         quoteId: {$ref: '#/components/schemas/Ulid'}
+        requestSha256: {type: string, pattern: '^[a-f0-9]{64}$'}
+        resultSha256: {type: string, pattern: '^[a-f0-9]{64}$'}
         engineVersion: {type: string}
-        packageVersion: {type: string}
-        requestHash: {type: string, pattern: '^[a-f0-9]{64}$'}
-        fingerprint: {type: string, pattern: '^[a-f0-9]{64}$'}
+        packageVersion: {type: integer, format: int64, minimum: 1}
+        result: {$ref: '#/components/schemas/QuoteResult'}
+    QuoteResult:
+      type: object
+      required: [grossAmountMinor, discountAmountMinor, payableAmountMinor, lines, appliedRuleIds, explanations, adjustments]
+      properties:
         grossAmountMinor: {$ref: '#/components/schemas/MinorAmount'}
         discountAmountMinor: {$ref: '#/components/schemas/MinorAmount'}
-        roundingMinor: {type: integer, format: int64}
         payableAmountMinor: {$ref: '#/components/schemas/MinorAmount'}
         lines: {type: array, items: {$ref: '#/components/schemas/QuoteLineResult'}}
+        appliedRuleIds: {type: array, items: {$ref: '#/components/schemas/Ulid'}}
         adjustments: {type: array, items: {$ref: '#/components/schemas/Adjustment'}}
         explanations: {type: array, items: {$ref: '#/components/schemas/Explanation'}}
     QuoteLineResult:
       type: object
-      required: [lineId, lineNo, skuId, quantity, grossAmountMinor, discountAmountMinor, payableAmountMinor]
+      required: [lineId, grossAmountMinor, discountAmountMinor, payableAmountMinor]
       properties:
         lineId: {$ref: '#/components/schemas/Ulid'}
-        lineNo: {type: integer}
-        skuId: {type: string}
-        quantity: {type: string}
         grossAmountMinor: {$ref: '#/components/schemas/MinorAmount'}
         discountAmountMinor: {$ref: '#/components/schemas/MinorAmount'}
         payableAmountMinor: {$ref: '#/components/schemas/MinorAmount'}
     Adjustment:
       type: object
-      required: [adjustmentId, sourceType, sourceId, stage, amountMinor, allocations]
+      required: [sourceId, amountMinor, lineAllocations]
       properties:
-        adjustmentId: {$ref: '#/components/schemas/Ulid'}
-        sourceType: {type: string, enum: [RULE, MANUAL_PRICE, ORDER_DISCOUNT, ROUNDING]}
         sourceId: {type: string}
-        stage: {type: string}
-        amountMinor: {type: integer, format: int64}
-        allocations:
-          type: array
-          items:
-            type: object
-            required: [lineId, amountMinor]
-            properties:
-              lineId: {$ref: '#/components/schemas/Ulid'}
-              amountMinor: {type: integer, format: int64, minimum: 0}
+        amountMinor: {$ref: '#/components/schemas/MinorAmount'}
+        lineAllocations:
+          type: object
+          additionalProperties: {$ref: '#/components/schemas/MinorAmount'}
     Explanation:
       type: object
       required: [sourceId, code]
@@ -417,20 +480,16 @@ components:
               recoveredDiscountMinor: {$ref: '#/components/schemas/MinorAmount'}
     PromotionPackage:
       type: object
-      required: [schemaVersion, engineMin, engineMax, packageVersion, promotionReleaseVersion, storeId, issuedAt, effectiveFrom, expiresAt, payloadSha256, signature, rules]
+      required: [packageId, storeId, packageVersion, previousVersion, payloadSha256, signingKeyId, generatedAt, expiresAt]
       properties:
-        schemaVersion: {type: string, enum: ['1.0']}
-        engineMin: {type: string}
-        engineMax: {type: string}
-        packageVersion: {type: string}
-        promotionReleaseVersion: {type: string}
-        storeId: {type: string}
-        issuedAt: {type: string, format: date-time}
-        effectiveFrom: {type: string, format: date-time}
+        packageId: {$ref: '#/components/schemas/Ulid'}
+        storeId: {type: integer, format: int64, minimum: 1}
+        packageVersion: {type: integer, format: int64, minimum: 1}
+        previousVersion: {type: integer, format: int64, minimum: 0}
         expiresAt: {type: string, format: date-time}
         payloadSha256: {type: string, pattern: '^[a-f0-9]{64}$'}
-        signature: {type: string, minLength: 16}
-        rules: {type: array, maxItems: 5000, items: {$ref: '#/components/schemas/RuleDefinition'}}
+        signingKeyId: {type: string, minLength: 1, maxLength: 64}
+        generatedAt: {type: string, format: date-time}
   responses:
     RuleResponse:
       description: 规则版本状态
@@ -438,13 +497,18 @@ components:
         application/json:
           schema:
             type: object
-            required: [ruleId, ruleVersionId, status, recordVersion, contentHash]
+            required: [ruleId, ruleVersionId, ruleCode, ruleName, versionNo, state, creatorUserId, version, contentSha256]
             properties:
               ruleId: {$ref: '#/components/schemas/Ulid'}
               ruleVersionId: {$ref: '#/components/schemas/Ulid'}
-              status: {type: string}
-              recordVersion: {type: integer, format: int64}
-              contentHash: {type: string, pattern: '^[a-f0-9]{64}$'}
+              ruleCode: {type: string}
+              ruleName: {type: string}
+              versionNo: {type: integer, minimum: 1}
+              state: {type: string, enum: [DRAFT, VALIDATED, APPROVED, PUBLISHED, PAUSED, RETIRED, REJECTED]}
+              creatorUserId: {type: integer, format: int64, minimum: 1}
+              approvedBy: {type: integer, format: int64, minimum: 1, nullable: true}
+              version: {type: integer, minimum: 0}
+              contentSha256: {type: string, pattern: '^[a-f0-9]{64}$'}
     Conflict:
       description: 状态、版本、幂等或金额冲突
     Forbidden:

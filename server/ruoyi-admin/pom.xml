@@ -121,6 +121,12 @@
             <artifactId>jshpos-transfer</artifactId>
         </dependency>
 
+        <!-- Gate 5A 确定性促销、人工优惠与成交优惠快照模块 -->
+        <dependency>
+            <groupId>com.jingshanghui.pos</groupId>
+            <artifactId>jshpos-promotion</artifactId>
+        </dependency>
+
         <!-- Gate 0 服务端数据库版本治理 -->
         <dependency>
             <groupId>org.flywaydb</groupId>

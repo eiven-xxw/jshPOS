@@ -11,7 +11,7 @@
     "ruleCode": {"type": "string", "pattern": "^[A-Z0-9][A-Z0-9_-]{0,63}$"},
     "ruleType": {"enum": ["SPECIAL_PRICE", "PERCENT_OFF", "AMOUNT_OFF", "NTH_ITEM_DISCOUNT", "BUNDLE_PRICE", "THRESHOLD_AMOUNT_OFF", "THRESHOLD_QUANTITY_OFF"]},
     "priority": {"type": "integer", "minimum": -100000, "maximum": 100000},
-    "stackMode": {"enum": ["STACKABLE", "EXCLUSIVE", "BEST_OF_GROUP", "STOP_AFTER_APPLY"]},
+    "stackMode": {"enum": ["STACKABLE", "EXCLUSIVE", "BEST_OF_GROUP"]},
     "exclusiveGroup": {"type": ["string", "null"], "maxLength": 64},
     "effectiveFrom": {"type": "string", "format": "date-time"},
     "effectiveTo": {"type": "string", "format": "date-time"},
@@ -23,7 +23,8 @@
         "channels": {"type": "array", "maxItems": 16, "items": {"enum": ["POS", "MOBILE_POS", "SELF_CHECKOUT"]}},
         "skuIds": {"type": "array", "maxItems": 256, "items": {"type": "string", "pattern": "^[1-9][0-9]{0,18}$"}},
         "categoryIds": {"type": "array", "maxItems": 256, "items": {"type": "string", "pattern": "^[1-9][0-9]{0,18}$"}},
-        "brandIds": {"type": "array", "maxItems": 256, "items": {"type": "string", "pattern": "^[1-9][0-9]{0,18}$"}}
+        "brandIds": {"type": "array", "maxItems": 256, "items": {"type": "string", "pattern": "^[1-9][0-9]{0,18}$"}},
+        "businessDays": {"type": "array", "maxItems": 7, "uniqueItems": true, "items": {"type": "integer", "minimum": 1, "maximum": 7}}
       }
     },
     "benefit": {

@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jingshanghui.pos.promotion.infrastructure.persistence.mapper.PromotionPersistenceMapper">
+    <insert id="insertVersion">
+        INSERT INTO prm_rule_version(rule_version_id,tenant_id,rule_id,version_no,rule_type,priority,stack_mode,
+          exclusive_group,effective_from,effective_to,state,content_sha256,engine_version,created_by)
+        VALUES(#{ruleVersionId},#{tenantId},#{ruleId},#{versionNo},#{ruleType},#{priority},#{stackMode},
+          #{exclusiveGroup},#{effectiveFrom},#{effectiveTo},#{state},#{contentSha256},#{engineVersion},#{createdBy})
+    </insert>
+    <insert id="insertScope">
+        INSERT INTO prm_rule_scope(scope_id,tenant_id,rule_version_id,dimension_type,dimension_value)
+        VALUES(#{scopeId},#{tenantId},#{ruleVersionId},#{dimensionType},#{dimensionValue})
+    </insert>
+    <insert id="insertBenefit">
+        INSERT INTO prm_rule_benefit(benefit_id,tenant_id,rule_version_id,amount_minor,discount_rate,nth_value,
+          threshold_minor,threshold_quantity,bundle_price_minor,bundle_components_json)
+        VALUES(#{benefitId},#{tenantId},#{ruleVersionId},#{amountMinor},#{discountRate},#{nthValue},
+          #{thresholdMinor},#{thresholdQuantity},#{bundlePriceMinor},CAST(#{bundleComponentsJson} AS JSON))
+    </insert>
+    <select id="findVersion" resultType="com.jingshanghui.pos.promotion.application.model.PromotionViews$RuleVersionView">
+        SELECT v.rule_id ruleId,v.rule_version_id ruleVersionId,r.rule_code ruleCode,r.rule_name ruleName,
+               v.version_no versionNo,v.state,v.created_by creatorUserId,v.approved_by approvedBy,
+               v.version,v.content_sha256 contentSha256
+        FROM prm_rule_version v JOIN prm_rule r ON r.tenant_id=v.tenant_id AND r.rule_id=v.rule_id
+        WHERE v.tenant_id=#{tenantId} AND v.rule_id=#{ruleId} AND v.rule_version_id=#{ruleVersionId}
+    </select>
+    <update id="changeState">
+        UPDATE prm_rule_version
+        SET state=#{toState},version=version+1,updated_at=UTC_TIMESTAMP(3),
+            approved_by=CASE WHEN #{toState}='APPROVED' THEN #{actorUserId} ELSE approved_by END,
+            approved_at=CASE WHEN #{toState}='APPROVED' THEN #{at} ELSE approved_at END,
+            published_at=CASE WHEN #{toState}='PUBLISHED' THEN #{at} ELSE published_at END,
+            paused_at=CASE WHEN #{toState}='PAUSED' THEN #{at} ELSE paused_at END
+        WHERE tenant_id=#{tenantId} AND rule_id=#{ruleId} AND rule_version_id=#{ruleVersionId}
+          AND state=#{fromState} AND version=#{expectedVersion}
+    </update>
+    <select id="listPublishedRules" resultType="com.jingshanghui.pos.promotion.application.port.PromotionPersistencePort$PublishedRuleRow">
+        SELECT v.rule_version_id ruleVersionId,v.rule_type ruleType,v.priority,v.stack_mode stackMode,
+               v.exclusive_group exclusiveGroup,v.effective_from effectiveFrom,v.effective_to effectiveTo,
+               (SELECT GROUP_CONCAT(CONCAT(s.dimension_type,':',s.dimension_value)
+                        ORDER BY s.dimension_type,s.dimension_value SEPARATOR '|')
+                  FROM prm_rule_scope s WHERE s.tenant_id=v.tenant_id AND s.rule_version_id=v.rule_version_id) scopeTokens,
+               b.amount_minor amountMinor,b.discount_rate discountRate,b.nth_value nthValue,
+               b.threshold_minor thresholdMinor,b.threshold_quantity thresholdQuantity,
+               b.bundle_price_minor bundlePriceMinor,CAST(b.bundle_components_json AS CHAR) bundleComponentsJson
+        FROM prm_rule_version v
+        JOIN prm_rule_benefit b ON b.tenant_id=v.tenant_id AND b.rule_version_id=v.rule_version_id
+        WHERE v.tenant_id=#{tenantId} AND v.state='PUBLISHED' AND v.effective_from&lt;=#{at}
+          AND (v.effective_to IS NULL OR v.effective_to&gt;#{at})
+        ORDER BY v.priority DESC,v.rule_version_id ASC
+    </select>
+    <select id="findRuleDefinition" resultType="com.jingshanghui.pos.promotion.application.port.PromotionPersistencePort$PublishedRuleRow">
+        SELECT v.rule_version_id ruleVersionId,v.rule_type ruleType,v.priority,v.stack_mode stackMode,
+               v.exclusive_group exclusiveGroup,v.effective_from effectiveFrom,v.effective_to effectiveTo,
+               (SELECT GROUP_CONCAT(CONCAT(s.dimension_type,':',s.dimension_value)
+                        ORDER BY s.dimension_type,s.dimension_value SEPARATOR '|')
+                  FROM prm_rule_scope s WHERE s.tenant_id=v.tenant_id AND s.rule_version_id=v.rule_version_id) scopeTokens,
+               b.amount_minor amountMinor,b.discount_rate discountRate,b.nth_value nthValue,
+               b.threshold_minor thresholdMinor,b.threshold_quantity thresholdQuantity,
+               b.bundle_price_minor bundlePriceMinor,CAST(b.bundle_components_json AS CHAR) bundleComponentsJson
+        FROM prm_rule_version v
+        JOIN prm_rule_benefit b ON b.tenant_id=v.tenant_id AND b.rule_version_id=v.rule_version_id
+        WHERE v.tenant_id=#{tenantId} AND v.rule_version_id=#{ruleVersionId}
+    </select>
+    <insert id="insertQuote">
+        INSERT INTO prm_quote(quote_id,tenant_id,store_id,terminal_id,idempotency_key,request_sha256,engine_version,
+          package_version,business_time,gross_amount_minor,discount_amount_minor,payable_amount_minor,currency,result_sha256)
+        VALUES(#{quoteId},#{tenantId},#{storeId},#{terminalId},#{idempotencyKey},#{requestSha256},#{engineVersion},
+          #{packageVersion},#{businessTime},#{grossAmountMinor},#{discountAmountMinor},#{payableAmountMinor},#{currency},#{resultSha256})
+    </insert>
+    <insert id="insertQuoteLine">
+        INSERT INTO prm_quote_line(quote_line_id,tenant_id,quote_id,source_line_id,line_no,sku_id,quantity,
+          unit_price_minor,gross_amount_minor,discount_amount_minor,payable_amount_minor)
+        VALUES(#{quoteLineId},#{tenantId},#{quoteId},#{sourceLineId},#{lineNo},#{skuId},#{quantity},
+          #{unitPriceMinor},#{grossAmountMinor},#{discountAmountMinor},#{payableAmountMinor})
+    </insert>
+    <insert id="insertAdjustment">
+        INSERT INTO prm_adjustment(adjustment_id,tenant_id,quote_id,source_line_id,source_type,source_id,
+          calculation_stage,amount_minor,explanation_code,applied_flag,ordinal_no)
+        VALUES(#{adjustmentId},#{tenantId},#{quoteId},#{sourceLineId},#{sourceType},#{sourceId},
+          #{calculationStage},#{amountMinor},#{explanationCode},#{appliedFlag},#{ordinalNo})
+    </insert>
+    <select id="findCommand" resultType="com.jingshanghui.pos.promotion.application.port.PromotionPersistencePort$StoredCommand">
+        SELECT request_sha256 requestSha256,aggregate_id aggregateId,result_sha256 resultSha256,
+               CAST(result_json AS CHAR) resultJson
+        FROM prm_command_result
+        WHERE tenant_id=#{tenantId} AND command_type=#{commandType} AND idempotency_key=#{idempotencyKey}
+    </select>
+    <insert id="insertCommand">
+        INSERT INTO prm_command_result(command_result_id,tenant_id,command_type,idempotency_key,request_sha256,
+          aggregate_type,aggregate_id,result_sha256,result_json)
+        VALUES(#{commandResultId},#{tenantId},#{commandType},#{idempotencyKey},#{requestSha256},
+          #{aggregateType},#{aggregateId},#{resultSha256},CAST(#{resultJson} AS JSON))
+    </insert>
+    <select id="findQuoteByKey" resultType="com.jingshanghui.pos.promotion.application.port.PromotionPersistencePort$StoredQuote">
+        SELECT quote_id quoteId,request_sha256 requestSha256,result_sha256 resultSha256,engine_version engineVersion,
+               package_version packageVersion,gross_amount_minor grossAmountMinor,
+               discount_amount_minor discountAmountMinor,payable_amount_minor payableAmountMinor
+        FROM prm_quote WHERE tenant_id=#{tenantId} AND store_id=#{storeId}
+          AND terminal_id=#{terminalId} AND idempotency_key=#{key}
+    </select>
+    <select id="listQuoteLines" resultType="com.jingshanghui.pos.promotion.application.port.PromotionPersistencePort$StoredQuoteLine">
+        SELECT source_line_id sourceLineId,gross_amount_minor grossAmountMinor,
+               discount_amount_minor discountAmountMinor,payable_amount_minor payableAmountMinor
+        FROM prm_quote_line WHERE tenant_id=#{tenantId} AND quote_id=#{quoteId} ORDER BY line_no
+    </select>
+    <insert id="insertAudit">
+        INSERT INTO prm_audit_event(audit_event_id,tenant_id,action_code,target_type,target_id,actor_user_id,
+          correlation_id,before_sha256,after_sha256,summary_json,occurred_at)
+        VALUES(#{auditEventId},#{tenantId},#{actionCode},#{targetType},#{targetId},#{actorUserId},
+          #{correlationId},#{beforeSha256},#{afterSha256},CAST(#{summaryJson} AS JSON),#{occurredAt})
+    </insert>
+    <insert id="insertOutbox">
+        INSERT INTO prm_event_outbox(outbox_id,tenant_id,event_type,aggregate_type,aggregate_id,aggregate_version,
+          payload_json,payload_sha256,delivery_state,available_at)
+        VALUES(#{outboxId},#{tenantId},#{eventType},#{aggregateType},#{aggregateId},#{aggregateVersion},
+          CAST(#{payloadJson} AS JSON),#{payloadSha256},'NEW',#{availableAt})
+    </insert>
+    <select id="listPackageRuleDefinitions" resultType="com.jingshanghui.pos.promotion.application.port.PromotionPersistencePort$PublishedRuleRow">
+        SELECT v.rule_version_id ruleVersionId,v.rule_type ruleType,v.priority,v.stack_mode stackMode,
+          v.exclusive_group exclusiveGroup,v.effective_from effectiveFrom,v.effective_to effectiveTo,
+          (SELECT GROUP_CONCAT(CONCAT(s.dimension_type,':',s.dimension_value)
+             ORDER BY s.dimension_type,s.dimension_value SEPARATOR '|')
+             FROM prm_rule_scope s WHERE s.tenant_id=v.tenant_id AND s.rule_version_id=v.rule_version_id) scopeTokens,
+          b.amount_minor amountMinor,b.discount_rate discountRate,b.nth_value nthValue,
+          b.threshold_minor thresholdMinor,b.threshold_quantity thresholdQuantity,
+          b.bundle_price_minor bundlePriceMinor,CAST(b.bundle_components_json AS CHAR) bundleComponentsJson
+        FROM prm_rule_version v
+        JOIN prm_rule_benefit b ON b.tenant_id=v.tenant_id AND b.rule_version_id=v.rule_version_id
+        WHERE v.tenant_id=#{tenantId} AND v.state='PUBLISHED' AND v.effective_from&lt;#{windowEnd}
+          AND (v.effective_to IS NULL OR v.effective_to&gt;#{windowStart})
+          AND (NOT EXISTS (SELECT 1 FROM prm_rule_scope s WHERE s.tenant_id=v.tenant_id
+               AND s.rule_version_id=v.rule_version_id AND s.dimension_type='STORE')
+               OR EXISTS (SELECT 1 FROM prm_rule_scope s WHERE s.tenant_id=v.tenant_id
+               AND s.rule_version_id=v.rule_version_id AND s.dimension_type='STORE'
+               AND s.dimension_value=CAST(#{storeId} AS CHAR)))
+        ORDER BY v.priority DESC,v.rule_version_id ASC
+    </select>
+    <select id="findLatestPackage" resultType="com.jingshanghui.pos.promotion.application.model.PromotionViews$PackageView">
+        SELECT package_id packageId,store_id storeId,package_version packageVersion,previous_version previousVersion,
+          payload_sha256 payloadSha256,signing_key_id signingKeyId,object_key objectKey,
+          generated_at generatedAt,expires_at expiresAt
+        FROM prm_rule_package WHERE tenant_id=#{tenantId} AND store_id=#{storeId}
+        ORDER BY package_version DESC LIMIT 1
+    </select>
+    <select id="findPackage" resultType="com.jingshanghui.pos.promotion.application.model.PromotionViews$PackageView">
+        SELECT package_id packageId,store_id storeId,package_version packageVersion,previous_version previousVersion,
+          payload_sha256 payloadSha256,signing_key_id signingKeyId,object_key objectKey,
+          generated_at generatedAt,expires_at expiresAt
+        FROM prm_rule_package WHERE tenant_id=#{tenantId} AND store_id=#{storeId} AND package_version=#{packageVersion}
+    </select>
+    <insert id="insertPackage">
+        INSERT INTO prm_rule_package(package_id,tenant_id,store_id,package_version,previous_version,schema_version,
+          engine_version,payload_sha256,signature_algorithm,signing_key_id,object_key,record_count,generated_at,
+          expires_at,state)
+        VALUES(#{packageId},#{tenantId},#{storeId},#{packageVersion},#{previousVersion},#{schemaVersion},
+          #{engineVersion},#{payloadSha256},'Ed25519',#{signingKeyId},#{objectKey},#{recordCount},#{generatedAt},
+          #{expiresAt},'AVAILABLE')
+    </insert>
+    <insert id="insertPackageItem">
+        INSERT INTO prm_rule_package_item(package_item_id,tenant_id,package_id,store_id,package_version,
+          ordinal_no,rule_version_id,rule_content_sha256)
+        VALUES(#{packageItemId},#{tenantId},#{packageId},#{storeId},#{packageVersion},
+          #{ordinalNo},#{ruleVersionId},#{ruleContentSha256})
+    </insert>
+    <select id="listPackageRules" resultType="com.jingshanghui.pos.promotion.application.port.PromotionPersistencePort$PublishedRuleRow">
+        SELECT v.rule_version_id ruleVersionId,v.rule_type ruleType,v.priority,v.stack_mode stackMode,
+          v.exclusive_group exclusiveGroup,v.effective_from effectiveFrom,v.effective_to effectiveTo,
+          (SELECT GROUP_CONCAT(CONCAT(s.dimension_type,':',s.dimension_value)
+             ORDER BY s.dimension_type,s.dimension_value SEPARATOR '|')
+             FROM prm_rule_scope s WHERE s.tenant_id=v.tenant_id AND s.rule_version_id=v.rule_version_id) scopeTokens,
+          b.amount_minor amountMinor,b.discount_rate discountRate,b.nth_value nthValue,
+          b.threshold_minor thresholdMinor,b.threshold_quantity thresholdQuantity,
+          b.bundle_price_minor bundlePriceMinor,CAST(b.bundle_components_json AS CHAR) bundleComponentsJson
+        FROM prm_rule_package p
+        JOIN prm_rule_package_item i ON i.tenant_id=p.tenant_id AND i.package_id=p.package_id
+          AND i.store_id=p.store_id AND i.package_version=p.package_version
+        JOIN prm_rule_version v ON v.tenant_id=i.tenant_id AND v.rule_version_id=i.rule_version_id
+        JOIN prm_rule_benefit b ON b.tenant_id=v.tenant_id AND b.rule_version_id=v.rule_version_id
+        WHERE p.tenant_id=#{tenantId} AND p.store_id=#{storeId} AND p.package_version=#{packageVersion}
+          AND i.rule_content_sha256=v.content_sha256 AND p.state IN ('AVAILABLE','ACTIVE','RETIRED')
+        ORDER BY i.ordinal_no ASC
+    </select>
+</mapper>
