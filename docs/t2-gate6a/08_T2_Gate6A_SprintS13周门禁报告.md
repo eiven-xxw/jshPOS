@@ -7,8 +7,10 @@
 > Gate 6A 分支起点：`1bd27f70d39dd2056ffecf3b25f07aa9c7953606`
 > TRM 独立封存提交：`cc939ee2096564ea48f489cffeffbffaa840064f`
 > BAK 全绿实现候选：`ece4c375144a7ab4abf7ac35ab62b243bf612ed8`
+> Gate 6A 状态与报告封板提交：`68a0f758045d086e990ef1e994ba94c6c8f0e4b2`
 > TRM 独立 CI：[Run 32044586171](https://github.com/eiven-xxw/jshPOS/actions/runs/32044586171)
 > BAK 完整 CI：[Run 32048133777](https://github.com/eiven-xxw/jshPOS/actions/runs/32048133777)
+> 状态与报告封板 CI：[Run 32049647953](https://github.com/eiven-xxw/jshPOS/actions/runs/32049647953)
 > 当前结论：`CONDITIONAL PASS / VERIFIED / AWAITING CONFIRMATION`
 
 ## 1. 管理结论
@@ -18,6 +20,8 @@ Gate 6A 获准的两项需求已严格按 `T2-TRM-001 → T2-BAK-001` 完成顺�
 `T2-TRM-001` 建立了服务端分配的终端身份、一次性激活凭据、只存摘要的设备凭据、租户/组织/门店绑定、能力和版本快照、轮换/吊销、可信上下文与只追加审计。`T2-BAK-001` 建立了六类来源的规范备份清单、AES-256-GCM 加密、密钥与数据分离、不可变对象目录、空隔离目标恢复、九项恢复校验、百万合成事实重建及 RPO/RTO 自动计时。
 
 BAK 候选在 GitHub Ubuntu、Windows 与 MySQL 8.4 干净执行器完成 10 个 Job，全部 `success`，总耗时 11 分 35 秒，生成 10 个可见 Artifact。建议 Gate 6A 结论为 `CONDITIONAL PASS`，`T2-TRM-001`、`T2-BAK-001` 保持 `VERIFIED`；只有项目发起人明确确认后才能更新为 `ACCEPTED`。
+
+状态、RTM、报告和下一步指令封板提交 `68a0f758…` 又在 Run `32049647953` 完成 10/10 Job、10 个 Artifact 的全量复跑，耗时 7 分 20 秒；因此候选实现证据与封板治理状态均已受独立 CI 约束。
 
 最高证据等级为 `STATIC + UNIT + MYSQL8.4_SYNTHETIC + SYNTHETIC_RESTORE`。生产 KMS、真实对象存储、跨区域灾备、真实 PITR、主认证终端、支付沙箱和试点证据均为 0；因此本结论不代表完整 Alpha、实机验收、试点就绪或可商用。
 
