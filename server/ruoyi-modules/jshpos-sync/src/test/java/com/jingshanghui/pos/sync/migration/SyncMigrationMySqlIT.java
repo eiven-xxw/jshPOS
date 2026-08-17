@@ -38,6 +38,8 @@ class SyncMigrationMySqlIT {
         Set<String> appliedVersions = Arrays.stream(flyway.info().applied())
             .map(info -> info.getVersion().getVersion())
             .collect(Collectors.toSet());
+        // baselineOnMigrate 会登记非文件基线版本 0；必须存在且不得混入实际迁移集合。
+        assertThat(appliedVersions.remove("0")).isTrue();
         assertThat(appliedVersions).containsExactlyInAnyOrderElementsOf(EXPECTED_MIGRATION_VERSIONS);
         assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("202608170025");
         assertThat(flyway.migrate().migrationsExecuted).isZero();
