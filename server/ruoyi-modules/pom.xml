@@ -22,6 +22,7 @@
         <module>jshpos-promotion</module>
         <module>jshpos-returns</module>
         <module>jshpos-member</module>
+        <module>jshpos-reporting</module>
         <module>ruoyi-demo</module>
         <module>ruoyi-generator</module>
         <module>ruoyi-job</module>

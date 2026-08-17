@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1.0",
+  "phase": "T2-GATE5D",
+  "immutabilityPolicy": "PUBLISHED_FILES_MUST_NOT_CHANGE; repairs use a new forward migration",
+  "files": [
+    {
+      "path": "server/ruoyi-modules/jshpos-reporting/src/main/resources/db/migration/V202608170032__gate5d_reporting_core.sql",
+      "sha256": "5c94e723bb8131f8c5ce248841daa86c82c9fc573c515a9aeab3a7a91044d382",
+      "requirementId": "T2-RPT-001"
+    },
+    {
+      "path": "server/ruoyi-modules/jshpos-reporting/src/main/resources/db/migration/V202608170033__gate5d_reporting_permissions.sql",
+      "sha256": "d79b14cbf67952b8613e617d924eae7d42c9396931dfe8893a1145f3bad33c34",
+      "requirementId": "T2-RPT-001"
+    }
+  ]
+}

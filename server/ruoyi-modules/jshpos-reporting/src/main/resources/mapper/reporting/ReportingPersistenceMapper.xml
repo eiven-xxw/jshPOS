@@ -1,0 +1,345 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jingshanghui.pos.reporting.infrastructure.persistence.mapper.ReportingPersistenceMapper">
+  <sql id="salesColumns">business_date businessDate,org_id orgId,store_id storeId,terminal_id terminalId,
+    cashier_id cashierId,currency,order_count orderCount,cancelled_order_count cancelledOrderCount,
+    return_count returnCount,gross_minor grossMinor,discount_minor discountMinor,surcharge_minor surchargeMinor,
+    receivable_minor receivableMinor,refund_minor refundMinor,cash_received_minor cashReceivedMinor,
+    cash_refunded_minor cashRefundedMinor,shift_difference_minor shiftDifferenceMinor,
+    promotion_snapshot_count promotionSnapshotCount,projection_status projectionStatus</sql>
+  <sql id="inventoryColumns">business_date businessDate,org_id orgId,store_id storeId,
+    warehouse_id warehouseId,sku_id skuId,currency,on_hand_delta onHandDelta,available_delta availableDelta,
+    reserved_delta reservedDelta,ledger_quantity_delta ledgerQuantityDelta,
+    purchase_quantity_delta purchaseQuantityDelta,stocktake_quantity_delta stocktakeQuantityDelta,
+    transfer_quantity_delta transferQuantityDelta,inventory_value_delta_minor inventoryValueDeltaMinor,
+    cogs_delta_minor cogsDeltaMinor,purchase_cost_delta_minor purchaseCostDeltaMinor,
+    stocktake_cost_delta_minor stocktakeCostDeltaMinor,transfer_cost_delta_minor transferCostDeltaMinor,
+    projection_status projectionStatus</sql>
+  <sql id="exportColumns">export_id exportId,request_sha256 requestSha256,report_type reportType,
+    from_date fromDate,to_date toDate,store_ids_csv storeIdsCsv,fields_csv fieldsCsv,state,
+    approval_required approvalRequired,requested_by requestedBy,approved_by approvedBy,
+    estimated_rows estimatedRows,correlation_id correlationId,artifact_sha256 artifactSha256,
+    expires_at expiresAt,version,created_at createdAt</sql>
+  <sql id="artifactColumns">export_id exportId,object_key objectKey,artifact_sha256 artifactSha256,
+    size_bytes sizeBytes,content_type contentType,created_at createdAt,expires_at expiresAt,
+    download_token_sha256 tokenSha256,token_user_id tokenUserId,token_expires_at tokenExpiresAt,
+    downloaded_at downloadedAt</sql>
+  <sql id="differenceColumns">difference_id differenceId,difference_type differenceType,
+    source_event_id sourceEventId,state,detail_sha256 detailSha256,assigned_to assignedTo,
+    detected_at detectedAt,version</sql>
+
+  <select id="findInbox" resultType="com.jingshanghui.pos.reporting.application.port.ReportingPersistencePort$InboxRow">
+    SELECT source_event_id sourceEventId,content_sha256 contentSha256,status
+    FROM rpt_source_event_inbox WHERE tenant_id=#{tenantId} AND source_event_id=#{sourceEventId}
+  </select>
+  <insert id="insertInbox">
+    INSERT IGNORE INTO rpt_source_event_inbox(source_event_id,tenant_id,source_owner,source_aggregate_id,
+      source_sequence,partition_key,schema_version,projection_version,content_sha256,occurred_at,business_date,
+      org_id,store_id,terminal_id,cashier_id,warehouse_id,sku_id,currency,metric_family,order_count,
+      cancelled_order_count,return_count,gross_minor,discount_minor,surcharge_minor,receivable_minor,refund_minor,
+      cash_received_minor,cash_refunded_minor,shift_difference_minor,promotion_snapshot_count,on_hand_delta,
+      available_delta,reserved_delta,ledger_quantity_delta,purchase_quantity_delta,stocktake_quantity_delta,
+      transfer_quantity_delta,inventory_value_delta_minor,cogs_delta_minor,purchase_cost_delta_minor,
+      stocktake_cost_delta_minor,transfer_cost_delta_minor,correlation_id,status)
+    VALUES(#{event.sourceEventId},#{tenantId},#{event.sourceOwner},#{event.sourceAggregateId},
+      #{event.sourceSequence},#{event.partitionKey},#{event.schemaVersion},#{event.projectionVersion},
+      #{event.contentSha256},#{event.occurredAt},#{event.businessDate},#{event.orgId},#{event.storeId},
+      COALESCE(#{event.terminalId},''),COALESCE(#{event.cashierId},0),COALESCE(#{event.warehouseId},''),
+      COALESCE(#{event.skuId},0),#{event.currency},#{event.metricFamily},
+      <choose><when test="event.sales != null">#{event.sales.orderCount}</when><otherwise>0</otherwise></choose>,
+      <choose><when test="event.sales != null">#{event.sales.cancelledOrderCount}</when><otherwise>0</otherwise></choose>,
+      <choose><when test="event.sales != null">#{event.sales.returnCount}</when><otherwise>0</otherwise></choose>,
+      <choose><when test="event.sales != null">#{event.sales.grossMinor}</when><otherwise>0</otherwise></choose>,
+      <choose><when test="event.sales != null">#{event.sales.discountMinor}</when><otherwise>0</otherwise></choose>,
+      <choose><when test="event.sales != null">#{event.sales.surchargeMinor}</when><otherwise>0</otherwise></choose>,
+      <choose><when test="event.sales != null">#{event.sales.receivableMinor}</when><otherwise>0</otherwise></choose>,
+      <choose><when test="event.sales != null">#{event.sales.refundMinor}</when><otherwise>0</otherwise></choose>,
+      <choose><when test="event.sales != null">#{event.sales.cashReceivedMinor}</when><otherwise>0</otherwise></choose>,
+      <choose><when test="event.sales != null">#{event.sales.cashRefundedMinor}</when><otherwise>0</otherwise></choose>,
+      <choose><when test="event.sales != null">#{event.sales.shiftDifferenceMinor}</when><otherwise>0</otherwise></choose>,
+      <choose><when test="event.sales != null">#{event.sales.promotionSnapshotCount}</when><otherwise>0</otherwise></choose>,
+      <choose><when test="event.inventoryCost != null">#{event.inventoryCost.onHandDelta}</when><otherwise>0</otherwise></choose>,
+      <choose><when test="event.inventoryCost != null">#{event.inventoryCost.availableDelta}</when><otherwise>0</otherwise></choose>,
+      <choose><when test="event.inventoryCost != null">#{event.inventoryCost.reservedDelta}</when><otherwise>0</otherwise></choose>,
+      <choose><when test="event.inventoryCost != null">#{event.inventoryCost.ledgerQuantityDelta}</when><otherwise>0</otherwise></choose>,
+      <choose><when test="event.inventoryCost != null">#{event.inventoryCost.purchaseQuantityDelta}</when><otherwise>0</otherwise></choose>,
+      <choose><when test="event.inventoryCost != null">#{event.inventoryCost.stocktakeQuantityDelta}</when><otherwise>0</otherwise></choose>,
+      <choose><when test="event.inventoryCost != null">#{event.inventoryCost.transferQuantityDelta}</when><otherwise>0</otherwise></choose>,
+      <choose><when test="event.inventoryCost != null">#{event.inventoryCost.inventoryValueDeltaMinor}</when><otherwise>0</otherwise></choose>,
+      <choose><when test="event.inventoryCost != null">#{event.inventoryCost.cogsDeltaMinor}</when><otherwise>0</otherwise></choose>,
+      <choose><when test="event.inventoryCost != null">#{event.inventoryCost.purchaseCostDeltaMinor}</when><otherwise>0</otherwise></choose>,
+      <choose><when test="event.inventoryCost != null">#{event.inventoryCost.stocktakeCostDeltaMinor}</when><otherwise>0</otherwise></choose>,
+      <choose><when test="event.inventoryCost != null">#{event.inventoryCost.transferCostDeltaMinor}</when><otherwise>0</otherwise></choose>,
+      #{event.correlationId},'RECEIVED')
+  </insert>
+  <update id="markInboxApplied">
+    UPDATE rpt_source_event_inbox SET status='APPLIED',applied_at=#{at}
+    WHERE tenant_id=#{tenantId} AND source_event_id=#{sourceEventId} AND status='RECEIVED'
+  </update>
+  <select id="lockCheckpoint" resultType="com.jingshanghui.pos.reporting.application.port.ReportingPersistencePort$CheckpointRow">
+    SELECT source_owner sourceOwner,partition_key partitionKey,contiguous_sequence contiguousSequence,
+      maximum_seen_sequence maximumSeenSequence,projection_status status,version
+    FROM rpt_projection_checkpoint WHERE tenant_id=#{tenantId} AND source_owner=#{sourceOwner}
+      AND partition_key=#{partitionKey} FOR UPDATE
+  </select>
+  <insert id="insertCheckpoint">
+    INSERT INTO rpt_projection_checkpoint(tenant_id,source_owner,partition_key,contiguous_sequence,
+      maximum_seen_sequence,projection_status,version)
+    VALUES(#{tenantId},#{sourceOwner},#{partitionKey},#{contiguous},#{maximumSeen},#{status},0)
+  </insert>
+  <update id="updateCheckpoint">
+    UPDATE rpt_projection_checkpoint SET contiguous_sequence=#{contiguous},maximum_seen_sequence=#{maximumSeen},
+      projection_status=#{status},version=version+1,updated_at=UTC_TIMESTAMP(3)
+    WHERE tenant_id=#{tenantId} AND source_owner=#{sourceOwner} AND partition_key=#{partitionKey}
+      AND version=#{expectedVersion}
+  </update>
+  <select id="existsAppliedSequence" resultType="boolean">
+    SELECT EXISTS(SELECT 1 FROM rpt_source_event_inbox WHERE tenant_id=#{tenantId}
+      AND source_owner=#{sourceOwner} AND partition_key=#{partitionKey}
+      AND source_sequence=#{sourceSequence} AND status='APPLIED')
+  </select>
+  <insert id="ensureProjectionRegistry">
+    INSERT IGNORE INTO rpt_projection_registry(tenant_id,metric_family,active_projection_version,version)
+    VALUES(#{tenantId},#{family},#{projectionVersion},0)
+  </insert>
+  <select id="activeProjectionVersion" resultType="string">
+    SELECT active_projection_version FROM rpt_projection_registry
+    WHERE tenant_id=#{tenantId} AND metric_family=#{family}
+  </select>
+  <update id="activateProjectionVersion">
+    UPDATE rpt_projection_registry SET active_projection_version=#{projectionVersion},version=version+1,
+      updated_at=UTC_TIMESTAMP(3) WHERE tenant_id=#{tenantId} AND metric_family=#{family}
+  </update>
+
+  <insert id="upsertSalesProjection">
+    INSERT INTO rpt_sales_daily(tenant_id,projection_version,business_date,org_id,store_id,terminal_id,cashier_id,
+      currency,order_count,cancelled_order_count,return_count,gross_minor,discount_minor,surcharge_minor,
+      receivable_minor,refund_minor,cash_received_minor,cash_refunded_minor,shift_difference_minor,
+      promotion_snapshot_count,projection_status)
+    VALUES(#{tenantId},#{targetProjectionVersion},#{event.businessDate},#{event.orgId},#{event.storeId},
+      #{event.terminalId},#{event.cashierId},#{event.currency},#{event.sales.orderCount},
+      #{event.sales.cancelledOrderCount},#{event.sales.returnCount},#{event.sales.grossMinor},
+      #{event.sales.discountMinor},#{event.sales.surchargeMinor},#{event.sales.receivableMinor},
+      #{event.sales.refundMinor},#{event.sales.cashReceivedMinor},#{event.sales.cashRefundedMinor},
+      #{event.sales.shiftDifferenceMinor},#{event.sales.promotionSnapshotCount},#{status})
+    ON DUPLICATE KEY UPDATE order_count=order_count+VALUES(order_count),
+      cancelled_order_count=cancelled_order_count+VALUES(cancelled_order_count),
+      return_count=return_count+VALUES(return_count),gross_minor=gross_minor+VALUES(gross_minor),
+      discount_minor=discount_minor+VALUES(discount_minor),surcharge_minor=surcharge_minor+VALUES(surcharge_minor),
+      receivable_minor=receivable_minor+VALUES(receivable_minor),refund_minor=refund_minor+VALUES(refund_minor),
+      cash_received_minor=cash_received_minor+VALUES(cash_received_minor),
+      cash_refunded_minor=cash_refunded_minor+VALUES(cash_refunded_minor),
+      shift_difference_minor=shift_difference_minor+VALUES(shift_difference_minor),
+      promotion_snapshot_count=promotion_snapshot_count+VALUES(promotion_snapshot_count),
+      updated_at=UTC_TIMESTAMP(3)
+  </insert>
+  <insert id="upsertInventoryCostProjection">
+    INSERT INTO rpt_inventory_cost_daily(tenant_id,projection_version,business_date,org_id,store_id,warehouse_id,
+      sku_id,currency,on_hand_delta,available_delta,reserved_delta,ledger_quantity_delta,purchase_quantity_delta,
+      stocktake_quantity_delta,transfer_quantity_delta,inventory_value_delta_minor,cogs_delta_minor,
+      purchase_cost_delta_minor,stocktake_cost_delta_minor,transfer_cost_delta_minor,projection_status)
+    VALUES(#{tenantId},#{targetProjectionVersion},#{event.businessDate},#{event.orgId},#{event.storeId},
+      #{event.warehouseId},#{event.skuId},#{event.currency},#{event.inventoryCost.onHandDelta},
+      #{event.inventoryCost.availableDelta},#{event.inventoryCost.reservedDelta},
+      #{event.inventoryCost.ledgerQuantityDelta},#{event.inventoryCost.purchaseQuantityDelta},
+      #{event.inventoryCost.stocktakeQuantityDelta},#{event.inventoryCost.transferQuantityDelta},
+      #{event.inventoryCost.inventoryValueDeltaMinor},#{event.inventoryCost.cogsDeltaMinor},
+      #{event.inventoryCost.purchaseCostDeltaMinor},#{event.inventoryCost.stocktakeCostDeltaMinor},
+      #{event.inventoryCost.transferCostDeltaMinor},#{status})
+    ON DUPLICATE KEY UPDATE on_hand_delta=on_hand_delta+VALUES(on_hand_delta),
+      available_delta=available_delta+VALUES(available_delta),reserved_delta=reserved_delta+VALUES(reserved_delta),
+      ledger_quantity_delta=ledger_quantity_delta+VALUES(ledger_quantity_delta),
+      purchase_quantity_delta=purchase_quantity_delta+VALUES(purchase_quantity_delta),
+      stocktake_quantity_delta=stocktake_quantity_delta+VALUES(stocktake_quantity_delta),
+      transfer_quantity_delta=transfer_quantity_delta+VALUES(transfer_quantity_delta),
+      inventory_value_delta_minor=inventory_value_delta_minor+VALUES(inventory_value_delta_minor),
+      cogs_delta_minor=cogs_delta_minor+VALUES(cogs_delta_minor),
+      purchase_cost_delta_minor=purchase_cost_delta_minor+VALUES(purchase_cost_delta_minor),
+      stocktake_cost_delta_minor=stocktake_cost_delta_minor+VALUES(stocktake_cost_delta_minor),
+      transfer_cost_delta_minor=transfer_cost_delta_minor+VALUES(transfer_cost_delta_minor),
+      updated_at=UTC_TIMESTAMP(3)
+  </insert>
+  <insert id="upsertProjectionLineage">
+    INSERT INTO rpt_projection_lineage(tenant_id,source_event_id,source_content_sha256,source_schema_version,
+      source_owner,source_partition_key,source_sequence,projection_version,metric_family,dimension_sha256,
+      org_id,store_id,business_date,checkpoint_contiguous,checkpoint_maximum_seen,projection_status,processed_at)
+    VALUES(#{tenantId},#{event.sourceEventId},#{event.contentSha256},#{event.schemaVersion},#{event.sourceOwner},
+      #{event.partitionKey},#{event.sourceSequence},#{targetProjectionVersion},#{event.metricFamily},
+      #{dimensionSha256},#{event.orgId},#{event.storeId},#{event.businessDate},
+      #{checkpoint.contiguousSequence},#{checkpoint.maximumSeenSequence},#{checkpoint.status},#{processedAt})
+    ON DUPLICATE KEY UPDATE checkpoint_contiguous=VALUES(checkpoint_contiguous),
+      checkpoint_maximum_seen=VALUES(checkpoint_maximum_seen),projection_status=VALUES(projection_status),
+      processed_at=VALUES(processed_at)
+  </insert>
+  <select id="hasIncompleteCheckpoint" resultType="boolean">
+    SELECT EXISTS(SELECT 1 FROM rpt_projection_checkpoint WHERE tenant_id=#{tenantId}
+      AND projection_status='INCOMPLETE' AND
+      ((#{family}='SALES' AND source_owner IN ('ORDER','SHIFT','PROMOTION')) OR
+       (#{family}='INVENTORY_COST' AND source_owner IN ('INVENTORY','COSTING'))))
+  </select>
+  <update id="updateSalesProjectionStatus">
+    UPDATE rpt_sales_daily SET projection_status=#{status},updated_at=UTC_TIMESTAMP(3)
+    WHERE tenant_id=#{tenantId} AND projection_version=#{targetProjectionVersion}
+  </update>
+  <update id="updateInventoryProjectionStatus">
+    UPDATE rpt_inventory_cost_daily SET projection_status=#{status},updated_at=UTC_TIMESTAMP(3)
+    WHERE tenant_id=#{tenantId} AND projection_version=#{targetProjectionVersion}
+  </update>
+  <update id="updateLineageProjectionStatus">
+    UPDATE rpt_projection_lineage SET projection_status=#{status},processed_at=UTC_TIMESTAMP(3)
+    WHERE tenant_id=#{tenantId} AND projection_version=#{projectionVersion} AND metric_family=#{family}
+  </update>
+
+  <select id="querySales" resultType="com.jingshanghui.pos.reporting.application.model.ReportingViews$SalesDailyView">
+    SELECT <include refid="salesColumns"/> FROM rpt_sales_daily
+    WHERE tenant_id=#{tenantId} AND projection_version=#{projectionVersion}
+      AND business_date BETWEEN #{fromDate} AND #{toDate} AND store_id=#{storeId}
+      <if test="terminalId != null and terminalId != ''">AND terminal_id=#{terminalId}</if>
+      <if test="cashierId != null">AND cashier_id=#{cashierId}</if>
+    ORDER BY business_date,store_id,terminal_id,cashier_id,currency
+  </select>
+  <select id="queryInventoryCost" resultType="com.jingshanghui.pos.reporting.application.model.ReportingViews$InventoryCostDailyView">
+    SELECT <include refid="inventoryColumns"/> FROM rpt_inventory_cost_daily
+    WHERE tenant_id=#{tenantId} AND projection_version=#{projectionVersion}
+      AND business_date BETWEEN #{fromDate} AND #{toDate} AND store_id=#{storeId}
+      <if test="warehouseId != null and warehouseId != ''">AND warehouse_id=#{warehouseId}</if>
+      <if test="skuId != null">AND sku_id=#{skuId}</if>
+    ORDER BY business_date,store_id,warehouse_id,sku_id,currency
+  </select>
+  <select id="countSales" resultType="long">
+    SELECT COUNT(*) FROM rpt_sales_daily WHERE tenant_id=#{tenantId} AND projection_version=#{projectionVersion}
+      AND business_date BETWEEN #{fromDate} AND #{toDate}
+      AND store_id IN <foreach collection="storeIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+  </select>
+  <select id="countInventoryCost" resultType="long">
+    SELECT COUNT(*) FROM rpt_inventory_cost_daily WHERE tenant_id=#{tenantId} AND projection_version=#{projectionVersion}
+      AND business_date BETWEEN #{fromDate} AND #{toDate}
+      AND store_id IN <foreach collection="storeIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+  </select>
+
+  <select id="listAppliedEvents" resultType="com.jingshanghui.pos.reporting.infrastructure.persistence.ReportingPersistenceParams$StoredEventRow">
+    SELECT source_event_id sourceEventId,source_owner sourceOwner,source_aggregate_id sourceAggregateId,
+      source_sequence sourceSequence,partition_key partitionKey,schema_version schemaVersion,
+      projection_version projectionVersion,content_sha256 contentSha256,occurred_at occurredAt,
+      business_date businessDate,org_id orgId,store_id storeId,terminal_id terminalId,cashier_id cashierId,
+      warehouse_id warehouseId,sku_id skuId,currency,metric_family metricFamily,order_count orderCount,
+      cancelled_order_count cancelledOrderCount,return_count returnCount,gross_minor grossMinor,
+      discount_minor discountMinor,surcharge_minor surchargeMinor,receivable_minor receivableMinor,
+      refund_minor refundMinor,cash_received_minor cashReceivedMinor,cash_refunded_minor cashRefundedMinor,
+      shift_difference_minor shiftDifferenceMinor,promotion_snapshot_count promotionSnapshotCount,
+      on_hand_delta onHandDelta,available_delta availableDelta,reserved_delta reservedDelta,
+      ledger_quantity_delta ledgerQuantityDelta,purchase_quantity_delta purchaseQuantityDelta,
+      stocktake_quantity_delta stocktakeQuantityDelta,transfer_quantity_delta transferQuantityDelta,
+      inventory_value_delta_minor inventoryValueDeltaMinor,cogs_delta_minor cogsDeltaMinor,
+      purchase_cost_delta_minor purchaseCostDeltaMinor,stocktake_cost_delta_minor stocktakeCostDeltaMinor,
+      transfer_cost_delta_minor transferCostDeltaMinor,correlation_id correlationId
+    FROM rpt_source_event_inbox WHERE tenant_id=#{tenantId} AND status='APPLIED'
+      AND business_date BETWEEN #{fromDate} AND #{toDate}
+    ORDER BY business_date,source_owner,partition_key,source_sequence,source_event_id
+  </select>
+  <delete id="clearSalesProjection">
+    DELETE FROM rpt_sales_daily WHERE tenant_id=#{tenantId} AND projection_version=#{projectionVersion}
+      AND business_date BETWEEN #{fromDate} AND #{toDate}
+  </delete>
+  <delete id="clearInventoryProjection">
+    DELETE FROM rpt_inventory_cost_daily WHERE tenant_id=#{tenantId} AND projection_version=#{projectionVersion}
+      AND business_date BETWEEN #{fromDate} AND #{toDate}
+  </delete>
+  <delete id="clearProjectionLineage">
+    DELETE FROM rpt_projection_lineage WHERE tenant_id=#{tenantId} AND projection_version=#{projectionVersion}
+      AND business_date BETWEEN #{fromDate} AND #{toDate}
+  </delete>
+  <select id="listSalesForDigest" resultType="com.jingshanghui.pos.reporting.application.model.ReportingViews$SalesDailyView">
+    SELECT <include refid="salesColumns"/> FROM rpt_sales_daily WHERE tenant_id=#{tenantId}
+      AND projection_version=#{projectionVersion} AND business_date BETWEEN #{fromDate} AND #{toDate}
+    ORDER BY business_date,org_id,store_id,terminal_id,cashier_id,currency
+  </select>
+  <select id="listInventoryForDigest" resultType="com.jingshanghui.pos.reporting.application.model.ReportingViews$InventoryCostDailyView">
+    SELECT <include refid="inventoryColumns"/> FROM rpt_inventory_cost_daily WHERE tenant_id=#{tenantId}
+      AND projection_version=#{projectionVersion} AND business_date BETWEEN #{fromDate} AND #{toDate}
+    ORDER BY business_date,org_id,store_id,warehouse_id,sku_id,currency
+  </select>
+
+  <insert id="insertRebuild">
+    INSERT IGNORE INTO rpt_projection_rebuild(rebuild_id,tenant_id,projection_version,from_date,to_date,state,
+      requested_by,correlation_id,event_count,projection_digest,created_at)
+    VALUES(#{row.rebuildId},#{tenantId},#{row.projectionVersion},#{row.fromDate},#{row.toDate},#{row.state},
+      #{row.requestedBy},#{row.correlationId},#{row.eventCount},#{row.projectionDigest},#{row.createdAt})
+  </insert>
+  <select id="findRebuild" resultType="com.jingshanghui.pos.reporting.application.port.ReportingPersistencePort$RebuildRow">
+    SELECT rebuild_id rebuildId,projection_version projectionVersion,from_date fromDate,to_date toDate,state,
+      requested_by requestedBy,correlation_id correlationId,event_count eventCount,
+      projection_digest projectionDigest,created_at createdAt
+    FROM rpt_projection_rebuild WHERE tenant_id=#{tenantId} AND rebuild_id=#{objectId}
+  </select>
+  <update id="completeRebuild">
+    UPDATE rpt_projection_rebuild SET state=#{state},event_count=#{eventCount},projection_digest=#{digest},
+      completed_at=#{completedAt} WHERE tenant_id=#{tenantId} AND rebuild_id=#{rebuildId} AND state='RUNNING'
+  </update>
+
+  <insert id="insertExport">
+    INSERT IGNORE INTO rpt_export_request(export_id,tenant_id,request_sha256,report_type,from_date,to_date,
+      store_ids_csv,fields_csv,state,approval_required,requested_by,approved_by,estimated_rows,correlation_id,
+      artifact_sha256,expires_at,version,created_at)
+    VALUES(#{row.exportId},#{tenantId},#{row.requestSha256},#{row.reportType},#{row.fromDate},#{row.toDate},
+      #{row.storeIdsCsv},#{row.fieldsCsv},#{row.state},#{row.approvalRequired},#{row.requestedBy},
+      #{row.approvedBy},#{row.estimatedRows},#{row.correlationId},#{row.artifactSha256},#{row.expiresAt},
+      #{row.version},#{row.createdAt})
+  </insert>
+  <select id="findExport" resultType="com.jingshanghui.pos.reporting.application.port.ReportingPersistencePort$ExportRow">
+    SELECT <include refid="exportColumns"/> FROM rpt_export_request
+    WHERE tenant_id=#{tenantId} AND export_id=#{objectId}
+  </select>
+  <update id="transitionExport">
+    UPDATE rpt_export_request SET state=#{toState},approved_by=COALESCE(#{approvedBy},approved_by),
+      approval_reason_sha256=COALESCE(#{reasonSha256},approval_reason_sha256),version=version+1,
+      updated_at=#{changedAt} WHERE tenant_id=#{tenantId} AND export_id=#{exportId}
+      AND state=#{fromState} AND version=#{expectedVersion}
+  </update>
+  <insert id="insertArtifact">
+    INSERT INTO rpt_export_artifact(export_id,tenant_id,object_key,artifact_sha256,size_bytes,content_type,
+      created_at,expires_at,download_token_sha256,token_user_id,token_expires_at,downloaded_at)
+    VALUES(#{row.exportId},#{tenantId},#{row.objectKey},#{row.artifactSha256},#{row.sizeBytes},#{row.contentType},
+      #{row.createdAt},#{row.expiresAt},#{row.tokenSha256},#{row.tokenUserId},#{row.tokenExpiresAt},#{row.downloadedAt})
+  </insert>
+  <update id="markExportReady">
+    UPDATE rpt_export_request SET state='READY',artifact_sha256=#{row.artifactSha256},expires_at=#{row.expiresAt},
+      version=version+1,updated_at=#{row.createdAt} WHERE tenant_id=#{tenantId} AND export_id=#{row.exportId}
+      AND state='GENERATING'
+  </update>
+  <select id="findArtifact" resultType="com.jingshanghui.pos.reporting.application.port.ReportingPersistencePort$ArtifactRow">
+    SELECT <include refid="artifactColumns"/> FROM rpt_export_artifact
+    WHERE tenant_id=#{tenantId} AND export_id=#{objectId}
+  </select>
+  <update id="issueDownloadToken">
+    UPDATE rpt_export_artifact SET download_token_sha256=#{tokenSha256},token_user_id=#{userId},
+      token_expires_at=#{tokenExpiresAt},downloaded_at=NULL WHERE tenant_id=#{tenantId} AND export_id=#{exportId}
+      AND expires_at>UTC_TIMESTAMP(3) AND EXISTS(SELECT 1 FROM rpt_export_request e
+        WHERE e.tenant_id=#{tenantId} AND e.export_id=#{exportId} AND e.state='READY' AND e.version=#{expectedVersion})
+  </update>
+  <update id="consumeDownloadToken">
+    UPDATE rpt_export_artifact SET downloaded_at=#{consumedAt}
+    WHERE tenant_id=#{tenantId} AND export_id=#{exportId} AND download_token_sha256=#{tokenSha256}
+      AND token_user_id=#{userId} AND token_expires_at>#{consumedAt} AND expires_at>#{consumedAt}
+      AND downloaded_at IS NULL
+  </update>
+
+  <select id="listDifferences" resultType="com.jingshanghui.pos.reporting.application.model.ReportingViews$DifferenceView">
+    SELECT <include refid="differenceColumns"/> FROM rpt_difference WHERE tenant_id=#{tenantId}
+    ORDER BY detected_at DESC,difference_id DESC LIMIT #{limit}
+  </select>
+  <select id="findDifference" resultType="com.jingshanghui.pos.reporting.application.model.ReportingViews$DifferenceView">
+    SELECT <include refid="differenceColumns"/> FROM rpt_difference
+    WHERE tenant_id=#{tenantId} AND difference_id=#{objectId}
+  </select>
+  <insert id="insertDifference">
+    INSERT INTO rpt_difference(difference_id,tenant_id,difference_type,source_event_id,state,detail_sha256,
+      assigned_to,detected_at,version) VALUES(#{row.differenceId},#{tenantId},#{row.differenceType},
+      #{row.sourceEventId},#{row.state},#{row.detailSha256},#{row.assignedTo},#{row.detectedAt},#{row.version})
+  </insert>
+  <update id="transitionDifference">
+    UPDATE rpt_difference SET state=#{toState},assigned_to=#{assignedTo},resolution_reason_sha256=#{reasonSha256},
+      changed_at=#{changedAt},version=version+1 WHERE tenant_id=#{tenantId} AND difference_id=#{differenceId}
+      AND state=#{fromState} AND version=#{expectedVersion}
+  </update>
+</mapper>

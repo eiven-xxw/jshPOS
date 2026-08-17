@@ -80,6 +80,14 @@ paths:
             schema: { $ref: "./schemas/report-export-command.v1.schema.json" }
       responses:
         "200": { description: 导出请求，可能等待独立审批 }
+  /api/v1/report-exports/{exportId}:
+    get:
+      operationId: getReportExport
+      x-requirement: T2-RPT-001
+      x-permission: report:export:request
+      parameters: [{ $ref: "#/components/parameters/ExportId" }]
+      responses:
+        "200": { description: 重新校验租户与门店范围后返回导出状态 }
   /api/v1/report-exports/{exportId}/approve:
     post:
       operationId: approveReportExport

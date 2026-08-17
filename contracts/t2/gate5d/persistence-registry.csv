@@ -1,0 +1,7 @@
+requirement_id,owner,store,object,policy,reason,status
+T2-RPT-001,Reporting,MySQL,rpt_source_event_inbox/rpt_projection_checkpoint/rpt_projection_registry,XML_ONLY,幂等来源事件和单调检查点不暴露通用CRUD,VERIFIED
+T2-RPT-001,Reporting,MySQL,rpt_projection_lineage/rpt_sales_daily/rpt_inventory_cost_daily,READ_PROJECTION,逐事件血缘与可丢弃重建日投影,VERIFIED
+T2-RPT-001,Reporting,MySQL,rpt_difference/rpt_projection_rebuild,XML_ONLY,差异与重建状态不覆盖权威事实,VERIFIED
+T2-RPT-001,Reporting,MySQL,rpt_export_request/rpt_export_artifact,XML_ONLY,独立审批、租户对象键和单次令牌,VERIFIED
+T2-RPT-001,Reporting,FileSystemOrObjectStorage,reporting/{tenant}/{export}/{sha256}.csv,ARTIFACT_PORT,服务端生成租户命名空间且到期清理,VERIFIED
+T2-RPT-002,PaymentReporting,NONE,NONE,DESIGN_ONLY,本阶段尚未通过RPT-001独立验证,DRAFT

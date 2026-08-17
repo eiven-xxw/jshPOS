@@ -94,6 +94,21 @@ def main() -> None:
     if "businessDate:" in gate4d_openapi:
         raise SystemExit("CONTRACT ERROR: Gate 4D client contract exposes server-owned businessDate")
 
+    gate5d_openapi = (ROOT / "contracts" / "t2" / "gate5d" / "openapi-reporting-v1.yaml").read_text(encoding="utf-8")
+    for token in (
+        "version: 1.0.0-gate5d", "T2-RPT-001", "/api/v1/reports/sales-daily:",
+        "/api/v1/reports/inventory-cost-daily:", "/api/v1/report-exports:",
+        "/api/v1/reporting/rebuilds:", "report:export:approve", "report:repair:manage",
+    ):
+        if token not in gate5d_openapi:
+            raise SystemExit(f"CONTRACT ERROR: Gate 5D formal Reporting OpenAPI missing {token}")
+    if "tenantId:" in gate5d_openapi or "tenant_id:" in gate5d_openapi or "X-Tenant" in gate5d_openapi:
+        raise SystemExit("CONTRACT ERROR: Gate 5D client contract exposes a tenant override")
+    gate5d_events = (ROOT / "contracts" / "t2" / "gate5d" / "reporting-events-v1.yaml").read_text(encoding="utf-8")
+    for token in ("tenantAuthority: trusted_context_only", "providerNetworkCallsAllowed: 0", "T2-PAY-002: BLOCKED"):
+        if token not in gate5d_events:
+            raise SystemExit(f"CONTRACT ERROR: Gate 5D Reporting event boundary missing {token}")
+
     print(f"CONTRACTS OK: {len(json_contracts)} JSON schemas and T0/T2 OpenAPI contracts")
 
 

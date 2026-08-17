@@ -99,5 +99,6 @@
 | CR-T2G5C-007 | 2026-08-17 | VERIFIED_CLOSURE | GitHub Run 32025473259 在提交 96b826b 上完成十个 Job 单次全绿：383 项服务端、MySQL 8.4 V31、Flutter 双平台各 71 项、Android、34 面攻击、15 个固定场景、安全/SBOM/许可证及 151 文件证据索引 | T2-MEM-001、T2-MEM-002、T2-SEC-001、T2-CI-001 | 两项继续 VERIFIED 等待发起人确认；T2-RPT-001/002 DRAFT、T2-PAY-002 BLOCKED，外部证据均为 0 |
 | CR-T2G5D-001 | 2026-08-17 | APPROVED | 项目发起人接受 Gate 5C CONDITIONAL PASS，将 T2-MEM-001/002 更新为 ACCEPTED，并从 Gate 5C 封板提交 12c916c 按 RPT-001→RPT-002 顺序启动 Gate 5D / Sprint S12 | T2-MEM-001、T2-MEM-002、T2-RPT-001、T2-RPT-002、ADR-031 | RPT-002 在 RPT-001 独立 VERIFIED 前保持 DRAFT；T2-PAY-002 保持 BLOCKED，Provider 网络调用为 0 |
 | CR-T2G5D-002 | 2026-08-17 | IN_PROGRESS | T2-RPT-001 已冻结 Reporting 数据主权、可丢弃投影、来源事件幂等、口径与业务日、权限脱敏、安全导出、Flyway、容量、重建、兼容、前向修复与测试准入 | T2-RPT-001、ADR-031 | 只准入销售、收银、库存和成本基础报表；T2-RPT-002 继续 DRAFT，不得预建支付报表运行时 |
+| CR-T2G5D-003 | 2026-08-17 | VERIFIED_RPT001_AWAITING_CI | T2-RPT-001 完成来源 Inbox、单调检查点、逐事件血缘、销售收银/库存成本日投影、缺口保守标记、影子重建、差异修复、白名单安全导出和 Web 工作台；报表模块39项、服务端全量424项、Web11项本地通过 | T2-RPT-001、ADR-031 | 独立候选证据不代表 ACCEPTED；RPT-002 仍 DRAFT；必须先通过 GitHub MySQL 8.4 百万行、双平台、安全与证据总门禁 |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。
