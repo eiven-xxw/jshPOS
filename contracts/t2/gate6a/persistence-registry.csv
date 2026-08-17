@@ -1,9 +1,9 @@
 requirement_id,owner,store,object,access_strategy,sql_mode,reason,status
-T2-TRM-001,TerminalRegistry,MySQL,pos_sync_device,CONTROLLED_WRITE,XML,沿用同步设备权威主表并只开放状态版本和能力具名条件更新,IN_PROGRESS
-T2-TRM-001,TerminalRegistry,MySQL,dev_terminal_activation,CONTROLLED_WRITE,XML,一次性激活授权只允许签发消费取消和过期状态迁移,IN_PROGRESS
-T2-TRM-001,TerminalRegistry,MySQL,dev_terminal_credential,CONTROLLED_WRITE,XML,凭据只存HMAC摘要且仅允许轮换吊销和过期状态迁移,IN_PROGRESS
-T2-TRM-001,TerminalRegistry,MySQL,dev_capability_snapshot/dev_terminal_command_result,APPEND_ONLY,XML,能力快照与命令幂等结果只追加且由数据库触发器保护,IN_PROGRESS
-T2-TRM-001,TerminalRegistry,MySQL,dev_terminal_audit,APPEND_ONLY,XML,终端生命周期和认证拒绝审计只追加不可改删,IN_PROGRESS
+T2-TRM-001,TerminalRegistry,MySQL,pos_sync_device,CONTROLLED_WRITE,XML,沿用同步设备权威主表并只开放状态版本和能力具名条件更新,VERIFIED
+T2-TRM-001,TerminalRegistry,MySQL,dev_terminal_activation,CONTROLLED_WRITE,XML,一次性激活授权只允许签发消费取消和过期状态迁移,VERIFIED
+T2-TRM-001,TerminalRegistry,MySQL,dev_terminal_credential,CONTROLLED_WRITE,XML,凭据只存HMAC摘要且仅允许轮换吊销和过期状态迁移,VERIFIED
+T2-TRM-001,TerminalRegistry,MySQL,dev_capability_snapshot/dev_terminal_command_result,APPEND_ONLY,XML,能力快照与命令幂等结果只追加且由数据库触发器保护,VERIFIED
+T2-TRM-001,TerminalRegistry,MySQL,dev_terminal_audit,APPEND_ONLY,XML,终端生命周期和认证拒绝审计只追加不可改删,VERIFIED
 T2-BAK-001,Resilience,MySQL,bak_backup_set/bak_backup_object/bak_restore_drill,CONTROLLED_WRITE,XML,仅设计登记且终端验证前禁止备份恢复运行时,DRAFT
 T2-BAK-001,Resilience,ObjectStorage,backups/{scope}/{backupId}/{sha256},APPEND_ONLY,XML,仅设计登记且真实云对象存储和KMS保持阻断,DRAFT
 T2-UPG-001,Upgrade,MySQL,upg_release/upg_rollout/upg_terminal_result,CONTROLLED_WRITE,XML,仅设计登记不得创建升级运行时,DRAFT
