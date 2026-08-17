@@ -105,7 +105,7 @@ Gate 5A 获准的三项需求已严格按 `T2-PRM-001 → T2-PRM-002 → T2-PRM-
 
 | Artifact | ID | 大小 | GitHub digest |
 |---|---:|---:|---|
-| `t2-gate5a-evidence-bundle` | 9277804814 | 458,517,670 B | `sha256:997e21eb83b8f1316fa5775cf9379d5d1b6da3a2f35714cbd58eae709ef5a832` |
+| `t2-gate5a-promotion-evidence-bundle` | 9277804814 | 458,517,670 B | `sha256:997e21eb83b8f1316fa5775cf9379d5d1b6da3a2f35714cbd58eae709ef5a832` |
 | `t2-gate5a-security` | 9277784071 | 229,236,302 B | `sha256:889dba70dc9bd8681262eb0cd75979ea5195cd9b4b10ed704daf4e83a0bca9a9` |
 | `t2-gate5a-pos-linux` | 9277770183 | 74,832,308 B | `sha256:fd0a4cb9dc76ded3cf54d3734f218f00583c07eba984d9f181a38196325181da` |
 | `t2-gate5a-server` | 9277747962 | 154,316,858 B | `sha256:f45e3016d5c78bcf5cee331ddc3467fb22dbd647e23f97d9a63b098b58939c28` |
