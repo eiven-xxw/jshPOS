@@ -211,7 +211,8 @@ CREATE TABLE inv_transfer_transit_ledger (
     CONSTRAINT ck_trf_transit_type CHECK (fact_type IN ('DISPATCHED','RECEIVED','DIFFERENCE_APPROVED')),
     CONSTRAINT ck_trf_transit_qty CHECK (quantity > 0),
     CONSTRAINT ck_trf_transit_reason CHECK (
-        (fact_type='DIFFERENCE_APPROVED' AND reason_code IN ('SHORTAGE','DAMAGED','REJECTED','TRANSIT_LOSS'))
+        (fact_type='DIFFERENCE_APPROVED' AND reason_code IS NOT NULL
+            AND reason_code IN ('SHORTAGE','DAMAGED','REJECTED','TRANSIT_LOSS'))
         OR (fact_type IN ('DISPATCHED','RECEIVED') AND reason_code IS NULL)
     )
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
