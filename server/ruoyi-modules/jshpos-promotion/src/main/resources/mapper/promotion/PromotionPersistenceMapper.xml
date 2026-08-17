@@ -12,7 +12,7 @@
         VALUES(#{scopeId},#{tenantId},#{ruleVersionId},#{dimensionType},#{dimensionValue})
     </insert>
     <insert id="insertBenefit">
-        INSERT INTO prm_rule_benefit(benefit_id,tenant_id,rule_version_id,amount_minor,discount_rate,nth_value,
+        INSERT INTO prm_rule_benefit(benefit_id,tenant_id,rule_version_id,amount_minor,discount_rate,nth_item_value,
           threshold_minor,threshold_quantity,bundle_price_minor,bundle_components_json)
         VALUES(#{benefitId},#{tenantId},#{ruleVersionId},#{amountMinor},#{discountRate},#{nthValue},
           #{thresholdMinor},#{thresholdQuantity},#{bundlePriceMinor},CAST(#{bundleComponentsJson} AS JSON))
@@ -40,7 +40,7 @@
                (SELECT GROUP_CONCAT(CONCAT(s.dimension_type,':',s.dimension_value)
                         ORDER BY s.dimension_type,s.dimension_value SEPARATOR '|')
                   FROM prm_rule_scope s WHERE s.tenant_id=v.tenant_id AND s.rule_version_id=v.rule_version_id) scopeTokens,
-               b.amount_minor amountMinor,b.discount_rate discountRate,b.nth_value nthValue,
+               b.amount_minor amountMinor,b.discount_rate discountRate,b.nth_item_value nthValue,
                b.threshold_minor thresholdMinor,b.threshold_quantity thresholdQuantity,
                b.bundle_price_minor bundlePriceMinor,CAST(b.bundle_components_json AS CHAR) bundleComponentsJson
         FROM prm_rule_version v
@@ -55,7 +55,7 @@
                (SELECT GROUP_CONCAT(CONCAT(s.dimension_type,':',s.dimension_value)
                         ORDER BY s.dimension_type,s.dimension_value SEPARATOR '|')
                   FROM prm_rule_scope s WHERE s.tenant_id=v.tenant_id AND s.rule_version_id=v.rule_version_id) scopeTokens,
-               b.amount_minor amountMinor,b.discount_rate discountRate,b.nth_value nthValue,
+               b.amount_minor amountMinor,b.discount_rate discountRate,b.nth_item_value nthValue,
                b.threshold_minor thresholdMinor,b.threshold_quantity thresholdQuantity,
                b.bundle_price_minor bundlePriceMinor,CAST(b.bundle_components_json AS CHAR) bundleComponentsJson
         FROM prm_rule_version v
@@ -231,7 +231,7 @@
           (SELECT GROUP_CONCAT(CONCAT(s.dimension_type,':',s.dimension_value)
              ORDER BY s.dimension_type,s.dimension_value SEPARATOR '|')
              FROM prm_rule_scope s WHERE s.tenant_id=v.tenant_id AND s.rule_version_id=v.rule_version_id) scopeTokens,
-          b.amount_minor amountMinor,b.discount_rate discountRate,b.nth_value nthValue,
+          b.amount_minor amountMinor,b.discount_rate discountRate,b.nth_item_value nthValue,
           b.threshold_minor thresholdMinor,b.threshold_quantity thresholdQuantity,
           b.bundle_price_minor bundlePriceMinor,CAST(b.bundle_components_json AS CHAR) bundleComponentsJson
         FROM prm_rule_version v
@@ -278,7 +278,7 @@
           (SELECT GROUP_CONCAT(CONCAT(s.dimension_type,':',s.dimension_value)
              ORDER BY s.dimension_type,s.dimension_value SEPARATOR '|')
              FROM prm_rule_scope s WHERE s.tenant_id=v.tenant_id AND s.rule_version_id=v.rule_version_id) scopeTokens,
-          b.amount_minor amountMinor,b.discount_rate discountRate,b.nth_value nthValue,
+          b.amount_minor amountMinor,b.discount_rate discountRate,b.nth_item_value nthValue,
           b.threshold_minor thresholdMinor,b.threshold_quantity thresholdQuantity,
           b.bundle_price_minor bundlePriceMinor,CAST(b.bundle_components_json AS CHAR) bundleComponentsJson
         FROM prm_rule_package p

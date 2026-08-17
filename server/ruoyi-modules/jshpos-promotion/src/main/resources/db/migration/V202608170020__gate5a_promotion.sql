@@ -64,7 +64,7 @@ CREATE TABLE prm_rule_benefit (
   rule_version_id CHAR(26) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '规则版本ULID',
   amount_minor BIGINT NULL COMMENT '固定金额最小货币单位',
   discount_rate DECIMAL(12,8) NULL COMMENT '折扣率0到1',
-  nth_value INT NULL COMMENT '第N件参数',
+  nth_item_value INT NULL COMMENT '第N件参数',
   threshold_minor BIGINT NULL COMMENT '金额门槛最小货币单位',
   threshold_quantity DECIMAL(20,6) NULL COMMENT '数量门槛',
   bundle_price_minor BIGINT NULL COMMENT '组合价最小货币单位',

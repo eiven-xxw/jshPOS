@@ -6,7 +6,7 @@
   "files": [
     {
       "path": "server/ruoyi-modules/jshpos-promotion/src/main/resources/db/migration/V202608170020__gate5a_promotion.sql",
-      "sha256": "9276603e5573a3d15c5683658e792dab02aadd7370682223ea32495db769dc98"
+      "sha256": "d67199105a2c0a6881dbbde31562401014b47ad845b4e8e5412c8d000c8e9371"
     },
     {
       "path": "server/ruoyi-modules/jshpos-promotion/src/main/resources/db/migration/V202608170021__gate5a_permissions.sql",
