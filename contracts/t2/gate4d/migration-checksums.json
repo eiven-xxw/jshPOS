@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "1.0",
+  "sealedAt": "2026-08-17T02:26:00Z",
+  "rule": "已发布迁移禁止修改；任何修复必须新增前向迁移",
+  "files": [
+    {
+      "path": "server/ruoyi-modules/jshpos-transfer/src/main/resources/db/migration/V202608170018__gate4d_transfer.sql",
+      "sha256": "ea56264ac1b9780e44b415693425e24b3ef02183f5c5e4697d69f435d7340908"
+    },
+    {
+      "path": "server/ruoyi-modules/jshpos-transfer/src/main/resources/db/migration/V202608170019__gate4d_permissions.sql",
+      "sha256": "c98a9fb1d3e2e07d01d44c74a3bcc2afcb7c3eb3f2f8202d8bb6566a6a5b073a"
+    }
+  ]
+}
