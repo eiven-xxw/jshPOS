@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0",
   "published": true,
-  "stage": "trm-candidate",
+  "stage": "bak-candidate",
   "files": [
     {
       "path": "server/ruoyi-modules/jshpos-sync/src/main/resources/db/migration/V202608160036__gate6a_terminal_registry.sql",
@@ -10,6 +10,14 @@
     {
       "path": "server/ruoyi-modules/jshpos-sync/src/main/resources/db/migration/V202608160037__gate6a_terminal_permissions.sql",
       "sha256": "b36fcb655ac8ff704b4fc83e4dbb80a95f8eb44ffb8b5f65db1dd90ea56d3ba0"
+    },
+    {
+      "path": "server/ruoyi-modules/jshpos-resilience/src/main/resources/db/migration/V202608180038__gate6a_backup_recovery.sql",
+      "sha256": "a4283b74f1287aec79ebdd6b7eb17c3213f9ddf25f62d2a400403195735f26aa"
+    },
+    {
+      "path": "server/ruoyi-modules/jshpos-resilience/src/main/resources/db/migration/V202608180039__gate6a_backup_permissions_guards.sql",
+      "sha256": "9ef75032b8fc4f6440331a7c9a9bc68dad8a048c45d581a4eb184e1f832a1a77"
     }
   ]
 }

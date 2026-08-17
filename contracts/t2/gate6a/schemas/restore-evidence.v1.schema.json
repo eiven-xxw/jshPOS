@@ -1,19 +1,32 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:jshpos:t2:gate6a:restore-evidence:v1",
-  "title": "T2-BAK-001 design-only restore evidence",
+  "title": "T2-BAK-001 synthetic restore evidence",
   "type": "object",
   "additionalProperties": false,
-  "required": ["drillId", "backupId", "isolatedEnvironment", "startedAt", "endedAt", "rpoSeconds", "rtoSeconds", "checks", "result", "evidenceSha256"],
+  "required": ["schemaVersion", "requirement", "evidenceLevel", "drillId", "backupId", "isolatedEnvironment", "startedAt", "endedAt", "rpoSeconds", "rtoSeconds", "checks", "result", "syntheticFactRows", "syntheticFactDigestSha256", "providerNetworkCalls", "realDeviceCommands", "cloudDrEvidence", "commercialSla", "evidenceSha256"],
   "properties": {
-    "drillId": {"type": "string"}, "backupId": {"type": "string"},
-    "isolatedEnvironment": {"type": "boolean", "const": true},
-    "startedAt": {"type": "string", "format": "date-time"}, "endedAt": {"type": "string", "format": "date-time"},
-    "rpoSeconds": {"type": "integer", "minimum": 0}, "rtoSeconds": {"type": "integer", "minimum": 0},
-    "checks": {"type": "array", "items": {"enum": ["MANIFEST", "SHA256", "ENCRYPTION", "FLYWAY_VALIDATE", "PROJECTION_REBUILD", "TENANT_RECONCILIATION", "BUSINESS_DAY_RECONCILIATION", "CURSOR", "AUDIT"]}},
+    "schemaVersion": {"const": "1.0"},
+    "requirement": {"const": "T2-BAK-001"},
+    "evidenceLevel": {"const": "SYNTHETIC_RESTORE"},
+    "drillId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "backupId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "isolatedEnvironment": {"const": true},
+    "startedAt": {"type": "string", "format": "date-time"},
+    "endedAt": {"type": "string", "format": "date-time"},
+    "rpoSeconds": {"type": "integer", "minimum": 0, "maximum": 900},
+    "rtoSeconds": {"type": "integer", "minimum": 1, "maximum": 3600},
+    "checks": {"type": "array", "minItems": 9, "maxItems": 9, "uniqueItems": true, "items": {"enum": ["MANIFEST", "SHA256", "ENCRYPTION", "FLYWAY_VALIDATE", "PROJECTION_REBUILD", "TENANT_RECONCILIATION", "BUSINESS_DAY_RECONCILIATION", "CURSOR", "AUDIT"]}},
     "result": {"enum": ["PASS", "FAIL_CLOSED"]},
-    "evidenceSha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+    "syntheticFactRows": {"const": 1000000},
+    "syntheticFactDigestSha256": {"$ref": "#/$defs/sha256"},
+    "providerNetworkCalls": {"const": 0},
+    "realDeviceCommands": {"const": 0},
+    "cloudDrEvidence": {"const": 0},
+    "commercialSla": {"const": false},
+    "evidenceSha256": {"$ref": "#/$defs/sha256"}
   },
-  "x-commercial-sla": false,
-  "x-runtime-status": "DRAFT"
+  "$defs": {"sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}},
+  "x-runtime-status": "IN_PROGRESS",
+  "x-evidence-limitation": "Local synthetic exercise; not production KMS, cloud cross-region DR, REAL_DEVICE, PILOT or commercial SLA."
 }

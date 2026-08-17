@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "1.0",
+  "phase": "T2-GATE6A",
+  "requirements": {"T2-UAT-001": "DRAFT", "T2-REL-001": "DRAFT"},
+  "runtimeAllowed": false,
+  "alphaClaimAllowed": false,
+  "evidenceCatalog": {
+    "governance": "artifacts/t2/gate6a/bundle/governance",
+    "serverAndCoverage": "artifacts/t2/gate6a/bundle/server",
+    "mysqlMigrations": "artifacts/t2/gate6a/bundle/mysql",
+    "terminalAndRestore": "artifacts/t2/gate6a/bundle/resilience",
+    "fixedVectors": "artifacts/t2/gate6a/bundle/vectors",
+    "flutterLinuxAndroid": "artifacts/t2/gate6a/bundle/pos-linux",
+    "flutterWindows": "artifacts/t2/gate6a/bundle/pos-windows",
+    "adminWeb": "artifacts/t2/gate6a/bundle/web",
+    "securitySbomLicense": "artifacts/t2/gate6a/bundle/security"
+  },
+  "mandatoryGapRegister": [
+    {"requirementId": "T2-PAY-002", "status": "BLOCKED", "evidenceNeeded": "AUTHORIZED_SANDBOX"},
+    {"requirementId": "T2-HWD-001", "status": "BLOCKED", "evidenceNeeded": "REAL_DEVICE"},
+    {"requirementId": "T2-PAR-001", "status": "BLOCKED", "evidenceNeeded": "DESIGN_PARTNER_PILOT_WILLINGNESS"},
+    {"gapId": "G6A-CLOUD-KMS", "status": "BLOCKED", "evidenceNeeded": "PRODUCTION_KMS_KEY_SEPARATION"},
+    {"gapId": "G6A-CLOUD-DR", "status": "BLOCKED", "evidenceNeeded": "CROSS_REGION_IMMUTABLE_RESTORE"},
+    {"gapId": "G6A-APK-ROLLBACK", "status": "BLOCKED", "evidenceNeeded": "REAL_DEVICE_INSTALL_AND_ROLLBACK"}
+  ],
+  "goNoGoChecks": [
+    "ALL_ADMITTED_REQUIREMENTS_VERIFIED_OR_ACCEPTED",
+    "P0_AND_P1_OPEN_RISKS_ZERO",
+    "PAYMENT_SANDBOX_EVIDENCE_PRESENT",
+    "REAL_DEVICE_EVIDENCE_PRESENT",
+    "DESIGN_PARTNER_EVIDENCE_PRESENT",
+    "NO_SECRET_OR_PII_LEAK",
+    "RPO_RTO_EVIDENCE_LEVEL_EXPLICIT",
+    "ROLLBACK_AND_FORWARD_FIX_REHEARSED"
+  ],
+  "requiredSignatures": ["SP", "PO", "ARCH", "QA", "SEC", "SRE"],
+  "decision": "NOT_REVIEWED",
+  "allowedDecisions": ["GO", "CONDITIONAL_GO", "NO_GO"],
+  "limitations": [
+    "Template preparation does not start complete Alpha acceptance.",
+    "STATIC/FAKE/SYNTHETIC evidence cannot satisfy SANDBOX, REAL_DEVICE, CLOUD_DR or PILOT.",
+    "Gate 6A completion does not establish commercial usability."
+  ]
+}

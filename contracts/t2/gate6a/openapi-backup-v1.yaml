@@ -1,0 +1,126 @@
+openapi: 3.1.0
+info:
+  title: 鲸熵汇 Gate 6A 备份恢复管理契约
+  version: 1.0.0
+  x-requirement-id: T2-BAK-001
+  x-runtime-status: IN_PROGRESS
+  x-evidence-level: SYNTHETIC_RESTORE
+servers: []
+paths:
+  /api/v1/backups:
+    post:
+      operationId: createEncryptedBackup
+      x-permission: backup:create
+      x-idempotency-key: backupId
+      x-tenant-scope-source: TRUSTED_AUTHORIZED_SCOPE
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CreateBackup'}
+      responses:
+        '200': {description: 已登记并完成的加密恢复集合, content: {application/json: {schema: {$ref: '#/components/schemas/BackupSummary'}}}}
+        '409': {description: 同键异内容或状态冲突}
+        '422': {description: 恢复集合不完整}
+  /api/v1/backups/{backupId}:
+    get:
+      operationId: getBackupCatalog
+      x-permission: backup:catalog:read
+      parameters:
+        - {$ref: '#/components/parameters/BackupId'}
+      responses:
+        '200': {description: 不含密钥和明文的目录摘要, content: {application/json: {schema: {$ref: '#/components/schemas/BackupSummary'}}}}
+        '404': {description: 备份不存在或不在可信范围}
+  /api/v1/backups/{backupId}/restore-drills:
+    post:
+      operationId: executeEmptyEnvironmentRestoreDrill
+      x-permission: backup:restore:execute
+      x-idempotency-key: drillId
+      x-tenant-scope-source: TRUSTED_AUTHORIZED_SCOPE
+      x-production-cutover: false
+      parameters:
+        - {$ref: '#/components/parameters/BackupId'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/RestoreDrill'}
+      responses:
+        '200': {description: 合成空环境演练摘要, content: {application/json: {schema: {$ref: '#/components/schemas/RestoreSummary'}}}}
+        '403': {description: 租户范围不一致}
+        '422': {description: 完整性或守恒失败关闭}
+  /api/v1/restore-drills/{drillId}:
+    get:
+      operationId: getRestoreDrillEvidence
+      x-permission: backup:evidence:read
+      parameters:
+        - name: drillId
+          in: path
+          required: true
+          schema: {$ref: '#/components/schemas/Ulid'}
+      responses:
+        '200': {description: RPO/RTO和校验摘要, content: {application/json: {schema: {$ref: '#/components/schemas/RestoreSummary'}}}}
+components:
+  parameters:
+    BackupId:
+      name: backupId
+      in: path
+      required: true
+      schema: {$ref: '#/components/schemas/Ulid'}
+  schemas:
+    Ulid: {type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'}
+    Sha256: {type: string, pattern: '^[a-f0-9]{64}$'}
+    Sha256OrEmpty: {type: string, pattern: '^$|^[a-f0-9]{64}$'}
+    CreateBackup:
+      type: object
+      additionalProperties: false
+      required: [backupId, environment, pointInTime, latestIncludedFactAt, schemaVersion, applicationVersion, keyVersion, immutableUntil, correlationId]
+      properties:
+        backupId: {$ref: '#/components/schemas/Ulid'}
+        environment: {type: string, maxLength: 64}
+        pointInTime: {type: string, format: date-time}
+        latestIncludedFactAt: {type: string, format: date-time}
+        schemaVersion: {type: string, maxLength: 64}
+        applicationVersion: {type: string, maxLength: 64}
+        keyVersion: {type: string, maxLength: 64, description: 外部密钥版本引用；不是密钥材料}
+        immutableUntil: {type: string, format: date-time}
+        correlationId: {$ref: '#/components/schemas/Ulid'}
+      description: 禁止包含tenantIds、密钥、对象明文或云凭据。
+    RestoreDrill:
+      type: object
+      additionalProperties: false
+      required: [drillId, expectedSchemaVersion, correlationId]
+      properties:
+        drillId: {$ref: '#/components/schemas/Ulid'}
+        expectedSchemaVersion: {type: string, maxLength: 64}
+        correlationId: {$ref: '#/components/schemas/Ulid'}
+      description: 租户范围由服务端可信授权上下文注入。
+    BackupSummary:
+      type: object
+      required: [backupId, state, tenantScopeSha256, pointInTime, immutableUntil, manifestSha256, objectCount]
+      properties:
+        backupId: {$ref: '#/components/schemas/Ulid'}
+        state: {enum: [CREATING, AVAILABLE, FAILED, EXPIRED]}
+        tenantScopeSha256: {$ref: '#/components/schemas/Sha256'}
+        pointInTime: {type: string, format: date-time}
+        immutableUntil: {type: string, format: date-time}
+        manifestSha256: {$ref: '#/components/schemas/Sha256OrEmpty'}
+        objectCount: {type: integer, minimum: 0, maximum: 10000}
+    RestoreSummary:
+      type: object
+      required: [drillId, backupId, state, rpoSeconds, rtoSeconds, evidenceSha256, checkCount]
+      properties:
+        drillId: {$ref: '#/components/schemas/Ulid'}
+        backupId: {$ref: '#/components/schemas/Ulid'}
+        state: {enum: [RUNNING, PASS, FAIL_CLOSED]}
+        rpoSeconds: {type: integer, minimum: 0}
+        rtoSeconds: {type: integer, minimum: 0}
+        evidenceSha256: {$ref: '#/components/schemas/Sha256OrEmpty'}
+        checkCount: {type: integer, minimum: 0, maximum: 9}
+x-security-boundaries:
+  keyMaterialInRequestOrResponse: false
+  providerNetworkCalls: 0
+  realDeviceCommands: 0
+  productionCloudWrites: 0
+  cloudDrEvidence: BLOCKED
+  commercialSla: false

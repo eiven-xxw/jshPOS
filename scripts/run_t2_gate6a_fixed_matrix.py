@@ -21,8 +21,11 @@ def main() -> None:
     roots = (
         ROOT / "server/ruoyi-modules/jshpos-sync/src/main",
         ROOT / "server/ruoyi-modules/jshpos-sync/src/test",
+        ROOT / "server/ruoyi-modules/jshpos-resilience/src/main",
+        ROOT / "server/ruoyi-modules/jshpos-resilience/src/test",
         ROOT / "contracts/t2/gate6a",
         ROOT / "admin-web/src/views/terminal",
+        ROOT / "scripts",
     )
     source = "\n".join(path.read_text(encoding="utf-8", errors="replace")
                         for root in roots for path in root.rglob("*") if path.is_file())
@@ -45,6 +48,24 @@ def main() -> None:
         "HUNDRED_THOUSAND": ("assertTerminalRegistryConstraintsAndHundredThousandCapacity", "100_000"),
         "FORWARD_MIGRATION": ("migratesExpectedVersions", "EXPECTED_MIGRATION_VERSIONS", "V202608160036"),
         "WEB_ONE_TIME_WARNING": ("关闭后无法再次查看", "不会再次显示"),
+        "BAK_NORMAL_EMPTY_RESTORE": ("createsEncryptedSetRestoresFromEmptyAndReplaysIdempotently", "beginEmpty"),
+        "BAK_SIX_DATA_CLASSES": ("EnumSet.allOf(DataClass.class)", "BUSINESS_OBJECT", "EVIDENCE"),
+        "BAK_IDEMPOTENT_REPLAY": ("findBackup(command.backupId())", "findDrill(command.drillId())"),
+        "BAK_SAME_KEY_DIFFERENT_CONTENT": ("BAK-IDEM-001", "同幂等键内容不一致"),
+        "BAK_AES_GCM": ("AES/GCM/NoPadding", "GCMParameterSpec"),
+        "BAK_WRONG_KEY_AAD_NONCE": ("failsClosedForWrongKeyAadNonceCorruptionAndLength", "nonce与清单不一致"),
+        "BAK_CORRUPT_OBJECT": ("failsClosedForCorruptObjectAndReconciliationDifference", "密文摘要不匹配"),
+        "BAK_MISSING_PART": ("备份对象缺失或不可读", "MISSING_PART"),
+        "BAK_CROSS_TENANT": ("对象租户摘要被替换", "CROSS_TENANT_REPLACEMENT"),
+        "BAK_SCHEMA_INCOMPATIBLE": ("Schema兼容窗口不匹配", "SCHEMA_INCOMPATIBLE"),
+        "BAK_APPEND_ONLY": ("trg_bak_object_no_update", "trg_bak_audit_no_delete"),
+        "BAK_STATE_GUARDS": ("trg_bak_set_guard", "trg_bak_drill_guard"),
+        "BAK_MYSQL_FULL_MIGRATION": ("ResilienceMigrationMySqlIT", "202608180039"),
+        "BAK_MILLION_FACT_DIGEST": ("syntheticFactRows", "1_000_000L"),
+        "BAK_NINE_RECONCILIATIONS": ("BUSINESS_DAY_RECONCILIATION", "FLYWAY_VALIDATE", "PROJECTION_REBUILD"),
+        "BAK_RPO_RTO_TIMER": ("MAX_RPO_SECONDS", "MAX_RTO_SECONDS", "commercialSla"),
+        "BAK_PROVIDER_NETWORK_ZERO": ("providerNetworkCalls", "cloudDrEvidence"),
+        "BAK_CLOUD_DR_BLOCKED": ("cloudObjectStorage", "crossRegionDr", "BLOCKED"),
     }
     results = []
     for vector, markers in required.items():

@@ -58,20 +58,20 @@ def flutter(root: Path) -> dict[str, int | bool]:
     return {"tests": tests, "success": done}
 
 
-def jacoco(root: Path) -> dict[str, float | int]:
-    reports = [path for path in root.rglob("jacoco.xml") if "jshpos-sync" in path.as_posix()]
+def jacoco(root: Path, module: str, label: str) -> dict[str, float | int]:
+    reports = [path for path in root.rglob("jacoco.xml") if module in path.as_posix()]
     if len(reports) != 1:
-        fail(f"expected one Sync JaCoCo report, got {len(reports)}")
+        fail(f"expected one {label} JaCoCo report, got {len(reports)}")
     counters = {node.attrib["type"]: node.attrib for node in ET.parse(reports[0]).getroot().findall("counter")}
     result: dict[str, float | int] = {}
     for name, minimum in (("LINE", 0.90), ("BRANCH", 0.85)):
         value = counters.get(name)
         if value is None:
-            fail(f"Sync JaCoCo missing {name}")
+            fail(f"{label} JaCoCo missing {name}")
         missed, covered = int(value["missed"]), int(value["covered"])
         ratio = covered / (covered + missed)
         if ratio < minimum:
-            fail(f"Sync JaCoCo {name} {ratio:.4f} below {minimum:.2f}")
+            fail(f"{label} JaCoCo {name} {ratio:.4f} below {minimum:.2f}")
         result[f"{name.lower()}Ratio"] = round(ratio, 6)
         result[f"{name.lower()}Covered"] = covered
         result[f"{name.lower()}Missed"] = missed
@@ -117,7 +117,10 @@ def main() -> None:
              "flutterWindows": flutter(bundle / "pos-windows")}
     if not list((bundle / "mysql").rglob("TEST-*SyncMigrationMySqlIT.xml")):
         fail("Gate 6A MySQL migration and 100k terminal capacity evidence missing")
-    sync_coverage = jacoco(bundle / "server")
+    if not list((bundle / "mysql").rglob("TEST-*ResilienceMigrationMySqlIT.xml")):
+        fail("Gate 6A empty-database full migration and backup guard evidence missing")
+    sync_coverage = jacoco(bundle / "server", "jshpos-sync", "Sync")
+    resilience_coverage = jacoco(bundle / "server", "jshpos-resilience", "Resilience")
     coverage_files = list((bundle / "pos-linux").rglob("flutter-*-coverage.json"))
     if len(coverage_files) != 3:
         fail("Gate 5A, Gate 5B and Gate 5C Flutter coverage reports are required")
@@ -152,9 +155,15 @@ def main() -> None:
     if stage in {"bak", "closure"} and len(restore_reports) != 1:
         fail("backup restore drill evidence missing")
     restore = json.loads(restore_reports[0].read_text(encoding="utf-8")) if restore_reports else None
-    if restore and (restore.get("rpoSeconds", 901) > 900 or restore.get("rtoSeconds", 3601) > 3600
-                    or restore.get("result") != "PASS"):
-        fail("Alpha-candidate internal RPO/RTO target not proven")
+    if restore:
+        required_checks = {"MANIFEST", "SHA256", "ENCRYPTION", "FLYWAY_VALIDATE", "PROJECTION_REBUILD",
+                           "TENANT_RECONCILIATION", "BUSINESS_DAY_RECONCILIATION", "CURSOR", "AUDIT"}
+        if (restore.get("evidenceLevel") != "SYNTHETIC_RESTORE"
+                or restore.get("rpoSeconds", 901) > 900 or not 1 <= restore.get("rtoSeconds", 0) <= 3600
+                or restore.get("result") != "PASS" or set(restore.get("checks", [])) != required_checks
+                or restore.get("syntheticFactRows") != 1_000_000
+                or restore.get("cloudDrEvidence") != 0 or restore.get("commercialSla") is not False):
+            fail("Alpha-candidate synthetic RPO/RTO and reconciliation target not proven or evidence was upgraded")
 
     files = [{"artifactGroup": path.relative_to(bundle).parts[0],
               "path": path.relative_to(bundle).as_posix(), "size": path.stat().st_size,
@@ -175,7 +184,8 @@ def main() -> None:
         "branchStart": "1bd27f70d39dd2056ffecf3b25f07aa9c7953606",
         "commitSha": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
         "requirements": states, "tests": tests,
-        "coverage": {"serverSync": sync_coverage, "flutter": flutter_coverage},
+        "coverage": {"serverSync": sync_coverage, "serverResilience": resilience_coverage,
+                     "flutter": flutter_coverage},
         "terminalAttackSurfaces": len(attack["surfaces"]), "fixedScenarios": matrix["fixedScenarios"],
         "syntheticTerminalCapacityRows": 100_000, "restoreDrill": restore,
         "providerNetworkCalls": 0, "realPiiRecords": 0, "realDeviceCommands": 0,

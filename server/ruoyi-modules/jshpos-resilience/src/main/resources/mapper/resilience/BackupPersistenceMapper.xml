@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jingshanghui.pos.resilience.infrastructure.persistence.mapper.BackupPersistenceMapper">
+    <resultMap id="backupRow" type="com.jingshanghui.pos.resilience.infrastructure.persistence.BackupPersistenceParams$BackupRow">
+        <constructor>
+            <arg column="backup_id" javaType="String"/><arg column="environment_code" javaType="String"/>
+            <arg column="tenant_ids_csv" javaType="String"/><arg column="tenant_scope_sha256" javaType="String"/>
+            <arg column="point_in_time" javaType="java.time.Instant"/><arg column="latest_included_fact_at" javaType="java.time.Instant"/>
+            <arg column="schema_version" javaType="String"/><arg column="application_version" javaType="String"/>
+            <arg column="key_version" javaType="String"/><arg column="immutable_until" javaType="java.time.Instant"/>
+            <arg column="request_sha256" javaType="String"/><arg column="manifest_sha256" javaType="String"/>
+            <arg column="manifest_json" javaType="String"/><arg column="state" javaType="String"/>
+        </constructor>
+    </resultMap>
+    <resultMap id="objectRow" type="com.jingshanghui.pos.resilience.infrastructure.persistence.BackupPersistenceParams$ObjectRow">
+        <constructor>
+            <arg column="object_id" javaType="String"/><arg column="data_class" javaType="String"/>
+            <arg column="logical_name" javaType="String"/><arg column="media_type" javaType="String"/>
+            <arg column="tenant_scope_sha256" javaType="String"/><arg column="plaintext_size_bytes" javaType="long"/>
+            <arg column="plaintext_sha256" javaType="String"/><arg column="ciphertext_size_bytes" javaType="long"/>
+            <arg column="ciphertext_sha256" javaType="String"/><arg column="key_version" javaType="String"/>
+            <arg column="nonce_base64" javaType="String"/><arg column="object_key" javaType="String"/>
+        </constructor>
+    </resultMap>
+    <resultMap id="drillRow" type="com.jingshanghui.pos.resilience.infrastructure.persistence.BackupPersistenceParams$DrillRow">
+        <constructor>
+            <arg column="drill_id" javaType="String"/><arg column="backup_id" javaType="String"/>
+            <arg column="request_sha256" javaType="String"/><arg column="started_at" javaType="java.time.Instant"/>
+            <arg column="ended_at" javaType="java.time.Instant"/><arg column="rpo_seconds" javaType="long"/>
+            <arg column="rto_seconds" javaType="long"/><arg column="state" javaType="String"/>
+            <arg column="evidence_sha256" javaType="String"/>
+        </constructor>
+    </resultMap>
+    <resultMap id="checkRow" type="com.jingshanghui.pos.resilience.infrastructure.persistence.BackupPersistenceParams$CheckRow">
+        <constructor><arg column="check_code" javaType="String"/><arg column="result" javaType="String"/><arg column="evidence_sha256" javaType="String"/></constructor>
+    </resultMap>
+
+    <select id="selectBackup" resultMap="backupRow">
+        SELECT backup_id,environment_code,tenant_ids_csv,tenant_scope_sha256,point_in_time,
+               latest_included_fact_at,schema_version,application_version,key_version,immutable_until,
+               request_sha256,manifest_sha256,manifest_json,state
+        FROM bak_backup_set WHERE backup_id=#{backupId}
+    </select>
+    <select id="selectObjects" resultMap="objectRow">
+        SELECT object_id,data_class,logical_name,media_type,tenant_scope_sha256,plaintext_size_bytes,
+               plaintext_sha256,ciphertext_size_bytes,ciphertext_sha256,key_version,nonce_base64,object_key
+        FROM bak_backup_object WHERE backup_id=#{backupId} ORDER BY logical_name,object_id
+    </select>
+    <insert id="insertBackup">
+        INSERT INTO bak_backup_set(backup_id,environment_code,tenant_ids_csv,tenant_scope_sha256,point_in_time,
+          latest_included_fact_at,schema_version,application_version,key_version,immutable_until,request_sha256,
+          state,requested_by,correlation_id,created_at,updated_at)
+        VALUES(#{backupId},#{environmentCode},#{tenantIdsCsv},#{tenantScopeSha256},#{pointInTime},
+          #{latestIncludedFactAt},#{schemaVersion},#{applicationVersion},#{keyVersion},#{immutableUntil},
+          #{requestSha256},'CREATING',#{actorId},#{correlationId},UTC_TIMESTAMP(3),UTC_TIMESTAMP(3))
+    </insert>
+    <insert id="insertObject">
+        INSERT INTO bak_backup_object(object_id,backup_id,data_class,logical_name,media_type,tenant_scope_sha256,
+          plaintext_size_bytes,plaintext_sha256,ciphertext_size_bytes,ciphertext_sha256,key_version,nonce_base64,
+          object_key,created_at)
+        VALUES(#{objectId},#{backupId},#{dataClass},#{logicalName},#{mediaType},#{tenantScopeSha256},
+          #{plaintextSizeBytes},#{plaintextSha256},#{ciphertextSizeBytes},#{ciphertextSha256},#{keyVersion},
+          #{nonceBase64},#{objectKey},UTC_TIMESTAMP(3))
+    </insert>
+    <update id="transitionBackup">
+        UPDATE bak_backup_set SET state=#{targetState},manifest_sha256=#{manifestSha256},manifest_json=#{manifestJson},
+          failure_sha256=#{failureSha256},updated_at=UTC_TIMESTAMP(3),last_actor_id=#{actorId},
+          last_correlation_id=#{correlationId},version=version+1
+        WHERE backup_id=#{backupId} AND state=#{expectedState}
+    </update>
+    <select id="selectDrill" resultMap="drillRow">
+        SELECT drill_id,backup_id,request_sha256,started_at,ended_at,rpo_seconds,rto_seconds,state,evidence_sha256
+        FROM bak_restore_drill WHERE drill_id=#{drillId}
+    </select>
+    <select id="selectChecks" resultMap="checkRow">
+        SELECT check_code,result,evidence_sha256 FROM bak_restore_check WHERE drill_id=#{drillId} ORDER BY check_id
+    </select>
+    <insert id="insertDrill">
+        INSERT INTO bak_restore_drill(drill_id,backup_id,request_sha256,state,started_at,requested_by,correlation_id)
+        VALUES(#{drillId},#{backupId},#{requestSha256},#{state},#{startedAt},#{actorId},#{correlationId})
+    </insert>
+    <update id="finishDrill">
+        UPDATE bak_restore_drill SET state=#{targetState},ended_at=#{endedAt},rpo_seconds=#{rpoSeconds},
+          rto_seconds=#{rtoSeconds},evidence_sha256=#{evidenceSha256},last_actor_id=#{actorId},
+          last_correlation_id=#{correlationId},version=version+1
+        WHERE drill_id=#{drillId} AND state=#{expectedState}
+    </update>
+    <insert id="insertCheck">
+        INSERT INTO bak_restore_check(check_id,drill_id,check_code,result,evidence_sha256,checked_at)
+        VALUES(#{checkId},#{drillId},#{checkCode},#{result},#{evidenceSha256},UTC_TIMESTAMP(3))
+    </insert>
+    <insert id="insertAudit">
+        INSERT INTO bak_audit(audit_id,backup_id,drill_id,action_code,actor_id,correlation_id,evidence_sha256,occurred_at)
+        VALUES(#{auditId},#{backupId},#{drillId},#{actionCode},#{actorId},#{correlationId},#{evidenceSha256},UTC_TIMESTAMP(3))
+    </insert>
+</mapper>

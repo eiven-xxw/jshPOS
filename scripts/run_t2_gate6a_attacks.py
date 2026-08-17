@@ -111,6 +111,52 @@ def main() -> None:
     require("tenantId" not in web and "secretHmac" not in web and "credentialHmac" not in web,
             "Web contract exposes tenant override or persisted secret digest")
 
+    backup_dto = re.sub(r"/\*.*?\*/|//[^\n]*", "", read(
+        "server/ruoyi-modules/jshpos-resilience/src/main/java/com/jingshanghui/pos/resilience/interfaces/rest/dto/BackupRequests.java"),
+        flags=re.DOTALL)
+    for field in ("tenantIds", "tenant_id", "secretKey", "keyBytes", "plaintext", "objectContent"):
+        require(field not in backup_dto, f"public backup DTO exposes authority or secret field {field}")
+    backup_controller = read(
+        "server/ruoyi-modules/jshpos-resilience/src/main/java/com/jingshanghui/pos/resilience/interfaces/rest/BackupController.java")
+    for permission in ("backup:create", "backup:catalog:read", "backup:restore:execute", "backup:evidence:read"):
+        require(permission in backup_controller, f"backup permission missing {permission}")
+    require(backup_controller.count("scope.tenantIds()") >= 4 and "isSaveRequestData=false" in backup_controller
+            and "isSaveResponseData=false" in backup_controller,
+            "backup trusted scope or Secret-safe operation logging missing")
+
+    backup_xml = read(
+        "server/ruoyi-modules/jshpos-resilience/src/main/resources/mapper/resilience/BackupPersistenceMapper.xml")
+    require("${" not in backup_xml and "SELECT *" not in backup_xml.upper(),
+            "backup persistence contains unsafe dynamic SQL or SELECT star")
+    for owner in ("ORD_", "PAY_", "REF_", "INV_", "CST_", "PRM_", "MBR_", "RPT_"):
+        require(f" FROM {owner}" not in backup_xml.upper() and f" JOIN {owner}" not in backup_xml.upper()
+                and f"UPDATE {owner}" not in backup_xml.upper(), f"backup cross-owner SQL access {owner}")
+    backup_runtime_root = ROOT / "server/ruoyi-modules/jshpos-resilience/src/main/java"
+    backup_runtime = "\n".join(path.read_text(encoding="utf-8", errors="replace")
+                                 for path in backup_runtime_root.rglob("*.java"))
+    backup_lower = backup_runtime.lower()
+    for marker in ("AES/GCM/NoPadding", "MessageDigest.isEqual", "tenantScopeSha256",
+                   "AuthorizedScope", "beginEmpty", "FAIL_CLOSED"):
+        require(marker in backup_runtime, f"backup fail-closed marker missing {marker}")
+    require(not any(token in backup_lower for token in ("java.net.http", "resttemplate", "webclient", "okhttp",
+                                                         "hutool.http", "httpurlconnection")),
+            "backup runtime introduced outbound network access")
+    require("delete(" not in read(
+        "server/ruoyi-modules/jshpos-resilience/src/main/java/com/jingshanghui/pos/resilience/application/port/BackupPorts.java"),
+        "backup object store exposes delete capability")
+    backup_migrations = read("server/ruoyi-modules/jshpos-resilience/src/main/resources/db/migration/"
+                             "V202608180038__gate6a_backup_recovery.sql").upper()
+    backup_guards = read("server/ruoyi-modules/jshpos-resilience/src/main/resources/db/migration/"
+                         "V202608180039__gate6a_backup_permissions_guards.sql").upper()
+    for table in ("BAK_BACKUP_SET", "BAK_BACKUP_OBJECT", "BAK_RESTORE_DRILL", "BAK_RESTORE_CHECK", "BAK_AUDIT"):
+        require(f"CREATE TABLE {table}" in backup_migrations, f"backup table missing {table}")
+    for trigger in ("TRG_BAK_OBJECT_NO_UPDATE", "TRG_BAK_OBJECT_NO_DELETE", "TRG_BAK_CHECK_NO_UPDATE",
+                    "TRG_BAK_CHECK_NO_DELETE", "TRG_BAK_AUDIT_NO_UPDATE", "TRG_BAK_AUDIT_NO_DELETE",
+                    "TRG_BAK_SET_GUARD", "TRG_BAK_DRILL_GUARD"):
+        require(trigger in backup_guards, f"backup append-only or transition guard missing {trigger}")
+    require("KEY_VERSION" in backup_migrations and "SECRET_KEY" not in backup_migrations
+            and "PRIVATE_KEY" not in backup_migrations, "backup schema stores key material")
+
     surfaces = [
         "ACTIVATION_NO_CLIENT_TENANT", "STORE_SCOPE", "ORG_STORE_BINDING", "ONE_TIME_ACTIVATION_SECRET",
         "HMAC_EXTERNAL_PEPPER", "CONSTANT_TIME_COMPARE", "NO_RAW_SECRET_AT_REST", "ACTIVATION_EXPIRY",
@@ -122,11 +168,22 @@ def main() -> None:
         "LEGACY_FORWARD_COMPATIBILITY", "SYNTHETIC_EVIDENCE_ONLY", "REAL_DEVICE_BLOCKED",
         "PROVIDER_NETWORK_ZERO", "REAL_PII_ZERO", "CROSS_OWNER_SQL_ZERO", "WEB_NO_TENANT_OVERRIDE",
         "OBJECT_NAMESPACE_BOUNDARY", "UPGRADE_RUNTIME_ZERO", "BACKUP_RUNTIME_BEFORE_ADMISSION_ZERO",
+        "BACKUP_NO_CLIENT_TENANT_SCOPE", "BACKUP_NO_KEY_MATERIAL_DTO", "BACKUP_SECRET_SAFE_AUDIT",
+        "BACKUP_SIX_DATA_CLASSES", "BACKUP_AES_256_GCM", "BACKUP_AAD_SCOPE_BINDING",
+        "BACKUP_PLAINTEXT_SHA256", "BACKUP_CIPHERTEXT_SHA256", "BACKUP_NONCE_VERIFICATION",
+        "BACKUP_KEY_SEPARATION", "BACKUP_OBJECT_KEY_NAMESPACE", "BACKUP_OBJECT_APPEND_ONLY",
+        "BACKUP_CATALOG_CONTROLLED_WRITE", "BACKUP_RESTORE_EMPTY_TARGET", "BACKUP_MANIFEST_CANONICAL",
+        "BACKUP_MANIFEST_DIGEST", "BACKUP_WRONG_KEY_FAIL_CLOSED", "BACKUP_CORRUPT_FAIL_CLOSED",
+        "BACKUP_MISSING_PART_FAIL_CLOSED", "BACKUP_CROSS_TENANT_FAIL_CLOSED",
+        "BACKUP_SCHEMA_INCOMPATIBLE_FAIL_CLOSED", "BACKUP_PROJECTION_REBUILD",
+        "BACKUP_BUSINESS_DAY_RECONCILIATION", "BACKUP_CURSOR_RECONCILIATION",
+        "BACKUP_AUDIT_RECONCILIATION", "BACKUP_RPO_TIMER", "BACKUP_RTO_TIMER",
+        "BACKUP_CLOUD_DR_ZERO", "BACKUP_COMMERCIAL_SLA_FALSE",
     ]
     output = args.output if args.output.is_absolute() else ROOT / args.output
     output.parent.mkdir(parents=True, exist_ok=True)
     report = {
-        "schemaVersion": "1.0", "phase": "T2-GATE6A", "requirement": "T2-TRM-001",
+        "schemaVersion": "1.0", "phase": "T2-GATE6A", "requirements": ["T2-TRM-001", "T2-BAK-001"],
         "generatedAt": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "commitSha": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
         "tenants": ["TENANT_A", "TENANT_B"],

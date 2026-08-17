@@ -44,9 +44,11 @@ DESIGN_FILES = (
     "docs/t2-gate6a/04_UPG001设计准备与实机阻断.md",
     "docs/t2-gate6a/05_测试矩阵CI与证据规范.md",
     "contracts/t2/gate6a/gate6a-admission.json",
+    "contracts/t2/gate6a/alpha-exit-review-template.json",
     "contracts/t2/gate6a/persistence-registry.csv",
     "contracts/t2/gate6a/migration-checksums.json",
     "contracts/t2/gate6a/openapi-terminal-v1.yaml",
+    "contracts/t2/gate6a/openapi-backup-v1.yaml",
     "contracts/t2/gate6a/terminal-events-v1.yaml",
     "contracts/t2/gate6a/upgrade-design-only-v1.yaml",
     "contracts/t2/gate6a/test-vectors/terminal-vectors.json",
@@ -113,6 +115,13 @@ def requirements(stage: str) -> dict[str, object]:
 def contracts(stage: str) -> dict[str, object]:
     content = {path: required(path) for path in DESIGN_FILES}
     admission = json.loads(content["contracts/t2/gate6a/gate6a-admission.json"])
+    exit_template = json.loads(content["contracts/t2/gate6a/alpha-exit-review-template.json"])
+    if exit_template.get("requirements") != {"T2-UAT-001": "DRAFT", "T2-REL-001": "DRAFT"}:
+        fail("Alpha exit template changed DRAFT requirements")
+    if exit_template.get("runtimeAllowed") is not False or exit_template.get("alphaClaimAllowed") is not False:
+        fail("Alpha exit template opened runtime or claim")
+    if set(exit_template.get("requiredSignatures", [])) != {"SP", "PO", "ARCH", "QA", "SEC", "SRE"}:
+        fail("Alpha exit template signature roles incomplete")
     if admission.get("sequence") != list(SEQUENCE):
         fail("Gate 6A sequence changed")
     if admission.get("requirements", {}).get("T2-PAY-002") != "BLOCKED":
@@ -131,6 +140,19 @@ def contracts(stage: str) -> dict[str, object]:
             fail(f"upgrade design boundary missing {marker}")
     for schema in ("terminal-activation.v1.schema.json", "backup-manifest.v1.schema.json", "restore-evidence.v1.schema.json"):
         json.loads(content[f"contracts/t2/gate6a/schemas/{schema}"])
+    if stage in {"bak", "closure"}:
+        backup_api = content["contracts/t2/gate6a/openapi-backup-v1.yaml"]
+        for marker in ("T2-BAK-001", "/api/v1/backups:", "TRUSTED_AUTHORIZED_SCOPE",
+                       "keyMaterialInRequestOrResponse: false", "cloudDrEvidence: BLOCKED"):
+            if marker not in backup_api:
+                fail(f"backup OpenAPI boundary missing {marker}")
+        manifest = json.loads(content["contracts/t2/gate6a/schemas/backup-manifest.v1.schema.json"])
+        restore = json.loads(content["contracts/t2/gate6a/schemas/restore-evidence.v1.schema.json"])
+        vectors = json.loads(content["contracts/t2/gate6a/test-vectors/backup-design-vectors.json"])
+        if manifest.get("x-runtime-status") != "IN_PROGRESS" or restore.get("x-runtime-status") != "IN_PROGRESS":
+            fail("backup runtime schemas were not admitted")
+        if vectors.get("status") != "IN_PROGRESS" or vectors.get("runtimeAllowed") is not True:
+            fail("backup executable vectors were not admitted")
     registry = list(csv.DictReader(content["contracts/t2/gate6a/persistence-registry.csv"].splitlines()))
     if not registry:
         fail("persistence registry is empty")
@@ -173,6 +195,19 @@ def runtime_scope(stage: str) -> dict[str, int]:
         for marker in ("TerminalRegistryService", "TerminalSecretProtector", "dev_terminal_activation"):
             if marker.lower() not in lowered:
                 fail(f"terminal runtime marker missing {marker}")
+    if stage in {"bak", "closure"}:
+        if not resilience.is_dir():
+            fail("backup runtime module missing after admission")
+        resilience_content = "\n".join(path.read_text(encoding="utf-8", errors="replace")
+                                        for path in resilience.rglob("*") if path.is_file())
+        resilience_lower = resilience_content.lower()
+        for marker in ("BackupRecoveryService", "AES/GCM/NoPadding", "AuthorizedScope",
+                       "CREATE TABLE bak_backup_set", "ResilienceMigrationMySqlIT"):
+            if marker not in resilience_content:
+                fail(f"backup runtime marker missing {marker}")
+        for token in ("java.net.http", "resttemplate", "webclient", "okhttp", "hutool.http", "httpurlconnection"):
+            if token in resilience_lower:
+                fail(f"backup runtime introduced forbidden outbound network {token}")
     tracked = git("ls-files", "server", "admin-web", "flutter-pos").splitlines()
     repository = "\n".join(
         (ROOT / name).read_text(encoding="utf-8", errors="replace")
