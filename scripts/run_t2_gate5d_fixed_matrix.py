@@ -24,6 +24,7 @@ def main() -> None:
                                      for path in (ROOT / "server/ruoyi-modules/jshpos-reporting/src/main").rglob("*")
                                      if path.is_file())
     sources += "\n" + (ROOT / "contracts/t2/gate5d/test-vectors/rpt001-vectors.json").read_text(encoding="utf-8")
+    sources += "\n" + (ROOT / "contracts/t2/gate5d/test-vectors/rpt002-vectors.json").read_text(encoding="utf-8")
     required = {
         "SALES_CONSERVATION": ("requireSalesConservation", "gross-discount+surcharge=receivable"),
         "DUPLICATE_SAME_HASH": ("returnsOriginalForDuplicateSameHashAndRejectsDifferentHash", "idempotent"),
@@ -41,7 +42,26 @@ def main() -> None:
         "DOWNLOAD_REPLAY": ("issuesAndConsumesSingleUseTokenAfterDigestVerification", "rejected_after_first_use"),
         "ARTIFACT_TAMPER": ("rejectsOversizedExportAndDetectsArtifactTampering", "ARTIFACT_DIGEST_MISMATCH"),
         "MILLION_MYSQL": ("assertMillionRowProjectionCapacity", "1_000_000"),
-        "FORWARD_MIGRATION": ("migratesAllFilesThroughV33AndEnforcesReportingIsolation", "202608170033"),
+        "FORWARD_MIGRATION": ("migratesAllFilesThroughV35AndEnforcesReportingIsolation", "202608170035"),
+        "PAYMENT_MATCHED": ("classifiesMissingMatchedAndEveryDifferenceInStablePriority", "payment-matched"),
+        "REFUND_MATCHED": ("PAYMENT 或 REFUND", "refund-matched"),
+        "FACT_BEFORE_BILL": ("factBeforeBillCreatesMissingBillAndIsIdempotent", "fact-before-bill"),
+        "BILL_BEFORE_FACT": ("billBeforeFactCreatesMissingInternalThenLateFactMatches", "bill-before-fact"),
+        "AMOUNT_MISMATCH": ("AMOUNT_MISMATCH", "amount-mismatch"),
+        "STATUS_MISMATCH": ("STATUS_MISMATCH", "status-mismatch"),
+        "BUSINESS_DATE_MISMATCH": ("BUSINESS_DATE_MISMATCH", "business-date-mismatch"),
+        "UNKNOWN_NOT_SUCCESS": ("UNKNOWN", "unknown-is-not-success"),
+        "RECON_DUPLICATE_SAME_HASH": ("factBeforeBillCreatesMissingBillAndIsIdempotent", "duplicate-same-hash"),
+        "RECON_DUPLICATE_DIFFERENT_HASH": ("rejectsDifferentContentAndCrossStoreMatchingKey",
+                                               "duplicate-different-hash"),
+        "RECON_TENANT_COMPOSITE": ("assertReconciliationTenantIdentityAndImmutability", "cross-tenant-key"),
+        "RECON_ASSIGNMENT_AUDIT": ("transitionsOpenDifferenceWithOptimisticVersionAndAppendsAudit",
+                                     "assignment-audit"),
+        "RECON_LATE_AUDIT": ("latestManualState", "late-convergence-keeps-audit"),
+        "RECON_FULL_REBUILD": ("rebuildsFromBothAppendOnlyInboxesAndPreservesExternalEvidenceBoundary",
+                                 "full-rebuild"),
+        "SYNTHETIC_NOT_SANDBOX": ("rejectsBillThatIsNotExplicitlyInternalSynthetic", "synthetic-not-sandbox"),
+        "RECON_100K_MYSQL": ("assertHundredThousandReconciliationCapacity", "100_000"),
     }
     results = []
     for vector, markers in required.items():

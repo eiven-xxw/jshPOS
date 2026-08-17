@@ -165,9 +165,54 @@ paths:
       x-permission: report:payment-reconciliation:manage
       parameters:
         - { $ref: "#/components/parameters/ReconciliationId" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [toState, reason, expectedVersion, correlationId]
+              properties:
+                toState: { type: string, enum: [ASSIGNED, RESOLVED, IGNORED] }
+                reason: { type: string, minLength: 1, maxLength: 256 }
+                expectedVersion: { type: integer, minimum: 0 }
+                correlationId: { $ref: "#/components/schemas/Ulid" }
       responses:
         "200": { description: 差异处理状态已更新并追加审计链 }
         "409": { description: 非法状态迁移或乐观锁冲突 }
+  /api/v1/reporting/payment-reconciliation/{reconciliationId}/audit:
+    get:
+      operationId: listPaymentReconciliationAudit
+      x-requirement: T2-RPT-002
+      x-permission: report:payment-reconciliation:read
+      parameters:
+        - { $ref: "#/components/parameters/ReconciliationId" }
+      responses:
+        "200": { description: 可信租户和门店范围内的只追加系统分类与人工处理审计链 }
+        "404": { description: 对账条目不存在或不可见 }
+  /api/v1/reporting/payment-reconciliation/rebuilds:
+    post:
+      operationId: rebuildPaymentReconciliationProjection
+      x-requirement: T2-RPT-002
+      x-permission: report:projection:rebuild
+      x-provider-network-calls: 0
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [rebuildId, fromDate, toDate, correlationId]
+              properties:
+                rebuildId: { $ref: "#/components/schemas/Ulid" }
+                fromDate: { type: string, format: date }
+                toDate: { type: string, format: date }
+                correlationId: { $ref: "#/components/schemas/Ulid" }
+      responses:
+        "200": { description: 从两侧只追加 Inbox 完成确定性重建并返回摘要 }
+        "409": { description: 同重建标识异内容或并发冲突 }
 components:
   securitySchemes:
     bearerAuth: { type: http, scheme: bearer }

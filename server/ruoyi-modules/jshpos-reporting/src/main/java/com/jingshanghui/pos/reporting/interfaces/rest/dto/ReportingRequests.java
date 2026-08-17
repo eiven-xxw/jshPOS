@@ -71,7 +71,7 @@ public final class ReportingRequests {
                           @Pattern(regexp=ULID) String correlationId) {}
     /** @param exportId 导出ULID @param reportType 报表类型 @param fromDate 起始日 @param toDate 结束日 @param storeIds 门店集合 @param fields 字段集合 @param correlationId 关联ULID */
     public record Export(@Pattern(regexp=ULID) String exportId,
-                         @Pattern(regexp="^(SALES_DAILY|INVENTORY_COST_DAILY)$") String reportType,
+                         @Pattern(regexp="^(SALES_DAILY|INVENTORY_COST_DAILY|PAYMENT_RECONCILIATION)$") String reportType,
                          @NotNull LocalDate fromDate, @NotNull LocalDate toDate,
                          @NotEmpty @Size(max=50) List<@Positive Long> storeIds,
                          @NotEmpty @Size(max=32) List<@Pattern(regexp="^[a-z][A-Za-z0-9]{0,63}$") String> fields,
@@ -85,4 +85,45 @@ public final class ReportingRequests {
     public record DifferenceState(@Pattern(regexp="^(OPEN|ACKNOWLEDGED|RESOLVED|IGNORED)$") String toState,
                                   @NotBlank @Size(max=256) String reason, @PositiveOrZero int expectedVersion,
                                   @Pattern(regexp=ULID) String correlationId) {}
+
+    /** Provider 无关支付或退款事实；刻意不包含 Provider、账号、签名和原始回调。 */
+    public record PaymentFact(@Pattern(regexp=ULID) String sourceEventId,
+                              @Pattern(regexp="^(PAYMENT|REFUND)$") String sourceOwner,
+                              @Positive long sourceSequence, @NotBlank @Size(max=96) String partitionKey,
+                              @Pattern(regexp="^1\\.0$") String schemaVersion,
+                              @Pattern(regexp=SHA256) String contentSha256, @NotNull Instant occurredAt,
+                              @NotNull LocalDate businessDate, @Positive Long orgId, @Positive Long storeId,
+                              @NotBlank @Size(max=64) String terminalId,
+                              @Pattern(regexp="^(PAYMENT|REFUND)$") String factType,
+                              @Pattern(regexp=ULID) String reconciliationKey,
+                              @Pattern(regexp=ULID) String orderId, @PositiveOrZero long amountMinor,
+                              @Pattern(regexp="^CNY$") String currency,
+                              @Pattern(regexp="^(SUCCEEDED|FAILED|UNKNOWN)$") String lifecycleStatus,
+                              @Pattern(regexp=ULID) String correlationId) {}
+
+    /** 内部合成账单条目；sourceType 与 synthetic 不能由服务端猜测。 */
+    public record SyntheticBill(@Pattern(regexp=ULID) String billEntryId,
+                                @Pattern(regexp=ULID) String batchId,
+                                @Pattern(regexp="^INTERNAL_SYNTHETIC$") String sourceType,
+                                @AssertTrue boolean synthetic,
+                                @Pattern(regexp="^1\\.0$") String schemaVersion,
+                                @Pattern(regexp=SHA256) String contentSha256,
+                                @NotNull LocalDate businessDate, @Positive Long orgId, @Positive Long storeId,
+                                @NotBlank @Size(max=64) String terminalId,
+                                @Pattern(regexp="^(PAYMENT|REFUND)$") String factType,
+                                @Pattern(regexp=ULID) String reconciliationKey,
+                                @PositiveOrZero long amountMinor, @Pattern(regexp="^CNY$") String currency,
+                                @Pattern(regexp="^(SUCCEEDED|FAILED|UNKNOWN)$") String lifecycleStatus,
+                                @Pattern(regexp=ULID) String correlationId) {}
+
+    /** 对账差异人工处理命令。 */
+    public record ReconciliationState(@Pattern(regexp="^(ASSIGNED|RESOLVED|IGNORED)$") String toState,
+                                      @NotBlank @Size(max=256) String reason,
+                                      @PositiveOrZero int expectedVersion,
+                                      @Pattern(regexp=ULID) String correlationId) {}
+
+    /** RPT-002 对账投影重建命令。 */
+    public record ReconciliationRebuild(@Pattern(regexp=ULID) String rebuildId,
+                                        @NotNull LocalDate fromDate, @NotNull LocalDate toDate,
+                                        @Pattern(regexp=ULID) String correlationId) {}
 }

@@ -1,5 +1,5 @@
 export type Id64 = string | number;
-export type ReportType = 'SALES_DAILY' | 'INVENTORY_COST_DAILY';
+export type ReportType = 'SALES_DAILY' | 'INVENTORY_COST_DAILY' | 'PAYMENT_RECONCILIATION';
 export type ProjectionStatus = 'CURRENT' | 'INCOMPLETE';
 export type ExportState = 'REQUESTED' | 'APPROVED' | 'REJECTED' | 'GENERATING' | 'READY' | 'FAILED' | 'EXPIRED';
 
@@ -47,6 +47,47 @@ export interface InventoryCostDailyVO {
   projectionStatus: ProjectionStatus;
 }
 
+export interface PaymentReconciliationVO {
+  reconciliationId: string;
+  reconciliationKey: string;
+  factType: 'PAYMENT' | 'REFUND';
+  businessDate: string;
+  storeId: Id64;
+  terminalId: string;
+  currency: 'CNY';
+  internalAmountMinor?: number;
+  billAmountMinor?: number;
+  internalStatus?: 'SUCCEEDED' | 'FAILED' | 'UNKNOWN';
+  billStatus?: 'SUCCEEDED' | 'FAILED' | 'UNKNOWN';
+  internalBusinessDate?: string;
+  billBusinessDate?: string;
+  differenceType:
+    | 'MATCHED'
+    | 'MISSING_BILL'
+    | 'MISSING_INTERNAL'
+    | 'AMOUNT_MISMATCH'
+    | 'CURRENCY_MISMATCH'
+    | 'STATUS_MISMATCH'
+    | 'BUSINESS_DATE_MISMATCH';
+  handlingState: 'MATCHED' | 'OPEN' | 'ASSIGNED' | 'RESOLVED' | 'IGNORED';
+  handlerId?: Id64;
+  version: number;
+}
+
+export interface PaymentReconciliationAuditVO {
+  auditId: string;
+  reconciliationId: string;
+  actionType: 'SYSTEM_CLASSIFIED' | 'MANUAL_TRANSITION';
+  fromDifferenceType?: PaymentReconciliationVO['differenceType'];
+  toDifferenceType: PaymentReconciliationVO['differenceType'];
+  fromHandlingState?: PaymentReconciliationVO['handlingState'];
+  toHandlingState: PaymentReconciliationVO['handlingState'];
+  operatorId: Id64;
+  reasonSha256: string;
+  correlationId: string;
+  occurredAt: string;
+}
+
 export interface ReportQuery {
   fromDate: string;
   toDate: string;
@@ -55,6 +96,8 @@ export interface ReportQuery {
   cashierId?: Id64;
   warehouseId?: string;
   skuId?: Id64;
+  differenceType?: PaymentReconciliationVO['differenceType'];
+  handlingState?: PaymentReconciliationVO['handlingState'];
 }
 
 export interface ExportRequest {

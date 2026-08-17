@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jingshanghui.pos.reporting.infrastructure.persistence.mapper.PaymentReconciliationMapper">
+  <sql id="factColumns">source_event_id sourceEventId,source_owner sourceOwner,source_sequence sourceSequence,
+    partition_key partitionKey,schema_version schemaVersion,content_sha256 contentSha256,occurred_at occurredAt,
+    business_date businessDate,org_id orgId,store_id storeId,terminal_id terminalId,fact_type factType,
+    reconciliation_key reconciliationKey,order_id orderId,amount_minor amountMinor,currency,
+    lifecycle_status lifecycleStatus,correlation_id correlationId</sql>
+  <sql id="billColumns">bill_entry_id billEntryId,batch_id batchId,source_type sourceType,synthetic,
+    schema_version schemaVersion,content_sha256 contentSha256,business_date businessDate,org_id orgId,
+    store_id storeId,terminal_id terminalId,fact_type factType,reconciliation_key reconciliationKey,
+    amount_minor amountMinor,currency,lifecycle_status lifecycleStatus,correlation_id correlationId</sql>
+  <sql id="projectionColumns">reconciliation_id reconciliationId,reconciliation_key reconciliationKey,
+    fact_type factType,source_event_id sourceEventId,bill_entry_id billEntryId,business_date businessDate,
+    org_id orgId,store_id storeId,terminal_id terminalId,currency,internal_amount_minor internalAmountMinor,
+    bill_amount_minor billAmountMinor,internal_status internalStatus,bill_status billStatus,
+    internal_business_date internalBusinessDate,bill_business_date billBusinessDate,
+    difference_type differenceType,handling_state handlingState,handler_id handlerId,
+    source_content_sha256 sourceContentSha256,bill_content_sha256 billContentSha256,
+    detected_at detectedAt,updated_at updatedAt,version</sql>
+  <sql id="viewColumns">reconciliation_id reconciliationId,reconciliation_key reconciliationKey,
+    fact_type factType,source_event_id sourceEventId,bill_entry_id billEntryId,business_date businessDate,
+    org_id orgId,store_id storeId,terminal_id terminalId,currency,internal_amount_minor internalAmountMinor,
+    bill_amount_minor billAmountMinor,internal_status internalStatus,bill_status billStatus,
+    internal_business_date internalBusinessDate,bill_business_date billBusinessDate,
+    difference_type differenceType,handling_state handlingState,handler_id handlerId,
+    detected_at detectedAt,updated_at updatedAt,version</sql>
+
+  <select id="findFactByEvent" resultType="com.jingshanghui.pos.reporting.application.port.PaymentReconciliationPersistencePort$FactRow">
+    SELECT <include refid="factColumns"/> FROM rpt_payment_fact_inbox
+    WHERE tenant_id=#{tenantId} AND source_event_id=#{objectId}
+  </select>
+  <select id="findFactByKey" resultType="com.jingshanghui.pos.reporting.application.port.PaymentReconciliationPersistencePort$FactRow">
+    SELECT <include refid="factColumns"/> FROM rpt_payment_fact_inbox
+    WHERE tenant_id=#{tenantId} AND reconciliation_key=#{objectId}
+  </select>
+  <insert id="insertFact">
+    INSERT IGNORE INTO rpt_payment_fact_inbox(source_event_id,tenant_id,source_owner,source_sequence,partition_key,
+      schema_version,content_sha256,occurred_at,business_date,org_id,store_id,terminal_id,fact_type,
+      reconciliation_key,order_id,amount_minor,currency,lifecycle_status,correlation_id,applied_at)
+    VALUES(#{fact.sourceEventId},#{tenantId},#{fact.sourceOwner},#{fact.sourceSequence},#{fact.partitionKey},
+      #{fact.schemaVersion},#{fact.contentSha256},#{fact.occurredAt},#{fact.businessDate},#{fact.orgId},
+      #{fact.storeId},#{fact.terminalId},#{fact.factType},#{fact.reconciliationKey},#{fact.orderId},
+      #{fact.amountMinor},#{fact.currency},#{fact.lifecycleStatus},#{fact.correlationId},#{appliedAt})
+  </insert>
+
+  <select id="findBillByEntry" resultType="com.jingshanghui.pos.reporting.application.port.PaymentReconciliationPersistencePort$BillRow">
+    SELECT <include refid="billColumns"/> FROM rpt_internal_bill_inbox
+    WHERE tenant_id=#{tenantId} AND bill_entry_id=#{objectId}
+  </select>
+  <select id="findBillByKey" resultType="com.jingshanghui.pos.reporting.application.port.PaymentReconciliationPersistencePort$BillRow">
+    SELECT <include refid="billColumns"/> FROM rpt_internal_bill_inbox
+    WHERE tenant_id=#{tenantId} AND reconciliation_key=#{objectId}
+  </select>
+  <insert id="insertBill">
+    INSERT IGNORE INTO rpt_internal_bill_inbox(bill_entry_id,tenant_id,batch_id,source_type,synthetic,
+      schema_version,content_sha256,business_date,org_id,store_id,terminal_id,fact_type,reconciliation_key,
+      amount_minor,currency,lifecycle_status,correlation_id,imported_by,imported_at)
+    VALUES(#{bill.billEntryId},#{tenantId},#{bill.batchId},#{bill.sourceType},#{bill.synthetic},
+      #{bill.schemaVersion},#{bill.contentSha256},#{bill.businessDate},#{bill.orgId},#{bill.storeId},
+      #{bill.terminalId},#{bill.factType},#{bill.reconciliationKey},#{bill.amountMinor},#{bill.currency},
+      #{bill.lifecycleStatus},#{bill.correlationId},#{importedBy},#{importedAt})
+  </insert>
+
+  <select id="lockReconciliation" resultType="com.jingshanghui.pos.reporting.application.port.PaymentReconciliationPersistencePort$ReconciliationRow">
+    SELECT <include refid="projectionColumns"/> FROM rpt_payment_reconciliation
+    WHERE tenant_id=#{tenantId} AND reconciliation_id=#{objectId} FOR UPDATE
+  </select>
+  <select id="findReconciliation" resultType="com.jingshanghui.pos.reporting.application.port.PaymentReconciliationPersistencePort$ReconciliationRow">
+    SELECT <include refid="projectionColumns"/> FROM rpt_payment_reconciliation
+    WHERE tenant_id=#{tenantId} AND reconciliation_id=#{objectId}
+  </select>
+  <insert id="insertReconciliation">
+    INSERT INTO rpt_payment_reconciliation(reconciliation_id,tenant_id,reconciliation_key,fact_type,
+      source_event_id,bill_entry_id,business_date,org_id,store_id,terminal_id,currency,
+      internal_amount_minor,bill_amount_minor,internal_status,bill_status,internal_business_date,
+      bill_business_date,difference_type,handling_state,handler_id,source_content_sha256,
+      bill_content_sha256,version,detected_at,updated_at)
+    VALUES(#{row.reconciliationId},#{tenantId},#{row.reconciliationKey},#{row.factType},#{row.sourceEventId},
+      #{row.billEntryId},#{row.businessDate},#{row.orgId},#{row.storeId},#{row.terminalId},#{row.currency},
+      #{row.internalAmountMinor},#{row.billAmountMinor},#{row.internalStatus},#{row.billStatus},
+      #{row.internalBusinessDate},#{row.billBusinessDate},#{row.differenceType},#{row.handlingState},
+      #{row.handlerId},#{row.sourceContentSha256},#{row.billContentSha256},0,#{row.detectedAt},#{row.updatedAt})
+  </insert>
+  <update id="updateReconciliation">
+    UPDATE rpt_payment_reconciliation SET fact_type=#{row.factType},source_event_id=#{row.sourceEventId},
+      bill_entry_id=#{row.billEntryId},business_date=#{row.businessDate},org_id=#{row.orgId},store_id=#{row.storeId},
+      terminal_id=#{row.terminalId},currency=#{row.currency},internal_amount_minor=#{row.internalAmountMinor},
+      bill_amount_minor=#{row.billAmountMinor},internal_status=#{row.internalStatus},bill_status=#{row.billStatus},
+      internal_business_date=#{row.internalBusinessDate},bill_business_date=#{row.billBusinessDate},
+      difference_type=#{row.differenceType},handling_state=#{row.handlingState},handler_id=#{row.handlerId},
+      source_content_sha256=#{row.sourceContentSha256},bill_content_sha256=#{row.billContentSha256},
+      detected_at=#{row.detectedAt},updated_at=#{row.updatedAt},version=version+1
+    WHERE tenant_id=#{tenantId} AND reconciliation_id=#{row.reconciliationId} AND version=#{expectedVersion}
+  </update>
+  <delete id="deleteProjection">
+    DELETE FROM rpt_payment_reconciliation WHERE tenant_id=#{tenantId}
+      AND business_date BETWEEN #{fromDate} AND #{toDate}
+  </delete>
+  <select id="listKeys" resultType="string">
+    SELECT reconciliation_key FROM (
+      SELECT reconciliation_key FROM rpt_payment_fact_inbox WHERE tenant_id=#{tenantId}
+        AND business_date BETWEEN #{fromDate} AND #{toDate}
+      UNION
+      SELECT reconciliation_key FROM rpt_internal_bill_inbox WHERE tenant_id=#{tenantId}
+        AND business_date BETWEEN #{fromDate} AND #{toDate}
+    ) keys_ordered ORDER BY reconciliation_key
+  </select>
+  <select id="latestManualState" resultType="com.jingshanghui.pos.reporting.application.port.PaymentReconciliationPersistencePort$ManualState">
+    SELECT to_handling_state handlingState,operator_id handlerId FROM rpt_reconciliation_audit
+    WHERE tenant_id=#{tenantId} AND reconciliation_id=#{objectId} AND action_type='MANUAL_TRANSITION'
+    ORDER BY occurred_at DESC,audit_id DESC LIMIT 1
+  </select>
+  <select id="query" resultType="com.jingshanghui.pos.reporting.application.model.PaymentReconciliationViews$ReconciliationView">
+    SELECT <include refid="viewColumns"/> FROM rpt_payment_reconciliation
+    WHERE tenant_id=#{tenantId} AND business_date BETWEEN #{fromDate} AND #{toDate} AND store_id=#{storeId}
+    <if test="differenceType != null and differenceType != ''">AND difference_type=#{differenceType}</if>
+    <if test="handlingState != null and handlingState != ''">AND handling_state=#{handlingState}</if>
+    ORDER BY business_date,reconciliation_id
+  </select>
+  <select id="count" resultType="long">
+    SELECT COUNT(*) FROM rpt_payment_reconciliation WHERE tenant_id=#{tenantId}
+      AND business_date BETWEEN #{fromDate} AND #{toDate}
+      AND store_id IN
+      <foreach collection="storeIds" item="storeId" open="(" separator="," close=")">#{storeId}</foreach>
+  </select>
+  <select id="listForDigest" resultType="com.jingshanghui.pos.reporting.application.model.PaymentReconciliationViews$ReconciliationView">
+    SELECT <include refid="viewColumns"/> FROM rpt_payment_reconciliation
+    WHERE tenant_id=#{tenantId} AND business_date BETWEEN #{fromDate} AND #{toDate}
+    ORDER BY business_date,reconciliation_id
+  </select>
+  <insert id="insertAudit">
+    INSERT INTO rpt_reconciliation_audit(audit_id,tenant_id,reconciliation_id,action_type,
+      from_difference_type,to_difference_type,from_handling_state,to_handling_state,operator_id,
+      reason_sha256,correlation_id,occurred_at)
+    VALUES(#{row.auditId},#{tenantId},#{row.reconciliationId},#{row.actionType},
+      #{row.fromDifferenceType},#{row.toDifferenceType},#{row.fromHandlingState},#{row.toHandlingState},
+      #{row.operatorId},#{row.reasonSha256},#{row.correlationId},#{row.occurredAt})
+  </insert>
+  <select id="listAudit" resultType="com.jingshanghui.pos.reporting.application.model.PaymentReconciliationViews$AuditView">
+    SELECT audit_id auditId,reconciliation_id reconciliationId,action_type actionType,
+      from_difference_type fromDifferenceType,to_difference_type toDifferenceType,
+      from_handling_state fromHandlingState,to_handling_state toHandlingState,operator_id operatorId,
+      reason_sha256 reasonSha256,correlation_id correlationId,occurred_at occurredAt
+    FROM rpt_reconciliation_audit WHERE tenant_id=#{tenantId} AND reconciliation_id=#{objectId}
+    ORDER BY occurred_at,audit_id
+  </select>
+</mapper>

@@ -1,6 +1,7 @@
 package com.jingshanghui.pos.reporting.infrastructure.export;
 
 import com.jingshanghui.pos.reporting.application.model.ReportingViews.*;
+import com.jingshanghui.pos.reporting.application.model.PaymentReconciliationViews.ReconciliationView;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -42,6 +43,22 @@ class ReportCsvEncoderTest {
             .isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> encoder.inventoryCost("t","01ARZ3NDEKTSV4RRFFQ69G5FAV",Set.of("unknown"),List.of(inventory),Instant.EPOCH))
             .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test void encodesPaymentReconciliationWithStableWhitelistAndFormulaProtection() {
+        var row=new ReconciliationView("01ARZ3NDEKTSV4RRFFQ69G5FAV","01ARZ3NDEKTSV4RRFFQ69G5FAV","REFUND",
+            "01ARZ3NDEKTSV4RRFFQ69G5FAW","01ARZ3NDEKTSV4RRFFQ69G5FAX",LocalDate.of(2026,8,17),
+            1L,11L,"=terminal","CNY",90L,91L,"SUCCEEDED","SUCCEEDED",LocalDate.of(2026,8,17),
+            LocalDate.of(2026,8,17),"AMOUNT_MISMATCH","ASSIGNED",8L,Instant.EPOCH,Instant.EPOCH,2);
+        Set<String> fields=Set.of("reconciliationId","factType","businessDate","storeId","terminalId",
+            "currency","internalAmountMinor","billAmountMinor","internalStatus","billStatus",
+            "internalBusinessDate","billBusinessDate","differenceType","handlingState","handlerId");
+        String csv=new String(encoder.paymentReconciliation("tenant_alpha","01ARZ3NDEKTSV4RRFFQ69G5FAY",
+            fields,List.of(row),Instant.EPOCH),StandardCharsets.UTF_8);
+        assertThat(csv).contains("tenant=\"tenant_alpha\"").contains("\"'=terminal\"")
+            .contains("\"AMOUNT_MISMATCH\"").contains("\"ASSIGNED\"");
+        assertThatThrownBy(() -> encoder.paymentReconciliation("tenant_alpha","01ARZ3NDEKTSV4RRFFQ69G5FAY",
+            Set.of("providerSecret"),List.of(row),Instant.EPOCH)).isInstanceOf(IllegalArgumentException.class);
     }
     private BigDecimal d(String value) { return new BigDecimal(value); }
 }

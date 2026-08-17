@@ -2,6 +2,7 @@ package com.jingshanghui.pos.reporting.infrastructure.export;
 
 import com.jingshanghui.pos.reporting.application.model.ReportingViews.InventoryCostDailyView;
 import com.jingshanghui.pos.reporting.application.model.ReportingViews.SalesDailyView;
+import com.jingshanghui.pos.reporting.application.model.PaymentReconciliationViews.ReconciliationView;
 import com.jingshanghui.pos.reporting.domain.ReportRules;
 
 import java.nio.charset.StandardCharsets;
@@ -23,6 +24,12 @@ public final class ReportCsvEncoder {
                                 List<InventoryCostDailyView> rows, Instant generatedAt) {
         List<String> fields = requestedFields.stream().sorted().toList();
         return encode(tenantId, exportId, fields, rows, generatedAt, field -> inventoryValue(field));
+    }
+
+    public byte[] paymentReconciliation(String tenantId, String exportId, Set<String> requestedFields,
+                                        List<ReconciliationView> rows, Instant generatedAt) {
+        List<String> fields = requestedFields.stream().sorted().toList();
+        return encode(tenantId, exportId, fields, rows, generatedAt, this::paymentValue);
     }
 
     private <T> byte[] encode(String tenantId, String exportId, List<String> fields, List<T> rows,
@@ -79,6 +86,27 @@ public final class ReportCsvEncoder {
             case "transferCostDeltaMinor" -> InventoryCostDailyView::transferCostDeltaMinor;
             case "projectionStatus" -> InventoryCostDailyView::projectionStatus;
             default -> throw new IllegalArgumentException("RPT-CSV-002: 非法库存成本字段");
+        };
+    }
+
+    private Function<ReconciliationView, Object> paymentValue(String field) {
+        return switch (field) {
+            case "reconciliationId" -> ReconciliationView::reconciliationId;
+            case "factType" -> ReconciliationView::factType;
+            case "businessDate" -> ReconciliationView::businessDate;
+            case "storeId" -> ReconciliationView::storeId;
+            case "terminalId" -> ReconciliationView::terminalId;
+            case "currency" -> ReconciliationView::currency;
+            case "internalAmountMinor" -> ReconciliationView::internalAmountMinor;
+            case "billAmountMinor" -> ReconciliationView::billAmountMinor;
+            case "internalStatus" -> ReconciliationView::internalStatus;
+            case "billStatus" -> ReconciliationView::billStatus;
+            case "internalBusinessDate" -> ReconciliationView::internalBusinessDate;
+            case "billBusinessDate" -> ReconciliationView::billBusinessDate;
+            case "differenceType" -> ReconciliationView::differenceType;
+            case "handlingState" -> ReconciliationView::handlingState;
+            case "handlerId" -> ReconciliationView::handlerId;
+            default -> throw new IllegalArgumentException("RPT-CSV-003: 非法支付对账字段");
         };
     }
 

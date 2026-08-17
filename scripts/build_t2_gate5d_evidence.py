@@ -124,13 +124,15 @@ def main() -> None:
     if len(attacks) != 1:
         fail("tenant/export attack report missing")
     attack = json.loads(attacks[0].read_text(encoding="utf-8"))
-    if len(attack.get("surfaces", [])) < 40 or any(item.get("result") != "PASS" for item in attack["surfaces"]):
+    minimum_attacks = 56 if requirement_state()[0] in {"rpt2", "closure"} else 40
+    if len(attack.get("surfaces", [])) < minimum_attacks or any(item.get("result") != "PASS" for item in attack["surfaces"]):
         fail("tenant/export attack matrix incomplete")
     matrices = list((bundle / "vectors").rglob("fixed-matrix.json"))
     if len(matrices) != 1:
         fail("fixed matrix missing")
     matrix = json.loads(matrices[0].read_text(encoding="utf-8"))
-    if matrix.get("fixedScenarios", 0) < 17 or matrix.get("providerNetworkCalls") != 0:
+    minimum_scenarios = 33 if requirement_state()[0] in {"rpt2", "closure"} else 17
+    if matrix.get("fixedScenarios", 0) < minimum_scenarios or matrix.get("providerNetworkCalls") != 0:
         fail("fixed matrix incomplete or network boundary changed")
     apk = list((bundle / "pos-linux").rglob("app-debug.apk"))
     if len(apk) != 1 or apk[0].stat().st_size < 1_000_000:
@@ -163,6 +165,8 @@ def main() -> None:
         "coverage": {"serverReporting": reporting_coverage, "flutter": flutter_coverage},
         "tenantExportAttackSurfaces": len(attack["surfaces"]), "fixedScenarios": matrix["fixedScenarios"],
         "millionSyntheticProjectionRows": 1_000_000,
+        "syntheticPaymentFacts": 100_000 if stage in {"rpt2", "closure"} else 0,
+        "syntheticInternalBillEntries": 100_000 if stage in {"rpt2", "closure"} else 0,
         "providerNetworkCalls": 0, "realPiiRecords": 0,
         "apk": {"size": apk[0].stat().st_size, "sha256": digest(apk[0])},
         "artifactPolicy": "Each producer artifact is retained once; final artifact uploads this index only.",

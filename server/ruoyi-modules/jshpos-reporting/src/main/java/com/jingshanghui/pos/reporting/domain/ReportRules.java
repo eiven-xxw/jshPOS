@@ -32,6 +32,10 @@ public final class ReportRules {
         "purchaseQuantityDelta", "stocktakeQuantityDelta", "transferQuantityDelta", "inventoryValueDeltaMinor",
         "cogsDeltaMinor", "purchaseCostDeltaMinor", "stocktakeCostDeltaMinor", "transferCostDeltaMinor",
         "projectionStatus");
+    private static final Set<String> PAYMENT_RECONCILIATION_FIELDS = Set.of("reconciliationId", "factType",
+        "businessDate", "storeId", "terminalId", "currency", "internalAmountMinor", "billAmountMinor",
+        "internalStatus", "billStatus", "internalBusinessDate", "billBusinessDate", "differenceType",
+        "handlingState", "handlerId");
 
     private ReportRules() {
     }
@@ -102,6 +106,7 @@ public final class ReportRules {
         Set<String> allowed = switch (reportType) {
             case "SALES_DAILY" -> SALES_FIELDS;
             case "INVENTORY_COST_DAILY" -> INVENTORY_FIELDS;
+            case "PAYMENT_RECONCILIATION" -> PAYMENT_RECONCILIATION_FIELDS;
             default -> throw bad("RPT-G5D-010", "未知报表类型");
         };
         if (fields == null || fields.isEmpty() || !allowed.containsAll(fields)) {
@@ -112,6 +117,7 @@ public final class ReportRules {
 
     public static boolean requiresApproval(String reportType, int estimatedRows, Set<String> fields) {
         return estimatedRows > APPROVAL_ROW_THRESHOLD || "INVENTORY_COST_DAILY".equals(reportType)
+            || "PAYMENT_RECONCILIATION".equals(reportType)
             || fields.stream().anyMatch(field -> field.toLowerCase().contains("cost"));
     }
 

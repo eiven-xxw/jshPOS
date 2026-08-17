@@ -1,6 +1,8 @@
 package com.jingshanghui.pos.reporting.interfaces.rest;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
+import com.jingshanghui.pos.reporting.application.model.PaymentReconciliationCommands;
+import com.jingshanghui.pos.reporting.application.model.PaymentReconciliationViews;
 import com.jingshanghui.pos.reporting.application.model.ReportingCommands.*;
 import com.jingshanghui.pos.reporting.application.model.ReportingViews.*;
 import com.jingshanghui.pos.reporting.application.service.*;
@@ -29,6 +31,7 @@ public class ReportingController {
     private final ReportQueryService queryService;
     private final ReportExportService exportService;
     private final ReportingDifferenceService differenceService;
+    private final PaymentReconciliationService paymentReconciliationService;
 
     @PostMapping("/reporting/source-events")
     @SaCheckPermission("report:projection:ingest")
@@ -144,5 +147,71 @@ public class ReportingController {
                                         @Valid @RequestBody ReportingRequests.DifferenceState request) {
         return R.ok(differenceService.transition(new DifferenceTransition(differenceId, request.toState(),
             request.reason(), request.expectedVersion(), request.correlationId())));
+    }
+
+    @PostMapping("/reporting/payment-facts")
+    @SaCheckPermission("report:payment:ingest")
+    @Log(title="消费Provider无关支付退款事实", businessType=BusinessType.INSERT,
+        isSaveRequestData=false, isSaveResponseData=false)
+    public R<PaymentReconciliationViews.IngestView> ingestPaymentFact(
+            @Valid @RequestBody ReportingRequests.PaymentFact request) {
+        return R.ok(paymentReconciliationService.ingestFact(new PaymentReconciliationCommands.PaymentFact(
+            request.sourceEventId(), request.sourceOwner(), request.sourceSequence(), request.partitionKey(),
+            request.schemaVersion(), request.contentSha256(), request.occurredAt(), request.businessDate(),
+            request.orgId(), request.storeId(), request.terminalId(), request.factType(),
+            request.reconciliationKey(), request.orderId(), request.amountMinor(), request.currency(),
+            request.lifecycleStatus(), request.correlationId())));
+    }
+
+    @PostMapping("/reporting/internal-synthetic-bills")
+    @SaCheckPermission("report:bill:synthetic-import")
+    @Log(title="导入内部合成账单", businessType=BusinessType.IMPORT,
+        isSaveRequestData=false, isSaveResponseData=false)
+    public R<PaymentReconciliationViews.IngestView> ingestSyntheticBill(
+            @Valid @RequestBody ReportingRequests.SyntheticBill request) {
+        return R.ok(paymentReconciliationService.ingestSyntheticBill(
+            new PaymentReconciliationCommands.SyntheticBillEntry(request.billEntryId(), request.batchId(),
+                request.sourceType(), request.synthetic(), request.schemaVersion(), request.contentSha256(),
+                request.businessDate(), request.orgId(), request.storeId(), request.terminalId(), request.factType(),
+                request.reconciliationKey(), request.amountMinor(), request.currency(), request.lifecycleStatus(),
+                request.correlationId())));
+    }
+
+    @GetMapping("/reports/payment-reconciliation")
+    @SaCheckPermission("report:payment-reconciliation:read")
+    public R<List<PaymentReconciliationViews.ReconciliationView>> paymentReconciliation(
+            @RequestParam LocalDate fromDate, @RequestParam LocalDate toDate,
+            @RequestParam @Positive Long storeId,
+            @RequestParam(required=false) @Pattern(regexp="^(MATCHED|MISSING_BILL|MISSING_INTERNAL|AMOUNT_MISMATCH|CURRENCY_MISMATCH|STATUS_MISMATCH|BUSINESS_DATE_MISMATCH)$") String differenceType,
+            @RequestParam(required=false) @Pattern(regexp="^(MATCHED|OPEN|ASSIGNED|RESOLVED|IGNORED)$") String handlingState) {
+        return R.ok(paymentReconciliationService.query(new PaymentReconciliationCommands.Query(fromDate, toDate,
+            storeId, differenceType, handlingState)));
+    }
+
+    @GetMapping("/reporting/payment-reconciliation/{reconciliationId}/audit")
+    @SaCheckPermission("report:payment-reconciliation:read")
+    public R<List<PaymentReconciliationViews.AuditView>> paymentReconciliationAudit(
+            @PathVariable @Pattern(regexp=ReportingRequests.ULID) String reconciliationId) {
+        return R.ok(paymentReconciliationService.audit(reconciliationId));
+    }
+
+    @PostMapping("/reporting/payment-reconciliation/{reconciliationId}/transitions")
+    @SaCheckPermission("report:payment-reconciliation:manage")
+    @Log(title="处理支付退款对账差异", businessType=BusinessType.UPDATE, isSaveRequestData=false)
+    public R<PaymentReconciliationViews.ReconciliationView> transitionPaymentReconciliation(
+            @PathVariable @Pattern(regexp=ReportingRequests.ULID) String reconciliationId,
+            @Valid @RequestBody ReportingRequests.ReconciliationState request) {
+        return R.ok(paymentReconciliationService.transition(new PaymentReconciliationCommands.Transition(
+            reconciliationId, request.toState(), request.reason(), request.expectedVersion(),
+            request.correlationId())));
+    }
+
+    @PostMapping("/reporting/payment-reconciliation/rebuilds")
+    @SaCheckPermission("report:projection:rebuild")
+    @Log(title="重建支付退款对账投影", businessType=BusinessType.UPDATE, isSaveRequestData=false)
+    public R<PaymentReconciliationViews.RebuildView> rebuildPaymentReconciliation(
+            @Valid @RequestBody ReportingRequests.ReconciliationRebuild request) {
+        return R.ok(paymentReconciliationService.rebuild(new PaymentReconciliationCommands.Rebuild(
+            request.rebuildId(), request.fromDate(), request.toDate(), request.correlationId())));
     }
 }

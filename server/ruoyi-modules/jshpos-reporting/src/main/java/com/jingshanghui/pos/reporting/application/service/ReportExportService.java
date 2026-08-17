@@ -6,6 +6,8 @@ import com.jingshanghui.pos.foundation.application.context.TrustedTenantContext;
 import com.jingshanghui.pos.foundation.application.security.ScopeAuthorizationService;
 import com.jingshanghui.pos.reporting.application.model.ReportingCommands.*;
 import com.jingshanghui.pos.reporting.application.model.ReportingViews.*;
+import com.jingshanghui.pos.reporting.application.model.PaymentReconciliationViews.ReconciliationView;
+import com.jingshanghui.pos.reporting.application.port.PaymentReconciliationPersistencePort;
 import com.jingshanghui.pos.reporting.application.port.ReportArtifactStore;
 import com.jingshanghui.pos.reporting.application.port.ReportDownloadTokenProtector;
 import com.jingshanghui.pos.reporting.application.port.ReportingPersistencePort;
@@ -31,6 +33,7 @@ import java.util.*;
 public class ReportExportService {
     private static final Duration ARTIFACT_RETENTION = Duration.ofHours(24);
     private final ReportingPersistencePort persistence;
+    private final PaymentReconciliationPersistencePort paymentReconciliationPersistence;
     private final ReportArtifactStore artifactStore;
     private final ReportDownloadTokenProtector tokenProtector;
     private final TrustedTenantContext tenantContext;
@@ -52,9 +55,12 @@ public class ReportExportService {
         command.storeIds().forEach(authorizationService::requireStoreAccess);
         Set<String> fields = ReportRules.requireExportFields(command.reportType(), command.fields());
         List<Long> stores = command.storeIds().stream().sorted().toList();
-        String activeVersion = persistence.activeProjectionVersion(principal.tenantId(),
-            "SALES_DAILY".equals(command.reportType()) ? "SALES" : "INVENTORY_COST");
-        long counted = activeVersion == null ? 0 : count(command, principal.tenantId(), activeVersion, stores);
+        String activeVersion = "PAYMENT_RECONCILIATION".equals(command.reportType()) ? null
+            : persistence.activeProjectionVersion(principal.tenantId(),
+                "SALES_DAILY".equals(command.reportType()) ? "SALES" : "INVENTORY_COST");
+        long counted = "PAYMENT_RECONCILIATION".equals(command.reportType())
+            ? paymentReconciliationPersistence.count(principal.tenantId(), command.fromDate(), command.toDate(), stores)
+            : activeVersion == null ? 0 : count(command, principal.tenantId(), activeVersion, stores);
         if (counted > ReportRules.MAX_EXPORT_ROWS) {
             throw new ServiceException("RPT-G5D-073: 导出预计行数超过 100000", 413);
         }
@@ -197,9 +203,15 @@ public class ReportExportService {
 
     private byte[] encode(ExportRow row, String tenantId, List<Long> stores) {
         Set<String> fields = new TreeSet<>(List.of(row.fieldsCsv().split(",")));
+        Instant now = clock.instant();
+        if ("PAYMENT_RECONCILIATION".equals(row.reportType())) {
+            List<ReconciliationView> rows = stores.stream().flatMap(storeId ->
+                paymentReconciliationPersistence.query(tenantId, row.fromDate(), row.toDate(), storeId,
+                    null, null).stream()).toList();
+            return csvEncoder.paymentReconciliation(tenantId, row.exportId(), fields, rows, now);
+        }
         String family = "SALES_DAILY".equals(row.reportType()) ? "SALES" : "INVENTORY_COST";
         String version = persistence.activeProjectionVersion(tenantId, family);
-        Instant now = clock.instant();
         if ("SALES_DAILY".equals(row.reportType())) {
             List<SalesDailyView> rows = stores.stream().flatMap(storeId -> persistence.querySales(tenantId, version,
                 row.fromDate(), row.toDate(), storeId, null, null).stream()).toList();

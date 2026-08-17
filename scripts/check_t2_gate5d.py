@@ -115,7 +115,9 @@ def contracts(stage: str) -> dict[str, object]:
         fail("Gate 5D forbidden boundary incomplete")
     openapi = content["contracts/t2/gate5d/openapi-reporting-v1.yaml"]
     for marker in ("T2-RPT-001", "/api/v1/reports/sales-daily:", "/api/v1/report-exports:",
-                   "report:export:approve", "report:repair:manage"):
+                   "report:export:approve", "report:repair:manage",
+                   "/api/v1/reporting/payment-reconciliation/{reconciliationId}/audit:",
+                   "/api/v1/reporting/payment-reconciliation/rebuilds:"):
         if marker not in openapi:
             fail(f"Reporting OpenAPI marker missing {marker}")
     events = content["contracts/t2/gate5d/reporting-events-v1.yaml"]

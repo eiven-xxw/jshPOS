@@ -3,8 +3,9 @@ import { newUlid, parseStoreIds, REPORTING_ENDPOINTS, trustedReportingPayload } 
 
 describe('Gate 5D reporting client contract', () => {
   it('uses only versioned first-party reporting endpoints', () => {
-    expect(Object.values(REPORTING_ENDPOINTS)).toHaveLength(3);
+    expect(Object.values(REPORTING_ENDPOINTS)).toHaveLength(5);
     expect(Object.values(REPORTING_ENDPOINTS).every((path) => path.startsWith('/api/v1/'))).toBe(true);
+    expect(REPORTING_ENDPOINTS.paymentReconciliationManage).toBe('/api/v1/reporting/payment-reconciliation');
   });
 
   it('rejects nested tenant override and normalizes store scope', () => {

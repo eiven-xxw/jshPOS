@@ -5,6 +5,7 @@ import com.jingshanghui.pos.foundation.application.context.*;
 import com.jingshanghui.pos.foundation.application.security.ScopeAuthorizationService;
 import com.jingshanghui.pos.reporting.application.model.ReportingCommands.*;
 import com.jingshanghui.pos.reporting.application.model.ReportingViews.*;
+import com.jingshanghui.pos.reporting.application.model.PaymentReconciliationViews.ReconciliationView;
 import com.jingshanghui.pos.reporting.application.port.*;
 import com.jingshanghui.pos.reporting.application.port.ReportingPersistencePort.*;
 import com.jingshanghui.pos.reporting.domain.CanonicalReportHash;
@@ -26,6 +27,7 @@ class ReportExportServiceTest {
     private static final String TENANT="tenant_alpha";
     private static final Instant NOW=Instant.parse("2026-08-17T03:00:00Z");
     private ReportingPersistencePort persistence;
+    private PaymentReconciliationPersistencePort paymentPersistence;
     private ReportArtifactStore store;
     private ReportDownloadTokenProtector tokens;
     private TrustedTenantContext context;
@@ -35,12 +37,13 @@ class ReportExportServiceTest {
     private ReportExportService service;
 
     @BeforeEach void setUp() {
-        persistence=mock(ReportingPersistencePort.class); store=mock(ReportArtifactStore.class);
+        persistence=mock(ReportingPersistencePort.class);
+        paymentPersistence=mock(PaymentReconciliationPersistencePort.class); store=mock(ReportArtifactStore.class);
         tokens=mock(ReportDownloadTokenProtector.class); context=mock(TrustedTenantContext.class);
         auth=mock(ScopeAuthorizationService.class); differences=mock(ReportingDifferenceService.class);
         audit=mock(DomainAuditService.class);
         when(context.requirePrincipal()).thenReturn(new TrustedPrincipal(TENANT,7L,1L,"synthetic"));
-        service=new ReportExportService(persistence,store,tokens,context,auth,differences,audit,
+        service=new ReportExportService(persistence,paymentPersistence,store,tokens,context,auth,differences,audit,
             Clock.fixed(NOW,ZoneOffset.UTC),new ReportCsvEncoder());
     }
 
@@ -148,6 +151,33 @@ class ReportExportServiceTest {
         when(store.get(artifact.objectKey())).thenReturn("bad".getBytes(StandardCharsets.UTF_8));
         assertThatThrownBy(() -> service.download(id,"x".repeat(40))).isInstanceOf(ServiceException.class);
         verify(differences).record(eq("ARTIFACT_DIGEST_MISMATCH"),eq(id),anyString());
+    }
+
+    @Test void paymentReconciliationExportAlwaysRequiresApprovalAndUsesOnlyProviderNeutralProjection() {
+        LocalDate day=LocalDate.of(2026,8,17); String id="01ARZ3NDEKTSV4RRFFQ69G5FAV";
+        when(paymentPersistence.count(TENANT,day,day,List.of(11L))).thenReturn(1L);
+        when(persistence.insertExportIfAbsent(eq(TENANT),any())).thenReturn(true);
+        ExportView requested=service.request(new ExportRequest(id,"PAYMENT_RECONCILIATION",day,day,Set.of(11L),
+            Set.of("businessDate","differenceType","internalAmountMinor","billAmountMinor"),
+            "01ARZ3NDEKTSV4RRFFQ69G5FAW"));
+        assertThat(requested.approvalRequired()).isTrue();
+        verify(paymentPersistence).count(TENANT,day,day,List.of(11L));
+        verify(persistence,never()).activeProjectionVersion(TENANT,"PAYMENT_RECONCILIATION");
+
+        ExportRow approved=row(id,"PAYMENT_RECONCILIATION",
+            "billAmountMinor,businessDate,differenceType,internalAmountMinor","APPROVED",true,7L,8L,1,1,null,null);
+        ExportRow ready=row(id,"PAYMENT_RECONCILIATION",
+            "billAmountMinor,businessDate,differenceType,internalAmountMinor","READY",true,7L,8L,1,3,
+            "a".repeat(64),NOW.plus(Duration.ofHours(24)));
+        when(persistence.findExport(TENANT,id)).thenReturn(approved,ready);
+        when(persistence.transitionExport(TENANT,id,"APPROVED","GENERATING",8L,null,1,NOW)).thenReturn(1);
+        when(paymentPersistence.query(TENANT,day,day,11L,null,null)).thenReturn(List.of(
+            new ReconciliationView(id,id,"PAYMENT","01ARZ3NDEKTSV4RRFFQ69G5FAW",
+                "01ARZ3NDEKTSV4RRFFQ69G5FAX",day,1L,11L,"T1","CNY",100L,90L,"SUCCEEDED",
+                "SUCCEEDED",day,day,"AMOUNT_MISMATCH","OPEN",null,NOW,NOW,0)));
+        assertThat(service.generate(new ExportGenerate(id,1,"01ARZ3NDEKTSV4RRFFQ69G5FAY")).state()).isEqualTo("READY");
+        verify(store).put(matches("^reporting/tenant_alpha/"+id+"/[a-f0-9]{64}\\.csv$"),
+            argThat(content -> new String(content,StandardCharsets.UTF_8).contains("AMOUNT_MISMATCH")));
     }
 
     private ExportRow row(String id,String type,String fields,String state,boolean approval,Long requestedBy,

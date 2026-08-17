@@ -40,9 +40,11 @@ def main() -> None:
                       "interfaces/rest/ReportingController.java")
     for permission in ("report:operation:read", "report:projection:ingest", "report:projection:rebuild",
                        "report:export:request", "report:export:approve", "report:export:generate",
-                       "report:export:download", "report:repair:manage"):
+                       "report:export:download", "report:repair:manage", "report:payment:ingest",
+                       "report:bill:synthetic-import", "report:payment-reconciliation:read",
+                       "report:payment-reconciliation:manage"):
         require(permission in controller, f"permission missing {permission}")
-    require(controller.count("isSaveRequestData=false") >= 6,
+    require(controller.count("isSaveRequestData=false") >= 10,
             "sensitive export/projection audit body suppression missing")
 
     xml = read("server/ruoyi-modules/jshpos-reporting/src/main/resources/mapper/reporting/ReportingPersistenceMapper.xml")
@@ -55,6 +57,24 @@ def main() -> None:
     require("DELETE FROM RPT_SOURCE_EVENT_INBOX" not in xml.upper(), "source Inbox delete exposed")
     require("RPT_PROJECTION_LINEAGE" in xml.upper() and "SOURCE_CONTENT_SHA256" in xml.upper(),
             "per-event projection lineage is missing")
+
+    reconciliation_xml = read(
+        "server/ruoyi-modules/jshpos-reporting/src/main/resources/mapper/reporting/"
+        "PaymentReconciliationMapper.xml")
+    reconciliation_sql = statements(reconciliation_xml)
+    require(reconciliation_sql and all("#{tenantId}" in item for item in reconciliation_sql),
+            "Payment reconciliation Mapper statement lacks tenant binding")
+    require("SELECT *" not in reconciliation_xml.upper(), "Payment reconciliation Mapper uses SELECT *")
+    for owner in ("ORD_", "PAY_", "REF_", "INV_", "CST_", "PRM_", "MBR_"):
+        require(f" FROM {owner}" not in reconciliation_xml.upper()
+                and f" JOIN {owner}" not in reconciliation_xml.upper()
+                and f"UPDATE {owner}" not in reconciliation_xml.upper(),
+                f"payment reporting cross-owner Mapper access {owner}")
+    require("DELETE FROM RPT_PAYMENT_FACT_INBOX" not in reconciliation_xml.upper()
+            and "DELETE FROM RPT_INTERNAL_BILL_INBOX" not in reconciliation_xml.upper(),
+            "append-only payment fact or synthetic bill delete exposed")
+    require("UPDATE RPT_RECONCILIATION_AUDIT" not in reconciliation_xml.upper(),
+            "append-only reconciliation audit update exposed")
 
     runtime_root = ROOT / "server/ruoyi-modules/jshpos-reporting/src/main/java"
     runtime = "\n".join(path.read_text(encoding="utf-8", errors="replace") for path in runtime_root.rglob("*.java"))
@@ -81,10 +101,22 @@ def main() -> None:
             "projection lineage schema/FK missing")
     require(" FLOAT" not in migration and " DOUBLE" not in migration and "DECIMAL(25,6)" in migration,
             "report quantity/cost precision policy changed")
+    reconciliation_migration = read(
+        "server/ruoyi-modules/jshpos-reporting/src/main/resources/db/migration/"
+        "V202608170034__gate5d_payment_reconciliation.sql").upper()
+    for trigger in ("TRG_RPT_PAYMENT_FACT_NO_UPDATE", "TRG_RPT_PAYMENT_FACT_NO_DELETE",
+                    "TRG_RPT_INTERNAL_BILL_NO_UPDATE", "TRG_RPT_INTERNAL_BILL_NO_DELETE",
+                    "TRG_RPT_RECON_AUDIT_NO_UPDATE", "TRG_RPT_RECON_AUDIT_NO_DELETE"):
+        require(trigger in reconciliation_migration, f"RPT-002 immutable trigger missing {trigger}")
+    require("INTERNAL_SYNTHETIC" in reconciliation_migration and "READ_PROJECTION" in reconciliation_migration,
+            "RPT-002 synthetic boundary or discardable projection missing")
 
     client = read("admin-web/src/api/reporting/contract.ts")
     require("RPT-IAM-001" in client and "tenant_id" in client and "parseStoreIds" in client,
             "Web tenant override or store-scope guard missing")
+    require("paymentReconciliationManage" in client
+            and "/api/v1/reporting/payment-reconciliation" in client,
+            "Web reconciliation audit/manage contract missing")
 
     surfaces = [
         "REST_AUTHORITY", "CONTROLLER_PERMISSION", "SENSITIVE_AUDIT_BODY", "TRUSTED_TENANT",
@@ -97,6 +129,12 @@ def main() -> None:
         "TENANT_OBJECT_KEY", "SHORT_DOWNLOAD_TOKEN", "SINGLE_USE_DOWNLOAD", "ARTIFACT_DIGEST",
         "ARTIFACT_EXPIRY", "TEMP_CLEANUP", "CACHE_NAMESPACE", "PROVIDER_NETWORK", "REAL_PII",
         "TWO_SYNTHETIC_TENANTS", "FORWARD_REPAIR",
+        "PAYMENT_FACT_TENANT", "SYNTHETIC_BILL_TENANT", "RECONCILIATION_TENANT",
+        "PAYMENT_FACT_IMMUTABLE", "SYNTHETIC_BILL_IMMUTABLE", "RECON_AUDIT_IMMUTABLE",
+        "PAYMENT_FACT_CONTENT_CONFLICT", "SYNTHETIC_BILL_CONTENT_CONFLICT",
+        "RECON_MATCH_PRIORITY", "RECON_LATE_CONVERGENCE", "RECON_UNKNOWN_STATUS",
+        "RECON_MANUAL_AUDIT", "RECON_REBUILD", "RECON_EXPORT_APPROVAL",
+        "SYNTHETIC_NOT_SANDBOX", "PROVIDER_BILL_DOWNLOAD_BLOCKED",
     ]
     output = args.output if args.output.is_absolute() else ROOT / args.output
     output.parent.mkdir(parents=True, exist_ok=True)

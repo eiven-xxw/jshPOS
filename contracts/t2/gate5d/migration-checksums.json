@@ -12,6 +12,16 @@
       "path": "server/ruoyi-modules/jshpos-reporting/src/main/resources/db/migration/V202608170033__gate5d_reporting_permissions.sql",
       "sha256": "d79b14cbf67952b8613e617d924eae7d42c9396931dfe8893a1145f3bad33c34",
       "requirementId": "T2-RPT-001"
+    },
+    {
+      "path": "server/ruoyi-modules/jshpos-reporting/src/main/resources/db/migration/V202608170034__gate5d_payment_reconciliation.sql",
+      "sha256": "b7276f21ab97b6b338a77170ec57cef5fad4a20c521ccb722f900715ab68458d",
+      "requirementId": "T2-RPT-002"
+    },
+    {
+      "path": "server/ruoyi-modules/jshpos-reporting/src/main/resources/db/migration/V202608170035__gate5d_payment_reconciliation_permissions.sql",
+      "sha256": "29eca61c89fdc9ca97d7b3f82a7d69370b5c31a50eb0baff4d15c426e46b5ccf",
+      "requirementId": "T2-RPT-002"
     }
   ]
 }
