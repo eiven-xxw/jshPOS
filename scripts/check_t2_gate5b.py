@@ -38,6 +38,8 @@ DESIGN_FILES = (
     "docs/t2-gate5b/04_迁移容量兼容回退与修复.md",
     "docs/t2-gate5b/05_测试矩阵CI与证据规范.md",
     "docs/t2-gate5b/06_会员与报表DRAFT设计准备.md",
+    "docs/t2-gate5b/07_T2_Gate5B_SprintS10周门禁报告.md",
+    "docs/t2-gate5b/08_Gate5C与Gate3B下一步操作指令.md",
     "contracts/t2/gate5b/gate5b-admission.json",
     "contracts/t2/gate5b/persistence-registry.csv",
     "contracts/t2/gate5b/openapi-returns-v1.yaml",
