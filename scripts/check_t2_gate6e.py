@@ -15,6 +15,7 @@ BASELINE = "281e98a6b286f1343a012ed289cecb195858dcc7"
 ADMISSION = ROOT / "contracts/t2/gate6e/gate6e-admission.json"
 ADM_VECTORS = ROOT / "contracts/t2/gate6e/test-vectors/admin-operations-v2.json"
 POS_VECTORS = ROOT / "contracts/t2/gate6e/test-vectors/pos-return-ui-v1.json"
+E2E_VECTORS = ROOT / "contracts/t2/gate6e/test-vectors/internal-alpha-candidate-v1.json"
 RTM = ROOT / "docs/governance/rtm.csv"
 ALLOWED_STATUSES = {
     ("IN_PROGRESS", "DRAFT", "DRAFT"),
@@ -131,8 +132,8 @@ def validate_sources(statuses: tuple[str, str, str]) -> None:
             if re.search(expression, pos_runtime, re.IGNORECASE):
                 fail(f"forbidden POS-009 runtime boundary token: {expression}")
     if statuses[2] == "DRAFT":
-        for relative in ("scripts/run_t2_gate6e_internal_alpha.py",
-                         "pos-flutter/test/gate6e/internal_alpha_candidate_test.dart"):
+        for relative in ("scripts/run_t2_gate6e_internal_alpha_candidate.py",
+                         "contracts/t2/gate6e/test-vectors/internal-alpha-candidate-v1.json"):
             if (ROOT / relative).exists():
                 fail(f"E2E-002 is DRAFT but candidate runtime exists: {relative}")
 
@@ -172,6 +173,52 @@ def validate_pos_vectors(document: dict) -> None:
         fail("POS vector external execution must remain zero")
 
 
+def validate_e2e_vectors(document: dict) -> None:
+    if document.get("requirementId") != "T2-E2E-002" or document.get("evidenceLevel") != "INTERNAL_ALPHA_CANDIDATE":
+        fail("E2E-002 vector identity/evidence drift")
+    if document.get("baseFixture") != "contracts/t2/gate6d/test-vectors/internal-cash-e2e-v1.json":
+        fail("E2E-002 must extend the frozen Gate 6D journey fixture")
+    required_steps = set(document.get("requiredSteps", []))
+    expected_steps = {
+        "ADMIN_INITIALIZE_AND_RELEASE", "POS_LOGIN_AND_OPEN_SHIFT",
+        "SALE_HOLD_RESUME_AND_CASH_SETTLE", "OUTBOX_INBOX_ACK_CONVERGE",
+        "ORDER_INVENTORY_COST_REPORT_RECONCILE", "PARTIAL_ORIGINAL_RETURN",
+        "FINAL_ORIGINAL_RETURN_WITH_REMAINDER", "CLOSE_SHIFT",
+        "SYNTHETIC_RESTORE_FROM_EMPTY", "SYNTHETIC_UPGRADE_ROLLBACK_AND_FORWARD_FIX",
+    }
+    if required_steps != expected_steps:
+        fail("E2E-002 required journey steps drift")
+    journeys = document.get("journeys", [])
+    if len(journeys) != 6 or len({item.get("id") for item in journeys}) != 6:
+        fail("E2E-002 requires six uniquely identified journeys")
+    if {item.get("tenantId") for item in journeys} != {"TENANT_A", "TENANT_B"}:
+        fail("E2E-002 journeys must use exactly two fictional tenants")
+    industries = {"CONVENIENCE", "SNACK_DISCOUNT", "COMMUNITY_SUPERMARKET"}
+    for tenant in ("TENANT_A", "TENANT_B"):
+        if {item.get("industry") for item in journeys if item.get("tenantId") == tenant} != industries:
+            fail(f"E2E-002 tenant {tenant} must cover all three industries")
+    if len({item.get("returnRef") for item in journeys}) != 6:
+        fail("E2E-002 return references must be unique")
+    recovery = document.get("recovery", {})
+    if (recovery.get("evidenceLevel") != "SYNTHETIC_RESTORE" or
+            recovery.get("startFromEmpty") is not True or
+            recovery.get("rpoTargetSeconds") != 900 or recovery.get("rtoTargetSeconds") != 3600):
+        fail("E2E-002 synthetic restore boundary drift")
+    upgrade = document.get("upgrade", {})
+    if upgrade.get("evidenceLevel") != "SOFTWARE_EXECUTION" or upgrade.get("syntheticPackageOnly") is not True:
+        fail("E2E-002 synthetic upgrade boundary drift")
+    seeds = document.get("failureSeeds", [])
+    if len(seeds) < 12 or len({item.get("seed") for item in seeds}) != len(seeds):
+        fail("E2E-002 requires at least twelve unique fixed failure seeds")
+    ledger = document.get("defectLedger", {})
+    if ledger.get("p0") or ledger.get("p1"):
+        fail("E2E-002 cannot be admitted with open P0/P1 defects")
+    external = document.get("externalExecution", {})
+    for field in ("providerNetworkCalls", "realDeviceCommands", "onsitePilots", "fullAlphaRuns", "productionDeployments"):
+        if external.get(field) != 0:
+            fail(f"E2E-002 external execution must remain zero: {field}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=pathlib.Path)
@@ -187,14 +234,21 @@ def main() -> None:
     pos_vectors = load_json(POS_VECTORS)
     if statuses[1] != "DRAFT":
         validate_pos_vectors(pos_vectors)
+    e2e_vectors = None
+    if statuses[2] != "DRAFT":
+        e2e_vectors = load_json(E2E_VECTORS)
+        validate_e2e_vectors(e2e_vectors)
     result = {
         "gate": "T2-GATE6E-S16",
         "baseline": BASELINE,
         "statuses": dict(zip(("T2-ADM-002", "T2-POS-009", "T2-E2E-002"), statuses)),
-        "vectorCount": len(adm_vectors["cases"]) + len(pos_vectors["cases"]),
+        "vectorCount": (len(adm_vectors["cases"]) + len(pos_vectors["cases"]) +
+                        (len(e2e_vectors["journeys"]) + len(e2e_vectors["failureSeeds"]) if e2e_vectors else 0)),
         "vectorCounts": {
             "T2-ADM-002": len(adm_vectors["cases"]),
             "T2-POS-009": len(pos_vectors["cases"]),
+            "T2-E2E-002": ((len(e2e_vectors["journeys"]) + len(e2e_vectors["failureSeeds"]))
+                            if e2e_vectors else 0),
         },
         "externalExecution": admission["externalExecution"],
         "result": "PASS",

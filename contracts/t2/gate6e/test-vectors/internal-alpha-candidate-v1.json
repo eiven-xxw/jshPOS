@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-E2E-002",
+  "evidenceLevel": "INTERNAL_ALPHA_CANDIDATE",
+  "baseFixture": "contracts/t2/gate6d/test-vectors/internal-cash-e2e-v1.json",
+  "currency": "CNY",
+  "quantityScale": 6,
+  "requiredSteps": [
+    "ADMIN_INITIALIZE_AND_RELEASE",
+    "POS_LOGIN_AND_OPEN_SHIFT",
+    "SALE_HOLD_RESUME_AND_CASH_SETTLE",
+    "OUTBOX_INBOX_ACK_CONVERGE",
+    "ORDER_INVENTORY_COST_REPORT_RECONCILE",
+    "PARTIAL_ORIGINAL_RETURN",
+    "FINAL_ORIGINAL_RETURN_WITH_REMAINDER",
+    "CLOSE_SHIFT",
+    "SYNTHETIC_RESTORE_FROM_EMPTY",
+    "SYNTHETIC_UPGRADE_ROLLBACK_AND_FORWARD_FIX"
+  ],
+  "journeys": [
+    {"id":"ALPHA-A-CONVENIENCE","baseJourneyId":"E2E-A-CONVENIENCE","tenantId":"TENANT_A","industry":"CONVENIENCE","returnRef":"01K6E000000000000000000001","originalQuantity":"2.000000","partialQuantity":"1.000000","finalQuantity":"1.000000","originalRefundableMinor":900,"partialRefundMinor":450,"finalRefundMinor":450,"saleCostMinor":"600.000000","partialCostReversalMinor":"300.000000","finalCostReversalMinor":"300.000000","backupSetId":"01K6E000000000000000000101","releaseId":"01K6E000000000000000000201"},
+    {"id":"ALPHA-A-DISCOUNT","baseJourneyId":"E2E-A-DISCOUNT","tenantId":"TENANT_A","industry":"SNACK_DISCOUNT","returnRef":"01K6E000000000000000000002","originalQuantity":"3.000000","partialQuantity":"1.000000","finalQuantity":"2.000000","originalRefundableMinor":1200,"partialRefundMinor":400,"finalRefundMinor":800,"saleCostMinor":"750.000000","partialCostReversalMinor":"250.000000","finalCostReversalMinor":"500.000000","backupSetId":"01K6E000000000000000000102","releaseId":"01K6E000000000000000000202"},
+    {"id":"ALPHA-A-COMMUNITY","baseJourneyId":"E2E-A-COMMUNITY","tenantId":"TENANT_A","industry":"COMMUNITY_SUPERMARKET","returnRef":"01K6E000000000000000000003","originalQuantity":"4.000000","partialQuantity":"1.500000","finalQuantity":"2.500000","originalRefundableMinor":2200,"partialRefundMinor":825,"finalRefundMinor":1375,"saleCostMinor":"1600.000000","partialCostReversalMinor":"600.000000","finalCostReversalMinor":"1000.000000","backupSetId":"01K6E000000000000000000103","releaseId":"01K6E000000000000000000203"},
+    {"id":"ALPHA-B-CONVENIENCE","baseJourneyId":"E2E-B-CONVENIENCE","tenantId":"TENANT_B","industry":"CONVENIENCE","returnRef":"01K6E000000000000000000004","originalQuantity":"1.000000","partialQuantity":"0.400000","finalQuantity":"0.600000","originalRefundableMinor":750,"partialRefundMinor":300,"finalRefundMinor":450,"saleCostMinor":"500.000000","partialCostReversalMinor":"200.000000","finalCostReversalMinor":"300.000000","backupSetId":"01K6E000000000000000000104","releaseId":"01K6E000000000000000000204"},
+    {"id":"ALPHA-B-DISCOUNT","baseJourneyId":"E2E-B-DISCOUNT","tenantId":"TENANT_B","industry":"SNACK_DISCOUNT","returnRef":"01K6E000000000000000000005","originalQuantity":"6.000000","partialQuantity":"2.000000","finalQuantity":"4.000000","originalRefundableMinor":1500,"partialRefundMinor":500,"finalRefundMinor":1000,"saleCostMinor":"1080.000000","partialCostReversalMinor":"360.000000","finalCostReversalMinor":"720.000000","backupSetId":"01K6E000000000000000000105","releaseId":"01K6E000000000000000000205"},
+    {"id":"ALPHA-B-COMMUNITY","baseJourneyId":"E2E-B-COMMUNITY","tenantId":"TENANT_B","industry":"COMMUNITY_SUPERMARKET","returnRef":"01K6E000000000000000000006","originalQuantity":"2.500000","partialQuantity":"1.000000","finalQuantity":"1.500000","originalRefundableMinor":2150,"partialRefundMinor":860,"finalRefundMinor":1290,"saleCostMinor":"1125.000000","partialCostReversalMinor":"450.000000","finalCostReversalMinor":"675.000000","backupSetId":"01K6E000000000000000000106","releaseId":"01K6E000000000000000000206"}
+  ],
+  "recovery": {
+    "evidenceLevel": "SYNTHETIC_RESTORE",
+    "startFromEmpty": true,
+    "rpoTargetSeconds": 900,
+    "rtoTargetSeconds": 3600,
+    "requiredChecks": ["MANIFEST_SHA256", "ENCRYPTION_KEY_VERSION", "FLYWAY_VALIDATE", "OWNER_FACT_RECONCILE", "PROJECTION_REBUILD", "INBOX_OUTBOX_CURSOR"]
+  },
+  "upgrade": {
+    "evidenceLevel": "SOFTWARE_EXECUTION",
+    "syntheticPackageOnly": true,
+    "requiredChecks": ["RELEASE_SHA256", "SIGNATURE_KEY_VERSION", "COMPATIBILITY_WINDOW", "PENDING_OUTBOX_GUARD", "HEALTH_CHECK", "ROLLBACK", "SAFE_FORWARD_FIX"]
+  },
+  "failureSeeds": [
+    {"seed":"G6E-0001","case":"CROSS_TENANT_ORDER","expected":"REJECT"},
+    {"seed":"G6E-0002","case":"CROSS_STORE_RETURN","expected":"REJECT"},
+    {"seed":"G6E-0003","case":"ACK_LOST_REPLAY","expected":"RETURN_ORIGINAL"},
+    {"seed":"G6E-0004","case":"OUTBOX_SAME_ID_DIFFERENT_HASH","expected":"REJECT"},
+    {"seed":"G6E-0005","case":"PROCESS_KILL_AFTER_SERVER_RECEIVE","expected":"QUERY_ORIGINAL"},
+    {"seed":"G6E-0006","case":"SQLITE_WRITE_FAILURE","expected":"ROLLBACK_ALL"},
+    {"seed":"G6E-0007","case":"BUSINESS_DATE_SWITCH","expected":"FREEZE_ORIGINAL"},
+    {"seed":"G6E-0008","case":"PROMOTION_SNAPSHOT_TAMPER","expected":"REJECT"},
+    {"seed":"G6E-0009","case":"RETURN_AMOUNT_TAMPER","expected":"REJECT"},
+    {"seed":"G6E-0010","case":"REPORT_PROJECTION_DROP_AND_REBUILD","expected":"RECONCILE"},
+    {"seed":"G6E-0011","case":"BACKUP_MISSING_OBJECT_OR_WRONG_KEY","expected":"FAIL_CLOSED"},
+    {"seed":"G6E-0012","case":"UPGRADE_BAD_SIGNATURE_OR_HEALTH","expected":"ROLLBACK_OR_FORWARD_FIX"}
+  ],
+  "defectLedger": {"p0": [], "p1": []},
+  "externalExecution": {"providerNetworkCalls":0,"realDeviceCommands":0,"onsitePilots":0,"fullAlphaRuns":0,"productionDeployments":0}
+}

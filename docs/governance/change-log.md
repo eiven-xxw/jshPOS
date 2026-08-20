@@ -144,5 +144,7 @@
 | CR-T2G6E-004 | 2026-08-20 | VERIFIED_ADM002 | GitHub run 32376161860 的治理、服务端、MySQL V42、Flutter Linux/Windows、Android/Kotlin/APK、后台、安全与证据索引八路独立门禁全部成功 | T2-ADM-002、T2-MIG-001、T2-CI-001、ADR-037 | ADM-002更新为VERIFIED但不代表外部设备、支付或商业验收；八项制品按30/90天保留 |
 | CR-T2G6E-005 | 2026-08-20 | IN_PROGRESS_POS009 | 在 ADM-002 独立 VERIFIED 后冻结原单查询、可退上限、现金/Provider无关状态、权限、错误、应用端口、离线恢复和固定向量，串行准入 POS-009 | T2-POS-009、ADR-037 | E2E-002继续DRAFT；Provider网络、真实终端、完整Alpha仍为0 |
 | CR-T2G6E-006 | 2026-08-20 | IMPLEMENTED_AWAITING_INDEPENDENT_CI | 完成 POS-009 只读领域投影、正式应用端口、单航班与UNKNOWN恢复Controller、失败关闭组合根、触控页面、会话入口、40项固定向量和Gate6E覆盖率门禁 | T2-POS-009、T2-CI-001、ADR-037 | 本地Flutter 112项全量测试、Analyze和新增范围90.57%行覆盖通过；状态保持IN_PROGRESS等待独立CI，E2E-002仍DRAFT |
+| CR-T2G6E-007 | 2026-08-20 | VERIFIED_POS009 | 实现提交 `d166dd3` 的 GitHub Actions run `32379271528` 八个 Job 单次全绿；Flutter Linux/Windows 各112项、目标覆盖率90.57%、Android/Kotlin/APK、服务端、MySQL V42、后台、安全、SBOM、许可证和证据索引通过 | T2-POS-009、T2-CI-001、ADR-037 | POS-009更新为VERIFIED而非ACCEPTED；Provider网络、真实设备、现场试点和完整Alpha均为0 |
+| CR-T2G6E-008 | 2026-08-20 | IN_PROGRESS_E2E002 | 在 POS-009 独立 VERIFIED 后，冻结两虚构租户六旅程、三业态、销售同步、部分/最终退款、库存成本报表、班次、合成备份恢复与升级回退的主权、不变量、固定seed、证据和Go/No-Go，串行准入E2E-002 | T2-E2E-002、T2-CI-001、ADR-037 | 最高证据为INTERNAL_ALPHA_CANDIDATE；不新增领域算法，不更新或替代T2-UAT-001，外部执行仍为0 |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。
