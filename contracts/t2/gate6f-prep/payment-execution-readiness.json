@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-PAY-002",
+  "status": "BLOCKED",
+  "selectedProvider": {
+    "code": "LAKALA",
+    "name": "拉卡拉",
+    "selectionScope": "DOCUMENT_VERIFICATION_CANDIDATE_ONLY",
+    "selectionReason": "现有 Gate 6C 公开资料覆盖支付、查询、退款、回调、签名和测试端点说明，且在既定优先序中排名第一",
+    "publicEvidence": ["PAY-LKL-PUB-001"],
+    "contractOrCommercialCommitment": false
+  },
+  "fallbackProvider": {
+    "code": "HUIFU",
+    "name": "汇付天下",
+    "selectionScope": "DOCUMENT_VERIFICATION_FALLBACK_ONLY",
+    "publicEvidence": ["PAY-HUIFU-PUB-001", "PAY-HUIFU-PUB-002"]
+  },
+  "controlledBundleStatus": "INCOMPLETE",
+  "verifiedDocumentStatus": "NOT_ACHIEVED",
+  "mandatoryItems": [
+    {"id":"PAY-AUTH","name":"授权沙箱及自动化测试授权","status":"MISSING","controlledReference":null},
+    {"id":"PAY-MERCHANT","name":"测试商户与适用产品权限","status":"MISSING","controlledReference":null},
+    {"id":"PAY-TERMINAL","name":"测试终端及终端绑定规则","status":"MISSING","controlledReference":null},
+    {"id":"PAY-API","name":"锁定版本的支付/查询/退款接口、错误码与变更政策","status":"MISSING","controlledReference":null},
+    {"id":"PAY-SIGN","name":"适用签名验签、证书轮换与防重放配置","status":"MISSING","controlledReference":null},
+    {"id":"PAY-CALLBACK","name":"回调域名、验签、重试、乱序与幂等说明","status":"MISSING","controlledReference":null},
+    {"id":"PAY-BILL","name":"账单格式、样例、下载窗口与对账口径","status":"MISSING","controlledReference":null},
+    {"id":"PAY-LIMIT","name":"限流、超时、维护窗口与故障升级路径","status":"MISSING","controlledReference":null},
+    {"id":"PAY-NETWORK","name":"沙箱域名、出口/回调白名单与网络责任边界","status":"MISSING","controlledReference":null},
+    {"id":"PAY-CONTACT","name":"可验证商务与技术联系人","status":"MISSING","controlledReference":null},
+    {"id":"PAY-SECRET","name":"Secret保管、轮换、到期和吊销引用","status":"MISSING","controlledReference":null}
+  ],
+  "providerNetworkAllowed": false,
+  "providerNetworkCalls": 0,
+  "realFundsAllowed": false,
+  "executionAdmission": "NO_GO"
+}

@@ -5,9 +5,9 @@
   "branch": "t2/gate6e-sprint16-internal-alpha-candidate",
   "evidenceCeiling": ["STATIC", "UNIT", "WIDGET", "COMPONENT", "SYNTHETIC_E2E", "INTERNAL_ALPHA_CANDIDATE", "SOFTWARE_EXECUTION"],
   "sequentialRequirements": [
-    {"order": 1, "id": "T2-ADM-002", "status": "VERIFIED", "runtimeAllowed": true, "dependsOn": []},
-    {"order": 2, "id": "T2-POS-009", "status": "VERIFIED", "runtimeAllowed": true, "dependsOn": ["T2-ADM-002"]},
-    {"order": 3, "id": "T2-E2E-002", "status": "VERIFIED", "runtimeAllowed": true, "dependsOn": ["T2-POS-009"]}
+    {"order": 1, "id": "T2-ADM-002", "status": "ACCEPTED", "runtimeAllowed": true, "dependsOn": []},
+    {"order": 2, "id": "T2-POS-009", "status": "ACCEPTED", "runtimeAllowed": true, "dependsOn": ["T2-ADM-002"]},
+    {"order": 3, "id": "T2-E2E-002", "status": "ACCEPTED", "runtimeAllowed": true, "dependsOn": ["T2-POS-009"]}
   ],
   "preservedStates": {
     "T2-PAY-002": "BLOCKED",

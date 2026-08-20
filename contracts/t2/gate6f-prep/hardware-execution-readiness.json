@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-HWD-001",
+  "status": "BLOCKED",
+  "hosts": [
+    {
+      "role": "PRIMARY_DOCUMENT_CANDIDATE",
+      "vendor": "商米",
+      "modelFamily": "T3 PRO MAX / L15B1",
+      "publicAndroid": "SUNMI OS based on Android 13",
+      "publicCpu": "Kryo-670 octa-core up to 2.7GHz",
+      "publicMemory": "6GB RAM + 128GB ROM",
+      "publicEvidence": ["HWD-SUNMI-PUB-001", "HWD-SUNMI-PUB-002"],
+      "selectionStatus": "SELECTED_FOR_DOCUMENT_VERIFICATION_PENDING_EXACT_SKU"
+    },
+    {
+      "role": "COMPATIBLE_DOCUMENT_CANDIDATE",
+      "vendor": "iMin",
+      "modelFamily": "D4 Pro",
+      "publicAndroid": "Android 13 64-bit",
+      "publicCpu": "2x Cortex-A78 2.2GHz + 6x Cortex-A55 2.0GHz",
+      "publicMemory": "4GB+64GB or 8GB+128GB",
+      "publicEvidence": ["HWD-IMIN-PUB-001", "HWD-IMIN-PUB-002"],
+      "selectionStatus": "SELECTED_FOR_DOCUMENT_VERIFICATION_PENDING_EXACT_SKU"
+    }
+  ],
+  "peripheralCandidates": [
+    {"type":"PRINTER_A","model":"SUNMI T3 PRO MAX integrated 80mm printer","status":"DOCUMENT_CANDIDATE"},
+    {"type":"PRINTER_B","model":"HPRT TP808","status":"DOCUMENT_CANDIDATE"},
+    {"type":"SCANNER","model":"Zebra DS2208","status":"DOCUMENT_CANDIDATE"},
+    {"type":"SCALE","model":"SUNMI S2","status":"DOCUMENT_CANDIDATE_WITH_ANDROID_LIFECYCLE_RISK"},
+    {"type":"CASH_DRAWER","model":null,"status":"MISSING_EXACT_MODEL"},
+    {"type":"CUSTOMER_DISPLAY","model":"SUNMI 10.1-inch or 15.6-inch secondary display","status":"DOCUMENT_CANDIDATE"}
+  ],
+  "controlledBundleStatus": "INCOMPLETE",
+  "verifiedDocumentStatus": "NOT_ACHIEVED",
+  "mandatoryMissing": [
+    "PRIMARY_EXACT_SKU_AND_FIRMWARE_BUILD",
+    "COMPATIBLE_EXACT_SKU_AND_FIRMWARE_BUILD",
+    "SDK_VERSION_ENTITLEMENT_LICENSE_AND_SHA256",
+    "PRIMARY_AND_COMPATIBLE_SAMPLE_ASSET_RECORDS",
+    "TWO_PRINTER_SAMPLE_AND_INTERFACE_BUNDLES",
+    "SCANNER_SAMPLE_AND_CONFIGURATION",
+    "SCALE_PROTOCOL_CALIBRATION_AND_COMPLIANCE",
+    "CASH_DRAWER_EXACT_MODEL_AND_ELECTRICAL_PROFILE",
+    "CUSTOMER_DISPLAY_PRIVACY_AND_INTERFACE_PROFILE",
+    "APK_INSTALL_SILENT_UPGRADE_AND_RECOVERY_AUTHORIZATION",
+    "WARRANTY_RMA_EOL_AND_NAMED_TECHNICAL_CONTACT"
+  ],
+  "realDeviceCommandsAllowed": false,
+  "realDeviceCommands": 0,
+  "executionAdmission": "NO_GO"
+}

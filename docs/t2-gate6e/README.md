@@ -13,4 +13,4 @@
 11. [Gate 6E / Sprint S16 周门禁暨内部 Alpha 候选收口报告](11_T2_Gate6E_SprintS16周门禁暨内部Alpha候选收口报告.md)
 12. [外部 P0 恢复对接、完整 Alpha UAT 与发布准备下一步操作指令](12_外部P0恢复对接完整AlphaUAT与发布准备下一步操作指令.md)
 
-当前 `T2-ADM-002=VERIFIED`、`T2-POS-009=VERIFIED`、`T2-E2E-002=VERIFIED`，等待项目发起人 Gate 6E 总评审。三项均未更新为 `ACCEPTED`；不得自动启动外部执行、完整 Alpha UAT 或发布准备。
+项目发起人已于 2026-08-21 接受 Gate 6E `CONDITIONAL PASS`，`T2-ADM-002`、`T2-POS-009`、`T2-E2E-002` 已更新为 `ACCEPTED`。其中 `T2-E2E-002` 的证据上限仍为 `INTERNAL_ALPHA_CANDIDATE`，不更新或替代 `T2-UAT-001`，不代表 SANDBOX、REAL_DEVICE、PILOT、FULL_ALPHA、PRODUCTION 或商业 SLA。

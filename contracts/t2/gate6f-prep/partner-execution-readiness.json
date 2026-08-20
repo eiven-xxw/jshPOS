@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-PAR-001",
+  "status": "BLOCKED",
+  "targetRequired": 5,
+  "verifiedRealTargetCount": 0,
+  "verifiedWrittenIntentRequired": 3,
+  "verifiedWrittenIntentCount": 0,
+  "authorizedMaskedSampleCount": 0,
+  "retentionDeletionAgreementCount": 0,
+  "legacyReconciliationReadyCount": 0,
+  "onsiteBoundaryConfirmedCount": 0,
+  "slots": [
+    {"opaqueId":"PAR-01","industry":"CONVENIENCE","identity":"MISSING","writtenIntent":"MISSING"},
+    {"opaqueId":"PAR-02","industry":"CONVENIENCE","identity":"MISSING","writtenIntent":"MISSING"},
+    {"opaqueId":"PAR-03","industry":"SNACK_DISCOUNT","identity":"MISSING","writtenIntent":"MISSING"},
+    {"opaqueId":"PAR-04","industry":"COMMUNITY_SUPERMARKET","identity":"MISSING","writtenIntent":"MISSING"},
+    {"opaqueId":"PAR-05","industry":"COMMUNITY_SUPERMARKET","identity":"MISSING","writtenIntent":"MISSING"}
+  ],
+  "contactAllowed": false,
+  "partnerContacts": 0,
+  "onsitePilotAllowed": false,
+  "onsitePilots": 0,
+  "verifiedDocumentStatus": "NOT_ACHIEVED",
+  "executionAdmission": "NO_GO"
+}

@@ -47,3 +47,4 @@ ADR 一经接受不得删除或静默改写。需要改变决策时，新建 ADR
 | ADR-035 | [Gate 6C 外部 P0 证据治理与 Alpha 准入](ADR-035-gate6c-external-p0-evidence-and-alpha-admission.md) | Accepted |
 | ADR-036 | [Gate 6D 内部产品化 UI 编排与合成闭环边界](ADR-036-gate6d-internal-productization-ui-orchestration.md) | Accepted |
 | ADR-037 | [Gate 6E 后台运营、原单退货退款与内部 Alpha 候选边界](ADR-037-gate6e-operations-return-internal-alpha.md) | Accepted |
+| ADR-038 | [Gate 6F 外部执行准入、完整 Alpha UAT 与发布准备边界](ADR-038-gate6f-external-admission-uat-release-prep.md) | Accepted |

@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-REL-001",
+  "status": "DRAFT",
+  "decision": "NO_GO_RELEASE",
+  "productionDeploymentAllowed": false,
+  "gaps": [
+    {"id":"REL-UAT","severity":"P0","status":"BLOCKED","reason":"T2-UAT-001尚未ACCEPTED"},
+    {"id":"REL-PAY","severity":"P0","status":"BLOCKED","reason":"T2-PAY-002仍BLOCKED"},
+    {"id":"REL-HWD","severity":"P0","status":"BLOCKED","reason":"T2-HWD-001仍BLOCKED"},
+    {"id":"REL-PAR","severity":"P0","status":"BLOCKED","reason":"T2-PAR-001仍BLOCKED"},
+    {"id":"REL-LIC","severity":"P0","status":"BLOCKED","reason":"T2-LIC-001三项组件尚未关闭"},
+    {"id":"REL-KMS","severity":"P0","status":"BLOCKED","reason":"生产KMS、对象存储、跨区域灾备和真实PITR仍缺外部证据"},
+    {"id":"REL-JSH","severity":"P2","status":"DEFERRED","reason":"T2-JSH-001真实接口资料未提供且不属于当前商业发布核心准入"}
+  ],
+  "preparedTemplates": [
+    "VERSION_AND_BUILD_COMMIT_MANIFEST",
+    "SBOM_AND_LICENSE_MANIFEST",
+    "ARTIFACT_SIGNATURE_AND_DIGEST",
+    "CHANGELOG_AND_KNOWN_ISSUES",
+    "FORWARD_DATABASE_MIGRATION",
+    "CANARY_AND_ROLLBACK",
+    "MONITORING_AND_ALERTING",
+    "CUSTOMER_SERVICE_AND_IMPLEMENTATION_RUNBOOK",
+    "RELEASE_GO_NO_GO_SIGNOFF",
+    "DATA_CLEARANCE_AND_ENVIRONMENT_DESTRUCTION"
+  ],
+  "productionDeployments": 0,
+  "commercialClaimAllowed": false
+}

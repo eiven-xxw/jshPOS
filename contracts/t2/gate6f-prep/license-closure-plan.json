@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-LIC-001",
+  "status": "DEFERRED",
+  "commercialReleaseBlocker": true,
+  "components": [
+    {
+      "name": "Aviator",
+      "decision": "PENDING_REPLACE_OR_LEGAL_APPROVAL",
+      "preferredPath": "评估并迁移到自有受限表达式DSL或经批准的宽松许可证规则执行组件",
+      "owner": "架构负责人/法务负责人",
+      "requiredEvidence": ["DEPENDENCY_INVENTORY", "LICENSE_OPINION_OR_REPLACEMENT_ADR", "REGRESSION_RESULT", "SBOM_WITHOUT_UNAPPROVED_COMPONENT"]
+    },
+    {
+      "name": "simple-http",
+      "decision": "PENDING_REPLACE_OR_LEGAL_APPROVAL",
+      "preferredPath": "优先迁移到仓库已批准且受集中超时重试审计治理的HTTP客户端",
+      "owner": "架构负责人/安全负责人",
+      "requiredEvidence": ["USAGE_MAP", "REPLACEMENT_ADR_OR_LEGAL_APPROVAL", "NETWORK_POLICY_REGRESSION", "SBOM_RESULT"]
+    },
+    {
+      "name": "MySQL Connector/J",
+      "decision": "PENDING_LEGAL_DISTRIBUTION_REVIEW_OR_DEPLOYMENT_MODEL_CHANGE",
+      "preferredPath": "由法务确认商业分发模式；必要时采用客户环境独立获取或经批准的替代驱动/部署模式",
+      "owner": "法务负责人/发布负责人",
+      "requiredEvidence": ["DISTRIBUTION_MODEL", "LEGAL_OPINION", "NOTICE_AND_OFFER_REQUIREMENTS", "RELEASE_BOM_APPROVAL"]
+    }
+  ],
+  "closureRule": "三个组件全部CLOSED且回归/SBOM/许可证证据通过后才允许商业发布",
+  "overallDecision": "NO_GO_COMMERCIAL_RELEASE"
+}

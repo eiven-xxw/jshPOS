@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-UAT-001",
+  "status": "DRAFT",
+  "decision": "NO_GO_FULL_ALPHA",
+  "fullAlphaAllowed": false,
+  "environment": {
+    "topologyStatus": "PREPARED_NOT_PROVISIONED",
+    "productionDataAllowed": false,
+    "syntheticDataAllowed": true,
+    "authorizedMaskedPartnerDataAllowedAfterApproval": true
+  },
+  "entryBlockers": ["T2-PAY-002", "T2-HWD-001", "T2-PAR-001"],
+  "testDomains": [
+    {"id":"UAT-TEN","name":"租户组织门店权限与审计","caseStatus":"DRAFT"},
+    {"id":"UAT-CAT","name":"商品价格数据包与迁移","caseStatus":"DRAFT"},
+    {"id":"UAT-SALE","name":"POS班次销售现金与退款","caseStatus":"DRAFT"},
+    {"id":"UAT-PAY","name":"首接支付成功失败超时UNKNOWN退款与对账","caseStatus":"BLOCKED_BY_T2_PAY_002"},
+    {"id":"UAT-HWD","name":"主兼容机与打印扫码秤钱箱客显","caseStatus":"BLOCKED_BY_T2_HWD_001"},
+    {"id":"UAT-OFF","name":"离线同步故障与积压恢复","caseStatus":"DRAFT"},
+    {"id":"UAT-INV","name":"库存采购盘点调拨成本","caseStatus":"DRAFT"},
+    {"id":"UAT-PRM","name":"促销人工优惠原快照退款","caseStatus":"DRAFT"},
+    {"id":"UAT-MEM","name":"会员隐私等级与积分","caseStatus":"DRAFT"},
+    {"id":"UAT-RPT","name":"报表导出与逐日守恒","caseStatus":"DRAFT"},
+    {"id":"UAT-UPG","name":"发布升级回退前向修复","caseStatus":"BLOCKED_FOR_REAL_DEVICE_EXECUTION"},
+    {"id":"UAT-BAK","name":"备份恢复RPO/RTO与数据清除","caseStatus":"DRAFT"},
+    {"id":"UAT-NFR","name":"容量性能安全灾备与可观测性","caseStatus":"DRAFT"},
+    {"id":"UAT-PAR","name":"伙伴旧系统逐日对账与现场责任边界","caseStatus":"BLOCKED_BY_T2_PAR_001"}
+  ],
+  "defectPolicy": {
+    "p0": "资金重复或丢失、跨租户泄漏、库存/成本不可重建、数据不可恢复、关键交易不可用或不可安全回退",
+    "p1": "核心旅程无可接受替代、对账不守恒、主要设备/支付能力不稳定、关键权限审计缺失或RPO/RTO不达目标",
+    "startRule": "三条外部P0全部经独立执行准入确认",
+    "acceptRule": "P0=0且P1=0，全部强制用例有合格证据和角色签署"
+  },
+  "externalExecution": {"fullAlphaRuns":0,"onsitePilots":0,"providerNetworkCalls":0,"realDeviceCommands":0}
+}

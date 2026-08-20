@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "1.0",
+  "phase": "T2-GATE6F-EXTERNAL-P0-UAT-PREP",
+  "baselineCommit": "0dd20e90c32914da48b3154f0bf1781ab8f2ba71",
+  "branch": "t2/gate6f-external-p0-uat-prep-20260821",
+  "decision": "CONDITIONAL_GO_PREP_ONLY",
+  "evidenceLevel": "STATIC_GOVERNANCE",
+  "acceptedInternalRequirements": {
+    "T2-ADM-002": "ACCEPTED",
+    "T2-POS-009": "ACCEPTED",
+    "T2-E2E-002": "ACCEPTED"
+  },
+  "preservedStates": {
+    "T2-PAY-002": "BLOCKED",
+    "T2-HWD-001": "BLOCKED",
+    "T2-PAR-001": "BLOCKED",
+    "T2-UAT-001": "DRAFT",
+    "T2-REL-001": "DRAFT",
+    "T2-JSH-001": "DEFERRED",
+    "T2-LIC-001": "DEFERRED"
+  },
+  "allowedActions": [
+    "CANDIDATE_SELECTION_FOR_DOCUMENT_VERIFICATION",
+    "CONTROLLED_METADATA_INTAKE",
+    "OFFLINE_DOCUMENT_VERIFICATION",
+    "INDEPENDENT_EXECUTION_ADMISSION_REPORT",
+    "FULL_ALPHA_UAT_PREPARATION",
+    "RELEASE_READINESS_PREPARATION",
+    "LICENSE_CLOSURE_PLANNING"
+  ],
+  "forbiddenActions": [
+    "PAYMENT_PROVIDER_NETWORK",
+    "REAL_DEVICE_INSTALL_OR_COMMAND",
+    "PARTNER_OR_STORE_CONTACT_OR_ONSITE_EXECUTION",
+    "FULL_ALPHA_UAT_EXECUTION",
+    "PRODUCTION_DEPLOYMENT",
+    "COMMERCIAL_AVAILABILITY_CLAIM",
+    "SECRET_OR_REAL_PII_IN_REPOSITORY"
+  ],
+  "externalExecution": {
+    "providerNetworkCalls": 0,
+    "realDeviceCommands": 0,
+    "partnerContacts": 0,
+    "onsitePilots": 0,
+    "fullAlphaRuns": 0,
+    "productionDeployments": 0,
+    "commercialClaimAllowed": false
+  },
+  "overallDecision": "NO_GO_EXTERNAL_EXECUTION_FULL_ALPHA_AND_RELEASE"
+}
