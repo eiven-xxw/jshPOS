@@ -149,6 +149,30 @@ def read_xml_tests(bundle: pathlib.Path, producer: str, pattern: str = "TEST-*.x
     return suites
 
 
+def read_flutter_successful_tests(path: pathlib.Path) -> set[str]:
+    """读取 Flutter 机器报告，仅返回已成功完成且未跳过的测试名称。"""
+    started: dict[int, str] = {}
+    successful_names: set[str] = set()
+    for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+        try: event = json.loads(line)
+        except json.JSONDecodeError: continue
+        # Flutter 会输出合法的扩展事件数组；它们不属于机器测试结果事件。
+        if not isinstance(event, dict):
+            continue
+        if event.get("type") == "testStart":
+            test = event.get("test", {})
+            if not isinstance(test, dict):
+                continue
+            metadata = test.get("metadata", {})
+            metadata = metadata if isinstance(metadata, dict) else {}
+            if isinstance(test.get("id"), int) and metadata.get("skip") is not True:
+                started[test["id"]] = test.get("name", "")
+        elif event.get("type") == "testDone" and event.get("result") == "success" and event.get("skipped") is not True:
+            if event.get("testID") in started:
+                successful_names.add(started[event["testID"]])
+    return successful_names
+
+
 def validate_ci_bundle(bundle: pathlib.Path) -> dict:
     suites = read_xml_tests(bundle, "server")
     for class_name, methods in SERVER_TESTS.items():
@@ -164,19 +188,16 @@ def validate_ci_bundle(bundle: pathlib.Path) -> dict:
     if missing_web:
         fail(f"missing admin component evidence: {sorted(missing_web)}")
 
-    flutter_names: set[str] = set()
     for producer in ("pos-linux", "pos-windows"):
         files = list((bundle / producer).rglob("flutter-tests.jsonl"))
         if not files:
             fail(f"missing Flutter machine evidence {producer}")
-        for line in files[0].read_text(encoding="utf-8", errors="replace").splitlines():
-            try: event = json.loads(line)
-            except json.JSONDecodeError: continue
-            if event.get("type") == "testStart":
-                flutter_names.add(event.get("test", {}).get("name", ""))
-    missing_flutter = {name for name in FLUTTER_TESTS if not any(name in actual for actual in flutter_names)}
-    if missing_flutter:
-        fail(f"missing cross-platform POS evidence: {sorted(missing_flutter)}")
+        successful_names = read_flutter_successful_tests(files[0])
+        missing_flutter = {
+            name for name in FLUTTER_TESTS if not any(name in actual for actual in successful_names)
+        }
+        if missing_flutter:
+            fail(f"missing successful unskipped POS evidence in {producer}: {sorted(missing_flutter)}")
 
     governance_files = list((bundle / "governance").rglob("gate6d-governance.json"))
     if not governance_files:
