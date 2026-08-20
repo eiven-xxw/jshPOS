@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-HWD-001",
+  "status": "BLOCKED",
+  "overallBundleStatus": "INCOMPLETE",
+  "realDeviceCommandsAllowed": false,
+  "realDeviceCommands": 0,
+  "hosts": [
+    {"role":"PRIMARY_CANDIDATE","vendor":"商米","model":"T3 PRO MAX / L15B1 系列待厂商确认具体 SKU","android":"SUNMI OS based on Android 13","cpu":"Kryo-670 octa-core up to 2.7GHz","memory":"6GB RAM + 128GB ROM","publicEvidence":["HWD-SUNMI-PUB-001","HWD-SUNMI-PUB-002"],"selectionStatus":"CANDIDATE_ONLY","controlledMissing":["QUOTED_SKU","FIRMWARE_BUILD","SDK_ENTITLEMENT","SAMPLE_SERIAL","SILENT_INSTALL_AUTHORIZATION","CHINA_CERTIFICATES","NAMED_TECHNICAL_CONTACT"]},
+    {"role":"COMPATIBLE_CANDIDATE","vendor":"iMin","model":"D4 Pro 具体 SKU 待厂商确认","android":"Android 13 64-bit","cpu":"octa-core: 2x Cortex-A78 2.2GHz + 6x Cortex-A55 2.0GHz","memory":"4GB+64GB or 8GB+128GB","publicEvidence":["HWD-IMIN-PUB-001","HWD-IMIN-PUB-002"],"selectionStatus":"CANDIDATE_ONLY","controlledMissing":["QUOTED_SKU","FIRMWARE_BUILD","SDK_ENTITLEMENT","SAMPLE_SERIAL","SILENT_INSTALL_AUTHORIZATION","CHINA_CERTIFICATES","NAMED_TECHNICAL_CONTACT"]}
+  ],
+  "peripherals": [
+    {"type":"PRINTER_INTEGRATED","candidate":"SUNMI T3 PRO MAX built-in 80mm printer","interface":"VENDOR_PRINT_SERVICE","publicEvidence":["HWD-SUNMI-PUB-001","HWD-SUNMI-PUB-002"],"status":"CANDIDATE_ONLY"},
+    {"type":"PRINTER_EXTERNAL","candidate":"HPRT TP808","interface":"USB/SERIAL/ETHERNET ESC/POS; Android SDK","publicEvidence":["HWD-HPRT-PUB-001"],"status":"CANDIDATE_ONLY"},
+    {"type":"SCANNER","candidate":"Zebra DS2208","interface":"USB HID/USB/RS232; 1D/2D","publicEvidence":["HWD-ZEBRA-PUB-001"],"status":"CANDIDATE_ONLY"},
+    {"type":"SCALE","candidate":"SUNMI S2 smart scale terminal","interface":"device-side scale service/serial capability subject to SDK confirmation","publicEvidence":["HWD-SUNMI-PUB-003","HWD-SUNMI-PUB-002"],"status":"CANDIDATE_WITH_OS_RISK"},
+    {"type":"CASH_DRAWER","candidate":"24V RJ12 cash drawer, exact vendor/model pending","interface":"host/printer drawer port","publicEvidence":["HWD-SUNMI-PUB-001","HWD-HPRT-PUB-001"],"status":"MODEL_MISSING"},
+    {"type":"CUSTOMER_DISPLAY","candidate":"SUNMI 10.1-inch or 15.6-inch secondary display","interface":"vendor secondary-display service/Android Presentation subject to SDK confirmation","publicEvidence":["HWD-SUNMI-PUB-001","HWD-SUNMI-PUB-002"],"status":"CANDIDATE_ONLY"}
+  ],
+  "crossRisks": [
+    "SUNMI S2 public specification is based on Android 7.1 and cannot be accepted without lifecycle and security confirmation.",
+    "Cash drawer lacks a concrete vendor/model and electrical compatibility evidence.",
+    "No candidate has a registered sample serial, firmware build or authorized SDK bundle."
+  ],
+  "executionAdmission": "NO_GO"
+}

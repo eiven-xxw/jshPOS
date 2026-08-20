@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "1.0",
+  "phase": "T2-GATE6C-EVIDENCE-INTAKE",
+  "baselineCommit": "74f5100b89a7cf98acd28622e5ccdc4beb7626b7",
+  "decision": "CONDITIONAL_GO_INTAKE_ONLY",
+  "requirements": [
+    {"id": "T2-PAY-002", "status": "BLOCKED", "networkAllowed": false, "bundleStatus": "INCOMPLETE"},
+    {"id": "T2-HWD-001", "status": "BLOCKED", "realDeviceCommandsAllowed": false, "bundleStatus": "INCOMPLETE"},
+    {"id": "T2-PAR-001", "status": "BLOCKED", "pilotAllowed": false, "bundleStatus": "MISSING"},
+    {"id": "T2-UAT-001", "status": "DRAFT", "fullAlphaAllowed": false},
+    {"id": "T2-REL-001", "status": "DRAFT", "commercialClaimAllowed": false}
+  ],
+  "allowedActions": [
+    "PUBLIC_OFFICIAL_DOCUMENT_INTAKE",
+    "OFFLINE_SOURCE_HASH_AND_SCOPE_VERIFICATION",
+    "CONTROLLED_EVIDENCE_RFI_PREPARATION",
+    "INDEPENDENT_EXECUTION_ADMISSION_REPORT_PREPARATION"
+  ],
+  "forbiddenActions": [
+    "PAYMENT_PROVIDER_NETWORK",
+    "PAYMENT_SECRET_IN_REPOSITORY",
+    "REAL_DEVICE_INSTALL_OR_COMMAND",
+    "ONSITE_PILOT",
+    "FULL_ALPHA_UAT",
+    "STATUS_UNBLOCK_WITH_PUBLIC_DOCUMENT_ONLY"
+  ],
+  "counters": {
+    "providerNetworkCalls": 0,
+    "realDeviceCommands": 0,
+    "onsitePilotExecutions": 0,
+    "fullAlphaExecutions": 0,
+    "verifiedRealPartners": 0,
+    "verifiedWrittenIntents": 0
+  }
+}

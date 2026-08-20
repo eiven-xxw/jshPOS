@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "1.0",
+  "asOf": "2026-08-20",
+  "decision": "NO_GO_FULL_ALPHA",
+  "fullAlphaAllowed": false,
+  "commercialClaimAllowed": false,
+  "gaps": [
+    {"id":"ALPHA-P0-PAY","requirementId":"T2-PAY-002","severity":"P0","status":"BLOCKED","publicDocuments":9,"controlledBundle":"INCOMPLETE","executionEvidence":0},
+    {"id":"ALPHA-P0-HWD","requirementId":"T2-HWD-001","severity":"P0","status":"BLOCKED","publicDocuments":7,"controlledBundle":"INCOMPLETE","executionEvidence":0},
+    {"id":"ALPHA-P0-PAR","requirementId":"T2-PAR-001","severity":"P0","status":"BLOCKED","realTargets":0,"writtenIntents":0,"executionEvidence":0}
+  ],
+  "dependentRequirements": [
+    {"id":"T2-UAT-001","status":"DRAFT"},
+    {"id":"T2-REL-001","status":"DRAFT"}
+  ]
+}

@@ -117,5 +117,7 @@
 | CR-T2G6B-005 | 2026-08-20 | ACCEPTED | 项目发起人确认《T2 Gate 6B / Sprint S14 周门禁报告》并接受 Gate 6B CONDITIONAL PASS，授权 `T2-UPG-001` 由 VERIFIED 更新为 ACCEPTED | T2-UPG-001、ADR-034 | 接受仅覆盖 Provider 无关发布治理、合成签名包、虚构终端和软件执行结果；不等于 REAL_DEVICE、生产发布链路或商业 SLA |
 | CR-T2G6C-001 | 2026-08-20 | APPROVED | 项目发起人按 CONDITIONAL GO 启动外部 P0 解阻与 Gate 6C-Prep，只允许支付沙箱、真实硬件、设计伙伴资料治理，以及 Alpha 差距、证据目录、RACI 和 Go/No-Go 模板 | T2-PAY-002、T2-HWD-001、T2-PAR-001、T2-UAT-001、T2-REL-001、ADR-035 | 三条外部需求保持 BLOCKED，UAT/REL 保持 DRAFT；Provider 网络、真实终端命令和完整 Alpha UAT 继续禁止 |
 | CR-T2G6C-002 | 2026-08-20 | CONDITIONAL_PASS_AWAITING_CONFIRMATION | Gate 6C-Prep 候选 `9d6d01e` 完成三条独立解阻报告、Alpha 差距/证据目录、RACI/截止点、Go/No-Go/回退模板和机器契约；GitHub Actions Run `32337497155` 的 Ubuntu、Windows、范围/Secret 边界和证据索引四个 Job 全绿 | T2-PAY-002、T2-HWD-001、T2-PAR-001、T2-UAT-001、T2-REL-001、ADR-035 | 仅 STATIC_GOVERNANCE；PAY/HWD/PAR 继续 BLOCKED，UAT/REL 继续 DRAFT；完整 Alpha 决策为 NO-GO，等待项目发起人确认资料收件阶段 |
+| CR-T2G6C-003 | 2026-08-20 | APPROVED | 项目发起人接受 Gate 6C-Prep CONDITIONAL PASS，仅授权进入三条外部证据收件与离线验真，并要求真实材料达到 VERIFIED_DOCUMENT 后另行提交独立执行准入评审 | T2-PAY-002、T2-HWD-001、T2-PAR-001、T2-UAT-001、T2-REL-001、ADR-035 | PAY/HWD/PAR 保持 BLOCKED，UAT/REL 保持 DRAFT；禁止 Provider 网络、真实设备命令、现场试点和完整 Alpha UAT |
+| CR-T2G6C-004 | 2026-08-20 | DOCUMENT_INTAKE_AWAITING_CI | 完成五家支付和主机/外设候选的 16 份公开官方响应 URL/字节数/SHA-256 登记、统一 RFI、伙伴证据包、三条独立 NO-GO 报告及 Alpha P0 差距；公开材料只标记 PUBLIC_OFFICIAL_DOCUMENT | T2-PAY-002、T2-HWD-001、T2-PAR-001、T2-UAT-001、T2-REL-001、ADR-035 | 授权沙箱包0、样机包0、真实伙伴0/5、书面意愿0/3；network/device/pilot/fullAlpha 执行数均为0，等待 CI 验证 |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。

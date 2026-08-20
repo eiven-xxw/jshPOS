@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-PAR-001",
+  "status": "BLOCKED",
+  "realTargetCount": 0,
+  "targetRequired": 5,
+  "verifiedWrittenIntentCount": 0,
+  "verifiedWrittenIntentRequired": 3,
+  "authorizedMaskedSampleCount": 0,
+  "retentionDeletionAgreementCount": 0,
+  "legacyReconciliationReadyCount": 0,
+  "partnerSlots": [
+    {"opaqueId":"PAR-01","businessType":"CONVENIENCE","identity":"MISSING","writtenIntent":"MISSING"},
+    {"opaqueId":"PAR-02","businessType":"CONVENIENCE","identity":"MISSING","writtenIntent":"MISSING"},
+    {"opaqueId":"PAR-03","businessType":"SNACK_DISCOUNT","identity":"MISSING","writtenIntent":"MISSING"},
+    {"opaqueId":"PAR-04","businessType":"COMMUNITY_SUPERMARKET","identity":"MISSING","writtenIntent":"MISSING"},
+    {"opaqueId":"PAR-05","businessType":"COMMUNITY_SUPERMARKET","identity":"MISSING","writtenIntent":"MISSING"}
+  ],
+  "pilotAllowed": false,
+  "executionAdmission": "NO_GO"
+}
