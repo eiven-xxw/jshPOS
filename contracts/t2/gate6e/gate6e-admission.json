@@ -5,8 +5,8 @@
   "branch": "t2/gate6e-sprint16-internal-alpha-candidate",
   "evidenceCeiling": ["STATIC", "UNIT", "WIDGET", "COMPONENT", "SYNTHETIC_E2E", "INTERNAL_ALPHA_CANDIDATE", "SOFTWARE_EXECUTION"],
   "sequentialRequirements": [
-    {"order": 1, "id": "T2-ADM-002", "status": "IN_PROGRESS", "runtimeAllowed": true, "dependsOn": []},
-    {"order": 2, "id": "T2-POS-009", "status": "DRAFT", "runtimeAllowed": false, "dependsOn": ["T2-ADM-002"]},
+    {"order": 1, "id": "T2-ADM-002", "status": "VERIFIED", "runtimeAllowed": true, "dependsOn": []},
+    {"order": 2, "id": "T2-POS-009", "status": "IN_PROGRESS", "runtimeAllowed": true, "dependsOn": ["T2-ADM-002"]},
     {"order": 3, "id": "T2-E2E-002", "status": "DRAFT", "runtimeAllowed": false, "dependsOn": ["T2-POS-009"]}
   ],
   "preservedStates": {
