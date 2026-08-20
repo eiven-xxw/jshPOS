@@ -229,12 +229,27 @@ jobs:
           server_sbom="$(find "$RUNNER_TEMP/gate6b-security-input/server" -name bom.json -type f -print -quit)"
           flutter_sbom="$(find "$RUNNER_TEMP/gate6b-security-input/pos" -name flutter-cyclonedx.json -type f -print -quit)"
           test -s "$server_sbom" && test -s "$flutter_sbom"
+          set +e
           /tmp/trivy sbom --skip-version-check --db-repository ghcr.io/aquasecurity/trivy-db:2 --java-db-repository ghcr.io/aquasecurity/trivy-java-db:1 --scanners vuln --severity HIGH,CRITICAL --exit-code 1 --format json --output artifacts/t2/gate6b/security/trivy-server-vuln.json "$server_sbom"
+          server_vulnerability_status=$?
+          set -e
+          if [ "$server_vulnerability_status" -ne 0 ]; then
+            /tmp/trivy sbom --skip-version-check --db-repository ghcr.io/aquasecurity/trivy-db:2 --java-db-repository ghcr.io/aquasecurity/trivy-java-db:1 --scanners vuln --severity HIGH,CRITICAL --exit-code 0 --format table "$server_sbom"
+            exit "$server_vulnerability_status"
+          fi
+          set +e
           /tmp/trivy sbom --skip-version-check --db-repository ghcr.io/aquasecurity/trivy-db:2 --scanners vuln --severity HIGH,CRITICAL --exit-code 1 --format json --output artifacts/t2/gate6b/security/trivy-flutter-vuln.json "$flutter_sbom"
+          flutter_vulnerability_status=$?
+          set -e
+          if [ "$flutter_vulnerability_status" -ne 0 ]; then
+            /tmp/trivy sbom --skip-version-check --db-repository ghcr.io/aquasecurity/trivy-db:2 --scanners vuln --severity HIGH,CRITICAL --exit-code 0 --format table "$flutter_sbom"
+            exit "$flutter_vulnerability_status"
+          fi
           python scripts/check_sbom_licenses.py "$server_sbom" docs/compliance/reviewed-license-allowlist.json | tee artifacts/t2/gate6b/security/server-license-policy.txt
           /tmp/trivy fs --skip-version-check --offline-scan --scanners secret --severity HIGH,CRITICAL --exit-code 1 --skip-dirs .git --format json --output artifacts/t2/gate6b/security/trivy-secret.json .
           /tmp/trivy config --skip-version-check --checks-bundle-repository ghcr.io/aquasecurity/trivy-checks:2 --severity HIGH,CRITICAL --exit-code 1 --format json --output artifacts/t2/gate6b/security/trivy-config.json .github/workflows/t2-gate6b.yml
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
         with: { name: t2-gate6b-security, path: artifacts/t2/gate6b/security, if-no-files-found: error, retention-days: 30 }
 
   evidence:
