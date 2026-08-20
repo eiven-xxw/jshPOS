@@ -125,5 +125,7 @@
 | CR-T2G6D-003 | 2026-08-20 | CI_FAILURE_FIXED_AWAITING_RETEST | GitHub Actions Run `32355937056` 的 POS Linux 格式门禁发现 Gate 6D 新增 Dart 文件未使用固定 Flutter 3.47.0 所带 Dart 3.13.0 格式化；使用相同引擎 SDK 修正，并将格式检查精确限定到本 Gate 变更，避免机械改写未触及的历史文件 | T2-POS-007、T2-CI-001、`.github/workflows/t2-gate6d.yml` | 失败 Run 与日志保留；未跳过 analyze/test、未降低覆盖率或安全阈值，要求重新运行完整流水线 |
 | CR-T2G6D-004 | 2026-08-20 | CI_FAILURE_FIXED_AWAITING_RETEST | GitHub Actions Run `32356409883` 的 Flutter fatal-infos 门禁发现会话服务构造器三处 `prefer_initializing_formals`；将只读依赖改为具名初始化形式并补充中文边界说明 | T2-POS-007、T2-CI-001 | 失败 Run 与日志保留；未禁用 lint、未降低阈值或自动重跑失败 Job，要求由新提交触发完整流水线 |
 | CR-T2G6D-005 | 2026-08-20 | CI_FAILURE_FIXED_AWAITING_RETEST | GitHub Actions Run `32356617979` 的 POS Linux 证明新增会话逻辑与组件测试均通过，但 Gate 6D 目标代码覆盖率为 82.72%，未达到 90% 门禁；补充终端停用/过期、未知验证异常、登录输入与认证异常、会话/班次失效、刷新/退出失败、权限成功及默认仓储失败关闭测试，本地 19 项通过并达到 99.38% | T2-POS-007、T2-CI-001 | 保留失败 Run；覆盖率阈值仍为 90%，未排除生产代码、未跳过测试或用重跑掩盖失败，要求完整 CI 重跑 |
+| CR-T2G6D-006 | 2026-08-20 | VERIFIED_POS007 | 实现候选 `e234d85` 的 GitHub Actions Run `32357245349` 八个 Job 单次全绿；19 项可信会话测试、99.38% 目标覆盖率、Flutter 双平台、Android、SQLite、MySQL、服务端、Web、安全、SBOM、许可证和证据索引通过 | T2-POS-007、T2-CI-001、ADR-036 | POS-007 更新为 VERIFIED 而非 ACCEPTED；仅虚构终端与软件证据，REAL_DEVICE/PILOT/完整Alpha仍为0 |
+| CR-T2G6D-007 | 2026-08-20 | IN_PROGRESS_POS008 | 在 POS-007 独立 VERIFIED 证据成立后，依序准入扫码搜索、购物篮、促销报价、受权人工优惠、挂取单、现金成交、打印任务预览及同步状态正式 UI | T2-POS-008、ADR-036 | UI 只能调用应用服务/Repository/设备适配端口；ADM-001 与 E2E-001 继续 DRAFT，真实打印和 Provider 网络仍禁止 |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。
