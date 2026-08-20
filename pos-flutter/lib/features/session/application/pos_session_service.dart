@@ -6,18 +6,20 @@ import 'pos_session_repository.dart';
 /// POS-007 会话应用服务，独占页面会话状态迁移与重复操作抑制。
 final class PosSessionService {
   PosSessionService({
-    required PosDeviceGateway deviceGateway,
-    required PosSessionRepository repository,
-    required String Function() correlationId,
+    required this.deviceGateway,
+    required this.repository,
+    required this.correlationId,
     DateTime Function()? now,
-  }) : _deviceGateway = deviceGateway,
-       _repository = repository,
-       _correlationId = correlationId,
-       _now = now ?? DateTime.now;
+  }) : _now = now ?? DateTime.now;
 
-  final PosDeviceGateway _deviceGateway;
-  final PosSessionRepository _repository;
-  final String Function() _correlationId;
+  /// 设备能力只读契约；应用层不得绕过它调用平台通道。
+  final PosDeviceGateway deviceGateway;
+
+  /// 会话可信仓储端口；具体实现负责服务端与安全存储边界。
+  final PosSessionRepository repository;
+
+  /// 关联标识生成器；用于重复请求与审计关联，不承载业务身份。
+  final String Function() correlationId;
   final DateTime Function() _now;
   PosSessionState _state = const PosSessionState.bootstrapping();
   Future<PosSessionState>? _bootstrapFlight;
@@ -37,8 +39,8 @@ final class PosSessionService {
     _state = const PosSessionState.bootstrapping();
     DeviceSnapshot? device;
     try {
-      device = await _deviceGateway.snapshot();
-      final terminal = await _repository.verifyTerminal(device);
+      device = await deviceGateway.snapshot();
+      final terminal = await repository.verifyTerminal(device);
       if (!terminal.isActive || !terminal.validUntil.isAfter(_now().toUtc())) {
         throw const PosSessionFailure(
           'TERMINAL_REVOKED',
@@ -101,10 +103,10 @@ final class PosSessionService {
       final command = EmployeeLoginCommand(
         loginName: loginName.trim(),
         secret: secret,
-        correlationId: _correlationId(),
+        correlationId: correlationId(),
         occurredAt: _now().toUtc(),
       );
-      final result = await _repository.authenticate(terminal, command);
+      final result = await repository.authenticate(terminal, command);
       if (!result.employee.expiresAt.isAfter(_now().toUtc())) {
         throw const PosSessionFailure('SESSION_EXPIRED', '会话已过期，请重新登录。');
       }
@@ -151,7 +153,7 @@ final class PosSessionService {
     final employee = before.employee;
     if (terminal == null || employee == null) return before;
     try {
-      final refreshed = await _repository.refresh(terminal, employee);
+      final refreshed = await repository.refresh(terminal, employee);
       if (!refreshed.terminal.isActive ||
           !refreshed.terminal.validUntil.isAfter(_now().toUtc())) {
         throw const PosSessionFailure('TERMINAL_REVOKED', '终端已被停用，请联系管理员。');
@@ -225,7 +227,7 @@ final class PosSessionService {
       shift: before.shift,
     );
     try {
-      await _repository.logout(terminal, employee, _correlationId());
+      await repository.logout(terminal, employee, correlationId());
       return _state = PosSessionState(
         phase: PosSessionPhase.signedOut,
         device: before.device,

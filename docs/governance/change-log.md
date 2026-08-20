@@ -123,5 +123,6 @@
 | CR-T2G6D-001 | 2026-08-20 | APPROVED | 项目发起人确认外部支付沙箱、真实硬件和设计伙伴暂不阻断内部产品化，并授权从 `aece518b9ef1057462e835ad7f98ce1aa2bffbf3` 按 POS-007→POS-008→ADM-001→E2E-001 串行启动 Gate 6D / Sprint S15 | T2-POS-007、T2-POS-008、T2-ADM-001、T2-E2E-001、ADR-036 | PAY/HWD/PAR 保持 BLOCKED，UAT/REL 保持 DRAFT，JSH/LIC 保持 DEFERRED；Provider 网络、真实设备、现场试点和完整 Alpha 均为 0 |
 | CR-T2G6D-002 | 2026-08-20 | IN_PROGRESS_POS007 | T2-POS-007 已冻结用户旅程、页面状态、可信终端和员工会话、权限、错误码、审计、应用端口、离线、兼容、回退和测试准入，按串行规则进入实现 | T2-POS-007、ADR-036 | POS-008、ADM-001、E2E-001 继续 DRAFT；POS-007 只允许虚构终端和软件会话证据 |
 | CR-T2G6D-003 | 2026-08-20 | CI_FAILURE_FIXED_AWAITING_RETEST | GitHub Actions Run `32355937056` 的 POS Linux 格式门禁发现 Gate 6D 新增 Dart 文件未使用固定 Flutter 3.47.0 所带 Dart 3.13.0 格式化；使用相同引擎 SDK 修正，并将格式检查精确限定到本 Gate 变更，避免机械改写未触及的历史文件 | T2-POS-007、T2-CI-001、`.github/workflows/t2-gate6d.yml` | 失败 Run 与日志保留；未跳过 analyze/test、未降低覆盖率或安全阈值，要求重新运行完整流水线 |
+| CR-T2G6D-004 | 2026-08-20 | CI_FAILURE_FIXED_AWAITING_RETEST | GitHub Actions Run `32356409883` 的 Flutter fatal-infos 门禁发现会话服务构造器三处 `prefer_initializing_formals`；将只读依赖改为具名初始化形式并补充中文边界说明 | T2-POS-007、T2-CI-001 | 失败 Run 与日志保留；未禁用 lint、未降低阈值或自动重跑失败 Job，要求由新提交触发完整流水线 |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。
