@@ -24,6 +24,7 @@
         <module>jshpos-member</module>
         <module>jshpos-reporting</module>
         <module>jshpos-resilience</module>
+        <module>jshpos-release</module>
         <module>ruoyi-demo</module>
         <module>ruoyi-generator</module>
         <module>ruoyi-job</module>

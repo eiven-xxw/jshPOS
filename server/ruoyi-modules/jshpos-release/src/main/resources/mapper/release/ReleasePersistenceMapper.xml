@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jingshanghui.pos.release.infrastructure.persistence.mapper.ReleasePersistenceMapper">
+    <resultMap id="releaseRow" type="com.jingshanghui.pos.release.infrastructure.persistence.ReleasePersistenceParams$ReleaseRow">
+        <constructor>
+            <arg column="release_id" javaType="String"/><arg column="tenant_id" javaType="String"/>
+            <arg column="artifact_type" javaType="String"/><arg column="release_version" javaType="String"/>
+            <arg column="channel_code" javaType="String"/><arg column="object_key" javaType="String"/>
+            <arg column="artifact_sha256" javaType="String"/><arg column="signature_base64" javaType="String"/>
+            <arg column="key_version" javaType="String"/><arg column="build_commit" javaType="String"/>
+            <arg column="sbom_sha256" javaType="String"/><arg column="manifest_sha256" javaType="String"/>
+            <arg column="min_app_version" javaType="String"/><arg column="max_app_version" javaType="String"/>
+            <arg column="min_protocol_version" javaType="String"/><arg column="max_protocol_version" javaType="String"/>
+            <arg column="min_schema_version" javaType="String"/><arg column="max_schema_version" javaType="String"/>
+            <arg column="min_system_version" javaType="String"/><arg column="max_system_version" javaType="String"/>
+            <arg column="required_capability_sha256" javaType="String"/><arg column="state" javaType="String"/>
+            <arg column="version_no" javaType="long"/><arg column="created_at" javaType="java.time.Instant"/>
+        </constructor>
+    </resultMap>
+    <resultMap id="rolloutRow" type="com.jingshanghui.pos.release.infrastructure.persistence.ReleasePersistenceParams$RolloutRow">
+        <constructor>
+            <arg column="rollout_id" javaType="String"/><arg column="tenant_id" javaType="String"/>
+            <arg column="release_id" javaType="String"/><arg column="canary_percent" javaType="int"/>
+            <arg column="state" javaType="String"/><arg column="version_no" javaType="long"/>
+            <arg column="created_at" javaType="java.time.Instant"/>
+        </constructor>
+    </resultMap>
+    <resultMap id="taskRow" type="com.jingshanghui.pos.release.infrastructure.persistence.ReleasePersistenceParams$TaskRow">
+        <constructor>
+            <arg column="task_id" javaType="String"/><arg column="tenant_id" javaType="String"/>
+            <arg column="rollout_id" javaType="String"/><arg column="release_id" javaType="String"/>
+            <arg column="device_id" javaType="String"/><arg column="store_id" javaType="java.lang.Long"/>
+            <arg column="state" javaType="String"/><arg column="last_evidence_sha256" javaType="String"/>
+            <arg column="version_no" javaType="long"/><arg column="created_at" javaType="java.time.Instant"/>
+        </constructor>
+    </resultMap>
+    <resultMap id="commandRow" type="com.jingshanghui.pos.release.infrastructure.persistence.ReleasePersistenceParams$CommandRow">
+        <constructor><arg column="request_sha256" javaType="String"/><arg column="aggregate_id" javaType="String"/><arg column="result_code" javaType="String"/></constructor>
+    </resultMap>
+
+    <select id="selectRelease" resultMap="releaseRow">
+        SELECT release_id,tenant_id,artifact_type,release_version,channel_code,object_key,artifact_sha256,
+          signature_base64,key_version,build_commit,sbom_sha256,manifest_sha256,min_app_version,max_app_version,
+          min_protocol_version,max_protocol_version,min_schema_version,max_schema_version,min_system_version,
+          max_system_version,required_capability_sha256,state,version_no,created_at
+        FROM upg_release WHERE tenant_id=#{tenantId} AND release_id=#{releaseId}
+    </select>
+    <select id="selectRollout" resultMap="rolloutRow">
+        SELECT rollout_id,tenant_id,release_id,canary_percent,state,version_no,created_at
+        FROM upg_rollout WHERE tenant_id=#{tenantId} AND rollout_id=#{rolloutId}
+    </select>
+    <select id="selectTask" resultMap="taskRow">
+        SELECT task_id,tenant_id,rollout_id,release_id,device_id,store_id,state,last_evidence_sha256,version_no,created_at
+        FROM upg_terminal_task WHERE tenant_id=#{tenantId} AND task_id=#{taskId}
+    </select>
+    <select id="selectScopes" resultType="long">
+        SELECT store_id FROM upg_target_scope
+        WHERE tenant_id=#{tenantId} AND aggregate_type=#{aggregateType} AND aggregate_id=#{aggregateId}
+        ORDER BY store_id
+    </select>
+    <select id="selectCommand" resultMap="commandRow">
+        SELECT request_sha256,aggregate_id,result_code FROM upg_command_result
+        WHERE tenant_id=#{tenantId} AND command_type=#{commandType} AND idempotency_key=#{idempotencyKey}
+    </select>
+
+    <insert id="insertRelease">
+        INSERT INTO upg_release(release_id,tenant_id,artifact_type,release_version,channel_code,object_key,
+          artifact_sha256,signature_base64,key_version,build_commit,sbom_sha256,manifest_sha256,min_app_version,
+          max_app_version,min_protocol_version,max_protocol_version,min_schema_version,max_schema_version,
+          min_system_version,max_system_version,required_capability_sha256,state,request_sha256,created_by,
+          correlation_id,created_at,updated_at)
+        VALUES(#{releaseId},#{tenantId},#{artifactType},#{releaseVersion},#{channelCode},#{objectKey},
+          #{artifactSha256},#{signatureBase64},#{keyVersion},#{buildCommit},#{sbomSha256},#{manifestSha256},
+          #{minAppVersion},#{maxAppVersion},#{minProtocolVersion},#{maxProtocolVersion},#{minSchemaVersion},
+          #{maxSchemaVersion},#{minSystemVersion},#{maxSystemVersion},#{requiredCapabilitySha256},'DRAFT',
+          #{requestSha256},#{actorId},#{correlationId},UTC_TIMESTAMP(3),UTC_TIMESTAMP(3))
+    </insert>
+    <insert id="insertScope">
+        INSERT INTO upg_target_scope(scope_id,tenant_id,aggregate_type,aggregate_id,store_id,created_at)
+        VALUES(#{scopeId},#{tenantId},#{aggregateType},#{aggregateId},#{storeId},UTC_TIMESTAMP(3))
+    </insert>
+    <update id="transitionRelease">
+        UPDATE upg_release SET state=#{toState},version_no=version_no+1,last_actor_id=#{actorId},
+          last_correlation_id=#{correlationId},updated_at=UTC_TIMESTAMP(3)
+        WHERE tenant_id=#{tenantId} AND release_id=#{releaseId} AND state=#{fromState} AND version_no=#{expectedVersion}
+    </update>
+
+    <insert id="insertRollout">
+        INSERT INTO upg_rollout(rollout_id,tenant_id,release_id,canary_percent,state,request_sha256,created_by,
+          correlation_id,created_at,updated_at)
+        VALUES(#{rolloutId},#{tenantId},#{releaseId},#{canaryPercent},'PLANNED',#{requestSha256},#{actorId},
+          #{correlationId},UTC_TIMESTAMP(3),UTC_TIMESTAMP(3))
+    </insert>
+    <update id="transitionRollout">
+        UPDATE upg_rollout SET state=#{toState},version_no=version_no+1,last_actor_id=#{actorId},
+          last_correlation_id=#{correlationId},updated_at=UTC_TIMESTAMP(3)
+        WHERE tenant_id=#{tenantId} AND rollout_id=#{rolloutId} AND state=#{fromState} AND version_no=#{expectedVersion}
+    </update>
+
+    <insert id="insertTask">
+        INSERT INTO upg_terminal_task(task_id,tenant_id,rollout_id,release_id,device_id,store_id,state,
+          request_sha256,last_evidence_sha256,created_by,correlation_id,created_at,updated_at)
+        VALUES(#{taskId},#{tenantId},#{rolloutId},#{releaseId},#{deviceId},#{storeId},'PLANNED',
+          #{requestSha256},#{evidenceSha256},#{actorId},#{correlationId},UTC_TIMESTAMP(3),UTC_TIMESTAMP(3))
+    </insert>
+    <update id="transitionTask">
+        UPDATE upg_terminal_task SET state=#{toState},last_evidence_sha256=#{evidenceSha256},
+          version_no=version_no+1,last_actor_id=#{actorId},last_correlation_id=#{correlationId},updated_at=UTC_TIMESTAMP(3)
+        WHERE tenant_id=#{tenantId} AND task_id=#{taskId} AND state=#{fromState} AND version_no=#{expectedVersion}
+    </update>
+    <select id="summarizeTasks" resultType="com.jingshanghui.pos.release.infrastructure.persistence.ReleasePersistenceParams$SummaryRow">
+        SELECT COALESCE(SUM(state='SUCCEEDED'),0) succeeded,
+          COALESCE(SUM(state IN ('PLANNED','DOWNLOADING','VERIFIED','INSTALLING','HEALTH_CHECK')),0) active,
+          COALESCE(SUM(state IN ('ROLLED_BACK','FORWARD_FIX_REQUIRED','FAILED_CLOSED')),0) failed
+        FROM upg_terminal_task WHERE tenant_id=#{tenantId} AND rollout_id=#{rolloutId}
+    </select>
+
+    <insert id="insertCommand">
+        INSERT INTO upg_command_result(command_id,tenant_id,command_type,idempotency_key,request_sha256,
+          aggregate_id,result_code,actor_id,occurred_at)
+        VALUES(#{commandId},#{tenantId},#{commandType},#{idempotencyKey},#{requestSha256},#{aggregateId},
+          #{resultCode},#{actorId},#{occurredAt})
+    </insert>
+    <insert id="insertEvent">
+        INSERT INTO upg_release_event(event_id,tenant_id,aggregate_type,aggregate_id,event_type,from_state,to_state,
+          evidence_sha256,correlation_id,occurred_at)
+        VALUES(#{eventId},#{tenantId},#{aggregateType},#{aggregateId},#{eventType},#{fromState},#{toState},
+          #{evidenceSha256},#{correlationId},UTC_TIMESTAMP(3))
+    </insert>
+    <insert id="insertAudit">
+        INSERT INTO upg_audit(audit_id,tenant_id,aggregate_type,aggregate_id,action_code,before_state,after_state,
+          evidence_sha256,actor_id,correlation_id,occurred_at)
+        VALUES(#{auditId},#{tenantId},#{aggregateType},#{aggregateId},#{actionCode},#{beforeState},#{afterState},
+          #{evidenceSha256},#{actorId},#{correlationId},UTC_TIMESTAMP(3))
+    </insert>
+</mapper>

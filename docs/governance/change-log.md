@@ -109,5 +109,8 @@
 | CR-T2G6A-001 | 2026-08-17 | APPROVED | 项目发起人按 `T2-TRM-001 → T2-BAK-001` 授权 Gate 6A / Sprint S13；UPG-001 只允许设计准备，UAT/REL 只允许退出材料模板 | T2-TRM-001、T2-BAK-001、T2-UPG-001、T2-UAT-001、T2-REL-001、ADR-032 | T2-PAY-002/HWD-001/PAR-001 保持 BLOCKED；禁止 Provider 网络、真实云资源写入、真实终端命令和 Alpha 声称 |
 | CR-T2G6A-002 | 2026-08-17 | IN_PROGRESS | T2-TRM-001 已冻结终端逻辑数据主权、激活/阻断/吊销/退役状态、一次性激活码与设备凭据摘要、版本能力快照、可信上下文、权限审计、V36迁移、容量、兼容回退和测试准入 | T2-TRM-001、ADR-032 | BAK-001 与 UPG-001 保持 DRAFT；只允许虚构终端与软件密钥，REAL_DEVICE=0 |
 | CR-DEV-004 | 2026-08-18 | APPROVED | 将新增表单列 `MP_ENTITY/XML_ONLY/READ_PROJECTION` 登记修订为数据访问策略 `CRUD_ENTITY/CONTROLLED_WRITE/APPEND_ONLY/READ_PROJECTION` 与 SQL 模式 `MP/XML/HYBRID` 两个维度；明确普通实体同一 Mapper 可以共用 `BaseMapper/Lambda` 和自定义 XML，`CRUD_ENTITY + XML` 同样合法；严格只追加对象不得原位迁移投递状态 | AGENTS.md、技术架构与开发规范 10.2.1/10.2.5、JSH-POS-DEV-STD-001/002、ADR-027、ADR-033 | 项目发起人 2026-08-18 正式确认；生效前已合法准入的旧登记（含进行中 Gate）兼容保留，新登记立即使用双维度；本次不修改业务代码、Mapper、Flyway、RTM 或 Gate 状态，不启动 Gate 6B |
+| CR-T2G6A-003 | 2026-08-20 | ACCEPTED | 项目发起人确认 Gate 6A CONDITIONAL PASS，将 T2-TRM-001 与 T2-BAK-001 由 VERIFIED 更新为 ACCEPTED | T2-TRM-001、T2-BAK-001、ADR-032 | TRM 不等于 REAL_DEVICE；BAK 仅 SYNTHETIC_RESTORE，RPO/RTO 不构成生产灾备或商业 SLA；生产 KMS/对象存储/跨区域/真实 PITR 继续阻断 |
+| CR-T2G6B-001 | 2026-08-20 | APPROVED | 项目发起人按 CONDITIONAL GO 启动 Gate 6B / Sprint S14，只准入 Provider 无关 T2-UPG-001，并要求支付、硬件和伙伴三条外部解阻轨保持隔离 | T2-UPG-001、T2-PAY-002、T2-HWD-001、T2-PAR-001、ADR-034 | 只允许合成签名包、虚构终端和软件执行结果；禁止真实终端命令、Provider 网络和完整 Alpha UAT |
+| CR-T2G6B-002 | 2026-08-20 | IN_PROGRESS | T2-UPG-001 已冻结 Release Owner、七类发布物、三套状态机、可信终端/安全探针、签名摘要、兼容、权限审计、API/事件、V40/V41、容量、回退/前向修复和测试准入，进入正式实现 | T2-UPG-001、ADR-034 | 新表已按 CONTROLLED_WRITE/APPEND_ONLY + XML 双登记；Gate 6A 设计夹具未转生产表；HWD/PAY/PAR 状态不变 |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。

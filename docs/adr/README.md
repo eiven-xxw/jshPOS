@@ -43,3 +43,4 @@ ADR 一经接受不得删除或静默改写。需要改变决策时，新建 ADR
 | ADR-031 | [Gate 5D 可重建报表投影与安全导出边界](ADR-031-gate5d-rebuildable-reporting-projections.md) | Accepted |
 | ADR-032 | [Gate 6A 终端唯一事实源与恢复性边界](ADR-032-gate6a-terminal-and-recovery.md) | Accepted |
 | ADR-033 | [持久化访问策略与 SQL 模式解耦](ADR-033-persistence-access-strategy-and-sql-mode.md) | Accepted |
+| ADR-034 | [Gate 6B Provider 无关发布治理与真实设备边界](ADR-034-gate6b-provider-neutral-release-governance.md) | Accepted |

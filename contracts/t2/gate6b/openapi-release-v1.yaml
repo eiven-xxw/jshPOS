@@ -1,0 +1,114 @@
+openapi: 3.1.0
+info:
+  title: 鲸熵汇 Gate 6B Provider无关发布治理 API
+  version: 1.0.0
+  description: 只定义发布治理和软件执行证据，不包含厂商安装、固件、重启或支付Provider调用。
+paths:
+  /api/v1/releases:
+    post:
+      operationId: createRelease
+      security: [{ bearerAuth: [] }]
+      parameters: [{$ref: '#/components/parameters/IdempotencyKey'}]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: '#/components/schemas/CreateRelease'}}}
+      responses: {'200': {description: DRAFT发布摘要}, '400': {description: 输入无效}, '403': {description: 租户或门店范围越权}}
+  /api/v1/releases/{releaseId}/verify:
+    post:
+      operationId: verifyReleaseArtifact
+      security: [{ bearerAuth: [] }]
+      parameters: [{$ref: '#/components/parameters/ReleaseId'}, {$ref: '#/components/parameters/IdempotencyKey'}]
+      responses: {'200': {description: SIGNED发布摘要}, '422': {description: 摘要/签名/密钥版本失败关闭}, '503': {description: 对象或公钥注册表未配置}}
+  /api/v1/releases/{releaseId}/stage:
+    post:
+      operationId: stageRelease
+      security: [{ bearerAuth: [] }]
+      parameters: [{$ref: '#/components/parameters/ReleaseId'}, {$ref: '#/components/parameters/IdempotencyKey'}]
+      responses: {'200': {description: STAGED发布摘要}, '409': {description: 状态不允许}}
+  /api/v1/releases/{releaseId}/revoke:
+    post:
+      operationId: revokeRelease
+      security: [{ bearerAuth: [] }]
+      parameters: [{$ref: '#/components/parameters/ReleaseId'}, {$ref: '#/components/parameters/IdempotencyKey'}]
+      responses: {'200': {description: REVOKED且不重写历史}}
+  /api/v1/releases/{releaseId}/rollouts:
+    post:
+      operationId: createRollout
+      security: [{ bearerAuth: [] }]
+      parameters: [{$ref: '#/components/parameters/ReleaseId'}, {$ref: '#/components/parameters/IdempotencyKey'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/CreateRollout'}}}}
+      responses: {'200': {description: PLANNED灰度批次}, '403': {description: 目标范围越界}}
+  /api/v1/releases/rollouts/{rolloutId}/tasks:
+    post:
+      operationId: assignSyntheticTerminalTask
+      security: [{ bearerAuth: [] }]
+      parameters: [{$ref: '#/components/parameters/RolloutId'}, {$ref: '#/components/parameters/IdempotencyKey'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/AssignTerminal'}}}}
+      responses: {'200': {description: 软件任务摘要}, '423': {description: 吊销/营业/待同步/UNKNOWN阻断}, '503': {description: 安全探针未配置}}
+  /api/v1/releases/tasks/{taskId}/observations:
+    post:
+      operationId: recordSoftwareObservation
+      security: [{ bearerAuth: [] }]
+      parameters: [{$ref: '#/components/parameters/TaskId'}, {$ref: '#/components/parameters/IdempotencyKey'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/Observation'}}}}
+      responses: {'200': {description: 更新后的软件任务状态}, '409': {description: 非法状态顺序或同键异内容}}
+components:
+  securitySchemes: {bearerAuth: {type: http, scheme: bearer}}
+  parameters:
+    IdempotencyKey: {name: X-Idempotency-Key, in: header, required: true, schema: {type: string, minLength: 8, maxLength: 128}}
+    ReleaseId: {name: releaseId, in: path, required: true, schema: {$ref: '#/components/schemas/Ulid'}}
+    RolloutId: {name: rolloutId, in: path, required: true, schema: {$ref: '#/components/schemas/Ulid'}}
+    TaskId: {name: taskId, in: path, required: true, schema: {$ref: '#/components/schemas/Ulid'}}
+  schemas:
+    Ulid: {type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'}
+    Sha256: {type: string, pattern: '^[0-9a-f]{64}$'}
+    CreateRelease:
+      type: object
+      additionalProperties: false
+      required: [artifactType,version,channel,objectKey,artifactSha256,signatureBase64,keyVersion,buildCommit,sbomSha256,compatibility,targetStoreIds]
+      properties:
+        artifactType: {enum: [SERVER,WEB,MYSQL_SCHEMA,SQLITE_SCHEMA,TEMPLATE_PACKAGE,DATA_PACKAGE,APK]}
+        version: {type: string, maxLength: 64}
+        channel: {enum: [INTERNAL,CANARY,STABLE,EMERGENCY]}
+        objectKey: {type: string, maxLength: 512, description: 必须位于服务端可信租户命名空间}
+        artifactSha256: {$ref: '#/components/schemas/Sha256'}
+        signatureBase64: {type: string, minLength: 32, maxLength: 1024, writeOnly: true}
+        keyVersion: {type: string, maxLength: 64}
+        buildCommit: {type: string, pattern: '^[0-9a-f]{40}$'}
+        sbomSha256: {$ref: '#/components/schemas/Sha256'}
+        compatibility: {$ref: '#/components/schemas/Compatibility'}
+        targetStoreIds: {type: array, minItems: 1, maxItems: 10000, uniqueItems: true, items: {type: integer, format: int64, minimum: 1}}
+    Compatibility:
+      type: object
+      additionalProperties: false
+      required: [minAppVersion,maxAppVersion,minProtocolVersion,maxProtocolVersion,minSchemaVersion,maxSchemaVersion,minSystemVersion,maxSystemVersion]
+      properties:
+        minAppVersion: {type: string}
+        maxAppVersion: {type: string}
+        minProtocolVersion: {type: string}
+        maxProtocolVersion: {type: string}
+        minSchemaVersion: {type: string}
+        maxSchemaVersion: {type: string}
+        minSystemVersion: {type: string}
+        maxSystemVersion: {type: string}
+        requiredCapabilitySha256: {$ref: '#/components/schemas/Sha256'}
+    CreateRollout:
+      type: object
+      additionalProperties: false
+      required: [targetStoreIds,canaryPercent]
+      properties:
+        targetStoreIds: {type: array, minItems: 1, maxItems: 10000, uniqueItems: true, items: {type: integer, format: int64, minimum: 1}}
+        canaryPercent: {type: integer, minimum: 1, maximum: 25}
+    AssignTerminal:
+      type: object
+      additionalProperties: false
+      required: [deviceId]
+      properties: {deviceId: {$ref: '#/components/schemas/Ulid'}}
+    Observation:
+      type: object
+      additionalProperties: false
+      required: [type,artifactSha256,evidenceSha256]
+      properties:
+        type: {enum: [DOWNLOAD_STARTED,DOWNLOAD_RESUMED,ARTIFACT_VERIFIED,INSTALL_STARTED,INSTALL_SUCCEEDED,HEALTH_PASSED,HEALTH_FAILED,MIGRATION_FAILED,ROLLBACK_SUCCEEDED,FORWARD_FIX_REQUIRED,DIGEST_MISMATCH,SIGNATURE_INVALID]}
+        artifactSha256: {$ref: '#/components/schemas/Sha256'}
+        evidenceSha256: {$ref: '#/components/schemas/Sha256'}

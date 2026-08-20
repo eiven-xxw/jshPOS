@@ -1,0 +1,25 @@
+{
+  "schemaVersion":"1.0",
+  "seed":"GATE6B-S14-FIXED-20260820",
+  "evidenceLevel":"SYNTHETIC_PACKAGE",
+  "vectors":[
+    {"id":"GOOD_APK","expected":"SUCCEEDED"},
+    {"id":"BAD_SIGNATURE","expected":"FAILED_CLOSED"},
+    {"id":"DIGEST_MISMATCH","expected":"FAILED_CLOSED"},
+    {"id":"OLD_PACKAGE_REPLAY","expected":"FAILED_CLOSED"},
+    {"id":"CROSS_TENANT_PACKAGE","expected":"FAILED_CLOSED"},
+    {"id":"DOWNLOAD_INTERRUPTED","expected":"RESUME_SAME_TASK"},
+    {"id":"PENDING_OUTBOX","expected":"BLOCKED"},
+    {"id":"UNKNOWN_PAYMENT","expected":"BLOCKED"},
+    {"id":"UNKNOWN_REFUND","expected":"BLOCKED"},
+    {"id":"BUSINESS_HOURS","expected":"BLOCKED"},
+    {"id":"REVOKED_TERMINAL","expected":"BLOCKED"},
+    {"id":"VERSION_MISMATCH","expected":"BLOCKED"},
+    {"id":"CAPABILITY_MISMATCH","expected":"BLOCKED"},
+    {"id":"APK_HEALTH_FAIL","expected":"ROLLED_BACK"},
+    {"id":"MYSQL_MIGRATION_FAIL","expected":"FORWARD_FIX_REQUIRED"},
+    {"id":"IDEMPOTENCY_CONFLICT","expected":"REJECTED"},
+    {"id":"CANARY_FAIL_STOP","expected":"NO_EXPANSION"}
+  ],
+  "forbiddenEvidenceUpgrades":["SANDBOX","REAL_DEVICE","PHYSICAL_POWER_LOSS","PILOT","PRODUCTION","COMMERCIAL_SLA"]
+}

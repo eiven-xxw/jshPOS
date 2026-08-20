@@ -283,6 +283,18 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
 - 只允许两个虚构租户、多组织、多门店、多终端和三业态合成数据；Provider 网络、生产密钥、真实资金、真实 PII、未经授权云资源写入、真实终端命令和后续 Gate 正式编码继续禁止。
 - 完成后必须分别提交 Gate 6A 周门禁报告与 UPG-001 设计准备/实机阻断报告并等待确认；不得自行启动完整 Alpha、发布或商业验收。
 
+## 4.22 当前 T2 Gate 6B / Sprint S14 条件准入
+
+- 项目发起人已于 2026-08-20 确认 Gate 6A `CONDITIONAL PASS`，接受 `T2-TRM-001/BAK-001` 更新为 `ACCEPTED`；TRM 不等于 `REAL_DEVICE`，BAK 仅为 `SYNTHETIC_RESTORE` 内部目标且不构成生产灾备或商业 SLA。
+- Gate 6B 唯一允许正式实现的需求是 `T2-UPG-001`；必须先冻结数据主权、状态机、不变量、权限、审计、API/事件、Flyway、容量、兼容、回退、运行手册、故障注入和测试准入。
+- `jshpos-release` 独占发布物、门店范围、灰度批次、终端软件任务、命令结果、发布事件和审计。它只能通过只读端口消费 Terminal Registry、Sync、Shift、Payment、Refund、对象存储和公钥注册表，不得跨模块 Mapper 修改其他 Owner 私表。
+- 发布物必须绑定 release ID、类型、版本、通道、可信租户/门店范围、SHA-256、签名/key version、build commit、SBOM 及 app/protocol/Schema/system/capability 兼容窗口；签名通过后身份字段冻结。
+- 发布、灰度、终端任务必须使用具名状态机、稳定幂等键、乐观锁和只追加事件/审计。摘要/签名错误、旧包重放、跨租户、下载中断、迁移/健康失败、pending Outbox、UNKNOWN 支付/退款、营业时段、版本能力不兼容和终端吊销必须失败关闭或显式暂停。
+- MySQL/SQLite Schema 只前进；Schema 失败使用安全前向修复，禁止修改已发布迁移。应用/Web/APK 只有在兼容边界满足时才能通过新事实表达回退，不得重写原任务历史。
+- 本 Sprint 只允许合成签名包、虚构终端和软件执行结果。`T2-HWD-001` 解阻前禁止真实 APK 安装、厂商静默安装 SDK、固件、真实重启或远程命令；合成结果不得升级为 `REAL_DEVICE`。
+- `T2-PAY-002`、`T2-HWD-001`、`T2-PAR-001` 保持 `BLOCKED`，`T2-UAT-001/REL-001` 保持 `DRAFT`。三项外部 P0 任一未解除时不得启动完整 Alpha UAT；Provider 网络、生产密钥、真实资金/PII、未经授权云写入继续禁止。
+- 完成后必须提交 Gate 6B 周门禁报告、HWD 实机升级解阻准备报告和外部 P0 差距清单等待确认；不得自行更新 UPG 为 ACCEPTED，不得宣称 Alpha、可试点或可商用。
+
 ## 5. 工程与测试规则
 
 - 服务端采用 RuoYi-Vue-Plus 模块化单体，不得把领域逻辑写入 Controller、通用工具类或框架系统模块。

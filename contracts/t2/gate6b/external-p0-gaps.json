@@ -1,0 +1,12 @@
+{
+  "schemaVersion":"1.0",
+  "alphaUatAllowed":false,
+  "items":[
+    {"id":"T2-PAY-002","status":"BLOCKED","requiredEvidence":"AUTHORIZED_SANDBOX","networkAllowed":false},
+    {"id":"T2-HWD-001","status":"BLOCKED","requiredEvidence":"REAL_DEVICE","realCommandsAllowed":false},
+    {"id":"T2-PAR-001","status":"BLOCKED","requiredEvidence":"WRITTEN_PARTNER_INTENT_AND_AUTHORIZED_SAMPLE","pilotClaimAllowed":false},
+    {"id":"PRODUCTION_KMS_SIGNING","status":"BLOCKED","requiredEvidence":"PRODUCTION_SECURITY_REVIEW"},
+    {"id":"PRODUCTION_OBJECT_STORAGE","status":"BLOCKED","requiredEvidence":"TENANT_ISOLATION_AND_WORM_REVIEW"},
+    {"id":"PRODUCTION_DR_PITR","status":"BLOCKED","requiredEvidence":"REAL_PITR_AND_CROSS_REGION_SWITCH"}
+  ]
+}

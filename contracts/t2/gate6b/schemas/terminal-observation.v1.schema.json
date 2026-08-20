@@ -1,0 +1,14 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://jshpos.example/contracts/gate6b/terminal-observation.v1.schema.json",
+  "title":"Gate 6B software terminal observation",
+  "type":"object",
+  "additionalProperties":false,
+  "required":["taskId","observationType","artifactSha256","evidenceSha256"],
+  "properties":{
+    "taskId":{"type":"string","pattern":"^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "observationType":{"enum":["DOWNLOAD_STARTED","DOWNLOAD_RESUMED","ARTIFACT_VERIFIED","INSTALL_STARTED","INSTALL_SUCCEEDED","HEALTH_PASSED","HEALTH_FAILED","MIGRATION_FAILED","ROLLBACK_SUCCEEDED","FORWARD_FIX_REQUIRED","DIGEST_MISMATCH","SIGNATURE_INVALID"]},
+    "artifactSha256":{"type":"string","pattern":"^[0-9a-f]{64}$"},
+    "evidenceSha256":{"type":"string","pattern":"^[0-9a-f]{64}$"}
+  }
+}

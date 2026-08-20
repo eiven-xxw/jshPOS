@@ -1,0 +1,19 @@
+schemaVersion: '1.0'
+owner: ReleaseGovernance
+envelope:
+  required: [eventId, tenantId, aggregateType, aggregateId, eventType, toState, evidenceSha256, correlationId, occurredAt]
+  invariants:
+    - tenantId由可信上下文注入
+    - eventId和aggregateId为服务端ULID
+    - evidenceSha256不含Secret或PII
+    - 事件本体只追加，投递状态不得原位写入本表
+events:
+  release.lifecycle.v1:
+    aggregateType: RELEASE
+    states: [DRAFT,SIGNED,STAGED,REVOKED]
+  release.rollout.v1:
+    aggregateType: ROLLOUT
+    states: [PLANNED,CANARY,ROLLING,PAUSED,COMPLETED,FAILED]
+  release.terminal_task.v1:
+    aggregateType: TASK
+    states: [PLANNED,DOWNLOADING,VERIFIED,INSTALLING,HEALTH_CHECK,SUCCEEDED,ROLLED_BACK,FORWARD_FIX_REQUIRED,FAILED_CLOSED]

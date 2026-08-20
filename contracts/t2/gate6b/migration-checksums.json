@@ -1,0 +1,8 @@
+{
+  "algorithm":"SHA-256",
+  "immutable":true,
+  "files":[
+    {"version":"202608200040","path":"server/ruoyi-modules/jshpos-release/src/main/resources/db/migration/V202608200040__gate6b_release_governance.sql","sha256":"1e25cac9362bd74b5df1fd2ac4b41a25f7572b73d1288f97efd474400f9d94f2"},
+    {"version":"202608200041","path":"server/ruoyi-modules/jshpos-release/src/main/resources/db/migration/V202608200041__gate6b_release_guards_permissions.sql","sha256":"038632b4c8e139210c50db8ae90a8f8bfe91271bd09142aad4dfd447a76d2e15"}
+  ]
+}

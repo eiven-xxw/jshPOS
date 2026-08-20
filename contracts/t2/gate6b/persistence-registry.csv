@@ -1,0 +1,8 @@
+table,owner,access_strategy,sql_mode,mutation_boundary,tenant_source,requirement_id
+upg_release,ReleaseGovernance,CONTROLLED_WRITE,XML,具名发布状态迁移且签名后身份冻结,TrustedTenantContext,T2-UPG-001
+upg_target_scope,ReleaseGovernance,APPEND_ONLY,XML,仅追加受权门店范围且禁止更新删除,TrustedTenantContext,T2-UPG-001
+upg_rollout,ReleaseGovernance,CONTROLLED_WRITE,XML,具名灰度状态迁移与乐观锁,TrustedTenantContext,T2-UPG-001
+upg_terminal_task,ReleaseGovernance,CONTROLLED_WRITE,XML,具名软件任务状态迁移且禁止真实远程命令,TrustedTenantContext,T2-UPG-001
+upg_command_result,ReleaseGovernance,APPEND_ONLY,XML,租户命令类型幂等结果只追加,TrustedTenantContext,T2-UPG-001
+upg_release_event,ReleaseGovernance,APPEND_ONLY,XML,发布领域事件只追加,TrustedTenantContext,T2-UPG-001
+upg_audit,ReleaseGovernance,APPEND_ONLY,XML,去敏发布审计只追加,TrustedTenantContext,T2-UPG-001

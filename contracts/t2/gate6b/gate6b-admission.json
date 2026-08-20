@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "1.0",
+  "gate": "T2-GATE6B-S14",
+  "baselineCommit": "ec26f18715c205f29f7b9ec7c8a6478aeffcc557",
+  "evidenceCeiling": ["STATIC", "UNIT", "MYSQL8.4_SYNTHETIC", "SYNTHETIC_PACKAGE", "SOFTWARE_EXECUTION"],
+  "requirements": [
+    {"id":"T2-TRM-001","status":"ACCEPTED","boundary":"NOT_REAL_DEVICE"},
+    {"id":"T2-BAK-001","status":"ACCEPTED","boundary":"SYNTHETIC_RESTORE_NOT_COMMERCIAL_SLA"},
+    {"id":"T2-UPG-001","status":"IN_PROGRESS","runtimeAllowed":true,"realDeviceCommandsAllowed":false},
+    {"id":"T2-PAY-002","status":"BLOCKED","networkAllowed":false},
+    {"id":"T2-HWD-001","status":"BLOCKED","realDeviceAllowed":false},
+    {"id":"T2-PAR-001","status":"BLOCKED","pilotClaimAllowed":false},
+    {"id":"T2-UAT-001","status":"DRAFT","fullAlphaAllowed":false},
+    {"id":"T2-REL-001","status":"DRAFT","commercialClaimAllowed":false}
+  ]
+}
