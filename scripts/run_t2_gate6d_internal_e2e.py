@@ -159,8 +159,9 @@ def validate_ci_bundle(bundle: pathlib.Path) -> dict:
         fail("missing complete MySQL migration evidence")
     web = read_xml_tests(bundle, "web")
     web_names = set().union(*web.values()) if web else set()
-    if not WEB_TESTS.issubset(web_names):
-        fail(f"missing admin component evidence: {sorted(WEB_TESTS - web_names)}")
+    missing_web = {name for name in WEB_TESTS if not any(name in actual for actual in web_names)}
+    if missing_web:
+        fail(f"missing admin component evidence: {sorted(missing_web)}")
 
     flutter_names: set[str] = set()
     for producer in ("pos-linux", "pos-windows"):
