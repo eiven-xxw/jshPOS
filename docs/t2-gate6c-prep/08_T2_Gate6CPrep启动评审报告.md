@@ -1,14 +1,18 @@
 # T2 Gate 6C-Prep 启动评审报告
 
-> 报告状态：`DRAFT — 等待治理 CI 与项目发起人确认`
+> 报告状态：`CONDITIONAL PASS — 仅外部资料收件/离线验真；完整 Alpha NO-GO；等待项目发起人确认`
 >
 > 基线起点：`f9b733adb2fe1715fd663bae6d2419c4eca668ff`
 >
 > 工作分支：`t2/gate6c-prep-20260820`
+>
+> 候选提交：`9d6d01e`
+>
+> GitHub Actions：[Run 32337497155](https://github.com/eiven-xxw/jshPOS/actions/runs/32337497155)
 
 ## 1. 建议结论
 
-建议 Gate 6C-Prep 在治理材料和机器门禁全绿后评为 `CONDITIONAL PASS`：允许继续三条外部证据收件与离线验真，但完整 Alpha 继续 `NO-GO`。当前没有任何外部需求达到解阻门槛。
+Gate 6C-Prep 治理材料和机器门禁已经全绿，建议评为 `CONDITIONAL PASS`：允许继续三条外部证据收件与离线验真，但完整 Alpha 继续 `NO-GO`。当前没有任何外部需求达到解阻门槛。
 
 ## 2. 状态核对
 
@@ -37,6 +41,17 @@
 
 本报告不代表支付可联网、硬件可安装、伙伴可试点、Alpha 可启动、生产发布链路可用或系统可商用。项目发起人确认前不进入外部执行阶段。
 
-## 6. 启动门禁
+## 6. 启动门禁结果
 
-待 CI 回填：治理/RTM/ADR、Ubuntu/Windows 编码可重复、禁止路径、Secret/PII、机器证据清单和最终 evidence artifact。任何失败保持 `NOT READY`。
+| Job | 结果 | 证据 |
+|---|---|---|
+| governance-ubuntu | PASS | Artifact `9395143620`，SHA-256 `0a1bee5637248c5249b0498e448e6e95b33caa11ee5bf7d37b769ed332dd4f5f` |
+| governance-windows | PASS | Artifact `9395145564`，SHA-256 `7f654ea11bf3b1b7cb21f21e249559c951cb517fe3208ae6912f87ee7242c704` |
+| security-boundary | PASS | Artifact `9395143175`，SHA-256 `c6522cad6c42a94d7293e7bfd55f465676e7868b9ed7d97211cddc4663f30658` |
+| evidence | PASS | Artifact `9395149436`，SHA-256 `fba5d28332d504eede422f2794a52d8250e61d68951497589f984f2a1f03c36f` |
+
+结构、RTM、83 个 JSON Schema/OpenAPI 契约、Gate 6B 接受边界、Gate 6C 状态、允许路径、依赖差异、Secret 文件/内容模式和双平台 UTF-8 路径均通过。变更没有触及 server、admin-web、pos-flutter、packages 或 infra 运行时；本阶段证据等级严格为 `STATIC_GOVERNANCE`。
+
+## 7. 最终建议
+
+建议项目发起人接受 Gate 6C-Prep `CONDITIONAL PASS`，只授权进入外部证据收件与离线验真。未经后续三条独立执行准入评审确认，支付网络、真实设备命令、现场试点和完整 Alpha UAT 继续为 `NO-GO`。
