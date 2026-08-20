@@ -6,7 +6,7 @@
   "requirements": [
     {"id":"T2-TRM-001","status":"ACCEPTED","boundary":"NOT_REAL_DEVICE"},
     {"id":"T2-BAK-001","status":"ACCEPTED","boundary":"SYNTHETIC_RESTORE_NOT_COMMERCIAL_SLA"},
-    {"id":"T2-UPG-001","status":"IN_PROGRESS","runtimeAllowed":true,"realDeviceCommandsAllowed":false},
+    {"id":"T2-UPG-001","status":"VERIFIED","runtimeAllowed":true,"realDeviceCommandsAllowed":false,"boundary":"SYNTHETIC_PACKAGE_AND_SOFTWARE_EXECUTION_ONLY"},
     {"id":"T2-PAY-002","status":"BLOCKED","networkAllowed":false},
     {"id":"T2-HWD-001","status":"BLOCKED","realDeviceAllowed":false},
     {"id":"T2-PAR-001","status":"BLOCKED","pilotClaimAllowed":false},

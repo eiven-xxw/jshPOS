@@ -113,5 +113,6 @@
 | CR-T2G6B-001 | 2026-08-20 | APPROVED | 项目发起人按 CONDITIONAL GO 启动 Gate 6B / Sprint S14，只准入 Provider 无关 T2-UPG-001，并要求支付、硬件和伙伴三条外部解阻轨保持隔离 | T2-UPG-001、T2-PAY-002、T2-HWD-001、T2-PAR-001、ADR-034 | 只允许合成签名包、虚构终端和软件执行结果；禁止真实终端命令、Provider 网络和完整 Alpha UAT |
 | CR-T2G6B-002 | 2026-08-20 | IN_PROGRESS | T2-UPG-001 已冻结 Release Owner、七类发布物、三套状态机、可信终端/安全探针、签名摘要、兼容、权限审计、API/事件、V40/V41、容量、回退/前向修复和测试准入，进入正式实现 | T2-UPG-001、ADR-034 | 新表已按 CONTROLLED_WRITE/APPEND_ONLY + XML 双登记；Gate 6A 设计夹具未转生产表；HWD/PAY/PAR 状态不变 |
 | CR-T2G6B-003 | 2026-08-20 | IN_PROGRESS | Gate 6B 供应链门禁检出 Netty 4.1.136.Final 的 CVE-2026-59902 HIGH，统一升级到已修复的 4.1.137.Final 并要求全量回归和 SBOM 重建 | server/pom.xml、全服务端依赖树、Gate 6B SBOM/漏洞门禁 | 不使用忽略、VEX 豁免或扫描排除；HIGH/CRITICAL 阈值保持不变，CI 全绿前不得关闭 |
+| CR-T2G6B-004 | 2026-08-20 | VERIFIED_AWAITING_CONFIRMATION | Gate 6B 修复候选 `da1df4f329e468b3caee5bf0ed638ceaeeeae543` 在 GitHub Actions Run `32333907801` 完成十个 Job 单次全绿：47 模块服务端、Gate 6B 15 项测试及覆盖率、MySQL V1—V41 与 100k 容量、17 个固定向量、Flutter 双平台、Android、Web、租户/发布故障、安全、SBOM 和许可证均通过；CVE-2026-59902 已由 Netty 4.1.137.Final 修复，证据索引 Artifact `9394169406` | T2-UPG-001、ADR-034、T2-SEC-001、T2-CI-001 | T2-UPG-001 更新为 VERIFIED，不代表 ACCEPTED；仅 SYNTHETIC_PACKAGE/SOFTWARE_EXECUTION，Provider 网络、REAL_DEVICE、PILOT 和完整 Alpha UAT 仍为 0 |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。
