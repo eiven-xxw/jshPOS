@@ -236,6 +236,21 @@ def validate_candidate(document: dict, base: dict) -> tuple[list[dict], list[dic
     return results, seeds
 
 
+def validate_coverage_report(coverage_report: dict) -> dict:
+    found_lines = coverage_report.get("foundLines")
+    covered_lines = coverage_report.get("coveredLines")
+    ratio = coverage_report.get("lineRatio")
+    minimum = coverage_report.get("minimum")
+    if (coverage_report.get("schemaVersion") != "1.0" or
+            not isinstance(found_lines, int) or not isinstance(covered_lines, int) or found_lines <= 0 or
+            not isinstance(ratio, (int, float)) or not isinstance(minimum, (int, float)) or
+            minimum < 0.90 or covered_lines > found_lines or ratio < minimum or
+            round(covered_lines / found_lines, 6) != ratio):
+        fail("Gate 6E Flutter coverage evidence is malformed or below the frozen threshold")
+    return {"status": "PASS", "coveredLines": covered_lines, "foundLines": found_lines,
+            "lineRatio": ratio, "minimum": minimum}
+
+
 def validate_ci_bundle(bundle: pathlib.Path) -> dict:
     suites = read_xml_tests(bundle, "server")
     for class_name, methods in SERVER_TESTS.items():
@@ -258,8 +273,10 @@ def validate_ci_bundle(bundle: pathlib.Path) -> dict:
         if missing:
             fail(f"missing successful unskipped POS evidence in {producer}: {sorted(missing)}")
     coverage = list((bundle / "pos-linux").rglob("flutter-gate6e-coverage.json"))
-    if len(coverage) != 1 or json.loads(coverage[0].read_text(encoding="utf-8")).get("status") != "PASS":
-        fail("Gate 6E Flutter coverage evidence missing or non-green")
+    if len(coverage) != 1:
+        fail("Gate 6E Flutter coverage evidence missing or duplicated")
+    coverage_report = json.loads(coverage[0].read_text(encoding="utf-8"))
+    coverage_evidence = validate_coverage_report(coverage_report)
     governance_reports = list((bundle / "governance").rglob("gate6e-governance.json"))
     if len(governance_reports) != 1:
         fail("Gate 6E governance evidence missing or duplicated")
@@ -274,7 +291,7 @@ def validate_ci_bundle(bundle: pathlib.Path) -> dict:
         "flutterRequiredTestsPerPlatform": len(FLUTTER_TESTS),
         "webRequiredTests": len(WEB_TESTS),
         "mysqlMigration": "PASS",
-        "gate6eCoverage": "PASS",
+        "gate6eCoverage": coverage_evidence,
     }
 
 

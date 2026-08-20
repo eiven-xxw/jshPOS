@@ -147,5 +147,6 @@
 | CR-T2G6E-007 | 2026-08-20 | VERIFIED_POS009 | 实现提交 `d166dd3` 的 GitHub Actions run `32379271528` 八个 Job 单次全绿；Flutter Linux/Windows 各112项、目标覆盖率90.57%、Android/Kotlin/APK、服务端、MySQL V42、后台、安全、SBOM、许可证和证据索引通过 | T2-POS-009、T2-CI-001、ADR-037 | POS-009更新为VERIFIED而非ACCEPTED；Provider网络、真实设备、现场试点和完整Alpha均为0 |
 | CR-T2G6E-008 | 2026-08-20 | IN_PROGRESS_E2E002 | 在 POS-009 独立 VERIFIED 后，冻结两虚构租户六旅程、三业态、销售同步、部分/最终退款、库存成本报表、班次、合成备份恢复与升级回退的主权、不变量、固定seed、证据和Go/No-Go，串行准入E2E-002 | T2-E2E-002、T2-CI-001、ADR-037 | 最高证据为INTERNAL_ALPHA_CANDIDATE；不新增领域算法，不更新或替代T2-UAT-001，外部执行仍为0 |
 | CR-T2G6E-009 | 2026-08-20 | IMPLEMENTED_E2E002_AWAITING_CI | 完成六旅程守恒执行器、十二个固定故障seed、P0/P1缺陷账、可重复运行手册、同run正式制品组合门禁、候选独立Job和最终证据索引升级 | T2-E2E-002、T2-CI-001、ADR-037 | 源契约模式六旅程/十二seed通过；继续IN_PROGRESS等待GitHub九Job独立CI，不以本地或合成结果替代UAT/外部证据 |
+| CR-T2G6E-010 | 2026-08-20 | CI_FAILURE_FIXED_AWAITING_RETEST | GitHub Actions run `32381684490` 的六个前置生产 Job 全绿，但候选消费者误要求覆盖率 JSON 含不存在的 `status` 字段；改为核验实际 `coveredLines/foundLines/lineRatio/minimum`，并继续强制最低90%及数值自洽 | T2-E2E-002、T2-CI-001、ADR-037 | 红色run与无候选制品事实保留；修复不降低阈值、不跳过报告，要求新提交九Job完整重跑 |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。
