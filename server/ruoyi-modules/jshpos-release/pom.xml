@@ -17,6 +17,17 @@
         <dependency><groupId>org.dromara</groupId><artifactId>ruoyi-common-log</artifactId></dependency>
         <dependency><groupId>org.dromara</groupId><artifactId>ruoyi-common-json</artifactId></dependency>
         <dependency><groupId>org.dromara</groupId><artifactId>ruoyi-common-web</artifactId></dependency>
+        <!-- 空库迁移测试必须汇集 Gate 0—6A 全部 Owner 的正式迁移资源；仅测试作用域，不形成运行时耦合。 -->
+        <dependency><groupId>com.jingshanghui.pos</groupId><artifactId>jshpos-payment</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>com.jingshanghui.pos</groupId><artifactId>jshpos-inventory</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>com.jingshanghui.pos</groupId><artifactId>jshpos-procurement</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>com.jingshanghui.pos</groupId><artifactId>jshpos-transfer</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>com.jingshanghui.pos</groupId><artifactId>jshpos-costing</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>com.jingshanghui.pos</groupId><artifactId>jshpos-promotion</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>com.jingshanghui.pos</groupId><artifactId>jshpos-returns</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>com.jingshanghui.pos</groupId><artifactId>jshpos-member</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>com.jingshanghui.pos</groupId><artifactId>jshpos-reporting</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>com.jingshanghui.pos</groupId><artifactId>jshpos-resilience</artifactId><scope>test</scope></dependency>
         <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-test</artifactId><scope>test</scope></dependency>
         <dependency><groupId>org.flywaydb</groupId><artifactId>flyway-core</artifactId><scope>test</scope></dependency>
         <dependency><groupId>org.flywaydb</groupId><artifactId>flyway-mysql</artifactId><scope>test</scope></dependency>
