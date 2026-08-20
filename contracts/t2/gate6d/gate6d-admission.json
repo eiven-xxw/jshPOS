@@ -7,8 +7,8 @@
   "sequentialRequirements": [
     {"order": 1, "id": "T2-POS-007", "status": "VERIFIED", "runtimeAllowed": true, "dependsOn": []},
     {"order": 2, "id": "T2-POS-008", "status": "VERIFIED", "runtimeAllowed": true, "dependsOn": ["T2-POS-007"]},
-    {"order": 3, "id": "T2-ADM-001", "status": "IN_PROGRESS", "runtimeAllowed": true, "dependsOn": ["T2-POS-008"]},
-    {"order": 4, "id": "T2-E2E-001", "status": "DRAFT", "runtimeAllowed": false, "dependsOn": ["T2-ADM-001"]}
+    {"order": 3, "id": "T2-ADM-001", "status": "VERIFIED", "runtimeAllowed": true, "dependsOn": ["T2-POS-008"]},
+    {"order": 4, "id": "T2-E2E-001", "status": "IN_PROGRESS", "runtimeAllowed": true, "dependsOn": ["T2-ADM-001"]}
   ],
   "preservedStates": {
     "T2-PAY-002": "BLOCKED",

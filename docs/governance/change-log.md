@@ -131,5 +131,7 @@
 | CR-T2G6D-009 | 2026-08-20 | VERIFIED_POS008 | 候选 `4675c7e` 的 GitHub Actions Run `32359246598` 八个 Job 单次全绿；Flutter全量102项、目标覆盖率97.37%、双平台、Android APK/Kotlin、SQLite、MySQL、服务端、Web、安全、SBOM、许可证及证据索引通过 | T2-POS-008、T2-CI-001、ADR-036 | POS-008 更新为 VERIFIED 而非 ACCEPTED；打印仅预览/Fake Adapter，Provider网络/REAL_DEVICE/PILOT/完整Alpha仍为0 |
 | CR-T2G6D-010 | 2026-08-20 | IN_PROGRESS_ADM001 | 在 POS-008 独立 VERIFIED 后，依序准入 Vue 经营工作台、组织门店、员工权限、商品条码多单位、分类品牌、价格版本和批量导入正式运营 UI | T2-ADM-001、ADR-036 | 只能调用正式 API；禁止跨模块直查和前端重算金额、库存、成本或促销，E2E-001 继续 DRAFT |
 | CR-T2G6D-011 | 2026-08-20 | IMPLEMENTED_ADM001_AWAITING_CI | ADM-001 完成正式经营工作台、组织门店与员工数据范围、商品条码多单位、分类品牌、价格版本、导入预检/错误明细/安全回退 UI；本地 TypeScript、ESLint、生产构建及 20 项 Web 测试通过 | T2-ADM-001、T2-CI-001、ADR-036 | 继续 IN_PROGRESS 等待 GitHub 完整 CI；只调用正式 API，不接收 tenant_id、不跨 Owner 直查、不在前端重算领域事实，E2E-001 仍为 DRAFT |
+| CR-T2G6D-012 | 2026-08-20 | VERIFIED_ADM001 | 实现候选 `ea7c23a` 的 GitHub Actions Run `32361270390` 八个 Job 单次全绿；20 项 Web 测试、类型检查、ESLint、生产构建、服务端、MySQL、Flutter 双平台、Android、安全、SBOM、许可证和证据索引通过 | T2-ADM-001、T2-CI-001、ADR-036 | ADM-001 更新为 VERIFIED 而非 ACCEPTED；仅内部软件证据，真实 PII、Provider 网络、REAL_DEVICE/PILOT/完整 Alpha 均为 0 |
+| CR-T2G6D-013 | 2026-08-20 | IN_PROGRESS_E2E001 | 在 ADM-001 独立 VERIFIED 后，依序准入虚构租户、虚构终端、现金支付的内部合成业务闭环及逐环节守恒核对 | T2-E2E-001、ADR-036 | 只能调用已接受 Owner 的正式端口/契约；不得新增领域算法或把 SYNTHETIC_E2E 升级为 SANDBOX、REAL_DEVICE、PILOT 或完整 Alpha |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。
