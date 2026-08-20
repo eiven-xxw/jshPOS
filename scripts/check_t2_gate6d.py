@@ -143,6 +143,23 @@ def main() -> None:
     else:
         output_admin_vector_count = 0
 
+    if RANK[rtm["T2-E2E-001"]["status"]] >= RANK["IN_PROGRESS"]:
+        e2e_vectors = json.loads(
+            (ROOT / "contracts/t2/gate6d/test-vectors/internal-cash-e2e-v1.json").read_text(encoding="utf-8")
+        )
+        require(e2e_vectors["requirementId"] == "T2-E2E-001", "E2E vectors requirement mismatch")
+        require(e2e_vectors["evidenceLevel"] == "SYNTHETIC_E2E", "E2E evidence level changed")
+        require(len(e2e_vectors["journeys"]) == 6, "E2E two-tenant/three-industry journeys incomplete")
+        require({item["tenantId"] for item in e2e_vectors["journeys"]} == {"TENANT_A", "TENANT_B"}, "E2E tenant set mismatch")
+        require(
+            all(value == 0 for value in e2e_vectors["externalExecution"].values()),
+            "E2E external execution must remain zero",
+        )
+        require((ROOT / "scripts/run_t2_gate6d_internal_e2e.py").is_file(), "E2E executable verifier missing")
+        output_e2e_journey_count = len(e2e_vectors["journeys"])
+    else:
+        output_e2e_journey_count = 0
+
     changed = subprocess.check_output(
         ["git", "diff", "--name-only", args.baseline, "HEAD"], cwd=ROOT, text=True
     ).splitlines()
@@ -158,6 +175,7 @@ def main() -> None:
         "sessionVectorCount": len(vectors["vectors"]),
         "saleVectorCount": output_sale_vector_count,
         "adminVectorCount": output_admin_vector_count,
+        "syntheticE2EJourneyCount": output_e2e_journey_count,
         "changedFiles": len(changed),
         "providerNetworkCalls": 0,
         "realDeviceCommands": 0,

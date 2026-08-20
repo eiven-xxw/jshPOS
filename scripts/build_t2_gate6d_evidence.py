@@ -8,7 +8,7 @@ import json
 import pathlib
 
 
-REQUIRED = {"governance", "server", "mysql", "pos-linux", "pos-windows", "web", "security"}
+REQUIRED = {"governance", "server", "mysql", "pos-linux", "pos-windows", "web", "internal-e2e", "security"}
 
 
 def main() -> None:
@@ -30,6 +30,16 @@ def main() -> None:
         )
     if not files:
         raise SystemExit("empty evidence bundle")
+    e2e_reports = list((root / "internal-e2e").rglob("internal-cash-e2e-report.json"))
+    if len(e2e_reports) != 1:
+        raise SystemExit("internal synthetic E2E report missing or duplicated")
+    e2e = json.loads(e2e_reports[0].read_text(encoding="utf-8"))
+    if (e2e.get("status") != "PASS" or e2e.get("evidenceLevel") != "SYNTHETIC_E2E"
+            or e2e.get("journeyCount") != 6 or e2e.get("tenantCount") != 2
+            or e2e.get("providerNetworkCalls") != 0 or e2e.get("realDeviceCommands") != 0
+            or e2e.get("onsitePilots") != 0 or e2e.get("fullAlphaRuns") != 0
+            or e2e.get("commercialClaimAllowed") is not False):
+        raise SystemExit("internal synthetic E2E evidence boundary or fixed journey count invalid")
     payload = {
         "schemaVersion": "1.0",
         "gate": "T2-GATE6D-S15",
@@ -41,6 +51,7 @@ def main() -> None:
         "pilot": 0,
         "fullAlpha": 0,
         "production": 0,
+        "syntheticE2EJourneys": e2e["journeyCount"],
         "files": files,
     }
     encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()

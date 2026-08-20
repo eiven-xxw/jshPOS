@@ -133,5 +133,6 @@
 | CR-T2G6D-011 | 2026-08-20 | IMPLEMENTED_ADM001_AWAITING_CI | ADM-001 完成正式经营工作台、组织门店与员工数据范围、商品条码多单位、分类品牌、价格版本、导入预检/错误明细/安全回退 UI；本地 TypeScript、ESLint、生产构建及 20 项 Web 测试通过 | T2-ADM-001、T2-CI-001、ADR-036 | 继续 IN_PROGRESS 等待 GitHub 完整 CI；只调用正式 API，不接收 tenant_id、不跨 Owner 直查、不在前端重算领域事实，E2E-001 仍为 DRAFT |
 | CR-T2G6D-012 | 2026-08-20 | VERIFIED_ADM001 | 实现候选 `ea7c23a` 的 GitHub Actions Run `32361270390` 八个 Job 单次全绿；20 项 Web 测试、类型检查、ESLint、生产构建、服务端、MySQL、Flutter 双平台、Android、安全、SBOM、许可证和证据索引通过 | T2-ADM-001、T2-CI-001、ADR-036 | ADM-001 更新为 VERIFIED 而非 ACCEPTED；仅内部软件证据，真实 PII、Provider 网络、REAL_DEVICE/PILOT/完整 Alpha 均为 0 |
 | CR-T2G6D-013 | 2026-08-20 | IN_PROGRESS_E2E001 | 在 ADM-001 独立 VERIFIED 后，依序准入虚构租户、虚构终端、现金支付的内部合成业务闭环及逐环节守恒核对 | T2-E2E-001、ADR-036 | 只能调用已接受 Owner 的正式端口/契约；不得新增领域算法或把 SYNTHETIC_E2E 升级为 SANDBOX、REAL_DEVICE、PILOT 或完整 Alpha |
+| CR-T2G6D-014 | 2026-08-20 | IMPLEMENTED_E2E001_AWAITING_CI | E2E-001 建立两虚构租户、六门店/终端、三业态的固定现金旅程，组合同提交 Foundation/Catalog/POS/Order/Sync/Inventory/Costing/Reporting/Web/MySQL 机器报告并核对金额、数量、库存、成本、报表、班次和摘要守恒；本地六旅程与六攻击矩阵通过 | T2-E2E-001、T2-CI-001、ADR-036 | 继续 IN_PROGRESS 等待新增 internal-e2e Job 和完整证据索引；证据固定为 SYNTHETIC_E2E，外部执行仍为 0 |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。
