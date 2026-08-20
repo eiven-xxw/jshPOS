@@ -330,6 +330,18 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
 - 本 Sprint 只允许现金和既有 Provider 无关 Fake；禁止 Provider SDK/HTTP、真实回调/账单、真实资金、生产密钥、真实 PII、真实外设与 APK 安装。内部合成证据不得宣称 Alpha、可试点或可商用。
 - 完成后必须提交《T2 Gate 6D / Sprint S15 周门禁报告》等待项目发起人确认；不得自动把四项需求更新为 `ACCEPTED`，不得自行进入 Gate 6E。
 
+## 4.26 当前 T2 Gate 6E / Sprint S16：后台运营、退货退款与内部 Alpha 候选条件准入
+
+- 项目发起人已于 2026-08-20 接受 Gate 6D `CONDITIONAL PASS`，授权 `T2-POS-007/008`、`T2-ADM-001`、`T2-E2E-001` 更新为 `ACCEPTED`，并从封板提交 `281e98a6b286f1343a012ed289cecb195858dcc7` 建立 `t2/gate6e-sprint16-internal-alpha-candidate`。
+- Gate 6E 只允许按 `T2-ADM-002 → T2-POS-009 → T2-E2E-002` 顺序准入；前项未形成独立 `VERIFIED` 证据时后项必须保持 `DRAFT`，不得预建运行时、绿色占位或倒补设计。
+- ADM-002 只允许通过各 Owner 正式 API 产品化库存/盘点、采购、调拨、成本、促销、会员、报表、终端与发布后台；禁止跨模块 Mapper、任意 SQL、前端状态机复制和权威金额/数量/成本/促销重算。
+- 后台写操作必须显示服务端状态/版本、二次确认、稳定幂等键、权限/数据范围和审计；库存与成本页面不得覆盖余额或历史流水，会员页面不得使用真实 PII。
+- POS-009 只有在 ADM-002 独立 VERIFIED 后才可准入；必须通过 Return/Refund、Promotion、Payment、Inventory 与 Audit 正式编排端口读取原订单/促销快照和累计已退上限，禁止 UI 直连 SQLite、MethodChannel、Mapper 或拼装领域事实。
+- E2E-002 只有在 POS-009 独立 VERIFIED 后才可实现，最高证据为 `INTERNAL_ALPHA_CANDIDATE`；不得更新或替代 `T2-UAT-001`，P0/P1 未关闭时保持 `IN_PROGRESS/NO-GO`。
+- `T2-PAY-002/HWD-001/PAR-001` 继续 `BLOCKED`，`T2-UAT-001/REL-001` 继续 `DRAFT`，`T2-JSH-001/LIC-001` 继续 `DEFERRED`。Provider 网络、真实设备命令、现场试点和完整 Alpha UAT 必须为 0。
+- 本 Sprint 禁止新增既有 Owner 领域算法、真实支付/回调/账单、真实外设/APK 安装、生产密钥、真实资金/PII、现场试点、生产部署和商业可用声明。
+- 完成后必须提交 Gate 6E 周门禁暨内部 Alpha 候选收口报告等待确认；不得自行启动外部执行、完整 Alpha UAT 或发布准备。
+
 ## 5. 工程与测试规则
 
 - 服务端采用 RuoYi-Vue-Plus 模块化单体，不得把领域逻辑写入 Controller、通用工具类或框架系统模块。

@@ -203,8 +203,8 @@ def validate_ci_bundle(bundle: pathlib.Path) -> dict:
     if not governance_files:
         fail("missing Gate 6D governance evidence")
     governance = json.loads(governance_files[0].read_text(encoding="utf-8"))
-    if governance["requirements"]["T2-E2E-001"] != "VERIFIED":
-        fail("closure E2E CI requires the independently verified requirement state")
+    if governance["requirements"]["T2-E2E-001"] not in {"VERIFIED", "ACCEPTED"}:
+        fail("closure E2E CI requires a verified or sponsor-accepted requirement state")
     return {"serverOwnerSuites": len(SERVER_TESTS), "flutterRequiredTests": len(FLUTTER_TESTS),
             "webRequiredTests": len(WEB_TESTS), "mysqlMigration": "PASS"}
 

@@ -13,4 +13,4 @@
 11. [T2 Gate 6D / Sprint S15 周门禁报告](11_T2_Gate6D_SprintS15周门禁报告.md)
 12. [Gate 6E 下一步操作指令](12_Gate6E下一步操作指令.md)
 
-T2-POS-007/008、T2-ADM-001 与 T2-E2E-001 均已形成独立 `VERIFIED` 证据；Gate 6D 建议为 `CONDITIONAL PASS`，等待项目发起人确认。未经确认不得更新为 `ACCEPTED` 或启动 Gate 6E。
+项目发起人已于 2026-08-20 接受 Gate 6D `CONDITIONAL PASS`，四项需求均更新为 `ACCEPTED`；接受范围仍只覆盖内部软件与合成证据，不改变任何外部 P0 或完整 Alpha 状态。
