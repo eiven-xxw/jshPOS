@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "1.0",
+  "gate": "T2-GATE6D-S15",
+  "baselineCommit": "aece518b9ef1057462e835ad7f98ce1aa2bffbf3",
+  "branch": "t2/gate6d-sprint15-internal-productization",
+  "evidenceCeiling": ["STATIC", "UNIT", "WIDGET", "COMPONENT", "SYNTHETIC_E2E", "SOFTWARE_EXECUTION"],
+  "sequentialRequirements": [
+    {"order": 1, "id": "T2-POS-007", "status": "IN_PROGRESS", "runtimeAllowed": true, "dependsOn": []},
+    {"order": 2, "id": "T2-POS-008", "status": "DRAFT", "runtimeAllowed": false, "dependsOn": ["T2-POS-007"]},
+    {"order": 3, "id": "T2-ADM-001", "status": "DRAFT", "runtimeAllowed": false, "dependsOn": ["T2-POS-008"]},
+    {"order": 4, "id": "T2-E2E-001", "status": "DRAFT", "runtimeAllowed": false, "dependsOn": ["T2-ADM-001"]}
+  ],
+  "preservedStates": {
+    "T2-PAY-002": "BLOCKED",
+    "T2-HWD-001": "BLOCKED",
+    "T2-PAR-001": "BLOCKED",
+    "T2-UAT-001": "DRAFT",
+    "T2-REL-001": "DRAFT",
+    "T2-JSH-001": "DEFERRED",
+    "T2-LIC-001": "DEFERRED"
+  },
+  "externalExecution": {
+    "providerNetworkCalls": 0,
+    "realDeviceCommands": 0,
+    "onsitePilots": 0,
+    "fullAlphaRuns": 0,
+    "commercialClaimAllowed": false
+  }
+}

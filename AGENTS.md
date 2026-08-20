@@ -318,6 +318,18 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
 - 仓库只保存公开 URL、必要事实摘要、响应字节数/SHA-256 和受控材料不透明引用；公开网页原始响应、受控原文、Secret、真实 PII、样机证书和未脱敏商户数据不得提交。
 - 本阶段结束必须提交支付、硬件、伙伴三条独立执行准入报告和更新后的 Alpha P0 差距。缺少完整受控材料时必须如实 `NO-GO/BLOCKED`，不得创建绿色占位、启动 Gate 6C 执行、完整 Alpha/UAT 或宣称可试点、可商用。
 
+## 4.25 当前 T2 Gate 6D / Sprint S15：内部产品化第一波条件准入
+
+- 项目发起人已于 2026-08-20 明确外部支付沙箱、真实硬件和设计伙伴资料暂不阻断内部业务产品化开发，并授权从 Gate 6C 封存提交 `aece518b9ef1057462e835ad7f98ce1aa2bffbf3` 建立 `t2/gate6d-sprint15-internal-productization`。
+- Gate 6D 只允许按 `T2-POS-007 → T2-POS-008 → T2-ADM-001 → T2-E2E-001` 顺序准入和实现；前项未形成独立 `VERIFIED` 证据时，后项必须保持 `DRAFT`，不得预建运行时、绿色占位或倒补设计。
+- Flutter POS 页面只能调用正式应用服务、Repository 和 `PosDeviceGateway`；禁止 UI 直接访问 SQLite、`MethodChannel`、拼装订单/支付/库存/促销事实或自行计算最终金额。可信终端、门店、员工、权限、班次和业务日上下文必须由应用层校验并失败关闭。
+- POS 必须覆盖大触控区、键盘/扫码输入、防重复点击、断网与同步积压、权限拒绝、错误恢复、业务日切换和安全退出。打印仅允许形成打印任务、预览及 Fake Device Adapter 调用；不得将软件预览提升为 `REAL_DEVICE`。
+- Vue 管理后台只能通过已批准正式 API 使用 Foundation、Catalog、RBAC 和 Audit Owner 能力；路由权限仅控制展示，服务端权限仍为最终授权。前端禁止跨模块直查、复制状态机或重新计算金额、库存、成本和促销。
+- `T2-E2E-001` 只允许两个虚构租户、多门店、多终端、三业态和现金支付的内部合成闭环；E2E 必须复用既有 Owner 端口与正式 SQLite/MySQL Schema，不新增库存、成本、促销、会员或报表算法。
+- `T2-PAY-002/HWD-001/PAR-001` 继续 `BLOCKED`，`T2-UAT-001/REL-001` 继续 `DRAFT`，`T2-JSH-001/LIC-001` 继续 `DEFERRED`。Provider 网络、真实终端命令、现场试点和完整 Alpha UAT 执行数必须为 0。
+- 本 Sprint 只允许现金和既有 Provider 无关 Fake；禁止 Provider SDK/HTTP、真实回调/账单、真实资金、生产密钥、真实 PII、真实外设与 APK 安装。内部合成证据不得宣称 Alpha、可试点或可商用。
+- 完成后必须提交《T2 Gate 6D / Sprint S15 周门禁报告》等待项目发起人确认；不得自动把四项需求更新为 `ACCEPTED`，不得自行进入 Gate 6E。
+
 ## 5. 工程与测试规则
 
 - 服务端采用 RuoYi-Vue-Plus 模块化单体，不得把领域逻辑写入 Controller、通用工具类或框架系统模块。

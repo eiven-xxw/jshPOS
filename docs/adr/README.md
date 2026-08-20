@@ -45,3 +45,4 @@ ADR 一经接受不得删除或静默改写。需要改变决策时，新建 ADR
 | ADR-033 | [持久化访问策略与 SQL 模式解耦](ADR-033-persistence-access-strategy-and-sql-mode.md) | Accepted |
 | ADR-034 | [Gate 6B Provider 无关发布治理与真实设备边界](ADR-034-gate6b-provider-neutral-release-governance.md) | Accepted |
 | ADR-035 | [Gate 6C 外部 P0 证据治理与 Alpha 准入](ADR-035-gate6c-external-p0-evidence-and-alpha-admission.md) | Accepted |
+| ADR-036 | [Gate 6D 内部产品化 UI 编排与合成闭环边界](ADR-036-gate6d-internal-productization-ui-orchestration.md) | Accepted |

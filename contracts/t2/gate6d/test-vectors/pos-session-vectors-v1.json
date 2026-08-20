@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-POS-007",
+  "evidenceLevel": "SYNTHETIC_SOFTWARE",
+  "vectors": [
+    {"id": "SESSION-001", "terminal": "ACTIVE", "employee": "VALID", "expected": "READY_WITH_SHIFT"},
+    {"id": "SESSION-002", "terminal": "UNKNOWN", "employee": "NOT_CALLED", "expectedError": "TERMINAL_UNTRUSTED"},
+    {"id": "SESSION-003", "terminal": "REVOKED", "employee": "NOT_CALLED", "expectedError": "TERMINAL_REVOKED"},
+    {"id": "SESSION-004", "terminal": "CAPABILITY_MISMATCH", "employee": "NOT_CALLED", "expectedError": "TERMINAL_CAPABILITY_MISMATCH"},
+    {"id": "SESSION-005", "terminal": "ACTIVE", "employee": "INVALID", "expectedError": "AUTH_FAILED"},
+    {"id": "SESSION-006", "terminal": "ACTIVE", "employee": "VALID_DUPLICATE_SUBMIT", "authenticationEffects": 1, "expected": "READY_WITH_SHIFT"},
+    {"id": "SESSION-007", "terminal": "ACTIVE", "employee": "NO_CASH_PERMISSION", "expectedError": "PERMISSION_DENIED"},
+    {"id": "SESSION-008", "terminal": "CROSS_TENANT_REFRESH", "expectedError": "SESSION_CONTEXT_MISMATCH"},
+    {"id": "SESSION-009", "terminal": "ACTIVE", "employee": "EXPIRED", "expectedError": "SESSION_EXPIRED"},
+    {"id": "SESSION-010", "terminal": "ACTIVE", "businessDate": "CHANGED_WITH_OPEN_SHIFT", "expectedError": "BUSINESS_DATE_CHANGED"},
+    {"id": "SESSION-011", "terminal": "ACTIVE", "employee": "VALID", "operation": "DUPLICATE_LOGOUT", "logoutEffects": 1, "expected": "SIGNED_OUT"}
+  ],
+  "externalExecution": {
+    "providerNetworkCalls": 0,
+    "realDeviceCommands": 0,
+    "onsitePilots": 0,
+    "fullAlphaRuns": 0
+  }
+}

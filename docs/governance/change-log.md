@@ -120,5 +120,7 @@
 | CR-T2G6C-003 | 2026-08-20 | APPROVED | 项目发起人接受 Gate 6C-Prep CONDITIONAL PASS，仅授权进入三条外部证据收件与离线验真，并要求真实材料达到 VERIFIED_DOCUMENT 后另行提交独立执行准入评审 | T2-PAY-002、T2-HWD-001、T2-PAR-001、T2-UAT-001、T2-REL-001、ADR-035 | PAY/HWD/PAR 保持 BLOCKED，UAT/REL 保持 DRAFT；禁止 Provider 网络、真实设备命令、现场试点和完整 Alpha UAT |
 | CR-T2G6C-004 | 2026-08-20 | DOCUMENT_INTAKE_AWAITING_CI | 完成五家支付和主机/外设候选的 16 份公开官方响应 URL/字节数/SHA-256 登记、统一 RFI、伙伴证据包、三条独立 NO-GO 报告及 Alpha P0 差距；公开材料只标记 PUBLIC_OFFICIAL_DOCUMENT | T2-PAY-002、T2-HWD-001、T2-PAR-001、T2-UAT-001、T2-REL-001、ADR-035 | 授权沙箱包0、样机包0、真实伙伴0/5、书面意愿0/3；network/device/pilot/fullAlpha 执行数均为0，等待 CI 验证 |
 | CR-T2G6C-005 | 2026-08-20 | PUBLIC_DOCUMENT_VERIFIED_AWAITING_CONFIRMATION | 候选 `91d2595` 的 GitHub Actions Run `32348712421` 完成 Ubuntu、Windows、离线范围/Secret 和证据索引 4 个 Job 一次全绿；16 份公开响应元数据、五家支付、两主机候选、六类外设及状态守恒通过 | T2-PAY-002、T2-HWD-001、T2-PAR-001、T2-UAT-001、T2-REL-001、ADR-035 | 只验证 PUBLIC_OFFICIAL_DOCUMENT/STATIC_GOVERNANCE；三条独立执行准入仍 NO-GO，PAY/HWD/PAR BLOCKED、UAT/REL DRAFT |
+| CR-T2G6D-001 | 2026-08-20 | APPROVED | 项目发起人确认外部支付沙箱、真实硬件和设计伙伴暂不阻断内部产品化，并授权从 `aece518b9ef1057462e835ad7f98ce1aa2bffbf3` 按 POS-007→POS-008→ADM-001→E2E-001 串行启动 Gate 6D / Sprint S15 | T2-POS-007、T2-POS-008、T2-ADM-001、T2-E2E-001、ADR-036 | PAY/HWD/PAR 保持 BLOCKED，UAT/REL 保持 DRAFT，JSH/LIC 保持 DEFERRED；Provider 网络、真实设备、现场试点和完整 Alpha 均为 0 |
+| CR-T2G6D-002 | 2026-08-20 | IN_PROGRESS_POS007 | T2-POS-007 已冻结用户旅程、页面状态、可信终端和员工会话、权限、错误码、审计、应用端口、离线、兼容、回退和测试准入，按串行规则进入实现 | T2-POS-007、ADR-036 | POS-008、ADM-001、E2E-001 继续 DRAFT；POS-007 只允许虚构终端和软件会话证据 |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。
