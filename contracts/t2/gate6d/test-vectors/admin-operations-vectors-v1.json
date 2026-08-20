@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-ADM-001",
+  "evidenceLevel": "COMPONENT",
+  "vectors": [
+    {"id": "ADM-UI-001", "scenario": "dashboard-all-apis-success", "expected": "VISIBLE_SCOPE_COUNTS"},
+    {"id": "ADM-UI-002", "scenario": "dashboard-partial-api-failure", "expected": "UNKNOWN_NOT_ZERO"},
+    {"id": "ADM-UI-003", "scenario": "organization-store-navigation", "expected": "FORMAL_ROUTE"},
+    {"id": "ADM-UI-004", "scenario": "staff-role-navigation", "expected": "RUOYI_FORMAL_ROUTE"},
+    {"id": "ADM-UI-005", "scenario": "staff-scope-query", "expected": "TRUSTED_SESSION_SCOPE"},
+    {"id": "ADM-UI-006", "scenario": "staff-scope-replace", "expected": "FOUNDATION_OWNER_AUDIT"},
+    {"id": "ADM-UI-007", "scenario": "category-create", "expected": "CATALOG_API_ONLY"},
+    {"id": "ADM-UI-008", "scenario": "brand-create", "expected": "CATALOG_API_ONLY"},
+    {"id": "ADM-UI-009", "scenario": "multi-unit-one-primary", "expected": "ACCEPTED"},
+    {"id": "ADM-UI-010", "scenario": "multi-unit-duplicate-barcode", "expected": "REJECTED"},
+    {"id": "ADM-UI-011", "scenario": "multi-unit-fractional-ratio", "expected": "REJECTED"},
+    {"id": "ADM-UI-012", "scenario": "import-preflight-errors", "expected": "ROW_DETAILS_VISIBLE"},
+    {"id": "ADM-UI-013", "scenario": "import-publish", "expected": "PRECHECK_REQUIRED"},
+    {"id": "ADM-UI-014", "scenario": "import-safe-rollback", "expected": "BATCH_STATE_RETURNED"},
+    {"id": "ADM-UI-015", "scenario": "store-price-version", "expected": "STORE_SELECTED_FROM_TRUSTED_API"},
+    {"id": "ADM-UI-016", "scenario": "future-price-effective-time", "expected": "OWNER_VALIDATED"},
+    {"id": "ADM-UI-017", "scenario": "price-publish", "expected": "STATE_AND_DIGEST_VISIBLE"},
+    {"id": "ADM-UI-018", "scenario": "client-tenant-override", "expected": "REJECTED"}
+  ],
+  "externalExecution": {
+    "providerNetworkCalls": 0,
+    "realDeviceCommands": 0,
+    "onsitePilots": 0,
+    "fullAlphaRuns": 0
+  }
+}

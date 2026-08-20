@@ -1,8 +1,8 @@
 {
   "$schema": "https://json.schemastore.org/package",
   "name": "@jshpos/admin-web",
-  "version": "0.0.0-t0",
-  "description": "鲸熵汇收银系统SaaS管理后台（T0工程骨架）",
+  "version": "0.15.0-internal",
+  "description": "鲸熵汇收银系统 SaaS 经营管理后台",
   "private": true,
   "packageManager": "pnpm@10.33.0",
   "author": "LionLi",

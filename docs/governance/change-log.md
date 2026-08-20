@@ -130,5 +130,6 @@
 | CR-T2G6D-008 | 2026-08-20 | IMPLEMENTED_POS008_AWAITING_CI | POS-008 完成应用服务端口、单航班页面编排、失败关闭默认实现、正式收银页面、F2/F4/F9、大触控、离线/积压提示、现金幂等成交和 Fake 打印预览；本地 Flutter 全量102项、Controller 7项、Widget 3项及 Gate6D 目标覆盖率97.37%通过 | T2-POS-008、T2-CI-001、ADR-036 | 继续 IN_PROGRESS 等待 GitHub 双平台/Android/安全/完整回归；未接入 Provider、真实设备或直接 SQLite/MethodChannel，ADM-001/E2E-001 仍 DRAFT |
 | CR-T2G6D-009 | 2026-08-20 | VERIFIED_POS008 | 候选 `4675c7e` 的 GitHub Actions Run `32359246598` 八个 Job 单次全绿；Flutter全量102项、目标覆盖率97.37%、双平台、Android APK/Kotlin、SQLite、MySQL、服务端、Web、安全、SBOM、许可证及证据索引通过 | T2-POS-008、T2-CI-001、ADR-036 | POS-008 更新为 VERIFIED 而非 ACCEPTED；打印仅预览/Fake Adapter，Provider网络/REAL_DEVICE/PILOT/完整Alpha仍为0 |
 | CR-T2G6D-010 | 2026-08-20 | IN_PROGRESS_ADM001 | 在 POS-008 独立 VERIFIED 后，依序准入 Vue 经营工作台、组织门店、员工权限、商品条码多单位、分类品牌、价格版本和批量导入正式运营 UI | T2-ADM-001、ADR-036 | 只能调用正式 API；禁止跨模块直查和前端重算金额、库存、成本或促销，E2E-001 继续 DRAFT |
+| CR-T2G6D-011 | 2026-08-20 | IMPLEMENTED_ADM001_AWAITING_CI | ADM-001 完成正式经营工作台、组织门店与员工数据范围、商品条码多单位、分类品牌、价格版本、导入预检/错误明细/安全回退 UI；本地 TypeScript、ESLint、生产构建及 20 项 Web 测试通过 | T2-ADM-001、T2-CI-001、ADR-036 | 继续 IN_PROGRESS 等待 GitHub 完整 CI；只调用正式 API，不接收 tenant_id、不跨 Owner 直查、不在前端重算领域事实，E2E-001 仍为 DRAFT |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。

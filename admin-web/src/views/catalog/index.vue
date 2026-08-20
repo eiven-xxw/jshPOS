@@ -2,8 +2,8 @@
   <div class="p-2">
     <el-alert
       class="mb-3"
-      title="Gate 1 商品价格工作台"
-      description="租户仅由可信登录会话注入；金额以分为单位，数量和单位换算不使用浮点数。"
+      title="商品与价格运营中心"
+      description="租户仅由可信登录会话注入；金额由服务端按最小货币单位校验，单位换算使用整数分子分母。"
       type="info"
       :closable="false"
       show-icon
@@ -13,8 +13,8 @@
       <template #header>
         <el-space wrap>
           <el-button icon="Refresh" @click="loadProducts">刷新商品</el-button>
-          <el-button v-hasPermi="['catalog:definition:manage']" @click="definitionDialog = true">分类与单位</el-button>
-          <el-button v-hasPermi="['catalog:product:manage']" type="primary" @click="productDialog = true">新增商品</el-button>
+          <el-button v-hasPermi="['catalog:definition:manage']" @click="definitionDialog = true">分类 / 品牌 / 单位</el-button>
+          <el-button v-hasPermi="['catalog:product:manage']" type="primary" @click="openProductDialog">新增商品</el-button>
           <el-button v-hasPermi="['catalog:import:preflight']" type="warning" @click="importDialog = true">导入预检</el-button>
           <el-button v-hasPermi="['catalog:price:manage']" type="success" @click="priceDialog = true">价格版本</el-button>
         </el-space>
@@ -43,7 +43,7 @@
       </el-table>
     </el-card>
 
-    <el-dialog v-model="definitionDialog" title="新增分类 / 单位" width="560px">
+    <el-dialog v-model="definitionDialog" title="分类 / 品牌 / 单位" width="620px">
       <el-tabs>
         <el-tab-pane label="分类">
           <el-form :model="categoryForm" label-width="100px">
@@ -51,6 +51,13 @@
             <el-form-item label="名称"><el-input v-model="categoryForm.name" /></el-form-item>
           </el-form>
           <el-button type="primary" @click="submitCategory">保存分类</el-button>
+        </el-tab-pane>
+        <el-tab-pane label="品牌">
+          <el-form :model="brandForm" label-width="100px">
+            <el-form-item label="编码"><el-input v-model="brandForm.code" maxlength="32" /></el-form-item>
+            <el-form-item label="名称"><el-input v-model="brandForm.name" maxlength="100" /></el-form-item>
+          </el-form>
+          <el-button type="primary" @click="submitBrand">保存品牌</el-button>
         </el-tab-pane>
         <el-tab-pane label="单位">
           <el-form :model="unitForm" label-width="100px">
@@ -63,18 +70,48 @@
       </el-tabs>
     </el-dialog>
 
-    <el-dialog v-model="productDialog" title="新增标准商品" width="620px">
+    <el-dialog v-model="productDialog" title="新增商品与销售单位" width="920px" destroy-on-close>
       <el-form :model="productForm" label-width="110px">
         <el-form-item label="SPU 编码"><el-input v-model="productForm.spuCode" /></el-form-item>
         <el-form-item label="SKU 编码"><el-input v-model="productForm.skuCode" /></el-form-item>
         <el-form-item label="商品名称"><el-input v-model="productForm.name" /></el-form-item>
         <el-form-item label="分类 ID"><el-input v-model="productForm.categoryId" /></el-form-item>
-        <el-form-item label="主单位 ID"><el-input v-model="primaryUnitId" /></el-form-item>
-        <el-form-item label="条码"><el-input v-model="primaryBarcode" /></el-form-item>
+        <el-form-item label="品牌 ID"><el-input v-model="productForm.brandId" placeholder="可选" /></el-form-item>
         <el-form-item label="商品类型">
           <el-select v-model="productForm.productType" class="w-full">
             <el-option label="标准" value="STANDARD" /><el-option label="称重" value="WEIGHT" /><el-option label="计数" value="COUNT" />
           </el-select>
+        </el-form-item>
+        <el-form-item label="销售单位">
+          <div class="w-full">
+            <el-table :data="productUnits" row-key="rowKey" border>
+              <el-table-column label="单位 ID" min-width="120">
+                <template #default="scope"><el-input v-model="scope.row.unitId" placeholder="64 位 ID" /></template>
+              </el-table-column>
+              <el-table-column label="换算分子" width="130">
+                <template #default="scope"><el-input-number v-model="scope.row.ratioNumerator" :min="1" :precision="0" /></template>
+              </el-table-column>
+              <el-table-column label="换算分母" width="130">
+                <template #default="scope"><el-input-number v-model="scope.row.ratioDenominator" :min="1" :precision="0" /></template>
+              </el-table-column>
+              <el-table-column label="主单位" width="90">
+                <template #default="scope"
+                  ><el-radio v-model="primaryUnitRow" :value="scope.row.rowKey" @change="selectPrimaryUnit(scope.row.rowKey)"
+                /></template>
+              </el-table-column>
+              <el-table-column label="条码（逗号或换行分隔）" min-width="240">
+                <template #default="scope"><el-input v-model="scope.row.barcodesText" type="textarea" :rows="2" /></template>
+              </el-table-column>
+              <el-table-column label="操作" width="80">
+                <template #default="scope"
+                  ><el-button link type="danger" :disabled="productUnits.length === 1" @click="removeProductUnit(scope.$index)"
+                    >删除</el-button
+                  ></template
+                >
+              </el-table-column>
+            </el-table>
+            <el-button class="mt-2" icon="Plus" @click="addProductUnit">增加销售单位</el-button>
+          </div>
         </el-form-item>
       </el-form>
       <template #footer
@@ -88,10 +125,16 @@
       <el-alert v-if="importResult" class="mt-2" :type="importResult.batch.errorCount ? 'error' : 'success'" :closable="false">
         批次 {{ importResult.batch.importBatchId }}：{{ importResult.batch.rowCount }} 行，{{ importResult.batch.errorCount }} 个错误
       </el-alert>
+      <el-table v-if="importResult?.errors.length" class="mt-2" :data="importResult.errors" max-height="260" border>
+        <el-table-column prop="rowNumber" label="行号" width="90" />
+        <el-table-column prop="field" label="字段" min-width="150" />
+        <el-table-column prop="message" label="错误明细" min-width="360" show-overflow-tooltip />
+      </el-table>
       <template #footer>
         <el-button @click="importDialog = false">关闭</el-button>
         <el-button type="primary" @click="runPreflight">执行预检</el-button>
         <el-button v-if="importResult?.batch.state === 'PRECHECKED'" type="success" @click="commitImport">原子发布</el-button>
+        <el-button v-if="importResult?.batch.state === 'PUBLISHED'" type="warning" @click="rollbackPublishedImport">安全回退</el-button>
       </template>
     </el-dialog>
 
@@ -103,9 +146,16 @@
         <el-form-item label="范围"
           ><el-select v-model="priceBookForm.scopeType"><el-option value="TENANT_BASE" /><el-option value="STORE" /></el-select
         ></el-form-item>
-        <el-form-item v-if="priceBookForm.scopeType === 'STORE'" label="门店 ID"><el-input v-model="priceBookStoreId" /></el-form-item>
+        <el-form-item v-if="priceBookForm.scopeType === 'STORE'" label="适用门店">
+          <el-select v-model="priceBookStoreId" class="w-full" filterable>
+            <el-option v-for="store in stores" :key="store.storeId" :label="`${store.code} - ${store.name}`" :value="String(store.storeId)" />
+          </el-select>
+        </el-form-item>
       </el-form>
-      <el-alert v-if="currentBook" type="success" :closable="false">当前草稿 ID：{{ currentBook.priceBookId }}</el-alert>
+      <el-alert v-if="currentBook" :type="currentBook.state === 'PUBLISHED' ? 'success' : 'info'" :closable="false">
+        价格簿 {{ currentBook.priceBookId }} · {{ currentBook.state
+        }}<span v-if="currentBook.contentSha256"> · 摘要 {{ currentBook.contentSha256.slice(0, 12) }}…</span>
+      </el-alert>
       <el-form v-if="currentBook" :model="priceItemForm" label-width="120px" class="mt-3">
         <el-form-item label="SKU ID"><el-input v-model="priceItemForm.skuId" /></el-form-item>
         <el-form-item label="单位 ID"><el-input v-model="priceItemForm.unitId" /></el-form-item>
@@ -128,6 +178,7 @@
 import {
   addPriceItem,
   changeProductState,
+  createBrand,
   createCategory,
   createPriceBook,
   createProduct,
@@ -135,9 +186,14 @@ import {
   listProducts,
   preflightImport,
   publishImport,
-  publishPriceBook
+  publishPriceBook,
+  rollbackImport
 } from '@/api/catalog';
 import type { CreatePriceBookForm, CreateProductForm, ImportPreflightVO, ImportRow, PriceBookVO, ProductState, ProductVO } from '@/api/catalog/types';
+import { listStores } from '@/api/foundation';
+import type { StoreVO } from '@/api/foundation/types';
+import { normalizeProductUnits } from '@/views/operations/model';
+import type { ProductUnitDraft } from '@/views/operations/model';
 
 const loading = ref(false);
 const products = ref<ProductVO[]>([]);
@@ -145,10 +201,10 @@ const definitionDialog = ref(false);
 const productDialog = ref(false);
 const importDialog = ref(false);
 const priceDialog = ref(false);
+const stores = ref<StoreVO[]>([]);
 const categoryForm = reactive({ code: '', name: '', sortNo: 0 });
+const brandForm = reactive({ code: '', name: '' });
 const unitForm = reactive({ code: '', name: '', decimalScale: 0 });
-const primaryUnitId = ref('');
-const primaryBarcode = ref('');
 const productForm = reactive<CreateProductForm>({
   spuCode: '',
   skuCode: '',
@@ -158,6 +214,9 @@ const productForm = reactive<CreateProductForm>({
   attributes: { schemaVersion: '1.0' },
   units: []
 });
+let unitSequence = 0;
+const productUnits = ref<ProductUnitDraft[]>([]);
+const primaryUnitRow = ref('');
 const importKey = ref('catalog-import-20260816-001');
 const importJson = ref('[]');
 const importResult = ref<ImportPreflightVO>();
@@ -169,7 +228,9 @@ const priceItemForm = reactive({ skuId: '', unitId: '', amountMinor: 0, effectiv
 const loadProducts = async () => {
   loading.value = true;
   try {
-    products.value = (await listProducts()).data;
+    const [productResponse, storeResponse] = await Promise.all([listProducts(), listStores()]);
+    products.value = productResponse.data;
+    stores.value = storeResponse.data;
   } finally {
     loading.value = false;
   }
@@ -178,22 +239,54 @@ const submitCategory = async () => {
   await createCategory({ ...categoryForm });
   ElMessage.success('分类已创建');
 };
+const submitBrand = async () => {
+  await createBrand({ ...brandForm });
+  ElMessage.success('品牌已创建');
+};
 const submitUnit = async () => {
   await createUnit({ ...unitForm });
   ElMessage.success('单位已创建');
 };
+const newUnitRow = (primary = false): ProductUnitDraft => {
+  unitSequence += 1;
+  return {
+    rowKey: `unit-${unitSequence}`,
+    unitId: '',
+    ratioNumerator: 1,
+    ratioDenominator: 1,
+    primary,
+    barcodesText: ''
+  };
+};
+const openProductDialog = () => {
+  Object.assign(productForm, {
+    spuCode: '',
+    skuCode: '',
+    name: '',
+    categoryId: '',
+    brandId: undefined,
+    productType: 'STANDARD',
+    attributes: { schemaVersion: '1.0' },
+    units: []
+  });
+  const first = newUnitRow(true);
+  productUnits.value = [first];
+  primaryUnitRow.value = first.rowKey;
+  productDialog.value = true;
+};
+const addProductUnit = () => productUnits.value.push(newUnitRow(false));
+const removeProductUnit = (index: number) => {
+  const removed = productUnits.value.splice(index, 1)[0];
+  if (removed?.primary && productUnits.value.length > 0) selectPrimaryUnit(productUnits.value[0].rowKey);
+};
+const selectPrimaryUnit = (rowKey: string) => {
+  primaryUnitRow.value = rowKey;
+  productUnits.value.forEach((item) => (item.primary = item.rowKey === rowKey));
+};
 const submitProduct = async () => {
   const payload: CreateProductForm = {
     ...productForm,
-    units: [
-      {
-        unitId: primaryUnitId.value,
-        ratioNumerator: 1,
-        ratioDenominator: 1,
-        primary: true,
-        barcodes: primaryBarcode.value ? [primaryBarcode.value] : []
-      }
-    ]
+    units: normalizeProductUnits(productUnits.value)
   };
   await createProduct(payload);
   productDialog.value = false;
@@ -213,6 +306,12 @@ const commitImport = async () => {
   if (!importResult.value) return;
   importResult.value.batch = (await publishImport(importResult.value.batch.importBatchId)).data;
   ElMessage.success('导入版本已原子发布');
+};
+const rollbackPublishedImport = async () => {
+  if (!importResult.value) return;
+  importResult.value.batch = (await rollbackImport(importResult.value.batch.importBatchId)).data;
+  ElMessage.success('已按批次状态安全回退；后续修改不会被覆盖');
+  await loadProducts();
 };
 const submitPriceBook = async () => {
   currentBook.value = (

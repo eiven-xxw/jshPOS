@@ -2,8 +2,8 @@
   <div class="p-2">
     <el-alert
       class="mb-3"
-      title="Gate 0 平台基础工作台"
-      description="租户由可信登录会话注入；页面不会接收、保存或提交 tenant_id。"
+      title="组织、门店与员工数据范围"
+      description="租户由可信登录会话注入；页面不会接收、保存或提交 tenant_id，服务端仍执行最终权限与数据范围校验。"
       type="info"
       :closable="false"
       show-icon
@@ -63,6 +63,52 @@
               <template #default="scope">
                 <el-button link type="primary" @click="showBusinessDate(scope.row)">查询</el-button>
               </template>
+            </el-table-column>
+          </el-table>
+        </el-tab-pane>
+
+        <el-tab-pane label="员工数据范围" name="staff">
+          <el-alert
+            class="mb-3"
+            title="员工账号与角色在“系统管理 → 用户/角色”维护；此处只授予鲸熵汇组织门店数据范围。"
+            type="info"
+            :closable="false"
+            show-icon
+          />
+          <el-form inline>
+            <el-form-item label="员工用户 ID"><el-input-number v-model="staffUserId" :min="1" :precision="0" /></el-form-item>
+            <el-form-item>
+              <el-button v-hasPermi="['foundation:scope:query']" type="primary" @click="loadStaffScopes">加载范围</el-button>
+              <el-button v-hasPermi="['foundation:scope:grant']" @click="addScopeRow">新增范围</el-button>
+              <el-button v-hasPermi="['foundation:scope:grant']" type="success" @click="saveStaffScopes">保存并审计</el-button>
+            </el-form-item>
+          </el-form>
+          <el-table :data="staffScopes" row-key="rowKey" border empty-text="请先输入员工用户 ID 并加载">
+            <el-table-column label="范围类型" min-width="170">
+              <template #default="scope">
+                <el-select v-model="scope.row.scopeType" class="w-full">
+                  <el-option label="全租户" value="TENANT" />
+                  <el-option label="组织及下级" value="ORG_SUBTREE" />
+                  <el-option label="指定门店" value="STORE" />
+                </el-select>
+              </template>
+            </el-table-column>
+            <el-table-column label="组织" min-width="200">
+              <template #default="scope">
+                <el-select v-model="scope.row.orgUnitId" :disabled="scope.row.scopeType !== 'ORG_SUBTREE'" clearable class="w-full">
+                  <el-option v-for="item in orgUnits" :key="item.orgUnitId" :label="`${item.code} - ${item.name}`" :value="item.orgUnitId" />
+                </el-select>
+              </template>
+            </el-table-column>
+            <el-table-column label="门店" min-width="200">
+              <template #default="scope">
+                <el-select v-model="scope.row.storeId" :disabled="scope.row.scopeType !== 'STORE'" clearable class="w-full">
+                  <el-option v-for="item in stores" :key="item.storeId" :label="`${item.code} - ${item.name}`" :value="item.storeId" />
+                </el-select>
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="90">
+              <template #default="scope"><el-button link type="danger" @click="staffScopes.splice(scope.$index, 1)">移除</el-button></template>
             </el-table-column>
           </el-table>
         </el-tab-pane>
@@ -146,7 +192,9 @@ import {
   listAuditEvents,
   listConfigTemplates,
   listOrgUnits,
-  listStores
+  listStaffScopes,
+  listStores,
+  replaceStaffScopes
 } from '@/api/foundation';
 import type {
   AuditEventVO,
@@ -157,6 +205,8 @@ import type {
   Industry,
   OrgUnitType,
   OrgUnitVO,
+  ScopeType,
+  StaffScopeInput,
   StoreVO
 } from '@/api/foundation/types';
 
@@ -166,12 +216,15 @@ const orgUnits = ref<OrgUnitVO[]>([]);
 const stores = ref<StoreVO[]>([]);
 const templates = ref<ConfigTemplateVO[]>([]);
 const auditEvents = ref<AuditEventVO[]>([]);
+const staffUserId = ref(1);
+const staffScopes = ref<Array<StaffScopeInput & { rowKey: string }>>([]);
 const orgDialog = ref(false);
 const storeDialog = ref(false);
 const templateDialog = ref(false);
 const storeStart = ref('06:00:00');
 const orgTypes: OrgUnitType[] = ['HEADQUARTERS', 'REGION', 'COMPANY', 'OTHER'];
 const industries: Industry[] = ['CONVENIENCE', 'SNACK_DISCOUNT', 'COMMUNITY_SUPERMARKET'];
+let scopeSequence = 0;
 
 const orgForm = reactive<CreateOrgUnitForm>({ code: '', name: '', type: 'COMPANY' });
 const storeForm = reactive<CreateStoreForm>({ orgUnitId: 0, code: '', name: '', zoneId: 'Asia/Shanghai', businessDayStart: '06:00:00' });
@@ -237,6 +290,37 @@ const submitTemplate = async () => {
 const showBusinessDate = async (store: StoreVO) => {
   const response = await getBusinessDate(store.storeId);
   ElMessage.success(`${store.name} 当前业务日：${response.data.businessDate}`);
+};
+
+const addScopeRow = () => {
+  scopeSequence += 1;
+  staffScopes.value.push({ rowKey: `scope-${scopeSequence}`, scopeType: 'STORE', storeId: stores.value[0]?.storeId });
+};
+const loadStaffScopes = async () => {
+  const response = await listStaffScopes(staffUserId.value);
+  staffScopes.value = response.data
+    .filter((item) => item.status === 'ACTIVE')
+    .map((item) => ({
+      rowKey: `scope-${item.staffScopeId}`,
+      scopeType: item.scopeType,
+      orgUnitId: item.orgUnitId,
+      storeId: item.storeId
+    }));
+};
+const saveStaffScopes = async () => {
+  const scopes = staffScopes.value.map<StaffScopeInput>((item) => {
+    const scopeType: ScopeType = item.scopeType;
+    if (scopeType === 'ORG_SUBTREE' && !item.orgUnitId) throw new Error('组织范围必须选择组织');
+    if (scopeType === 'STORE' && !item.storeId) throw new Error('门店范围必须选择门店');
+    return {
+      scopeType,
+      orgUnitId: scopeType === 'ORG_SUBTREE' ? item.orgUnitId : undefined,
+      storeId: scopeType === 'STORE' ? item.storeId : undefined
+    };
+  });
+  await replaceStaffScopes(staffUserId.value, scopes);
+  ElMessage.success('员工数据范围已替换并记录审计');
+  await loadStaffScopes();
 };
 
 onMounted(loadAll);

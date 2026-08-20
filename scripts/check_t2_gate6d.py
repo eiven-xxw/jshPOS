@@ -110,6 +110,39 @@ def main() -> None:
     else:
         output_sale_vector_count = 0
 
+    admin_source = "\n".join(
+        (ROOT / relative).read_text(encoding="utf-8")
+        for relative in (
+            "admin-web/src/views/index.vue",
+            "admin-web/src/views/foundation/index.vue",
+            "admin-web/src/views/catalog/index.vue",
+            "admin-web/src/views/operations/model.ts",
+        )
+    )
+    if RANK[rtm["T2-ADM-001"]["status"]] >= RANK["IN_PROGRESS"]:
+        for required in (
+            "经营工作台",
+            "normalizeProductUnits",
+            "replaceStaffScopes",
+            "createBrand",
+            "publishPriceBook",
+            "rollbackImport",
+        ):
+            require(required in admin_source, f"admin formal UI token missing: {required}")
+        require("RuoYi-Cloud-Plus" not in (ROOT / "admin-web/src/views/index.vue").read_text(encoding="utf-8"), "framework demo home remains")
+        for forbidden in ("tenantId:", "tenant_id:", "fetch(", "axios.create("):
+            require(forbidden not in admin_source, f"admin UI bypass token found: {forbidden}")
+        admin_vectors = json.loads(
+            (ROOT / "contracts/t2/gate6d/test-vectors/admin-operations-vectors-v1.json").read_text(encoding="utf-8")
+        )
+        require(admin_vectors["requirementId"] == "T2-ADM-001", "admin vectors requirement mismatch")
+        require(len(admin_vectors["vectors"]) >= 18, "admin fixed vectors incomplete")
+        require(len({item["id"] for item in admin_vectors["vectors"]}) == len(admin_vectors["vectors"]), "duplicate admin vector id")
+        require(all(value == 0 for value in admin_vectors["externalExecution"].values()), "admin vector external execution must remain zero")
+        output_admin_vector_count = len(admin_vectors["vectors"])
+    else:
+        output_admin_vector_count = 0
+
     changed = subprocess.check_output(
         ["git", "diff", "--name-only", args.baseline, "HEAD"], cwd=ROOT, text=True
     ).splitlines()
@@ -124,6 +157,7 @@ def main() -> None:
         "preservedStates": PRESERVED,
         "sessionVectorCount": len(vectors["vectors"]),
         "saleVectorCount": output_sale_vector_count,
+        "adminVectorCount": output_admin_vector_count,
         "changedFiles": len(changed),
         "providerNetworkCalls": 0,
         "realDeviceCommands": 0,
