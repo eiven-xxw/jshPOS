@@ -112,5 +112,6 @@
 | CR-T2G6A-003 | 2026-08-20 | ACCEPTED | 项目发起人确认 Gate 6A CONDITIONAL PASS，将 T2-TRM-001 与 T2-BAK-001 由 VERIFIED 更新为 ACCEPTED | T2-TRM-001、T2-BAK-001、ADR-032 | TRM 不等于 REAL_DEVICE；BAK 仅 SYNTHETIC_RESTORE，RPO/RTO 不构成生产灾备或商业 SLA；生产 KMS/对象存储/跨区域/真实 PITR 继续阻断 |
 | CR-T2G6B-001 | 2026-08-20 | APPROVED | 项目发起人按 CONDITIONAL GO 启动 Gate 6B / Sprint S14，只准入 Provider 无关 T2-UPG-001，并要求支付、硬件和伙伴三条外部解阻轨保持隔离 | T2-UPG-001、T2-PAY-002、T2-HWD-001、T2-PAR-001、ADR-034 | 只允许合成签名包、虚构终端和软件执行结果；禁止真实终端命令、Provider 网络和完整 Alpha UAT |
 | CR-T2G6B-002 | 2026-08-20 | IN_PROGRESS | T2-UPG-001 已冻结 Release Owner、七类发布物、三套状态机、可信终端/安全探针、签名摘要、兼容、权限审计、API/事件、V40/V41、容量、回退/前向修复和测试准入，进入正式实现 | T2-UPG-001、ADR-034 | 新表已按 CONTROLLED_WRITE/APPEND_ONLY + XML 双登记；Gate 6A 设计夹具未转生产表；HWD/PAY/PAR 状态不变 |
+| CR-T2G6B-003 | 2026-08-20 | IN_PROGRESS | Gate 6B 供应链门禁检出 Netty 4.1.136.Final 的 CVE-2026-59902 HIGH，统一升级到已修复的 4.1.137.Final 并要求全量回归和 SBOM 重建 | server/pom.xml、全服务端依赖树、Gate 6B SBOM/漏洞门禁 | 不使用忽略、VEX 豁免或扫描排除；HIGH/CRITICAL 阈值保持不变，CI 全绿前不得关闭 |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。

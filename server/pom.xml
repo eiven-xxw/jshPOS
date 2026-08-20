@@ -37,7 +37,7 @@
         <lombok.version>1.18.44</lombok.version>
         <bouncycastle.version>1.85</bouncycastle.version>
         <!-- T0 供应链基线：显式覆盖上游 BOM 中尚未发布修复的版本 -->
-        <netty.version>4.1.136.Final</netty.version>
+        <netty.version>4.1.137.Final</netty.version>
         <httpcore5.version>5.4.3</httpcore5.version>
         <postgresql.version>42.7.12</postgresql.version>
         <fory.version>1.1.0</fory.version>
