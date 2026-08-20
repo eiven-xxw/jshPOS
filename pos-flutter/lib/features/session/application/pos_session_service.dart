@@ -46,7 +46,9 @@ final class PosSessionService {
         );
       }
       final reported = device.capabilities.map((item) => item.id).toSet();
-      final approved = terminal.approvedCapabilities.map((item) => item.id).toSet();
+      final approved = terminal.approvedCapabilities
+          .map((item) => item.id)
+          .toSet();
       if (!approved.containsAll(reported)) {
         throw const PosSessionFailure(
           'TERMINAL_CAPABILITY_MISMATCH',
@@ -63,10 +65,7 @@ final class PosSessionService {
     } catch (_) {
       return _lock(
         device,
-        const PosSessionFailure(
-          'TERMINAL_UNTRUSTED',
-          '无法验证终端身份，请检查网络或联系管理员。',
-        ),
+        const PosSessionFailure('TERMINAL_UNTRUSTED', '无法验证终端身份，请检查网络或联系管理员。'),
       );
     }
   }
@@ -76,12 +75,10 @@ final class PosSessionService {
     required String loginName,
     required String secret,
   }) {
-    return _loginFlight ??= _login(
-      loginName: loginName,
-      secret: secret,
-    ).whenComplete(() {
-      _loginFlight = null;
-    });
+    return _loginFlight ??= _login(loginName: loginName, secret: secret)
+        .whenComplete(() {
+          _loginFlight = null;
+        });
   }
 
   Future<PosSessionState> _login({
@@ -92,10 +89,7 @@ final class PosSessionService {
     final terminal = before.terminal;
     if (before.phase != PosSessionPhase.signedOut || terminal == null) {
       return _failWithoutUnlock(
-        const PosSessionFailure(
-          'SESSION_STATE_CONFLICT',
-          '当前状态不允许登录。',
-        ),
+        const PosSessionFailure('SESSION_STATE_CONFLICT', '当前状态不允许登录。'),
       );
     }
     _state = PosSessionState(
@@ -112,10 +106,7 @@ final class PosSessionService {
       );
       final result = await _repository.authenticate(terminal, command);
       if (!result.employee.expiresAt.isAfter(_now().toUtc())) {
-        throw const PosSessionFailure(
-          'SESSION_EXPIRED',
-          '会话已过期，请重新登录。',
-        );
+        throw const PosSessionFailure('SESSION_EXPIRED', '会话已过期，请重新登录。');
       }
       final shift = result.shift;
       if (shift != null &&
@@ -163,10 +154,7 @@ final class PosSessionService {
       final refreshed = await _repository.refresh(terminal, employee);
       if (!refreshed.terminal.isActive ||
           !refreshed.terminal.validUntil.isAfter(_now().toUtc())) {
-        throw const PosSessionFailure(
-          'TERMINAL_REVOKED',
-          '终端已被停用，请联系管理员。',
-        );
+        throw const PosSessionFailure('TERMINAL_REVOKED', '终端已被停用，请联系管理员。');
       }
       if (refreshed.terminal.tenantId != terminal.tenantId ||
           refreshed.terminal.storeId != terminal.storeId ||
@@ -186,7 +174,8 @@ final class PosSessionService {
           safeMessage: '会话已过期，请重新登录。',
         );
       }
-      final changed = refreshed.shift != null &&
+      final changed =
+          refreshed.shift != null &&
           refreshed.shift!.businessDate != refreshed.terminal.businessDate;
       return _state = PosSessionState(
         phase: refreshed.shift == null
@@ -268,10 +257,7 @@ final class PosSessionService {
   /// 应用能力入口的最终本地防线；服务端仍必须再次授权。
   void requirePermission(PosPermission permission) {
     if (!_state.hasPermission(permission) || _state.businessDateChanged) {
-      throw const PosSessionFailure(
-        'PERMISSION_DENIED',
-        '当前员工无权执行该操作。',
-      );
+      throw const PosSessionFailure('PERMISSION_DENIED', '当前员工无权执行该操作。');
     }
   }
 

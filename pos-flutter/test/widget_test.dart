@@ -35,10 +35,7 @@ void main() {
       greaterThanOrEqualTo(48),
     );
 
-    await tester.enterText(
-      find.byKey(const Key('employeeLogin')),
-      'cashier01',
-    );
+    await tester.enterText(find.byKey(const Key('employeeLogin')), 'cashier01');
     await tester.enterText(
       find.byKey(const Key('employeeSecret')),
       'synthetic-pin',
@@ -121,11 +118,8 @@ class _FakeSessionRepository implements PosSessionRepository {
   Future<PosSessionRefresh> refresh(
     TrustedTerminalContext terminal,
     EmployeeSession employee,
-  ) async => PosSessionRefresh(
-    terminal: terminal,
-    employee: employee,
-    shift: _shift,
-  );
+  ) async =>
+      PosSessionRefresh(terminal: terminal, employee: employee, shift: _shift);
 
   @override
   Future<void> logout(

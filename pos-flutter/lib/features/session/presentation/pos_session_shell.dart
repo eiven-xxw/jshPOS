@@ -393,9 +393,8 @@ class _PermissionTile extends StatelessWidget {
     child: InkWell(
       onTap: enabled
           ? () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('$label 将在对应功能界面中打开')),
-              );
+              ScaffoldMessenger.of(context)
+                  .showSnackBar(SnackBar(content: Text('$label 将在对应功能界面中打开')));
             }
           : null,
       child: Padding(

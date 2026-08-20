@@ -106,10 +106,7 @@ final class EmployeeLoginCommand {
         secret.length < 4 ||
         secret.length > 128 ||
         !RegExp(r'^[0-9A-HJKMNP-TV-Z]{26}$').hasMatch(correlationId)) {
-      throw const PosSessionFailure(
-        'AUTH_INPUT_INVALID',
-        '工号或口令格式不正确。',
-      );
+      throw const PosSessionFailure('AUTH_INPUT_INVALID', '工号或口令格式不正确。');
     }
   }
 
@@ -136,10 +133,7 @@ final class EmployeeSession {
         !RegExp(r'^[A-Za-z0-9._:-]{16,128}$').hasMatch(sessionRef) ||
         !expiresAt.isAfter(authenticatedAt) ||
         !this.permissions.contains(PosPermission.sessionLogin)) {
-      throw const PosSessionFailure(
-        'SESSION_CONTEXT_INVALID',
-        '员工会话上下文无效。',
-      );
+      throw const PosSessionFailure('SESSION_CONTEXT_INVALID', '员工会话上下文无效。');
     }
   }
 

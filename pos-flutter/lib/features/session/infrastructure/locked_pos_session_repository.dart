@@ -9,10 +9,7 @@ final class LockedPosSessionRepository implements PosSessionRepository {
 
   @override
   Future<TrustedTerminalContext> verifyTerminal(DeviceSnapshot device) {
-    throw const PosSessionFailure(
-      'TERMINAL_UNTRUSTED',
-      '终端尚未完成可信激活，请联系管理员。',
-    );
+    throw const PosSessionFailure('TERMINAL_UNTRUSTED', '终端尚未完成可信激活，请联系管理员。');
   }
 
   @override
@@ -20,10 +17,7 @@ final class LockedPosSessionRepository implements PosSessionRepository {
     TrustedTerminalContext terminal,
     EmployeeLoginCommand command,
   ) {
-    throw const PosSessionFailure(
-      'TERMINAL_UNTRUSTED',
-      '终端尚未完成可信激活，请联系管理员。',
-    );
+    throw const PosSessionFailure('TERMINAL_UNTRUSTED', '终端尚未完成可信激活，请联系管理员。');
   }
 
   @override
@@ -31,10 +25,7 @@ final class LockedPosSessionRepository implements PosSessionRepository {
     TrustedTerminalContext terminal,
     EmployeeSession employee,
   ) {
-    throw const PosSessionFailure(
-      'TERMINAL_UNTRUSTED',
-      '终端尚未完成可信激活，请联系管理员。',
-    );
+    throw const PosSessionFailure('TERMINAL_UNTRUSTED', '终端尚未完成可信激活，请联系管理员。');
   }
 
   @override

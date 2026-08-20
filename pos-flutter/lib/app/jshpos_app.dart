@@ -25,8 +25,7 @@ class JshposApp extends StatelessWidget {
       home: PosSessionShell(
         sessionService: PosSessionService(
           deviceGateway: deviceGateway ?? const PosDeviceAdapter(),
-          repository:
-              sessionRepository ?? const LockedPosSessionRepository(),
+          repository: sessionRepository ?? const LockedPosSessionRepository(),
           correlationId: UlidGenerator().next,
         ),
       ),

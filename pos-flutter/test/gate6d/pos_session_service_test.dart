@@ -22,10 +22,7 @@ void main() {
 
     test('终端吊销或验证失败时锁定且员工登录不可达', () async {
       final fixture = _Fixture(
-        verifyFailure: const PosSessionFailure(
-          'TERMINAL_REVOKED',
-          '终端已停用。',
-        ),
+        verifyFailure: const PosSessionFailure('TERMINAL_REVOKED', '终端已停用。'),
       );
 
       final state = await fixture.service.bootstrap();
@@ -57,7 +54,10 @@ void main() {
       final states = await Future.wait([first, second]);
 
       expect(fixture.repository.authenticateCount, 1);
-      expect(states.every((state) => state.employee?.employeeId == '101'), isTrue);
+      expect(
+        states.every((state) => state.employee?.employeeId == '101'),
+        isTrue,
+      );
       expect('$states', isNot(contains('synthetic-pin')));
     });
 
@@ -308,11 +308,7 @@ class _FakeRepository implements PosSessionRepository {
     EmployeeSession employee,
   ) async =>
       refreshResult ??
-      PosSessionRefresh(
-        terminal: terminal,
-        employee: employee,
-        shift: shift,
-      );
+      PosSessionRefresh(terminal: terminal, employee: employee, shift: shift);
 
   @override
   Future<void> logout(
