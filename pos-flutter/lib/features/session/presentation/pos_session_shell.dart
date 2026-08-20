@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import '../../sale/application/pos_sale_application_service.dart';
 import '../../sale/application/pos_sale_controller.dart';
 import '../../sale/presentation/pos_checkout_page.dart';
+import '../../return_refund/application/pos_return_application_service.dart';
+import '../../return_refund/application/pos_return_controller.dart';
+import '../../return_refund/presentation/pos_return_page.dart';
 import '../application/pos_session_service.dart';
 import '../domain/pos_session_models.dart';
 
@@ -11,11 +14,13 @@ final class PosSessionShell extends StatefulWidget {
   const PosSessionShell({
     required this.sessionService,
     required this.saleService,
+    required this.returnService,
     super.key,
   });
 
   final PosSessionService sessionService;
   final PosSaleApplicationService saleService;
+  final PosReturnApplicationService returnService;
 
   @override
   State<PosSessionShell> createState() => _PosSessionShellState();
@@ -277,6 +282,26 @@ class _PosSessionShellState extends State<PosSessionShell> {
                           controller: PosSaleController(
                             sessionService: widget.sessionService,
                             saleService: widget.saleService,
+                          ),
+                        ),
+                      ),
+                    ),
+            ),
+            _PermissionTile(
+              label: '原单退货退款',
+              icon: Icons.assignment_return,
+              enabled:
+                  shift != null &&
+                  _state.hasPermission(PosPermission.returnRead) &&
+                  _state.hasPermission(PosPermission.returnCreate),
+              onTap: shift == null
+                  ? null
+                  : () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => PosReturnPage(
+                          controller: PosReturnController(
+                            sessionService: widget.sessionService,
+                            returnService: widget.returnService,
                           ),
                         ),
                       ),

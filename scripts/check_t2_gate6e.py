@@ -13,7 +13,8 @@ import subprocess
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 BASELINE = "281e98a6b286f1343a012ed289cecb195858dcc7"
 ADMISSION = ROOT / "contracts/t2/gate6e/gate6e-admission.json"
-VECTORS = ROOT / "contracts/t2/gate6e/test-vectors/admin-operations-v2.json"
+ADM_VECTORS = ROOT / "contracts/t2/gate6e/test-vectors/admin-operations-v2.json"
+POS_VECTORS = ROOT / "contracts/t2/gate6e/test-vectors/pos-return-ui-v1.json"
 RTM = ROOT / "docs/governance/rtm.csv"
 ALLOWED_STATUSES = {
     ("IN_PROGRESS", "DRAFT", "DRAFT"),
@@ -109,6 +110,31 @@ def validate_sources(statuses: tuple[str, str, str]) -> None:
         flutter_changes = git("diff", "--name-only", BASELINE, "--", "pos-flutter/lib")
         if flutter_changes:
             fail("POS-009 is DRAFT but Flutter runtime changed")
+    else:
+        pos_files = [
+            "pos-flutter/lib/features/return_refund/domain/pos_return_models.dart",
+            "pos-flutter/lib/features/return_refund/application/pos_return_application_service.dart",
+            "pos-flutter/lib/features/return_refund/application/pos_return_controller.dart",
+            "pos-flutter/lib/features/return_refund/infrastructure/locked_pos_return_application_service.dart",
+            "pos-flutter/lib/features/return_refund/presentation/pos_return_page.dart",
+        ]
+        for relative in pos_files:
+            if not (ROOT / relative).is_file():
+                fail(f"missing POS-009 runtime file: {relative}")
+        pos_runtime = "\n".join((ROOT / path).read_text(encoding="utf-8") for path in pos_files)
+        for token in ("PosReturnApplicationService", "refreshReturnStatus", "resultUnknown",
+                      "PosPermission.returnCreate", "LockedPosReturnApplicationService"):
+            if token not in pos_runtime:
+                fail(f"missing POS-009 boundary token: {token}")
+        for expression in (r"package:http", r"dart:io", r"sqflite", r"MethodChannel",
+                           r"pos_local_database", r"\bMapper\b", r"https?://"):
+            if re.search(expression, pos_runtime, re.IGNORECASE):
+                fail(f"forbidden POS-009 runtime boundary token: {expression}")
+    if statuses[2] == "DRAFT":
+        for relative in ("scripts/run_t2_gate6e_internal_alpha.py",
+                         "pos-flutter/test/gate6e/internal_alpha_candidate_test.dart"):
+            if (ROOT / relative).exists():
+                fail(f"E2E-002 is DRAFT but candidate runtime exists: {relative}")
 
 
 def validate_vectors(document: dict) -> None:
@@ -130,6 +156,22 @@ def validate_vectors(document: dict) -> None:
         fail("vector external execution must remain zero")
 
 
+def validate_pos_vectors(document: dict) -> None:
+    if document.get("requirementId") != "T2-POS-009" or document.get("evidenceLevel") != "WIDGET":
+        fail("POS-009 vector identity/evidence drift")
+    if set(document.get("tenants", [])) != {"TENANT_A", "TENANT_B"}:
+        fail("POS vectors must use exactly two fictional tenants")
+    if set(document.get("industries", [])) != {"CONVENIENCE", "SNACK_DISCOUNT", "COMMUNITY_SUPERMARKET"}:
+        fail("POS vectors must cover three admitted industries")
+    cases = document.get("cases", [])
+    if len(cases) < 40 or len({item.get("id") for item in cases}) != len(cases):
+        fail("at least forty uniquely identified POS-009 cases are required")
+    external = document.get("externalExecution", {})
+    if any(external.get(field) != 0 for field in
+           ("providerNetworkCalls", "realDeviceCommands", "onsitePilots", "fullAlphaRuns")):
+        fail("POS vector external execution must remain zero")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=pathlib.Path)
@@ -140,13 +182,20 @@ def main() -> None:
     statuses = validate_serial(admission, rows)
     validate_preserved(admission, rows)
     validate_sources(statuses)
-    vectors = load_json(VECTORS)
-    validate_vectors(vectors)
+    adm_vectors = load_json(ADM_VECTORS)
+    validate_vectors(adm_vectors)
+    pos_vectors = load_json(POS_VECTORS)
+    if statuses[1] != "DRAFT":
+        validate_pos_vectors(pos_vectors)
     result = {
         "gate": "T2-GATE6E-S16",
         "baseline": BASELINE,
         "statuses": dict(zip(("T2-ADM-002", "T2-POS-009", "T2-E2E-002"), statuses)),
-        "vectorCount": len(vectors["cases"]),
+        "vectorCount": len(adm_vectors["cases"]) + len(pos_vectors["cases"]),
+        "vectorCounts": {
+            "T2-ADM-002": len(adm_vectors["cases"]),
+            "T2-POS-009": len(pos_vectors["cases"]),
+        },
         "externalExecution": admission["externalExecution"],
         "result": "PASS",
     }

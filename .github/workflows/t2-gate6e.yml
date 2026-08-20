@@ -111,7 +111,7 @@ jobs:
           mkdir -p artifacts/t2/gate6e/pos-linux
           cd pos-flutter
           flutter pub get --enforce-lockfile
-          dart format --output=none --set-exit-if-changed lib/app/jshpos_app.dart lib/features/session lib/features/sale test/gate6d test/widget_test.dart
+          dart format --output=none --set-exit-if-changed lib/app/jshpos_app.dart lib/features/session lib/features/sale lib/features/return_refund test/gate6d test/gate6e test/widget_test.dart
           flutter analyze --fatal-infos
           flutter test --machine --coverage > ../artifacts/t2/gate6e/pos-linux/flutter-tests.jsonl
           cd ..
@@ -120,6 +120,7 @@ jobs:
           python scripts/check_flutter_gate5b_coverage.py --input pos-flutter/coverage/lcov.info --minimum 0.90 --output artifacts/t2/gate6e/pos-linux/flutter-gate5b-coverage.json
           python scripts/check_flutter_gate5c_coverage.py --input pos-flutter/coverage/lcov.info --minimum 0.90 --output artifacts/t2/gate6e/pos-linux/flutter-gate5c-coverage.json
           python scripts/check_flutter_gate6d_coverage.py --input pos-flutter/coverage/lcov.info --minimum 0.90 --output artifacts/t2/gate6e/pos-linux/flutter-gate6d-coverage.json
+          python scripts/check_flutter_gate6e_coverage.py --input pos-flutter/coverage/lcov.info --minimum 0.90 --output artifacts/t2/gate6e/pos-linux/flutter-gate6e-coverage.json
           cp pos-flutter/coverage/lcov.info artifacts/t2/gate6e/pos-linux/lcov.info
           cd pos-flutter
           flutter pub deps --json > ../artifacts/t2/gate6e/pos-linux/flutter-dependencies.json
@@ -145,7 +146,7 @@ jobs:
           New-Item -ItemType Directory -Force artifacts/t2/gate6e/pos-windows | Out-Null
           Push-Location pos-flutter
           flutter pub get --enforce-lockfile
-          dart format --output=none --set-exit-if-changed lib/app/jshpos_app.dart lib/features/session lib/features/sale test/gate6d test/widget_test.dart
+          dart format --output=none --set-exit-if-changed lib/app/jshpos_app.dart lib/features/session lib/features/sale lib/features/return_refund test/gate6d test/gate6e test/widget_test.dart
           flutter analyze --fatal-infos
           flutter test --machine | Tee-Object -FilePath ../artifacts/t2/gate6e/pos-windows/flutter-tests.jsonl
           Pop-Location

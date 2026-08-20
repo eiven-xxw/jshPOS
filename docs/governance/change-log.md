@@ -143,5 +143,6 @@
 | CR-T2G6E-003 | 2026-08-20 | IMPLEMENTED_AWAITING_INDEPENDENT_CI | 完成 ADM-002 Owner API 适配、后台四分区页面、受控写操作编排、40项固定向量、V42菜单迁移、Web与MySQL回归升级及Gate 6E独立CI | T2-ADM-002、T2-MIG-001、T2-CI-001、ADR-037 | 本地Web 35项测试/类型/ESLint/生产构建和治理门禁通过；MySQL实测及全量跨平台CI待GitHub干净执行器，状态保持IN_PROGRESS |
 | CR-T2G6E-004 | 2026-08-20 | VERIFIED_ADM002 | GitHub run 32376161860 的治理、服务端、MySQL V42、Flutter Linux/Windows、Android/Kotlin/APK、后台、安全与证据索引八路独立门禁全部成功 | T2-ADM-002、T2-MIG-001、T2-CI-001、ADR-037 | ADM-002更新为VERIFIED但不代表外部设备、支付或商业验收；八项制品按30/90天保留 |
 | CR-T2G6E-005 | 2026-08-20 | IN_PROGRESS_POS009 | 在 ADM-002 独立 VERIFIED 后冻结原单查询、可退上限、现金/Provider无关状态、权限、错误、应用端口、离线恢复和固定向量，串行准入 POS-009 | T2-POS-009、ADR-037 | E2E-002继续DRAFT；Provider网络、真实终端、完整Alpha仍为0 |
+| CR-T2G6E-006 | 2026-08-20 | IMPLEMENTED_AWAITING_INDEPENDENT_CI | 完成 POS-009 只读领域投影、正式应用端口、单航班与UNKNOWN恢复Controller、失败关闭组合根、触控页面、会话入口、40项固定向量和Gate6E覆盖率门禁 | T2-POS-009、T2-CI-001、ADR-037 | 本地Flutter 112项全量测试、Analyze和新增范围90.57%行覆盖通过；状态保持IN_PROGRESS等待独立CI，E2E-002仍DRAFT |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。
