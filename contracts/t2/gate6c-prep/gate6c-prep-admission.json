@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "1.0",
+  "phase": "T2-GATE6C-PREP",
+  "baselineCommit": "f9b733adb2fe1715fd663bae6d2419c4eca668ff",
+  "requirements": [
+    {"id": "T2-UPG-001", "status": "ACCEPTED", "boundary": "SYNTHETIC_PACKAGE_AND_SOFTWARE_EXECUTION_ONLY"},
+    {"id": "T2-PAY-002", "status": "BLOCKED", "networkAllowed": false, "requiredEvidence": "AUTHORIZED_SANDBOX"},
+    {"id": "T2-HWD-001", "status": "BLOCKED", "realDeviceCommandsAllowed": false, "requiredEvidence": "REAL_DEVICE"},
+    {"id": "T2-PAR-001", "status": "BLOCKED", "pilotAllowed": false, "requiredEvidence": "PARTNER_VERIFIED"},
+    {"id": "T2-UAT-001", "status": "DRAFT", "fullAlphaAllowed": false},
+    {"id": "T2-REL-001", "status": "DRAFT", "commercialClaimAllowed": false}
+  ],
+  "allowedActions": [
+    "EXTERNAL_DOCUMENT_INTAKE",
+    "OFFLINE_PROVENANCE_AND_HASH_VERIFICATION",
+    "RACI_AND_DEADLINE_GOVERNANCE",
+    "GO_NO_GO_TEMPLATE_PREPARATION"
+  ],
+  "forbiddenActions": [
+    "PAYMENT_PROVIDER_NETWORK",
+    "REAL_DEVICE_COMMAND",
+    "PRODUCTION_SECRET_OR_REAL_FUNDS",
+    "UNMASKED_PII_IN_REPOSITORY",
+    "FULL_ALPHA_UAT",
+    "PILOT_OR_COMMERCIAL_CLAIM"
+  ],
+  "decision": "AWAITING_SP_REVIEW"
+}

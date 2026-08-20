@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0",
+  "asOf": "2026-08-20",
+  "phase": "T2-GATE6C-PREP",
+  "tracks": [
+    {
+      "requirementId": "T2-PAY-002",
+      "status": "BLOCKED",
+      "currentEvidenceLevel": "MISSING",
+      "requiredEvidenceLevel": "SANDBOX_EXECUTED",
+      "receivedCount": 0,
+      "networkCalls": 0,
+      "missing": ["SELECTED_PROVIDER", "TEST_AUTHORIZATION", "SANDBOX_MERCHANT", "TEST_TERMINAL", "VERSIONED_OFFICIAL_API", "SIGNATURE_AND_CALLBACK", "REFUND_AND_BILL", "RATE_LIMIT_AND_NETWORK", "TECHNICAL_CONTACT"]
+    },
+    {
+      "requirementId": "T2-HWD-001",
+      "status": "BLOCKED",
+      "currentEvidenceLevel": "MISSING",
+      "requiredEvidenceLevel": "REAL_DEVICE_EXECUTED",
+      "receivedCount": 0,
+      "realDeviceCommands": 0,
+      "missing": ["PRIMARY_VENDOR_MODEL", "ANDROID_FIRMWARE", "CPU_MEMORY_STORAGE", "SDK_AND_LICENSE", "SAMPLE_DEVICE", "PRINTER_A", "PRINTER_B", "SCANNER", "SCALE", "CASH_DRAWER", "CUSTOMER_DISPLAY", "TECHNICAL_CONTACT"]
+    },
+    {
+      "requirementId": "T2-PAR-001",
+      "status": "BLOCKED",
+      "currentEvidenceLevel": "MISSING",
+      "requiredEvidenceLevel": "PARTNER_VERIFIED",
+      "targetPartners": 5,
+      "verifiedPartners": 0,
+      "requiredWrittenIntent": 3,
+      "verifiedWrittenIntent": 0,
+      "missing": ["FIVE_VERIFIED_TARGETS", "THREE_WRITTEN_INTENTS", "AUTHORIZED_MASKED_SAMPLES", "LEGACY_RECONCILIATION_CONDITIONS", "RETENTION_AND_DELETION"]
+    }
+  ],
+  "fullAlphaAllowed": false,
+  "commercialClaimAllowed": false
+}

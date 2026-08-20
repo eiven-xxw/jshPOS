@@ -1,0 +1,29 @@
+{
+  "templateVersion": "1.0",
+  "phase": "T2-GATE6C-ALPHA-ENTRY",
+  "requirements": {
+    "T2-PAY-002": "BLOCKED",
+    "T2-HWD-001": "BLOCKED",
+    "T2-PAR-001": "BLOCKED",
+    "T2-UAT-001": "DRAFT",
+    "T2-REL-001": "DRAFT"
+  },
+  "mandatoryChecks": [
+    "PAYMENT_SANDBOX_ACCEPTED",
+    "REAL_DEVICE_ACCEPTED",
+    "DESIGN_PARTNER_ACCEPTED",
+    "P0_P1_OPEN_RISKS_ZERO",
+    "NO_SECRET_OR_PII_LEAK",
+    "UAT_SCOPE_ENVIRONMENT_DATA_RACI_FROZEN",
+    "ROLLBACK_AND_INCIDENT_RESPONSE_APPROVED"
+  ],
+  "requiredSignatures": ["SP", "PO", "ARCH", "QA", "SEC", "SRE"],
+  "decision": "NO_GO",
+  "allowedDecisions": ["GO", "CONDITIONAL_GO", "NO_GO"],
+  "fullAlphaAllowed": false,
+  "limitations": [
+    "Preparation does not start Alpha UAT.",
+    "STATIC FAKE SYNTHETIC or templates cannot satisfy external P0 evidence.",
+    "No commercial usability claim is allowed."
+  ]
+}

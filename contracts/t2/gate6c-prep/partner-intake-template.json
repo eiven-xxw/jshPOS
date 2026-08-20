@@ -1,0 +1,15 @@
+{
+  "templateVersion": "1.0",
+  "requirementId": "T2-PAR-001",
+  "status": "MISSING",
+  "partnerSlots": [
+    {"opaqueId": "PAR-01", "businessType": "CONVENIENCE", "verifiedIdentity": false, "writtenIntent": false},
+    {"opaqueId": "PAR-02", "businessType": "CONVENIENCE", "verifiedIdentity": false, "writtenIntent": false},
+    {"opaqueId": "PAR-03", "businessType": "SNACK_DISCOUNT", "verifiedIdentity": false, "writtenIntent": false},
+    {"opaqueId": "PAR-04", "businessType": "COMMUNITY_SUPERMARKET", "verifiedIdentity": false, "writtenIntent": false},
+    {"opaqueId": "PAR-05", "businessType": "COMMUNITY_SUPERMARKET", "verifiedIdentity": false, "writtenIntent": false}
+  ],
+  "authorizedMaskedSampleCount": 0,
+  "legacyReconciliationReadyCount": 0,
+  "pilotAllowed": false
+}

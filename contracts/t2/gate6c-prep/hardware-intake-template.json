@@ -1,0 +1,23 @@
+{
+  "templateVersion": "1.0",
+  "requirementId": "T2-HWD-001",
+  "status": "MISSING",
+  "host": {
+    "vendorReference": null,
+    "model": null,
+    "androidAndFirmware": null,
+    "cpuMemoryStorage": null,
+    "sdkAndLicense": null,
+    "sampleDeviceReference": null,
+    "technicalContactReference": null
+  },
+  "peripherals": {
+    "printerIntegrated": null,
+    "printerExternal": null,
+    "scanner": null,
+    "scale": null,
+    "cashDrawer": null,
+    "customerDisplay": null
+  },
+  "realDeviceCommandsAllowed": false
+}

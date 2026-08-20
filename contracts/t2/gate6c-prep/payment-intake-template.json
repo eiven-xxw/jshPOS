@@ -1,0 +1,19 @@
+{
+  "templateVersion": "1.0",
+  "requirementId": "T2-PAY-002",
+  "providerCode": "TO_BE_SELECTED",
+  "status": "MISSING",
+  "fields": {
+    "legalAndTestAuthorization": null,
+    "sandboxMerchantReference": null,
+    "testTerminalReference": null,
+    "officialApiVersion": null,
+    "signatureCertificateReference": null,
+    "callbackSecurityDocument": null,
+    "refundAndBillDocument": null,
+    "rateLimitAndNetworkDocument": null,
+    "technicalContactReference": null
+  },
+  "secretsAllowedInThisFile": false,
+  "networkAllowed": false
+}

@@ -15,7 +15,7 @@ def main() -> None:
         rtm={row["requirement_id"]:row for row in csv.DictReader(stream)}
     fail(rtm["T2-TRM-001"]["status"]=="ACCEPTED","TRM must be ACCEPTED")
     fail(rtm["T2-BAK-001"]["status"]=="ACCEPTED","BAK must be ACCEPTED")
-    fail(rtm["T2-UPG-001"]["status"] in {"IN_PROGRESS","VERIFIED"},"UPG must be IN_PROGRESS/VERIFIED")
+    fail(rtm["T2-UPG-001"]["status"] in {"IN_PROGRESS","VERIFIED","ACCEPTED"},"UPG must be IN_PROGRESS/VERIFIED/ACCEPTED")
     for item in ("T2-PAY-002","T2-HWD-001","T2-PAR-001"):
         fail(rtm[item]["status"]=="BLOCKED",f"{item} must remain BLOCKED")
     for item in ("T2-UAT-001","T2-REL-001"):

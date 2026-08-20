@@ -1,6 +1,6 @@
 # T2 Gate 6B / Sprint S14 周门禁报告
 
-> 报告状态：`CONDITIONAL PASS — T2-UPG-001 VERIFIED，等待项目发起人确认`
+> 报告状态：`CONDITIONAL PASS — 项目发起人已于 2026-08-20 接受，T2-UPG-001=ACCEPTED`
 >
 > 分支：`t2/gate6b-sprint14-20260820`
 >
@@ -12,7 +12,7 @@
 
 ## 1. 阶段结论
 
-`T2-UPG-001` 已完成设计准入、Provider 无关正式实现、干净执行器全量回归和证据封存，状态由 `IN_PROGRESS` 更新为 `VERIFIED`，建议 Gate 6B `CONDITIONAL PASS`。本次不将需求更新为 `ACCEPTED`，须等待项目发起人确认。
+`T2-UPG-001` 已完成设计准入、Provider 无关正式实现、干净执行器全量回归和证据封存。项目发起人已接受 Gate 6B `CONDITIONAL PASS`，需求状态由 `VERIFIED` 更新为 `ACCEPTED`，证据边界保持不变。
 
 证据上限仍是 `STATIC/UNIT/MYSQL8.4_SYNTHETIC/SYNTHETIC_PACKAGE/SOFTWARE_EXECUTION`。实现没有发送支付 Provider 网络请求，没有安装真实 APK，没有调用厂商静默升级 SDK、固件、重启或远程终端命令，也没有使用生产密钥、真实资金、真实 PII 或未经授权云资源。
 
