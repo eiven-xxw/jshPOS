@@ -135,5 +135,6 @@
 | CR-T2G6D-013 | 2026-08-20 | IN_PROGRESS_E2E001 | 在 ADM-001 独立 VERIFIED 后，依序准入虚构租户、虚构终端、现金支付的内部合成业务闭环及逐环节守恒核对 | T2-E2E-001、ADR-036 | 只能调用已接受 Owner 的正式端口/契约；不得新增领域算法或把 SYNTHETIC_E2E 升级为 SANDBOX、REAL_DEVICE、PILOT 或完整 Alpha |
 | CR-T2G6D-014 | 2026-08-20 | IMPLEMENTED_E2E001_AWAITING_CI | E2E-001 建立两虚构租户、六门店/终端、三业态的固定现金旅程，组合同提交 Foundation/Catalog/POS/Order/Sync/Inventory/Costing/Reporting/Web/MySQL 机器报告并核对金额、数量、库存、成本、报表、班次和摘要守恒；本地六旅程与六攻击矩阵通过 | T2-E2E-001、T2-CI-001、ADR-036 | 继续 IN_PROGRESS 等待新增 internal-e2e Job 和完整证据索引；证据固定为 SYNTHETIC_E2E，外部执行仍为 0 |
 | CR-T2G6D-015 | 2026-08-20 | CI_FAILURE_FIXED_AWAITING_RETEST | GitHub Actions Run `32363250672` 的六个前置生产 Job 与安全门禁成功，但 `internal-e2e` 将 Vitest JUnit 的“测试套件 > 用例”全名错误地按裸用例名完全相等匹配，导致三项已成功组件证据被误报缺失；改为在同一成功 JUnit 用例名内匹配冻结用例名 | T2-E2E-001、T2-CI-001 | 失败 Run 与无 E2E Artifact 事实保留；未删除必需用例、未允许失败/跳过、未降低测试/安全阈值，要求新提交完整重跑 |
+| CR-T2G6D-016 | 2026-08-20 | CI_FAILURE_FIXED_AWAITING_RETEST | 对失败 Run `32363250672` 做本地证据复现时发现，Web 生产者文件 `gate1-vitest-junit.xml` 不符合服务端 Surefire 的 `TEST-*.xml` 命名约定，解析器未发现该文件；为 Web 生产者显式扫描 XML，同时继续逐文件拒绝 failures/errors/skipped | T2-E2E-001、T2-CI-001 | 保持服务端和 MySQL 的 Surefire 文件约束、三项冻结 Web 用例及所有既有阈值；要求新提交完整重跑，不以本地修复宣称 VERIFIED |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。

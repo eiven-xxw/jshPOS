@@ -135,12 +135,12 @@ def validate_journeys(document: dict) -> list[dict]:
     return results
 
 
-def read_xml_tests(bundle: pathlib.Path, producer: str) -> dict[str, set[str]]:
+def read_xml_tests(bundle: pathlib.Path, producer: str, pattern: str = "TEST-*.xml") -> dict[str, set[str]]:
     root = bundle / producer
     if not root.exists():
         fail(f"missing CI evidence producer {producer}")
     suites: dict[str, set[str]] = {}
-    for path in root.rglob("TEST-*.xml"):
+    for path in root.rglob(pattern):
         node = ET.parse(path).getroot()
         if any(int(float(node.attrib.get(key, "0"))) for key in ("failures", "errors", "skipped")):
             fail(f"non-green test report {path.name}")
@@ -157,7 +157,8 @@ def validate_ci_bundle(bundle: pathlib.Path) -> dict:
     mysql = read_xml_tests(bundle, "mysql")
     if "ReleaseMigrationMySqlIT" not in mysql:
         fail("missing complete MySQL migration evidence")
-    web = read_xml_tests(bundle, "web")
+    # Vitest 的 JUnit 文件名不是 Maven Surefire 的 TEST-*.xml，仍必须逐份解析并校验失败、错误和跳过数。
+    web = read_xml_tests(bundle, "web", "*.xml")
     web_names = set().union(*web.values()) if web else set()
     missing_web = {name for name in WEB_TESTS if not any(name in actual for actual in web_names)}
     if missing_web:
