@@ -26,3 +26,13 @@ Gate 6F 的准备工作已按授权边界完成，建议评审结论为 `CONDITI
 ## 3. 评审请求
 
 本报告不申请任何外部执行，也不申请改变上述状态。下一步只能由项目发起人通过受控渠道补充某一轨真实资料；验真达到 `VERIFIED_DOCUMENT` 后，重新生成该轨独立执行准入报告并等待逐轨确认。三轨尚未全部执行解阻前，不提交完整 Alpha UAT 启动申请。
+
+## 4. CI 与证据
+
+- 准备提交：`9dff20c73c2de478ba5bbb5f73d9f5f1e43c4a6c`
+- GitHub Actions：[Run 32418776072](https://github.com/eiven-xxw/jshPOS/actions/runs/32418776072)
+- 结果：`governance-ubuntu`、`governance-windows`、`offline-boundary`、`evidence` 四个 Job 全部成功。
+- 最终证据索引 Artifact：`9424909336`，归档摘要 `sha256:fc2db4ba1c46160105a59357a78e6c5bd924c848fbdf0b5eabc56552d72de775`。
+- Ubuntu Artifact：`9424888657`；Windows Artifact：`9424901056`；离线边界 Artifact：`9424888795`。
+
+该 CI 只证明 Gate 6F 治理、状态守恒、允许路径、无运行时/依赖扩张和证据索引可重复，不形成 SANDBOX、REAL_DEVICE、PARTNER_VERIFIED、PILOT、FULL_ALPHA 或 PRODUCTION 证据。回填本节后需由同一 Gate 6F 流水线执行最终闭环验证。
