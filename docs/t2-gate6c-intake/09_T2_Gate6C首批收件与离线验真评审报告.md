@@ -31,6 +31,19 @@
 
 本报告不申请 Provider 网络、实机命令或试点授权。请按轨提供/指定受控输入；每条轨达到完整 `VERIFIED_DOCUMENT` 后，团队只提交该轨新的独立执行准入报告。三条轨可以并行补件，但不能相互替代或自动解除阻断。
 
-## 5. 明确不作出的声明
+## 5. CI 与封存证据
+
+候选提交 `91d2595ee1bd2e1ad9452e0c8d1033b560768b91` 的 GitHub Actions Run [`32348712421`](https://github.com/eiven-xxw/jshPOS/actions/runs/32348712421) 一次完成 4/4 Job：
+
+| Job | 结果 | Artifact | Artifact SHA-256 |
+|---|---|---:|---|
+| governance-ubuntu | PASS | `9399009767` | `c50dddf2172b1e0807c89dd44ed1252b3cf9933fc8b01c22dc976b3b49a60bfe` |
+| governance-windows | PASS | `9399013392` | `cc3fb24848c595fbdcc4a308b48df6d00eecbc3cfcb66fb55efe336fd990fa95` |
+| offline-boundary | PASS | `9399010648` | `7ebe1cad9ea916ab752c81995dfdac58d45f11679f2d5d63b61c5c3d45267bce` |
+| evidence | PASS | `9399021136` | `f09af942556335c1007dbb9768ddc397d37c978e69b30c7eaa2f55bf37e77419` |
+
+门禁核验结构、RTM、83 个既有 JSON Schema/OpenAPI 契约、16 份公开响应元数据、五家支付/两主机候选/六类外设、状态与计数守恒、依赖差异、Secret 文件/内容模式以及业务运行时零变更。Artifact 只含机器摘要，不含公开网页原文、Secret、PII、设备证书或商户数据。
+
+## 6. 明确不作出的声明
 
 不声明已选定支付机构、不声明支付沙箱可用、不声明机型通过认证、不声明外设兼容、不声明存在设计伙伴，不声明 Alpha、可试点或可商用。
