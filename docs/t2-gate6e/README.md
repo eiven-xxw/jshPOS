@@ -9,5 +9,8 @@
 7. [T2-POS-009 独立验证报告](07_T2_POS009独立验证报告.md)
 8. [T2-E2E-002 实施设计与测试准入](08_T2_E2E002实施设计与测试准入.md)
 9. [T2-E2E-002 可重复运行手册](09_T2_E2E002可重复运行手册.md)
+10. [T2-E2E-002 独立验证报告](10_T2_E2E002独立验证报告.md)
+11. [Gate 6E / Sprint S16 周门禁暨内部 Alpha 候选收口报告](11_T2_Gate6E_SprintS16周门禁暨内部Alpha候选收口报告.md)
+12. [外部 P0 恢复对接、完整 Alpha UAT 与发布准备下一步操作指令](12_外部P0恢复对接完整AlphaUAT与发布准备下一步操作指令.md)
 
-当前 `T2-ADM-002=VERIFIED`、`T2-POS-009=VERIFIED`、`T2-E2E-002=IN_PROGRESS`。E2E-002 已完成设计与测试准入，下一步只能实现内部合成候选闭环，不得启动完整 Alpha UAT 或任何外部执行。
+当前 `T2-ADM-002=VERIFIED`、`T2-POS-009=VERIFIED`、`T2-E2E-002=VERIFIED`，等待项目发起人 Gate 6E 总评审。三项均未更新为 `ACCEPTED`；不得自动启动外部执行、完整 Alpha UAT 或发布准备。
