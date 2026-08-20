@@ -1,13 +1,21 @@
 import 'package:flutter/material.dart';
 
+import '../../sale/application/pos_sale_application_service.dart';
+import '../../sale/application/pos_sale_controller.dart';
+import '../../sale/presentation/pos_checkout_page.dart';
 import '../application/pos_session_service.dart';
 import '../domain/pos_session_models.dart';
 
 /// POS-007 正式应用壳；只展示会话服务快照并向应用服务发送命令。
 final class PosSessionShell extends StatefulWidget {
-  const PosSessionShell({required this.sessionService, super.key});
+  const PosSessionShell({
+    required this.sessionService,
+    required this.saleService,
+    super.key,
+  });
 
   final PosSessionService sessionService;
+  final PosSaleApplicationService saleService;
 
   @override
   State<PosSessionShell> createState() => _PosSessionShellState();
@@ -261,16 +269,30 @@ class _PosSessionShellState extends State<PosSessionShell> {
               enabled: shift == null
                   ? _state.hasPermission(PosPermission.shiftOpen)
                   : _state.hasPermission(PosPermission.saleOperate),
+              onTap: shift == null
+                  ? null
+                  : () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => PosCheckoutPage(
+                          controller: PosSaleController(
+                            sessionService: widget.sessionService,
+                            saleService: widget.saleService,
+                          ),
+                        ),
+                      ),
+                    ),
             ),
             _PermissionTile(
               label: '同步状态',
               icon: Icons.sync,
               enabled: _state.hasPermission(PosPermission.syncView),
+              onTap: () => _openCheckout(context),
             ),
             _PermissionTile(
               label: '打印任务预览',
               icon: Icons.receipt_long,
               enabled: _state.hasPermission(PosPermission.printPreview),
+              onTap: () => _openCheckout(context),
             ),
           ],
         ),
@@ -282,6 +304,18 @@ class _PosSessionShellState extends State<PosSessionShell> {
       ],
     );
   }
+
+  Future<void> _openCheckout(BuildContext context) =>
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => PosCheckoutPage(
+            controller: PosSaleController(
+              sessionService: widget.sessionService,
+              saleService: widget.saleService,
+            ),
+          ),
+        ),
+      );
 }
 
 class _CenteredPanel extends StatelessWidget {
@@ -383,20 +417,17 @@ class _PermissionTile extends StatelessWidget {
     required this.label,
     required this.icon,
     required this.enabled,
+    required this.onTap,
   });
   final String label;
   final IconData icon;
   final bool enabled;
+  final VoidCallback? onTap;
   @override
   Widget build(BuildContext context) => Card(
     color: enabled ? null : Theme.of(context).disabledColor.withAlpha(20),
     child: InkWell(
-      onTap: enabled
-          ? () {
-              ScaffoldMessenger.of(context)
-                  .showSnackBar(SnackBar(content: Text('$label 将在对应功能界面中打开')));
-            }
-          : null,
+      onTap: enabled ? onTap : null,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Row(

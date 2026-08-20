@@ -6,12 +6,20 @@ import '../features/session/application/pos_session_repository.dart';
 import '../features/session/application/pos_session_service.dart';
 import '../features/session/infrastructure/locked_pos_session_repository.dart';
 import '../features/session/presentation/pos_session_shell.dart';
+import '../features/sale/application/pos_sale_application_service.dart';
+import '../features/sale/infrastructure/locked_pos_sale_application_service.dart';
 
 class JshposApp extends StatelessWidget {
-  const JshposApp({super.key, this.deviceGateway, this.sessionRepository});
+  const JshposApp({
+    super.key,
+    this.deviceGateway,
+    this.sessionRepository,
+    this.saleService,
+  });
 
   final PosDeviceGateway? deviceGateway;
   final PosSessionRepository? sessionRepository;
+  final PosSaleApplicationService? saleService;
 
   @override
   Widget build(BuildContext context) {
@@ -28,6 +36,7 @@ class JshposApp extends StatelessWidget {
           repository: sessionRepository ?? const LockedPosSessionRepository(),
           correlationId: UlidGenerator().next,
         ),
+        saleService: saleService ?? const LockedPosSaleApplicationService(),
       ),
     );
   }

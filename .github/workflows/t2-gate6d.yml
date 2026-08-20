@@ -111,7 +111,7 @@ jobs:
           mkdir -p artifacts/t2/gate6d/pos-linux
           cd pos-flutter
           flutter pub get --enforce-lockfile
-          dart format --output=none --set-exit-if-changed lib/app/jshpos_app.dart lib/features/session test/gate6d test/widget_test.dart
+          dart format --output=none --set-exit-if-changed lib/app/jshpos_app.dart lib/features/session lib/features/sale test/gate6d test/widget_test.dart
           flutter analyze --fatal-infos
           flutter test --machine --coverage > ../artifacts/t2/gate6d/pos-linux/flutter-tests.jsonl
           cd ..
@@ -145,7 +145,7 @@ jobs:
           New-Item -ItemType Directory -Force artifacts/t2/gate6d/pos-windows | Out-Null
           Push-Location pos-flutter
           flutter pub get --enforce-lockfile
-          dart format --output=none --set-exit-if-changed lib/app/jshpos_app.dart lib/features/session test/gate6d test/widget_test.dart
+          dart format --output=none --set-exit-if-changed lib/app/jshpos_app.dart lib/features/session lib/features/sale test/gate6d test/widget_test.dart
           flutter analyze --fatal-infos
           flutter test --machine | Tee-Object -FilePath ../artifacts/t2/gate6d/pos-windows/flutter-tests.jsonl
           Pop-Location

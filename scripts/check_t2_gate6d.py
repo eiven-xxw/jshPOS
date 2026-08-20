@@ -77,7 +77,12 @@ def main() -> None:
     require(len({item["id"] for item in vectors["vectors"]}) == len(vectors["vectors"]), "duplicate session vector id")
     require(all(value == 0 for value in vectors["externalExecution"].values()), "vector external execution must remain zero")
 
-    presentation = source_text(ROOT / "pos-flutter/lib/features/session/presentation").lower()
+    presentation = "\n".join(
+        (
+            source_text(ROOT / "pos-flutter/lib/features/session/presentation"),
+            source_text(ROOT / "pos-flutter/lib/features/sale/presentation"),
+        )
+    ).lower()
     for forbidden in ("package:sqlite3", "methodchannel", "sqflite", "database.execute", "tenantid:"):
         require(forbidden not in presentation, f"Flutter UI bypass token found: {forbidden}")
     session_source = source_text(ROOT / "pos-flutter/lib/features/session")
@@ -87,6 +92,23 @@ def main() -> None:
     lower = session_source.lower()
     for forbidden in ("provider_url", "production_key", "okhttpclient", "resttemplate", "webclient.builder"):
         require(forbidden not in lower, f"provider/network runtime token found: {forbidden}")
+
+    sale_source = source_text(ROOT / "pos-flutter/lib/features/sale")
+    if RANK[rtm["T2-POS-008"]["status"]] >= RANK["IN_PROGRESS"]:
+        require("PosSaleApplicationService" in sale_source, "sale application boundary missing")
+        require("PosSaleController" in sale_source, "sale page controller missing")
+        require("LockedPosSaleApplicationService" in sale_source, "sale fail-closed adapter missing")
+        require("///" in sale_source and re.search(r"[\u4e00-\u9fff]", sale_source) is not None, "sale core Chinese comments missing")
+        sale_vectors = json.loads(
+            (ROOT / "contracts/t2/gate6d/test-vectors/pos-sale-vectors-v1.json").read_text(encoding="utf-8")
+        )
+        require(sale_vectors["requirementId"] == "T2-POS-008", "sale vectors requirement mismatch")
+        require(len(sale_vectors["vectors"]) >= 16, "sale fixed vectors incomplete")
+        require(len({item["id"] for item in sale_vectors["vectors"]}) == len(sale_vectors["vectors"]), "duplicate sale vector id")
+        require(all(value == 0 for value in sale_vectors["externalExecution"].values()), "sale vector external execution must remain zero")
+        output_sale_vector_count = len(sale_vectors["vectors"])
+    else:
+        output_sale_vector_count = 0
 
     changed = subprocess.check_output(
         ["git", "diff", "--name-only", args.baseline, "HEAD"], cwd=ROOT, text=True
@@ -101,6 +123,7 @@ def main() -> None:
         "requirements": {item: rtm[item]["status"] for item in ORDER},
         "preservedStates": PRESERVED,
         "sessionVectorCount": len(vectors["vectors"]),
+        "saleVectorCount": output_sale_vector_count,
         "changedFiles": len(changed),
         "providerNetworkCalls": 0,
         "realDeviceCommands": 0,

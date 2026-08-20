@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-POS-008",
+  "evidenceLevel": "SYNTHETIC_UI",
+  "vectors": [
+    {"id": "SALE-UI-001", "scenario": "barcode-scan", "expected": "OWNER_QUOTE_ADDED"},
+    {"id": "SALE-UI-002", "scenario": "scanner-double-submit", "expected": "SINGLE_FLIGHT"},
+    {"id": "SALE-UI-003", "scenario": "product-search", "expected": "PUBLISHED_PROJECTION_ONLY"},
+    {"id": "SALE-UI-004", "scenario": "quantity-change", "expected": "OWNER_REQUOTE"},
+    {"id": "SALE-UI-005", "scenario": "promotion-refresh", "expected": "VERSION_AND_FINGERPRINT_REPLACED"},
+    {"id": "SALE-UI-006", "scenario": "manual-adjustment-authorized", "expected": "AUDIT_REFERENCE_RETURNED"},
+    {"id": "SALE-UI-007", "scenario": "manual-adjustment-denied", "expected": "PERMISSION_DENIED"},
+    {"id": "SALE-UI-008", "scenario": "sale-hold", "expected": "OWNER_FACT_AND_NEW_BASKET"},
+    {"id": "SALE-UI-009", "scenario": "held-sale-resume", "expected": "STATE_AND_VERSION_RECHECKED"},
+    {"id": "SALE-UI-010", "scenario": "cash-settlement", "expected": "STABLE_IDEMPOTENCY_RESULT"},
+    {"id": "SALE-UI-011", "scenario": "cash-settlement-retry", "expected": "ORIGINAL_RESULT"},
+    {"id": "SALE-UI-012", "scenario": "application-restart", "expected": "WORKSPACE_RECOVERED"},
+    {"id": "SALE-UI-013", "scenario": "offline-sale", "expected": "SAFE_LOCAL_AND_BACKLOG_VISIBLE"},
+    {"id": "SALE-UI-014", "scenario": "sync-dead-letter", "expected": "VISIBLE_AND_NOT_DROPPED"},
+    {"id": "SALE-UI-015", "scenario": "print-preview", "expected": "FAKE_ADAPTER_NO_DEVICE_COMMAND"},
+    {"id": "SALE-UI-016", "scenario": "business-day-changed", "expected": "DANGEROUS_OPERATION_BLOCKED"},
+    {"id": "SALE-UI-017", "scenario": "cross-tenant-projection", "expected": "FAIL_CLOSED"},
+    {"id": "SALE-UI-018", "scenario": "unknown-owner-error", "expected": "SAFE_MESSAGE_ONLY"}
+  ],
+  "externalExecution": {
+    "providerNetworkCalls": 0,
+    "realDeviceCommands": 0,
+    "onsitePilots": 0,
+    "fullAlphaRuns": 0
+  }
+}

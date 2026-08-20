@@ -9,6 +9,9 @@ PREFIXES = (
     "lib/features/session/domain/",
     "lib/features/session/application/",
     "lib/features/session/infrastructure/",
+    "lib/features/sale/domain/",
+    "lib/features/sale/application/",
+    "lib/features/sale/infrastructure/",
 )
 
 
@@ -30,7 +33,7 @@ def main() -> None:
             files[current][1] += int(hits > 0)
     selected = {name: value for name, value in files.items() if name.startswith(PREFIXES)}
     if not selected:
-        raise SystemExit("FLUTTER GATE6D COVERAGE ERROR: no session runtime files found")
+        raise SystemExit("FLUTTER GATE6D COVERAGE ERROR: no session/sale runtime files found")
     found = sum(value[0] for value in selected.values())
     covered = sum(value[1] for value in selected.values())
     ratio = covered / found
@@ -38,7 +41,7 @@ def main() -> None:
         raise SystemExit(f"FLUTTER GATE6D COVERAGE ERROR: {ratio:.4f} below {args.minimum:.4f}")
     report = {
         "schemaVersion": "1.0",
-        "scope": "T2-POS-007 trusted terminal and employee session",
+        "scope": "T2-POS-007 trusted session and T2-POS-008 sale application runtime",
         "coveredLines": covered,
         "foundLines": found,
         "lineRatio": round(ratio, 6),
