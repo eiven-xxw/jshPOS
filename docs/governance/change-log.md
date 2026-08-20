@@ -140,5 +140,6 @@
 | CR-T2G6D-018 | 2026-08-20 | VERIFIED_E2E001_GATE6D_REVIEW_PENDING | 候选 `f5a450d` 的 GitHub Actions Run `32366111390` 九个 Job 全部成功；内部 E2E 组合核验 12 个 Owner 测试套件、Linux/Windows 各 6 个成功未跳过 Flutter 用例、3 个 Web 用例、MySQL 全迁移与六条现金旅程 | T2-E2E-001、T2-CI-001、ADR-036 | T2-E2E-001 更新为 VERIFIED 而非 ACCEPTED；证据仅为 SYNTHETIC_E2E，Provider网络/REAL_DEVICE/PILOT/FULL_ALPHA/PRODUCTION仍为0，等待Gate 6D总评审 |
 | CR-T2G6E-001 | 2026-08-20 | APPROVED | 项目发起人接受 Gate 6D CONDITIONAL PASS，将 POS-007/008、ADM-001、E2E-001 更新为 ACCEPTED，并授权从 `281e98a6b286f1343a012ed289cecb195858dcc7` 串行启动 Gate 6E | T2-ADM-002、T2-POS-009、T2-E2E-002、ADR-037 | 外部三项P0保持BLOCKED；UAT/REL保持DRAFT；JSH/LIC保持DEFERRED；完整Alpha和外部执行仍为0 |
 | CR-T2G6E-002 | 2026-08-20 | IN_PROGRESS_ADM002 | 已冻结后台第二波的数据主权、用户旅程、页面状态、权限、审计、错误、正式API、离线、兼容、回退和测试准入，按串行规则只准入 T2-ADM-002 | T2-ADM-002、ADR-037 | POS-009/E2E-002继续DRAFT；不新增Owner算法、数据库迁移或Provider/设备运行时 |
+| CR-T2G6E-003 | 2026-08-20 | IMPLEMENTED_AWAITING_INDEPENDENT_CI | 完成 ADM-002 Owner API 适配、后台四分区页面、受控写操作编排、40项固定向量、V42菜单迁移、Web与MySQL回归升级及Gate 6E独立CI | T2-ADM-002、T2-MIG-001、T2-CI-001、ADR-037 | 本地Web 35项测试/类型/ESLint/生产构建和治理门禁通过；MySQL实测及全量跨平台CI待GitHub干净执行器，状态保持IN_PROGRESS |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。

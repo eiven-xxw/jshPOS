@@ -78,3 +78,87 @@ export const buildOperationsSummary = (input: {
   inactiveProductCount: input.productStatuses.filter((value) => value !== 'ACTIVE').length,
   deniedAuditCount: input.auditResults.filter((value) => value === 'DENIED' || value === 'FAILURE').length
 });
+
+/** Gate 6E 受控写操作的页面状态，不映射也不推演任何领域状态机。 */
+export type OperationPageState = 'IDLE' | 'LOADING' | 'READY' | 'CONFIRMING' | 'SUBMITTING' | 'SUCCEEDED' | 'FAILED' | 'STALE';
+
+/** 二次确认快照；状态和版本必须来自 Owner 最近一次查询结果。 */
+export interface OperationConfirmation {
+  owner: string;
+  objectId: string;
+  currentState: string;
+  currentVersion: number;
+  action: string;
+  impact: string;
+  reason: string;
+  idempotencyKey: string;
+}
+
+/**
+ * 构建高风险操作的不可变确认快照。这里只做输入完整性检查，状态迁移是否合法仍由服务端 Owner 判断。
+ */
+export const buildOperationConfirmation = (input: OperationConfirmation): Readonly<OperationConfirmation> => {
+  const normalized = {
+    ...input,
+    owner: input.owner.trim(),
+    objectId: input.objectId.trim(),
+    currentState: input.currentState.trim(),
+    action: input.action.trim(),
+    impact: input.impact.trim(),
+    reason: input.reason.trim(),
+    idempotencyKey: input.idempotencyKey.trim()
+  };
+  if (
+    !normalized.owner ||
+    !normalized.objectId ||
+    !normalized.currentState ||
+    !normalized.action ||
+    !normalized.impact ||
+    normalized.reason.length < 4 ||
+    !Number.isSafeInteger(normalized.currentVersion) ||
+    normalized.currentVersion < 0 ||
+    !/^[0-9A-HJKMNP-TV-Z]{26}$/.test(normalized.idempotencyKey)
+  ) {
+    throw new Error('ADM-OP-001: 状态、版本、影响、原因和幂等键必须完整');
+  }
+  return Object.freeze(normalized);
+};
+
+/** 将逗号分隔的平台标识转换为安全整数；仅用于不超过 Number 安全范围的服务端字段。 */
+export const parseSafePlatformIds = (value: string, limit = 500): number[] => {
+  const ids = [
+    ...new Set(
+      value
+        .split(/[,，\s]+/)
+        .map((item) => item.trim())
+        .filter(Boolean)
+    )
+  ];
+  if (!ids.length || ids.length > limit || ids.some((item) => !/^[1-9]\d{0,15}$/.test(item) || !Number.isSafeInteger(Number(item)))) {
+    throw new Error('ADM-INPUT-003: 标识列表为空、超限或超过前端安全整数范围');
+  }
+  return ids.map(Number);
+};
+
+/** 校验精确十进制文本；返回字符串，禁止前端转换为浮点数参与领域计算。 */
+export const exactDecimal = (value: string, allowNegative = false): string => {
+  const normalized = value.trim();
+  const expression = allowNegative ? /^-?(?:0|[1-9]\d{0,12})(?:\.\d{1,6})?$/ : /^(?:0|[1-9]\d{0,12})(?:\.\d{1,6})?$/;
+  if (!expression.test(normalized)) throw new Error('ADM-INPUT-004: 数量必须为最多六位小数的精确文本');
+  return normalized;
+};
+
+/**
+ * 创建单航班执行器。重复点击共享原 Promise；失败不会伪造成功，并允许操作者使用原幂等键显式重试。
+ */
+export const createSingleFlight = () => {
+  let pending: Promise<unknown> | undefined;
+  return <T>(work: () => Promise<T>): Promise<T> => {
+    if (pending) return pending as Promise<T>;
+    const current = work();
+    pending = current;
+    return current.finally(() => {
+      if (pending === current) pending = undefined;
+    });
+  };
+};

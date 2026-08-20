@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.*;
 
-/** Gate 6B MySQL 8.4 空库迁移、权限、冻结身份、状态机和只追加保护集成测试。 */
+/** Gate 6E MySQL 8.4 空库迁移、权限、冻结身份、状态机和只追加保护集成测试。 */
 class ReleaseMigrationMySqlIT {
     private final String url = required("GATE6B_MYSQL_JDBC_URL");
     private final String username = required("GATE6B_MYSQL_USERNAME");
@@ -26,7 +26,7 @@ class ReleaseMigrationMySqlIT {
             .collect(Collectors.toSet());
         assertThat(applied.remove("0")).isTrue();
         assertThat(applied).containsExactlyInAnyOrderElementsOf(expected);
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("202608200041");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("202608200042");
         assertThat(flyway.migrate().migrationsExecuted).isZero();
         flyway.validate();
         assertSchemaAndGuards();
@@ -78,6 +78,9 @@ class ReleaseMigrationMySqlIT {
             try(ResultSet rows=s.executeQuery("SELECT COUNT(*) FROM sys_menu WHERE menu_id BETWEEN 9201400 AND 9201406")) {
                 assertThat(rows.next()).isTrue(); assertThat(rows.getInt(1)).isEqualTo(7);
             }
+            try(ResultSet rows=s.executeQuery("SELECT COUNT(*) FROM sys_menu WHERE menu_id=9201500 AND component='operations/advanced/index' AND perms='operations:advanced:read'")) {
+                assertThat(rows.next()).isTrue(); assertThat(rows.getInt(1)).isEqualTo(1);
+            }
             s.executeUpdate("INSERT INTO upg_release(release_id,tenant_id,artifact_type,release_version,channel_code,object_key,artifact_sha256,signature_base64,key_version,build_commit,sbom_sha256,manifest_sha256,min_app_version,max_app_version,min_protocol_version,max_protocol_version,min_schema_version,max_schema_version,min_system_version,max_system_version,state,request_sha256,created_by,correlation_id,created_at,updated_at) VALUES('"+release+"','TENANT_A','APK','1.2.3','CANARY','releases/TENANT_A/app.apk',REPEAT('a',64),REPEAT('e',64),'synthetic-v1',REPEAT('c',40),REPEAT('b',64),REPEAT('d',64),'1.0','2.0','1.0','2.0','1.0','3.0','10.0','14.0','DRAFT',REPEAT('f',64),101,'01K6A000000000000000000005',UTC_TIMESTAMP(3),UTC_TIMESTAMP(3))");
             s.executeUpdate("INSERT INTO upg_target_scope(scope_id,tenant_id,aggregate_type,aggregate_id,store_id,created_at) VALUES('01K6A000000000000000000006','TENANT_A','RELEASE','"+release+"',101,UTC_TIMESTAMP(3))");
             s.executeUpdate("UPDATE upg_release SET state='SIGNED',version_no=version_no+1,last_actor_id=101,last_correlation_id='01K6A000000000000000000007',updated_at=UTC_TIMESTAMP(3) WHERE release_id='"+release+"'");
@@ -113,7 +116,7 @@ class ReleaseMigrationMySqlIT {
         versions.add("202608160036"); versions.add("202608160037");
         for(int v=13;v<=35;v++) versions.add("20260817"+String.format("%04d",v));
         versions.add("202608180038"); versions.add("202608180039");
-        versions.add("202608200040"); versions.add("202608200041");
+        versions.add("202608200040"); versions.add("202608200041"); versions.add("202608200042");
         return versions;
     }
     private static String required(String name) { String value=System.getenv(name); if(value==null||value.isBlank()) throw new IllegalStateException(name+" must be provided by CI"); return value; }

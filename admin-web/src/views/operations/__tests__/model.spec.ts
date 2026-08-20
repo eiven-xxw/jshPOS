@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { buildOperationsSummary, normalizeProductUnits } from '../model';
+import {
+  buildOperationConfirmation,
+  buildOperationsSummary,
+  createSingleFlight,
+  exactDecimal,
+  normalizeProductUnits,
+  parseSafePlatformIds
+} from '../model';
 
 describe('ADM-001 operations model', () => {
   it('normalizes exact multi-units without adding tenant identity', () => {
@@ -71,5 +78,48 @@ describe('ADM-001 operations model', () => {
       inactiveProductCount: 2,
       deniedAuditCount: 2
     });
+  });
+
+  it('freezes a high-risk operation confirmation with server state version and stable idempotency key', () => {
+    const confirmation = buildOperationConfirmation({
+      owner: 'Inventory',
+      objectId: '01J00000000000000000000001',
+      currentState: 'REVIEWED',
+      currentVersion: 3,
+      action: 'approve',
+      impact: '追加盘盈盘亏流水并重建余额投影',
+      reason: '复核差异后批准入账',
+      idempotencyKey: '01J00000000000000000000002'
+    });
+    expect(Object.isFrozen(confirmation)).toBe(true);
+    expect(confirmation.currentVersion).toBe(3);
+    expect(() => buildOperationConfirmation({ ...confirmation, currentVersion: -1, reason: 'x' })).toThrow('ADM-OP-001');
+  });
+
+  it('keeps decimal quantities as exact text and rejects float-like unsafe inputs', () => {
+    expect(exactDecimal('12.340000')).toBe('12.340000');
+    expect(exactDecimal('-1.5', true)).toBe('-1.5');
+    expect(() => exactDecimal('1e3')).toThrow('ADM-INPUT-004');
+    expect(() => exactDecimal('-1')).toThrow('ADM-INPUT-004');
+  });
+
+  it('parses bounded platform ids without losing integer precision', () => {
+    expect(parseSafePlatformIds('1, 2，2 3')).toEqual([1, 2, 3]);
+    expect(() => parseSafePlatformIds('9007199254740992')).toThrow('ADM-INPUT-003');
+    expect(() => parseSafePlatformIds('')).toThrow('ADM-INPUT-003');
+  });
+
+  it('deduplicates repeated submits while allowing a later explicit retry', async () => {
+    const singleFlight = createSingleFlight();
+    let calls = 0;
+    const task = () => {
+      calls += 1;
+      return Promise.resolve(calls);
+    };
+    const first = singleFlight(task);
+    const duplicate = singleFlight(task);
+    expect(await first).toBe(1);
+    expect(await duplicate).toBe(1);
+    expect(await singleFlight(task)).toBe(2);
   });
 });
