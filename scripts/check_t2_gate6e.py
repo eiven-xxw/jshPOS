@@ -136,6 +136,18 @@ def validate_sources(statuses: tuple[str, str, str]) -> None:
                          "contracts/t2/gate6e/test-vectors/internal-alpha-candidate-v1.json"):
             if (ROOT / relative).exists():
                 fail(f"E2E-002 is DRAFT but candidate runtime exists: {relative}")
+    else:
+        runner = ROOT / "scripts/run_t2_gate6e_internal_alpha_candidate.py"
+        if not runner.is_file():
+            fail("E2E-002 is admitted but the candidate evidence runner is missing")
+        source = runner.read_text(encoding="utf-8")
+        for token in ("INTERNAL_ALPHA_CANDIDATE", "validate_gate6d_journeys", "ReturnOrchestrationServiceTest",
+                      "BackupRecoveryServiceTest", "ReleaseGovernanceServiceTest", "CONDITIONAL_GO_INTERNAL_ONLY"):
+            if token not in source:
+                fail(f"E2E-002 candidate runner boundary missing: {token}")
+        for expression in (r"requests\.", r"urllib\.request", r"httpx", r"https?://"):
+            if re.search(expression, source, re.IGNORECASE):
+                fail(f"E2E-002 candidate runner must not open a network boundary: {expression}")
 
 
 def validate_vectors(document: dict) -> None:
