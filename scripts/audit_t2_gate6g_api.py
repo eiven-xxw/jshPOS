@@ -14,6 +14,7 @@ HTTP_METHODS = {"get", "post", "put", "delete", "patch"}
 OPENAPI_EXCLUDES = ("draft", "design")
 PERMISSION_EXCEPTIONS = {
     ("POST", "/api/pos/v1/terminals/activate"): "一次性激活凭据协议在业务权限建立前完成认证",
+    ("POST", "/api/pos/v1/terminals/authenticate"): "设备凭据认证在员工权限会话建立前完成，服务端仅返回登记范围内可信上下文",
 }
 ERROR_PATTERN = re.compile(r"^[A-Z][A-Z0-9]{1,15}-(?:[0-9]{3}|[A-Z][A-Z0-9-]{1,63})$")
 
@@ -133,7 +134,9 @@ def error_catalog() -> tuple[list[dict], list[dict]]:
         ROOT / "admin-web" / "src" / "api",
         ROOT / "pos-flutter" / "lib",
     ]
-    literal = re.compile(r'["\']([A-Z][A-Z0-9-]{2,}):\s*([^"\'\r\n]*)')
+    # 正式错误文本固定为 ``CODE: message``。要求冒号后至少一个空白，避免把
+    # ``RULE:${id}``、``MANUAL:${id}`` 等规范业务映射键误报为错误码。
+    literal = re.compile(r'["\']([A-Z][A-Z0-9-]{2,}):\s+([^"\'\r\n]*)')
     for root in roots:
         if not root.exists():
             continue

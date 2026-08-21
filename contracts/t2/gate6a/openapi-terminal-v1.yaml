@@ -169,7 +169,8 @@ components:
         clientTime: {type: string, format: date-time}
     AuthenticatedDevice:
       type: object
-      required: [tenantId, deviceId, orgUnitId, storeId, terminalId, boundUserId, protocolVersion, schemaVersion, credentialVersion]
+      required: [tenantId, deviceId, orgUnitId, storeId, terminalId, boundUserId, storeName, storeTimezone,
+        businessDate, terminalName, status, protocolVersion, schemaVersion, credentialVersion, validUntil]
       properties:
         tenantId: {type: string}
         deviceId: {type: string}
@@ -177,9 +178,15 @@ components:
         storeId: {type: integer, format: int64}
         terminalId: {type: string}
         boundUserId: {type: integer, format: int64}
+        storeName: {type: string, description: 只读显示值，不参与授权}
+        storeTimezone: {type: string}
+        businessDate: {type: string, format: date}
+        terminalName: {type: string, description: 只读显示值，不参与授权}
+        status: {type: string, enum: [ACTIVE]}
         protocolVersion: {type: string}
         schemaVersion: {type: string}
         credentialVersion: {type: integer, format: int64}
+        validUntil: {type: string, format: date-time}
     ChangeStatusCommand:
       type: object
       required: [targetStatus, reason, idempotencyKey, expectedVersion]

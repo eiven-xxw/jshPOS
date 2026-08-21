@@ -50,6 +50,7 @@ final class TrustedTerminalContext {
     required this.orgUnitId,
     required this.storeId,
     required this.storeName,
+    String? deviceId,
     required this.terminalId,
     required this.terminalName,
     required this.storeTimezone,
@@ -58,7 +59,8 @@ final class TrustedTerminalContext {
     required this.protocolVersion,
     required this.validUntil,
     required Set<DeviceCapability> approvedCapabilities,
-  }) : approvedCapabilities = Set.unmodifiable(approvedCapabilities) {
+  }) : deviceId = deviceId ?? terminalId,
+       approvedCapabilities = Set.unmodifiable(approvedCapabilities) {
     _validate();
   }
 
@@ -67,6 +69,9 @@ final class TrustedTerminalContext {
   final String orgUnitId;
   final String storeId;
   final String storeName;
+
+  /// 设备注册表 ULID；与门店内终端业务标识相互独立。
+  final String deviceId;
   final String terminalId;
   final String terminalName;
   final String storeTimezone;
@@ -82,6 +87,7 @@ final class TrustedTerminalContext {
     if (!RegExp(r'^[A-Za-z0-9][A-Za-z0-9_-]{0,19}$').hasMatch(tenantId) ||
         !RegExp(r'^[1-9][0-9]{0,18}$').hasMatch(orgUnitId) ||
         !RegExp(r'^[1-9][0-9]{0,18}$').hasMatch(storeId) ||
+        !RegExp(r'^[0-9A-HJKMNP-TV-Z]{26}$').hasMatch(deviceId) ||
         !RegExp(r'^[0-9A-HJKMNP-TV-Z]{26}$').hasMatch(terminalId) ||
         tenantName.trim().isEmpty ||
         storeName.trim().isEmpty ||

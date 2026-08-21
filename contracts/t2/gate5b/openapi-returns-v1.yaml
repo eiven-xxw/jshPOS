@@ -6,6 +6,21 @@ info:
 servers:
   - url: /api/v1
 paths:
+  /returns/preview:
+    post:
+      operationId: previewOriginalReturn
+      summary: 只读预检原单可退数量、原优惠恢复与退款金额
+      description: 不创建退货、退款、库存或审计事实；金额只能来自原订单和原成交促销快照。
+      security: [{ bearerAuth: [] }]
+      x-permission: return:request:read
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PreviewReturn' }
+      responses:
+        '200': { $ref: '#/components/responses/ReturnPreviewResult' }
+        '409': { description: 原单、快照、累计上限或金额守恒校验失败 }
   /returns:
     post:
       operationId: requestOriginalReturn
@@ -59,6 +74,16 @@ components:
       required: true
       schema: { $ref: '#/components/schemas/Ulid' }
   responses:
+    ReturnPreviewResult:
+      description: 原单与原促销快照联合计算的只读预检
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [code, data]
+            properties:
+              code: { type: integer }
+              data: { $ref: '#/components/schemas/ReturnPreview' }
     ReturnResult:
       description: 退货退款 Saga 当前不可变检查点投影
       content:
@@ -103,6 +128,22 @@ components:
               quantity: { type: number, exclusiveMinimum: 0, multipleOf: 0.000001 }
         correlationId: { $ref: '#/components/schemas/Ulid' }
         occurredAt: { type: string, format: date-time }
+    PreviewReturn:
+      type: object
+      additionalProperties: false
+      required: [orderQuery, lines]
+      properties:
+        orderQuery: { type: string, minLength: 1, maxLength: 64 }
+        lines:
+          type: array
+          maxItems: 500
+          items:
+            type: object
+            additionalProperties: false
+            required: [orderLineId, quantity]
+            properties:
+              orderLineId: { $ref: '#/components/schemas/Ulid' }
+              quantity: { type: number, exclusiveMinimum: 0, multipleOf: 0.000001 }
     ApproveReturn:
       type: object
       additionalProperties: false
@@ -130,3 +171,45 @@ components:
         recordVersion: { type: integer, format: int64, minimum: 1 }
         lines: { type: array, items: { type: object } }
         duplicate: { type: boolean }
+    ReturnPreview:
+      type: object
+      required: [orderId, localOrderNo, storeId, businessDate, currency, settlementKind,
+        promotionSnapshotId, promotionSnapshotSha256, originalReceivableAmountMinor,
+        cumulativeRefundedAmountMinor, maximumRefundableAmountMinor, requestedGrossAmountMinor,
+        recoveredDiscountAmountMinor, refundableAmountMinor, lines]
+      properties:
+        orderId: { $ref: '#/components/schemas/Ulid' }
+        localOrderNo: { type: string }
+        storeId: { type: integer, format: int64 }
+        businessDate: { type: string, format: date }
+        currency: { type: string, enum: [CNY] }
+        settlementKind: { type: string, enum: [CASH, PROVIDER_NEUTRAL] }
+        promotionSnapshotId: { $ref: '#/components/schemas/Ulid' }
+        promotionSnapshotSha256: { type: string, pattern: '^[a-f0-9]{64}$' }
+        originalReceivableAmountMinor: { type: integer, format: int64 }
+        cumulativeRefundedAmountMinor: { type: integer, format: int64 }
+        maximumRefundableAmountMinor: { type: integer, format: int64 }
+        requestedGrossAmountMinor: { type: integer, format: int64 }
+        recoveredDiscountAmountMinor: { type: integer, format: int64 }
+        refundableAmountMinor: { type: integer, format: int64 }
+        lines:
+          type: array
+          maxItems: 500
+          items: { $ref: '#/components/schemas/ReturnPreviewLine' }
+    ReturnPreviewLine:
+      type: object
+      required: [orderLineId, skuCode, productName, unitCode, originalQuantity,
+        cumulativeReturnedQuantity, maximumReturnableQuantity, requestedQuantity,
+        requestedGrossMinor, recoveredDiscountMinor, refundableAmountMinor]
+      properties:
+        orderLineId: { $ref: '#/components/schemas/Ulid' }
+        skuCode: { type: string }
+        productName: { type: string }
+        unitCode: { type: string }
+        originalQuantity: { type: number, multipleOf: 0.000001 }
+        cumulativeReturnedQuantity: { type: number, multipleOf: 0.000001 }
+        maximumReturnableQuantity: { type: number, multipleOf: 0.000001 }
+        requestedQuantity: { type: number, multipleOf: 0.000001 }
+        requestedGrossMinor: { type: integer, format: int64 }
+        recoveredDiscountMinor: { type: integer, format: int64 }
+        refundableAmountMinor: { type: integer, format: int64 }

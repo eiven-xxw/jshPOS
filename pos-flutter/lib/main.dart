@@ -1,8 +1,8 @@
 import 'package:flutter/widgets.dart';
 
-import 'app/jshpos_app.dart';
+import 'app/pos_application_bootstrap.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const JshposApp());
+  runApp(await PosApplicationBootstrap.create());
 }

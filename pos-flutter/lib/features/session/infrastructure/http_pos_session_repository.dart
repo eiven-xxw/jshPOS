@@ -108,6 +108,7 @@ final class HttpPosSessionRepository implements PosSessionRepository {
       orgUnitId: _text(data, 'orgUnitId'),
       storeId: _text(data, 'storeId'),
       storeName: _text(data, 'storeName'),
+      deviceId: _text(data, 'deviceId'),
       terminalId: _text(data, 'terminalId'),
       terminalName: _text(data, 'terminalName'),
       storeTimezone: _text(data, 'storeTimezone'),
@@ -323,6 +324,7 @@ final class HttpPosSessionRepository implements PosSessionRepository {
     if (verified == null ||
         verified.tenantId != terminal.tenantId ||
         verified.storeId != terminal.storeId ||
+        verified.deviceId != terminal.deviceId ||
         verified.terminalId != terminal.terminalId ||
         _material == null) {
       throw const PosSessionFailure('TERMINAL_CONTEXT_MISMATCH', '终端可信上下文不一致。');

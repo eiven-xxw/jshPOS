@@ -160,6 +160,7 @@ final class PosSessionService {
       }
       if (refreshed.terminal.tenantId != terminal.tenantId ||
           refreshed.terminal.storeId != terminal.storeId ||
+          refreshed.terminal.deviceId != terminal.deviceId ||
           refreshed.terminal.terminalId != terminal.terminalId ||
           refreshed.employee.employeeId != employee.employeeId) {
         throw const PosSessionFailure(
