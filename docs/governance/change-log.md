@@ -156,5 +156,6 @@
 | CR-T2G6F-004 | 2026-08-21 | CONDITIONAL_PASS_ACCEPTED | 项目发起人确认 Gate 6F-Prep `CONDITIONAL PASS`；最终闭环提交 `7ccc50112d954c1d4c9bdd3464da4b3a2eb9ec3e` 的 GitHub Actions run `32418944447` 四 Job 全绿，证据 Artifact `9424960730` | T2-PAY-002、T2-HWD-001、T2-PAR-001、T2-UAT-001、T2-REL-001、ADR-038 | 仅接受准备阶段；三轨状态和外部零执行边界不变，不构成外部解阻或完整Alpha准入 |
 | CR-T2PAYDOC-001 | 2026-08-21 | APPROVED_OFFLINE_VERIFICATION_ONLY | 项目发起人仅授权拉卡拉首接候选的受控材料离线验真，要求核验来源、签署、产品/版本/范围、摘要、保管、到期、轮换、删除和吊销 | T2-PAY-002、ADR-038 | 未授权 Provider 网络；PAY-002 继续 BLOCKED，整包 VERIFIED_DOCUMENT 后仍须独立执行准入确认 |
 | CR-T2PAYDOC-002 | 2026-08-21 | MATERIAL_IDS_MISSING_NO_GO_AWAITING_CI | 检查用户指令、仓库受控引用与本地收件目录，发现提供值仍为 `[填写…材料 ID]` 占位符；实际受控材料 ID 为 0/11，全部必需项保持 MISSING | T2-PAY-002、T2-SEC-001、ADR-038 | 不把占位符、Gate6C公开资料或Fake升级为受控证据；verifiedDocumentStatus=NOT_ACHIEVED，networkCalls=0，等待真实不透明ID补件 |
+| CR-T2PAYDOC-003 | 2026-08-21 | MISSING_INTAKE_VERIFIED_AWAITING_FINAL_CLOSURE | 缺件治理提交 `97be28f0de081a837b9f2963a9bfe29f76e36323` 的 GitHub Actions run `32431781888` 完成 Ubuntu、Windows、离线边界与证据索引四 Job 全绿；证据 Artifact `9429323791` | T2-PAY-002、T2-SEC-001、ADR-038 | 只证明0/11、NOT_ACHIEVED、NO-GO和零网络可重复；回填后需最终闭环 CI，PAY-002继续BLOCKED |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。
