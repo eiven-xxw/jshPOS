@@ -161,6 +161,39 @@ def validate_forbidden_boundaries() -> None:
                 fail(f"cross-owner Mapper reference: {path.relative_to(ROOT)} -> {table}")
 
 
+def validate_e2e_materials(statuses: tuple[str, ...]) -> None:
+    if statuses[-1] not in {"IN_PROGRESS", "VERIFIED"}:
+        return
+    required = (
+        "contracts/t2/gate6g/test-vectors/internal-v1-core-candidate-v1.json",
+        "scripts/run_t2_gate6g_internal_v1_candidate.py",
+        "scripts/build_t2_gate6g_runtime_stack_smoke.py",
+        "docs/t2-gate6g/11_T2_E2E003设计准入与独立验证.md",
+        "docs/t2-gate6g/12_T2_E2E003可重复运行手册.md",
+        "docs/t2-gate6g/13_Gate6G缺陷账与性能基线.md",
+        "docs/t2-gate6g/14_Gate6G证据索引.md",
+        "docs/t2-gate6g/15_T2_Gate6G_SprintS17周门禁报告.md",
+        "docs/t2-gate6g/16_Gate6H下一步操作指令.md",
+        "pos-flutter/lib/app/pos_application_bootstrap.dart",
+        "pos-flutter/lib/infrastructure/runtime/session_bound_pos_runtime.dart",
+        "pos-flutter/test/gate6g/formal_pos_runtime_e2e_test.dart",
+    )
+    missing = [item for item in required if not (ROOT / item).is_file()]
+    if missing:
+        fail(f"E2E-003 admitted materials missing: {missing}")
+    vector = load_json(ROOT / required[0])
+    if (vector.get("requirementId") != "T2-E2E-003" or
+            vector.get("evidenceLevel") != "INTERNAL_V1_CORE_CANDIDATE" or
+            any(value != 0 for value in vector.get("externalExecution", {}).values()) or
+            vector.get("commercialClaimAllowed") is not False):
+        fail("E2E-003 vector identity or external evidence boundary drift")
+    workflow = (ROOT / ".github/workflows/t2-gate6g.yml").read_text(encoding="utf-8")
+    for token in ("runtime-stack-smoke:", "internal-v1-core-candidate:",
+                  "run_t2_gate6g_internal_v1_candidate.py", "build_t2_gate6g_evidence.py"):
+        if token not in workflow:
+            fail(f"Gate6G workflow missing E2E token: {token}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=pathlib.Path)
@@ -172,6 +205,7 @@ def main() -> None:
     validate_preserved(document, rows)
     validate_branch()
     validate_forbidden_boundaries()
+    validate_e2e_materials(statuses)
     result = {
         "gate": "T2-GATE6G-S17",
         "baseline": BASELINE,

@@ -2,7 +2,7 @@ package com.jingshanghui.pos.sync.application.service;
 
 import com.jingshanghui.pos.order.application.model.OrderCommands.CloseShift;
 import com.jingshanghui.pos.order.application.model.OrderCommands.OpenSyncedShift;
-import com.jingshanghui.pos.order.application.service.ShiftService;
+import com.jingshanghui.pos.order.application.port.ShiftSubmissionPort;
 import com.jingshanghui.pos.sync.application.model.SyncModels.DeviceContext;
 import com.jingshanghui.pos.sync.application.model.SyncModels.EventEnvelope;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +19,7 @@ import java.util.Map;
 @Component
 @RequiredArgsConstructor
 public class ShiftEventDispatcher {
-    private final ShiftService shifts;
+    private final ShiftSubmissionPort shifts;
 
     public void apply(DeviceContext context, EventEnvelope event) {
         if ("shift.opened.v1".equals(event.eventType())) {

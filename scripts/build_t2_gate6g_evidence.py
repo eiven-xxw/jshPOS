@@ -8,7 +8,10 @@ import hashlib
 import json
 from pathlib import Path
 
-REQUIRED_STAGE_DIRS = {"governance", "server", "mysql", "pos-linux", "pos-windows", "web", "security"}
+REQUIRED_STAGE_DIRS = {
+    "governance", "server", "mysql", "pos-linux", "pos-windows", "web",
+    "runtime-stack", "internal-v1-core", "security",
+}
 
 
 def main() -> int:
@@ -30,11 +33,35 @@ def main() -> int:
         })
     if not files:
         raise SystemExit("Gate6G evidence bundle is empty")
+    reports = list((bundle / "internal-v1-core").rglob("internal-v1-core-candidate-report.json"))
+    if len(reports) != 1:
+        raise SystemExit("Gate6G internal V1 core report missing or duplicated")
+    candidate = json.loads(reports[0].read_text(encoding="utf-8"))
+    if (candidate.get("status") != "PASS" or
+            candidate.get("evidenceLevel") != "INTERNAL_V1_CORE_CANDIDATE" or
+            candidate.get("internalDecision") != "CONDITIONAL_GO_INTERNAL_ONLY" or
+            candidate.get("openP0") != 0 or candidate.get("openP1") != 0 or
+            candidate.get("commercialClaimAllowed") is not False or
+            any(value != 0 for value in candidate.get("externalExecution", {}).values())):
+        raise SystemExit("Gate6G internal V1 core evidence boundary invalid")
+    digest = candidate.pop("evidenceSha256", None)
+    canonical = json.dumps(candidate, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
+    if digest != hashlib.sha256(canonical).hexdigest():
+        raise SystemExit("Gate6G internal V1 core report self-digest invalid")
     result = {
         "schemaVersion": "1.0",
         "gate": "T2-GATE6G-S17",
         "evidenceCeiling": "INTERNAL_V1_CORE_CANDIDATE",
         "externalExecution": 0,
+        "internalV1CoreCandidate": {
+            "status": candidate["status"],
+            "decision": candidate["internalDecision"],
+            "baseSaleJourneys": candidate["baseSaleJourneyCount"],
+            "returnJourneys": candidate["returnJourneyCount"],
+            "fixedFailureSeeds": candidate["fixedFailureSeedCount"],
+            "openP0": candidate["openP0"],
+            "openP1": candidate["openP1"],
+        },
         "fileCount": len(files),
         "files": files,
     }

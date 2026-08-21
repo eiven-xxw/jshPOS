@@ -10,6 +10,7 @@ import com.jingshanghui.pos.order.application.model.OrderCommands.OpenShift;
 import com.jingshanghui.pos.order.application.model.OrderCommands.OpenSyncedShift;
 import com.jingshanghui.pos.order.application.model.OrderViews.ApprovalView;
 import com.jingshanghui.pos.order.application.model.OrderViews.ShiftView;
+import com.jingshanghui.pos.order.application.port.ShiftSubmissionPort;
 import com.jingshanghui.pos.order.domain.CanonicalHash;
 import com.jingshanghui.pos.order.domain.OrderRules;
 import com.jingshanghui.pos.order.domain.UlidGenerator;
@@ -29,7 +30,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class ShiftService {
+public class ShiftService implements ShiftSubmissionPort {
 
     private static final String OPEN = "OPEN_SHIFT";
     private static final String CLOSE = "CLOSE_SHIFT";
@@ -52,6 +53,7 @@ public class ShiftService {
     }
 
     /** 接收 POS 已冻结的班次身份，确保本地与云端使用同一个 shiftId。 */
+    @Override
     @Transactional
     public ShiftView openSynced(OpenSyncedShift command) {
         OrderRules.requireUlid(command.shiftId(), "shiftId");
@@ -161,6 +163,7 @@ public class ShiftService {
     }
 
     @Transactional
+    @Override
     public ShiftView close(CloseShift command) {
         TrustedPrincipal principal = tenantContext.requirePrincipal();
         OrderRules.requireUlid(command.commandId(), "commandId");

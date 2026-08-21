@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-E2E-003",
+  "evidenceLevel": "INTERNAL_V1_CORE_CANDIDATE",
+  "predecessorFixtures": [
+    "contracts/t2/gate6d/test-vectors/internal-cash-e2e-v1.json",
+    "contracts/t2/gate6e/test-vectors/internal-alpha-candidate-v1.json"
+  ],
+  "industries": ["CONVENIENCE", "SNACK_DISCOUNT", "COMMUNITY_SUPERMARKET"],
+  "runtimeComponents": {
+    "server": "ruoyi-admin executable JAR with all accepted Owner modules",
+    "adminWeb": "production Vue build and formal API component tests",
+    "flutterPos": "formal session-bound composition root over loopback HTTP",
+    "mysql": "empty MySQL 8.4 forward migration and metadata validation",
+    "sqlite": "file-backed formal POS schema, signed packages and cash transaction"
+  },
+  "requiredRuntimeAssertions": [
+    "TRUSTED_TERMINAL_AND_EMPLOYEE_SESSION",
+    "SIGNED_CATALOG_PACKAGE",
+    "SIGNED_PROMOTION_PACKAGE",
+    "FILE_SQLITE_FORWARD_MIGRATION",
+    "SHIFT_OPEN",
+    "SCAN_AND_PROMOTION_QUOTE",
+    "AUTHORIZED_MANUAL_ADJUSTMENT",
+    "ATOMIC_CASH_SETTLEMENT",
+    "PRINT_TASK_PREVIEW_ONLY",
+    "SHIFT_CLOSE",
+    "SESSION_LOGOUT",
+    "NO_CLIENT_TENANT_AUTHORITY"
+  ],
+  "failureSeeds": [
+    {"seed":"G6G-0001","case":"RUNTIME_ASSEMBLY_AFTER_LOGIN_FAILS","expected":"LOGOUT_AND_FAIL_CLOSED"},
+    {"seed":"G6G-0002","case":"NON_TLS_NON_LOOPBACK_CONFIGURATION","expected":"REJECT"},
+    {"seed":"G6G-0003","case":"RETURN_WAREHOUSE_ID_TYPE_DRIFT","expected":"REJECT"},
+    {"seed":"G6G-0004","case":"HARDWARE_SECURE_CREDENTIAL_MISSING","expected":"BLOCKED_UNAVAILABLE"},
+    {"seed":"G6G-0005","case":"CROSS_TENANT_ORDER","expected":"REJECT"},
+    {"seed":"G6G-0006","case":"ACK_LOST_REPLAY","expected":"RETURN_ORIGINAL"},
+    {"seed":"G6G-0007","case":"OUTBOX_SAME_ID_DIFFERENT_HASH","expected":"REJECT"},
+    {"seed":"G6G-0008","case":"PROCESS_KILL_AFTER_SERVER_RECEIVE","expected":"QUERY_ORIGINAL"},
+    {"seed":"G6G-0009","case":"SQLITE_WRITE_FAILURE","expected":"ROLLBACK_ALL"},
+    {"seed":"G6G-0010","case":"PROMOTION_SNAPSHOT_TAMPER","expected":"REJECT"},
+    {"seed":"G6G-0011","case":"REPORT_PROJECTION_REBUILD","expected":"RECONCILE"},
+    {"seed":"G6G-0012","case":"BACKUP_OR_UPGRADE_ARTIFACT_INVALID","expected":"FAIL_CLOSED"}
+  ],
+  "performanceTargets": {
+    "classification": "INTERNAL_CI_BASELINE_ONLY",
+    "serverRegressionSeconds": 900,
+    "mysqlMigrationSeconds": 300,
+    "flutterRegressionSecondsPerPlatform": 300,
+    "webBuildAndTestSeconds": 300
+  },
+  "defectLedger": {"p0": [], "p1": []},
+  "externalExecution": {
+    "providerNetworkCalls": 0,
+    "realFunds": 0,
+    "realDeviceCommands": 0,
+    "partnerContacts": 0,
+    "onsitePilots": 0,
+    "fullAlphaRuns": 0,
+    "productionDeployments": 0
+  },
+  "commercialClaimAllowed": false
+}
