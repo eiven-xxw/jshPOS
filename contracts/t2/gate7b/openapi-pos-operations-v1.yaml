@@ -10,6 +10,18 @@ x-pos-local-application-operations:
     summary: 追加补打请求、审计、幂等结果和 Outbox；真实打印固定失败关闭
     requestSchema: '#/components/schemas/ReceiptReprintRequest'
     resultSchema: '#/components/schemas/ReceiptReprintResult'
+  cancelCurrentBasket:
+    summary: 将当前未完成购物篮以只追加取消事实终止，保留订单行、审计与 Outbox
+    requestSchema: '#/components/schemas/OrderCancellationRequest'
+    resultSchema: '#/components/schemas/OrderDispositionResult'
+  cancelHeldSale:
+    summary: 取消当前可信班次内的挂单；不得删除挂单或订单行
+    requestSchema: '#/components/schemas/OrderCancellationRequest'
+    resultSchema: '#/components/schemas/OrderDispositionResult'
+  routeCompletedOrderDisposition:
+    summary: 已完成订单只追加退货退款或异常补偿路由，不改变成交状态
+    requestSchema: '#/components/schemas/CompletedOrderDispositionRequest'
+    resultSchema: '#/components/schemas/OrderDispositionResult'
 paths:
   /api/v1/pos/shifts/{shiftId}/cash-movements:
     post:
@@ -76,6 +88,43 @@ components:
       required: true
       schema: { type: string, minLength: 16, maxLength: 128 }
   schemas:
+    OrderCancellationRequest:
+      type: object
+      additionalProperties: false
+      required: [dispositionId, orderId, reasonCode, reasonText, expectedVersion, occurredAt]
+      properties:
+        dispositionId: { type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$' }
+        orderId: { type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$' }
+        reasonCode: { type: string, pattern: '^[A-Z][A-Z0-9_]{1,31}$' }
+        reasonText: { type: string, minLength: 1, maxLength: 256 }
+        expectedVersion: { type: integer, minimum: 1 }
+        occurredAt: { type: string, format: date-time }
+    CompletedOrderDispositionRequest:
+      type: object
+      additionalProperties: false
+      required: [dispositionId, orderId, routeCode, reasonCode, reasonText, occurredAt]
+      properties:
+        dispositionId: { type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$' }
+        orderId: { type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$' }
+        routeCode:
+          type: string
+          enum: [RETURN_REFUND_REQUIRED, PAYMENT_REVERSAL_OBSERVATION_REQUIRED, EXPLICIT_COMPENSATION_REQUIRED]
+        reasonCode: { type: string, pattern: '^[A-Z][A-Z0-9_]{1,31}$' }
+        reasonText: { type: string, minLength: 1, maxLength: 256 }
+        occurredAt: { type: string, format: date-time }
+    OrderDispositionResult:
+      type: object
+      additionalProperties: false
+      required: [dispositionId, orderId, dispositionType, fromStatus, effectiveStatus, requestSha256, outboxEventId, duplicate]
+      properties:
+        dispositionId: { type: string }
+        orderId: { type: string }
+        dispositionType: { type: string }
+        fromStatus: { type: string }
+        effectiveStatus: { type: string }
+        requestSha256: { type: string, pattern: '^[a-f0-9]{64}$' }
+        outboxEventId: { type: string }
+        duplicate: { type: boolean }
     ReceiptPreview:
       type: object
       additionalProperties: false

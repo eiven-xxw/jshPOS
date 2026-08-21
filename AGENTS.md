@@ -415,7 +415,9 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
 ## 4.33 当前 T2 Gate 7B / Sprint S20：POS 交易运营第一批条件准入
 
 - 项目发起人已于 2026-08-21 接受 Gate 7A，并授权从封板提交 `fd255f45115015fa0bab91f1fd8b1c14c2acc51e` 建立 `t2/gate7b-sprint20-pos-operations`，严格按 `T2-POS-010 → T2-POS-011 → T2-ORD-004` 串行开发。
-- `T2-POS-010` 已由候选 Run `32487652575` 独立验证，并由封存 Run `32488566595` 完成闭环；`T2-POS-011` 已由候选提交 `f19406dbb8c8a31818969766cbb6f548320d9f22` 的 Run `32494347095` 独立验证。当前 `T2-ORD-004` 仍必须保持 `DRAFT`，POS-011 的 `VERIFIED` 封存提交未完成闭环 CI 前不得预建 ORD-004 运行时或迁移。
+- `T2-POS-010` 已由候选 Run `32487652575` 独立验证并由 Run `32488566595` 闭环；`T2-POS-011` 已由候选 Run `32494347095` 独立验证并由封存提交 `94a315ee2aa0304e7a02dfb20182eef0e0281e7a` 的 Run `32495308502` 闭环。现只允许 `T2-ORD-004` 按已冻结设计进入 `IN_PROGRESS`。
+- ORD-004 仅允许把 `DRAFT/PENDING_PAYMENT` 且无成功或未知资金、无库存出库的交易迁移为 `CANCELLED`；`COMPLETED/CONFIRMED` 及已有资金、库存、成本、促销和审计事实不得回退、删除或覆盖，只能追加 `RETURN_REFUND_REQUIRED/PAYMENT_REVERSAL_OBSERVATION_REQUIRED/EXPLICIT_COMPENSATION_REQUIRED` 处置路由。
+- 购物篮取消、挂单取消、未完成本地单作废、服务端取消墓碑和成交后处置路由必须使用稳定幂等键、内容摘要、可信租户/门店/终端/员工/班次/业务日、只追加处置事实、审计和 Outbox；同键异内容、跨租户、业务日漂移、支付 `PROCESSING/UNKNOWN/SUCCEEDED`、库存已出或状态竞态必须失败关闭。
 - POS-010 复用 Checkout/Order Owner，在独立只追加表记录非销售现金移动和非销售钱箱请求；现金移动、班次理论现金/版本、审计、幂等结果和 Outbox 必须同事务，钱箱请求金额恒为零且不得伪造设备成功。
 - 本地权限来自已认证员工会话，服务端仍执行权限和门店范围校验；`tenant_id`、门店、终端、员工、班次和业务日只来自可信上下文。现金移动输入必须为正数最小货币单位整数，Owner 冻结其正负方向。
 - SQLite/Flyway 只允许独立前向迁移，已发布迁移不得修改；现金和审计事实不得更新或删除。真实钱箱未解阻时设备执行状态固定为 `BLOCKED_EXTERNAL`，真实外设命令必须为 0。

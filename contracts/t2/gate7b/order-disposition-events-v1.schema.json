@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jingshanghui.example/contracts/t2/gate7b/order-disposition-events-v1.schema.json",
+  "title": "Gate 7B order cancellation and reverse-disposition events",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["dispositionId", "orderId", "storeId", "terminalId", "cashierId", "shiftId", "businessDate", "dispositionType", "fromStatus", "effectiveStatus", "reasonCode", "reasonText", "requestSha256", "aggregateVersion"],
+  "properties": {
+    "dispositionId": { "$ref": "#/$defs/ulid" },
+    "orderId": { "$ref": "#/$defs/ulid" },
+    "storeId": { "type": "string", "pattern": "^[1-9][0-9]{0,18}$" },
+    "terminalId": { "$ref": "#/$defs/ulid" },
+    "cashierId": { "type": "string", "minLength": 1, "maxLength": 64 },
+    "shiftId": { "$ref": "#/$defs/ulid" },
+    "businessDate": { "type": "string", "format": "date" },
+    "dispositionType": { "enum": ["CANCEL_BEFORE_COMPLETION", "RETURN_REFUND_REQUIRED", "PAYMENT_REVERSAL_OBSERVATION_REQUIRED", "EXPLICIT_COMPENSATION_REQUIRED"] },
+    "fromStatus": { "enum": ["DRAFT", "PENDING_PAYMENT", "CONFIRMED", "COMPLETED"] },
+    "effectiveStatus": { "enum": ["CANCELLED", "CONFIRMED", "COMPLETED"] },
+    "reasonCode": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]{1,31}$" },
+    "reasonText": { "type": "string", "minLength": 1, "maxLength": 256 },
+    "authorizationRef": { "type": ["string", "null"], "minLength": 16, "maxLength": 128 },
+    "requestSha256": { "$ref": "#/$defs/sha256" },
+    "aggregateVersion": { "type": "integer", "minimum": 1 },
+    "occurredAt": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "ulid": { "type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$" },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

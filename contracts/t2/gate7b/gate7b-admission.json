@@ -21,8 +21,8 @@
       "evidenceCeiling": "SOFTWARE_EXECUTION"
     },
     "T2-ORD-004": {
-      "status": "DRAFT",
-      "admission": "WAITING_FOR_T2_POS_011_VERIFIED",
+      "status": "IN_PROGRESS",
+      "admission": "PASSED_DESIGN_ENTRY_AFTER_POS011_CLOSURE_RUN_32495308502",
       "evidenceCeiling": "SOFTWARE_EXECUTION"
     }
   },
