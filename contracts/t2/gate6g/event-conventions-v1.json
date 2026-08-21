@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-API-001",
+  "transport": "AT_LEAST_ONCE_OUTBOX_INBOX",
+  "requiredEnvelope": [
+    "eventId",
+    "eventType",
+    "schemaVersion",
+    "producerOwner",
+    "aggregateId",
+    "tenantId",
+    "occurredAt",
+    "correlationId",
+    "payloadHash",
+    "payload"
+  ],
+  "authority": {
+    "tenantIdMeaning": "由生产 Owner 可信上下文冻结的事实属性，不是消费者授权凭据",
+    "consumerMustCrossCheckTrustedChannelAndScope": true,
+    "clientMayProduceAuthoritativeOwnerEvent": false
+  },
+  "replay": {
+    "sameEventSameHash": "RETURN_ORIGINAL_RESULT_OR_CONTINUE_CHECKPOINT",
+    "sameEventDifferentHash": "REJECT_AND_QUARANTINE",
+    "outOfOrder": "DEFER_OR_EXPLICIT_CONFLICT_POLICY",
+    "unknown": "QUERY_OR_OBSERVE_ORIGINAL_EVENT",
+    "regenerateBusinessCommand": false
+  },
+  "compatibility": {
+    "eventTypeSuffixCarriesMajorVersion": true,
+    "schemaVersionRequired": true,
+    "additiveOptionalFieldsAllowed": true,
+    "removingOrChangingMeaningRequiresNewEventMajorVersion": true
+  },
+  "forbiddenPayload": ["Secret", "raw credential", "payment key", "unnecessary PII"],
+  "providerNetworkCallsAllowed": 0
+}

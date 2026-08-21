@@ -161,5 +161,6 @@
 | CR-T2G6G-001 | 2026-08-21 | APPROVED | 项目发起人按 CONDITIONAL GO 从 `a6c91a1d66857583ce7e498541b63bcf0b81dc52` 启动 Gate 6G / Sprint S17，并要求 CORE→API→DAT→INT→E2E 严格串行 | T2-CORE-001、T2-API-001、T2-DAT-001、T2-INT-001、T2-E2E-003、ADR-039 | 只收口商业V1内部正式代码；PAY/HWD/PAR/PRN保持BLOCKED，V1/UAT/REL保持DRAFT，JSH/LIC保持DEFERRED，外部执行为0 |
 | CR-T2G6G-002 | 2026-08-21 | IN_PROGRESS_CORE001 | CORE-001 已冻结Owner主权、生产装配、占位分类、事务失败关闭、覆盖矩阵和测试准入，成为唯一获准实现项 | T2-CORE-001、ADR-039 | API/DAT/INT/E2E继续DRAFT；不得以审计脚本或文档预建后续运行时 |
 | CR-T2G6G-003 | 2026-08-21 | VERIFIED_CORE001_IN_PROGRESS_API001 | CORE机器审计覆盖55项已接受需求和15个Owner，修复Order/Promotion跨Owner读取Foundation私表，47项目Maven全量verify和覆盖率门槛通过 | T2-CORE-001、T2-API-001、ADR-039 | CORE更新为VERIFIED并仅准入API为IN_PROGRESS；外部状态和零执行边界不变，DAT/INT/E2E继续DRAFT |
+| CR-T2G6G-004 | 2026-08-21 | VERIFIED_API001_IN_PROGRESS_DAT001 | 完成164项正式Controller与164项OpenAPI双向覆盖、事件兼容、737项错误码、权限、可信租户、幂等、分页与版本审计，补齐19项既有端点契约并修正Gate2服务前缀 | T2-API-001、T2-DAT-001、ADR-039 | API更新为VERIFIED并仅准入DAT为IN_PROGRESS；历史成本路径保留兼容，Provider网络与真实回调仍为0，INT/E2E继续DRAFT |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。

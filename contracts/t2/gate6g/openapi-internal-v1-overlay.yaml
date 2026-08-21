@@ -1,0 +1,71 @@
+openapi: 3.1.0
+info:
+  title: 鲸熵汇商业 V1 内部 API 收口补充契约
+  version: 1.0.0-gate6g
+  description: >-
+    补齐既有 Gate 正式运行时中尚未进入 OpenAPI 的查询、治理和恢复端点。
+    本契约不新增支付 Provider、真实回调或真实硬件命令。
+x-requirement-ids: [T2-API-001]
+x-provider-network-calls-allowed: 0
+x-real-device-commands-allowed: 0
+security:
+  - bearerAuth: []
+paths:
+  /api/v1/inventory/policies:
+    post: {operationId: publishInventoryPolicy, x-permission: 'inventory:policy:publish', parameters: [{$ref: '#/components/parameters/CorrelationId'}, {$ref: '#/components/parameters/IdempotencyKey'}], responses: {'200': {$ref: '#/components/responses/Ok'}, '409': {$ref: '#/components/responses/Conflict'}}}
+  /api/v1/inventory/ledgers/{warehouseId}/{skuId}:
+    get: {operationId: findInventoryLedger, x-permission: 'inventory:ledger:read', parameters: [{$ref: '#/components/parameters/CorrelationId'}], responses: {'200': {$ref: '#/components/responses/Ok'}}}
+  /api/v1/inventory/balances/{warehouseId}/{skuId}/rebuild:
+    post: {operationId: rebuildInventoryBalance, x-permission: 'inventory:rebuild', parameters: [{$ref: '#/components/parameters/CorrelationId'}, {$ref: '#/components/parameters/IdempotencyKey'}], responses: {'200': {$ref: '#/components/responses/Ok'}, '409': {$ref: '#/components/responses/Conflict'}}}
+  /api/v1/inventory/stocktakes/{stocktakeId}:
+    get: {operationId: findStocktake, x-permission: 'inventory:stocktake:read', parameters: [{$ref: '#/components/parameters/CorrelationId'}], responses: {'200': {$ref: '#/components/responses/Ok'}}}
+  /api/v1/refunds/{refundId}:
+    get: {operationId: findRefund, x-permission: 'refund:read', parameters: [{$ref: '#/components/parameters/CorrelationId'}], responses: {'200': {$ref: '#/components/responses/Ok'}}}
+  /api/v1/procurement/suppliers/{supplierId}/state:
+    post: {operationId: changeSupplierState, x-permission: 'procurement:supplier:state', parameters: [{$ref: '#/components/parameters/CorrelationId'}, {$ref: '#/components/parameters/IdempotencyKey'}], responses: {'200': {$ref: '#/components/responses/Ok'}, '409': {$ref: '#/components/responses/Conflict'}}}
+  /api/v1/procurement/orders/{orderId}/close:
+    post: {operationId: closePurchaseOrder, x-permission: 'procurement:order:close', parameters: [{$ref: '#/components/parameters/CorrelationId'}, {$ref: '#/components/parameters/IdempotencyKey'}], responses: {'200': {$ref: '#/components/responses/Ok'}, '409': {$ref: '#/components/responses/Conflict'}}}
+  /api/v1/procurement/orders/{orderId}:
+    get: {operationId: findPurchaseOrder, x-permission: 'procurement:order:read', parameters: [{$ref: '#/components/parameters/CorrelationId'}], responses: {'200': {$ref: '#/components/responses/Ok'}}}
+  /api/v1/procurement/receipts/{receiptId}:
+    get: {operationId: findPurchaseReceipt, x-permission: 'procurement:receipt:read', parameters: [{$ref: '#/components/parameters/CorrelationId'}], responses: {'200': {$ref: '#/components/responses/Ok'}}}
+  /api/v1/releases/{releaseId}:
+    get: {operationId: findRelease, x-permission: 'release:read', parameters: [{$ref: '#/components/parameters/CorrelationId'}], responses: {'200': {$ref: '#/components/responses/Ok'}}}
+  /api/v1/releases/rollouts/{rolloutId}:
+    get: {operationId: findReleaseRollout, x-permission: 'release:read', parameters: [{$ref: '#/components/parameters/CorrelationId'}], responses: {'200': {$ref: '#/components/responses/Ok'}}}
+  /api/v1/releases/rollouts/{rolloutId}/start-canary:
+    post: {operationId: startReleaseCanary, x-permission: 'release:rollout', parameters: [{$ref: '#/components/parameters/CorrelationId'}, {$ref: '#/components/parameters/IdempotencyKey'}], responses: {'200': {$ref: '#/components/responses/Ok'}, '409': {$ref: '#/components/responses/Conflict'}}}
+  /api/v1/releases/rollouts/{rolloutId}/expand:
+    post: {operationId: expandReleaseRollout, x-permission: 'release:rollout', parameters: [{$ref: '#/components/parameters/CorrelationId'}, {$ref: '#/components/parameters/IdempotencyKey'}], responses: {'200': {$ref: '#/components/responses/Ok'}, '409': {$ref: '#/components/responses/Conflict'}}}
+  /api/v1/releases/rollouts/{rolloutId}/pause:
+    post: {operationId: pauseReleaseRollout, x-permission: 'release:rollout', parameters: [{$ref: '#/components/parameters/CorrelationId'}, {$ref: '#/components/parameters/IdempotencyKey'}], responses: {'200': {$ref: '#/components/responses/Ok'}, '409': {$ref: '#/components/responses/Conflict'}}}
+  /api/v1/releases/rollouts/{rolloutId}/complete:
+    post: {operationId: completeReleaseRollout, x-permission: 'release:rollout', parameters: [{$ref: '#/components/parameters/CorrelationId'}, {$ref: '#/components/parameters/IdempotencyKey'}], responses: {'200': {$ref: '#/components/responses/Ok'}, '409': {$ref: '#/components/responses/Conflict'}}}
+  /api/v1/report-exports/{exportId}/download:
+    get: {operationId: downloadApprovedReportExport, x-permission: 'report:export:download', parameters: [{$ref: '#/components/parameters/CorrelationId'}], responses: {'200': {$ref: '#/components/responses/Ok'}, '403': {$ref: '#/components/responses/Forbidden'}}}
+  /api/v1/reporting/differences/{differenceId}/transitions:
+    post: {operationId: transitionReportingDifference, x-permission: 'report:repair:manage', parameters: [{$ref: '#/components/parameters/CorrelationId'}, {$ref: '#/components/parameters/IdempotencyKey'}], responses: {'200': {$ref: '#/components/responses/Ok'}, '409': {$ref: '#/components/responses/Conflict'}}}
+  /api/admin/v1/sync/dead-letters/{eventId}/retry:
+    post: {operationId: retrySyncDeadLetter, x-permission: 'sync:repair', parameters: [{$ref: '#/components/parameters/CorrelationId'}, {$ref: '#/components/parameters/IdempotencyKey'}], responses: {'200': {$ref: '#/components/responses/Ok'}, '409': {$ref: '#/components/responses/Conflict'}}}
+  /api/v1/terminals:
+    get: {operationId: listTerminals, x-permission: 'terminal:registry:read', parameters: [{$ref: '#/components/parameters/CorrelationId'}], responses: {'200': {$ref: '#/components/responses/Ok'}}}
+components:
+  securitySchemes:
+    bearerAuth: {type: http, scheme: bearer}
+  parameters:
+    CorrelationId:
+      name: X-Correlation-Id
+      in: header
+      required: false
+      schema: {type: string, maxLength: 64}
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      description: 事实写入必须使用此请求头或请求体中的稳定 commandId/eventId。
+      schema: {type: string, minLength: 1, maxLength: 128}
+  responses:
+    Ok: {description: 成功；使用统一 R(code,msg,data) 响应信封。}
+    BadRequest: {description: 输入、摘要或分页参数不合法。}
+    Forbidden: {description: 权限、可信租户或门店范围拒绝。}
+    Conflict: {description: 幂等键异内容、状态、版本或并发冲突。}

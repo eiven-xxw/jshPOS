@@ -1,11 +1,12 @@
 openapi: 3.1.0
 info:
   title: JSH POS Gate 2 Shift and Cash Order API
-  version: 1.0.0-gate2
+  version: 1.1.0-gate6g
   description: >-
     T2-POS-001..005 and T2-ORD-001..002 formal application API. Tenant identity is
     derived exclusively from the authenticated trusted context and is never accepted in a payload.
-servers: []
+servers:
+  - url: /api/v1/pos
 x-local-only-requirements: [T2-POS-004, T2-OFF-001]
 security:
   - bearerAuth: []

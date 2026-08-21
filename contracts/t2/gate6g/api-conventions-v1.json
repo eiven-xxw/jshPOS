@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-API-001",
+  "apiVersion": "v1",
+  "compatibility": {
+    "stablePrefixes": ["/api/v1", "/api/pos/v1", "/api/admin/v1"],
+    "additiveChangesAllowed": true,
+    "removalOrSemanticChangeRequiresNewMajorVersion": true,
+    "publishedContractsAreImmutableExceptForDocumentedForwardCorrections": true
+  },
+  "authority": {
+    "tenantSource": "AUTHENTICATED_TRUSTED_CONTEXT",
+    "clientTenantIdIsAuthorizationInput": false,
+    "storeAndTerminalMustBeCrossCheckedWithTenant": true,
+    "failClosedWhenContextMissingOrMismatched": true
+  },
+  "headers": {
+    "correlationId": "X-Correlation-Id",
+    "idempotencyKey": "Idempotency-Key",
+    "contentType": "application/json"
+  },
+  "idempotency": {
+    "requiredForMutationsOfFacts": true,
+    "acceptedSources": ["Idempotency-Key header", "immutable commandId/eventId in request body"],
+    "sameKeySameHash": "RETURN_ORIGINAL_RESULT",
+    "sameKeyDifferentHash": "REJECT_CONFLICT",
+    "unknownOutcome": "QUERY_OR_OBSERVE_ORIGINAL_COMMAND",
+    "regenerateBusinessCommand": false
+  },
+  "responseEnvelope": {
+    "type": "org.dromara.common.core.domain.R",
+    "fields": ["code", "msg", "data"],
+    "correlationIdReturnedInHeader": true
+  },
+  "pagination": {
+    "pageMode": {"parameters": ["page", "size"], "pageMinimum": 1, "sizeMinimum": 1, "sizeMaximum": 200},
+    "cursorMode": {"parameters": ["cursor", "afterSequence", "limit"], "limitMinimum": 1, "limitMaximum": 1000},
+    "sorting": "SERVER_ALLOWLIST_ONLY",
+    "tenantAndScopeFilterMandatory": true
+  },
+  "errorCode": {
+    "format": "^[A-Z][A-Z0-9]{1,15}-(?:[0-9]{3}|[A-Z][A-Z0-9-]{1,63})$",
+    "prefixOwnedByModule": true,
+    "stableWithinV1": true,
+    "messageMayBeLocalizedButMustNotExposeSecretOrPII": true
+  },
+  "isolationSurfaces": ["Mapper", "XML", "native SQL", "scheduled task", "cache", "export", "temporary file", "object storage"],
+  "forbidden": [
+    "client supplied tenant_id as authority",
+    "cross Owner Mapper access",
+    "frontend amount promotion inventory cost or payment-state recomputation",
+    "Provider SDK or Provider HTTP client",
+    "real callback endpoint",
+    "secret in repository log CI or ordinary artifact"
+  ]
+}

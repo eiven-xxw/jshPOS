@@ -6,6 +6,8 @@ x-requirement-ids: [T2-INV-001, T2-INV-002, T2-INV-004]
 paths:
   /api/v1/inventory/sales/{orderId}/apply:
     post:
+      operationId: applyInventorySale
+      x-permission: 'inventory:movement:apply'
       summary: 从权威已完成订单快照幂等应用销售出库
       parameters:
         - {name: orderId, in: path, required: true, schema: {type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'}}
@@ -17,6 +19,8 @@ paths:
       responses: {'200': {description: 已应用或相同命令重放}, '409': {description: 来源、策略或库存冲突}}
   /api/v1/inventory/returns/{refundId}/apply:
     post:
+      operationId: applyInventoryReturn
+      x-permission: 'inventory:movement:apply'
       summary: 从权威成功原单退款快照幂等应用退货入库
       parameters:
         - {name: refundId, in: path, required: true, schema: {type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'}}
@@ -28,6 +32,8 @@ paths:
       responses: {'200': {description: 已应用或相同命令重放}, '409': {description: 来源或数量冲突}}
   /api/v1/inventory/balances/{warehouseId}/{skuId}:
     get:
+      operationId: findInventoryBalance
+      x-permission: 'inventory:balance:read'
       summary: 查询可信租户内库存投影
       parameters:
         - {name: warehouseId, in: path, required: true, schema: {type: string}}

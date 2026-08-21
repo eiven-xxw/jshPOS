@@ -55,7 +55,7 @@ def main() -> None:
     ):
         if requirement_id not in gate2_openapi:
             raise SystemExit(f"CONTRACT ERROR: Gate 2 OpenAPI missing {requirement_id}")
-    for token in ("version: 1.0.0-gate2", "/cash-orders:", "/shifts/{shiftId}/close:", "Idempotency-Key", "additionalProperties: false"):
+    for token in ("version: 1.1.0-gate6g", "url: /api/v1/pos", "/cash-orders:", "/shifts/{shiftId}/close:", "Idempotency-Key", "additionalProperties: false"):
         if token not in gate2_openapi:
             raise SystemExit(f"CONTRACT ERROR: Gate 2 formal OpenAPI missing {token}")
     if "tenantId:" in gate2_openapi or "tenant_id:" in gate2_openapi:
