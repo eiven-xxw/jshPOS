@@ -153,6 +153,14 @@ def validate() -> dict:
                       "order.reversal-routed.v1", "insertOrderFinalityGuard",
                       "reserveCompletion", "countCancellationDisposition"):
             fail(token in runtime, f"ORD004 运行时/同步/墓碑边界缺失: {token}")
+    if stage == "FIRST_BATCH_VERIFIED":
+        for path in (
+            "docs/t2-gate7b/03_T2_POS010独立验证报告.md",
+            "docs/t2-gate7b/05_T2_POS011独立验证报告.md",
+            "docs/t2-gate7b/07_T2_ORD004独立验证报告.md",
+            "docs/t2-gate7b/08_T2_Gate7B_SprintS20第一批周门禁报告.md",
+        ):
+            text(path)
     return {
         "schemaVersion": "1.0", "gate": "T2-GATE7B-SPRINT-S20-POS-OPERATIONS-FIRST-BATCH",
         "status": "PASS", "stage": stage, "baselineCommit": BASELINE,
