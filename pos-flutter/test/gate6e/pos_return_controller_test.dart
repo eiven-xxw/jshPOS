@@ -159,6 +159,48 @@ void main() {
       throwsA(isA<PosReturnFailure>()),
     );
   });
+
+  test('非预期应用错误与恢复查询权限均失败关闭', () async {
+    final fixture = await ReturnFixture.ready();
+
+    fixture.returns.failure = StateError('synthetic search failure');
+    await fixture.controller.searchOriginalOrder(orderRef);
+    expect(fixture.controller.state.errorCode, 'RETURN_SEARCH_FAILED');
+
+    fixture.returns.failure = null;
+    await fixture.controller.searchOriginalOrder(orderRef);
+    fixture.returns.failure = StateError('synthetic quantity failure');
+    await fixture.controller.changeQuantity(lineRef, '1');
+    expect(fixture.controller.state.errorCode, 'RETURN_QUANTITY_FAILED');
+
+    fixture.returns.failure = null;
+    await fixture.controller.changeQuantity(lineRef, '1');
+    fixture.returns.failure = StateError('synthetic submit failure');
+    await fixture.controller.submitCashReturn(reasonCode: 'CUSTOMER_REQUEST');
+    expect(fixture.controller.state.errorCode, 'RETURN_SUBMIT_FAILED');
+
+    fixture.returns.failure = StateError('synthetic refresh failure');
+    await fixture.controller.refreshStatus(returnRef);
+    expect(fixture.controller.state.phase, PosReturnPagePhase.unknown);
+    expect(fixture.controller.state.recoverableReturnRef, returnRef);
+
+    fixture.returns.failure = const PosReturnFailure(
+      'RETURN_REFRESH_REJECTED',
+      '合成查询被拒绝。',
+    );
+    await fixture.controller.refreshStatus(returnRef);
+    expect(fixture.controller.state.errorCode, 'RETURN_REFRESH_REJECTED');
+
+    final noReadPermission = await ReturnFixture.ready(
+      permissions: {PosPermission.returnCreate},
+    );
+    await noReadPermission.controller.refreshStatus(returnRef);
+    expect(noReadPermission.controller.state.errorCode, 'PERMISSION_DENIED');
+
+    final noReference = await ReturnFixture.ready();
+    await noReference.controller.refreshStatus();
+    expect(noReference.controller.state.errorCode, 'RETURN_REFERENCE_REQUIRED');
+  });
 }
 
 final class ReturnFixture {

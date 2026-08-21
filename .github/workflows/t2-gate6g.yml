@@ -226,7 +226,7 @@ jobs:
           mkdir -p artifacts/t2/gate6g/runtime-stack
           mysql_container="$(docker ps --filter publish=3306 --format '{{.ID}}' | head -1)"
           test -n "$mysql_container"
-          docker exec -i "$mysql_container" mysql -uroot -psynthetic_gate6g_runtime_root jshpos_gate6g_runtime < server/script/sql/ry_vue_5.X.sql
+          docker exec -i "$mysql_container" mysql --default-character-set=utf8mb4 -uroot -psynthetic_gate6g_runtime_root jshpos_gate6g_runtime < server/script/sql/ry_vue_5.X.sql
           server_jar="$(find downloaded/server -name ruoyi-admin.jar -type f -print -quit)"
           test -s "$server_jar"
           java -jar "$server_jar" \
