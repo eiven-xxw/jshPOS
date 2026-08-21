@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'dart:math';
-import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
 import 'package:cryptography/cryptography.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jshpos_pos/features/catalog/infrastructure/catalog_package_installer.dart';
 import 'package:jshpos_pos/features/checkout/application/checkout_local_service.dart';
@@ -149,7 +149,9 @@ void main() {
 
       expect(workspace?.lines.single.quantity, '1000');
       // 只输出合成执行器趋势，禁止解释为真实扫码枪或 Android 性能。
-      print('GATE6H_METRIC pos_scan_1000_ms=${stopwatch.elapsedMilliseconds}');
+      debugPrint(
+        'GATE6H_METRIC pos_scan_1000_ms=${stopwatch.elapsedMilliseconds}',
+      );
     },
   );
 
@@ -172,7 +174,7 @@ void main() {
 
       expect(fixture.count('local_order'), 200);
       expect(fixture.count('local_cash_payment'), 200);
-      print(
+      debugPrint(
         'GATE6H_METRIC pos_settlement_200_ms=${stopwatch.elapsedMilliseconds}',
       );
     },

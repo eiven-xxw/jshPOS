@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:crypto/crypto.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jshpos_pos/features/checkout/domain/checkout_models.dart';
 import 'package:jshpos_pos/features/checkout/domain/ulid_generator.dart';
@@ -287,7 +288,7 @@ void main() {
 
       expect(fixture.transport.pushedEventIds.length, 10000);
       expect(fixture.statusCount('ACKED'), 10000);
-      print(
+      debugPrint(
         'GATE6H_METRIC sync_backlog_10000_ms=${stopwatch.elapsedMilliseconds}',
       );
     },
