@@ -873,6 +873,8 @@ final class CheckoutLocalService {
           'receivableAmountMinor': command.receivableAmountMinor,
           'tenderedAmountMinor': command.tenderedAmountMinor,
           'promotionSnapshotId': command.promotionSnapshotId,
+          'quoteId': command.quoteId,
+          'promotionEngineVersion': 'promotion-engine-1.0.0',
           'promotionSnapshotHash': 'sha256:$promotionHash',
           'quoteFingerprint': command.quoteFingerprint,
           'settlementFingerprint': command.settlementFingerprint,
@@ -1573,19 +1575,34 @@ final class CheckoutLocalService {
   }
 
   Map<String, Object?> _promotionSnapshot(PromotedCashSaleCommand command) => {
-    'schemaVersion': '1.0',
     'snapshotId': command.promotionSnapshotId,
     'orderId': command.basket.orderId,
     'quoteId': command.quoteId,
+    'storeId': int.parse(_binding.storeId),
+    'terminalId': _binding.terminalId,
+    'currency': 'CNY',
     'quoteFingerprint': command.quoteFingerprint,
-    'settlementFingerprint': command.settlementFingerprint,
-    'packageVersion': command.packageVersion,
-    'manualEventRefs': command.manualEventRefs,
     'grossAmountMinor': command.grossAmountMinor,
     'discountAmountMinor': command.discountAmountMinor,
-    'surchargeAmountMinor': command.surchargeAmountMinor,
-    'receivableAmountMinor': command.receivableAmountMinor,
-    'lines': command.lines.map((line) => line.toSnapshot()).toList(),
+    'payableAmountMinor':
+        command.grossAmountMinor - command.discountAmountMinor,
+    'lines': command.lines
+        .map(
+          (line) => {
+            'lineId': line.basketLine.lineId,
+            'lineNo': line.basketLine.lineNo,
+            'skuId': int.parse(line.basketLine.quote.skuId),
+            'quantity': line.basketLine.quantity.canonical,
+            'grossAmountMinor': line.basketLine.grossAmountMinor,
+            'discountAmountMinor': line.discountAmountMinor,
+            'payableAmountMinor':
+                line.basketLine.grossAmountMinor - line.discountAmountMinor,
+            'sourceAllocationsSha256': PromotedOrderSnapshotCodec.sha256Hex(
+              line.sourceAllocations,
+            ),
+          },
+        )
+        .toList(),
   };
 
   void _insertCompletedOrder(

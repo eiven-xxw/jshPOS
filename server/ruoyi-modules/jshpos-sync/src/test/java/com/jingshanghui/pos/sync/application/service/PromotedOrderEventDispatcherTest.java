@@ -2,6 +2,7 @@ package com.jingshanghui.pos.sync.application.service;
 
 import com.jingshanghui.pos.order.application.model.PromotedOrderCommands.SubmitPromotedCashOrder;
 import com.jingshanghui.pos.order.application.service.PromotedCashOrderService;
+import com.jingshanghui.pos.order.application.port.PromotionSnapshotIngestionPort;
 import com.jingshanghui.pos.sync.application.model.SyncModels.DeviceContext;
 import com.jingshanghui.pos.sync.application.model.SyncModels.EventEnvelope;
 import org.dromara.common.core.exception.ServiceException;
@@ -23,7 +24,8 @@ import static org.mockito.Mockito.verifyNoInteractions;
 class PromotedOrderEventDispatcherTest {
 
     private final PromotedCashOrderService orders = mock(PromotedCashOrderService.class);
-    private final PromotedOrderEventDispatcher dispatcher = new PromotedOrderEventDispatcher(orders);
+    private final PromotionSnapshotIngestionPort snapshots = mock(PromotionSnapshotIngestionPort.class);
+    private final PromotedOrderEventDispatcher dispatcher = new PromotedOrderEventDispatcher(orders, snapshots);
     private final DeviceContext trusted = new DeviceContext("TENANT_A", "DEVICE_A", 1101L,
         "01K2A000000000000000000011", 101L, "1.1");
 
@@ -35,6 +37,7 @@ class PromotedOrderEventDispatcherTest {
 
         ArgumentCaptor<SubmitPromotedCashOrder> captor = ArgumentCaptor.forClass(SubmitPromotedCashOrder.class);
         verify(orders).submit(captor.capture());
+        verify(snapshots).ingest(org.mockito.ArgumentMatchers.any());
         SubmitPromotedCashOrder command = captor.getValue();
         assertThat(command.storeId()).isEqualTo(1101L);
         assertThat(command.terminalId()).isEqualTo(trusted.terminalId());
@@ -55,7 +58,7 @@ class PromotedOrderEventDispatcherTest {
         assertThatThrownBy(() -> dispatcher.apply(trusted, event(payload)))
             .isInstanceOf(ServiceException.class)
             .hasMessageContaining("SYNC_CONTEXT_MISMATCH");
-        verifyNoInteractions(orders);
+        verifyNoInteractions(orders, snapshots);
     }
 
     private EventEnvelope event(Map<String, Object> payload) {
@@ -97,6 +100,8 @@ class PromotedOrderEventDispatcherTest {
         value.put("priceVersion", 1);
         value.put("industryTemplateVersion", "CONVENIENCE.1");
         value.put("promotionSnapshotId", "01K2A000000000000000000051");
+        value.put("quoteId", "01K2A000000000000000000052");
+        value.put("promotionEngineVersion", "promotion-engine-1.0.0");
         value.put("promotionSnapshotHash", "sha256:" + "1".repeat(64));
         value.put("quoteFingerprint", "2".repeat(64));
         value.put("settlementFingerprint", "3".repeat(64));

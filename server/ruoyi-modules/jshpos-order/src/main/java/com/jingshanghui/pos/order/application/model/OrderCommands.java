@@ -15,6 +15,13 @@ public final class OrderCommands {
                             long configVersion, Instant occurredAt) {
     }
 
+    /** POS 同步开班命令；shiftId 是本地事务已经冻结的业务身份，服务端不得重新生成。 */
+    public record OpenSyncedShift(String commandId, String idempotencyKey, String shiftId, Long storeId,
+                                  String terminalId, String cashierId, LocalDate businessDate,
+                                  String storeTimezone, long openingCashMinor, long configVersion,
+                                  Instant occurredAt) {
+    }
+
     public record ApproveDifference(String commandId, String idempotencyKey, String shiftId,
                                     long actualCashMinor, long expectedVersion,
                                     String reasonCode, String reasonText, Instant occurredAt) {

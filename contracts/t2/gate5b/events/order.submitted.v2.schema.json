@@ -3,7 +3,7 @@
   "$id": "https://jingshanghui.example/contracts/gate5b/order.submitted.v2.schema.json",
   "title": "POS含促销快照订单提交事件",
   "type": "object",
-  "required": ["schemaVersion", "orderId", "localOrderNo", "storeId", "terminalId", "cashierId", "shiftId", "businessDate", "storeTimezone", "catalogVersion", "priceVersion", "industryTemplateVersion", "promotionSnapshotId", "promotionSnapshotHash", "quoteFingerprint", "settlementFingerprint", "packageVersion", "orderSnapshotHash", "manualEventRefs", "grossAmountMinor", "discountAmountMinor", "surchargeAmountMinor", "receivableAmountMinor", "tenderedAmountMinor", "lines"],
+  "required": ["schemaVersion", "orderId", "localOrderNo", "storeId", "terminalId", "cashierId", "shiftId", "businessDate", "storeTimezone", "catalogVersion", "priceVersion", "industryTemplateVersion", "promotionSnapshotId", "quoteId", "promotionEngineVersion", "promotionSnapshotHash", "quoteFingerprint", "settlementFingerprint", "packageVersion", "orderSnapshotHash", "manualEventRefs", "grossAmountMinor", "discountAmountMinor", "surchargeAmountMinor", "receivableAmountMinor", "tenderedAmountMinor", "lines"],
   "properties": {
     "schemaVersion": {"const": "2.0"},
     "orderId": {"$ref": "#/$defs/ulid"},
@@ -18,6 +18,8 @@
     "priceVersion": {"type": "integer", "minimum": 1},
     "industryTemplateVersion": {"type": "string", "minLength": 1, "maxLength": 64},
     "promotionSnapshotId": {"$ref": "#/$defs/ulid"},
+    "quoteId": {"$ref": "#/$defs/ulid"},
+    "promotionEngineVersion": {"type": "string", "const": "promotion-engine-1.0.0"},
     "promotionSnapshotHash": {"$ref": "#/$defs/prefixedHash"},
     "quoteFingerprint": {"$ref": "#/$defs/hash"},
     "settlementFingerprint": {"$ref": "#/$defs/hash"},

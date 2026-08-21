@@ -50,6 +50,25 @@ paths:
             application/json:
               schema: {$ref: '#/components/schemas/ActivatedTerminal'}
         '409': {description: 重复、过期、同键异内容或凭据已消费}
+  /api/pos/v1/terminals/authenticate:
+    post:
+      operationId: authenticateTerminal
+      summary: 使用登记设备凭据取得可信终端上下文
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/AuthenticateTerminalCommand'}
+      responses:
+        '200':
+          description: 返回由服务端注册表派生的租户、组织、门店和终端上下文
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/AuthenticatedDevice'}
+        '401': {description: 凭据、状态或有效期校验失败}
+        '409': {description: 应用、协议或 Schema 不在兼容窗口}
+        '423': {description: 检测到克隆并阻断终端}
   /api/v1/terminals/{deviceId}/status:
     put:
       operationId: changeTerminalStatus
@@ -136,6 +155,31 @@ components:
         deviceCredential: {type: string, writeOnly: true}
         credentialVersion: {type: integer, format: int64}
         secretShownOnce: {type: boolean, enum: [true]}
+    AuthenticateTerminalCommand:
+      type: object
+      required: [deviceId, deviceCredential, deviceFingerprintSha256, publicKeySha256, appVersion, protocolVersion, schemaVersion, clientTime]
+      properties:
+        deviceId: {type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'}
+        deviceCredential: {type: string, minLength: 32, maxLength: 128, writeOnly: true}
+        deviceFingerprintSha256: {type: string, pattern: '^[a-f0-9]{64}$'}
+        publicKeySha256: {type: string, pattern: '^[a-f0-9]{64}$'}
+        appVersion: {type: string}
+        protocolVersion: {type: string}
+        schemaVersion: {type: string}
+        clientTime: {type: string, format: date-time}
+    AuthenticatedDevice:
+      type: object
+      required: [tenantId, deviceId, orgUnitId, storeId, terminalId, boundUserId, protocolVersion, schemaVersion, credentialVersion]
+      properties:
+        tenantId: {type: string}
+        deviceId: {type: string}
+        orgUnitId: {type: integer, format: int64}
+        storeId: {type: integer, format: int64}
+        terminalId: {type: string}
+        boundUserId: {type: integer, format: int64}
+        protocolVersion: {type: string}
+        schemaVersion: {type: string}
+        credentialVersion: {type: integer, format: int64}
     ChangeStatusCommand:
       type: object
       required: [targetStatus, reason, idempotencyKey, expectedVersion]

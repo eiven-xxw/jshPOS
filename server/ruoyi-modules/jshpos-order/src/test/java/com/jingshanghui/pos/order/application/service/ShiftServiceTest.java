@@ -6,6 +6,7 @@ import com.jingshanghui.pos.foundation.application.security.ScopeAuthorizationSe
 import com.jingshanghui.pos.order.application.model.OrderCommands.ApproveDifference;
 import com.jingshanghui.pos.order.application.model.OrderCommands.CloseShift;
 import com.jingshanghui.pos.order.application.model.OrderCommands.OpenShift;
+import com.jingshanghui.pos.order.application.model.OrderCommands.OpenSyncedShift;
 import com.jingshanghui.pos.order.application.model.OrderViews.ApprovalView;
 import com.jingshanghui.pos.order.application.model.OrderViews.ShiftView;
 import com.jingshanghui.pos.order.domain.UlidGenerator;
@@ -60,6 +61,21 @@ class ShiftServiceTest {
             eq(5000L), any());
         verify(journal).appendEvent(eq("TENANT_A"), eq("shift.event"), eq("shift.opened.v1"),
             eq("SHIFT"), any(), eq(1L), eq("01K2A000000000000000000051"), any(), any());
+    }
+
+    @Test
+    void keepsThePosFrozenShiftIdentityWhenOpeningFromSync() {
+        when(context.requirePrincipal()).thenReturn(principal(101L));
+        when(mapper.findShift("TENANT_A", SHIFT)).thenReturn(shift("OPEN", 1, 5000, null, null));
+
+        ShiftView result = service.openSynced(new OpenSyncedShift("01K2A000000000000000000054",
+            "sync-open-shift-0001", SHIFT, 1101L, TERMINAL, "101", LocalDate.parse("2026-08-16"),
+            "Asia/Shanghai", 5000, 1, NOW));
+
+        assertThat(result.shiftId()).isEqualTo(SHIFT);
+        verify(mapper).insertShift(eq("TENANT_A"), eq(SHIFT), eq(1101L), eq(TERMINAL), eq(101L),
+            eq("Synthetic User"), eq(LocalDate.parse("2026-08-16")), eq("Asia/Shanghai"), eq(1L),
+            eq(5000L), any());
     }
 
     @Test

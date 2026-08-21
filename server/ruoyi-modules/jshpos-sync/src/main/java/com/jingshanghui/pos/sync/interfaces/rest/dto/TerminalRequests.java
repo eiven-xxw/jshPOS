@@ -60,6 +60,26 @@ public final class TerminalRequests {
                            @NotNull Instant clientTime) { }
 
     /**
+     * POS 设备凭据认证请求；不接收 tenant_id、门店或终端能力覆盖值。
+     * @param deviceId 服务端激活时分配的设备 ULID
+     * @param deviceCredential 仅用于本次内存校验的设备秘密
+     * @param deviceFingerprintSha256 设备指纹摘要
+     * @param publicKeySha256 设备公钥摘要
+     * @param appVersion 应用版本
+     * @param protocolVersion 同步协议版本
+     * @param schemaVersion 本地 Schema 版本
+     * @param clientTime 客户端 UTC 时间
+     */
+    public record Authenticate(@NotBlank @Pattern(regexp = ULID) String deviceId,
+                               @NotBlank @Size(min = 32, max = 128) String deviceCredential,
+                               @NotBlank @Pattern(regexp = SHA256) String deviceFingerprintSha256,
+                               @NotBlank @Pattern(regexp = SHA256) String publicKeySha256,
+                               @NotBlank @Pattern(regexp = VERSION) String appVersion,
+                               @NotBlank @Pattern(regexp = VERSION) String protocolVersion,
+                               @NotBlank @Pattern(regexp = VERSION) String schemaVersion,
+                               @NotNull Instant clientTime) { }
+
+    /**
      * 终端状态接口请求。
      * @param targetStatus 目标安全状态
      * @param reason 受审计原因

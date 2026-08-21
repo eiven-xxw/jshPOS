@@ -3,6 +3,9 @@ package com.jingshanghui.pos.sync.application.service;
 import com.jingshanghui.pos.order.application.model.PromotedOrderCommands.PromotedLine;
 import com.jingshanghui.pos.order.application.model.PromotedOrderCommands.SubmitPromotedCashOrder;
 import com.jingshanghui.pos.order.application.port.PromotedOrderSubmissionPort;
+import com.jingshanghui.pos.order.application.port.PromotionSnapshotIngestionPort;
+import com.jingshanghui.pos.order.application.port.PromotionSnapshotIngestionPort.SnapshotCommand;
+import com.jingshanghui.pos.order.application.port.PromotionSnapshotIngestionPort.SnapshotLine;
 import com.jingshanghui.pos.sync.application.model.SyncModels.DeviceContext;
 import com.jingshanghui.pos.sync.application.model.SyncModels.EventEnvelope;
 import org.dromara.common.core.exception.ServiceException;
@@ -22,9 +25,12 @@ import java.util.Map;
 public class PromotedOrderEventDispatcher {
 
     private final PromotedOrderSubmissionPort orders;
+    private final PromotionSnapshotIngestionPort promotionSnapshots;
 
-    public PromotedOrderEventDispatcher(PromotedOrderSubmissionPort orders) {
+    public PromotedOrderEventDispatcher(PromotedOrderSubmissionPort orders,
+                                        PromotionSnapshotIngestionPort promotionSnapshots) {
         this.orders = orders;
+        this.promotionSnapshots = promotionSnapshots;
     }
 
     public void apply(DeviceContext context, EventEnvelope event) {
@@ -38,6 +44,14 @@ public class PromotedOrderEventDispatcher {
         }
         List<PromotedLine> lines = array(payload, "lines").stream().map(this::line).toList();
         List<String> manualRefs = array(payload, "manualEventRefs").stream().map(value -> String.valueOf(value)).toList();
+        promotionSnapshots.ingest(new SnapshotCommand(event.eventId(), event.correlationId(),
+            text(payload, "quoteId"), text(payload, "promotionSnapshotId"), text(payload, "orderId"),
+            context.storeId(), context.terminalId(), LocalDate.parse(text(payload, "businessDate")),
+            number(payload, "packageVersion"), text(payload, "promotionEngineVersion"),
+            text(payload, "quoteFingerprint"), hash(payload, "promotionSnapshotHash"),
+            number(payload, "grossAmountMinor"), number(payload, "discountAmountMinor"),
+            number(payload, "grossAmountMinor") - number(payload, "discountAmountMinor"),
+            event.occurredAt(), array(payload, "lines").stream().map(this::snapshotLine).toList()));
         orders.submit(new SubmitPromotedCashOrder(event.correlationId(), event.idempotencyKey(),
             text(payload, "orderId"), text(payload, "localOrderNo"), context.storeId(), context.terminalId(),
             text(payload, "shiftId"), context.userId().toString(), LocalDate.parse(text(payload, "businessDate")),
@@ -49,6 +63,30 @@ public class PromotedOrderEventDispatcher {
             number(payload, "discountAmountMinor"), number(payload, "surchargeAmountMinor"),
             number(payload, "receivableAmountMinor"), number(payload, "tenderedAmountMinor"), lines,
             event.occurredAt()));
+    }
+
+    private SnapshotLine snapshotLine(Object source) {
+        if (!(source instanceof Map<?, ?> raw)) {
+            throw invalid("lines must contain objects");
+        }
+        Map<String, Object> value = new LinkedHashMap<>();
+        raw.forEach((key, item) -> value.put(String.valueOf(key), item));
+        Map<String, Long> allocations = new LinkedHashMap<>();
+        Object sources = value.get("sourceAllocations");
+        if (!(sources instanceof Map<?, ?> sourceMap)) {
+            throw invalid("sourceAllocations must be an object");
+        }
+        sourceMap.forEach((key, amount) -> allocations.put(String.valueOf(key),
+            asLong(amount, "sourceAllocations")));
+        try {
+            return new SnapshotLine(text(value, "lineId"), Math.toIntExact(number(value, "lineNo")),
+                number(value, "skuId"), new java.math.BigDecimal(text(value, "quantity")),
+                number(value, "unitPriceMinor"), number(value, "grossAmountMinor"),
+                number(value, "discountAmountMinor"),
+                number(value, "grossAmountMinor") - number(value, "discountAmountMinor"), allocations);
+        } catch (NumberFormatException exception) {
+            throw invalid("quantity must be an exact decimal");
+        }
     }
 
     private PromotedLine line(Object source) {

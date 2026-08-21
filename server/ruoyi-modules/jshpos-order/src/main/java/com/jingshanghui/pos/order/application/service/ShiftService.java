@@ -7,6 +7,7 @@ import com.jingshanghui.pos.foundation.domain.CanonicalJson;
 import com.jingshanghui.pos.order.application.model.OrderCommands.ApproveDifference;
 import com.jingshanghui.pos.order.application.model.OrderCommands.CloseShift;
 import com.jingshanghui.pos.order.application.model.OrderCommands.OpenShift;
+import com.jingshanghui.pos.order.application.model.OrderCommands.OpenSyncedShift;
 import com.jingshanghui.pos.order.application.model.OrderViews.ApprovalView;
 import com.jingshanghui.pos.order.application.model.OrderViews.ShiftView;
 import com.jingshanghui.pos.order.domain.CanonicalHash;
@@ -19,6 +20,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Map;
@@ -43,6 +46,21 @@ public class ShiftService {
 
     @Transactional
     public ShiftView open(OpenShift command) {
+        return openInternal(new OpenInput(command.commandId(), command.idempotencyKey(), ulids.next(),
+            command.storeId(), command.terminalId(), command.cashierId(), command.businessDate(),
+            command.storeTimezone(), command.openingCashMinor(), command.configVersion(), command.occurredAt()));
+    }
+
+    /** 接收 POS 已冻结的班次身份，确保本地与云端使用同一个 shiftId。 */
+    @Transactional
+    public ShiftView openSynced(OpenSyncedShift command) {
+        OrderRules.requireUlid(command.shiftId(), "shiftId");
+        return openInternal(new OpenInput(command.commandId(), command.idempotencyKey(), command.shiftId(),
+            command.storeId(), command.terminalId(), command.cashierId(), command.businessDate(),
+            command.storeTimezone(), command.openingCashMinor(), command.configVersion(), command.occurredAt()));
+    }
+
+    private ShiftView openInternal(OpenInput command) {
         TrustedPrincipal principal = tenantContext.requirePrincipal();
         requireActor(command.cashierId(), principal);
         authorizationService.requireStoreAccess(command.storeId());
@@ -62,7 +80,7 @@ public class ShiftService {
         if (duplicate != null) {
             return duplicate;
         }
-        String shiftId = ulids.next();
+        String shiftId = command.shiftId();
         LocalDateTime at = utc(command.occurredAt());
         mapper.insertShift(tenantId, shiftId, command.storeId(), command.terminalId(), principal.userId(),
             safeName(principal), command.businessDate(), command.storeTimezone(), command.configVersion(),
@@ -80,6 +98,12 @@ public class ShiftService {
             shiftId, result, at);
         return result;
     }
+
+    /** 内部统一开班输入，避免 REST 开班与同步开班复制状态机。 */
+    private record OpenInput(String commandId, String idempotencyKey, String shiftId, Long storeId,
+                             String terminalId, String cashierId, LocalDate businessDate,
+                             String storeTimezone, long openingCashMinor, long configVersion,
+                             Instant occurredAt) { }
 
     @Transactional
     public ApprovalView approveDifference(ApproveDifference command) {

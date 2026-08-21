@@ -11,7 +11,11 @@ import '../domain/sync_models.dart';
 typedef SyncFailureInjector = void Function(String checkpoint);
 
 abstract interface class LocalSyncChangeApplier {
-  void apply(Database database, TrustedDeviceBinding binding, SyncChange change);
+  void apply(
+    Database database,
+    TrustedDeviceBinding binding,
+    SyncChange change,
+  );
 }
 
 final class SyncControlChangeApplier implements LocalSyncChangeApplier {
@@ -124,7 +128,8 @@ final class PosSyncCoordinator {
     } on SyncTransportException catch (failure) {
       errorCode = failure.code;
     } on Object catch (failure) {
-      errorCode = 'SYNC_RUN_FAILED_${failure.runtimeType.toString().toUpperCase()}';
+      errorCode =
+          'SYNC_RUN_FAILED_${failure.runtimeType.toString().toUpperCase()}';
     }
     final backlog = _refreshBacklogAlert();
     return SyncRunSummary(
@@ -141,7 +146,7 @@ final class PosSyncCoordinator {
 
   void _requireBootstrapBinding(SyncBootstrap bootstrap) {
     if (bootstrap.protocolVersion != '1.0' ||
-        bootstrap.deviceId != _binding.terminalId ||
+        bootstrap.deviceId != _binding.deviceId ||
         bootstrap.terminalId != _binding.terminalId ||
         bootstrap.storeId != _binding.storeId ||
         bootstrap.maxBatchEvents < 1 ||
@@ -174,8 +179,12 @@ final class PosSyncCoordinator {
           row['event_id']! as String,
           row['correlation_id']! as String,
         );
-        _applyAckById(row['event_id']! as String, row['payload_sha256']! as String,
-            (row['attempt_count']! as int), ack);
+        _applyAckById(
+          row['event_id']! as String,
+          row['payload_sha256']! as String,
+          (row['attempt_count']! as int),
+          ack,
+        );
       } on SyncTransportException {
         return;
       }
@@ -229,10 +238,7 @@ final class PosSyncCoordinator {
           break;
         }
       }
-      final leaseUntil = _now()
-          .toUtc()
-          .add(leaseDuration)
-          .toIso8601String();
+      final leaseUntil = _now().toUtc().add(leaseDuration).toIso8601String();
       for (final event in events) {
         _db.execute(
           'UPDATE local_outbox SET status=\'SENDING\',lease_token=?,lease_until=?,attempt_count=attempt_count+1,last_error_code=NULL,updated_at=? WHERE tenant_id=? AND event_id=? AND status IN (\'PENDING\',\'RETRY\')',
@@ -243,16 +249,16 @@ final class PosSyncCoordinator {
         }
       }
     });
-    return events.isEmpty ? null : SyncPushBatch(batchId: batchId, events: events);
+    return events.isEmpty
+        ? null
+        : SyncPushBatch(batchId: batchId, events: events);
   }
 
   SyncEventEnvelope _eventFromRow(Row row) {
     final payloadJson = row['payload_json']! as String;
     final payloadHash = sha256.convert(utf8.encode(payloadJson)).toString();
     if (payloadHash != row['payload_sha256']) {
-      throw StateError(
-        'SYNC_LOCAL_PAYLOAD_TAMPERED: ${row['event_id']}',
-      );
+      throw StateError('SYNC_LOCAL_PAYLOAD_TAMPERED: ${row['event_id']}');
     }
     final eventType = row['event_type']! as String;
     final versionMatch = RegExp(r'\.v([1-9][0-9]*)$').firstMatch(eventType);
@@ -266,7 +272,7 @@ final class PosSyncCoordinator {
       eventVersion: int.parse(versionMatch.group(1)!),
       aggregateId: row['aggregate_id']! as String,
       aggregateVersion: row['aggregate_version']! as int,
-      deviceId: _binding.terminalId,
+      deviceId: _binding.deviceId,
       storeId: _binding.storeId,
       terminalId: _binding.terminalId,
       sequenceNo: row['device_sequence']! as int,
@@ -454,7 +460,8 @@ final class PosSyncCoordinator {
   int _retryDelayMs(String eventId, int attempt) {
     final exponent = attempt.clamp(0, 7).toInt();
     final base = (500 * (1 << exponent)).clamp(500, 60000).toInt();
-    final jitter = eventId.codeUnits.fold<int>(0, (sum, value) => sum + value) % 251;
+    final jitter =
+        eventId.codeUnits.fold<int>(0, (sum, value) => sum + value) % 251;
     return base + jitter;
   }
 
@@ -486,7 +493,12 @@ final class PosSyncCoordinator {
   Future<({int pulled, int applied, int deadLetters, String? errorCode})>
   _pullStream(String stream) async {
     if (!await _flushPendingAck(stream)) {
-      return (pulled: 0, applied: 0, deadLetters: 0, errorCode: 'SYNC_ACK_PENDING');
+      return (
+        pulled: 0,
+        applied: 0,
+        deadLetters: 0,
+        errorCode: 'SYNC_ACK_PENDING',
+      );
     }
     final cursorRows = _db.select(
       'SELECT applied_cursor FROM local_sync_cursor WHERE tenant_id=? AND stream_code=?',
@@ -505,8 +517,7 @@ final class PosSyncCoordinator {
     } on SyncTransportException catch (failure) {
       return (pulled: 0, applied: 0, deadLetters: 0, errorCode: failure.code);
     }
-    if (page.stream != stream ||
-        page.pageDigest != _pageDigest(page.changes)) {
+    if (page.stream != stream || page.pageDigest != _pageDigest(page.changes)) {
       if (page.changes.isNotEmpty) {
         _recordInboundDeadLetter(
           page.changes.first.changeId,
@@ -638,9 +649,9 @@ final class PosSyncCoordinator {
     );
     if (rows.isEmpty) return true;
     final row = rows.single;
-    final changeIds = (jsonDecode(row['applied_change_ids_json']! as String)
-            as List<Object?>)
-        .cast<String>();
+    final changeIds = (jsonDecode(
+      row['applied_change_ids_json']! as String,
+    ) as List<Object?>).cast<String>();
     try {
       await transport.acknowledge(
         SyncAckCommand(
@@ -653,12 +664,7 @@ final class PosSyncCoordinator {
       );
       _db.execute(
         'UPDATE local_sync_cursor SET remote_acked_cursor=applied_cursor,ack_retry_count=0,last_error_code=NULL,updated_at=? WHERE tenant_id=? AND stream_code=? AND applied_cursor=?',
-        [
-          _utcNow(),
-          _binding.tenantId,
-          stream,
-          row['applied_cursor'],
-        ],
+        [_utcNow(), _binding.tenantId, stream, row['applied_cursor']],
       );
       return true;
     } on SyncTransportException catch (failure) {
@@ -670,11 +676,7 @@ final class PosSyncCoordinator {
     }
   }
 
-  void _recordInboundDeadLetter(
-    String sourceId,
-    String code,
-    String summary,
-  ) {
+  void _recordInboundDeadLetter(String sourceId, String code, String summary) {
     _db.execute(
       'INSERT INTO local_sync_dead_letter(dead_letter_id,tenant_id,direction,source_id,failure_code,failure_summary,status,attempt_count,created_at) VALUES(?,?,\'INBOUND\',?,?,?,\'OPEN\',1,?) ON CONFLICT(tenant_id,direction,source_id) DO UPDATE SET failure_code=excluded.failure_code,failure_summary=excluded.failure_summary,attempt_count=local_sync_dead_letter.attempt_count+1',
       [
@@ -696,31 +698,23 @@ final class PosSyncCoordinator {
   }
 
   int _refreshBacklogAlert() {
-    final backlog = _db
-        .select(
-          'SELECT COUNT(*) value FROM local_outbox WHERE tenant_id=? AND status IN (\'PENDING\',\'SENDING\',\'RETRY\')',
-          [_binding.tenantId],
-        )
-        .single['value']! as int;
+    final backlog =
+        _db.select(
+              'SELECT COUNT(*) value FROM local_outbox WHERE tenant_id=? AND status IN (\'PENDING\',\'SENDING\',\'RETRY\')',
+              [_binding.tenantId],
+            ).single['value']!
+            as int;
     final now = _utcNow();
     final status = backlog >= backlogAlertThreshold ? 'OPEN' : 'RESOLVED';
     _db.execute(
       'INSERT INTO local_sync_alert(tenant_id,alert_code,status,observed_value,threshold_value,first_seen_at,updated_at) VALUES(?,\'OUTBOX_BACKLOG\',?,?,?,?,?) ON CONFLICT(tenant_id,alert_code) DO UPDATE SET status=excluded.status,observed_value=excluded.observed_value,threshold_value=excluded.threshold_value,updated_at=excluded.updated_at',
-      [
-        _binding.tenantId,
-        status,
-        backlog,
-        backlogAlertThreshold,
-        now,
-        now,
-      ],
+      [_binding.tenantId, status, backlog, backlogAlertThreshold, now, now],
     );
     return backlog;
   }
 
-  String _pageDigest(List<SyncChange> changes) => sha256
-      .convert(utf8.encode(syncPageDigest(changes)))
-      .toString();
+  String _pageDigest(List<SyncChange> changes) =>
+      sha256.convert(utf8.encode(syncPageDigest(changes))).toString();
 
   String _utcNow() => _now().toUtc().toIso8601String();
 }

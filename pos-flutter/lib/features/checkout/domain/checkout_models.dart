@@ -10,13 +10,19 @@ final class TrustedDeviceBinding {
     required this.tenantId,
     required this.storeId,
     required this.terminalId,
+    String? deviceId,
     required this.cashierId,
     required this.cashierName,
     required this.storeTimezone,
-  });
+  }) : deviceId = deviceId ?? terminalId;
 
   final String tenantId;
   final String storeId;
+
+  /// 服务端终端注册表分配的设备 ULID；旧本地绑定缺失时兼容沿用 terminalId。
+  final String deviceId;
+
+  /// 门店内稳定的终端业务标识，与设备注册 ID 不要求相同。
   final String terminalId;
   final String cashierId;
   final String cashierName;
@@ -25,6 +31,7 @@ final class TrustedDeviceBinding {
   void validate() {
     if (!RegExp(r'^[A-Za-z0-9][A-Za-z0-9_-]{0,19}$').hasMatch(tenantId) ||
         !RegExp(r'^[1-9][0-9]{0,18}$').hasMatch(storeId) ||
+        !UlidGenerator.isCanonical(deviceId) ||
         !UlidGenerator.isCanonical(terminalId) ||
         cashierId.isEmpty ||
         cashierName.isEmpty ||

@@ -12,6 +12,7 @@ import 'package:jshpos_pos/infrastructure/local_database/pos_local_database.dart
 const binding = TrustedDeviceBinding(
   tenantId: 'TENANT_A',
   storeId: '1101',
+  deviceId: '01K2A000000000000000000009',
   terminalId: '01K2A000000000000000000011',
   cashierId: '101',
   cashierName: 'Synthetic Alice',
@@ -56,6 +57,10 @@ void main() {
       expect(second.acked, 1);
       expect(fixture.status(eventId), 'ACKED');
       expect(fixture.transport.pushedEventIds, [eventId, eventId]);
+      expect(fixture.transport.pushedDeviceIds, [
+        binding.deviceId,
+        binding.deviceId,
+      ]);
     },
   );
 
@@ -378,6 +383,7 @@ final class FakeSyncTransport implements PosSyncTransport {
   int ackCalls = 0;
   bool duplicateAfterAcceptedUnknown = false;
   final List<String> pushedEventIds = [];
+  final List<String> pushedDeviceIds = [];
   final List<String> resultQueries = [];
   final Set<String> pendingEvents = {};
   final Map<String, String> resultStatuses = {};
@@ -388,7 +394,7 @@ final class FakeSyncTransport implements PosSyncTransport {
   @override
   Future<SyncBootstrap> bootstrap(String correlationId) async =>
       const SyncBootstrap(
-        deviceId: '01K2A000000000000000000011',
+        deviceId: '01K2A000000000000000000009',
         storeId: '1101',
         terminalId: '01K2A000000000000000000011',
         protocolVersion: '1.0',
@@ -400,6 +406,7 @@ final class FakeSyncTransport implements PosSyncTransport {
   @override
   Future<SyncPushResponse> push(SyncPushBatch batch) async {
     pushedEventIds.addAll(batch.events.map((event) => event.eventId));
+    pushedDeviceIds.addAll(batch.events.map((event) => event.deviceId));
     for (final event in batch.events) {
       _payloadHashes[event.eventId] = event.payloadHash;
     }

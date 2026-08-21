@@ -27,6 +27,7 @@ public class SyncFactProcessor {
     private final SyncIdGenerator ids;
     private final Clock clock;
     private final PromotedOrderEventDispatcher promotedOrderEvents;
+    private final ShiftEventDispatcher shiftEvents;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public EventAck apply(DeviceContext context, EventEnvelope event) {
@@ -49,7 +50,9 @@ public class SyncFactProcessor {
             return new EventAck(event.eventId(), event.payloadHash(), "CONFLICT",
                 "AGGREGATE_VERSION_CONFLICT", null);
         }
-        if ("order.submitted.v2".equals(event.eventType())) {
+        if (event.eventType().startsWith("shift.")) {
+            shiftEvents.apply(context, event);
+        } else if ("order.submitted.v2".equals(event.eventType())) {
             promotedOrderEvents.apply(context, event);
         }
         mapper.insertBusinessFact(ids.next(), context.tenantId(), event.eventId(), event.stream(), event.eventType(),

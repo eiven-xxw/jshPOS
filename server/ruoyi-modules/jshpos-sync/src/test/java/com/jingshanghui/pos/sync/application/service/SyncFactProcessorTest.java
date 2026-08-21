@@ -82,7 +82,8 @@ class SyncFactProcessorTest {
         SyncIdGenerator ids = mock(SyncIdGenerator.class);
         when(ids.next()).thenReturn(id(90));
         return new SyncFactProcessor(mapper, json, ids,
-            Clock.fixed(Instant.parse("2026-08-16T08:00:00Z"), ZoneOffset.UTC), dispatcher);
+            Clock.fixed(Instant.parse("2026-08-16T08:00:00Z"), ZoneOffset.UTC), dispatcher,
+            mock(ShiftEventDispatcher.class));
     }
 
     private EventEnvelope event(String type, String eventId, long version) {
