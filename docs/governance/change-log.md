@@ -163,5 +163,6 @@
 | CR-T2G6G-003 | 2026-08-21 | VERIFIED_CORE001_IN_PROGRESS_API001 | CORE机器审计覆盖55项已接受需求和15个Owner，修复Order/Promotion跨Owner读取Foundation私表，47项目Maven全量verify和覆盖率门槛通过 | T2-CORE-001、T2-API-001、ADR-039 | CORE更新为VERIFIED并仅准入API为IN_PROGRESS；外部状态和零执行边界不变，DAT/INT/E2E继续DRAFT |
 | CR-T2G6G-004 | 2026-08-21 | VERIFIED_API001_IN_PROGRESS_DAT001 | 完成164项正式Controller与164项OpenAPI双向覆盖、事件兼容、737项错误码、权限、可信租户、幂等、分页与版本审计，补齐19项既有端点契约并修正Gate2服务前缀 | T2-API-001、T2-DAT-001、ADR-039 | API更新为VERIFIED并仅准入DAT为IN_PROGRESS；历史成本路径保留兼容，Provider网络与真实回调仍为0，INT/E2E继续DRAFT |
 | CR-T2G6G-005 | 2026-08-21 | IMPLEMENTED_DAT001_AWAITING_INDEPENDENT_CI | 追加V43至V51九个Owner前向迁移补齐90张早期表中文说明，冻结159表主键租户索引精度与5项多租户备份控制面例外，新增双租户三业态正式API种子及SQLite中断重试和未来版本失败关闭测试 | T2-DAT-001、T2-MIG-001、ADR-039 | 本地DAT审计、SQLite故障测试、Flutter Analyze和47项目Maven全量verify通过；状态保持IN_PROGRESS等待GitHub MySQL8.4与双平台独立CI，INT/E2E继续DRAFT |
+| CR-T2G6G-006 | 2026-08-21 | CI_FAILURE_FIXED_AWAITING_RETEST | GitHub Actions run `32439772017` 的治理与后台门禁成功，但 POS Linux 的固定 Dart 3.13.0 格式门禁发现两份 Gate 6G 新增文件尚未实际写回格式化结果；使用同版 SDK 写回并复核 Analyze 与 SQLite 迁移故障测试 | T2-DAT-001、T2-CI-001、ADR-039 | 保留失败 run；未跳过格式、测试或覆盖率门禁，DAT 继续 IN_PROGRESS，要求新提交触发完整流水线 |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。

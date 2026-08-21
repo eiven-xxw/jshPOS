@@ -172,16 +172,16 @@ final class PosLocalDatabase {
         final checksum = sha256
             .convert(utf8.encode(S9PromotionSchema.v3))
             .toString();
-      database.execute(
-        'INSERT INTO local_schema_history(version,description,checksum_sha256,installed_at) VALUES(3,?,?,?)',
+        database.execute(
+          'INSERT INTO local_schema_history(version,description,checksum_sha256,installed_at) VALUES(3,?,?,?)',
           [
             'gate5a-promotion-package-quote-snapshot',
             checksum,
             DateTime.now().toUtc().toIso8601String(),
-        ],
-      );
-      checkpoint('migration.v3.before-version');
-      database.execute('PRAGMA user_version=${S9PromotionSchema.version}');
+          ],
+        );
+        checkpoint('migration.v3.before-version');
+        database.execute('PRAGMA user_version=${S9PromotionSchema.version}');
       });
     } finally {
       database.execute('PRAGMA foreign_keys=ON');

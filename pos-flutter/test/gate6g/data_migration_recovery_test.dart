@@ -16,7 +16,9 @@ const binding = TrustedDeviceBinding(
 
 void main() {
   test('SQLite迁移中断整体回滚且原文件可安全重试到v7', () {
-    final directory = Directory.systemTemp.createTempSync('jshpos-gate6g-migration-');
+    final directory = Directory.systemTemp.createTempSync(
+      'jshpos-gate6g-migration-',
+    );
     final path = '${directory.path}${Platform.pathSeparator}pos.db';
     try {
       expect(
@@ -33,12 +35,20 @@ void main() {
       );
 
       final recovered = PosLocalDatabase.openPath(path, binding);
-      expect(recovered.database.select('PRAGMA user_version').single.values.first, 7);
       expect(
-        recovered.database.select('SELECT COUNT(*) AS value FROM local_schema_history').single['value'],
+        recovered.database.select('PRAGMA user_version').single.values.first,
         7,
       );
-      expect(recovered.database.select('PRAGMA quick_check').single.values.first, 'ok');
+      expect(
+        recovered.database
+            .select('SELECT COUNT(*) AS value FROM local_schema_history')
+            .single['value'],
+        7,
+      );
+      expect(
+        recovered.database.select('PRAGMA quick_check').single.values.first,
+        'ok',
+      );
       recovered.close();
     } finally {
       directory.deleteSync(recursive: true);
@@ -46,7 +56,9 @@ void main() {
   });
 
   test('未知未来SQLite版本失败关闭且不执行降级迁移', () {
-    final directory = Directory.systemTemp.createTempSync('jshpos-gate6g-future-');
+    final directory = Directory.systemTemp.createTempSync(
+      'jshpos-gate6g-future-',
+    );
     final path = '${directory.path}${Platform.pathSeparator}pos.db';
     try {
       final raw = sqlite3.open(path);
@@ -54,7 +66,12 @@ void main() {
       raw.close();
       expect(
         () => PosLocalDatabase.openPath(path, binding),
-        throwsA(predicate((error) => error.toString().contains('LOCAL_SCHEMA_UNSUPPORTED: 999'))),
+        throwsA(
+          predicate(
+            (error) =>
+                error.toString().contains('LOCAL_SCHEMA_UNSUPPORTED: 999'),
+          ),
+        ),
       );
       final verify = sqlite3.open(path);
       expect(verify.select('PRAGMA user_version').single.values.first, 999);
