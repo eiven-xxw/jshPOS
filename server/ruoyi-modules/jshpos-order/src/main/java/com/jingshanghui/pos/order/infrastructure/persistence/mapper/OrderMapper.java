@@ -71,15 +71,6 @@ public interface OrderMapper {
     @Select("SELECT COALESCE(SUM(signed_amount_minor),0) FROM shf_cash_ledger WHERE tenant_id=#{tenantId} AND shift_id=#{shiftId}")
     long sumCashLedger(@Param("tenantId") String tenantId, @Param("shiftId") String shiftId);
 
-    @Select("""
-        SELECT COALESCE(MAX(CAST(JSON_UNQUOTE(JSON_EXTRACT(v.content_json,'$.cashDifferenceApprovalMinor')) AS SIGNED)),0)
-        FROM jsh_config_binding b JOIN jsh_config_template_version v
-          ON v.tenant_id=b.tenant_id AND v.template_id=b.template_id AND v.config_version_id=b.current_version_id
-        WHERE b.tenant_id=#{tenantId} AND ((b.target_type='STORE' AND b.target_id=#{storeId}) OR b.target_type='TENANT')
-          AND v.state='PUBLISHED'
-        """)
-    Long findDifferenceThreshold(@Param("tenantId") String tenantId, @Param("storeId") Long storeId);
-
     @Insert("""
         INSERT INTO shf_shift_approval(approval_id,tenant_id,shift_id,approver_user_id,reason_code,reason_text,
           theoretical_cash_minor,actual_cash_minor,difference_minor,expected_shift_version,status,approved_at)

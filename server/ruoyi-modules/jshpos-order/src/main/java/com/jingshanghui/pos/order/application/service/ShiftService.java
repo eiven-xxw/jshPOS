@@ -37,6 +37,7 @@ public class ShiftService {
     private final ScopeAuthorizationService authorizationService;
     private final IdempotencyService idempotency;
     private final OrderJournalService journal;
+    private final ShiftDifferencePolicy differencePolicy;
     private final UlidGenerator ulids;
     private final Clock clock;
 
@@ -111,8 +112,7 @@ public class ShiftService {
         long ledger = mapper.sumCashLedger(principal.tenantId(), shift.shiftId());
         long theoretical = safeAdd(shift.openingCashMinor(), ledger);
         long difference = safeSubtract(command.actualCashMinor(), theoretical);
-        Long configured = mapper.findDifferenceThreshold(principal.tenantId(), shift.storeId());
-        long threshold = configured == null ? 0 : Math.max(0, configured);
+        long threshold = differencePolicy.approvalThresholdMinor(shift.storeId());
         if (absoluteExceeds(difference, threshold) == false) {
             throw new ServiceException("SHIFT_APPROVAL_NOT_REQUIRED: 差异未超过配置阈值", 409);
         }
@@ -161,8 +161,7 @@ public class ShiftService {
         long ledger = mapper.sumCashLedger(principal.tenantId(), shift.shiftId());
         long theoretical = safeAdd(shift.openingCashMinor(), ledger);
         long difference = safeSubtract(command.actualCashMinor(), theoretical);
-        Long configured = mapper.findDifferenceThreshold(principal.tenantId(), shift.storeId());
-        long threshold = configured == null ? 0 : Math.max(0, configured);
+        long threshold = differencePolicy.approvalThresholdMinor(shift.storeId());
         ApprovalView approval = null;
         if (absoluteExceeds(difference, threshold)) {
             if (command.approvalId() == null) {

@@ -47,7 +47,6 @@ public interface PromotionPersistenceMapper {
     StoredQuote lockQuote(@Param("tenantId") String tenantId, @Param("quoteId") String quoteId);
     List<StoredAdjustment> listQuoteAdjustments(@Param("tenantId") String tenantId,
                                                  @Param("quoteId") String quoteId);
-    ManualPolicyRow findManualPolicy(@Param("tenantId") String tenantId, @Param("storeId") Long storeId);
     ManualEvent findPendingManualEvent(@Param("tenantId") String tenantId, @Param("quoteId") String quoteId);
     ManualEvent findLatestAppliedManualEvent(@Param("tenantId") String tenantId,
                                               @Param("quoteId") String quoteId);

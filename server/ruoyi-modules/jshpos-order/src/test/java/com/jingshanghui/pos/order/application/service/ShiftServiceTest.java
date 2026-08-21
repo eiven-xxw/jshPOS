@@ -39,9 +39,10 @@ class ShiftServiceTest {
     private final ScopeAuthorizationService authorization = mock(ScopeAuthorizationService.class);
     private final IdempotencyService idempotency = mock(IdempotencyService.class);
     private final OrderJournalService journal = mock(OrderJournalService.class);
+    private final ShiftDifferencePolicy differencePolicy = mock(ShiftDifferencePolicy.class);
     private final Clock clock = Clock.fixed(NOW, ZoneOffset.UTC);
     private final ShiftService service = new ShiftService(mapper, context, authorization, idempotency, journal,
-        new UlidGenerator(clock), clock);
+        differencePolicy, new UlidGenerator(clock), clock);
 
     @Test
     void opensShiftOnlyForTheTrustedCashierAndStore() {
@@ -67,7 +68,7 @@ class ShiftServiceTest {
         when(mapper.findShift("TENANT_A", SHIFT)).thenReturn(shift("OPEN", 1, 5000, null, null));
         when(mapper.lockShift("TENANT_A", SHIFT)).thenReturn(shift("OPEN", 1, 5000, null, null));
         when(mapper.sumCashLedger("TENANT_A", SHIFT)).thenReturn(1299L);
-        when(mapper.findDifferenceThreshold("TENANT_A", 1101L)).thenReturn(0L);
+        when(differencePolicy.approvalThresholdMinor(1101L)).thenReturn(0L);
         ApprovalView approval = new ApprovalView(APPROVAL, SHIFT, 102L, "APPROVED", 6299, 6300, 1, 1);
         when(mapper.findApproval(eq("TENANT_A"), eq(SHIFT), any())).thenReturn(approval);
 
@@ -89,7 +90,7 @@ class ShiftServiceTest {
         when(context.requirePrincipal()).thenReturn(principal(101L));
         when(mapper.lockShift("TENANT_A", SHIFT)).thenReturn(shift("OPEN", 1, 5000, null, null));
         when(mapper.sumCashLedger("TENANT_A", SHIFT)).thenReturn(1299L);
-        when(mapper.findDifferenceThreshold("TENANT_A", 1101L)).thenReturn(0L);
+        when(differencePolicy.approvalThresholdMinor(1101L)).thenReturn(0L);
         when(mapper.findApproval("TENANT_A", SHIFT, APPROVAL))
             .thenReturn(new ApprovalView(APPROVAL, SHIFT, 102L, "APPROVED", 6299, 6300, 1, 1));
         when(mapper.closeShift(eq("TENANT_A"), eq(SHIFT), eq(6299L), eq(6300L), eq(1L),
@@ -109,7 +110,7 @@ class ShiftServiceTest {
         when(context.requirePrincipal()).thenReturn(principal(101L));
         when(mapper.lockShift("TENANT_A", SHIFT)).thenReturn(shift("OPEN", 1, 5000, null, null));
         when(mapper.sumCashLedger("TENANT_A", SHIFT)).thenReturn(1299L);
-        when(mapper.findDifferenceThreshold("TENANT_A", 1101L)).thenReturn(0L);
+        when(differencePolicy.approvalThresholdMinor(1101L)).thenReturn(0L);
         when(mapper.findApproval("TENANT_A", SHIFT, APPROVAL))
             .thenReturn(new ApprovalView(APPROVAL, SHIFT, 102L, "APPROVED", 6299, 6301, 2, 1));
 

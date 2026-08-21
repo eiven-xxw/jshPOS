@@ -1,5 +1,7 @@
 package com.jingshanghui.pos.promotion.infrastructure.persistence;
 
+import com.jingshanghui.pos.foundation.application.context.TrustedTenantContext;
+import com.jingshanghui.pos.foundation.application.port.PublishedConfigReadPort;
 import com.jingshanghui.pos.promotion.application.model.PromotionViews.RuleVersionView;
 import com.jingshanghui.pos.promotion.application.model.PromotionViews.PackageView;
 import com.jingshanghui.pos.promotion.application.port.PromotionPersistencePort;
@@ -15,7 +17,10 @@ import java.util.List;
 @Repository
 @RequiredArgsConstructor
 public class MyBatisPromotionPersistenceAdapter implements PromotionPersistencePort {
+    private static final String MANUAL_POLICY = "PROMOTION_MANUAL_AUTHORITY";
     private final PromotionPersistenceMapper mapper;
+    private final PublishedConfigReadPort configs;
+    private final TrustedTenantContext tenantContext;
     @Override public void insertVersion(VersionWrite value) { requireOne(mapper.insertVersion(value)); }
     @Override public void insertScope(ScopeWrite value) { requireOne(mapper.insertScope(value)); }
     @Override public void insertBenefit(BenefitWrite value) { requireOne(mapper.insertBenefit(value)); }
@@ -71,7 +76,12 @@ public class MyBatisPromotionPersistenceAdapter implements PromotionPersistenceP
         return mapper.listQuoteAdjustments(tenantId, quoteId);
     }
     @Override public ManualPolicyRow findManualPolicy(String tenantId, Long storeId) {
-        return mapper.findManualPolicy(tenantId, storeId);
+        if (!tenantContext.requireTenantId().equals(tenantId)) {
+            throw new ServiceException("PRM-TEN-002: 促销策略租户上下文不一致", 403);
+        }
+        return configs.find(MANUAL_POLICY, storeId)
+            .map(value -> new ManualPolicyRow(value.configVersionId(), value.contentSha256(), value.contentJson()))
+            .orElse(null);
     }
     @Override public ManualEvent findPendingManualEvent(String tenantId, String quoteId) {
         return mapper.findPendingManualEvent(tenantId, quoteId);

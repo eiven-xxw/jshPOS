@@ -157,5 +157,9 @@
 | CR-T2PAYDOC-001 | 2026-08-21 | APPROVED_OFFLINE_VERIFICATION_ONLY | 项目发起人仅授权拉卡拉首接候选的受控材料离线验真，要求核验来源、签署、产品/版本/范围、摘要、保管、到期、轮换、删除和吊销 | T2-PAY-002、ADR-038 | 未授权 Provider 网络；PAY-002 继续 BLOCKED，整包 VERIFIED_DOCUMENT 后仍须独立执行准入确认 |
 | CR-T2PAYDOC-002 | 2026-08-21 | MATERIAL_IDS_MISSING_NO_GO_AWAITING_CI | 检查用户指令、仓库受控引用与本地收件目录，发现提供值仍为 `[填写…材料 ID]` 占位符；实际受控材料 ID 为 0/11，全部必需项保持 MISSING | T2-PAY-002、T2-SEC-001、ADR-038 | 不把占位符、Gate6C公开资料或Fake升级为受控证据；verifiedDocumentStatus=NOT_ACHIEVED，networkCalls=0，等待真实不透明ID补件 |
 | CR-T2PAYDOC-003 | 2026-08-21 | MISSING_INTAKE_VERIFIED_AWAITING_FINAL_CLOSURE | 缺件治理提交 `97be28f0de081a837b9f2963a9bfe29f76e36323` 的 GitHub Actions run `32431781888` 完成 Ubuntu、Windows、离线边界与证据索引四 Job 全绿；证据 Artifact `9429323791` | T2-PAY-002、T2-SEC-001、ADR-038 | 只证明0/11、NOT_ACHIEVED、NO-GO和零网络可重复；回填后需最终闭环 CI，PAY-002继续BLOCKED |
+| CR-T2PAYDOC-004 | 2026-08-21 | MISSING_INTAKE_CLOSED | 最终缺件治理提交 `a6c91a1d66857583ce7e498541b63bcf0b81dc52` 的 GitHub Actions run `32431882627` 四 Job 全绿，证据 Artifact `9429358450` | T2-PAY-002、T2-SEC-001、ADR-038 | 实际材料仍0/11，NOT_ACHIEVED/NO-GO；项目发起人允许暂不阻断内部代码收口但PAY-002状态不变 |
+| CR-T2G6G-001 | 2026-08-21 | APPROVED | 项目发起人按 CONDITIONAL GO 从 `a6c91a1d66857583ce7e498541b63bcf0b81dc52` 启动 Gate 6G / Sprint S17，并要求 CORE→API→DAT→INT→E2E 严格串行 | T2-CORE-001、T2-API-001、T2-DAT-001、T2-INT-001、T2-E2E-003、ADR-039 | 只收口商业V1内部正式代码；PAY/HWD/PAR/PRN保持BLOCKED，V1/UAT/REL保持DRAFT，JSH/LIC保持DEFERRED，外部执行为0 |
+| CR-T2G6G-002 | 2026-08-21 | IN_PROGRESS_CORE001 | CORE-001 已冻结Owner主权、生产装配、占位分类、事务失败关闭、覆盖矩阵和测试准入，成为唯一获准实现项 | T2-CORE-001、ADR-039 | API/DAT/INT/E2E继续DRAFT；不得以审计脚本或文档预建后续运行时 |
+| CR-T2G6G-003 | 2026-08-21 | VERIFIED_CORE001_IN_PROGRESS_API001 | CORE机器审计覆盖55项已接受需求和15个Owner，修复Order/Promotion跨Owner读取Foundation私表，47项目Maven全量verify和覆盖率门槛通过 | T2-CORE-001、T2-API-001、ADR-039 | CORE更新为VERIFIED并仅准入API为IN_PROGRESS；外部状态和零执行边界不变，DAT/INT/E2E继续DRAFT |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。

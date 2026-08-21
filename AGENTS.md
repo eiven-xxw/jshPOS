@@ -365,6 +365,19 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
 - `T2-HWD-001/PAR-001` 继续 `BLOCKED`，`T2-UAT-001/REL-001` 继续 `DRAFT`，`T2-LIC-001/JSH-001` 继续 `DEFERRED`；不得启动完整 Alpha、真实设备、伙伴联系、现场试点或生产发布。
 - 实际材料 ID 未齐时必须提交缺件报告和补件指令，不得伪造更新后的绿色《T2-PAY-002 支付沙箱执行准入评审报告》。
 
+## 4.29 当前 T2 Gate 6G / Sprint S17：商业 V1 内部核心代码收口条件准入
+
+- 项目发起人已于 2026-08-21 授权从支付缺件封板提交 `a6c91a1d66857583ce7e498541b63bcf0b81dc52` 建立 `t2/gate6g-sprint17-core-productization`，外部资料暂不阻断内部核心代码与业务代码收口。
+- Gate 6G 只允许按 `T2-CORE-001 → T2-API-001 → T2-DAT-001 → T2-INT-001 → T2-E2E-003` 串行准入；前项未形成独立 `VERIFIED` 证据时，后项必须保持 `DRAFT`，不得预建绿色实现或倒补设计。
+- `T2-CORE-001` 先建立 Requirement→页面→API→Application→Domain→Repository/Mapper→Schema→测试覆盖矩阵，审计并修复生产路径中的 Fake/Mock/Stub/InMemory/Locked/TODO/空实现/硬编码合成数据；外部边界只允许显式失败关闭，不得伪造成功。
+- `T2-API-001` 只收口已接受能力的正式 REST/OpenAPI/事件/错误码/幂等/关联/分页/排序/版本兼容；不得新增 Provider SDK/HTTP、真实回调或跨 Owner Mapper，不得由客户端 tenant_id 决定授权。
+- `T2-DAT-001` 只允许前向迁移、初始化、合成种子、投影重建、安全清理与环境一致性；已发布 MySQL/SQLite 迁移不得修改，所有数据继续使用两个虚构租户、三业态、多门店、多终端。
+- `T2-INT-001` 必须通过正式应用端口、版本化事件、Inbox/Outbox 或明确只读端口组合已接受 Owner；每个 Owner 只写自己的事实，UNKNOWN 只能查询/观察收敛，金额、数量、分摊、库存和成本逐字段守恒。
+- `T2-E2E-003` 必须同时运行正式服务端、Web、Flutter、MySQL 与 SQLite 路径，不得使用数据库后门或测试专用绿色占位；证据上限为 `INTERNAL_V1_CORE_CANDIDATE`，不更新或替代完整 Alpha UAT。
+- `T2-PAY-002/HWD-001/PAR-001/PRN-001` 继续 `BLOCKED`，`T2-UAT-001/REL-001` 与全部 `V1-*` 汇总验收项继续 `DRAFT`，`T2-LIC-001/JSH-001` 继续 `DEFERRED`。
+- Provider 网络、真实资金、真实设备命令、伙伴联系、现场试点、完整 Alpha 与生产部署必须为 0；不得用 Fake、内部 E2E 或软件执行解除外部阻断。
+- 完成后必须提交核心完整性审计、API/装配差距、Gate 6G 周门禁、RTM/缺陷/证据和 Gate 6H 指令，等待项目发起人确认；不得自动启动 Gate 6H、完整 Alpha 或生产发布。
+
 ## 5. 工程与测试规则
 
 - 服务端采用 RuoYi-Vue-Plus 模块化单体，不得把领域逻辑写入 Controller、通用工具类或框架系统模块。

@@ -19,14 +19,14 @@ class PromotionMapperXmlPolicyTest {
                 .contains("insert into prm_event_outbox").contains("insert into prm_manual_price_audit")
                 .contains("insert into prm_transaction_snapshot").contains("insert into prm_transaction_allocation")
                 .contains("insert into prm_refund_allocation_ledger")
-                .contains("from jsh_config_binding b").contains("b.tenant_id=#{tenantid}")
                 .contains("from prm_manual_price_audit").contains("order by event_sequence")
                 .contains("<select id=\"lockquote\"").contains("for update")
                 .contains("<select id=\"locksnapshot\"")
                 .doesNotContain("update prm_quote").doesNotContain("update prm_transaction_snapshot")
                 .doesNotContain("update prm_manual_price_audit")
                 .doesNotContain("update prm_transaction_allocation").doesNotContain("update prm_refund_allocation_ledger")
-                .doesNotContain("update ord_").doesNotContain("update inv_").doesNotContain("update pay_");
+                .doesNotContain("update ord_").doesNotContain("update inv_").doesNotContain("update pay_")
+                .doesNotContain("jsh_config_");
         }
     }
 
