@@ -1,0 +1,74 @@
+name: T2 Gate 6H Internal Release Candidate Quality Gates
+
+on:
+  push:
+    branches: ["codex/t2-gate6h-sprint18-internal-release-candidate"]
+  pull_request:
+    paths:
+      - "AGENTS.md"
+      - ".github/workflows/t2-gate6h.yml"
+      - "admin-web/**"
+      - "contracts/t2/**"
+      - "docs/**"
+      - "pos-flutter/**"
+      - "scripts/**"
+      - "server/**"
+
+permissions:
+  contents: read
+
+jobs:
+  governance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with: { python-version: "3.12" }
+      - name: Validate Gate 6H governance and UX boundary
+        run: |
+          mkdir -p artifacts/t2/gate6h/governance
+          python scripts/check_t0_structure.py
+          python scripts/check_rtm.py
+          python scripts/check_contracts.py
+          python scripts/check_t2_gate6g.py
+          python scripts/check_t2_gate6h.py --output artifacts/t2/gate6h/governance/gate6h-governance.json
+          python scripts/audit_t2_gate6h_ux.py --output artifacts/t2/gate6h/governance/ux-audit.json
+          python scripts/review_dependency_diff.py c2db49fb47db5fe30fe01515b60ee6f054b214e3 "$(git rev-parse HEAD)" > artifacts/t2/gate6h/governance/dependency-input-diff.json
+          git diff --check
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with: { name: t2-gate6h-governance, path: artifacts/t2/gate6h/governance, if-no-files-found: error, retention-days: 30 }
+
+  ux:
+    needs: governance
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with: { flutter-version: "3.47.0", channel: stable, cache: true }
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+        with: { version: 10.33.0 }
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with: { node-version: "24", cache: pnpm, cache-dependency-path: admin-web/pnpm-lock.yaml }
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with: { python-version: "3.12" }
+      - name: Verify Flutter and Vue commercial V1 experience
+        run: |
+          mkdir -p artifacts/t2/gate6h/ux
+          pushd pos-flutter
+          flutter pub get --enforce-lockfile
+          dart format --output=none --set-exit-if-changed lib/app lib/features/experience lib/features/session test/gate6h
+          flutter analyze --fatal-infos
+          flutter test --machine > ../artifacts/t2/gate6h/ux/flutter-tests.jsonl
+          popd
+          pushd admin-web
+          pnpm install --frozen-lockfile
+          pnpm build:prod
+          pnpm lint:eslint
+          pnpm typecheck
+          pnpm test:gate1:ci
+          cp gate1-vitest-junit.xml ../artifacts/t2/gate6h/ux/web-tests.xml
+          popd
+          python scripts/audit_t2_gate6h_ux.py --output artifacts/t2/gate6h/ux/ux-audit.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with: { name: t2-gate6h-ux, path: artifacts/t2/gate6h/ux, if-no-files-found: error, retention-days: 30 }

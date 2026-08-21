@@ -16,6 +16,7 @@ import '../features/return_refund/infrastructure/locked_pos_return_application_s
 class JshposApp extends StatelessWidget {
   const JshposApp({
     super.key,
+    this.industryTemplateVersion = 'CONVENIENCE_V1',
     this.deviceGateway,
     this.sessionRepository,
     this.saleService,
@@ -24,6 +25,7 @@ class JshposApp extends StatelessWidget {
   });
 
   final PosDeviceGateway? deviceGateway;
+  final String industryTemplateVersion;
   final PosSessionRepository? sessionRepository;
   final PosSaleApplicationService? saleService;
   final PosReturnApplicationService? returnService;
@@ -37,8 +39,13 @@ class JshposApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF0D6B5B)),
         useMaterial3: true,
+        visualDensity: VisualDensity.standard,
+        filledButtonTheme: const FilledButtonThemeData(
+          style: ButtonStyle(minimumSize: WidgetStatePropertyAll(Size(48, 48))),
+        ),
       ),
       home: PosSessionShell(
+        industryTemplateVersion: industryTemplateVersion,
         sessionService: PosSessionService(
           deviceGateway: deviceGateway ?? const PosDeviceAdapter(),
           repository: sessionRepository ?? const LockedPosSessionRepository(),

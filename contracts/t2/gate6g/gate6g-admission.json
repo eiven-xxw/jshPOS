@@ -6,11 +6,11 @@
   "decision": "CONDITIONAL_GO_INTERNAL_CORE_ONLY",
   "evidenceCeiling": "INTERNAL_V1_CORE_CANDIDATE",
   "sequentialRequirements": [
-    {"order":1,"id":"T2-CORE-001","status":"VERIFIED","runtimeAllowed":true,"dependsOn":[]},
-    {"order":2,"id":"T2-API-001","status":"VERIFIED","runtimeAllowed":true,"dependsOn":["T2-CORE-001"]},
-    {"order":3,"id":"T2-DAT-001","status":"VERIFIED","runtimeAllowed":true,"dependsOn":["T2-API-001"]},
-    {"order":4,"id":"T2-INT-001","status":"VERIFIED","runtimeAllowed":true,"dependsOn":["T2-DAT-001"]},
-    {"order":5,"id":"T2-E2E-003","status":"VERIFIED","runtimeAllowed":true,"dependsOn":["T2-INT-001"]}
+    {"order":1,"id":"T2-CORE-001","status":"ACCEPTED","runtimeAllowed":true,"dependsOn":[]},
+    {"order":2,"id":"T2-API-001","status":"ACCEPTED","runtimeAllowed":true,"dependsOn":["T2-CORE-001"]},
+    {"order":3,"id":"T2-DAT-001","status":"ACCEPTED","runtimeAllowed":true,"dependsOn":["T2-API-001"]},
+    {"order":4,"id":"T2-INT-001","status":"ACCEPTED","runtimeAllowed":true,"dependsOn":["T2-DAT-001"]},
+    {"order":5,"id":"T2-E2E-003","status":"ACCEPTED","runtimeAllowed":true,"dependsOn":["T2-INT-001"]}
   ],
   "preservedStates": {
     "T2-PAY-002":"BLOCKED",

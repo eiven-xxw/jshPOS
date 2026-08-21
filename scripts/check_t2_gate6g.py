@@ -33,6 +33,7 @@ ALLOWED_STATUSES = {
     ("VERIFIED", "VERIFIED", "VERIFIED", "VERIFIED", "DRAFT"),
     ("VERIFIED", "VERIFIED", "VERIFIED", "VERIFIED", "IN_PROGRESS"),
     ("VERIFIED", "VERIFIED", "VERIFIED", "VERIFIED", "VERIFIED"),
+    ("ACCEPTED", "ACCEPTED", "ACCEPTED", "ACCEPTED", "ACCEPTED"),
 }
 PRESERVED = {
     "T2-PAY-002": "BLOCKED",
@@ -114,9 +115,9 @@ def validate_preserved(document: dict, rows: dict[str, dict[str, str]]) -> None:
         fail("commercial claim must remain forbidden")
 
 
-def validate_branch() -> None:
+def validate_branch(statuses: tuple[str, ...]) -> None:
     current = git("branch", "--show-current")
-    if current and current != BRANCH:
+    if current and current != BRANCH and statuses != ("ACCEPTED",) * len(SEQUENCE):
         fail(f"unexpected branch {current}")
     completed = subprocess.run(
         ["git", "merge-base", "--is-ancestor", BASELINE, "HEAD"], cwd=ROOT
@@ -203,7 +204,7 @@ def main() -> None:
     document = load_json(ADMISSION)
     statuses = validate_serial(document, rows)
     validate_preserved(document, rows)
-    validate_branch()
+    validate_branch(statuses)
     validate_forbidden_boundaries()
     validate_e2e_materials(statuses)
     result = {

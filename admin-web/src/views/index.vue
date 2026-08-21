@@ -13,6 +13,18 @@
       </div>
     </section>
 
+    <section class="industry-experience" aria-label="商业V1行业体验">
+      <div>
+        <span class="industry-kicker">当前查看体验</span>
+        <strong>{{ industryExperience.label }}</strong>
+        <p>{{ industryExperience.summary }}</p>
+      </div>
+      <el-segmented v-model="selectedIndustry" :options="INDUSTRY_EXPERIENCE_OPTIONS" aria-label="切换行业体验视图" />
+      <div class="industry-actions">
+        <el-tag v-for="action in industryExperience.primaryActions" :key="action" effect="plain">{{ action }}</el-tag>
+      </div>
+    </section>
+
     <el-alert
       v-if="loadWarning"
       class="mb-4"
@@ -118,6 +130,8 @@ import type { ProductVO } from '@/api/catalog/types';
 import { listAuditEvents, listConfigTemplates, listOrgUnits, listStores } from '@/api/foundation';
 import type { AuditEventVO, ConfigTemplateVO, OrgUnitVO, StoreVO } from '@/api/foundation/types';
 import { buildOperationsSummary } from '@/views/operations/model';
+import { INDUSTRY_EXPERIENCE_OPTIONS, resolveIndustryExperience } from '@/views/operations/experience';
+import type { Industry } from '@/api/foundation/types';
 import { DataAnalysis, Goods, Lock, Monitor, OfficeBuilding, SetUp, Shop, UserFilled } from '@element-plus/icons-vue';
 import type { Component } from 'vue';
 
@@ -140,6 +154,8 @@ const products = ref<ProductVO[]>([]);
 const templates = ref<ConfigTemplateVO[]>([]);
 const recentAudits = ref<AuditEventVO[]>([]);
 const available = reactive({ org: false, store: false, product: false, config: false, audit: false });
+const selectedIndustry = ref<Industry>('CONVENIENCE');
+const industryExperience = computed(() => resolveIndustryExperience(selectedIndustry.value));
 
 const summary = computed(() =>
   buildOperationsSummary({
@@ -331,6 +347,37 @@ onMounted(loadDashboard);
   gap: 10px;
   justify-content: flex-end;
 }
+.industry-experience {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) auto minmax(220px, auto);
+  gap: 18px;
+  align-items: center;
+  padding: 18px 20px;
+  margin-bottom: 18px;
+  background: #fff;
+  border: 1px solid #dfe9e6;
+  border-radius: 14px;
+}
+.industry-experience strong {
+  display: block;
+  margin-top: 2px;
+  font-size: 19px;
+}
+.industry-experience p {
+  margin: 5px 0 0;
+  color: #6f807c;
+}
+.industry-kicker {
+  color: #08715e;
+  font-size: 12px;
+  font-weight: 700;
+}
+.industry-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+}
 .summary-grid :deep(.el-col) {
   margin-bottom: 12px;
 }
@@ -482,6 +529,12 @@ onMounted(loadDashboard);
   }
   .module-grid {
     grid-template-columns: 1fr;
+  }
+  .industry-experience {
+    grid-template-columns: 1fr;
+  }
+  .industry-actions {
+    justify-content: flex-start;
   }
 }
 </style>

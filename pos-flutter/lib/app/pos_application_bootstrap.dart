@@ -160,6 +160,7 @@ final class PosApplicationBootstrap {
     );
     runtime = SessionBoundPosRuntime(sessions: session, assembler: assembler);
     return JshposApp(
+      industryTemplateVersion: resolved.industryTemplateVersion,
       sessionRepository: runtime,
       saleService: runtime,
       returnService: runtime,

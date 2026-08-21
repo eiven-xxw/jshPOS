@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../sale/application/pos_sale_application_service.dart';
 import '../../sale/application/pos_sale_controller.dart';
 import '../../sale/presentation/pos_checkout_page.dart';
+import '../../experience/domain/industry_experience_profile.dart';
 import '../../return_refund/application/pos_return_application_service.dart';
 import '../../return_refund/application/pos_return_controller.dart';
 import '../../return_refund/presentation/pos_return_page.dart';
@@ -13,6 +14,7 @@ import '../domain/pos_session_models.dart';
 /// POS-007 正式应用壳；只展示会话服务快照并向应用服务发送命令。
 final class PosSessionShell extends StatefulWidget {
   const PosSessionShell({
+    required this.industryTemplateVersion,
     required this.sessionService,
     required this.saleService,
     required this.returnService,
@@ -21,6 +23,7 @@ final class PosSessionShell extends StatefulWidget {
   });
 
   final PosSessionService sessionService;
+  final String industryTemplateVersion;
   final PosSaleApplicationService saleService;
   final PosReturnApplicationService returnService;
   final PosShiftApplicationService shiftService;
@@ -35,6 +38,8 @@ class _PosSessionShellState extends State<PosSessionShell> {
   final _secretFocus = FocusNode();
 
   PosSessionState get _state => widget.sessionService.state;
+  IndustryExperienceProfile get _experience =>
+      IndustryExperienceProfile.resolve(widget.industryTemplateVersion);
 
   @override
   void initState() {
@@ -255,6 +260,8 @@ class _PosSessionShellState extends State<PosSessionShell> {
                   '业务日 ${terminal.businessDate} · ${terminal.storeTimezone}',
                   textAlign: TextAlign.center,
                 ),
+                const SizedBox(height: 12),
+                _IndustryExperienceBanner(profile: _experience),
                 if (_state.safeMessage != null) ...[
                   const SizedBox(height: 16),
                   _SafeError(
@@ -359,6 +366,8 @@ class _PosSessionShellState extends State<PosSessionShell> {
             ),
           ],
         ),
+        const SizedBox(height: 16),
+        _IndustryExperienceBanner(profile: _experience),
         const SizedBox(height: 24),
         Text('可用工作区', style: Theme.of(context).textTheme.titleLarge),
         const SizedBox(height: 12),
@@ -573,6 +582,49 @@ class _PermissionTile extends StatelessWidget {
             Icon(enabled ? Icons.chevron_right : Icons.lock_outline),
           ],
         ),
+      ),
+    ),
+  );
+}
+
+/// 只读行业体验提示；不会参与授权或任何领域计算。
+class _IndustryExperienceBanner extends StatelessWidget {
+  const _IndustryExperienceBanner({required this.profile});
+
+  final IndustryExperienceProfile profile;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    label: '当前行业体验：${profile.label}',
+    liveRegion: !profile.supported,
+    child: Container(
+      key: const Key('industryExperienceBanner'),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: profile.supported
+            ? Theme.of(context).colorScheme.primaryContainer
+            : Theme.of(context).colorScheme.errorContainer,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Icon(profile.supported ? Icons.storefront : Icons.warning_amber),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  profile.label,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 2),
+                Text('${profile.primaryHint}；${profile.checkoutHint}'),
+              ],
+            ),
+          ),
+        ],
       ),
     ),
   );

@@ -49,3 +49,4 @@ ADR 一经接受不得删除或静默改写。需要改变决策时，新建 ADR
 | ADR-037 | [Gate 6E 后台运营、原单退货退款与内部 Alpha 候选边界](ADR-037-gate6e-operations-return-internal-alpha.md) | Accepted |
 | ADR-038 | [Gate 6F 外部执行准入、完整 Alpha UAT 与发布准备边界](ADR-038-gate6f-external-admission-uat-release-prep.md) | Accepted |
 | ADR-039 | [Gate 6G 商业 V1 内部核心代码收口](ADR-039-gate6g-core-productization-closure.md) | Accepted |
+| ADR-040 | [Gate 6H 体验、性能、运维与内部发布候选](ADR-040-gate6h-experience-performance-operations-rc.md) | Accepted |

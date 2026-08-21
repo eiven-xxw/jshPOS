@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "1.0",
+  "gate": "T2-GATE6H-S18",
+  "baselineCommit": "c2db49fb47db5fe30fe01515b60ee6f054b214e3",
+  "branch": "codex/t2-gate6h-sprint18-internal-release-candidate",
+  "decision": "CONDITIONAL_GO_INTERNAL_RELEASE_CANDIDATE_ONLY",
+  "evidenceCeiling": "INTERNAL_RELEASE_CANDIDATE",
+  "sequentialRequirements": [
+    {"order": 1, "id": "T2-UX-001", "status": "IN_PROGRESS", "dependsOn": []},
+    {"order": 2, "id": "T2-PERF-001", "status": "DRAFT", "dependsOn": ["T2-UX-001"]},
+    {"order": 3, "id": "T2-OPS-001", "status": "DRAFT", "dependsOn": ["T2-PERF-001"]},
+    {"order": 4, "id": "T2-RC-001", "status": "DRAFT", "dependsOn": ["T2-OPS-001"]}
+  ],
+  "preservedStates": {
+    "T2-PAY-002": "BLOCKED", "T2-HWD-001": "BLOCKED", "T2-PAR-001": "BLOCKED", "T2-PRN-001": "BLOCKED",
+    "T2-UAT-001": "DRAFT", "T2-REL-001": "DRAFT", "T2-JSH-001": "DEFERRED", "T2-LIC-001": "DEFERRED",
+    "V1-SAA-001": "DRAFT", "V1-PRD-001": "DRAFT", "V1-POS-001": "DRAFT", "V1-PAY-001": "DRAFT",
+    "V1-INV-001": "DRAFT", "V1-PRM-001": "DRAFT", "V1-SYN-001": "DRAFT"
+  },
+  "externalExecution": {
+    "providerNetworkCalls": 0, "realFunds": 0, "realDeviceCommands": 0, "partnerContacts": 0,
+    "onsitePilots": 0, "fullAlphaRuns": 0, "productionDeployments": 0, "commercialClaimAllowed": false
+  }
+}
