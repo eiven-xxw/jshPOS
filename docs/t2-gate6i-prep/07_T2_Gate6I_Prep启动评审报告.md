@@ -2,7 +2,7 @@
 
 ## 1. 评审结论
 
-建议 `CONDITIONAL PASS / PREPARED_NO_GO`：Gate 6H 四项已按项目发起人授权更新为 `ACCEPTED`；四条独立执行准入材料、完整 Alpha 冻结矩阵和机器门禁已经建立。该结论只表示准备材料可进入补件评审，不授权外部执行、完整 Alpha 或生产发布。
+建议 `CONDITIONAL PASS / PREPARED_NO_GO`：Gate 6H 四项已按项目发起人授权更新为 `ACCEPTED`；四条独立执行准入材料、完整 Alpha 冻结矩阵和机器门禁已经建立，并由 GitHub Ubuntu、Windows、离线范围与证据索引四项独立复核通过。该结论只表示准备材料可进入补件评审，不授权外部执行、完整 Alpha 或生产发布。
 
 ## 2. 交付与状态
 
@@ -49,6 +49,16 @@
 
 Provider 网络 `0`、真实资金 `0`、真实设备 `0`、真实外设 `0`、伙伴联系 `0`、现场试点 `0`、完整 Alpha `0`、生产部署 `0`。没有创建 Provider SDK/HTTP、设备命令、真实回调、账单下载或 UAT 执行脚本。
 
-## 7. 等待项目发起人确认
+## 7. CI 与证据
+
+- 候选提交：`87c5ac10bd89052644e05589a0942fde3a8e80de`。
+- GitHub Actions Run：`32478124733`，四个 Job 首次运行全部成功，总时长 31 秒。
+- Ubuntu 治理 Artifact：`9445042096`，SHA-256 `a44603aff2098096cf6c294ab2a5456fc92a838d2010678ce9be4dc6f69466d9`。
+- Windows 治理 Artifact：`9445045700`，SHA-256 `81a967e1452a6accd435215640710856b0b0ae168f46154b10145bb1e23c6d1a`。
+- 离线边界 Artifact：`9445042171`，SHA-256 `a87215074500391798a1f8a55d0ec878f7b24d6977f6b499ecac6e0884fb0e4f`。
+- 证据索引 Artifact：`9445051059`，SHA-256 `d01a378627f50905a8ff7ef4f1d91c669e4eae418cae6a328053de0458f13edb`。
+- GitHub Actions 的 Node.js 20 弃用提示是非阻断维护风险；没有因此改用浮动 action、跳过检查或降低门禁。
+
+## 8. 等待项目发起人确认
 
 若接受本报告，建议下一阶段仍按“逐轨真实补件 → 离线验真 → 独立执行准入确认”推进。任何一轨缺少真实材料时只更新缺件报告，不自动启动其他轨或完整 Alpha。
