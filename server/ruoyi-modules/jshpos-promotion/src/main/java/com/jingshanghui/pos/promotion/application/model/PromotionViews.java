@@ -115,6 +115,13 @@ public final class PromotionViews {
         public RefundAllocationView { lines = List.copyOf(lines); }
     }
 
+    /** 不落账的退款预检结果；金额完全由 Promotion Owner 的原快照算法给出。 */
+    public record RefundPreviewView(String snapshotId, long grossAmountMinor,
+                                    long recoveredDiscountMinor, long refundableAmountMinor,
+                                    List<RefundLineView> lines) {
+        public RefundPreviewView { lines = List.copyOf(lines); }
+    }
+
     /** 退款行本次金额和累计上限视图。 */
     public record RefundLineView(String lineId, BigDecimal quantity, long grossAmountMinor,
                                  long recoveredDiscountMinor, long refundableAmountMinor,

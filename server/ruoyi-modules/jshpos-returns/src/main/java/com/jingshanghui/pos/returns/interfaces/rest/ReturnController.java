@@ -4,6 +4,8 @@ import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.jingshanghui.pos.returns.application.model.ReturnCommands.ApproveReturn;
 import com.jingshanghui.pos.returns.application.model.ReturnCommands.RequestLine;
 import com.jingshanghui.pos.returns.application.model.ReturnCommands.RequestReturn;
+import com.jingshanghui.pos.returns.application.model.ReturnCommands.PreviewReturn;
+import com.jingshanghui.pos.returns.application.model.ReturnViews.ReturnPreview;
 import com.jingshanghui.pos.returns.application.model.ReturnViews.ReturnView;
 import com.jingshanghui.pos.returns.application.service.ReturnOrchestrationService;
 import com.jingshanghui.pos.returns.interfaces.rest.dto.ReturnRequests;
@@ -30,6 +32,14 @@ import org.springframework.web.bind.annotation.RestController;
 public class ReturnController {
     private static final String ULID = "^[0-9A-HJKMNP-TV-Z]{26}$";
     private final ReturnOrchestrationService service;
+
+    @PostMapping("/preview")
+    @SaCheckPermission("return:request:read")
+    public R<ReturnPreview> preview(@Valid @RequestBody ReturnRequests.Preview request) {
+        var lines = request.lines() == null ? java.util.List.<ReturnRequests.Line>of() : request.lines();
+        return R.ok(service.preview(new PreviewReturn(request.orderQuery(), lines.stream()
+            .map(line -> new RequestLine(line.orderLineId(), line.quantity().toPlainString())).toList())));
+    }
 
     @PostMapping
     @SaCheckPermission("return:request:create")

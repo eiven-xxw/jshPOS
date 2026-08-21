@@ -69,6 +69,12 @@
         WHERE r.tenant_id=#{tenantId} AND r.order_id=#{orderId} AND r.status&lt;&gt;'FAILED'
         GROUP BY l.order_line_id
     </select>
+    <select id="sumReservedRefundAmount" resultType="long">
+        SELECT COALESCE(SUM(refundable_amount_minor),0)
+        FROM ret_return
+        WHERE tenant_id=#{tenantId} AND order_id=#{orderId} AND status&lt;&gt;'FAILED'
+          AND refundable_amount_minor IS NOT NULL
+    </select>
     <update id="approve">
         UPDATE ret_return SET status='PROMOTION_PENDING',approver_user_id=#{approverUserId},
           promotion_event_id=#{promotionEventId},record_version=record_version+1,updated_at=#{occurredAt}

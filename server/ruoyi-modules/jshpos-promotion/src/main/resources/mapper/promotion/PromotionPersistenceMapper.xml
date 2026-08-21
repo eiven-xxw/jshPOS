@@ -291,6 +291,13 @@
           payable_amount_minor payableAmountMinor
         FROM prm_transaction_snapshot WHERE tenant_id=#{tenantId} AND order_id=#{orderId}
     </select>
+    <select id="findSnapshot" resultType="com.jingshanghui.pos.promotion.application.port.PromotionPersistencePort$StoredSnapshot">
+        SELECT snapshot_id AS snapshotId,order_id AS orderId,quote_id AS quoteId,store_id AS storeId,
+               terminal_id AS terminalId,business_date AS businessDate,currency,quote_fingerprint AS quoteFingerprint,
+               snapshot_sha256 AS snapshotSha256,gross_amount_minor AS grossAmountMinor,
+               discount_amount_minor AS discountAmountMinor,payable_amount_minor AS payableAmountMinor
+        FROM prm_transaction_snapshot WHERE tenant_id=#{tenantId} AND snapshot_id=#{snapshotId}
+    </select>
     <select id="lockSnapshot" resultType="com.jingshanghui.pos.promotion.application.port.PromotionPersistencePort$StoredSnapshot">
         SELECT snapshot_id snapshotId,order_id orderId,quote_id quoteId,store_id storeId,terminal_id terminalId,
           business_date businessDate,currency,quote_fingerprint quoteFingerprint,snapshot_sha256 snapshotSha256,

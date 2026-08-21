@@ -7,11 +7,14 @@ import com.jingshanghui.pos.foundation.application.security.ScopeAuthorizationSe
 import com.jingshanghui.pos.order.application.port.ReturnOrderSnapshotPort;
 import com.jingshanghui.pos.order.application.port.ReturnOrderSnapshotPort.ReturnOrderLine;
 import com.jingshanghui.pos.order.application.port.ReturnOrderSnapshotPort.ReturnOrderSnapshot;
+import com.jingshanghui.pos.promotion.application.port.ReturnPromotionAllocationPort;
 import com.jingshanghui.pos.order.domain.UlidGenerator;
 import com.jingshanghui.pos.promotion.application.port.ReturnPromotionAllocationPort.AllocatedLine;
 import com.jingshanghui.pos.promotion.application.port.ReturnPromotionAllocationPort.AllocationResult;
+import com.jingshanghui.pos.promotion.application.port.ReturnPromotionAllocationPort.PreviewResult;
 import com.jingshanghui.pos.returns.application.model.ReturnCommands.ApproveReturn;
 import com.jingshanghui.pos.returns.application.model.ReturnCommands.PaymentObservation;
+import com.jingshanghui.pos.returns.application.model.ReturnCommands.PreviewReturn;
 import com.jingshanghui.pos.returns.application.model.ReturnCommands.RequestLine;
 import com.jingshanghui.pos.returns.application.model.ReturnCommands.RequestReturn;
 import com.jingshanghui.pos.returns.domain.ReturnStates.Status;
@@ -64,11 +67,12 @@ class ReturnOrchestrationServiceTest {
 
     private final ReturnMapper mapper = mock(ReturnMapper.class);
     private final ReturnOrderSnapshotPort orders = mock(ReturnOrderSnapshotPort.class);
+    private final ReturnPromotionAllocationPort promotions = mock(ReturnPromotionAllocationPort.class);
     private final TrustedTenantContext context = mock(TrustedTenantContext.class);
     private final ScopeAuthorizationService authorization = mock(ScopeAuthorizationService.class);
     private final DomainAuditService audit = mock(DomainAuditService.class);
     private final UlidGenerator ulids = mock(UlidGenerator.class);
-    private final ReturnOrchestrationService service = new ReturnOrchestrationService(mapper, orders, context,
+    private final ReturnOrchestrationService service = new ReturnOrchestrationService(mapper, orders, promotions, context,
         authorization, audit, ulids);
 
     @BeforeEach
@@ -76,8 +80,10 @@ class ReturnOrchestrationServiceTest {
         when(context.requirePrincipal()).thenReturn(new TrustedPrincipal("TENANT_A", 101L, 1L, "Synthetic Alice"));
         when(context.requireTenantId()).thenReturn("TENANT_A");
         when(orders.requireSnapshot(ORDER)).thenReturn(orderSnapshot(CASH_PAYMENT));
+        when(orders.resolveSnapshot("SYN-ORDER-1")).thenReturn(orderSnapshot(CASH_PAYMENT));
         when(mapper.lockOrderGuard("TENANT_A", ORDER)).thenReturn(ORDER);
         when(mapper.sumReservedQuantities("TENANT_A", ORDER)).thenReturn(List.of());
+        when(mapper.sumReservedRefundAmount("TENANT_A", ORDER)).thenReturn(0L);
         when(mapper.listLines("TENANT_A", RETURN)).thenReturn(List.of(line(null, null, null)));
     }
 
@@ -97,6 +103,27 @@ class ReturnOrchestrationServiceTest {
         verify(mapper).insertIdempotency(any());
         verify(audit).append(eq("RETURN_REQUESTED"), eq("RETURN"), eq(RETURN), eq(null),
             eq("PENDING_APPROVAL"), any());
+    }
+
+    @Test
+    void previewsThroughOrderAndPromotionOwnersWithoutCreatingReturnFacts() {
+        when(promotions.preview(any())).thenReturn(new PreviewResult(SNAPSHOT, 1000, 100, 900,
+            List.of(new AllocatedLine(ORDER_LINE, BigDecimal.ONE, 1000, 100, 900,
+                BigDecimal.ONE, 900))));
+
+        var result = service.preview(new PreviewReturn("SYN-ORDER-1",
+            List.of(new RequestLine(ORDER_LINE, "1"))));
+
+        assertThat(result.orderId()).isEqualTo(ORDER);
+        assertThat(result.refundableAmountMinor()).isEqualTo(900);
+        assertThat(result.lines()).singleElement().satisfies(line -> {
+            assertThat(line.productName()).isEqualTo("合成商品");
+            assertThat(line.maximumReturnableQuantity()).isEqualByComparingTo("2");
+            assertThat(line.requestedQuantity()).isEqualByComparingTo("1");
+        });
+        verify(promotions).preview(any());
+        verify(mapper, never()).insertReturn(any());
+        verify(mapper, never()).insertLine(any());
     }
 
     @Test
@@ -188,9 +215,10 @@ class ReturnOrchestrationServiceTest {
     }
 
     private ReturnOrderSnapshot orderSnapshot(String cashPaymentId) {
-        return new ReturnOrderSnapshot(ORDER, 1101L, TERMINAL, DAY, "COMPLETED", "PAID", "CNY",
+        return new ReturnOrderSnapshot(ORDER, "SYN-ORDER-1", 1101L, TERMINAL, DAY, "COMPLETED", "PAID", "CNY",
             2000, 200, 0, 1800, SNAPSHOT, "a".repeat(64), cashPaymentId,
-            List.of(new ReturnOrderLine(ORDER_LINE, 701L, 301L, new BigDecimal("2"), 2000, 200, 0, 1800)));
+            List.of(new ReturnOrderLine(ORDER_LINE, 701L, "SKU-701", "合成商品", 301L, "PCS",
+                new BigDecimal("2"), 2000, 200, 0, 1800)));
     }
 
     private ReturnRow row(Status status, String promotionEventId, String paymentEventId) {

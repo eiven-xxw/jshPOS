@@ -11,9 +11,16 @@ import com.jingshanghui.pos.order.domain.UlidGenerator;
 import com.jingshanghui.pos.payment.application.port.ReturnPaymentRefundPort.RefundState;
 import com.jingshanghui.pos.promotion.application.port.ReturnPromotionAllocationPort.AllocatedLine;
 import com.jingshanghui.pos.promotion.application.port.ReturnPromotionAllocationPort.AllocationResult;
+import com.jingshanghui.pos.promotion.application.port.ReturnPromotionAllocationPort;
+import com.jingshanghui.pos.promotion.application.port.ReturnPromotionAllocationPort.AllocationLine;
+import com.jingshanghui.pos.promotion.application.port.ReturnPromotionAllocationPort.PreviewCommand;
+import com.jingshanghui.pos.promotion.application.port.ReturnPromotionAllocationPort.PreviewResult;
 import com.jingshanghui.pos.returns.application.model.ReturnCommands.ApproveReturn;
 import com.jingshanghui.pos.returns.application.model.ReturnCommands.PaymentObservation;
+import com.jingshanghui.pos.returns.application.model.ReturnCommands.PreviewReturn;
 import com.jingshanghui.pos.returns.application.model.ReturnCommands.RequestReturn;
+import com.jingshanghui.pos.returns.application.model.ReturnViews.PreviewLine;
+import com.jingshanghui.pos.returns.application.model.ReturnViews.ReturnPreview;
 import com.jingshanghui.pos.returns.application.model.ReturnViews.ReturnLineView;
 import com.jingshanghui.pos.returns.application.model.ReturnViews.ReturnView;
 import com.jingshanghui.pos.returns.domain.ReturnHash;
@@ -51,10 +58,81 @@ public class ReturnOrchestrationService {
     private static final String REQUEST_COMMAND = "REQUEST_ORIGINAL_RETURN";
     private final ReturnMapper mapper;
     private final ReturnOrderSnapshotPort orders;
+    private final ReturnPromotionAllocationPort promotions;
     private final TrustedTenantContext tenantContext;
     private final ScopeAuthorizationService authorizationService;
     private final DomainAuditService audit;
     private final UlidGenerator ulids;
+
+    /**
+     * 原单与退款金额只读预检。金额只由 Promotion Owner 原成交快照算法计算，
+     * 本方法不创建退款标识、账本、审计或 Outbox。
+     */
+    @Transactional(readOnly = true)
+    public ReturnPreview preview(PreviewReturn command) {
+        if (command == null || command.orderQuery() == null || command.orderQuery().isBlank()
+            || command.orderQuery().length() > 64 || command.lines().size() > 500) {
+            throw new ServiceException("RET-PREVIEW-001: 原单预检字段非法", 400);
+        }
+        String tenantId = tenantContext.requireTenantId();
+        ReturnOrderSnapshotPort.ReturnOrderSnapshot order = orders.resolveSnapshot(command.orderQuery().trim());
+        authorizationService.requireStoreAccess(order.storeId());
+        Map<String, ReturnOrderLine> source = new LinkedHashMap<>();
+        order.lines().forEach(line -> source.put(line.lineId(), line));
+        Map<String, BigDecimal> reserved = new HashMap<>();
+        mapper.sumReservedQuantities(tenantId, order.orderId())
+            .forEach(value -> reserved.put(value.orderLineId(), value.reservedQuantity()));
+        Map<String, BigDecimal> requested = new LinkedHashMap<>();
+        try {
+            for (var line : command.lines()) {
+                ReturnRules.requireUlid(line.orderLineId(), "orderLineId");
+                BigDecimal quantity = ReturnRules.positiveQuantity(new BigDecimal(line.quantity()), "quantity");
+                if (requested.putIfAbsent(line.orderLineId(), quantity) != null) {
+                    throw new ServiceException("RET-LINE-002: 同一原订单行不得重复", 409);
+                }
+                ReturnOrderLine original = source.get(line.orderLineId());
+                if (original == null) throw new ServiceException("RET-LINE-001: 原成交行不存在", 409);
+                ReturnRules.requireQuantityAvailable(original.quantity(),
+                    reserved.getOrDefault(line.orderLineId(), BigDecimal.ZERO), quantity);
+            }
+        } catch (NumberFormatException exception) {
+            throw new ServiceException("RET-QTY-001: quantity必须为精确十进制", 409);
+        }
+        PreviewResult allocation = requested.isEmpty()
+            ? new PreviewResult(order.promotionSnapshotId(), 0, 0, 0, List.of())
+            : promotions.preview(new PreviewCommand(order.promotionSnapshotId(), requested.entrySet().stream()
+                .map(value -> new AllocationLine(value.getKey(), value.getValue())).toList()));
+        if (!order.promotionSnapshotId().equals(allocation.snapshotId())
+            || allocation.grossAmountMinor() - allocation.recoveredDiscountMinor()
+                != allocation.refundableAmountMinor()) {
+            throw new ServiceException("RET-PREVIEW-002: Promotion预检身份或金额不守恒", 500);
+        }
+        Map<String, AllocatedLine> allocated = new HashMap<>();
+        allocation.lines().forEach(line -> allocated.put(line.lineId(), line));
+        if (!allocated.keySet().equals(requested.keySet())) {
+            throw new ServiceException("RET-PREVIEW-003: Promotion预检行集合不一致", 500);
+        }
+        long cumulativeRefunded = mapper.sumReservedRefundAmount(tenantId, order.orderId());
+        long maximumRefundable = order.receivableAmountMinor() - cumulativeRefunded;
+        if (maximumRefundable < 0 || allocation.refundableAmountMinor() > maximumRefundable) {
+            throw new ServiceException("RET-PREVIEW-004: 累计退款金额超过原单上限", 409);
+        }
+        List<PreviewLine> lines = order.lines().stream().map(line -> {
+            BigDecimal returned = reserved.getOrDefault(line.lineId(), BigDecimal.ZERO);
+            BigDecimal maximum = line.quantity().subtract(returned);
+            AllocatedLine value = allocated.get(line.lineId());
+            return new PreviewLine(line.lineId(), line.skuCode(), line.productName(), line.unitCode(),
+                line.quantity(), returned, maximum, requested.getOrDefault(line.lineId(), BigDecimal.ZERO),
+                value == null ? 0 : value.grossAmountMinor(),
+                value == null ? 0 : value.recoveredDiscountMinor(),
+                value == null ? 0 : value.refundableAmountMinor());
+        }).toList();
+        return new ReturnPreview(order.orderId(), order.localOrderNo(), order.storeId(), order.businessDate(),
+            order.currency(), order.cashPaymentId() == null ? "PROVIDER_NEUTRAL" : "CASH",
+            order.promotionSnapshotId(), order.promotionSnapshotSha256(), order.receivableAmountMinor(),
+            cumulativeRefunded, maximumRefundable, allocation.grossAmountMinor(),
+            allocation.recoveredDiscountMinor(), allocation.refundableAmountMinor(), lines);
+    }
 
     /** 创建待独立审批申请，并在订单守卫锁内校验累计数量上限。 */
     @Transactional

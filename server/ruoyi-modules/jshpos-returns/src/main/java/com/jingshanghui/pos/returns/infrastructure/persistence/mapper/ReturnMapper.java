@@ -22,6 +22,8 @@ public interface ReturnMapper {
     List<LineRow> listLines(@Param("tenantId") String tenantId, @Param("returnId") String returnId);
     List<ReservedQuantityRow> sumReservedQuantities(@Param("tenantId") String tenantId,
                                                     @Param("orderId") String orderId);
+    long sumReservedRefundAmount(@Param("tenantId") String tenantId,
+                                 @Param("orderId") String orderId);
     int approve(@Param("tenantId") String tenantId, @Param("returnId") String returnId,
                 @Param("expectedVersion") long expectedVersion, @Param("approverUserId") Long approverUserId,
                 @Param("promotionEventId") String promotionEventId, @Param("occurredAt") LocalDateTime occurredAt);

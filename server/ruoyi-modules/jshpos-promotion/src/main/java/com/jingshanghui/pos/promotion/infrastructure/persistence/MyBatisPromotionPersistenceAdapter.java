@@ -102,6 +102,9 @@ public class MyBatisPromotionPersistenceAdapter implements PromotionPersistenceP
     @Override public StoredSnapshot findSnapshotByOrder(String tenantId, String orderId) {
         return mapper.findSnapshotByOrder(tenantId, orderId);
     }
+    @Override public StoredSnapshot findSnapshot(String tenantId, String snapshotId) {
+        return mapper.findSnapshot(tenantId, snapshotId);
+    }
     @Override public StoredSnapshot lockSnapshot(String tenantId, String snapshotId) {
         return mapper.lockSnapshot(tenantId, snapshotId);
     }

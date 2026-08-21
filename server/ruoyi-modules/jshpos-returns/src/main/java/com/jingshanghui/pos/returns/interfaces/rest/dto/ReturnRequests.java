@@ -43,6 +43,10 @@ public final class ReturnRequests {
                        @NotNull @DecimalMin(value = "0", inclusive = false)
                        @Digits(integer = 13, fraction = 6) BigDecimal quantity) { }
 
+    /** 原单只读预检；lines 为空用于首次加载，非空用于数量与金额重算。 */
+    public record Preview(@NotBlank @Size(max = 64) String orderQuery,
+                          @Size(max = 500) List<@Valid Line> lines) { }
+
     /** 独立审批命令；审批人由可信上下文提供并与申请人执行职责分离。 */
     public record Approve(@Pattern(regexp = ULID) String commandId,
                           @Pattern(regexp = "^[A-Z0-9_]{2,32}$") String reasonCode,

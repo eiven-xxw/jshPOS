@@ -29,6 +29,11 @@ public final class ReturnCommands {
     /** 原成交行与本次精确退货数量。 */
     public record RequestLine(String orderLineId, String quantity) { }
 
+    /** 不落账的原单与退款金额预检；空 lines 返回零选择的完整可退投影。 */
+    public record PreviewReturn(String orderQuery, List<RequestLine> lines) {
+        public PreviewReturn { lines = lines == null ? List.of() : List.copyOf(lines); }
+    }
+
     /** 独立审批人准入退款 Saga，不触发 Provider 网络。 */
     public record ApproveReturn(String commandId, String returnId, String reasonCode,
                                 String correlationId, Instant occurredAt) { }

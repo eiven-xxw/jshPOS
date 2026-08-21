@@ -169,6 +169,40 @@ public class PromotionTransactionService {
         return view;
     }
 
+    /** 使用与正式退款完全相同的原快照算法做只读预检，不创建账本或幂等事实。 */
+    @Transactional(readOnly = true)
+    public RefundPreviewView previewRefund(
+        String snapshotId,
+        List<com.jingshanghui.pos.promotion.application.model.PromotionCommands.RefundLine> lines
+    ) {
+        requireUlid(snapshotId);
+        requireRefundLines(lines);
+        TrustedPrincipal principal = tenantContext.requirePrincipal();
+        StoredSnapshot stored = persistence.findSnapshot(principal.tenantId(), snapshotId);
+        if (stored == null) throw new ServiceException("PRM-REFUND-011: 成交优惠快照不存在或不可见", 404);
+        authorization.requireStoreAccess(stored.storeId());
+        List<StoredSnapshotLine> storedLines = persistence.listSnapshotLines(principal.tenantId(), snapshotId);
+        Snapshot snapshot = engine.freeze(storedLines.stream().map(line -> new SnapshotLine(line.lineId(),
+            line.lineNo(), line.skuId(), line.quantity(), line.grossAmountMinor(), line.discountAmountMinor(),
+            line.payableAmountMinor())).toList());
+        if (snapshot.grossAmountMinor() != stored.grossAmountMinor()
+            || snapshot.discountAmountMinor() != stored.discountAmountMinor()
+            || snapshot.payableAmountMinor() != stored.payableAmountMinor()
+            || !canonicalStoredSnapshot(stored, storedLines).sha256().equals(stored.snapshotSha256())) {
+            throw new ServiceException("PRM-REFUND-013: 成交优惠快照摘要或金额已损坏", 500);
+        }
+        List<PriorRefund> history = persistence.listRefundHistory(principal.tenantId(), snapshotId).stream()
+            .map(row -> new PriorRefund(row.lineId(), row.quantity(), row.grossAmountMinor(),
+                row.discountAmountMinor(), row.payableAmountMinor())).toList();
+        RefundResult result = engine.refund(snapshot, history, lines.stream()
+            .map(line -> new RefundRequestLine(line.lineId(), line.quantity())).toList());
+        return new RefundPreviewView(snapshotId, result.grossAmountMinor(), result.recoveredDiscountMinor(),
+            result.refundableAmountMinor(), result.lines().stream().map(line -> new RefundLineView(line.lineId(),
+                line.quantity(), line.grossAmountMinor(), line.recoveredDiscountMinor(),
+                line.refundableAmountMinor(), line.cumulativeQuantity(), line.cumulativeGrossAmountMinor(),
+                line.cumulativeDiscountAmountMinor(), line.cumulativePayableAmountMinor())).toList());
+    }
+
     private ResolvedQuote resolveQuote(String tenantId, StoredQuote quote) {
         List<ManualEvent> applied = persistence.listAppliedManualEvents(tenantId, quote.quoteId());
         if (!applied.isEmpty()) {
@@ -367,8 +401,17 @@ public class PromotionTransactionService {
         }
         requireUlid(value.commandId()); requireUlid(value.snapshotId()); requireUlid(value.refundId());
         requireUlid(value.correlationId());
+        requireRefundLines(value.lines());
+    }
+
+    private void requireRefundLines(
+        List<com.jingshanghui.pos.promotion.application.model.PromotionCommands.RefundLine> lines
+    ) {
+        if (lines == null || lines.isEmpty() || lines.size() > 500) {
+            throw new ServiceException("PRM-REFUND-014: 退款分摊请求无效", 400);
+        }
         Set<String> unique = new LinkedHashSet<>();
-        for (com.jingshanghui.pos.promotion.application.model.PromotionCommands.RefundLine line : value.lines()) {
+        for (com.jingshanghui.pos.promotion.application.model.PromotionCommands.RefundLine line : lines) {
             if (line == null) throw new ServiceException("PRM-REFUND-014: 退款分摊请求无效", 400);
             requireUlid(line.lineId());
             if (!unique.add(line.lineId()) || line.quantity() == null || line.quantity().signum() <= 0

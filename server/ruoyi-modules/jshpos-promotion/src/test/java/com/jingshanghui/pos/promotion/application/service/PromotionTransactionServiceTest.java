@@ -119,6 +119,30 @@ class PromotionTransactionServiceTest {
     }
 
     @Test
+    void previewsWithTheSameSnapshotAlgorithmWithoutAppendingFacts() {
+        var frozen = service.freeze(freeze());
+        ArgumentCaptor<SnapshotLineWrite> line = ArgumentCaptor.forClass(SnapshotLineWrite.class);
+        verify(persistence).insertSnapshotLine(line.capture());
+        SnapshotLineWrite saved = line.getValue();
+        when(persistence.findSnapshot(TENANT, SNAPSHOT)).thenReturn(new StoredSnapshot(SNAPSHOT, ORDER, QUOTE,
+            1101L, "TERM-01", LocalDate.of(2026, 8, 17), "CNY", fingerprint, frozen.snapshotHash(),
+            1000, 100, 900));
+        when(persistence.listSnapshotLines(TENANT, SNAPSHOT)).thenReturn(List.of(new StoredSnapshotLine(saved.lineId(),
+            saved.lineNo(), saved.skuId(), saved.quantity(), saved.grossAmountMinor(), saved.discountAmountMinor(),
+            saved.payableAmountMinor(), saved.sourceAllocationsJson(), saved.sourceAllocationsSha256())));
+        when(persistence.listRefundHistory(TENANT, SNAPSHOT)).thenReturn(List.of());
+        clearInvocations(persistence);
+
+        var result = service.previewRefund(SNAPSHOT, List.of(new RefundLine(LINE, BigDecimal.ONE)));
+
+        assertThat(result.refundableAmountMinor()).isEqualTo(300);
+        verify(persistence, never()).insertRefundAllocation(any());
+        verify(persistence, never()).insertCommand(any());
+        verify(persistence, never()).insertAudit(any());
+        verify(persistence, never()).insertOutbox(any());
+    }
+
+    @Test
     void blocksPendingManualOrChangedFingerprintBeforeWritingSnapshot() {
         when(persistence.findPendingManualEvent(TENANT, QUOTE))
             .thenReturn(mock(ManualEvent.class))

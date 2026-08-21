@@ -12,6 +12,9 @@ public interface ReturnOwnerMapper {
 
     ReturnOrderHeader findReturnOrder(@Param("tenantId") String tenantId, @Param("orderId") String orderId);
 
+    List<ReturnOrderHeader> findReturnOrders(@Param("tenantId") String tenantId,
+                                             @Param("orderQuery") String orderQuery);
+
     List<ReturnOrderLine> listReturnOrderLines(@Param("tenantId") String tenantId,
                                                @Param("orderId") String orderId);
 
@@ -39,7 +42,8 @@ public interface ReturnOwnerMapper {
                                @Param("occurredAt") LocalDateTime occurredAt);
 
     /** Order Owner头快照，promotion字段只作不可变引用。 */
-    record ReturnOrderHeader(String orderId, Long storeId, String terminalId, LocalDate businessDate,
+    record ReturnOrderHeader(String orderId, String localOrderNo, Long storeId, String terminalId,
+                             LocalDate businessDate,
                              String status, String paymentStatus, String currency, long grossAmountMinor,
                              long discountAmountMinor, long surchargeAmountMinor, long receivableAmountMinor,
                              String promotionSnapshotId, String promotionSnapshotSha256,

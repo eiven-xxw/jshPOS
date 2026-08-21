@@ -3,7 +3,7 @@
 <mapper namespace="com.jingshanghui.pos.order.infrastructure.persistence.mapper.ReturnOwnerMapper">
     <!-- 只读原成交头；租户条件同时约束订单、促销绑定和现金收款。 -->
     <select id="findReturnOrder" resultType="com.jingshanghui.pos.order.infrastructure.persistence.mapper.ReturnOwnerMapper$ReturnOrderHeader">
-        SELECT o.order_id AS orderId,o.store_id AS storeId,o.terminal_id AS terminalId,
+        SELECT o.order_id AS orderId,o.local_order_no AS localOrderNo,o.store_id AS storeId,o.terminal_id AS terminalId,
                o.business_date AS businessDate,o.status,o.payment_status AS paymentStatus,o.currency,
                o.gross_amount_minor AS grossAmountMinor,o.discount_amount_minor AS discountAmountMinor,
                o.surcharge_amount_minor AS surchargeAmountMinor,o.receivable_amount_minor AS receivableAmountMinor,
@@ -15,8 +15,25 @@
         WHERE o.tenant_id=#{tenantId} AND o.order_id=#{orderId}
     </select>
 
+    <!-- 小票号仅在终端内唯一；若同租户命中多张原单，上层必须失败关闭。 -->
+    <select id="findReturnOrders" resultType="com.jingshanghui.pos.order.infrastructure.persistence.mapper.ReturnOwnerMapper$ReturnOrderHeader">
+        SELECT o.order_id AS orderId,o.local_order_no AS localOrderNo,o.store_id AS storeId,o.terminal_id AS terminalId,
+               o.business_date AS businessDate,o.status,o.payment_status AS paymentStatus,o.currency,
+               o.gross_amount_minor AS grossAmountMinor,o.discount_amount_minor AS discountAmountMinor,
+               o.surcharge_amount_minor AS surchargeAmountMinor,o.receivable_amount_minor AS receivableAmountMinor,
+               b.promotion_snapshot_id AS promotionSnapshotId,
+               b.promotion_snapshot_sha256 AS promotionSnapshotSha256,p.cash_payment_id AS cashPaymentId
+        FROM ord_sales_order o
+        JOIN ord_promotion_binding b ON b.tenant_id=o.tenant_id AND b.order_id=o.order_id
+        LEFT JOIN ord_cash_payment p ON p.tenant_id=o.tenant_id AND p.order_id=o.order_id AND p.status='SUCCEEDED'
+        WHERE o.tenant_id=#{tenantId} AND (o.order_id=#{orderQuery} OR o.local_order_no=#{orderQuery})
+        ORDER BY o.order_id
+        LIMIT 2
+    </select>
+
     <select id="listReturnOrderLines" resultType="com.jingshanghui.pos.order.application.port.ReturnOrderSnapshotPort$ReturnOrderLine">
-        SELECT line_id AS lineId,sku_id AS skuId,unit_id AS unitId,quantity,
+        SELECT line_id AS lineId,sku_id AS skuId,sku_code AS skuCode,
+               product_name_snapshot AS productName,unit_id AS unitId,unit_code AS unitCode,quantity,
                gross_amount_minor AS grossAmountMinor,discount_amount_minor AS discountAmountMinor,
                surcharge_amount_minor AS surchargeAmountMinor,payable_amount_minor AS payableAmountMinor
         FROM ord_order_line

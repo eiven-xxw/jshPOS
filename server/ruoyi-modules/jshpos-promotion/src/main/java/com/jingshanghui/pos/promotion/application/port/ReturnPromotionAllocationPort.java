@@ -8,6 +8,19 @@ public interface ReturnPromotionAllocationPort {
 
     AllocationResult allocate(AllocationCommand command);
 
+    /** 只读预检，不生成退款标识、账本、审计或 Outbox。 */
+    PreviewResult preview(PreviewCommand command);
+
+    record PreviewCommand(String snapshotId, List<AllocationLine> lines) {
+        public PreviewCommand { lines = List.copyOf(lines); }
+    }
+
+    record PreviewResult(String snapshotId, long grossAmountMinor,
+                         long recoveredDiscountMinor, long refundableAmountMinor,
+                         List<AllocatedLine> lines) {
+        public PreviewResult { lines = List.copyOf(lines); }
+    }
+
     /** @param eventId 稳定Owner命令ULID @param snapshotId 原成交促销快照ULID
      * @param refundId 退货退款ULID @param lines 本次退货数量 @param correlationId 关联ULID */
     record AllocationCommand(String eventId, String snapshotId, String refundId,

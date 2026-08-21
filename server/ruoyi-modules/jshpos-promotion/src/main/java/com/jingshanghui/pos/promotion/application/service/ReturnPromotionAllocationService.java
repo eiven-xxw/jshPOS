@@ -14,6 +14,17 @@ public class ReturnPromotionAllocationService implements ReturnPromotionAllocati
     private final PromotionTransactionService transactions;
 
     @Override
+    public PreviewResult preview(PreviewCommand command) {
+        var result = transactions.previewRefund(command.snapshotId(), command.lines().stream()
+            .map(line -> new RefundLine(line.lineId(), line.quantity())).toList());
+        return new PreviewResult(result.snapshotId(), result.grossAmountMinor(),
+            result.recoveredDiscountMinor(), result.refundableAmountMinor(), result.lines().stream()
+            .map(line -> new AllocatedLine(line.lineId(), line.quantity(), line.grossAmountMinor(),
+                line.recoveredDiscountMinor(), line.refundableAmountMinor(), line.cumulativeQuantity(),
+                line.cumulativePayableAmountMinor())).toList());
+    }
+
+    @Override
     public AllocationResult allocate(AllocationCommand command) {
         var result = transactions.allocateRefund(new AllocateRefund(command.eventId(), command.snapshotId(),
             command.refundId(), command.lines().stream()

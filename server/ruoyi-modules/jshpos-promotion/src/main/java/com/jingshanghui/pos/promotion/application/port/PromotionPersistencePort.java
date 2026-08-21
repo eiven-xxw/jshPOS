@@ -44,6 +44,7 @@ public interface PromotionPersistencePort {
     void insertManualEvent(ManualEventWrite value);
     StoredSnapshot findSnapshotByQuote(String tenantId, String quoteId);
     StoredSnapshot findSnapshotByOrder(String tenantId, String orderId);
+    StoredSnapshot findSnapshot(String tenantId, String snapshotId);
     StoredSnapshot lockSnapshot(String tenantId, String snapshotId);
     List<StoredSnapshotLine> listSnapshotLines(String tenantId, String snapshotId);
     ExistingRefund findRefund(String tenantId, String refundId);

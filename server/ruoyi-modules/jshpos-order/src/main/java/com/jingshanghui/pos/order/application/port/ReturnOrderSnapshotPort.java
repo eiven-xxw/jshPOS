@@ -10,8 +10,12 @@ public interface ReturnOrderSnapshotPort {
     /** 在可信租户内读取已完成订单；不存在、未完成或不可见时失败关闭。 */
     ReturnOrderSnapshot requireSnapshot(String orderId);
 
+    /** 按订单 ULID 或小票号解析唯一原单；小票号歧义时失败关闭。 */
+    ReturnOrderSnapshot resolveSnapshot(String orderQuery);
+
     /** 原成交订单、促销绑定与收款身份快照。 */
-    record ReturnOrderSnapshot(String orderId, Long storeId, String terminalId, LocalDate businessDate,
+    record ReturnOrderSnapshot(String orderId, String localOrderNo, Long storeId, String terminalId,
+                               LocalDate businessDate,
                                String status, String paymentStatus, String currency,
                                long grossAmountMinor, long discountAmountMinor, long surchargeAmountMinor,
                                long receivableAmountMinor, String promotionSnapshotId,
@@ -20,7 +24,8 @@ public interface ReturnOrderSnapshotPort {
     }
 
     /** 原成交行；数量为精确六位小数，金额为最小货币单位分。 */
-    record ReturnOrderLine(String lineId, Long skuId, Long unitId, BigDecimal quantity,
+    record ReturnOrderLine(String lineId, Long skuId, String skuCode, String productName,
+                           Long unitId, String unitCode, BigDecimal quantity,
                            long grossAmountMinor, long discountAmountMinor,
                            long surchargeAmountMinor, long payableAmountMinor) { }
 }

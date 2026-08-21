@@ -56,7 +56,7 @@ class CashRefundOwnerServiceTest {
     @BeforeEach
     void configureTrustedSyntheticContext() {
         when(context.requirePrincipal()).thenReturn(new TrustedPrincipal("TENANT_A", 101L, 1L, "Synthetic Alice"));
-        when(orders.requireSnapshot(ORDER)).thenReturn(new ReturnOrderSnapshot(ORDER, 1101L, TERMINAL, DAY,
+        when(orders.requireSnapshot(ORDER)).thenReturn(new ReturnOrderSnapshot(ORDER, "SYN-ORDER-1", 1101L, TERMINAL, DAY,
             "COMPLETED", "PAID", "CNY", 1000, 100, 0, 900,
             "01K5S000000000000000000001", "b".repeat(64), PAYMENT, List.of()));
         when(mapper.lockCashPayment("TENANT_A", PAYMENT))

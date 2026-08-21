@@ -57,6 +57,7 @@ public interface PromotionPersistenceMapper {
     int insertManualEvent(ManualEventWrite value);
     StoredSnapshot findSnapshotByQuote(@Param("tenantId") String tenantId, @Param("quoteId") String quoteId);
     StoredSnapshot findSnapshotByOrder(@Param("tenantId") String tenantId, @Param("orderId") String orderId);
+    StoredSnapshot findSnapshot(@Param("tenantId") String tenantId, @Param("snapshotId") String snapshotId);
     StoredSnapshot lockSnapshot(@Param("tenantId") String tenantId, @Param("snapshotId") String snapshotId);
     List<StoredSnapshotLine> listSnapshotLines(@Param("tenantId") String tenantId,
                                                 @Param("snapshotId") String snapshotId);
