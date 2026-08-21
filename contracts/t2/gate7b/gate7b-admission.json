@@ -11,8 +11,8 @@
   ],
   "requirements": {
     "T2-POS-010": {
-      "status": "IN_PROGRESS",
-      "admission": "PASSED_DESIGN_ENTRY",
+      "status": "VERIFIED",
+      "admission": "INDEPENDENT_CI_VERIFIED_RUN_32487652575",
       "evidenceCeiling": "SOFTWARE_EXECUTION"
     },
     "T2-POS-011": {
