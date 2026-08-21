@@ -1,7 +1,7 @@
 package com.jingshanghui.pos.order.application.service;
 
 import com.jingshanghui.pos.catalog.application.price.PriceResolution.ResolvedPrice;
-import com.jingshanghui.pos.catalog.application.service.PriceBookService;
+import com.jingshanghui.pos.catalog.application.port.OrderPriceResolutionPort;
 import com.jingshanghui.pos.foundation.application.context.TrustedPrincipal;
 import com.jingshanghui.pos.foundation.application.context.TrustedTenantContext;
 import com.jingshanghui.pos.foundation.application.security.ScopeAuthorizationService;
@@ -41,7 +41,7 @@ public class CashOrderService {
     private final OrderMapper mapper;
     private final TrustedTenantContext tenantContext;
     private final ScopeAuthorizationService authorizationService;
-    private final PriceBookService priceBookService;
+    private final OrderPriceResolutionPort priceBookService;
     private final IdempotencyService idempotency;
     private final OrderJournalService journal;
     private final UlidGenerator ulids;

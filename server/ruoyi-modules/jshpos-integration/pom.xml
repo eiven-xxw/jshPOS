@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent><groupId>org.dromara</groupId><artifactId>ruoyi-modules</artifactId><version>${revision}</version></parent>
+
+    <groupId>com.jingshanghui.pos</groupId>
+    <artifactId>jshpos-integration</artifactId>
+    <description>商业V1模块化单体组合根与启动期装配守卫</description>
+
+    <dependencies>
+        <dependency><groupId>com.jingshanghui.pos</groupId><artifactId>jshpos-foundation</artifactId></dependency>
+        <dependency><groupId>com.jingshanghui.pos</groupId><artifactId>jshpos-catalog</artifactId></dependency>
+        <dependency><groupId>com.jingshanghui.pos</groupId><artifactId>jshpos-order</artifactId></dependency>
+        <dependency><groupId>com.jingshanghui.pos</groupId><artifactId>jshpos-sync</artifactId></dependency>
+        <dependency><groupId>com.jingshanghui.pos</groupId><artifactId>jshpos-payment</artifactId></dependency>
+        <dependency><groupId>com.jingshanghui.pos</groupId><artifactId>jshpos-inventory</artifactId></dependency>
+        <dependency><groupId>com.jingshanghui.pos</groupId><artifactId>jshpos-procurement</artifactId></dependency>
+        <dependency><groupId>com.jingshanghui.pos</groupId><artifactId>jshpos-costing</artifactId></dependency>
+        <dependency><groupId>com.jingshanghui.pos</groupId><artifactId>jshpos-transfer</artifactId></dependency>
+        <dependency><groupId>com.jingshanghui.pos</groupId><artifactId>jshpos-promotion</artifactId></dependency>
+        <dependency><groupId>com.jingshanghui.pos</groupId><artifactId>jshpos-returns</artifactId></dependency>
+        <dependency><groupId>com.jingshanghui.pos</groupId><artifactId>jshpos-member</artifactId></dependency>
+        <dependency><groupId>com.jingshanghui.pos</groupId><artifactId>jshpos-reporting</artifactId></dependency>
+        <dependency><groupId>com.jingshanghui.pos</groupId><artifactId>jshpos-resilience</artifactId></dependency>
+        <dependency><groupId>com.jingshanghui.pos</groupId><artifactId>jshpos-release</artifactId></dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+    <build><plugins>
+        <plugin>
+            <groupId>org.jacoco</groupId><artifactId>jacoco-maven-plugin</artifactId><version>0.8.13</version>
+            <configuration><includes><include>com/jingshanghui/pos/integration/application/*</include></includes></configuration>
+            <executions>
+                <execution><id>gate6g-prepare-agent</id><goals><goal>prepare-agent</goal></goals><configuration><propertyName>gate6gJacocoArgLine</propertyName></configuration></execution>
+                <execution><id>gate6g-report</id><phase>verify</phase><goals><goal>report</goal></goals></execution>
+                <execution><id>gate6g-check</id><phase>verify</phase><goals><goal>check</goal></goals><configuration><rules><rule><element>BUNDLE</element><limits><limit><counter>LINE</counter><value>COVEREDRATIO</value><minimum>0.90</minimum></limit><limit><counter>BRANCH</counter><value>COVEREDRATIO</value><minimum>0.85</minimum></limit></limits></rule></rules></configuration></execution>
+            </executions>
+        </plugin>
+        <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-surefire-plugin</artifactId><configuration><groups>!exclude</groups><argLine>@{gate6gJacocoArgLine} -Dfile.encoding=UTF-8</argLine></configuration></plugin>
+    </plugins></build>
+    <properties><gate6gJacocoArgLine></gate6gJacocoArgLine></properties>
+</project>

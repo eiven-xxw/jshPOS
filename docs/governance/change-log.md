@@ -165,5 +165,6 @@
 | CR-T2G6G-005 | 2026-08-21 | IMPLEMENTED_DAT001_AWAITING_INDEPENDENT_CI | 追加V43至V51九个Owner前向迁移补齐90张早期表中文说明，冻结159表主键租户索引精度与5项多租户备份控制面例外，新增双租户三业态正式API种子及SQLite中断重试和未来版本失败关闭测试 | T2-DAT-001、T2-MIG-001、ADR-039 | 本地DAT审计、SQLite故障测试、Flutter Analyze和47项目Maven全量verify通过；状态保持IN_PROGRESS等待GitHub MySQL8.4与双平台独立CI，INT/E2E继续DRAFT |
 | CR-T2G6G-006 | 2026-08-21 | CI_FAILURE_FIXED_AWAITING_RETEST | GitHub Actions run `32439772017` 的治理与后台门禁成功，但 POS Linux 的固定 Dart 3.13.0 格式门禁发现两份 Gate 6G 新增文件尚未实际写回格式化结果；使用同版 SDK 写回并复核 Analyze 与 SQLite 迁移故障测试 | T2-DAT-001、T2-CI-001、ADR-039 | 保留失败 run；未跳过格式、测试或覆盖率门禁，DAT 继续 IN_PROGRESS，要求新提交触发完整流水线 |
 | CR-T2G6G-007 | 2026-08-21 | VERIFIED_DAT001_IN_PROGRESS_INT001 | 修复提交 `2f1ad5e` 的 GitHub Actions run `32440088990` 八个 Job 全绿；MySQL 8.4 空环境执行 V1至V51、159表元数据和SQLite双平台迁移恢复均通过，DAT更新为VERIFIED并依序仅准入INT | T2-DAT-001、T2-INT-001、T2-CI-001、ADR-039 | 数据证据仅为内部合成环境；生产PITR、KMS、对象存储和真实数据不在范围，E2E-003继续DRAFT |
+| CR-T2G6G-008 | 2026-08-21 | IMPLEMENTED_INT001_AWAITING_INDEPENDENT_CI | 新增 `jshpos-integration` 正式组合根，在启动时验证16项Owner能力唯一装配；以显式端口关闭Order到Catalog及Sync到Order的具体服务耦合，冻结20项版本化协作、12个故障seed和外部失败关闭边界；本地正式JAR含16个模块且11个关键套件均成功未跳过 | T2-INT-001、T2-CI-001、ADR-039 | 本地证据为STATIC_AND_SOFTWARE_EXECUTION；INT继续IN_PROGRESS等待GitHub独立CI，E2E-003继续DRAFT，外部网络和设备执行为0 |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。

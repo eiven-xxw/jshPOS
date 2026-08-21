@@ -9,6 +9,7 @@ import com.jingshanghui.pos.order.application.model.OrderViews.ShiftView;
 import com.jingshanghui.pos.order.application.model.PromotedOrderCommands.PromotedLine;
 import com.jingshanghui.pos.order.application.model.PromotedOrderCommands.SubmitPromotedCashOrder;
 import com.jingshanghui.pos.order.application.port.PromotedOrderRepository;
+import com.jingshanghui.pos.order.application.port.PromotedOrderSubmissionPort;
 import com.jingshanghui.pos.order.application.port.PromotedOrderRepository.BindingWrite;
 import com.jingshanghui.pos.order.application.port.PromotedOrderRepository.LineWrite;
 import com.jingshanghui.pos.order.application.port.PromotedOrderRepository.OrderWrite;
@@ -43,7 +44,7 @@ import java.util.Map;
  */
 @Service
 @RequiredArgsConstructor
-public class PromotedCashOrderService {
+public class PromotedCashOrderService implements PromotedOrderSubmissionPort {
 
     private static final String COMMAND_TYPE = "SUBMIT_PROMOTED_CASH_ORDER";
     private final PromotedOrderRepository promotedOrders;
@@ -57,6 +58,7 @@ public class PromotedCashOrderService {
 
     /** 在一个服务端事务内保存订单、快照绑定、现金、审计、幂等与Outbox。 */
     @Transactional
+    @Override
     public CashOrderResult submit(SubmitPromotedCashOrder command) {
         TrustedPrincipal principal = tenantContext.requirePrincipal();
         requireActor(command.cashierId(), principal);

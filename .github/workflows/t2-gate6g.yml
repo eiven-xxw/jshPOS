@@ -38,6 +38,7 @@ jobs:
           python scripts/audit_t2_gate6g_core.py --output artifacts/t2/gate6g/governance/core-audit.json
           python scripts/audit_t2_gate6g_api.py --output artifacts/t2/gate6g/governance/api-audit.json
           python scripts/audit_t2_gate6g_data.py --output artifacts/t2/gate6g/governance/data-audit.json
+          python scripts/audit_t2_gate6g_integration.py --output artifacts/t2/gate6g/governance/integration-static-audit.json
           python scripts/review_dependency_diff.py a6c91a1d66857583ce7e498541b63bcf0b81dc52 "$(git rev-parse HEAD)" > artifacts/t2/gate6g/governance/dependency-input-diff.json
           git diff --check
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
@@ -49,9 +50,17 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
         with: { distribution: temurin, java-version: "21", cache: maven }
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with: { python-version: "3.12" }
       - name: Execute complete modular-monolith regression and coverage
         working-directory: server
         run: ./mvnw -pl ruoyi-admin -am clean verify -DskipTests=false
+      - name: Verify formal Owner composition in executable JAR and test evidence
+        run: >-
+          python scripts/audit_t2_gate6g_integration.py
+          --server-jar server/ruoyi-admin/target/ruoyi-admin.jar
+          --surefire-root server/ruoyi-modules
+          --output artifacts/t2/gate6g/server/integration-runtime-audit.json
       - name: Generate tested aggregate CycloneDX SBOM
         working-directory: server
         run: ./mvnw org.cyclonedx:cyclonedx-maven-plugin:2.9.1:makeAggregateBom
@@ -64,6 +73,7 @@ jobs:
             server/ruoyi-admin/target/ruoyi-admin.jar
             server/target/bom.json
             server/target/bom.xml
+            artifacts/t2/gate6g/server
           if-no-files-found: error
           retention-days: 30
 

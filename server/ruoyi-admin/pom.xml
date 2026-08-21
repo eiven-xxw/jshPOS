@@ -157,6 +157,12 @@
             <artifactId>jshpos-release</artifactId>
         </dependency>
 
+        <!-- Gate 6G 商业V1组合根：只校验Owner正式装配和外部失败关闭，不承载领域算法 -->
+        <dependency>
+            <groupId>com.jingshanghui.pos</groupId>
+            <artifactId>jshpos-integration</artifactId>
+        </dependency>
+
         <!-- Gate 0 服务端数据库版本治理 -->
         <dependency>
             <groupId>org.flywaydb</groupId>

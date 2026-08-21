@@ -2,7 +2,7 @@ package com.jingshanghui.pos.sync.application.service;
 
 import com.jingshanghui.pos.order.application.model.PromotedOrderCommands.PromotedLine;
 import com.jingshanghui.pos.order.application.model.PromotedOrderCommands.SubmitPromotedCashOrder;
-import com.jingshanghui.pos.order.application.service.PromotedCashOrderService;
+import com.jingshanghui.pos.order.application.port.PromotedOrderSubmissionPort;
 import com.jingshanghui.pos.sync.application.model.SyncModels.DeviceContext;
 import com.jingshanghui.pos.sync.application.model.SyncModels.EventEnvelope;
 import org.dromara.common.core.exception.ServiceException;
@@ -21,9 +21,9 @@ import java.util.Map;
 @Component
 public class PromotedOrderEventDispatcher {
 
-    private final PromotedCashOrderService orders;
+    private final PromotedOrderSubmissionPort orders;
 
-    public PromotedOrderEventDispatcher(PromotedCashOrderService orders) {
+    public PromotedOrderEventDispatcher(PromotedOrderSubmissionPort orders) {
         this.orders = orders;
     }
 

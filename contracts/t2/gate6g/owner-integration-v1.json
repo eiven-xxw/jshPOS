@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-INT-001",
+  "architecture": "MODULAR_MONOLITH_WITH_EXPLICIT_OWNER_PORTS",
+  "compositionRoot": "jshpos-integration",
+  "owners": [
+    "foundation", "catalog", "order", "sync", "terminal", "payment",
+    "inventory", "procurement", "costing", "transfer", "promotion",
+    "returns", "member", "reporting", "resilience", "release"
+  ],
+  "collaborations": [
+    {"from":"foundation","to":"all","mechanism":"APPLICATION_PORT","contract":"trusted-tenant-context.v1","writeOwner":"foundation"},
+    {"from":"catalog","to":"order","mechanism":"READ_ONLY_PORT","contract":"OrderPriceResolutionPort.v1","writeOwner":"catalog"},
+    {"from":"pos-sqlite","to":"sync","mechanism":"INBOX_OUTBOX","contract":"pos-sync-push-ack-cursor.v1","writeOwner":"sync"},
+    {"from":"sync","to":"order","mechanism":"APPLICATION_PORT","contract":"PromotedOrderSubmissionPort.v2","writeOwner":"order"},
+    {"from":"promotion","to":"order","mechanism":"READ_ONLY_PORT","contract":"PromotionSnapshotQueryPort.v1","writeOwner":"promotion"},
+    {"from":"order","to":"inventory","mechanism":"READ_ONLY_PORT","contract":"InventoryOrderSnapshotPort.v1","writeOwner":"order"},
+    {"from":"inventory","to":"costing","mechanism":"APPLICATION_PORT","contract":"AuthoritativeCostPostingPort.v1","writeOwner":"costing"},
+    {"from":"procurement","to":"inventory","mechanism":"APPLICATION_PORT","contract":"AuthoritativeInventoryMovementPort.v1","writeOwner":"inventory"},
+    {"from":"procurement","to":"costing","mechanism":"READ_ONLY_PORT","contract":"ProcurementCostSourcePort.v1","writeOwner":"procurement"},
+    {"from":"transfer","to":"inventory","mechanism":"APPLICATION_PORT","contract":"AuthoritativeInventoryMovementPort.v1","writeOwner":"inventory"},
+    {"from":"transfer","to":"costing","mechanism":"READ_ONLY_PORT","contract":"TransferCostSourcePort.v1","writeOwner":"transfer"},
+    {"from":"returns","to":"order","mechanism":"APPLICATION_PORT","contract":"ReturnOrderSnapshotPort+CashRefundOwnerPort.v1","writeOwner":"order"},
+    {"from":"returns","to":"promotion","mechanism":"APPLICATION_PORT","contract":"ReturnPromotionAllocationPort.v1","writeOwner":"promotion"},
+    {"from":"returns","to":"payment","mechanism":"APPLICATION_PORT","contract":"ReturnPaymentRefundPort.v1","writeOwner":"payment"},
+    {"from":"returns","to":"inventory","mechanism":"APPLICATION_PORT","contract":"AuthoritativeInventoryMovementPort.v1","writeOwner":"inventory"},
+    {"from":"order+inventory+costing+member+payment+returns","to":"reporting","mechanism":"VERSIONED_EVENT","contract":"reporting-projection-event.v1","writeOwner":"reporting"},
+    {"from":"terminal","to":"sync","mechanism":"APPLICATION_PORT","contract":"trusted-terminal-context.v1","writeOwner":"terminal"},
+    {"from":"release","to":"terminal","mechanism":"READ_ONLY_PORT","contract":"TerminalRegistryPort.v1","writeOwner":"terminal"},
+    {"from":"resilience","to":"all","mechanism":"READ_ONLY_PORT","contract":"BackupPorts.Source.v1","writeOwner":"resilience","runtimeDefault":"FAIL_CLOSED"},
+    {"from":"release","to":"all","mechanism":"READ_ONLY_PORT","contract":"ReleasePorts.SafetyProbe.v1","writeOwner":"release","runtimeDefault":"FAIL_CLOSED"}
+  ],
+  "invariants": [
+    "OWNER_WRITES_ONLY_OWN_FACTS",
+    "NO_CROSS_OWNER_MAPPER",
+    "IDEMPOTENCY_KEY_SAME_CONTENT_REPLAY_ONLY",
+    "SAME_KEY_DIFFERENT_CONTENT_REJECTED",
+    "UNKNOWN_CONVERGES_BY_QUERY_OR_OBSERVATION",
+    "NO_REGENERATED_BUSINESS_COMMAND_FOR_UNKNOWN",
+    "GROSS_MINUS_DISCOUNT_PLUS_SURCHARGE_EQUALS_RECEIVABLE",
+    "INVENTORY_AND_COST_LEDGER_APPEND_ONLY_AND_REBUILDABLE",
+    "TENANT_FROM_TRUSTED_CONTEXT_ONLY"
+  ],
+  "failureSeeds": [
+    "gate6g-duplicate-001",
+    "gate6g-out-of-order-002",
+    "gate6g-ack-lost-003",
+    "gate6g-process-killed-004",
+    "gate6g-disk-write-failed-005",
+    "gate6g-business-day-switch-006",
+    "gate6g-partial-owner-failure-007",
+    "gate6g-full-replay-008",
+    "gate6g-tenant-swap-009",
+    "gate6g-payload-tamper-010",
+    "gate6g-idempotency-collision-011",
+    "gate6g-unknown-observation-012"
+  ],
+  "externalBoundaries": {
+    "payment-provider": "BLOCKED_UNAVAILABLE",
+    "real-hardware": "BLOCKED_UNAVAILABLE",
+    "design-partner": "BLOCKED_UNAVAILABLE",
+    "real-printer": "BLOCKED_UNAVAILABLE",
+    "jsh-connector": "DEFERRED_UNAVAILABLE"
+  }
+}

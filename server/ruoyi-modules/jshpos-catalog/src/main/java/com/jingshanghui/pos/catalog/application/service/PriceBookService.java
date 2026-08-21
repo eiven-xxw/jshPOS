@@ -6,6 +6,7 @@ import com.jingshanghui.pos.catalog.application.model.CatalogViews.PriceCandidat
 import com.jingshanghui.pos.catalog.application.price.PriceResolution;
 import com.jingshanghui.pos.catalog.application.price.PriceResolution.Candidate;
 import com.jingshanghui.pos.catalog.application.price.PriceResolution.ResolvedPrice;
+import com.jingshanghui.pos.catalog.application.port.OrderPriceResolutionPort;
 import com.jingshanghui.pos.catalog.domain.CatalogRules;
 import com.jingshanghui.pos.catalog.infrastructure.persistence.mapper.CatalogMapper;
 import com.jingshanghui.pos.foundation.application.audit.DomainAuditService;
@@ -29,7 +30,7 @@ import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
-public class PriceBookService {
+public class PriceBookService implements OrderPriceResolutionPort {
 
     private final CatalogMapper mapper;
     private final TrustedTenantContext tenantContext;
@@ -120,6 +121,7 @@ public class PriceBookService {
     }
 
     @Transactional(readOnly = true)
+    @Override
     public ResolvedPrice resolve(Long skuId, Long unitId, Long storeId, Instant at) {
         String tenantId = tenantContext.requireTenantId();
         authorizationService.requireStoreAccess(storeId);
