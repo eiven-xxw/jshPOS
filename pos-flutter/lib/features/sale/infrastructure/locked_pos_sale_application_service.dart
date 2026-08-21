@@ -40,6 +40,14 @@ final class LockedPosSaleApplicationService
       _unavailable();
 
   @override
+  Future<PosReprintRequestView> requestReceiptReprint({
+    required String orderRef,
+    required String reasonCode,
+    required String reasonText,
+    required String idempotencyKey,
+  }) async => _unavailable();
+
+  @override
   Future<PosSaleWorkspace> refreshPromotionQuote() async => _unavailable();
 
   @override

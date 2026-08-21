@@ -164,6 +164,8 @@ final class FilePosBusinessRuntimeAssembler
         syncCoordinator: sync,
         ulids: ulids,
         industryTemplateVersion: industryTemplateVersion,
+        permissions: employee.permissions,
+        authorizationRef: employee.sessionRef,
       );
       final shift = LocalPosShiftApplicationService(
         database: database,
@@ -360,6 +362,18 @@ final class SessionBoundPosRuntime
   @override
   Future<PosPrintPreviewView> previewPrintTask(String orderRef) =>
       _ready.sale.previewPrintTask(orderRef);
+  @override
+  Future<PosReprintRequestView> requestReceiptReprint({
+    required String orderRef,
+    required String reasonCode,
+    required String reasonText,
+    required String idempotencyKey,
+  }) => _ready.sale.requestReceiptReprint(
+    orderRef: orderRef,
+    reasonCode: reasonCode,
+    reasonText: reasonText,
+    idempotencyKey: idempotencyKey,
+  );
   @override
   Future<PosSaleWorkspace> refreshSyncStatus() =>
       _ready.sale.refreshSyncStatus();

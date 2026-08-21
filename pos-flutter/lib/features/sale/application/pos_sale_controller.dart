@@ -14,6 +14,7 @@ final class PosSalePageState {
     this.searchResults = const [],
     this.settlement,
     this.printPreview,
+    this.reprintRequest,
     this.errorCode,
     this.safeMessage,
   });
@@ -25,6 +26,7 @@ final class PosSalePageState {
   final List<PosProductView> searchResults;
   final PosCashSettlementView? settlement;
   final PosPrintPreviewView? printPreview;
+  final PosReprintRequestView? reprintRequest;
   final String? errorCode;
   final String? safeMessage;
 
@@ -188,6 +190,50 @@ final class PosSaleController {
     }
   }
 
+  Future<PosSalePageState> requestReprint({
+    required String orderRef,
+    required String reasonCode,
+    required String reasonText,
+    required String idempotencyKey,
+  }) => _flight ??= _requestReprint(
+    orderRef: orderRef,
+    reasonCode: reasonCode,
+    reasonText: reasonText,
+    idempotencyKey: idempotencyKey,
+  ).whenComplete(() => _flight = null);
+
+  Future<PosSalePageState> _requestReprint({
+    required String orderRef,
+    required String reasonCode,
+    required String reasonText,
+    required String idempotencyKey,
+  }) async {
+    try {
+      sessionService.requirePermission(PosPermission.printReprint);
+      _state = _copy(phase: PosSalePagePhase.busy, clearError: true);
+      final request = await saleService.requestReceiptReprint(
+        orderRef: orderRef,
+        reasonCode: reasonCode,
+        reasonText: reasonText,
+        idempotencyKey: idempotencyKey,
+      );
+      final preview = await saleService.previewPrintTask(orderRef);
+      return _state = PosSalePageState(
+        phase: PosSalePagePhase.settled,
+        workspace: _state.workspace,
+        settlement: _state.settlement,
+        printPreview: preview,
+        reprintRequest: request,
+      );
+    } on PosSessionFailure catch (error) {
+      return _failure(error.code, error.message);
+    } on PosSaleFailure catch (error) {
+      return _failure(error.code, error.message);
+    } catch (_) {
+      return _failure('REPRINT_REQUEST_FAILED', '补打请求失败，请使用原幂等键重试。');
+    }
+  }
+
   /// 成交完成后由应用服务创建新篮，页面不复用已冻结的原交易命令。
   Future<PosSalePageState> startNextSale() {
     _state = const PosSalePageState.loading();
@@ -239,6 +285,7 @@ final class PosSaleController {
     required PosSalePagePhase phase,
     List<PosProductView>? searchResults,
     PosPrintPreviewView? printPreview,
+    PosReprintRequestView? reprintRequest,
     String? errorCode,
     String? safeMessage,
     bool clearError = false,
@@ -248,6 +295,7 @@ final class PosSaleController {
     searchResults: searchResults ?? _state.searchResults,
     settlement: _state.settlement,
     printPreview: printPreview ?? _state.printPreview,
+    reprintRequest: reprintRequest ?? _state.reprintRequest,
     errorCode: clearError ? null : errorCode ?? _state.errorCode,
     safeMessage: clearError ? null : safeMessage ?? _state.safeMessage,
   );

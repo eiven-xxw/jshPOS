@@ -51,12 +51,19 @@ void main() {
         idempotencyKey: 'cash:sale:001:fingerprint',
       );
       final preview = await controller.loadPrintPreview('order:001');
+      final reprint = await controller.requestReprint(
+        orderRef: 'order:001',
+        reasonCode: 'CUSTOMER_COPY',
+        reasonText: '顾客要求补打',
+        idempotencyKey: 'reprint:order:001:0001',
+      );
       final next = await controller.startNextSale();
 
       expect(fixture.sale.resumeRef, 'held:001');
       expect(fixture.sale.idempotencyKey, 'cash:sale:001:fingerprint');
       expect(settlement.settlement?.orderRef, 'order:001');
       expect(preview.printPreview?.adapterEvidence, 'FAKE_DEVICE_ADAPTER');
+      expect(reprint.reprintRequest?.executionStatus, 'BLOCKED_EXTERNAL');
       expect(next.phase, PosSalePagePhase.ready);
       expect(fixture.sale.loadCount, 2);
     });
@@ -165,6 +172,12 @@ void main() {
           idempotencyKey: 'cash:stable',
         ),
         () => service.previewPrintTask('order:001'),
+        () => service.requestReceiptReprint(
+          orderRef: 'order:001',
+          reasonCode: 'CUSTOMER_COPY',
+          reasonText: '顾客要求补打',
+          idempotencyKey: 'reprint:order:001:0001',
+        ),
         service.refreshSyncStatus,
       ];
 
@@ -297,6 +310,7 @@ final class SaleFixture {
               PosPermission.manualDiscount,
               PosPermission.cashSettle,
               PosPermission.printPreview,
+              PosPermission.printReprint,
               PosPermission.syncView,
             },
       ),
@@ -422,6 +436,25 @@ final class FakePosSaleApplicationService implements PosSaleApplicationService {
   Future<PosPrintPreviewView> previewPrintTask(String orderRef) async {
     _fail();
     return printPreview;
+  }
+
+  @override
+  Future<PosReprintRequestView> requestReceiptReprint({
+    required String orderRef,
+    required String reasonCode,
+    required String reasonText,
+    required String idempotencyKey,
+  }) async {
+    _fail();
+    return PosReprintRequestView(
+      printRequestRef: '01K2A000000000000000000091',
+      orderRef: orderRef,
+      reprintNo: 1,
+      documentDigest: List.filled(64, 'a').join(),
+      executionStatus: 'BLOCKED_EXTERNAL',
+      outboxEventRef: '01K2A000000000000000000092',
+      duplicate: false,
+    );
   }
 
   @override

@@ -20,12 +20,12 @@ class OrderMigrationMySqlIT {
     private final String password = required("GATE2_MYSQL_PASSWORD");
 
     @Test
-    void migratesAllNineVersionsAndEnforcesTenantCashAndAppendOnlyConstraints() throws Exception {
+    void migratesAllTenVersionsAndEnforcesTenantCashAndAppendOnlyConstraints() throws Exception {
         createFrameworkMenuFixture();
         Flyway flyway = Flyway.configure().dataSource(url, username, password)
             .locations("classpath:db/migration").table("jshpos_flyway_schema_history")
             .baselineOnMigrate(true).baselineVersion("0").cleanDisabled(true).load();
-        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(9);
+        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(10);
         assertThat(flyway.migrate().migrationsExecuted).isZero();
         flyway.validate();
         assertTablesAndPermissions();
@@ -52,7 +52,8 @@ class OrderMigrationMySqlIT {
         Set<String> tables = Set.of("shf_shift", "shf_shift_approval", "ord_sales_order", "ord_order_line",
             "ord_state_history", "ord_cash_payment", "shf_cash_ledger", "ord_print_job",
             "ord_event_outbox", "ord_idempotency", "ord_audit_event", "ord_promotion_binding",
-            "ord_cash_refund", "shf_cash_movement", "shf_drawer_event");
+            "ord_cash_refund", "shf_cash_movement", "shf_drawer_event",
+            "ord_receipt_document", "ord_print_request");
         try (Connection connection = DriverManager.getConnection(url, username, password);
              Statement statement = connection.createStatement()) {
             for (String table : tables) {
@@ -66,6 +67,10 @@ class OrderMigrationMySqlIT {
                 assertThat(rows.getInt(1)).isEqualTo(7);
             }
             try (var rows = statement.executeQuery("SELECT COUNT(DISTINCT perms) FROM sys_menu WHERE menu_id IN (9200208,9200209)")) {
+                assertThat(rows.next()).isTrue();
+                assertThat(rows.getInt(1)).isEqualTo(2);
+            }
+            try (var rows = statement.executeQuery("SELECT COUNT(DISTINCT perms) FROM sys_menu WHERE menu_id IN (9200210,9200211)")) {
                 assertThat(rows.next()).isTrue();
                 assertThat(rows.getInt(1)).isEqualTo(2);
             }

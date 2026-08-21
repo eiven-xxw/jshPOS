@@ -103,6 +103,28 @@ def validate() -> dict:
     if stage in {"POS010_IMPLEMENTATION", "POS010_INDEPENDENT_VERIFIED"}:
         fail(not any(any(version in item for version in forbidden) for item in changed),
              "POS010 未验证前不得预建 POS011/ORD004 迁移")
+    if stage in {"POS011_IMPLEMENTATION", "POS011_INDEPENDENT_VERIFIED",
+                 "ORD004_IMPLEMENTATION", "FIRST_BATCH_VERIFIED"}:
+        required_pos011 = [
+            "docs/t2-gate7b/04_T2_POS011设计准入.md",
+            "contracts/t2/gate7b/receipt-events-v1.schema.json",
+            "pos-flutter/lib/infrastructure/local_database/gate7b_receipt_schema.dart",
+            "server/ruoyi-modules/jshpos-order/src/main/resources/db/migration/V202608210053__gate7b_receipt_reprint.sql",
+        ]
+        for path in required_pos011:
+            text(path)
+        receipt_sqlite = text(required_pos011[2])
+        receipt_mysql = text(required_pos011[3]).lower()
+        for token in ("BLOCKED_EXTERNAL", "immutable", "append-only"):
+            fail(token in receipt_sqlite, f"POS011 SQLite 边界缺失: {token}")
+        for token in ("blocked_external", "immutable", "append-only"):
+            fail(token in receipt_mysql, f"POS011 MySQL 边界缺失: {token}")
+        for token in ("requestReceiptReprint", "receipt.document-frozen.v1",
+                      "receipt.reprint-requested.v1"):
+            fail(token in checkout or token in sync, f"POS011 运行时/同步契约缺失: {token}")
+    if stage in {"POS011_IMPLEMENTATION", "POS011_INDEPENDENT_VERIFIED"}:
+        fail(not any("V202608210054" in item for item in changed),
+             "POS011 未验证前不得预建 ORD004 迁移")
     return {
         "schemaVersion": "1.0", "gate": "T2-GATE7B-SPRINT-S20-POS-OPERATIONS-FIRST-BATCH",
         "status": "PASS", "stage": stage, "baselineCommit": BASELINE,

@@ -237,7 +237,34 @@ public interface OrderMapper {
                      @Param("aggregateType") String aggregateType, @Param("aggregateId") String aggregateId,
                      @Param("version") long version, @Param("correlationId") String correlationId,
                      @Param("payloadJson") String payloadJson, @Param("payloadHash") String payloadHash,
-                     @Param("at") LocalDateTime at);
+                       @Param("at") LocalDateTime at);
+
+    @Select("SELECT p.print_job_id FROM ord_sales_order o JOIN ord_print_job p ON p.tenant_id=o.tenant_id AND p.order_id=o.order_id WHERE o.tenant_id=#{tenantId} AND o.order_id=#{orderId}")
+    String findPrintJobId(@Param("tenantId") String tenantId, @Param("orderId") String orderId);
+
+    @Insert("INSERT INTO ord_receipt_document(document_id,tenant_id,source_event_id,order_id,store_id,terminal_id,cashier_user_id,document_type,template_version,template_schema_version,semantic_payload_json,content_sha256,order_aggregate_version,execution_status,frozen_at) VALUES(#{documentId},#{tenantId},#{sourceEventId},#{orderId},#{storeId},#{terminalId},#{cashierId},#{documentType},#{templateVersion},#{schemaVersion},CAST(#{payloadJson} AS JSON),#{contentHash},#{orderVersion},'BLOCKED_EXTERNAL',#{at})")
+    int insertReceiptDocument(@Param("tenantId") String tenantId, @Param("sourceEventId") String sourceEventId,
+                              @Param("documentId") String documentId, @Param("orderId") String orderId,
+                              @Param("storeId") Long storeId, @Param("terminalId") String terminalId,
+                              @Param("cashierId") Long cashierId, @Param("documentType") String documentType,
+                              @Param("templateVersion") String templateVersion, @Param("schemaVersion") int schemaVersion,
+                              @Param("payloadJson") String payloadJson, @Param("contentHash") String contentHash,
+                              @Param("orderVersion") long orderVersion, @Param("at") LocalDateTime at);
+
+    @Select("SELECT COUNT(*) FROM ord_receipt_document d WHERE d.tenant_id=#{tenantId} AND d.order_id=#{orderId} AND d.document_id=#{documentId} AND d.content_sha256=#{documentHash}")
+    int countReceiptSource(@Param("tenantId") String tenantId, @Param("orderId") String orderId,
+                           @Param("documentId") String documentId,
+                           @Param("documentHash") String documentHash);
+
+    @Insert("INSERT INTO ord_print_request(print_request_id,tenant_id,source_event_id,print_job_id,document_id,order_id,store_id,terminal_id,requested_by,authorization_ref,request_kind,reprint_no,reason_code,reason_text,request_sha256,document_sha256,execution_status,requested_at) VALUES(#{requestId},#{tenantId},#{sourceEventId},#{printJobId},#{documentId},#{orderId},#{storeId},#{terminalId},#{cashierId},#{authorizationRef},'REPRINT',#{reprintNo},#{reasonCode},#{reasonText},#{requestHash},#{documentHash},'BLOCKED_EXTERNAL',#{at})")
+    int insertPrintRequest(@Param("tenantId") String tenantId, @Param("sourceEventId") String sourceEventId,
+                           @Param("requestId") String requestId, @Param("printJobId") String printJobId,
+                           @Param("documentId") String documentId, @Param("orderId") String orderId,
+                           @Param("storeId") Long storeId, @Param("terminalId") String terminalId,
+                           @Param("cashierId") Long cashierId, @Param("authorizationRef") String authorizationRef,
+                           @Param("reprintNo") int reprintNo, @Param("reasonCode") String reasonCode,
+                           @Param("reasonText") String reasonText, @Param("requestHash") String requestHash,
+                           @Param("documentHash") String documentHash, @Param("at") LocalDateTime at);
 
     @Insert("""
         INSERT INTO ord_audit_event(audit_id,tenant_id,action_code,aggregate_type,aggregate_id,actor_user_id,

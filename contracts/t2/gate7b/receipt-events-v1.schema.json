@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jingshanghui.example/contracts/t2/gate7b/receipt-events-v1.schema.json",
+  "title": "Gate 7B receipt events",
+  "oneOf": [
+    { "$ref": "#/$defs/documentFrozen" },
+    { "$ref": "#/$defs/reprintRequested" }
+  ],
+  "$defs": {
+    "ulid": { "type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$" },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "trustedScope": {
+      "type": "object",
+      "required": ["storeId", "terminalId", "cashierId"],
+      "properties": {
+        "storeId": { "type": "string" },
+        "terminalId": { "$ref": "#/$defs/ulid" },
+        "cashierId": { "type": "string" }
+      }
+    },
+    "documentFrozen": {
+      "allOf": [
+        { "$ref": "#/$defs/trustedScope" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["documentId", "printJobId", "orderId", "storeId", "terminalId", "cashierId", "documentType", "templateVersion", "templateSchemaVersion", "contentSha256", "semanticPayload", "orderAggregateVersion", "executionStatus"],
+          "properties": {
+            "documentId": { "$ref": "#/$defs/ulid" },
+            "printJobId": { "$ref": "#/$defs/ulid" },
+            "orderId": { "$ref": "#/$defs/ulid" },
+            "storeId": { "type": "string" },
+            "terminalId": { "$ref": "#/$defs/ulid" },
+            "cashierId": { "type": "string" },
+            "documentType": { "const": "SALE_RECEIPT" },
+            "templateVersion": { "type": "string", "minLength": 1, "maxLength": 32 },
+            "templateSchemaVersion": { "const": 1 },
+            "contentSha256": { "$ref": "#/$defs/sha256" },
+            "semanticPayload": { "type": "object" },
+            "orderAggregateVersion": { "type": "integer", "minimum": 1 },
+            "executionStatus": { "const": "BLOCKED_EXTERNAL" }
+          }
+        }
+      ]
+    },
+    "reprintRequested": {
+      "allOf": [
+        { "$ref": "#/$defs/trustedScope" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["printRequestId", "printJobId", "documentId", "orderId", "requestKind", "reprintNo", "storeId", "terminalId", "cashierId", "authorizationRef", "reasonCode", "reasonText", "requestSha256", "documentSha256", "executionStatus", "requestedAt"],
+          "properties": {
+            "printRequestId": { "$ref": "#/$defs/ulid" },
+            "printJobId": { "$ref": "#/$defs/ulid" },
+            "documentId": { "$ref": "#/$defs/ulid" },
+            "orderId": { "$ref": "#/$defs/ulid" },
+            "requestKind": { "const": "REPRINT" },
+            "reprintNo": { "type": "integer", "minimum": 1, "maximum": 999 },
+            "storeId": { "type": "string" },
+            "terminalId": { "$ref": "#/$defs/ulid" },
+            "cashierId": { "type": "string" },
+            "authorizationRef": { "type": "string", "minLength": 16, "maxLength": 128 },
+            "reasonCode": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]{1,31}$" },
+            "reasonText": { "type": "string", "minLength": 1, "maxLength": 256 },
+            "requestSha256": { "$ref": "#/$defs/sha256" },
+            "documentSha256": { "$ref": "#/$defs/sha256" },
+            "executionStatus": { "const": "BLOCKED_EXTERNAL" },
+            "requestedAt": { "type": "string", "format": "date-time" }
+          }
+        }
+      ]
+    }
+  }
+}

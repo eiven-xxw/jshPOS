@@ -1,3 +1,7 @@
+import 'dart:convert';
+
+import 'package:crypto/crypto.dart';
+
 import '../../../infrastructure/local_database/pos_local_database.dart';
 import '../../catalog/infrastructure/catalog_package_installer.dart';
 import '../../checkout/application/checkout_local_service.dart';
@@ -9,6 +13,7 @@ import '../../promotion/application/local_promotion_quote_service.dart';
 import '../../promotion/domain/manual_adjustment_engine.dart';
 import '../../promotion/domain/promotion_engine.dart';
 import '../../synchronization/application/sync_coordinator.dart';
+import '../../session/domain/pos_session_models.dart';
 import '../application/pos_sale_application_service.dart';
 import '../domain/pos_sale_models.dart';
 
@@ -23,6 +28,8 @@ final class LocalPosSaleApplicationService
     required this.checkout,
     required this.ulids,
     required this.industryTemplateVersion,
+    this.permissions = const {},
+    this.authorizationRef = 'BLOCKED_NO_SESSION',
     this.syncCoordinator,
     DateTime Function()? now,
   }) : _now = now ?? DateTime.now;
@@ -35,6 +42,8 @@ final class LocalPosSaleApplicationService
   final PosSyncCoordinator? syncCoordinator;
   final UlidGenerator ulids;
   final String industryTemplateVersion;
+  final Set<PosPermission> permissions;
+  final String authorizationRef;
   final DateTime Function() _now;
 
   Basket? _basket;
@@ -348,32 +357,85 @@ final class LocalPosSaleApplicationService
   Future<PosPrintPreviewView> previewPrintTask(String orderRef) async {
     final binding = database.binding;
     final orders = database.database.select(
-      '''SELECT o.*,p.print_job_id FROM local_order o
+      '''SELECT o.*,p.print_job_id,d.document_id,d.template_version,d.semantic_payload_json,d.content_sha256,
+         COALESCE((SELECT MAX(r.reprint_no) FROM local_print_request r
+           WHERE r.tenant_id=o.tenant_id AND r.order_id=o.order_id AND r.request_kind='REPRINT'),0) reprint_no,
+         (SELECT r.requested_by_name || ' / ' || r.reason_code || ' / ' || r.requested_at
+           FROM local_print_request r WHERE r.tenant_id=o.tenant_id AND r.order_id=o.order_id
+             AND r.request_kind='REPRINT' ORDER BY r.reprint_no DESC LIMIT 1) reprint_audit
+         FROM local_order o
          JOIN local_print_job p ON p.tenant_id=o.tenant_id AND p.order_id=o.order_id
+         JOIN local_receipt_document d ON d.tenant_id=o.tenant_id AND d.order_id=o.order_id
          WHERE o.tenant_id=? AND o.store_id=? AND o.terminal_id=? AND o.order_id=? AND o.status='COMPLETED' ''',
       [binding.tenantId, binding.storeId, binding.terminalId, orderRef],
     );
     if (orders.length != 1) {
-      throw const PosSaleFailure('PRINT_TASK_NOT_FOUND', '打印任务不存在或不可见。');
+      throw const PosSaleFailure('RECEIPT_NOT_FOUND', '冻结收据不存在或不可见。');
     }
     final order = orders.single;
-    final lines = database.database.select(
-      'SELECT product_name_snapshot,quantity_decimal,payable_amount_minor FROM local_order_line WHERE tenant_id=? AND order_id=? ORDER BY line_no',
-      [binding.tenantId, orderRef],
-    );
+    final semanticPayloadJson = order['semantic_payload_json']! as String;
+    final actualDigest = sha256
+        .convert(utf8.encode(semanticPayloadJson))
+        .toString();
+    if (actualDigest != order['content_sha256']) {
+      throw const PosSaleFailure('RECEIPT_HASH_MISMATCH', '冻结收据内容摘要校验失败。');
+    }
+    final payload = (jsonDecode(semanticPayloadJson) as Map)
+        .cast<String, Object?>();
+    final semanticLines = (payload['lines']! as List).cast<Map>();
+    final reprintNo = order['reprint_no']! as int;
     return PosPrintPreviewView(
       taskRef: order['print_job_id']! as String,
       orderRef: orderRef,
-      title: '鲸熵汇收银小票（预览）',
-      lines: lines
+      title: reprintNo == 0 ? '鲸熵汇收银小票（预览）' : '鲸熵汇收银小票（补打 #$reprintNo）',
+      lines: semanticLines
           .map(
             (line) =>
-                '${line['product_name_snapshot']} × ${line['quantity_decimal']}  ${_money(line['payable_amount_minor']! as int)}',
+                '${line['name']} × ${line['quantity']}  ${_money(line['payableAmountMinor']! as int)}',
           )
           .toList(growable: false),
-      totalText: '合计 ${_money(order['receivable_amount_minor']! as int)}',
-      adapterEvidence: 'FAKE_DEVICE_ADAPTER/BLOCKED_REAL_PRINTER',
+      totalText: '合计 ${_money(payload['receivableAmountMinor']! as int)}',
+      adapterEvidence: 'SOFTWARE_PREVIEW/BLOCKED_REAL_PRINTER',
+      templateVersion: order['template_version']! as String,
+      contentSha256: order['content_sha256']! as String,
+      reprintNo: reprintNo,
+      reprintAuditText: order['reprint_audit'] as String?,
     );
+  }
+
+  @override
+  Future<PosReprintRequestView> requestReceiptReprint({
+    required String orderRef,
+    required String reasonCode,
+    required String reasonText,
+    required String idempotencyKey,
+  }) async {
+    if (!permissions.contains(PosPermission.printReprint) ||
+        authorizationRef == 'BLOCKED_NO_SESSION') {
+      throw const PosSaleFailure('PERMISSION_DENIED', '当前员工无补打权限。');
+    }
+    try {
+      final result = checkout.requestReceiptReprint(
+        commandId: ulids.next(),
+        idempotencyKey: idempotencyKey,
+        orderId: orderRef,
+        reasonCode: reasonCode,
+        reasonText: reasonText,
+        authorizationRef: authorizationRef,
+        occurredAt: _now().toUtc(),
+      );
+      return PosReprintRequestView(
+        printRequestRef: result.printRequestId,
+        orderRef: result.orderId,
+        reprintNo: result.reprintNo,
+        documentDigest: result.documentSha256,
+        executionStatus: result.executionStatus,
+        outboxEventRef: result.outboxEventId,
+        duplicate: result.duplicate,
+      );
+    } on PosDomainException catch (error) {
+      throw PosSaleFailure(error.code, error.message);
+    }
   }
 
   @override

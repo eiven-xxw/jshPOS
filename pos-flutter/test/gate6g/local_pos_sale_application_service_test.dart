@@ -16,6 +16,7 @@ import 'package:jshpos_pos/features/promotion/domain/promotion_engine.dart';
 import 'package:jshpos_pos/features/promotion/infrastructure/promotion_package_installer.dart';
 import 'package:jshpos_pos/features/sale/infrastructure/local_pos_sale_application_service.dart';
 import 'package:jshpos_pos/features/sale/domain/pos_sale_models.dart';
+import 'package:jshpos_pos/features/session/domain/pos_session_models.dart';
 import 'package:jshpos_pos/features/shift/domain/shift_models.dart';
 import 'package:jshpos_pos/infrastructure/local_database/pos_local_database.dart';
 
@@ -47,6 +48,15 @@ void main() {
         idempotencyKey: 'cash:${adjusted.saleRef}:${adjusted.quoteFingerprint}',
       );
       final preview = await fixture.service.previewPrintTask(settled.orderRef);
+      final reprint = await fixture.service.requestReceiptReprint(
+        orderRef: settled.orderRef,
+        reasonCode: 'CUSTOMER_COPY',
+        reasonText: '顾客要求补打',
+        idempotencyKey: 'reprint:${settled.orderRef}:0001',
+      );
+      final reprintPreview = await fixture.service.previewPrintTask(
+        settled.orderRef,
+      );
 
       expect(initial.lines, isEmpty);
       expect(quoted.totals.grossAmountMinor, 299);
@@ -57,6 +67,10 @@ void main() {
       expect(settled.changeAmountMinor, 151);
       expect(preview.lines.single, contains('合成柠檬水'));
       expect(preview.adapterEvidence, contains('BLOCKED_REAL_PRINTER'));
+      expect(preview.adapterEvidence, startsWith('SOFTWARE_PREVIEW'));
+      expect(reprint.executionStatus, 'BLOCKED_EXTERNAL');
+      expect(reprintPreview.reprintNo, 1);
+      expect(reprintPreview.title, contains('补打 #1'));
       expect(fixture.count('local_order'), 1);
       expect(fixture.count('local_promotion_manual_event'), 1);
       expect(fixture.count('local_promotion_transaction_snapshot'), 1);
@@ -127,7 +141,7 @@ void main() {
         isA<PosSaleFailure>().having(
           (error) => error.code,
           'code',
-          'PRINT_TASK_NOT_FOUND',
+          'RECEIPT_NOT_FOUND',
         ),
       ),
     );
@@ -241,6 +255,11 @@ final class _Fixture {
         checkout: checkout,
         ulids: ulids,
         industryTemplateVersion: 'CONVENIENCE_V1',
+        permissions: const {
+          PosPermission.printPreview,
+          PosPermission.printReprint,
+        },
+        authorizationRef: 'SYNTHETIC_SESSION_REF_0001',
         now: () => fixedNow,
       ),
     );

@@ -53,7 +53,7 @@ class ReleaseMigrationMySqlIT {
                 }
             }
         }
-        assertThat(tables).hasSize(161);
+        assertThat(tables).hasSize(163);
         try (Connection c = DriverManager.getConnection(url, username, password);
              PreparedStatement query = c.prepareStatement("SELECT t.table_name FROM information_schema.tables t LEFT JOIN information_schema.columns c ON c.table_schema=t.table_schema AND c.table_name=t.table_name AND c.column_name='tenant_id' WHERE t.table_schema=DATABASE() AND t.table_type='BASE TABLE' AND t.table_name NOT IN ('sys_menu','jshpos_flyway_schema_history') AND c.column_name IS NULL ORDER BY t.table_name");
              ResultSet rows = query.executeQuery()) {

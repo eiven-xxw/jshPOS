@@ -2,6 +2,14 @@ openapi: 3.1.0
 info:
   title: 鲸熵汇 Gate 7B POS 交易运营 API
   version: 1.0.0
+x-pos-local-application-operations:
+  loadPrintPreview:
+    summary: 从成交时冻结的语义收据生成软件预览，禁止按当前商品或促销重算
+    resultSchema: '#/components/schemas/ReceiptPreview'
+  requestReceiptReprint:
+    summary: 追加补打请求、审计、幂等结果和 Outbox；真实打印固定失败关闭
+    requestSchema: '#/components/schemas/ReceiptReprintRequest'
+    resultSchema: '#/components/schemas/ReceiptReprintResult'
 paths:
   /api/v1/pos/shifts/{shiftId}/cash-movements:
     post:
@@ -68,6 +76,40 @@ components:
       required: true
       schema: { type: string, minLength: 16, maxLength: 128 }
   schemas:
+    ReceiptPreview:
+      type: object
+      additionalProperties: false
+      required: [documentId, orderId, templateVersion, contentSha256, reprintNo, semanticLines]
+      properties:
+        documentId: { type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$' }
+        orderId: { type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$' }
+        templateVersion: { type: string, minLength: 1, maxLength: 32 }
+        contentSha256: { type: string, pattern: '^[a-f0-9]{64}$' }
+        reprintNo: { type: integer, minimum: 0, maximum: 999 }
+        semanticLines: { type: array, maxItems: 500, items: { type: object } }
+    ReceiptReprintRequest:
+      type: object
+      additionalProperties: false
+      required: [printRequestId, orderId, reasonCode, reasonText, authorizationRef, requestedAt]
+      properties:
+        printRequestId: { type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$' }
+        orderId: { type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$' }
+        reasonCode: { type: string, pattern: '^[A-Z][A-Z0-9_]{1,31}$' }
+        reasonText: { type: string, minLength: 1, maxLength: 256 }
+        authorizationRef: { type: string, minLength: 16, maxLength: 128 }
+        requestedAt: { type: string, format: date-time }
+    ReceiptReprintResult:
+      type: object
+      additionalProperties: false
+      required: [printRequestId, orderId, documentId, reprintNo, documentSha256, executionStatus, outboxEventId]
+      properties:
+        printRequestId: { type: string }
+        orderId: { type: string }
+        documentId: { type: string }
+        reprintNo: { type: integer, minimum: 1, maximum: 999 }
+        documentSha256: { type: string, pattern: '^[a-f0-9]{64}$' }
+        executionStatus: { type: string, const: BLOCKED_EXTERNAL }
+        outboxEventId: { type: string }
     CashMovementRequest:
       type: object
       additionalProperties: false

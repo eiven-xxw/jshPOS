@@ -529,16 +529,23 @@ final class CheckoutLocalService {
         );
       }
       localDatabase.checkpoint('cash.ledger');
+      final printJobId = ulids.next();
       _db.execute(
         'INSERT INTO local_print_job(print_job_id,tenant_id,order_id,status,template_version,payload_sha256,created_at) VALUES(?,?,?,\'PENDING\',?,?,?)',
         [
-          ulids.next(),
+          printJobId,
           _binding.tenantId,
           command.basket.orderId,
           command.industryTemplateVersion,
           snapshotHash,
           at,
         ],
+      );
+      _freezeReceiptDocument(
+        orderId: command.basket.orderId,
+        printJobId: printJobId,
+        templateVersion: command.industryTemplateVersion,
+        at: at,
       );
       localDatabase.checkpoint('print.queued');
       final submittedEvent = _appendOutbox(
@@ -837,16 +844,23 @@ final class CheckoutLocalService {
         );
       }
       localDatabase.checkpoint('promoted.cash.ledger');
+      final printJobId = ulids.next();
       _db.execute(
         'INSERT INTO local_print_job(print_job_id,tenant_id,order_id,status,template_version,payload_sha256,created_at) VALUES(?,?,?,\'PENDING\',?,?,?)',
         [
-          ulids.next(),
+          printJobId,
           _binding.tenantId,
           command.basket.orderId,
           command.industryTemplateVersion,
           orderSnapshotHash,
           at,
         ],
+      );
+      final receipt = _freezeReceiptDocument(
+        orderId: command.basket.orderId,
+        printJobId: printJobId,
+        templateVersion: command.industryTemplateVersion,
+        at: at,
       );
       final submittedEvent = _appendOutbox(
         stream: 'order.command',
@@ -929,6 +943,13 @@ final class CheckoutLocalService {
         },
         occurredAt: at,
       );
+      _appendReceiptFrozenEvent(
+        receipt: receipt,
+        printJobId: printJobId,
+        aggregateVersion: completedVersion,
+        correlationId: command.commandId,
+        occurredAt: at,
+      );
       localDatabase.checkpoint('promoted.outbox.appended');
       _audit(
         'PROMOTED_CASH_ORDER_COMPLETED',
@@ -963,6 +984,169 @@ final class CheckoutLocalService {
         at,
       );
       localDatabase.checkpoint('promoted.idempotency.saved');
+      return result;
+    });
+  }
+
+  /// 创建受权补打请求；只形成可同步的软件事实，不调用真实打印机。
+  ReceiptReprintResult requestReceiptReprint({
+    required String commandId,
+    required String idempotencyKey,
+    required String orderId,
+    required String reasonCode,
+    required String reasonText,
+    required String authorizationRef,
+    required DateTime occurredAt,
+  }) {
+    _requireCommand(commandId, idempotencyKey);
+    if (!RegExp(r'^[0-9A-HJKMNP-TV-Z]{26}$').hasMatch(orderId) ||
+        !RegExp(r'^[A-Z][A-Z0-9_]{1,31}$').hasMatch(reasonCode) ||
+        reasonCode == 'ORDER_COMPLETED' ||
+        reasonText.trim().isEmpty ||
+        reasonText.trim().length > 256 ||
+        authorizationRef.length < 16 ||
+        authorizationRef.length > 128) {
+      throw const PosDomainException(
+        'RECEIPT_REPRINT_INVALID',
+        'receipt reprint input is invalid',
+      );
+    }
+    final at = occurredAt.toUtc().toIso8601String();
+    final requestHash = _hash([
+      orderId,
+      reasonCode,
+      reasonText.trim(),
+      authorizationRef,
+      _binding.cashierId,
+    ]);
+    final replay = _idempotent<ReceiptReprintResult>(
+      'REQUEST_RECEIPT_REPRINT',
+      idempotencyKey,
+      requestHash,
+      ReceiptReprintResult.fromJson,
+    );
+    if (replay != null) {
+      return replay;
+    }
+    return localDatabase.transaction(() {
+      final rows = _db.select(
+        '''SELECT d.document_id,d.content_sha256,d.template_version,d.semantic_payload_json,p.print_job_id
+           FROM local_receipt_document d
+           JOIN local_order o ON o.tenant_id=d.tenant_id AND o.order_id=d.order_id
+           JOIN local_print_job p ON p.tenant_id=d.tenant_id AND p.order_id=d.order_id
+           WHERE d.tenant_id=? AND o.store_id=? AND o.terminal_id=?
+             AND d.order_id=? AND o.status='COMPLETED' ''',
+        [_binding.tenantId, _binding.storeId, _binding.terminalId, orderId],
+      );
+      if (rows.length != 1) {
+        throw const PosDomainException(
+          'RECEIPT_NOT_FOUND',
+          'receipt document does not exist in trusted terminal scope',
+        );
+      }
+      final row = rows.single;
+      final semanticPayloadJson = row['semantic_payload_json']! as String;
+      if (sha256.convert(utf8.encode(semanticPayloadJson)).toString() !=
+          row['content_sha256']) {
+        throw const PosDomainException(
+          'RECEIPT_HASH_MISMATCH',
+          'receipt semantic payload digest does not match the frozen digest',
+        );
+      }
+      final reprintNo =
+          (_db.select(
+                "SELECT COALESCE(MAX(reprint_no),0) n FROM local_print_request WHERE tenant_id=? AND order_id=? AND request_kind='REPRINT'",
+                [_binding.tenantId, orderId],
+              ).single['n']!
+              as int) +
+          1;
+      if (reprintNo > 999) {
+        throw const PosDomainException(
+          'RECEIPT_REPRINT_LIMIT_REACHED',
+          'receipt reprint sequence exceeds the audited limit',
+        );
+      }
+      final requestId = ulids.next();
+      _db.execute(
+        '''INSERT INTO local_print_request(print_request_id,tenant_id,print_job_id,order_id,document_id,
+           request_kind,reprint_no,requested_by,requested_by_name,authorization_ref,reason_code,reason_text,
+           idempotency_key,request_sha256,document_sha256,execution_status,adapter_evidence,requested_at)
+           VALUES(?,?,?,?,?,'REPRINT',?,?,?,?,?,?,?,?,?,'BLOCKED_EXTERNAL','BLOCKED_REAL_PRINTER',?)''',
+        [
+          requestId,
+          _binding.tenantId,
+          row['print_job_id'],
+          orderId,
+          row['document_id'],
+          reprintNo,
+          _binding.cashierId,
+          _binding.cashierName,
+          authorizationRef,
+          reasonCode,
+          reasonText.trim(),
+          idempotencyKey,
+          requestHash,
+          row['content_sha256'],
+          at,
+        ],
+      );
+      localDatabase.checkpoint('reprint.requested');
+      final eventId = _appendOutbox(
+        stream: 'order.command',
+        eventType: 'receipt.reprint-requested.v1',
+        aggregateId: requestId,
+        aggregateVersion: 1,
+        correlationId: commandId,
+        payload: {
+          'printRequestId': requestId,
+          'printJobId': row['print_job_id'],
+          'documentId': row['document_id'],
+          'orderId': orderId,
+          'requestKind': 'REPRINT',
+          'reprintNo': reprintNo,
+          'storeId': _binding.storeId,
+          'terminalId': _binding.terminalId,
+          'cashierId': _binding.cashierId,
+          'authorizationRef': authorizationRef,
+          'reasonCode': reasonCode,
+          'reasonText': reasonText.trim(),
+          'requestSha256': requestHash,
+          'documentSha256': row['content_sha256'],
+          'executionStatus': 'BLOCKED_EXTERNAL',
+          'requestedAt': at,
+        },
+        occurredAt: at,
+      );
+      _audit(
+        'RECEIPT_REPRINT_REQUESTED',
+        'PRINT_REQUEST',
+        requestId,
+        commandId,
+        null,
+        'BLOCKED_EXTERNAL',
+        null,
+        requestHash,
+        at,
+      );
+      final result = ReceiptReprintResult(
+        printRequestId: requestId,
+        orderId: orderId,
+        documentId: row['document_id']! as String,
+        reprintNo: reprintNo,
+        documentSha256: row['content_sha256']! as String,
+        executionStatus: 'BLOCKED_EXTERNAL',
+        outboxEventId: eventId,
+        duplicate: false,
+      );
+      _saveIdempotency(
+        'REQUEST_RECEIPT_REPRINT',
+        commandId,
+        idempotencyKey,
+        requestHash,
+        requestId,
+        result.toJson(),
+        at,
+      );
       return result;
     });
   }
@@ -2076,6 +2260,171 @@ final class CheckoutLocalService {
             .map((line) => line.toSnapshot())
             .toList(),
   };
+
+  /// 从已落库的不可变订单事实生成语义收据，并创建唯一原始打印请求。
+  ({String documentId, String contentSha256, String payloadJson})
+  _freezeReceiptDocument({
+    required String orderId,
+    required String printJobId,
+    required String templateVersion,
+    required String at,
+  }) {
+    final orders = _db.select(
+      '''SELECT local_order_no,store_id,terminal_id,shift_id,cashier_id,business_date,currency,
+         gross_amount_minor,discount_amount_minor,surcharge_amount_minor,receivable_amount_minor
+         FROM local_order WHERE tenant_id=? AND order_id=? AND status='COMPLETED' ''',
+      [_binding.tenantId, orderId],
+    );
+    if (orders.length != 1) {
+      throw const PosDomainException(
+        'RECEIPT_SOURCE_INVALID',
+        'completed order source is missing',
+      );
+    }
+    final order = orders.single;
+    final lines = _db.select(
+      '''SELECT line_no,sku_code,barcode_value,product_name_snapshot,unit_code,quantity_decimal,
+         unit_price_minor,gross_amount_minor,discount_amount_minor,surcharge_amount_minor,payable_amount_minor
+         FROM local_order_line WHERE tenant_id=? AND order_id=? ORDER BY line_no''',
+      [_binding.tenantId, orderId],
+    );
+    if (lines.isEmpty || lines.length > 500) {
+      throw const PosDomainException(
+        'RECEIPT_SOURCE_INVALID',
+        'receipt must contain between one and 500 order lines',
+      );
+    }
+    final payload = <String, Object?>{
+      'schemaVersion': 1,
+      'documentType': 'SALE_RECEIPT',
+      'orderId': orderId,
+      'localOrderNo': order['local_order_no'],
+      'storeId': order['store_id'],
+      'terminalId': order['terminal_id'],
+      'shiftId': order['shift_id'],
+      'cashierId': order['cashier_id'],
+      'cashierName': _binding.cashierName,
+      'businessDate': order['business_date'],
+      'currency': order['currency'],
+      'templateVersion': templateVersion,
+      'grossAmountMinor': order['gross_amount_minor'],
+      'discountAmountMinor': order['discount_amount_minor'],
+      'surchargeAmountMinor': order['surcharge_amount_minor'],
+      'receivableAmountMinor': order['receivable_amount_minor'],
+      'lines': lines
+          .map(
+            (line) => <String, Object?>{
+              'lineNo': line['line_no'],
+              'skuCode': line['sku_code'],
+              'barcode': line['barcode_value'],
+              'name': line['product_name_snapshot'],
+              'unitCode': line['unit_code'],
+              'quantity': line['quantity_decimal'],
+              'unitPriceMinor': line['unit_price_minor'],
+              'grossAmountMinor': line['gross_amount_minor'],
+              'discountAmountMinor': line['discount_amount_minor'],
+              'surchargeAmountMinor': line['surcharge_amount_minor'],
+              'payableAmountMinor': line['payable_amount_minor'],
+            },
+          )
+          .toList(growable: false),
+    };
+    final payloadJson = jsonEncode(payload);
+    if (utf8.encode(payloadJson).length > 1024 * 1024) {
+      throw const PosDomainException(
+        'RECEIPT_PAYLOAD_TOO_LARGE',
+        'receipt semantic payload exceeds the one MiB limit',
+      );
+    }
+    final contentSha256 = sha256.convert(utf8.encode(payloadJson)).toString();
+    final documentId = ulids.next();
+    _db.execute(
+      '''INSERT INTO local_receipt_document(document_id,tenant_id,order_id,document_type,
+         template_version,template_schema_version,semantic_payload_json,content_sha256,frozen_at)
+         VALUES(?,?,?,'SALE_RECEIPT',?,1,?,?,?)''',
+      [
+        documentId,
+        _binding.tenantId,
+        orderId,
+        templateVersion,
+        payloadJson,
+        contentSha256,
+        at,
+      ],
+    );
+    final printRequestId = ulids.next();
+    final idempotencyKey = 'print-original:$orderId';
+    final requestSha256 = _hash([
+      printRequestId,
+      printJobId,
+      orderId,
+      documentId,
+      contentSha256,
+      'ORIGINAL',
+    ]);
+    _db.execute(
+      '''INSERT INTO local_print_request(print_request_id,tenant_id,print_job_id,order_id,document_id,
+         request_kind,reprint_no,requested_by,requested_by_name,authorization_ref,reason_code,reason_text,
+         idempotency_key,request_sha256,document_sha256,execution_status,adapter_evidence,requested_at)
+         VALUES(?,?,?,?,?,'ORIGINAL',0,?,?,?,'ORDER_COMPLETED','成交后原始小票任务',?,?,?,
+         'BLOCKED_EXTERNAL','BLOCKED_REAL_PRINTER',?)''',
+      [
+        printRequestId,
+        _binding.tenantId,
+        printJobId,
+        orderId,
+        documentId,
+        _binding.cashierId,
+        _binding.cashierName,
+        'SYSTEM_ORDER_COMPLETION',
+        idempotencyKey,
+        requestSha256,
+        contentSha256,
+        at,
+      ],
+    );
+    localDatabase.checkpoint('receipt.frozen');
+    return (
+      documentId: documentId,
+      contentSha256: contentSha256,
+      payloadJson: payloadJson,
+    );
+  }
+
+  void _appendReceiptFrozenEvent({
+    required ({String documentId, String contentSha256, String payloadJson})
+    receipt,
+    required String printJobId,
+    required int aggregateVersion,
+    required String correlationId,
+    required String occurredAt,
+  }) {
+    final payload = (jsonDecode(receipt.payloadJson) as Map)
+        .cast<String, Object?>();
+    _appendOutbox(
+      stream: 'order.command',
+      eventType: 'receipt.document-frozen.v1',
+      aggregateId: receipt.documentId,
+      aggregateVersion: 1,
+      correlationId: correlationId,
+      payload: {
+        'documentId': receipt.documentId,
+        'printJobId': printJobId,
+        'orderId': payload['orderId'],
+        'storeId': _binding.storeId,
+        'terminalId': _binding.terminalId,
+        'cashierId': _binding.cashierId,
+        'documentType': 'SALE_RECEIPT',
+        'templateVersion': payload['templateVersion'],
+        'templateSchemaVersion': 1,
+        'contentSha256': receipt.contentSha256,
+        'semanticPayload': payload,
+        'orderAggregateVersion': aggregateVersion,
+        'executionStatus': 'BLOCKED_EXTERNAL',
+      },
+      occurredAt: occurredAt,
+    );
+  }
 
   String _appendOutbox({
     required String stream,

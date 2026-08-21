@@ -43,6 +43,14 @@ abstract interface class PosSaleApplicationService {
   /// 读取已完成订单的打印任务预览；不得控制真实打印机。
   Future<PosPrintPreviewView> previewPrintTask(String orderRef);
 
+  /// 生成带原因、次数、操作者与授权引用的补打请求；不得直接控制打印机。
+  Future<PosReprintRequestView> requestReceiptReprint({
+    required String orderRef,
+    required String reasonCode,
+    required String reasonText,
+    required String idempotencyKey,
+  });
+
   /// 刷新正式同步应用服务的积压、重试和死信只读状态。
   Future<PosSaleWorkspace> refreshSyncStatus();
 }

@@ -21,7 +21,8 @@ public final class SyncRules {
         "shift.opened.v1", "shift.difference-approved.v1", "shift.closed.v1",
         "shift.cash-movement.recorded.v1", "shift.drawer-requested.v1",
         "order.suspended.v1", "order.resumed.v1", "order.submitted.v1",
-        "cash.received.v1", "order.completed.v1", "order.submitted.v2", "order.completed.v2"
+        "cash.received.v1", "order.completed.v1", "order.submitted.v2", "order.completed.v2",
+        "receipt.document-frozen.v1", "receipt.reprint-requested.v1"
     );
 
     private SyncRules() {

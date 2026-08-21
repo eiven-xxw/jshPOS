@@ -28,6 +28,7 @@ public class SyncFactProcessor {
     private final Clock clock;
     private final PromotedOrderEventDispatcher promotedOrderEvents;
     private final ShiftEventDispatcher shiftEvents;
+    private final ReceiptEventDispatcher receiptEvents;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public EventAck apply(DeviceContext context, EventEnvelope event) {
@@ -54,6 +55,8 @@ public class SyncFactProcessor {
             shiftEvents.apply(context, event);
         } else if ("order.submitted.v2".equals(event.eventType())) {
             promotedOrderEvents.apply(context, event);
+        } else if (event.eventType().startsWith("receipt.")) {
+            receiptEvents.apply(context, event);
         }
         mapper.insertBusinessFact(ids.next(), context.tenantId(), event.eventId(), event.stream(), event.eventType(),
             event.aggregateId(), event.aggregateVersion(), serialize(event), event.payloadHash(), now);

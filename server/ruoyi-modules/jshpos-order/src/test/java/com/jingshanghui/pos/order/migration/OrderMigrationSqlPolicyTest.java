@@ -53,4 +53,18 @@ class OrderMigrationSqlPolicyTest {
             "pos:shift:cash-manage", "pos:drawer:no-sale", "可信租户标识", "最小货币单位带符号金额");
         assertThat(sql).doesNotContain("float", "double", "device sdk", "http://", "https://");
     }
+
+    @Test
+    void gate7bReceiptMigrationFreezesDocumentsAndKeepsRealPrinterBlocked() throws IOException {
+        String sql;
+        try (var stream = getClass().getResourceAsStream(
+            "/db/migration/V202608210053__gate7b_receipt_reprint.sql")) {
+            assertThat(stream).isNotNull();
+            sql = new String(stream.readAllBytes(), StandardCharsets.UTF_8).toLowerCase();
+        }
+        assertThat(sql).contains("create table ord_receipt_document", "create table ord_print_request",
+            "receipt document is immutable", "print request is append-only", "blocked_external",
+            "pos:print:preview", "pos:print:reprint", "content_sha256", "authorization_ref");
+        assertThat(sql).doesNotContain("float", "double", "printed'", "device sdk", "http://", "https://");
+    }
 }

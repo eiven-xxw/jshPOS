@@ -176,12 +176,25 @@ class _PosCheckoutPageState extends State<PosCheckoutPage> {
               ...preview.lines.map(Text.new),
               const Divider(),
               Text(preview.totalText),
+              Text('模板：${preview.templateVersion}'),
+              Text('内容摘要：${preview.contentSha256}'),
+              if (preview.reprintAuditText != null)
+                Text('补打审计：${preview.reprintAuditText}'),
               const SizedBox(height: 12),
               Text('设备证据：${preview.adapterEvidence}（仅预览，未发送真实打印命令）'),
             ],
           ),
         ),
         actions: [
+          OutlinedButton.icon(
+            key: const Key('requestReceiptReprint'),
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              await _showReprintDialog(preview.orderRef);
+            },
+            icon: const Icon(Icons.print),
+            label: const Text('申请补打'),
+          ),
           FilledButton(
             onPressed: () => Navigator.pop(dialogContext),
             child: const Text('关闭'),
@@ -189,6 +202,65 @@ class _PosCheckoutPageState extends State<PosCheckoutPage> {
         ],
       ),
     );
+  }
+
+  Future<void> _showReprintDialog(String orderRef) async {
+    final reason = TextEditingController();
+    final idempotencyKey =
+        'reprint:$orderRef:${DateTime.now().toUtc().microsecondsSinceEpoch}';
+    try {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('补打小票确认'),
+          content: SizedBox(
+            width: 420,
+            child: TextField(
+              key: const Key('reprintReason'),
+              controller: reason,
+              maxLength: 256,
+              decoration: const InputDecoration(
+                labelText: '补打原因',
+                hintText: '例如：顾客遗失后申请副本',
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('取消'),
+            ),
+            FilledButton(
+              key: const Key('confirmReceiptReprint'),
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('登记补打'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true || !mounted) return;
+      await widget.controller.requestReprint(
+        orderRef: orderRef,
+        reasonCode: 'CUSTOMER_COPY',
+        reasonText: reason.text,
+        idempotencyKey: idempotencyKey,
+      );
+      if (!mounted) return;
+      setState(() {});
+      final request = _state.reprintRequest;
+      if (request != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '补打 #${request.reprintNo} 已登记；真实打印未开放（${request.executionStatus}）',
+            ),
+          ),
+        );
+      }
+      await _showPrintPreview();
+    } finally {
+      reason.dispose();
+    }
   }
 
   @override

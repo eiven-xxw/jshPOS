@@ -507,6 +507,53 @@ final class PromotedCashSaleResult {
   };
 }
 
+/// POS-011 补打请求结果；真实打印未解阻时 executionStatus 必须失败关闭。
+final class ReceiptReprintResult {
+  const ReceiptReprintResult({
+    required this.printRequestId,
+    required this.orderId,
+    required this.documentId,
+    required this.reprintNo,
+    required this.documentSha256,
+    required this.executionStatus,
+    required this.outboxEventId,
+    this.duplicate = false,
+  });
+
+  factory ReceiptReprintResult.fromJson(
+    Map<String, Object?> json, {
+    bool duplicate = false,
+  }) => ReceiptReprintResult(
+    printRequestId: json['printRequestId']! as String,
+    orderId: json['orderId']! as String,
+    documentId: json['documentId']! as String,
+    reprintNo: json['reprintNo']! as int,
+    documentSha256: json['documentSha256']! as String,
+    executionStatus: json['executionStatus']! as String,
+    outboxEventId: json['outboxEventId']! as String,
+    duplicate: duplicate,
+  );
+
+  final String printRequestId;
+  final String orderId;
+  final String documentId;
+  final int reprintNo;
+  final String documentSha256;
+  final String executionStatus;
+  final String outboxEventId;
+  final bool duplicate;
+
+  Map<String, Object?> toJson() => {
+    'printRequestId': printRequestId,
+    'orderId': orderId,
+    'documentId': documentId,
+    'reprintNo': reprintNo,
+    'documentSha256': documentSha256,
+    'executionStatus': executionStatus,
+    'outboxEventId': outboxEventId,
+  };
+}
+
 String _canonicalValues(Iterable<Object?> values) => values.map((value) {
   final text = '$value';
   return '${text.length}:$text;';

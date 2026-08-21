@@ -46,10 +46,9 @@ void main() {
       expect(fixture.count('local_cash_payment'), 1);
       expect(fixture.count('local_cash_ledger'), 1);
       expect(fixture.count('local_print_job'), 1);
-      expect(
-        fixture.count('local_outbox'),
-        4,
-      ); // shift plus three cash-order facts
+      expect(fixture.count('local_receipt_document'), 1);
+      expect(fixture.count('local_print_request'), 1);
+      expect(fixture.count('local_outbox'), 4); // 兼容交易仅同步班次、订单、现金及完成事实
       expect(fixture.count('local_audit_event'), 2);
       expect(fixture.count('local_idempotency'), 2);
       expect(fixture.scalar("SELECT status FROM local_order"), 'COMPLETED');
@@ -378,6 +377,135 @@ void main() {
     });
   });
 
+  group('T2-POS-011 frozen receipt and reprint audit', () {
+    test('freezes semantic receipt and appends idempotent blocked reprint', () {
+      final fixture = Fixture();
+      addTearDown(fixture.close);
+      final shift = fixture.openShift();
+      final sale = fixture.service.completeCashSale(
+        fixture.sale(shift.shiftId),
+      );
+
+      final first = fixture.service.requestReceiptReprint(
+        commandId: '01K2A000000000000000000101',
+        idempotencyKey: 'receipt-reprint-key-0001',
+        orderId: sale.orderId,
+        reasonCode: 'CUSTOMER_COPY',
+        reasonText: '虚构顾客遗失后申请副本',
+        authorizationRef: 'session:synthetic:0001',
+        occurredAt: fixture.now,
+      );
+      final replay = fixture.service.requestReceiptReprint(
+        commandId: '01K2A000000000000000000101',
+        idempotencyKey: 'receipt-reprint-key-0001',
+        orderId: sale.orderId,
+        reasonCode: 'CUSTOMER_COPY',
+        reasonText: '虚构顾客遗失后申请副本',
+        authorizationRef: 'session:synthetic:0001',
+        occurredAt: fixture.now,
+      );
+
+      expect(first.reprintNo, 1);
+      expect(first.executionStatus, 'BLOCKED_EXTERNAL');
+      expect(replay.duplicate, isTrue);
+      expect(replay.printRequestId, first.printRequestId);
+      expect(fixture.count('local_receipt_document'), 1);
+      expect(fixture.count('local_print_request'), 2); // 原始任务加一次补打
+      expect(
+        fixture.scalar(
+          "SELECT adapter_evidence FROM local_print_request WHERE request_kind='REPRINT'",
+        ),
+        'BLOCKED_REAL_PRINTER',
+      );
+      expect(
+        () => fixture.database.database.execute(
+          "UPDATE local_receipt_document SET template_version='tampered'",
+        ),
+        throwsA(isA<SqliteException>()),
+      );
+      expect(
+        () => fixture.database.database.execute(
+          "DELETE FROM local_print_request WHERE request_kind='REPRINT'",
+        ),
+        throwsA(isA<SqliteException>()),
+      );
+    });
+
+    test('same idempotency key with different reason fails closed', () {
+      final fixture = Fixture();
+      addTearDown(fixture.close);
+      final shift = fixture.openShift();
+      final sale = fixture.service.completeCashSale(
+        fixture.sale(shift.shiftId),
+      );
+      fixture.service.requestReceiptReprint(
+        commandId: '01K2A000000000000000000102',
+        idempotencyKey: 'receipt-reprint-key-0002',
+        orderId: sale.orderId,
+        reasonCode: 'CUSTOMER_COPY',
+        reasonText: '虚构原因甲',
+        authorizationRef: 'session:synthetic:0001',
+        occurredAt: fixture.now,
+      );
+      expect(
+        () => fixture.service.requestReceiptReprint(
+          commandId: '01K2A000000000000000000103',
+          idempotencyKey: 'receipt-reprint-key-0002',
+          orderId: sale.orderId,
+          reasonCode: 'DAMAGED_COPY',
+          reasonText: '虚构原因乙',
+          authorizationRef: 'session:synthetic:0001',
+          occurredAt: fixture.now,
+        ),
+        throwsA(
+          isA<PosDomainException>().having(
+            (error) => error.code,
+            'code',
+            'IDEMPOTENCY_KEY_REUSED',
+          ),
+        ),
+      );
+    });
+
+    test('failure injection rolls reprint request audit outbox and idempotency back', () {
+      var armed = false;
+      final fixture = Fixture(
+        failureInjector: (point) {
+          if (armed && point == 'reprint.requested') {
+            throw StateError('synthetic print storage failure');
+          }
+        },
+      );
+      addTearDown(fixture.close);
+      final shift = fixture.openShift();
+      final sale = fixture.service.completeCashSale(
+        fixture.sale(shift.shiftId),
+      );
+      final requestBefore = fixture.count('local_print_request');
+      final outboxBefore = fixture.count('local_outbox');
+      final auditBefore = fixture.count('local_audit_event');
+      final idemBefore = fixture.count('local_idempotency');
+      armed = true;
+
+      expect(
+        () => fixture.service.requestReceiptReprint(
+          commandId: '01K2A000000000000000000104',
+          idempotencyKey: 'receipt-reprint-key-0003',
+          orderId: sale.orderId,
+          reasonCode: 'CUSTOMER_COPY',
+          reasonText: '虚构失败注入',
+          authorizationRef: 'session:synthetic:0001',
+          occurredAt: fixture.now,
+        ),
+        throwsStateError,
+      );
+      expect(fixture.count('local_print_request'), requestBefore);
+      expect(fixture.count('local_outbox'), outboxBefore);
+      expect(fixture.count('local_audit_event'), auditBefore);
+      expect(fixture.count('local_idempotency'), idemBefore);
+    });
+  });
+
   test('database binding refuses a second fictional tenant', () {
     final directory = Directory.systemTemp.createTempSync('jshpos-gate2-');
     final path = '${directory.path}${Platform.pathSeparator}pos.sqlite3';
@@ -395,7 +523,7 @@ void main() {
     addTearDown(reopened.close);
     expect(
       reopened.database.select('PRAGMA user_version').single.values.first,
-      9,
+      10,
     );
     expect(
       reopened.database.select('PRAGMA quick_check').single.values.first,

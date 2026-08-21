@@ -185,6 +185,10 @@ final class PosPrintPreviewView {
     required this.lines,
     required this.totalText,
     required this.adapterEvidence,
+    this.templateVersion = 'LEGACY',
+    this.contentSha256 = '',
+    this.reprintNo = 0,
+    this.reprintAuditText,
   });
 
   final String taskRef;
@@ -193,4 +197,29 @@ final class PosPrintPreviewView {
   final List<String> lines;
   final String totalText;
   final String adapterEvidence;
+  final String templateVersion;
+  final String contentSha256;
+  final int reprintNo;
+  final String? reprintAuditText;
+}
+
+/// 补打只形成受审计请求；真实打印未解阻时不得返回成功设备状态。
+final class PosReprintRequestView {
+  const PosReprintRequestView({
+    required this.printRequestRef,
+    required this.orderRef,
+    required this.reprintNo,
+    required this.documentDigest,
+    required this.executionStatus,
+    required this.outboxEventRef,
+    required this.duplicate,
+  });
+
+  final String printRequestRef;
+  final String orderRef;
+  final int reprintNo;
+  final String documentDigest;
+  final String executionStatus;
+  final String outboxEventRef;
+  final bool duplicate;
 }

@@ -15,7 +15,7 @@ const binding = TrustedDeviceBinding(
 );
 
 void main() {
-  test('SQLite迁移中断整体回滚且原文件可安全重试到v9', () {
+  test('SQLite迁移中断整体回滚且原文件可安全重试到v10', () async {
     final directory = Directory.systemTemp.createTempSync(
       'jshpos-gate6g-migration-',
     );
@@ -37,13 +37,13 @@ void main() {
       final recovered = PosLocalDatabase.openPath(path, binding);
       expect(
         recovered.database.select('PRAGMA user_version').single.values.first,
-        9,
+        10,
       );
       expect(
         recovered.database
             .select('SELECT COUNT(*) AS value FROM local_schema_history')
             .single['value'],
-        9,
+        10,
       );
       expect(
         recovered.database.select('PRAGMA quick_check').single.values.first,
@@ -51,7 +51,7 @@ void main() {
       );
       recovered.close();
     } finally {
-      directory.deleteSync(recursive: true);
+      await _deleteTemporaryDirectory(directory);
     }
   });
 
@@ -80,4 +80,17 @@ void main() {
       directory.deleteSync(recursive: true);
     }
   });
+}
+
+/// Windows 的 SQLite WAL 文件句柄可能在 close 后极短时间内才完成释放。
+Future<void> _deleteTemporaryDirectory(Directory directory) async {
+  for (var attempt = 0; attempt < 5; attempt += 1) {
+    try {
+      await directory.delete(recursive: true);
+      return;
+    } on FileSystemException {
+      if (attempt == 4) rethrow;
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+    }
+  }
 }

@@ -13,6 +13,7 @@ import 's10_settlement_schema.dart';
 import 's11_member_schema.dart';
 import 'gate6g_catalog_schema.dart';
 import 'gate7b_cash_operation_schema.dart';
+import 'gate7b_receipt_schema.dart';
 
 typedef FailureInjector = void Function(String checkpoint);
 
@@ -130,7 +131,11 @@ final class PosLocalDatabase {
       _migrateToCashOperationV9();
       version = Gate7bCashOperationSchema.version;
     }
-    if (version != Gate7bCashOperationSchema.version) {
+    if (version == Gate7bCashOperationSchema.version) {
+      _migrateToReceiptV10();
+      version = Gate7bReceiptSchema.version;
+    }
+    if (version != Gate7bReceiptSchema.version) {
       throw StateError('LOCAL_SCHEMA_UNSUPPORTED: $version');
     }
     _verifySchemaChecksum();
@@ -166,6 +171,9 @@ final class PosLocalDatabase {
       Gate7bCashOperationSchema.version: sha256
           .convert(utf8.encode(Gate7bCashOperationSchema.v9))
           .toString(),
+      Gate7bReceiptSchema.version: sha256
+          .convert(utf8.encode(Gate7bReceiptSchema.v10))
+          .toString(),
     };
     for (final entry in expected.entries) {
       final rows = database.select(
@@ -178,6 +186,25 @@ final class PosLocalDatabase {
         );
       }
     }
+  }
+
+  void _migrateToReceiptV10() {
+    transaction(() {
+      database.execute(Gate7bReceiptSchema.v10);
+      final checksum = sha256
+          .convert(utf8.encode(Gate7bReceiptSchema.v10))
+          .toString();
+      database.execute(
+        'INSERT INTO local_schema_history(version,description,checksum_sha256,installed_at) VALUES(10,?,?,?)',
+        [
+          'gate7b-receipt-document-reprint',
+          checksum,
+          DateTime.now().toUtc().toIso8601String(),
+        ],
+      );
+      checkpoint('migration.v10.before-version');
+      database.execute('PRAGMA user_version=${Gate7bReceiptSchema.version}');
+    });
   }
 
   void _migrateToPromotionV3() {
