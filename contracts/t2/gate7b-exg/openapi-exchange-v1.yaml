@@ -6,7 +6,7 @@ info:
     只编排原单退货退款、新销售和只追加关联。租户、操作者与审批人均来自
     服务端可信上下文；接口不创建第三笔资金、库存、促销或订单事实。
 x-requirement-id: T2-EXG-001
-x-runtime-admission: IN_PROGRESS
+x-runtime-admission: VERIFIED
 x-provider-network-calls: 0
 servers:
   - url: /api/v1

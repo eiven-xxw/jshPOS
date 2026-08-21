@@ -436,13 +436,13 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
 ## 4.35 当前 T2 Gate 7B / Sprint S20-B：T2-EXG-001 独立正式开发
 
 - 项目发起人已于 2026-08-22 接受 CR-T2G7B-009 和第二批准备阶段 `CONDITIONAL PASS`，授权从封存提交 `4d184a1cf5998c91d9cc9db359a4d5ed0d16e0c3` 建立 `t2/gate7b-sprint20b-exg-runtime`，仅准入 `T2-EXG-001`。
-- ADR-044 更新为 `Accepted`。`T2-EXG-001` 可在完成独立准入检查后进入 `IN_PROGRESS`；`T2-PAY-004` 必须继续 `DRAFT`，未经 EXG 独立 `VERIFIED` 和项目发起人再次确认不得编码。
+- ADR-044 已为 `Accepted`。`T2-EXG-001` 已完成独立实现与候选全量 CI，当前为 `VERIFIED` 并等待项目发起人确认；`T2-PAY-004` 必须继续 `DRAFT`，未经项目发起人再次确认不得编码。
 - 换货只能表达为“原单退货退款 + 新销售 + ReturnOrchestration Owner 只追加关联”。原退货退款复用既有 Return/Refund/Promotion/Payment/Inventory Owner，新销售复用既有 Checkout/Order Owner；换货不得复制或覆盖任一 Owner 的状态机、金额、促销、库存或成本事实。
 - 换货 Saga 只持有两条腿的稳定命令 ID、Owner 聚合引用、摘要、检查点和审计。跨 Owner 使用正式应用端口与观察，不使用分布式事务或跨 Owner Mapper；成功资金、库存或订单事实不得补偿删除。
 - `RETURN_UNKNOWN/SALE_UNKNOWN` 只能沿原 returnId/orderId/commandId 查询或观察；禁止生成替代退款、扣款或销售命令。部分成功且无法自动收敛必须进入 `MANUAL_RECOVERY_REQUIRED` 并保留完整审计。
 - MySQL 与 SQLite 只允许独立前向迁移；换货事件与腿关联只追加，Saga 头只允许具名条件状态迁移。Flutter 页面只能调用 Exchange、Return 和 Sale 正式应用端口，禁止直接访问 SQLite、Mapper 或拼装 Owner 事实。
 - `T2-PAY-002/HWD-001/PRN-001/PAR-001` 继续 `BLOCKED`，`T2-UAT-001/REL-001` 继续 `DRAFT`，`T2-JSH-001/LIC-001` 继续 `DEFERRED`；Provider 网络、真实资金、真实设备/外设命令、伙伴联系、现场试点、完整 Alpha、生产部署和商业声明全部为 0。
-- 完成后必须提交 `T2-EXG-001` 独立周门禁报告并等待确认；不得自动准入 `T2-PAY-004` 或 Gate 7C。
+- `T2-EXG-001` 独立周门禁报告和证据索引必须随封存提交复跑完整 CI 并等待确认；不得自动准入 `T2-PAY-004` 或 Gate 7C。
 
 ## 5. 工程与测试规则
 
