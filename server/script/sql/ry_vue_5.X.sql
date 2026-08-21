@@ -407,6 +407,10 @@ insert into sys_menu values('1509', '测试树表修改',   '1506', '3', '#',   
 insert into sys_menu values('1510', '测试树表删除',   '1506', '4', '#',    '', '',  1, 0, 'F', '0', '0', 'demo:tree:remove',              '#', 103, 1, sysdate(), null, null, '');
 insert into sys_menu values('1511', '测试树表导出',   '1506', '5', '#',    '', '',  1, 0, 'F', '0', '0', 'demo:tree:export',              '#', 103, 1, sysdate(), null, null, '');
 
+-- 鲸熵汇正式权限迁移使用稳定路由名；必须在上方旧版位置参数种子完成后前向补列。
+alter table sys_menu
+    add column route_name varchar(100) default '' comment '稳定路由名称' after query_param;
+
 -- ----------------------------
 -- 6、用户和角色关联表  用户N-1角色
 -- ----------------------------

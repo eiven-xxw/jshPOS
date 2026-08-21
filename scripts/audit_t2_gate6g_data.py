@@ -145,6 +145,31 @@ def seed_summary() -> tuple[dict, list[str]]:
     }, failures
 
 
+def bootstrap_summary() -> tuple[dict, list[str]]:
+    """核对 RuoYi 空环境脚本与正式 Flyway 权限迁移的最小兼容面。"""
+    source = ROOT / "server" / "script" / "sql" / "ry_vue_5.X.sql"
+    workflow = ROOT / ".github" / "workflows" / "t2-gate6g.yml"
+    sql = source.read_text(encoding="utf-8")
+    workflow_text = workflow.read_text(encoding="utf-8")
+    failures: list[str] = []
+    route_column = re.search(
+        r"ALTER\s+TABLE\s+sys_menu\s+ADD\s+COLUMN\s+route_name\s+varchar\(100\)",
+        sql,
+        re.IGNORECASE,
+    )
+    last_seed = sql.lower().rfind("insert into sys_menu values")
+    if route_column is None or route_column.start() <= last_seed:
+        failures.append("RuoYi sys_menu 必须在位置参数种子完成后前向补充 route_name")
+    if "mysql --default-character-set=utf8mb4" not in workflow_text:
+        failures.append("MySQL 空环境导入未显式锁定 utf8mb4 客户端字符集")
+    return {
+        "path": source.relative_to(ROOT).as_posix(),
+        "sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
+        "routeNameCompatibility": route_column is not None and route_column.start() > last_seed,
+        "utf8mb4ClientImport": "mysql --default-character-set=utf8mb4" in workflow_text,
+    }, failures
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", required=True)
@@ -179,6 +204,7 @@ def main() -> int:
     ]
     float_tables = [item["table"] for item in tables if item["hasFloatOrDouble"]]
     seed, seed_failures = seed_summary()
+    bootstrap, bootstrap_failures = bootstrap_summary()
     required_sqlite_tests = [
         "pos-flutter/test/gate2/checkout_local_service_test.dart",
         "pos-flutter/test/gate5c/member_cache_store_test.dart",
@@ -195,6 +221,7 @@ def main() -> int:
         "missingChineseTableComment": missing_comments,
         "floatOrDoubleTable": float_tables,
         "syntheticSeed": seed_failures,
+        "ruoyiBootstrapCompatibility": bootstrap_failures,
         "sqliteRecoveryTests": missing_sqlite_tests,
     }
     failure_count = sum(len(value) for value in hard_failures.values())
@@ -209,6 +236,7 @@ def main() -> int:
         "tables": tables,
         "multiTenantControlPlaneExceptions": sorted(CONTROL_PLANE_EXCEPTIONS),
         "seed": seed,
+        "ruoyiBootstrap": bootstrap,
         "sqlite": {"currentVersion": 7, "publishedSchemaFileCount": len(SQLITE_SCHEMA_FILES)},
         "hardFailureCount": failure_count,
         "hardFailures": hard_failures,
