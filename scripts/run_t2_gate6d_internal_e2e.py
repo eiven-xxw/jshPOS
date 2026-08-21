@@ -30,7 +30,7 @@ SERVER_TESTS = {
 }
 FLUTTER_TESTS = {
     "可信虚构终端进入员工登录并可安全退出",
-    "SQLite V7 preserves signed packages and transaction allocation schema",
+    "preserves signed packages and transaction allocation schema",
     "suspend and resume preserve the same draft and exact lines",
     "freezes quote, snapshot, order, cash and outbox atomically",
     "ACK lost resends the original identity and converges as duplicate",
