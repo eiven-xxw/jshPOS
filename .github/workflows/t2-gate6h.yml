@@ -91,7 +91,7 @@ jobs:
           --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -psynthetic_gate6h_root"
           --health-interval=10s --health-timeout=5s --health-retries=12
       redis:
-        image: redis:7.2.5@sha256:9a167bde7ad14322f81722df9e99054829278c4e6b0426cb57b441ea6f839305
+        image: redis:7.4.10-alpine@sha256:e7723ff73d963f5cc6d9c4643ea3d989527a402a319239054e9472a7fb9219a2
         ports: ["6379:6379"]
         options: >-
           --health-cmd="redis-cli ping"
