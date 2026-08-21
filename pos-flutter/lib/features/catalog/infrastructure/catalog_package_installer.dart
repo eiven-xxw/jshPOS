@@ -274,6 +274,24 @@ final class CatalogPackageInstaller {
     return _resolve(rows.single, at ?? _utcNow());
   }
 
+  /// 按活动包中的稳定 SKU 引用恢复商品；挂单取单后仍重新校验当前包价格。
+  CatalogResolvedPrice resolveSku(String skuId, {DateTime? at}) {
+    if (!RegExp(r'^[1-9][0-9]{0,18}$').hasMatch(skuId)) {
+      throw StateError('CAT-LOOKUP-004: sku reference is invalid');
+    }
+    final rows = database.database.select(
+      '''SELECT p.* FROM local_catalog_package_binding b
+         JOIN local_catalog_product p ON p.tenant_id=b.tenant_id AND p.store_id=b.store_id
+           AND p.package_version=b.active_package_version
+         WHERE b.singleton_id=1 AND b.tenant_id=? AND b.store_id=? AND p.sku_id=?''',
+      [database.binding.tenantId, database.binding.storeId, skuId],
+    );
+    if (rows.length != 1) {
+      throw StateError('CAT-LOOKUP-002: product is unavailable');
+    }
+    return _resolve(rows.single, at ?? _utcNow());
+  }
+
   /// 搜索返回活动包商品；关键词参数化并限制数量，禁止任意 SQL。
   List<CatalogResolvedPrice> search(
     String keyword, {
