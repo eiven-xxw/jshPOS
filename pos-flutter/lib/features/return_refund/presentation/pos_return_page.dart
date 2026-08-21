@@ -6,7 +6,11 @@ import '../domain/pos_return_models.dart';
 
 /// POS-009 原单退货退款正式页面；只向 Controller 发送用户意图。
 final class PosReturnPage extends StatefulWidget {
-  const PosReturnPage({required this.controller, this.onStartExchange, super.key});
+  const PosReturnPage({
+    required this.controller,
+    this.onStartExchange,
+    super.key,
+  });
 
   final PosReturnController controller;
   final ValueChanged<PosReturnSubmissionView>? onStartExchange;

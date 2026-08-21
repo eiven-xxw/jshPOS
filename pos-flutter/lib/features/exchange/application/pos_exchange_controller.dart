@@ -49,7 +49,8 @@ final class PosExchangeController {
   }
 
   Future<PosExchangePageState> refresh([String? exchangeRef]) async {
-    final ref = exchangeRef ?? state.view?.exchangeRef ?? state.recoverableExchangeRef;
+    final ref =
+        exchangeRef ?? state.view?.exchangeRef ?? state.recoverableExchangeRef;
     if (state.busy || ref == null) return state;
     state = PosExchangePageState(
       phase: PosExchangePagePhase.submitting,
@@ -75,20 +76,23 @@ final class PosExchangeController {
     }
   }
 
-  Future<PosExchangePageState> approve(String reasonCode) =>
-      _mutate((view) => service.approve(
-        exchangeRef: view.exchangeRef,
-        correlationRef: view.correlationRef,
-        reasonCode: reasonCode,
-      ));
+  Future<PosExchangePageState> approve(String reasonCode) => _mutate(
+    (view) => service.approve(
+      exchangeRef: view.exchangeRef,
+      correlationRef: view.correlationRef,
+      reasonCode: reasonCode,
+    ),
+  );
 
   Future<PosExchangePageState> recover(String targetLeg, String reasonCode) =>
-      _mutate((view) => service.recover(
-        exchangeRef: view.exchangeRef,
-        correlationRef: view.correlationRef,
-        targetLeg: targetLeg,
-        reasonCode: reasonCode,
-      ));
+      _mutate(
+        (view) => service.recover(
+          exchangeRef: view.exchangeRef,
+          correlationRef: view.correlationRef,
+          targetLeg: targetLeg,
+          reasonCode: reasonCode,
+        ),
+      );
 
   Future<PosExchangePageState> _mutate(
     Future<PosExchangeView> Function(PosExchangeView view) operation,

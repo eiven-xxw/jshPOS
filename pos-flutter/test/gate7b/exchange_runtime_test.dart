@@ -19,49 +19,75 @@ const _binding = TrustedDeviceBinding(
 );
 
 void main() {
-  test('SQLite V12 freezes exchange command journal and append-only event policy', () {
-    final database = PosLocalDatabase.inMemory(_binding);
-    addTearDown(database.close);
-    expect(database.database.select('PRAGMA user_version').single.values.first, 12);
-    expect(
-      database.database.select(
-        "SELECT COUNT(*) value FROM sqlite_master WHERE type='table' AND name IN ('local_exchange_command','local_exchange_event')",
-      ).single['value'],
-      2,
-    );
-    expect(
-      database.database.select(
-        "SELECT COUNT(*) value FROM sqlite_master WHERE type='trigger' AND name LIKE 'local_exchange_%'",
-      ).single['value'],
-      4,
-    );
-  });
+  test(
+    'SQLite V12 freezes exchange command journal and append-only event policy',
+    () {
+      final database = PosLocalDatabase.inMemory(_binding);
+      addTearDown(database.close);
+      expect(
+        database.database.select('PRAGMA user_version').single.values.first,
+        12,
+      );
+      expect(
+        database.database
+            .select(
+              "SELECT COUNT(*) value FROM sqlite_master WHERE type='table' AND name IN ('local_exchange_command','local_exchange_event')",
+            )
+            .single['value'],
+        2,
+      );
+      expect(
+        database.database
+            .select(
+              "SELECT COUNT(*) value FROM sqlite_master WHERE type='trigger' AND name LIKE 'local_exchange_%'",
+            )
+            .single['value'],
+        4,
+      );
+    },
+  );
 
-  testWidgets('page renders two separate owner legs and creates append-only link', (tester) async {
-    final service = _FakeExchangeService();
-    final controller = PosExchangeController(service: service, source: _source());
-    await tester.pumpWidget(MaterialApp(home: PosExchangePage(
-      controller: controller,
-      allowApprove: true,
-      allowRecover: true,
-    )));
-    expect(find.byKey(const Key('exchangeOwnerBoundary')), findsOneWidget);
-    expect(find.text('原单退货退款'), findsOneWidget);
-    expect(find.text('新销售'), findsOneWidget);
-    expect(find.byKey(const Key('exchangeDisplayDifference')), findsOneWidget);
-    await tester.tap(find.byKey(const Key('createExchangeLink')));
-    await tester.pumpAndSettle();
-    expect(service.createCount, 1);
-    expect(find.byKey(const Key('exchangeSagaStatus')), findsOneWidget);
-    expect(find.text('等待另一名受权员工审批'), findsOneWidget);
-    await tester.tap(find.byKey(const Key('approveExchange')));
-    await tester.pumpAndSettle();
-    expect(service.approveCount, 1);
-  });
+  testWidgets(
+    'page renders two separate owner legs and creates append-only link',
+    (tester) async {
+      final service = _FakeExchangeService();
+      final controller = PosExchangeController(
+        service: service,
+        source: _source(),
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: PosExchangePage(
+            controller: controller,
+            allowApprove: true,
+            allowRecover: true,
+          ),
+        ),
+      );
+      expect(find.byKey(const Key('exchangeOwnerBoundary')), findsOneWidget);
+      expect(find.text('原单退货退款'), findsOneWidget);
+      expect(find.text('新销售'), findsOneWidget);
+      expect(
+        find.byKey(const Key('exchangeDisplayDifference')),
+        findsOneWidget,
+      );
+      await tester.tap(find.byKey(const Key('createExchangeLink')));
+      await tester.pumpAndSettle();
+      expect(service.createCount, 1);
+      expect(find.byKey(const Key('exchangeSagaStatus')), findsOneWidget);
+      expect(find.text('等待另一名受权员工审批'), findsOneWidget);
+      await tester.tap(find.byKey(const Key('approveExchange')));
+      await tester.pumpAndSettle();
+      expect(service.approveCount, 1);
+    },
+  );
 
   test('UNKNOWN preserves original exchange id and refresh never creates replacement', () async {
     final service = _FakeExchangeService(unknownOnCreate: true);
-    final controller = PosExchangeController(service: service, source: _source());
+    final controller = PosExchangeController(
+      service: service,
+      source: _source(),
+    );
     await controller.create('CUSTOMER_EXCHANGE');
     expect(controller.state.phase, PosExchangePagePhase.unknown);
     expect(controller.state.recoverableExchangeRef, _exchangeId);
@@ -112,7 +138,10 @@ final class _FakeExchangeService implements PosExchangeApplicationService {
   int recoverCount = 0;
 
   @override
-  Future<PosExchangeView> create({required PosExchangeSource source, required String reasonCode}) async {
+  Future<PosExchangeView> create({
+    required PosExchangeSource source,
+    required String reasonCode,
+  }) async {
     createCount++;
     if (unknownOnCreate) {
       throw const PosExchangeFailure(

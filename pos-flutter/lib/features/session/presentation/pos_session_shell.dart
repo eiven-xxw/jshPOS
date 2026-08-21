@@ -455,8 +455,12 @@ class _PosSessionShellState extends State<PosSessionShell> {
                             returnService: widget.returnService,
                           ),
                           onStartExchange:
-                              _state.hasPermission(PosPermission.exchangeRead) &&
-                                  _state.hasPermission(PosPermission.exchangeCreate)
+                              _state.hasPermission(
+                                    PosPermission.exchangeRead,
+                                  ) &&
+                                  _state.hasPermission(
+                                    PosPermission.exchangeCreate,
+                                  )
                               ? (submission) =>
                                     _openExchangeCheckout(context, submission)
                               : null,
@@ -519,12 +523,8 @@ class _PosSessionShellState extends State<PosSessionShell> {
                   newSale: newSale,
                 ),
               ),
-              allowApprove: _state.hasPermission(
-                PosPermission.exchangeApprove,
-              ),
-              allowRecover: _state.hasPermission(
-                PosPermission.exchangeRecover,
-              ),
+              allowApprove: _state.hasPermission(PosPermission.exchangeApprove),
+              allowRecover: _state.hasPermission(PosPermission.exchangeRecover),
             ),
           ),
         ),

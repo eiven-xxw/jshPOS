@@ -65,22 +65,40 @@ class _PosExchangePageState extends State<PosExchangePage> {
               key: const Key('exchangeReason'),
               initialValue: _reasonCode,
               items: const [
-                DropdownMenuItem(value: 'CUSTOMER_EXCHANGE', child: Text('顾客换购')),
-                DropdownMenuItem(value: 'WRONG_ITEM_EXCHANGE', child: Text('错拿换购')),
-                DropdownMenuItem(value: 'QUALITY_EXCHANGE', child: Text('质量问题换购')),
+                DropdownMenuItem(
+                  value: 'CUSTOMER_EXCHANGE',
+                  child: Text('顾客换购'),
+                ),
+                DropdownMenuItem(
+                  value: 'WRONG_ITEM_EXCHANGE',
+                  child: Text('错拿换购'),
+                ),
+                DropdownMenuItem(
+                  value: 'QUALITY_EXCHANGE',
+                  child: Text('质量问题换购'),
+                ),
               ],
-              onChanged: _state.busy ? null : (value) => setState(() => _reasonCode = value!),
-              decoration: const InputDecoration(labelText: '换货原因', border: OutlineInputBorder()),
+              onChanged: _state.busy
+                  ? null
+                  : (value) => setState(() => _reasonCode = value!),
+              decoration: const InputDecoration(
+                labelText: '换货原因',
+                border: OutlineInputBorder(),
+              ),
             ),
             const SizedBox(height: 16),
             if (_state.safeMessage != null)
-              Text('${_state.safeMessage}\n错误码：${_state.errorCode}',
+              Text(
+                '${_state.safeMessage}\n错误码：${_state.errorCode}',
                 key: const Key('exchangeSafeError'),
-                style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
             if (view == null && _state.recoverableExchangeRef == null)
               FilledButton.icon(
                 key: const Key('createExchangeLink'),
-                onPressed: _state.busy ? null : () => _run(widget.controller.create(_reasonCode)),
+                onPressed: _state.busy
+                    ? null
+                    : () => _run(widget.controller.create(_reasonCode)),
                 icon: const Icon(Icons.swap_horiz),
                 label: const Text('建立只追加换货关联'),
               ),
@@ -96,9 +114,7 @@ class _PosExchangePageState extends State<PosExchangePage> {
                           widget.controller.approve('SUPERVISOR_APPROVED'),
                         ),
                   icon: const Icon(Icons.verified_user),
-                  label: Text(
-                    widget.allowApprove ? '独立审批换货' : '需要换货审批权限',
-                  ),
+                  label: Text(widget.allowApprove ? '独立审批换货' : '需要换货审批权限'),
                 ),
               if (view.status == PosExchangeStatus.manualRecoveryRequired) ...[
                 FilledButton.tonalIcon(
@@ -139,7 +155,9 @@ class _PosExchangePageState extends State<PosExchangePage> {
             ] else if (_state.recoverableExchangeRef case final ref?)
               FilledButton.tonalIcon(
                 key: const Key('recoverUnknownExchange'),
-                onPressed: _state.busy ? null : () => _run(widget.controller.refresh(ref)),
+                onPressed: _state.busy
+                    ? null
+                    : () => _run(widget.controller.refresh(ref)),
                 icon: const Icon(Icons.manage_search),
                 label: const Text('只查询原换货命令'),
               ),
@@ -149,12 +167,21 @@ class _PosExchangePageState extends State<PosExchangePage> {
     );
   }
 
-  Widget _leg({required String title, required String identity, required int amount, required String status}) =>
-      Card(child: ListTile(
-        title: Text(title),
-        subtitle: Text('$identity\n$status'),
-        trailing: Text(_money(amount), style: Theme.of(context).textTheme.titleLarge),
-      ));
+  Widget _leg({
+    required String title,
+    required String identity,
+    required int amount,
+    required String status,
+  }) => Card(
+    child: ListTile(
+      title: Text(title),
+      subtitle: Text('$identity\n$status'),
+      trailing: Text(
+        _money(amount),
+        style: Theme.of(context).textTheme.titleLarge,
+      ),
+    ),
+  );
 
   Widget _status(PosExchangeView view) => Card(
     color: view.status == PosExchangeStatus.completed
@@ -163,7 +190,9 @@ class _PosExchangePageState extends State<PosExchangePage> {
     child: ListTile(
       key: const Key('exchangeSagaStatus'),
       title: Text(view.status.safeLabel),
-      subtitle: Text('${view.exchangeRef}\n版本 ${view.recordVersion} · ${view.correlationRef}'),
+      subtitle: Text(
+        '${view.exchangeRef}\n版本 ${view.recordVersion} · ${view.correlationRef}',
+      ),
     ),
   );
 }

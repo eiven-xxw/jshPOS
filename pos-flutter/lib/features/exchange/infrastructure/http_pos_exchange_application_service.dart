@@ -43,7 +43,11 @@ final class HttpPosExchangeApplicationService
       '''SELECT exchange_id,request_sha256,return_id,new_order_id
          FROM local_exchange_command
          WHERE tenant_id=? AND (return_id=? OR new_order_id=?)''',
-      [binding.tenantId, source.originalReturn.returnRef, source.newSale.orderRef],
+      [
+        binding.tenantId,
+        source.originalReturn.returnRef,
+        source.newSale.orderRef,
+      ],
     );
     if (prior.isNotEmpty) {
       if (prior.length != 1 ||
@@ -59,7 +63,12 @@ final class HttpPosExchangeApplicationService
     final order = database.database.select(
       '''SELECT business_date,status FROM local_order
          WHERE tenant_id=? AND order_id=? AND store_id=? AND terminal_id=?''',
-      [binding.tenantId, source.newSale.orderRef, binding.storeId, binding.terminalId],
+      [
+        binding.tenantId,
+        source.newSale.orderRef,
+        binding.storeId,
+        binding.terminalId,
+      ],
     );
     if (order.length != 1 || order.single['status'] != 'COMPLETED') {
       throw const PosExchangeFailure(
@@ -218,7 +227,10 @@ final class HttpPosExchangeApplicationService
       throw const PosExchangeFailure('EXCHANGE_NOT_FOUND', '本机没有该换货原命令。');
     }
     try {
-      return _saveObservation(exchangeRef, await _request('POST', path, body: body));
+      return _saveObservation(
+        exchangeRef,
+        await _request('POST', path, body: body),
+      );
     } on _ExchangeHttpFailure catch (error) {
       if (error.resultUnknown) {
         _markUnknown(exchangeRef, local.single['request_sha256']! as String);
@@ -248,7 +260,13 @@ final class HttpPosExchangeApplicationService
       if (database.database.updatedRows != 1) {
         throw StateError('EXCHANGE_LOCAL_STATE_CONFLICT');
       }
-      _appendLocalEvent(exchangeId, 'SUBMITTING', 'SUBMITTING', requestHash, at);
+      _appendLocalEvent(
+        exchangeId,
+        'SUBMITTING',
+        'SUBMITTING',
+        requestHash,
+        at,
+      );
       database.checkpoint('exchange.before-http');
     });
     try {
@@ -352,7 +370,10 @@ final class HttpPosExchangeApplicationService
           .openUrl(method, baseUri.resolve(path))
           .timeout(timeout);
       request.headers
-        ..set(HttpHeaders.authorizationHeader, 'Bearer ${await accessTokenProvider()}')
+        ..set(
+          HttpHeaders.authorizationHeader,
+          'Bearer ${await accessTokenProvider()}',
+        )
         ..set('X-Device-Id', binding.terminalId)
         ..set(HttpHeaders.acceptHeader, ContentType.json.mimeType);
       if (body != null) {
@@ -363,13 +384,16 @@ final class HttpPosExchangeApplicationService
       final text = await utf8.decoder.bind(response).join().timeout(timeout);
       final envelope = (jsonDecode(text) as Map).cast<String, Object?>();
       final code = envelope['code'];
-      if (response.statusCode < 200 || response.statusCode >= 300 ||
+      if (response.statusCode < 200 ||
+          response.statusCode >= 300 ||
           (code is num && code.toInt() != 200)) {
         throw _ExchangeHttpFailure(
           'EXCHANGE_HTTP_${response.statusCode}',
           _safeMessage(envelope['msg']),
-          resultUnknown: response.statusCode == 408 ||
-              response.statusCode == 429 || response.statusCode >= 500,
+          resultUnknown:
+              response.statusCode == 408 ||
+              response.statusCode == 429 ||
+              response.statusCode >= 500,
         );
       }
       final data = envelope['data'];
@@ -429,7 +453,9 @@ final class HttpPosExchangeApplicationService
   }
 
   String _digest(Map<String, Object?> value) => sha256
-      .convert(utf8.encode(jsonEncode(SplayTreeMap<String, Object?>.from(value))))
+      .convert(
+        utf8.encode(jsonEncode(SplayTreeMap<String, Object?>.from(value))),
+      )
       .toString();
 
   void _requireUlid(String value) {
@@ -442,7 +468,11 @@ final class HttpPosExchangeApplicationService
 }
 
 final class _ExchangeHttpFailure implements Exception {
-  const _ExchangeHttpFailure(this.code, this.safeMessage, {this.resultUnknown = false});
+  const _ExchangeHttpFailure(
+    this.code,
+    this.safeMessage, {
+    this.resultUnknown = false,
+  });
   final String code;
   final String safeMessage;
   final bool resultUnknown;

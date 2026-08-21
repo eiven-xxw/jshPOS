@@ -358,28 +358,26 @@ final class LocalPosSaleApplicationService
     final occurredAt = _now().toUtc();
     try {
       final command = PromotedCashSaleCommand(
-          commandId: ulids.next(),
-          idempotencyKey: idempotencyKey,
-          basket: basket,
-          shiftId: shift['shift_id']! as String,
-          businessDate: shift['business_date']! as String,
-          catalogVersion: versions
-              .map((value) => value.catalogVersion)
-              .reduce(_max),
-          priceVersion: versions
-              .map((value) => value.priceVersion)
-              .reduce(_max),
-          industryTemplateVersion: industryTemplateVersion,
-          quoteId: base.quoteId,
-          quoteFingerprint: base.quoteFingerprint,
-          settlementFingerprint: fingerprint,
-          packageVersion: base.packageVersion,
-          promotionSnapshotId: ulids.next(),
-          lines: settlementLines,
-          manualEventRefs: _manualEvents,
-          tenderedAmountMinor: _parseYuan(tenderedAmount),
-          occurredAt: occurredAt,
-        );
+        commandId: ulids.next(),
+        idempotencyKey: idempotencyKey,
+        basket: basket,
+        shiftId: shift['shift_id']! as String,
+        businessDate: shift['business_date']! as String,
+        catalogVersion: versions
+            .map((value) => value.catalogVersion)
+            .reduce(_max),
+        priceVersion: versions.map((value) => value.priceVersion).reduce(_max),
+        industryTemplateVersion: industryTemplateVersion,
+        quoteId: base.quoteId,
+        quoteFingerprint: base.quoteFingerprint,
+        settlementFingerprint: fingerprint,
+        packageVersion: base.packageVersion,
+        promotionSnapshotId: ulids.next(),
+        lines: settlementLines,
+        manualEventRefs: _manualEvents,
+        tenderedAmountMinor: _parseYuan(tenderedAmount),
+        occurredAt: occurredAt,
+      );
       final result = checkout.completePromotedCashSale(command);
       final localOrderNo = basket.localOrderNo;
       _basket = null;

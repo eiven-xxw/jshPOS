@@ -85,7 +85,10 @@ enum PosExchangeStatus {
 
 /// 已完成的原退货和新销售；本地仅据此冻结关联，不做净额结算。
 final class PosExchangeSource {
-  const PosExchangeSource({required this.originalReturn, required this.newSale});
+  const PosExchangeSource({
+    required this.originalReturn,
+    required this.newSale,
+  });
   final PosReturnSubmissionView originalReturn;
   final PosCashSettlementView newSale;
 }
