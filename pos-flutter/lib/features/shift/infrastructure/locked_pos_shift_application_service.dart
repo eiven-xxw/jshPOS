@@ -1,5 +1,6 @@
 import '../../session/domain/pos_session_models.dart';
 import '../application/pos_shift_application_service.dart';
+import '../domain/shift_models.dart';
 
 /// 未配置正式 SQLite/Checkout 组合根时的安全默认实现。
 final class LockedPosShiftApplicationService
@@ -22,6 +23,24 @@ final class LockedPosShiftApplicationService
   Future<void> close({
     required String shiftId,
     required String actualCash,
+    required String idempotencyKey,
+  }) async => _unavailable();
+
+  @override
+  Future<ShiftOperationResult> recordCashMovement({
+    required String shiftId,
+    required ShiftCashMovementType movementType,
+    required String amount,
+    required String reasonCode,
+    required String reasonText,
+    required String idempotencyKey,
+  }) async => _unavailable();
+
+  @override
+  Future<ShiftOperationResult> requestNoSaleDrawer({
+    required String shiftId,
+    required String reasonCode,
+    required String reasonText,
     required String idempotencyKey,
   }) async => _unavailable();
 }

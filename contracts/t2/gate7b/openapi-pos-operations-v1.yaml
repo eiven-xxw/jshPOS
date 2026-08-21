@@ -1,0 +1,121 @@
+openapi: 3.1.0
+info:
+  title: 鲸熵汇 Gate 7B POS 交易运营 API
+  version: 1.0.0
+paths:
+  /api/v1/pos/shifts/{shiftId}/cash-movements:
+    post:
+      operationId: recordShiftCashMovement
+      summary: 记录班次非销售现金移动
+      parameters:
+        - $ref: '#/components/parameters/ShiftId'
+        - $ref: '#/components/parameters/CommandId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CashMovementRequest'
+      responses:
+        '200':
+          description: 原子落账或同摘要幂等返回
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CashMovementResult'
+        '403': { $ref: '#/components/responses/PermissionDenied' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /api/v1/pos/shifts/{shiftId}/drawer-events:
+    post:
+      operationId: requestNoSaleDrawer
+      summary: 记录非销售开钱箱请求
+      description: 当前只记录业务请求；真实设备执行状态固定为 BLOCKED_EXTERNAL。
+      parameters:
+        - $ref: '#/components/parameters/ShiftId'
+        - $ref: '#/components/parameters/CommandId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DrawerEventRequest'
+      responses:
+        '200':
+          description: 请求事实已记录但未执行真实设备命令
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DrawerEventResult'
+        '403': { $ref: '#/components/responses/PermissionDenied' }
+        '409': { $ref: '#/components/responses/Conflict' }
+components:
+  parameters:
+    ShiftId:
+      name: shiftId
+      in: path
+      required: true
+      schema: { type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$' }
+    CommandId:
+      name: X-Command-Id
+      in: header
+      required: true
+      schema: { type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$' }
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema: { type: string, minLength: 16, maxLength: 128 }
+  schemas:
+    CashMovementRequest:
+      type: object
+      additionalProperties: false
+      required: [movementId, movementType, amountMinor, expectedVersion, reasonCode, reasonText, authorizationRef, occurredAt]
+      properties:
+        movementId: { type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$' }
+        movementType: { type: string, enum: [CASH_IN, CASH_OUT, SAFE_DROP] }
+        amountMinor: { type: integer, minimum: 1, maximum: 9007199254740991 }
+        expectedVersion: { type: integer, minimum: 1 }
+        reasonCode: { type: string, pattern: '^[A-Z][A-Z0-9_]{1,31}$' }
+        reasonText: { type: string, minLength: 1, maxLength: 256 }
+        authorizationRef: { type: string, minLength: 16, maxLength: 128 }
+        occurredAt: { type: string, format: date-time }
+    CashMovementResult:
+      type: object
+      required: [movementId, shiftId, movementType, signedAmountMinor, currency, businessDate, recordVersion, traceId]
+      properties:
+        movementId: { type: string }
+        shiftId: { type: string }
+        movementType: { type: string }
+        signedAmountMinor: { type: integer }
+        currency: { type: string, const: CNY }
+        businessDate: { type: string, format: date }
+        recordVersion: { type: integer }
+        traceId: { type: string }
+    DrawerEventRequest:
+      type: object
+      additionalProperties: false
+      required: [drawerEventId, expectedVersion, reasonCode, reasonText, authorizationRef, occurredAt]
+      properties:
+        drawerEventId: { type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$' }
+        expectedVersion: { type: integer, minimum: 1 }
+        reasonCode: { type: string, pattern: '^[A-Z][A-Z0-9_]{1,31}$' }
+        reasonText: { type: string, minLength: 1, maxLength: 256 }
+        authorizationRef: { type: string, minLength: 16, maxLength: 128 }
+        occurredAt: { type: string, format: date-time }
+    DrawerEventResult:
+      type: object
+      required: [drawerEventId, shiftId, eventType, deviceExecutionStatus, recordVersion, traceId]
+      properties:
+        drawerEventId: { type: string }
+        shiftId: { type: string }
+        eventType: { type: string, const: NO_SALE_OPEN_REQUESTED }
+        deviceExecutionStatus: { type: string, const: BLOCKED_EXTERNAL }
+        recordVersion: { type: integer }
+        traceId: { type: string }
+  responses:
+    PermissionDenied:
+      description: 权限或可信数据范围拒绝
+    Conflict:
+      description: 班次关闭、版本冲突、同键异内容或金额边界冲突

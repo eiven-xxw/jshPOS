@@ -71,6 +71,50 @@ public interface OrderMapper {
     @Select("SELECT COALESCE(SUM(signed_amount_minor),0) FROM shf_cash_ledger WHERE tenant_id=#{tenantId} AND shift_id=#{shiftId}")
     long sumCashLedger(@Param("tenantId") String tenantId, @Param("shiftId") String shiftId);
 
+    @Select("SELECT COALESCE(SUM(signed_amount_minor),0) FROM shf_cash_movement WHERE tenant_id=#{tenantId} AND shift_id=#{shiftId}")
+    long sumNonSaleCashMovement(@Param("tenantId") String tenantId, @Param("shiftId") String shiftId);
+
+    @Insert("""
+        INSERT INTO shf_cash_movement(movement_id,tenant_id,shift_id,store_id,terminal_id,cashier_user_id,
+          business_date,movement_type,signed_amount_minor,currency,reason_code,reason_text,authorization_ref,
+          command_id,request_sha256,shift_version,occurred_at)
+        VALUES(#{movementId},#{tenantId},#{shiftId},#{storeId},#{terminalId},#{cashierId},#{businessDate},
+          #{movementType},#{signedAmount},'CNY',#{reasonCode},#{reasonText},#{authorizationRef},#{commandId},
+          #{requestHash},#{shiftVersion},#{at})
+        """)
+    int insertCashMovement(@Param("tenantId") String tenantId, @Param("movementId") String movementId,
+                           @Param("shiftId") String shiftId, @Param("storeId") Long storeId,
+                           @Param("terminalId") String terminalId, @Param("cashierId") Long cashierId,
+                           @Param("businessDate") LocalDate businessDate, @Param("movementType") String movementType,
+                           @Param("signedAmount") long signedAmount, @Param("reasonCode") String reasonCode,
+                           @Param("reasonText") String reasonText, @Param("authorizationRef") String authorizationRef,
+                           @Param("commandId") String commandId, @Param("requestHash") String requestHash,
+                           @Param("shiftVersion") long shiftVersion, @Param("at") LocalDateTime at);
+
+    @Insert("""
+        INSERT INTO shf_drawer_event(drawer_event_id,tenant_id,shift_id,store_id,terminal_id,cashier_user_id,
+          business_date,event_type,reason_code,reason_text,authorization_ref,device_execution_status,command_id,
+          request_sha256,shift_version,occurred_at)
+        VALUES(#{eventId},#{tenantId},#{shiftId},#{storeId},#{terminalId},#{cashierId},#{businessDate},
+          'NO_SALE_OPEN_REQUESTED',#{reasonCode},#{reasonText},#{authorizationRef},'BLOCKED_EXTERNAL',
+          #{commandId},#{requestHash},#{shiftVersion},#{at})
+        """)
+    int insertDrawerEvent(@Param("tenantId") String tenantId, @Param("eventId") String eventId,
+                          @Param("shiftId") String shiftId, @Param("storeId") Long storeId,
+                          @Param("terminalId") String terminalId, @Param("cashierId") Long cashierId,
+                          @Param("businessDate") LocalDate businessDate, @Param("reasonCode") String reasonCode,
+                          @Param("reasonText") String reasonText, @Param("authorizationRef") String authorizationRef,
+                          @Param("commandId") String commandId, @Param("requestHash") String requestHash,
+                          @Param("shiftVersion") long shiftVersion, @Param("at") LocalDateTime at);
+
+    @Update("UPDATE shf_shift SET theoretical_cash_minor=#{theoretical},record_version=record_version+1 WHERE tenant_id=#{tenantId} AND shift_id=#{shiftId} AND status='OPEN' AND record_version=#{version}")
+    int applyNonSaleCash(@Param("tenantId") String tenantId, @Param("shiftId") String shiftId,
+                         @Param("theoretical") long theoretical, @Param("version") long version);
+
+    @Update("UPDATE shf_shift SET record_version=record_version+1 WHERE tenant_id=#{tenantId} AND shift_id=#{shiftId} AND status='OPEN' AND record_version=#{version}")
+    int advanceShiftVersion(@Param("tenantId") String tenantId, @Param("shiftId") String shiftId,
+                            @Param("version") long version);
+
     @Insert("""
         INSERT INTO shf_shift_approval(approval_id,tenant_id,shift_id,approver_user_id,reason_code,reason_text,
           theoretical_cash_minor,actual_cash_minor,difference_minor,expected_shift_version,status,approved_at)

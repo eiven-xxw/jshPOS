@@ -32,6 +32,19 @@ public final class OrderCommands {
                              Instant occurredAt) {
     }
 
+    /** 班次非销售现金动作；amountMinor 始终为正，方向由 movementType 决定。 */
+    public record RecordCashMovement(String commandId, String idempotencyKey, String movementId,
+                                     String shiftId, String movementType, long amountMinor,
+                                     long expectedVersion, String reasonCode, String reasonText,
+                                     String authorizationRef, Instant occurredAt) {
+    }
+
+    /** 非销售开钱箱请求；本需求不包含任何真实外设执行。 */
+    public record RequestNoSaleDrawer(String commandId, String idempotencyKey, String drawerEventId,
+                                      String shiftId, long expectedVersion, String reasonCode,
+                                      String reasonText, String authorizationRef, Instant occurredAt) {
+    }
+
     public record CashOrder(String commandId, String idempotencyKey, String orderId, String localOrderNo,
                             Long storeId, String terminalId, String shiftId, String cashierId, LocalDate businessDate,
                             String storeTimezone, long catalogVersion, long priceVersion,

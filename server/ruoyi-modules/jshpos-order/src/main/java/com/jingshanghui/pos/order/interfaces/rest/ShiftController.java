@@ -63,6 +63,34 @@ public class ShiftController {
             request.actualCashMinor(), request.expectedVersion(), request.approvalId(), request.occurredAt())), commandId));
     }
 
+    @PostMapping("/{shiftId}/cash-movements")
+    @SaCheckPermission("pos:shift:cash-manage")
+    @Log(title = "班次现金收支", businessType = BusinessType.INSERT)
+    public R<OrderResponses.CashMovementResult> recordCashMovement(
+        @PathVariable @Pattern(regexp = ULID) String shiftId,
+        @RequestHeader("X-Command-Id") @Pattern(regexp = ULID) String commandId,
+        @RequestHeader("Idempotency-Key") @NotBlank String idempotencyKey,
+        @Valid @RequestBody OrderRequests.CashMovement request) {
+        return R.ok(OrderResponses.cashMovement(service.recordCashMovement(
+            new OrderCommands.RecordCashMovement(commandId, idempotencyKey, request.movementId(), shiftId,
+                request.movementType(), request.amountMinor(), request.expectedVersion(), request.reasonCode(),
+                request.reasonText(), request.authorizationRef(), request.occurredAt())), commandId));
+    }
+
+    @PostMapping("/{shiftId}/drawer-events")
+    @SaCheckPermission("pos:drawer:no-sale")
+    @Log(title = "非销售开钱箱请求", businessType = BusinessType.INSERT)
+    public R<OrderResponses.DrawerEventResult> requestNoSaleDrawer(
+        @PathVariable @Pattern(regexp = ULID) String shiftId,
+        @RequestHeader("X-Command-Id") @Pattern(regexp = ULID) String commandId,
+        @RequestHeader("Idempotency-Key") @NotBlank String idempotencyKey,
+        @Valid @RequestBody OrderRequests.DrawerEvent request) {
+        return R.ok(OrderResponses.drawerEvent(service.requestNoSaleDrawer(
+            new OrderCommands.RequestNoSaleDrawer(commandId, idempotencyKey, request.drawerEventId(), shiftId,
+                request.expectedVersion(), request.reasonCode(), request.reasonText(), request.authorizationRef(),
+                request.occurredAt())), commandId));
+    }
+
     private Long parsePlatformId(String value) {
         try {
             long result = Long.parseLong(value);

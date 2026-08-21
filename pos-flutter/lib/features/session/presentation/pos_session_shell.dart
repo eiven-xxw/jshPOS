@@ -8,6 +8,7 @@ import '../../return_refund/application/pos_return_application_service.dart';
 import '../../return_refund/application/pos_return_controller.dart';
 import '../../return_refund/presentation/pos_return_page.dart';
 import '../../shift/application/pos_shift_application_service.dart';
+import '../../shift/presentation/pos_cash_management_page.dart';
 import '../application/pos_session_service.dart';
 import '../domain/pos_session_models.dart';
 
@@ -405,6 +406,30 @@ class _PosSessionShellState extends State<PosSessionShell> {
                   shift != null &&
                   _state.hasPermission(PosPermission.shiftClose),
               onTap: shift == null ? null : _closeShift,
+            ),
+            _PermissionTile(
+              label: '班次现金与钱箱',
+              icon: Icons.account_balance_wallet_outlined,
+              enabled:
+                  shift != null &&
+                  (_state.hasPermission(PosPermission.cashManage) ||
+                      _state.hasPermission(PosPermission.drawerNoSale)),
+              onTap: shift == null
+                  ? null
+                  : () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => PosCashManagementPage(
+                          shiftId: shift.shiftId,
+                          service: widget.shiftService,
+                          allowCashMovement: _state.hasPermission(
+                            PosPermission.cashManage,
+                          ),
+                          allowDrawerRequest: _state.hasPermission(
+                            PosPermission.drawerNoSale,
+                          ),
+                        ),
+                      ),
+                    ),
             ),
             _PermissionTile(
               label: '原单退货退款',

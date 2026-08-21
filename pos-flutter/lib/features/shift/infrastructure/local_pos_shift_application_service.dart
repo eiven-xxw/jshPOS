@@ -3,6 +3,7 @@ import '../../checkout/application/checkout_local_service.dart';
 import '../../checkout/domain/ulid_generator.dart';
 import '../../session/domain/pos_session_models.dart';
 import '../application/pos_shift_application_service.dart';
+import '../domain/shift_models.dart';
 
 /// 正式本地班次应用服务；只通过 Checkout Owner 生成班次、现金与 Outbox 事实。
 final class LocalPosShiftApplicationService
@@ -12,13 +13,18 @@ final class LocalPosShiftApplicationService
     required this.checkout,
     required this.ulids,
     required this.configVersion,
+    Set<PosPermission>? permissions,
+    this.authorizationRef = 'LOCKED_AUTHORIZATION',
     DateTime Function()? now,
-  }) : _now = now ?? DateTime.now;
+  }) : permissions = Set.unmodifiable(permissions ?? const <PosPermission>{}),
+       _now = now ?? DateTime.now;
 
   final PosLocalDatabase database;
   final CheckoutLocalService checkout;
   final UlidGenerator ulids;
   final int configVersion;
+  final Set<PosPermission> permissions;
+  final String authorizationRef;
   final DateTime Function() _now;
 
   @override
@@ -81,6 +87,89 @@ final class LocalPosShiftApplicationService
       throw PosSessionFailure(error.code, error.message);
     }
   }
+
+  @override
+  Future<ShiftOperationResult> recordCashMovement({
+    required String shiftId,
+    required ShiftCashMovementType movementType,
+    required String amount,
+    required String reasonCode,
+    required String reasonText,
+    required String idempotencyKey,
+  }) async {
+    _requirePermission(PosPermission.cashManage);
+    try {
+      final version = _openShiftVersion(shiftId);
+      return checkout.recordShiftCashMovement(
+        commandId: ulids.next(),
+        idempotencyKey: idempotencyKey,
+        shiftId: shiftId,
+        movementType: movementType,
+        amountMinor: _parsePositiveYuan(amount),
+        reasonCode: reasonCode,
+        reasonText: reasonText,
+        authorizationRef: authorizationRef,
+        expectedVersion: version,
+        occurredAt: _now().toUtc(),
+      );
+    } on PosDomainException catch (error) {
+      throw PosSessionFailure(error.code, error.message);
+    }
+  }
+
+  @override
+  Future<ShiftOperationResult> requestNoSaleDrawer({
+    required String shiftId,
+    required String reasonCode,
+    required String reasonText,
+    required String idempotencyKey,
+  }) async {
+    _requirePermission(PosPermission.drawerNoSale);
+    try {
+      return checkout.requestNoSaleDrawer(
+        commandId: ulids.next(),
+        idempotencyKey: idempotencyKey,
+        shiftId: shiftId,
+        reasonCode: reasonCode,
+        reasonText: reasonText,
+        authorizationRef: authorizationRef,
+        expectedVersion: _openShiftVersion(shiftId),
+        occurredAt: _now().toUtc(),
+      );
+    } on PosDomainException catch (error) {
+      throw PosSessionFailure(error.code, error.message);
+    }
+  }
+
+  int _openShiftVersion(String shiftId) {
+    final rows = database.database.select(
+      '''SELECT record_version FROM local_shift WHERE tenant_id=? AND store_id=?
+         AND terminal_id=? AND cashier_id=? AND shift_id=? AND status='OPEN' ''',
+      [
+        database.binding.tenantId,
+        database.binding.storeId,
+        database.binding.terminalId,
+        database.binding.cashierId,
+        shiftId,
+      ],
+    );
+    if (rows.length != 1) {
+      throw const PosSessionFailure('SHIFT_STATE_CONFLICT', '班次不存在或已经关闭。');
+    }
+    return rows.single['record_version']! as int;
+  }
+
+  void _requirePermission(PosPermission permission) {
+    if (!permissions.contains(permission)) {
+      throw const PosSessionFailure('PERMISSION_DENIED', '当前员工没有执行该班次操作的权限。');
+    }
+    if (!RegExp(r'^[A-Za-z0-9._:-]{16,128}$').hasMatch(authorizationRef)) {
+      throw const PosSessionFailure(
+        'AUTHORIZATION_CONTEXT_INVALID',
+        '员工授权上下文无效。',
+      );
+    }
+  }
 }
 
 int _parseYuan(String source) {
@@ -91,4 +180,12 @@ int _parseYuan(String source) {
   }
   final fraction = (match.group(2) ?? '').padRight(2, '0');
   return int.parse(match.group(1)!) * 100 + int.parse(fraction);
+}
+
+int _parsePositiveYuan(String source) {
+  final value = _parseYuan(source);
+  if (value <= 0) {
+    throw const PosSessionFailure('SHIFT_CASH_INVALID', '班次现金金额必须大于零。');
+  }
+  return value;
 }

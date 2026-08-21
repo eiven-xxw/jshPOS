@@ -54,6 +54,30 @@ public final class OrderRequests {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = false)
+    public record CashMovement(
+        @NotBlank @Pattern(regexp = ULID) String movementId,
+        @NotBlank @Pattern(regexp = "^(CASH_IN|CASH_OUT|SAFE_DROP)$") String movementType,
+        @Min(1) @Max(9_007_199_254_740_991L) long amountMinor,
+        @Min(1) long expectedVersion,
+        @NotBlank @Pattern(regexp = "^[A-Z][A-Z0-9_]{1,31}$") String reasonCode,
+        @NotBlank @Size(max = 256) String reasonText,
+        @NotBlank @Pattern(regexp = "^[A-Za-z0-9._:-]{16,128}$") String authorizationRef,
+        @NotNull Instant occurredAt
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = false)
+    public record DrawerEvent(
+        @NotBlank @Pattern(regexp = ULID) String drawerEventId,
+        @Min(1) long expectedVersion,
+        @NotBlank @Pattern(regexp = "^[A-Z][A-Z0-9_]{1,31}$") String reasonCode,
+        @NotBlank @Size(max = 256) String reasonText,
+        @NotBlank @Pattern(regexp = "^[A-Za-z0-9._:-]{16,128}$") String authorizationRef,
+        @NotNull Instant occurredAt
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = false)
     public record CashOrder(
         @NotBlank @Pattern(regexp = ULID) String orderId,
         @NotBlank @Size(max = 40) String localOrderNo,

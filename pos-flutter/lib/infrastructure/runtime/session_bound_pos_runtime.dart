@@ -170,6 +170,8 @@ final class FilePosBusinessRuntimeAssembler
         checkout: checkout,
         ulids: ulids,
         configVersion: configVersion,
+        permissions: employee.permissions,
+        authorizationRef: employee.sessionRef,
       );
       final returns = HttpPosReturnApplicationService(
         baseUri: baseUri.resolve('api/v1/'),
@@ -398,6 +400,36 @@ final class SessionBoundPosRuntime
   }) => _ready.shift.close(
     shiftId: shiftId,
     actualCash: actualCash,
+    idempotencyKey: idempotencyKey,
+  );
+
+  @override
+  Future<ShiftOperationResult> recordCashMovement({
+    required String shiftId,
+    required ShiftCashMovementType movementType,
+    required String amount,
+    required String reasonCode,
+    required String reasonText,
+    required String idempotencyKey,
+  }) => _ready.shift.recordCashMovement(
+    shiftId: shiftId,
+    movementType: movementType,
+    amount: amount,
+    reasonCode: reasonCode,
+    reasonText: reasonText,
+    idempotencyKey: idempotencyKey,
+  );
+
+  @override
+  Future<ShiftOperationResult> requestNoSaleDrawer({
+    required String shiftId,
+    required String reasonCode,
+    required String reasonText,
+    required String idempotencyKey,
+  }) => _ready.shift.requestNoSaleDrawer(
+    shiftId: shiftId,
+    reasonCode: reasonCode,
+    reasonText: reasonText,
     idempotencyKey: idempotencyKey,
   );
 

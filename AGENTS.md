@@ -412,6 +412,16 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
 - `T2-PAY-002/HWD-001/PRN-001/PAR-001` 继续 `BLOCKED`，`T2-UAT-001/REL-001` 继续 `DRAFT`，`T2-JSH-001/LIC-001` 继续 `DEFERRED`。允许外部端口失败关闭，但不得模拟成功或用内部证据解除 `SANDBOX/REAL_DEVICE/PILOT` 阻断。
 - Provider 网络、真实资金、真实设备/外设命令、伙伴联系、现场试点、完整 Alpha、生产部署和商业声明必须全部为 0。完成 Gate 7A 报告与 CI 后必须等待项目发起人确认，不得自动启动 Gate 7B。
 
+## 4.33 当前 T2 Gate 7B / Sprint S20：POS 交易运营第一批条件准入
+
+- 项目发起人已于 2026-08-21 接受 Gate 7A，并授权从封板提交 `fd255f45115015fa0bab91f1fd8b1c14c2acc51e` 建立 `t2/gate7b-sprint20-pos-operations`，严格按 `T2-POS-010 → T2-POS-011 → T2-ORD-004` 串行开发。
+- 当前只有 `T2-POS-010` 完成设计准入并可进入 `IN_PROGRESS`；`T2-POS-011/ORD-004` 必须保持 `DRAFT`，前项未完成独立 `VERIFIED` 与 CI 时不得预建后项运行时或迁移。
+- POS-010 复用 Checkout/Order Owner，在独立只追加表记录非销售现金移动和非销售钱箱请求；现金移动、班次理论现金/版本、审计、幂等结果和 Outbox 必须同事务，钱箱请求金额恒为零且不得伪造设备成功。
+- 本地权限来自已认证员工会话，服务端仍执行权限和门店范围校验；`tenant_id`、门店、终端、员工、班次和业务日只来自可信上下文。现金移动输入必须为正数最小货币单位整数，Owner 冻结其正负方向。
+- SQLite/Flyway 只允许独立前向迁移，已发布迁移不得修改；现金和审计事实不得更新或删除。真实钱箱未解阻时设备执行状态固定为 `BLOCKED_EXTERNAL`，真实外设命令必须为 0。
+- `T2-EXG-001/PAY-004` 与 Gate 7C—7E 继续 `DRAFT`；`T2-PAY-002/HWD-001/PRN-001/PAR-001` 继续 `BLOCKED`，`T2-UAT-001/REL-001` 继续 `DRAFT`，`T2-JSH-001/LIC-001` 继续 `DEFERRED`。
+- Provider 网络、真实资金、真实设备/外设命令、伙伴联系、现场试点、完整 Alpha、生产部署和商业声明继续为 0。完成第一批后提交周门禁报告等待确认，不得自动进入第二批或后续 Gate。
+
 ## 5. 工程与测试规则
 
 - 服务端采用 RuoYi-Vue-Plus 模块化单体，不得把领域逻辑写入 Controller、通用工具类或框架系统模块。

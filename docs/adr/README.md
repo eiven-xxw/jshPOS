@@ -52,3 +52,4 @@ ADR 一经接受不得删除或静默改写。需要改变决策时，新建 ADR
 | ADR-040 | [Gate 6H 体验、性能、运维与内部发布候选](ADR-040-gate6h-experience-performance-operations-rc.md) | Accepted |
 | ADR-041 | [Gate 6I 外部执行准入快照与完整 Alpha 冻结](ADR-041-gate6i-external-admission-alpha-freeze.md) | Accepted |
 | ADR-042 | [Gate 7A 商业 V1 内部业务差距审计与串行准入](ADR-042-gate7a-v1-business-gap-audit.md) | Accepted |
+| ADR-043 | [Gate 7B POS 交易运营第一批串行扩展](ADR-043-gate7b-pos-operations-first-batch.md) | Accepted |

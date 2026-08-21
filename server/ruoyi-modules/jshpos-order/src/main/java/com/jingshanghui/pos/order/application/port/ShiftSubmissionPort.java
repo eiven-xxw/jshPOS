@@ -2,6 +2,10 @@ package com.jingshanghui.pos.order.application.port;
 
 import com.jingshanghui.pos.order.application.model.OrderCommands.CloseShift;
 import com.jingshanghui.pos.order.application.model.OrderCommands.OpenSyncedShift;
+import com.jingshanghui.pos.order.application.model.OrderCommands.RecordCashMovement;
+import com.jingshanghui.pos.order.application.model.OrderCommands.RequestNoSaleDrawer;
+import com.jingshanghui.pos.order.application.model.OrderViews.CashMovementView;
+import com.jingshanghui.pos.order.application.model.OrderViews.DrawerEventView;
 import com.jingshanghui.pos.order.application.model.OrderViews.ShiftView;
 
 /**
@@ -17,4 +21,10 @@ public interface ShiftSubmissionPort {
 
     /** 接收 POS 已冻结的关班事实，并按订单 Owner 状态机完成关闭。 */
     ShiftView close(CloseShift command);
+
+    /** 接收 POS 已冻结的非销售现金事实。 */
+    CashMovementView recordCashMovement(RecordCashMovement command);
+
+    /** 接收 POS 已冻结的钱箱请求事实；不得触发设备。 */
+    DrawerEventView requestNoSaleDrawer(RequestNoSaleDrawer command);
 }

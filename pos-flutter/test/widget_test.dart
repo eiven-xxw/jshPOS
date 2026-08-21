@@ -4,6 +4,7 @@ import 'package:jshpos_pos/app/jshpos_app.dart';
 import 'package:jshpos_pos/features/session/application/pos_session_repository.dart';
 import 'package:jshpos_pos/features/session/domain/pos_session_models.dart';
 import 'package:jshpos_pos/features/shift/application/pos_shift_application_service.dart';
+import 'package:jshpos_pos/features/shift/domain/shift_models.dart';
 import 'package:pos_device_adapter/pos_device_adapter.dart';
 
 void main() {
@@ -235,6 +236,24 @@ final class _FakeShiftApplicationService implements PosShiftApplicationService {
   }) async {
     closedShiftId = shiftId;
   }
+
+  @override
+  Future<ShiftOperationResult> recordCashMovement({
+    required String shiftId,
+    required ShiftCashMovementType movementType,
+    required String amount,
+    required String reasonCode,
+    required String reasonText,
+    required String idempotencyKey,
+  }) async => throw UnimplementedError();
+
+  @override
+  Future<ShiftOperationResult> requestNoSaleDrawer({
+    required String shiftId,
+    required String reasonCode,
+    required String reasonText,
+    required String idempotencyKey,
+  }) async => throw UnimplementedError();
 }
 
 final _terminal = TrustedTerminalContext(

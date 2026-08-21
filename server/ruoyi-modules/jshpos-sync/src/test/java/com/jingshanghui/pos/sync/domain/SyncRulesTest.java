@@ -16,6 +16,8 @@ class SyncRulesTest {
         assertThat(SyncRules.requireHash("a".repeat(64), "hash")).hasSize(64);
         SyncRules.requirePositive(1, "version");
         assertThat(SyncRules.supportsPosFact("order.completed.v1")).isTrue();
+        assertThat(SyncRules.supportsPosFact("shift.cash-movement.recorded.v1")).isTrue();
+        assertThat(SyncRules.supportsPosFact("shift.drawer-requested.v1")).isTrue();
         assertThat(SyncRules.supportsPosFact("payment.completed.v1")).isFalse();
         assertThat(SyncRules.clampPullLimit(-1)).isEqualTo(1);
         assertThat(SyncRules.clampPullLimit(100)).isEqualTo(100);

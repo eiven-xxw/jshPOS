@@ -6,6 +6,65 @@ final class ShiftPolicy {
   final int cashDifferenceApprovalMinor;
 }
 
+/// 班次非销售现金动作；正负方向由领域固定，页面不得自行传入带符号金额。
+enum ShiftCashMovementType {
+  cashIn('CASH_IN'),
+  cashOut('CASH_OUT'),
+  safeDrop('SAFE_DROP');
+
+  const ShiftCashMovementType(this.wireCode);
+  final String wireCode;
+
+  int signed(int amountMinor) => this == cashIn ? amountMinor : -amountMinor;
+}
+
+/// 班次现金/钱箱命令的不可变结果，支持原幂等键恢复而不重建命令。
+final class ShiftOperationResult {
+  const ShiftOperationResult({
+    required this.operationId,
+    required this.shiftId,
+    required this.operationType,
+    required this.theoreticalCashMinor,
+    required this.recordVersion,
+    required this.deviceExecutionStatus,
+    this.signedAmountMinor,
+    this.duplicate = false,
+  });
+
+  factory ShiftOperationResult.fromJson(
+    Map<String, Object?> json, {
+    bool duplicate = false,
+  }) => ShiftOperationResult(
+    operationId: json['operationId']! as String,
+    shiftId: json['shiftId']! as String,
+    operationType: json['operationType']! as String,
+    signedAmountMinor: json['signedAmountMinor'] as int?,
+    theoreticalCashMinor: json['theoreticalCashMinor']! as int,
+    recordVersion: json['recordVersion']! as int,
+    deviceExecutionStatus: json['deviceExecutionStatus']! as String,
+    duplicate: duplicate,
+  );
+
+  final String operationId;
+  final String shiftId;
+  final String operationType;
+  final int? signedAmountMinor;
+  final int theoreticalCashMinor;
+  final int recordVersion;
+  final String deviceExecutionStatus;
+  final bool duplicate;
+
+  Map<String, Object?> toJson() => {
+    'operationId': operationId,
+    'shiftId': shiftId,
+    'operationType': operationType,
+    'signedAmountMinor': signedAmountMinor,
+    'theoreticalCashMinor': theoreticalCashMinor,
+    'recordVersion': recordVersion,
+    'deviceExecutionStatus': deviceExecutionStatus,
+  };
+}
+
 /// Result of the trusted supervisor authentication boundary. Credentials and
 /// PINs are never retained; only the opaque proof reference is persisted.
 final class SupervisorSession {

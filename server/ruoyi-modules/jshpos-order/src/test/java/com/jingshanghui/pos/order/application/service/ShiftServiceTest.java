@@ -7,7 +7,11 @@ import com.jingshanghui.pos.order.application.model.OrderCommands.ApproveDiffere
 import com.jingshanghui.pos.order.application.model.OrderCommands.CloseShift;
 import com.jingshanghui.pos.order.application.model.OrderCommands.OpenShift;
 import com.jingshanghui.pos.order.application.model.OrderCommands.OpenSyncedShift;
+import com.jingshanghui.pos.order.application.model.OrderCommands.RecordCashMovement;
+import com.jingshanghui.pos.order.application.model.OrderCommands.RequestNoSaleDrawer;
 import com.jingshanghui.pos.order.application.model.OrderViews.ApprovalView;
+import com.jingshanghui.pos.order.application.model.OrderViews.CashMovementView;
+import com.jingshanghui.pos.order.application.model.OrderViews.DrawerEventView;
 import com.jingshanghui.pos.order.application.model.OrderViews.ShiftView;
 import com.jingshanghui.pos.order.domain.UlidGenerator;
 import com.jingshanghui.pos.order.infrastructure.persistence.mapper.OrderMapper;
@@ -76,6 +80,61 @@ class ShiftServiceTest {
         verify(mapper).insertShift(eq("TENANT_A"), eq(SHIFT), eq(1101L), eq(TERMINAL), eq(101L),
             eq("Synthetic User"), eq(LocalDate.parse("2026-08-16")), eq("Asia/Shanghai"), eq(1L),
             eq(5000L), any());
+    }
+
+    @Test
+    void recordsNonSaleCashWithSignedDirectionAndShiftVersionAtomically() {
+        when(context.requirePrincipal()).thenReturn(principal(101L));
+        when(mapper.lockShift("TENANT_A", SHIFT)).thenReturn(shift("OPEN", 1, 5000, null, null));
+        when(mapper.applyNonSaleCash("TENANT_A", SHIFT, 4800, 1)).thenReturn(1);
+
+        CashMovementView result = service.recordCashMovement(new RecordCashMovement(
+            "01K2A000000000000000000055", "cash-movement-key-001",
+            "01K2A000000000000000000095", SHIFT, "SAFE_DROP", 200, 1,
+            "SAFE_DROP", "Synthetic safe drop", "SESSION_AUTH_REF_123456", NOW));
+
+        assertThat(result.signedAmountMinor()).isEqualTo(-200);
+        assertThat(result.theoreticalCashMinor()).isEqualTo(4800);
+        assertThat(result.recordVersion()).isEqualTo(2);
+        verify(authorization).requireStoreAccess(1101L);
+        verify(mapper).insertCashMovement(eq("TENANT_A"), eq("01K2A000000000000000000095"),
+            eq(SHIFT), eq(1101L), eq(TERMINAL), eq(101L), eq(LocalDate.parse("2026-08-16")),
+            eq("SAFE_DROP"), eq(-200L), eq("SAFE_DROP"), eq("Synthetic safe drop"),
+            eq("SESSION_AUTH_REF_123456"), eq("01K2A000000000000000000055"), any(), eq(2L), any());
+    }
+
+    @Test
+    void recordsDrawerRequestButKeepsRealDeviceExecutionBlocked() {
+        when(context.requirePrincipal()).thenReturn(principal(101L));
+        when(mapper.lockShift("TENANT_A", SHIFT)).thenReturn(shift("OPEN", 1, 5000, null, null));
+        when(mapper.advanceShiftVersion("TENANT_A", SHIFT, 1)).thenReturn(1);
+
+        DrawerEventView result = service.requestNoSaleDrawer(new RequestNoSaleDrawer(
+            "01K2A000000000000000000056", "drawer-request-key-001",
+            "01K2A000000000000000000096", SHIFT, 1, "CHANGE_REQUEST",
+            "Synthetic drawer request", "SESSION_AUTH_REF_123456", NOW));
+
+        assertThat(result.deviceExecutionStatus()).isEqualTo("BLOCKED_EXTERNAL");
+        assertThat(result.theoreticalCashMinor()).isEqualTo(5000);
+        assertThat(result.recordVersion()).isEqualTo(2);
+        verify(mapper).insertDrawerEvent(eq("TENANT_A"), eq("01K2A000000000000000000096"),
+            eq(SHIFT), eq(1101L), eq(TERMINAL), eq(101L), eq(LocalDate.parse("2026-08-16")),
+            eq("CHANGE_REQUEST"), eq("Synthetic drawer request"), eq("SESSION_AUTH_REF_123456"),
+            eq("01K2A000000000000000000056"), any(), eq(2L), any());
+    }
+
+    @Test
+    void rejectsCashMovementWhenTrustedActorDoesNotOwnTheShift() {
+        when(context.requirePrincipal()).thenReturn(principal(202L));
+        when(mapper.lockShift("TENANT_A", SHIFT)).thenReturn(shift("OPEN", 1, 5000, null, null));
+
+        assertThatThrownBy(() -> service.recordCashMovement(new RecordCashMovement(
+            "01K2A000000000000000000057", "cash-movement-denied-01",
+            "01K2A000000000000000000097", SHIFT, "CASH_IN", 100, 1,
+            "FLOAT_TOPUP", "Synthetic denied movement", "SESSION_AUTH_REF_123456", NOW)))
+            .isInstanceOf(ServiceException.class).hasMessageContaining("SHIFT_STATE_CONFLICT");
+        verify(mapper, never()).insertCashMovement(any(), any(), any(), any(), any(), any(), any(), any(),
+            anyLong(), any(), any(), any(), any(), any(), anyLong(), any());
     }
 
     @Test

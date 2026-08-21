@@ -39,6 +39,18 @@ public final class OrderViews {
                                long expectedShiftVersion) {
     }
 
+    /** 班次现金动作的冻结结果。 */
+    public record CashMovementView(String movementId, String shiftId, String movementType,
+                                   long signedAmountMinor, String currency, LocalDate businessDate,
+                                   long theoreticalCashMinor, long recordVersion) {
+    }
+
+    /** 钱箱请求只记录事实，设备执行状态固定为 BLOCKED_EXTERNAL。 */
+    public record DrawerEventView(String drawerEventId, String shiftId, String eventType,
+                                  String deviceExecutionStatus, LocalDate businessDate,
+                                  long theoreticalCashMinor, long recordVersion) {
+    }
+
     /** 支付领域只读端口使用的原订单行快照。 */
     public record PaymentLineView(String lineId, BigDecimal quantity, long payableAmountMinor) {
     }

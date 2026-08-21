@@ -20,6 +20,8 @@ enum PosPermission {
   manualDiscount('pos:discount:manual'),
   approveDiscount('pos:discount:approve'),
   cashSettle('pos:cash:settle'),
+  cashManage('pos:shift:cash-manage'),
+  drawerNoSale('pos:drawer:no-sale'),
   returnRead('return:request:read'),
   returnCreate('return:request:create'),
   returnApprove('return:request:approve'),

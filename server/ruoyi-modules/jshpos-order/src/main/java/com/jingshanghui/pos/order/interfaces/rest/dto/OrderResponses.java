@@ -1,6 +1,8 @@
 package com.jingshanghui.pos.order.interfaces.rest.dto;
 
 import com.jingshanghui.pos.order.application.model.OrderViews.ApprovalView;
+import com.jingshanghui.pos.order.application.model.OrderViews.CashMovementView;
+import com.jingshanghui.pos.order.application.model.OrderViews.DrawerEventView;
 import com.jingshanghui.pos.order.application.model.OrderViews.OrderView;
 import com.jingshanghui.pos.order.application.model.OrderViews.ShiftView;
 
@@ -24,6 +26,18 @@ public final class OrderResponses {
             view.expectedShiftVersion(), traceId);
     }
 
+    public static CashMovementResult cashMovement(CashMovementView view, String traceId) {
+        return new CashMovementResult(view.movementId(), view.shiftId(), view.movementType(),
+            view.signedAmountMinor(), view.currency(), view.businessDate(), view.theoreticalCashMinor(),
+            view.recordVersion(), traceId);
+    }
+
+    public static DrawerEventResult drawerEvent(DrawerEventView view, String traceId) {
+        return new DrawerEventResult(view.drawerEventId(), view.shiftId(), view.eventType(),
+            view.deviceExecutionStatus(), view.businessDate(), view.theoreticalCashMinor(),
+            view.recordVersion(), traceId);
+    }
+
     public static OrderDetails order(OrderView view) {
         return new OrderDetails(view.orderId(), view.localOrderNo(), view.storeId().toString(), view.terminalId(),
             view.shiftId(), view.cashierUserId().toString(), view.businessDate(), view.status(), view.paymentStatus(),
@@ -39,6 +53,16 @@ public final class OrderResponses {
     public record ApprovalResult(String approvalId, String shiftId, String approverUserId, String status,
                                  long theoreticalCashMinor, long actualCashMinor, long differenceMinor,
                                  long expectedShiftVersion, String traceId) {
+    }
+
+    public record CashMovementResult(String movementId, String shiftId, String movementType,
+                                     long signedAmountMinor, String currency, LocalDate businessDate,
+                                     long theoreticalCashMinor, long recordVersion, String traceId) {
+    }
+
+    public record DrawerEventResult(String drawerEventId, String shiftId, String eventType,
+                                    String deviceExecutionStatus, LocalDate businessDate,
+                                    long theoreticalCashMinor, long recordVersion, String traceId) {
     }
 
     public record OrderDetails(String orderId, String localOrderNo, String storeId, String terminalId,

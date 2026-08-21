@@ -2,6 +2,8 @@ package com.jingshanghui.pos.sync.application.service;
 
 import com.jingshanghui.pos.order.application.model.OrderCommands.CloseShift;
 import com.jingshanghui.pos.order.application.model.OrderCommands.OpenSyncedShift;
+import com.jingshanghui.pos.order.application.model.OrderCommands.RecordCashMovement;
+import com.jingshanghui.pos.order.application.model.OrderCommands.RequestNoSaleDrawer;
 import com.jingshanghui.pos.order.application.port.ShiftSubmissionPort;
 import com.jingshanghui.pos.sync.application.model.SyncModels.DeviceContext;
 import com.jingshanghui.pos.sync.application.model.SyncModels.EventEnvelope;
@@ -26,6 +28,10 @@ public class ShiftEventDispatcher {
             open(context, event);
         } else if ("shift.closed.v1".equals(event.eventType())) {
             close(event);
+        } else if ("shift.cash-movement.recorded.v1".equals(event.eventType())) {
+            cashMovement(context, event);
+        } else if ("shift.drawer-requested.v1".equals(event.eventType())) {
+            drawerRequest(context, event);
         }
     }
 
@@ -52,6 +58,44 @@ public class ShiftEventDispatcher {
         shifts.close(new CloseShift(event.correlationId(), event.idempotencyKey(), event.aggregateId(),
             number(payload, "actualCashMinor"), event.aggregateVersion() - 1,
             approval == null ? null : String.valueOf(approval), event.occurredAt()));
+    }
+
+    private void cashMovement(DeviceContext context, EventEnvelope event) {
+        Map<String, Object> payload = event.payload();
+        requireTrustedContext(context, event, payload);
+        String movementType = text(payload, "movementType");
+        long signed = number(payload, "signedAmountMinor");
+        if (("CASH_IN".equals(movementType) && signed <= 0)
+            || (("CASH_OUT".equals(movementType) || "SAFE_DROP".equals(movementType)) && signed >= 0)
+            || event.aggregateVersion() < 2 || number(payload, "expectedVersion") != event.aggregateVersion() - 1) {
+            throw new ServiceException("SYNC_PAYLOAD_INVALID: 班次现金方向或版本无效", 400);
+        }
+        shifts.recordCashMovement(new RecordCashMovement(event.correlationId(), event.idempotencyKey(),
+            text(payload, "movementId"), event.aggregateId(), movementType, Math.abs(signed),
+            event.aggregateVersion() - 1, text(payload, "reasonCode"), text(payload, "reasonText"),
+            text(payload, "authorizationRef"), event.occurredAt()));
+    }
+
+    private void drawerRequest(DeviceContext context, EventEnvelope event) {
+        Map<String, Object> payload = event.payload();
+        requireTrustedContext(context, event, payload);
+        if (event.aggregateVersion() < 2 || number(payload, "expectedVersion") != event.aggregateVersion() - 1
+            || !"BLOCKED_EXTERNAL".equals(text(payload, "deviceExecutionStatus"))) {
+            throw new ServiceException("SYNC_PAYLOAD_INVALID: 钱箱请求状态或版本无效", 400);
+        }
+        shifts.requestNoSaleDrawer(new RequestNoSaleDrawer(event.correlationId(), event.idempotencyKey(),
+            text(payload, "drawerEventId"), event.aggregateId(), event.aggregateVersion() - 1,
+            text(payload, "reasonCode"), text(payload, "reasonText"), text(payload, "authorizationRef"),
+            event.occurredAt()));
+    }
+
+    private void requireTrustedContext(DeviceContext context, EventEnvelope event, Map<String, Object> payload) {
+        if (!event.aggregateId().equals(text(payload, "shiftId"))
+            || !context.storeId().toString().equals(text(payload, "storeId"))
+            || !context.terminalId().equals(text(payload, "terminalId"))
+            || !context.userId().toString().equals(text(payload, "cashierId"))) {
+            throw new ServiceException("SYNC_CONTEXT_MISMATCH: 班次操作试图覆盖可信设备上下文", 403);
+        }
     }
 
     private String text(Map<String, Object> payload, String field) {

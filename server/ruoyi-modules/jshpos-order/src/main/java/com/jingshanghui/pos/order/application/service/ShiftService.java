@@ -8,7 +8,11 @@ import com.jingshanghui.pos.order.application.model.OrderCommands.ApproveDiffere
 import com.jingshanghui.pos.order.application.model.OrderCommands.CloseShift;
 import com.jingshanghui.pos.order.application.model.OrderCommands.OpenShift;
 import com.jingshanghui.pos.order.application.model.OrderCommands.OpenSyncedShift;
+import com.jingshanghui.pos.order.application.model.OrderCommands.RecordCashMovement;
+import com.jingshanghui.pos.order.application.model.OrderCommands.RequestNoSaleDrawer;
 import com.jingshanghui.pos.order.application.model.OrderViews.ApprovalView;
+import com.jingshanghui.pos.order.application.model.OrderViews.CashMovementView;
+import com.jingshanghui.pos.order.application.model.OrderViews.DrawerEventView;
 import com.jingshanghui.pos.order.application.model.OrderViews.ShiftView;
 import com.jingshanghui.pos.order.application.port.ShiftSubmissionPort;
 import com.jingshanghui.pos.order.domain.CanonicalHash;
@@ -27,6 +31,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Map;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -35,6 +40,9 @@ public class ShiftService implements ShiftSubmissionPort {
     private static final String OPEN = "OPEN_SHIFT";
     private static final String CLOSE = "CLOSE_SHIFT";
     private static final String APPROVE = "APPROVE_SHIFT_DIFFERENCE";
+    private static final String CASH_MOVEMENT = "RECORD_SHIFT_CASH_MOVEMENT";
+    private static final String DRAWER_REQUEST = "REQUEST_NO_SALE_DRAWER";
+    private static final Set<String> CASH_MOVEMENT_TYPES = Set.of("CASH_IN", "CASH_OUT", "SAFE_DROP");
 
     private final OrderMapper mapper;
     private final TrustedTenantContext tenantContext;
@@ -107,6 +115,108 @@ public class ShiftService implements ShiftSubmissionPort {
                              String storeTimezone, long openingCashMinor, long configVersion,
                              Instant occurredAt) { }
 
+    /**
+     * 追加班次非销售现金事实，并在同一事务中更新理论现金、审计、Outbox 和幂等结果。
+     */
+    @Override
+    @Transactional
+    public CashMovementView recordCashMovement(RecordCashMovement command) {
+        TrustedPrincipal principal = tenantContext.requirePrincipal();
+        validateOperationIdentity(command.commandId(), command.idempotencyKey(), command.movementId(),
+            command.shiftId(), command.expectedVersion(), command.reasonCode(), command.reasonText(),
+            command.authorizationRef(), command.occurredAt());
+        OrderRules.requireMoney(command.amountMinor(), "amountMinor");
+        if (command.amountMinor() <= 0 || !CASH_MOVEMENT_TYPES.contains(command.movementType())) {
+            throw new ServiceException("SHIFT_CASH_INPUT_INVALID: 现金类型或金额无效", 400);
+        }
+        String tenantId = principal.tenantId();
+        String requestHash = CanonicalHash.sha256(CanonicalHash.lengthPrefixed(List.of(command.movementId(),
+            command.shiftId(), command.movementType(), command.amountMinor(), command.expectedVersion(),
+            command.reasonCode(), command.reasonText(), command.authorizationRef())));
+        CashMovementView duplicate = idempotency.find(tenantId, CASH_MOVEMENT, command.idempotencyKey(),
+            requestHash, CashMovementView.class);
+        if (duplicate != null) return duplicate;
+        ShiftView shift = lockOwnedOpenShift(principal, command.shiftId(), command.expectedVersion());
+        long signedAmount = "CASH_IN".equals(command.movementType())
+            ? command.amountMinor() : -command.amountMinor();
+        long theoretical = safeAdd(shift.theoreticalCashMinor(), signedAmount);
+        long version = shift.recordVersion() + 1;
+        LocalDateTime at = utc(command.occurredAt());
+        mapper.insertCashMovement(tenantId, command.movementId(), shift.shiftId(), shift.storeId(),
+            shift.terminalId(), principal.userId(), shift.businessDate(), command.movementType(), signedAmount,
+            command.reasonCode(), command.reasonText().trim(), command.authorizationRef(), command.commandId(),
+            requestHash, version, at);
+        if (mapper.applyNonSaleCash(tenantId, shift.shiftId(), theoretical, shift.recordVersion()) != 1) {
+            throw new ServiceException("SHIFT_STATE_CONFLICT: 班次现金并发冲突", 409);
+        }
+        CashMovementView result = new CashMovementView(command.movementId(), shift.shiftId(),
+            command.movementType(), signedAmount, "CNY", shift.businessDate(), theoretical, version);
+        String payload = CanonicalJson.from(Map.<String, Object>ofEntries(
+            Map.entry("movementId", command.movementId()), Map.entry("shiftId", shift.shiftId()),
+            Map.entry("storeId", shift.storeId().toString()), Map.entry("terminalId", shift.terminalId()),
+            Map.entry("cashierId", principal.userId().toString()),
+            Map.entry("businessDate", shift.businessDate().toString()),
+            Map.entry("movementType", command.movementType()), Map.entry("amountMinor", command.amountMinor()),
+            Map.entry("signedAmountMinor", signedAmount),
+            Map.entry("currency", "CNY"), Map.entry("reasonCode", command.reasonCode()),
+            Map.entry("reasonText", command.reasonText().trim()), Map.entry("expectedVersion", command.expectedVersion())
+        )).json();
+        journal.appendEvent(tenantId, "shift.event", "shift.cash-movement.recorded.v1", "SHIFT",
+            shift.shiftId(), version, command.commandId(), payload, at);
+        journal.audit(tenantId, "SHIFT_CASH_" + command.movementType(), "SHIFT", shift.shiftId(),
+            principal.userId(), null, command.commandId(), "OPEN", "OPEN", signedAmount, requestHash,
+            command.reasonCode(), at);
+        idempotency.save(tenantId, CASH_MOVEMENT, command.commandId(), command.idempotencyKey(), requestHash,
+            shift.shiftId(), result, at);
+        return result;
+    }
+
+    /** 钱箱事件仅落审计事实，真实设备执行固定失败关闭。 */
+    @Override
+    @Transactional
+    public DrawerEventView requestNoSaleDrawer(RequestNoSaleDrawer command) {
+        TrustedPrincipal principal = tenantContext.requirePrincipal();
+        validateOperationIdentity(command.commandId(), command.idempotencyKey(), command.drawerEventId(),
+            command.shiftId(), command.expectedVersion(), command.reasonCode(), command.reasonText(),
+            command.authorizationRef(), command.occurredAt());
+        String tenantId = principal.tenantId();
+        String requestHash = CanonicalHash.sha256(CanonicalHash.lengthPrefixed(List.of(command.drawerEventId(),
+            command.shiftId(), command.expectedVersion(), command.reasonCode(), command.reasonText(),
+            command.authorizationRef())));
+        DrawerEventView duplicate = idempotency.find(tenantId, DRAWER_REQUEST, command.idempotencyKey(),
+            requestHash, DrawerEventView.class);
+        if (duplicate != null) return duplicate;
+        ShiftView shift = lockOwnedOpenShift(principal, command.shiftId(), command.expectedVersion());
+        long version = shift.recordVersion() + 1;
+        LocalDateTime at = utc(command.occurredAt());
+        mapper.insertDrawerEvent(tenantId, command.drawerEventId(), shift.shiftId(), shift.storeId(),
+            shift.terminalId(), principal.userId(), shift.businessDate(), command.reasonCode(),
+            command.reasonText().trim(), command.authorizationRef(), command.commandId(), requestHash, version, at);
+        if (mapper.advanceShiftVersion(tenantId, shift.shiftId(), shift.recordVersion()) != 1) {
+            throw new ServiceException("SHIFT_STATE_CONFLICT: 钱箱请求并发冲突", 409);
+        }
+        DrawerEventView result = new DrawerEventView(command.drawerEventId(), shift.shiftId(),
+            "NO_SALE_OPEN_REQUESTED", "BLOCKED_EXTERNAL", shift.businessDate(),
+            shift.theoreticalCashMinor(), version);
+        String payload = CanonicalJson.from(Map.<String, Object>ofEntries(
+            Map.entry("drawerEventId", command.drawerEventId()), Map.entry("shiftId", shift.shiftId()),
+            Map.entry("storeId", shift.storeId().toString()), Map.entry("terminalId", shift.terminalId()),
+            Map.entry("cashierId", principal.userId().toString()),
+            Map.entry("businessDate", shift.businessDate().toString()),
+            Map.entry("eventType", "NO_SALE_OPEN_REQUESTED"),
+            Map.entry("deviceExecutionStatus", "BLOCKED_EXTERNAL"),
+            Map.entry("reasonCode", command.reasonCode()), Map.entry("reasonText", command.reasonText().trim()),
+            Map.entry("expectedVersion", command.expectedVersion())
+        )).json();
+        journal.appendEvent(tenantId, "shift.event", "shift.drawer-requested.v1", "SHIFT",
+            shift.shiftId(), version, command.commandId(), payload, at);
+        journal.audit(tenantId, "NO_SALE_DRAWER_REQUESTED", "SHIFT", shift.shiftId(), principal.userId(),
+            null, command.commandId(), "OPEN", "OPEN", null, requestHash, command.reasonCode(), at);
+        idempotency.save(tenantId, DRAWER_REQUEST, command.commandId(), command.idempotencyKey(), requestHash,
+            shift.shiftId(), result, at);
+        return result;
+    }
+
     @Transactional
     public ApprovalView approveDifference(ApproveDifference command) {
         TrustedPrincipal principal = tenantContext.requirePrincipal();
@@ -135,7 +245,7 @@ public class ShiftService implements ShiftSubmissionPort {
         if (principal.userId().equals(shift.cashierUserId())) {
             throw new ServiceException("SHIFT_APPROVER_SEPARATION_REQUIRED: 审批人不得为本班收银员", 403);
         }
-        long ledger = mapper.sumCashLedger(principal.tenantId(), shift.shiftId());
+        long ledger = totalCashLedger(principal.tenantId(), shift.shiftId());
         long theoretical = safeAdd(shift.openingCashMinor(), ledger);
         long difference = safeSubtract(command.actualCashMinor(), theoretical);
         long threshold = differencePolicy.approvalThresholdMinor(shift.storeId());
@@ -185,7 +295,7 @@ public class ShiftService implements ShiftSubmissionPort {
             || command.expectedVersion() != shift.recordVersion()) {
             throw new ServiceException("SHIFT_STATE_CONFLICT: 班次状态、操作者或版本冲突", 409);
         }
-        long ledger = mapper.sumCashLedger(principal.tenantId(), shift.shiftId());
+        long ledger = totalCashLedger(principal.tenantId(), shift.shiftId());
         long theoretical = safeAdd(shift.openingCashMinor(), ledger);
         long difference = safeSubtract(command.actualCashMinor(), theoretical);
         long threshold = differencePolicy.approvalThresholdMinor(shift.storeId());
@@ -231,6 +341,38 @@ public class ShiftService implements ShiftSubmissionPort {
             throw new ServiceException("RESOURCE_NOT_VISIBLE: 班次不存在或不可见", 404);
         }
         return result;
+    }
+
+    private ShiftView lockOwnedOpenShift(TrustedPrincipal principal, String shiftId, long expectedVersion) {
+        ShiftView shift = mapper.lockShift(principal.tenantId(), shiftId);
+        if (shift == null) {
+            throw new ServiceException("RESOURCE_NOT_VISIBLE: 班次不存在或不可见", 404);
+        }
+        authorizationService.requireStoreAccess(shift.storeId());
+        if (!principal.userId().equals(shift.cashierUserId()) || !"OPEN".equals(shift.status())
+            || shift.recordVersion() != expectedVersion) {
+            throw new ServiceException("SHIFT_STATE_CONFLICT: 班次状态、操作者或版本冲突", 409);
+        }
+        return shift;
+    }
+
+    private void validateOperationIdentity(String commandId, String idempotencyKey, String operationId,
+                                           String shiftId, long expectedVersion, String reasonCode,
+                                           String reasonText, String authorizationRef, Instant occurredAt) {
+        OrderRules.requireUlid(commandId, "commandId");
+        OrderRules.requireUlid(operationId, "operationId");
+        OrderRules.requireUlid(shiftId, "shiftId");
+        OrderRules.requireIdempotencyKey(idempotencyKey);
+        if (expectedVersion <= 0 || occurredAt == null || reasonCode == null
+            || !reasonCode.matches("^[A-Z][A-Z0-9_]{1,31}$") || reasonText == null
+            || reasonText.isBlank() || reasonText.length() > 256 || authorizationRef == null
+            || !authorizationRef.matches("^[A-Za-z0-9._:-]{16,128}$")) {
+            throw new ServiceException("SHIFT_OPERATION_INPUT_INVALID: 班次操作上下文不完整", 400);
+        }
+    }
+
+    private long totalCashLedger(String tenantId, String shiftId) {
+        return safeAdd(mapper.sumCashLedger(tenantId, shiftId), mapper.sumNonSaleCashMovement(tenantId, shiftId));
     }
 
     private void requireActor(String cashierId, TrustedPrincipal principal) {

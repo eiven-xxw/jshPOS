@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "1.0",
+  "gate": "T2-GATE7B-SPRINT-S20-POS-OPERATIONS-FIRST-BATCH",
+  "baselineCommit": "fd255f45115015fa0bab91f1fd8b1c14c2acc51e",
+  "branch": "t2/gate7b-sprint20-pos-operations",
+  "decision": "CONDITIONAL_GO_FIRST_BATCH_ONLY",
+  "serialOrder": [
+    "T2-POS-010",
+    "T2-POS-011",
+    "T2-ORD-004"
+  ],
+  "requirements": {
+    "T2-POS-010": {
+      "status": "IN_PROGRESS",
+      "admission": "PASSED_DESIGN_ENTRY",
+      "evidenceCeiling": "SOFTWARE_EXECUTION"
+    },
+    "T2-POS-011": {
+      "status": "DRAFT",
+      "admission": "WAITING_FOR_T2_POS_010_VERIFIED",
+      "evidenceCeiling": "SOFTWARE_EXECUTION"
+    },
+    "T2-ORD-004": {
+      "status": "DRAFT",
+      "admission": "WAITING_FOR_T2_POS_011_VERIFIED",
+      "evidenceCeiling": "SOFTWARE_EXECUTION"
+    }
+  },
+  "preservedStates": {
+    "T2-EXG-001": "DRAFT",
+    "T2-PAY-004": "DRAFT",
+    "T2-PAY-002": "BLOCKED",
+    "T2-HWD-001": "BLOCKED",
+    "T2-PRN-001": "BLOCKED",
+    "T2-PAR-001": "BLOCKED",
+    "T2-UAT-001": "DRAFT",
+    "T2-REL-001": "DRAFT",
+    "T2-JSH-001": "DEFERRED",
+    "T2-LIC-001": "DEFERRED"
+  },
+  "externalExecution": {
+    "providerNetworkCalls": 0,
+    "realFundsTransactions": 0,
+    "realDeviceCommands": 0,
+    "realPeripheralCommands": 0,
+    "partnerContacts": 0,
+    "onsitePilots": 0,
+    "fullAlphaRuns": 0,
+    "productionDeployments": 0,
+    "commercialClaimAllowed": false
+  }
+}

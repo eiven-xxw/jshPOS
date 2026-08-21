@@ -967,6 +967,282 @@ final class CheckoutLocalService {
     });
   }
 
+  /// 在一个 SQLite 事务中追加非销售现金事实、班次余额、审计和 Outbox。
+  ShiftOperationResult recordShiftCashMovement({
+    required String commandId,
+    required String idempotencyKey,
+    required String shiftId,
+    required ShiftCashMovementType movementType,
+    required int amountMinor,
+    required String reasonCode,
+    required String reasonText,
+    required String authorizationRef,
+    required int expectedVersion,
+    required DateTime occurredAt,
+  }) {
+    _requireCommand(commandId, idempotencyKey);
+    MoneyRules.requireMinor(amountMinor, 'amountMinor');
+    if (amountMinor <= 0 ||
+        expectedVersion <= 0 ||
+        !RegExp(r'^[A-Z][A-Z0-9_]{1,31}$').hasMatch(reasonCode) ||
+        reasonText.trim().isEmpty ||
+        reasonText.length > 256 ||
+        !RegExp(r'^[A-Za-z0-9._:-]{16,128}$').hasMatch(authorizationRef)) {
+      throw const PosDomainException(
+        'SHIFT_CASH_INPUT_INVALID',
+        'cash movement amount, reason, authorization or version is invalid',
+      );
+    }
+    final signed = movementType.signed(amountMinor);
+    final requestHash = _hash([
+      shiftId,
+      movementType.wireCode,
+      amountMinor,
+      reasonCode,
+      reasonText,
+      authorizationRef,
+      expectedVersion,
+    ]);
+    return localDatabase.transaction(() {
+      final duplicate = _idempotent<ShiftOperationResult>(
+        'RECORD_SHIFT_CASH_MOVEMENT',
+        idempotencyKey,
+        requestHash,
+        ShiftOperationResult.fromJson,
+      );
+      if (duplicate != null) return duplicate;
+      final shift = _requireOpenShift(shiftId);
+      if (shift['record_version'] != expectedVersion) {
+        throw const PosDomainException(
+          'SHIFT_STATE_CONFLICT',
+          'cash movement shift version conflict',
+        );
+      }
+      final current = shift['theoretical_cash_minor']! as int;
+      final next = current + signed;
+      MoneyRules.requireMinor(next, 'theoreticalCashMinor');
+      final movementId = ulids.next();
+      final version = expectedVersion + 1;
+      final at = occurredAt.toUtc().toIso8601String();
+      _db.execute(
+        'INSERT INTO local_shift_cash_movement(movement_id,tenant_id,shift_id,store_id,terminal_id,cashier_id,business_date,movement_type,signed_amount_minor,currency,reason_code,reason_text,authorization_ref,command_id,request_sha256,shift_version,occurred_at) VALUES(?,?,?,?,?,?,?,?,?,\'CNY\',?,?,?,?,?,?,?)',
+        [
+          movementId,
+          _binding.tenantId,
+          shiftId,
+          _binding.storeId,
+          _binding.terminalId,
+          _binding.cashierId,
+          shift['business_date'],
+          movementType.wireCode,
+          signed,
+          reasonCode,
+          reasonText.trim(),
+          authorizationRef,
+          commandId,
+          requestHash,
+          version,
+          at,
+        ],
+      );
+      _db.execute(
+        'UPDATE local_shift SET theoretical_cash_minor=?,record_version=record_version+1 WHERE tenant_id=? AND shift_id=? AND status=\'OPEN\' AND record_version=?',
+        [next, _binding.tenantId, shiftId, expectedVersion],
+      );
+      if (_db.updatedRows != 1) {
+        throw const PosDomainException(
+          'SHIFT_STATE_CONFLICT',
+          'concurrent cash movement conflict',
+        );
+      }
+      localDatabase.checkpoint('shift.cash-movement.persisted');
+      _appendOutbox(
+        stream: 'shift.event',
+        eventType: 'shift.cash-movement.recorded.v1',
+        aggregateId: shiftId,
+        aggregateVersion: version,
+        correlationId: commandId,
+        payload: {
+          'movementId': movementId,
+          'shiftId': shiftId,
+          'storeId': _binding.storeId,
+          'terminalId': _binding.terminalId,
+          'cashierId': _binding.cashierId,
+          'businessDate': shift['business_date'],
+          'movementType': movementType.wireCode,
+          'amountMinor': amountMinor,
+          'signedAmountMinor': signed,
+          'currency': 'CNY',
+          'reasonCode': reasonCode,
+          'reasonText': reasonText.trim(),
+          'authorizationRef': authorizationRef,
+          'expectedVersion': expectedVersion,
+        },
+        occurredAt: at,
+      );
+      _audit(
+        'SHIFT_CASH_${movementType.wireCode}',
+        'SHIFT',
+        shiftId,
+        commandId,
+        'OPEN',
+        'OPEN',
+        signed,
+        requestHash,
+        at,
+      );
+      final result = ShiftOperationResult(
+        operationId: movementId,
+        shiftId: shiftId,
+        operationType: movementType.wireCode,
+        signedAmountMinor: signed,
+        theoreticalCashMinor: next,
+        recordVersion: version,
+        deviceExecutionStatus: 'NOT_APPLICABLE',
+      );
+      _saveIdempotency(
+        'RECORD_SHIFT_CASH_MOVEMENT',
+        commandId,
+        idempotencyKey,
+        requestHash,
+        shiftId,
+        result.toJson(),
+        at,
+      );
+      return result;
+    });
+  }
+
+  /// 钱箱外设未解阻：只追加请求事实并固定失败关闭，不下发 MethodChannel。
+  ShiftOperationResult requestNoSaleDrawer({
+    required String commandId,
+    required String idempotencyKey,
+    required String shiftId,
+    required String reasonCode,
+    required String reasonText,
+    required String authorizationRef,
+    required int expectedVersion,
+    required DateTime occurredAt,
+  }) {
+    _requireCommand(commandId, idempotencyKey);
+    if (expectedVersion <= 0 ||
+        !RegExp(r'^[A-Z][A-Z0-9_]{1,31}$').hasMatch(reasonCode) ||
+        reasonText.trim().isEmpty ||
+        reasonText.length > 256 ||
+        !RegExp(r'^[A-Za-z0-9._:-]{16,128}$').hasMatch(authorizationRef)) {
+      throw const PosDomainException(
+        'DRAWER_REQUEST_INPUT_INVALID',
+        'drawer reason, authorization or version is invalid',
+      );
+    }
+    final requestHash = _hash([
+      shiftId,
+      reasonCode,
+      reasonText,
+      authorizationRef,
+      expectedVersion,
+    ]);
+    return localDatabase.transaction(() {
+      final duplicate = _idempotent<ShiftOperationResult>(
+        'REQUEST_NO_SALE_DRAWER',
+        idempotencyKey,
+        requestHash,
+        ShiftOperationResult.fromJson,
+      );
+      if (duplicate != null) return duplicate;
+      final shift = _requireOpenShift(shiftId);
+      if (shift['record_version'] != expectedVersion) {
+        throw const PosDomainException(
+          'SHIFT_STATE_CONFLICT',
+          'drawer request shift version conflict',
+        );
+      }
+      final eventId = ulids.next();
+      final version = expectedVersion + 1;
+      final at = occurredAt.toUtc().toIso8601String();
+      _db.execute(
+        'INSERT INTO local_drawer_event(drawer_event_id,tenant_id,shift_id,store_id,terminal_id,cashier_id,business_date,event_type,reason_code,reason_text,authorization_ref,device_execution_status,command_id,request_sha256,shift_version,occurred_at) VALUES(?,?,?,?,?,?,?,\'NO_SALE_OPEN_REQUESTED\',?,?,?,\'BLOCKED_EXTERNAL\',?,?,?,?)',
+        [
+          eventId,
+          _binding.tenantId,
+          shiftId,
+          _binding.storeId,
+          _binding.terminalId,
+          _binding.cashierId,
+          shift['business_date'],
+          reasonCode,
+          reasonText.trim(),
+          authorizationRef,
+          commandId,
+          requestHash,
+          version,
+          at,
+        ],
+      );
+      _db.execute(
+        'UPDATE local_shift SET record_version=record_version+1 WHERE tenant_id=? AND shift_id=? AND status=\'OPEN\' AND record_version=?',
+        [_binding.tenantId, shiftId, expectedVersion],
+      );
+      if (_db.updatedRows != 1) {
+        throw const PosDomainException(
+          'SHIFT_STATE_CONFLICT',
+          'concurrent drawer request conflict',
+        );
+      }
+      localDatabase.checkpoint('shift.drawer-request.persisted');
+      _appendOutbox(
+        stream: 'shift.event',
+        eventType: 'shift.drawer-requested.v1',
+        aggregateId: shiftId,
+        aggregateVersion: version,
+        correlationId: commandId,
+        payload: {
+          'drawerEventId': eventId,
+          'shiftId': shiftId,
+          'storeId': _binding.storeId,
+          'terminalId': _binding.terminalId,
+          'cashierId': _binding.cashierId,
+          'businessDate': shift['business_date'],
+          'reasonCode': reasonCode,
+          'reasonText': reasonText.trim(),
+          'authorizationRef': authorizationRef,
+          'deviceExecutionStatus': 'BLOCKED_EXTERNAL',
+          'expectedVersion': expectedVersion,
+        },
+        occurredAt: at,
+      );
+      _audit(
+        'NO_SALE_DRAWER_REQUESTED',
+        'SHIFT',
+        shiftId,
+        commandId,
+        'OPEN',
+        'OPEN',
+        null,
+        requestHash,
+        at,
+      );
+      final result = ShiftOperationResult(
+        operationId: eventId,
+        shiftId: shiftId,
+        operationType: 'NO_SALE_OPEN_REQUESTED',
+        theoreticalCashMinor: shift['theoretical_cash_minor']! as int,
+        recordVersion: version,
+        deviceExecutionStatus: 'BLOCKED_EXTERNAL',
+      );
+      _saveIdempotency(
+        'REQUEST_NO_SALE_DRAWER',
+        commandId,
+        idempotencyKey,
+        requestHash,
+        shiftId,
+        result.toJson(),
+        at,
+      );
+      return result;
+    });
+  }
+
   ShiftCloseApproval approveShiftDifference({
     required String commandId,
     required String idempotencyKey,
@@ -1018,12 +1294,7 @@ final class CheckoutLocalService {
           'shift approval state or version conflict',
         );
       }
-      final ledger =
-          _db.select(
-                'SELECT COALESCE(SUM(signed_amount_minor),0) total FROM local_cash_ledger WHERE tenant_id=? AND shift_id=?',
-                [_binding.tenantId, shiftId],
-              ).single['total']!
-              as int;
+      final ledger = _cashLedgerTotal(shiftId);
       final theoretical = (rows.single['opening_cash_minor']! as int) + ledger;
       final difference = actualCashMinor - theoretical;
       if (difference.abs() <= shiftPolicy.cashDifferenceApprovalMinor) {
@@ -1145,12 +1416,7 @@ final class CheckoutLocalService {
           'shift close state or version conflict',
         );
       }
-      final ledger =
-          _db.select(
-                'SELECT COALESCE(SUM(signed_amount_minor),0) total FROM local_cash_ledger WHERE tenant_id=? AND shift_id=?',
-                [_binding.tenantId, shiftId],
-              ).single['total']!
-              as int;
+      final ledger = _cashLedgerTotal(shiftId);
       final theoretical = (rows.single['opening_cash_minor']! as int) + ledger;
       final difference = actualCashMinor - theoretical;
       Row? approval;
@@ -1753,6 +2019,22 @@ final class CheckoutLocalService {
       );
     }
     return rows.single;
+  }
+
+  int _cashLedgerTotal(String shiftId) {
+    final sale =
+        _db.select(
+              'SELECT COALESCE(SUM(signed_amount_minor),0) total FROM local_cash_ledger WHERE tenant_id=? AND shift_id=?',
+              [_binding.tenantId, shiftId],
+            ).single['total']!
+            as int;
+    final nonSale =
+        _db.select(
+              'SELECT COALESCE(SUM(signed_amount_minor),0) total FROM local_shift_cash_movement WHERE tenant_id=? AND shift_id=?',
+              [_binding.tenantId, shiftId],
+            ).single['total']!
+            as int;
+    return sale + nonSale;
   }
 
   bool _matchesDraftContext(

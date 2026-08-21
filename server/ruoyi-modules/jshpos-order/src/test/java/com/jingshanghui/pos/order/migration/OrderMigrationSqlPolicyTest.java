@@ -39,4 +39,18 @@ class OrderMigrationSqlPolicyTest {
             "trg_ord_promotion_binding_no_delete", "ord_promotion_binding is immutable");
         assertThat(sql).doesNotContain("float", "double", "references prm_", "update prm_", "delete from prm_");
     }
+
+    @Test
+    void gate7bMigrationKeepsCashAndDrawerFactsAppendOnlyAndDeviceBlocked() throws IOException {
+        String sql;
+        try (var stream = getClass().getResourceAsStream(
+            "/db/migration/V202608210052__gate7b_shift_cash_drawer.sql")) {
+            assertThat(stream).isNotNull();
+            sql = new String(stream.readAllBytes(), StandardCharsets.UTF_8).toLowerCase();
+        }
+        assertThat(sql).contains("create table shf_cash_movement", "create table shf_drawer_event",
+            "shift cash movement is append-only", "drawer event is append-only", "blocked_external",
+            "pos:shift:cash-manage", "pos:drawer:no-sale", "可信租户标识", "最小货币单位带符号金额");
+        assertThat(sql).doesNotContain("float", "double", "device sdk", "http://", "https://");
+    }
 }

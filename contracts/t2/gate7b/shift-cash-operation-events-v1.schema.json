@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jingshanghui.example/contracts/t2/gate7b/shift-cash-operation-events-v1.schema.json",
+  "title": "Gate 7B shift cash operation event",
+  "oneOf": [
+    { "$ref": "#/$defs/cashMovement" },
+    { "$ref": "#/$defs/drawerRequest" }
+  ],
+  "$defs": {
+    "base": {
+      "type": "object",
+      "required": ["shiftId", "storeId", "terminalId", "cashierId", "businessDate", "authorizationRef"],
+      "properties": {
+        "shiftId": { "type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$" },
+        "storeId": { "type": "string", "pattern": "^[1-9][0-9]{0,18}$" },
+        "terminalId": { "type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$" },
+        "cashierId": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "businessDate": { "type": "string", "format": "date" },
+        "authorizationRef": { "type": "string", "minLength": 16, "maxLength": 128 }
+      }
+    },
+    "cashMovement": {
+      "allOf": [
+        { "$ref": "#/$defs/base" },
+        {
+          "type": "object",
+          "required": ["movementId", "movementType", "amountMinor", "signedAmountMinor", "currency", "reasonCode", "reasonText"],
+          "properties": {
+            "movementId": { "type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$" },
+            "movementType": { "enum": ["CASH_IN", "CASH_OUT", "SAFE_DROP"] },
+            "amountMinor": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+            "signedAmountMinor": { "type": "integer" },
+            "currency": { "const": "CNY" },
+            "reasonCode": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]{1,31}$" },
+            "reasonText": { "type": "string", "minLength": 1, "maxLength": 256 }
+          }
+        }
+      ]
+    },
+    "drawerRequest": {
+      "allOf": [
+        { "$ref": "#/$defs/base" },
+        {
+          "type": "object",
+          "required": ["drawerEventId", "eventType", "deviceExecutionStatus", "reasonCode", "reasonText"],
+          "properties": {
+            "drawerEventId": { "type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$" },
+            "eventType": { "const": "NO_SALE_OPEN_REQUESTED" },
+            "deviceExecutionStatus": { "const": "BLOCKED_EXTERNAL" },
+            "reasonCode": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]{1,31}$" },
+            "reasonText": { "type": "string", "minLength": 1, "maxLength": 256 }
+          }
+        }
+      ]
+    }
+  }
+}

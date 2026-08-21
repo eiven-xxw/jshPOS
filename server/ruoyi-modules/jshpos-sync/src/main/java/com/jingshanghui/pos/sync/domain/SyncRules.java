@@ -19,6 +19,7 @@ public final class SyncRules {
     private static final Pattern SHA256 = Pattern.compile("^[a-f0-9]{64}$");
     private static final Set<String> SUPPORTED_POS_FACTS = Set.of(
         "shift.opened.v1", "shift.difference-approved.v1", "shift.closed.v1",
+        "shift.cash-movement.recorded.v1", "shift.drawer-requested.v1",
         "order.suspended.v1", "order.resumed.v1", "order.submitted.v1",
         "cash.received.v1", "order.completed.v1", "order.submitted.v2", "order.completed.v2"
     );
