@@ -266,6 +266,32 @@ void main() {
       );
     },
   );
+
+  test(
+    'Gate 6H synthetic sync backlog drains 10000 events without loss',
+    () async {
+      final fixture = SyncFixture();
+      addTearDown(fixture.close);
+      final stopwatch = Stopwatch()..start();
+      for (var index = 0; index < 10000; index++) {
+        fixture.enqueue();
+      }
+      expect(fixture.count('local_outbox'), 10000);
+
+      for (var batch = 0; batch < 100; batch++) {
+        final result = await fixture.coordinator().runOnce();
+        expect(result.claimed, 100);
+        expect(result.acked, 100);
+      }
+      stopwatch.stop();
+
+      expect(fixture.transport.pushedEventIds.length, 10000);
+      expect(fixture.statusCount('ACKED'), 10000);
+      print(
+        'GATE6H_METRIC sync_backlog_10000_ms=${stopwatch.elapsedMilliseconds}',
+      );
+    },
+  );
 }
 
 final class SyncFixture {
@@ -282,6 +308,7 @@ final class SyncFixture {
   final UlidGenerator ids;
   final PosLocalDatabase db;
   final FakeSyncTransport transport;
+  int _nextDeviceSequence = 1;
 
   PosSyncCoordinator coordinator({
     SyncFailureInjector? failureInjector,
@@ -299,7 +326,7 @@ final class SyncFixture {
   String enqueue({String? eventId}) {
     final id = eventId ?? ids.next();
     final payload = <String, Object?>{
-      'orderId': '01K2A000000000000000000031',
+      'orderId': id,
       'shiftId': '01K2A000000000000000000021',
       'paymentId': '01K2A000000000000000000061',
       'businessDate': '2026-08-16',
@@ -310,11 +337,12 @@ final class SyncFixture {
     };
     final payloadJson = jsonEncode(payload);
     db.database.execute(
-      "INSERT INTO local_outbox(event_id,tenant_id,device_sequence,stream_code,event_type,aggregate_id,aggregate_version,correlation_id,payload_json,payload_sha256,status,attempt_count,created_at) VALUES(?,?,1,'order.command','order.completed.v1',?,4,?,?,?,?,0,?)",
+      "INSERT INTO local_outbox(event_id,tenant_id,device_sequence,stream_code,event_type,aggregate_id,aggregate_version,correlation_id,payload_json,payload_sha256,status,attempt_count,created_at) VALUES(?,?,?,'order.command','order.completed.v1',?,4,?,?,?,?,0,?)",
       [
         id,
         binding.tenantId,
-        '01K2A000000000000000000031',
+        _nextDeviceSequence++,
+        id,
         ids.next(),
         payloadJson,
         sha256.convert(utf8.encode(payloadJson)).toString(),
@@ -372,6 +400,13 @@ final class SyncFixture {
             eventId,
           ]).single['status']!
           as String;
+
+  int statusCount(String status) =>
+      db.database.select(
+            'SELECT COUNT(*) value FROM local_outbox WHERE tenant_id=? AND status=?',
+            [binding.tenantId, status],
+          ).single['value']!
+          as int;
 
   void advance(Duration duration) => now = now.add(duration);
   void close() => db.close();

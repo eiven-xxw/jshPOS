@@ -17,6 +17,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: t2-gate6h-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   governance:
     runs-on: ubuntu-latest
@@ -72,3 +76,90 @@ jobs:
           python scripts/audit_t2_gate6h_ux.py --output artifacts/t2/gate6h/ux/ux-audit.json
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with: { name: t2-gate6h-ux, path: artifacts/t2/gate6h/ux, if-no-files-found: error, retention-days: 30 }
+
+  performance:
+    needs: [governance, ux]
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4.6@sha256:869218921e61d6c3c89820955d63cca42971f0e3e6c1e2792247bbd944ebc6e9
+        env:
+          MYSQL_ROOT_PASSWORD: synthetic_gate6h_root
+          MYSQL_DATABASE: jshpos_gate6h
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -psynthetic_gate6h_root"
+          --health-interval=10s --health-timeout=5s --health-retries=12
+      redis:
+        image: redis:7.2.5@sha256:9a167bde7ad14322f81722df9e99054829278c4e6b0426cb57b441ea6f839305
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s --health-timeout=5s --health-retries=12
+    env:
+      GATE5D_MYSQL_JDBC_URL: jdbc:mysql://127.0.0.1:3306/jshpos_gate6h?useUnicode=true&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      GATE5D_MYSQL_USERNAME: root
+      GATE5D_MYSQL_PASSWORD: synthetic_gate6h_root
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with: { distribution: temurin, java-version: "21", cache: maven }
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with: { flutter-version: "3.47.0", channel: stable, cache: true }
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with: { python-version: "3.12" }
+      - name: Execute fixed catalog reporting concurrency and POS performance loads
+        run: |
+          mkdir -p artifacts/t2/gate6h/performance/bundle/catalog
+          mkdir -p artifacts/t2/gate6h/performance/bundle/reporting
+          mkdir -p artifacts/t2/gate6h/performance/bundle/pos
+          pushd server
+          ./mvnw -pl ruoyi-modules/jshpos-catalog -am test -Dtest=CatalogImportPreflightTest -Dsurefire.failIfNoSpecifiedTests=false -DskipTests=false
+          ./mvnw -pl ruoyi-modules/jshpos-reporting -am test -Dtest=ReportingMigrationMySqlIT,PaymentReconciliationServiceTest -Dsurefire.failIfNoSpecifiedTests=false -DskipTests=false
+          ./mvnw -pl ruoyi-admin -am package -DskipTests
+          popd
+          cp server/ruoyi-modules/jshpos-catalog/target/gate1-capacity.json artifacts/t2/gate6h/performance/bundle/catalog/
+          cp server/ruoyi-modules/jshpos-reporting/target/surefire-reports/TEST-*ReportingMigrationMySqlIT.xml artifacts/t2/gate6h/performance/bundle/reporting/
+          cp server/ruoyi-modules/jshpos-reporting/target/surefire-reports/TEST-*PaymentReconciliationServiceTest.xml artifacts/t2/gate6h/performance/bundle/reporting/
+          pushd pos-flutter
+          flutter pub get --enforce-lockfile
+          flutter test --machine test/gate6g/local_pos_sale_application_service_test.dart test/sprint3/sync_coordinator_test.dart > ../artifacts/t2/gate6h/performance/bundle/pos/flutter-performance.jsonl
+          popd
+      - name: Measure formal server cold start in synthetic MySQL and Redis
+        run: |
+          mysql_container="$(docker ps --filter publish=3306 --format '{{.ID}}' | head -1)"
+          redis_container="$(docker ps --filter publish=6379 --format '{{.ID}}' | head -1)"
+          test -n "$mysql_container" && test -n "$redis_container"
+          docker exec "$mysql_container" mysql -uroot -psynthetic_gate6h_root -e "CREATE DATABASE jshpos_gate6h_runtime CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+          docker exec -i "$mysql_container" mysql --default-character-set=utf8mb4 -uroot -psynthetic_gate6h_root jshpos_gate6h_runtime < server/script/sql/ry_vue_5.X.sql
+          docker exec "$redis_container" redis-cli CONFIG SET requirepass synthetic_gate6h_redis_runtime
+          started_ms="$(date +%s%3N)"
+          java -jar server/ruoyi-admin/target/ruoyi-admin.jar \
+            --server.port=18080 \
+            --spring.datasource.dynamic.p6spy=false \
+            '--spring.datasource.dynamic.datasource.master.url=jdbc:mysql://127.0.0.1:3306/jshpos_gate6h_runtime?useUnicode=true&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&nullCatalogMeansCurrent=true' \
+            --spring.datasource.dynamic.datasource.master.username=root \
+            --spring.datasource.dynamic.datasource.master.password=synthetic_gate6h_root \
+            --spring.data.redis.host=127.0.0.1 --spring.data.redis.port=6379 \
+            --spring.data.redis.password=synthetic_gate6h_redis_runtime \
+            --spring.boot.admin.client.enabled=false --snail-job.enabled=false --captcha.enable=false \
+            > artifacts/t2/gate6h/performance/server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          ready=0
+          for attempt in $(seq 1 90); do
+            if curl -fsS http://127.0.0.1:18080/ >/dev/null; then ready=1; break; fi
+            if ! kill -0 "$server_pid"; then tail -200 artifacts/t2/gate6h/performance/server.log; exit 1; fi
+            sleep 2
+          done
+          test "$ready" -eq 1
+          elapsed_ms=$(( $(date +%s%3N) - started_ms ))
+          python -c "import json,pathlib; pathlib.Path('artifacts/t2/gate6h/performance/bundle/server-cold-start.json').write_text(json.dumps({'status':'PASS','milliseconds':int('$elapsed_ms'),'executor':'github-ubuntu-latest','syntheticOnly':True},indent=2)+'\\n')"
+      - name: Reconcile seven internal synthetic performance dimensions
+        run: >-
+          python scripts/build_t2_gate6h_performance_evidence.py
+          --bundle-dir artifacts/t2/gate6h/performance/bundle
+          --output artifacts/t2/gate6h/performance/performance-baseline.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with: { name: t2-gate6h-performance, path: artifacts/t2/gate6h/performance, if-no-files-found: error, retention-days: 30 }

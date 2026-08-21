@@ -132,6 +132,51 @@ void main() {
       ),
     );
   });
+
+  test(
+    'Gate 6H synthetic POS scan baseline executes 1000 formal scans',
+    () async {
+      final fixture = await _Fixture.create();
+      addTearDown(fixture.close);
+      await fixture.service.loadWorkspace();
+
+      final stopwatch = Stopwatch()..start();
+      PosSaleWorkspace? workspace;
+      for (var index = 0; index < 1000; index++) {
+        workspace = await fixture.service.scanBarcode('6900000000001');
+      }
+      stopwatch.stop();
+
+      expect(workspace?.lines.single.quantity, '1000');
+      // 只输出合成执行器趋势，禁止解释为真实扫码枪或 Android 性能。
+      print('GATE6H_METRIC pos_scan_1000_ms=${stopwatch.elapsedMilliseconds}');
+    },
+  );
+
+  test(
+    'Gate 6H synthetic POS settlement baseline commits 200 cash orders',
+    () async {
+      final fixture = await _Fixture.create();
+      addTearDown(fixture.close);
+      await fixture.service.loadWorkspace();
+
+      final stopwatch = Stopwatch()..start();
+      for (var index = 0; index < 200; index++) {
+        final workspace = await fixture.service.scanBarcode('6900000000001');
+        await fixture.service.settleCash(
+          tenderedAmount: '3.00',
+          idempotencyKey: 'gate6h-cash:${workspace.saleRef}:$index',
+        );
+      }
+      stopwatch.stop();
+
+      expect(fixture.count('local_order'), 200);
+      expect(fixture.count('local_cash_payment'), 200);
+      print(
+        'GATE6H_METRIC pos_settlement_200_ms=${stopwatch.elapsedMilliseconds}',
+      );
+    },
+  );
 }
 
 final class _Fixture {
