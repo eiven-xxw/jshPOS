@@ -2,6 +2,7 @@ package com.jingshanghui.pos.catalog.application.service;
 
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.jingshanghui.pos.catalog.application.model.CatalogViews.PackageView;
+import com.jingshanghui.pos.catalog.application.model.CatalogViews.PackageArtifact;
 import com.jingshanghui.pos.catalog.application.packagev1.CatalogPackageCodec;
 import com.jingshanghui.pos.catalog.application.packagev1.PackageObjectPort;
 import com.jingshanghui.pos.catalog.application.packagev1.PackageSigningPort;
@@ -83,6 +84,28 @@ public class CatalogPackageService {
             throw new ServiceException("CAT-DPK-011: 数据包不存在或不可见", 404);
         }
         return result;
+    }
+
+    /** 从服务端生成的可信命名空间读取原始包，供 POS 再次验摘要和 Ed25519 签名。 */
+    @Transactional(readOnly = true)
+    public PackageArtifact download(Long storeId, long packageVersion) {
+        String tenantId = tenantContext.requireTenantId();
+        authorizationService.requireStoreAccess(storeId);
+        PackageView metadata = mapper.findPackage(tenantId, storeId, packageVersion);
+        if (metadata == null) {
+            throw new ServiceException("CAT-DPK-011: 数据包不存在或不可见", 404);
+        }
+        PackageObjectPort objectPort = objectPorts.getIfAvailable();
+        if (objectPort == null) {
+            throw new ServiceException("CAT-DPK-010: 对象存储端口未配置", 503);
+        }
+        PackageObjectPort.StoredObject stored = objectPort.get(metadata.objectKey());
+        if (stored == null || stored.payload().length == 0 || stored.signature().length != 64
+            || !CatalogPackageCodec.sha256(stored.payload()).equals(metadata.payloadSha256())) {
+            throw new ServiceException("CAT-DPK-013: 数据包对象缺失或摘要损坏", 500);
+        }
+        return new PackageArtifact(stored.payload(), metadata.payloadSha256(),
+            metadata.signingKeyId(), stored.signature());
     }
 
     private List<CatalogPackageCodec.Record> packageRecords(String tenantId, Long storeId) {

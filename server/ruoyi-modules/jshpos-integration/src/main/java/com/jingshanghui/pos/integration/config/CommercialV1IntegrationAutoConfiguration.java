@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Bean;
  * <p>组合根只承担启动期装配校验；所有领域事实仍由各 Owner 自己写入。</p>
  */
 @AutoConfiguration
+@org.springframework.context.annotation.Import(PackageArtifactInfrastructureConfiguration.class)
 @AutoConfigureAfter(name = {
     "com.jingshanghui.pos.foundation.config.FoundationAutoConfiguration",
     "com.jingshanghui.pos.catalog.config.CatalogAutoConfiguration",

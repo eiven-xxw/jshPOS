@@ -42,6 +42,18 @@ public final class CatalogViews {
     ) {
     }
 
+    /** POS 下载的 canonical 商品价格包，摘要与签名由响应头携带。 */
+    public record PackageArtifact(byte[] payload, String payloadSha256,
+                                  String signingKeyId, byte[] signature) {
+        public PackageArtifact {
+            payload = payload.clone();
+            signature = signature.clone();
+        }
+
+        @Override public byte[] payload() { return payload.clone(); }
+        @Override public byte[] signature() { return signature.clone(); }
+    }
+
     public record ImportPreflightView(ImportBatchView batch, List<ImportErrorView> errors) {
         public ImportPreflightView {
             errors = List.copyOf(errors);

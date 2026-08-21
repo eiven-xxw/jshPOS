@@ -280,25 +280,37 @@ public interface CatalogMapper {
                                                  @Param("storeId") Long storeId, @Param("at") LocalDateTime at);
 
     @Select("""
-        SELECT CONCAT('PRODUCT|',s.sku_code,'|',s.sku_name,'|',s.product_type,'|',s.status)
-        FROM cat_sku s WHERE s.tenant_id=#{tenantId}
-        UNION ALL
-        SELECT CONCAT('IMPORTED_PRODUCT|',r.sku_code,'|',
-                      JSON_UNQUOTE(JSON_EXTRACT(r.canonical_json,'$.name')),'|',
-                      JSON_UNQUOTE(JSON_EXTRACT(r.canonical_json,'$.productType')),'|ACTIVE')
-        FROM cat_import_record r
-        JOIN cat_catalog_binding b
-          ON b.tenant_id=r.tenant_id AND b.current_batch_id=r.import_batch_id
-        WHERE r.tenant_id=#{tenantId}
-        ORDER BY 1
+        SELECT CAST(JSON_OBJECT(
+          'skuId',CAST(s.sku_id AS CHAR),'skuCode',s.sku_code,'name',s.sku_name,
+          'productType',s.product_type,'status',s.status,
+          'categoryId',CAST(p.category_id AS CHAR),
+          'brandId',IF(p.brand_id IS NULL,NULL,CAST(p.brand_id AS CHAR)),
+          'unitId',CAST(su.unit_id AS CHAR),'unitCode',u.unit_code,'unitName',u.unit_name,
+          'decimalScale',u.decimal_scale,'ratioNumerator',su.ratio_numerator,
+          'ratioDenominator',su.ratio_denominator,
+          'barcode',(SELECT bc.barcode_value FROM cat_barcode bc
+            WHERE bc.tenant_id=s.tenant_id AND bc.sku_unit_id=su.sku_unit_id AND bc.status='ACTIVE'
+            ORDER BY bc.barcode_id LIMIT 1)
+        ) AS CHAR)
+        FROM cat_sku s
+        JOIN cat_spu p ON p.tenant_id=s.tenant_id AND p.spu_id=s.spu_id
+        JOIN cat_sku_unit su ON su.tenant_id=s.tenant_id AND su.sku_id=s.sku_id AND su.primary_unit=TRUE
+        JOIN cat_unit u ON u.tenant_id=su.tenant_id AND u.unit_id=su.unit_id
+        WHERE s.tenant_id=#{tenantId} AND s.status='ACTIVE' AND p.status='ACTIVE' AND u.status='ACTIVE'
+        ORDER BY s.sku_id
         """)
     List<String> listProductPackageRows(@Param("tenantId") String tenantId);
 
     @Select("""
-        SELECT CONCAT('PRICE|',b.book_code,'|',b.version_no,'|',b.scope_type,'|',COALESCE(b.store_id,0),'|',
-                      i.sku_id,'|',i.unit_id,'|',i.amount_minor,'|',
-                      DATE_FORMAT(i.effective_from,'%Y-%m-%dT%H:%i:%s.%fZ'),'|',
-                      COALESCE(DATE_FORMAT(i.effective_to,'%Y-%m-%dT%H:%i:%s.%fZ'),''))
+        SELECT CAST(JSON_OBJECT(
+          'priceBookId',CAST(b.price_book_id AS CHAR),'bookCode',b.book_code,
+          'versionNo',b.version_no,'scopeType',b.scope_type,
+          'storeId',IF(b.store_id IS NULL,NULL,CAST(b.store_id AS CHAR)),
+          'skuId',CAST(i.sku_id AS CHAR),'unitId',CAST(i.unit_id AS CHAR),
+          'amountMinor',i.amount_minor,'currency',i.currency,
+          'effectiveFrom',DATE_FORMAT(i.effective_from,'%Y-%m-%dT%H:%i:%s.%fZ'),
+          'effectiveTo',IF(i.effective_to IS NULL,NULL,DATE_FORMAT(i.effective_to,'%Y-%m-%dT%H:%i:%s.%fZ'))
+        ) AS CHAR)
         FROM prc_price_item i JOIN prc_price_book b ON b.tenant_id=i.tenant_id AND b.price_book_id=i.price_book_id
         WHERE i.tenant_id=#{tenantId} AND b.state='PUBLISHED'
           AND (b.scope_type='TENANT_BASE' OR b.store_id=#{storeId})
@@ -327,4 +339,15 @@ public interface CatalogMapper {
         ORDER BY package_version DESC LIMIT 1
         """)
     PackageView findLatestPackage(@Param("tenantId") String tenantId, @Param("storeId") Long storeId);
+
+    @Select("""
+        SELECT package_id packageId,store_id storeId,package_version packageVersion,previous_version previousVersion,
+               schema_version schemaVersion,payload_sha256 payloadSha256,signature_algorithm signatureAlgorithm,
+               signing_key_id signingKeyId,object_key objectKey,record_count recordCount,generated_at generatedAt
+        FROM dpk_catalog_package
+        WHERE tenant_id=#{tenantId} AND store_id=#{storeId} AND package_version=#{packageVersion}
+          AND state='AVAILABLE'
+        """)
+    PackageView findPackage(@Param("tenantId") String tenantId, @Param("storeId") Long storeId,
+                            @Param("packageVersion") long packageVersion);
 }

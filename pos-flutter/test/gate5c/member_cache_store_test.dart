@@ -25,9 +25,9 @@ void main() {
     expect(view?.memberRef, '01K5C000000000000000000001');
     expect(view?.maskedLabel, '会员-000001');
     expect(view?.levelCode, 'BASIC');
-    final stored = database.database.select(
-      'SELECT member_token_hash FROM local_member_cache',
-    ).single['member_token_hash'];
+    final stored = database.database
+        .select('SELECT member_token_hash FROM local_member_cache')
+        .single['member_token_hash'];
     expect(stored, isNot('synthetic-member-token-a'));
 
     final columns = database.database
@@ -67,21 +67,27 @@ void main() {
 
     store.upsert(entry(now, expiresAt: now.add(const Duration(seconds: 1))));
     expect(
-      store.resolve('synthetic-member-token-a', now.add(const Duration(seconds: 2))),
+      store.resolve(
+        'synthetic-member-token-a',
+        now.add(const Duration(seconds: 2)),
+      ),
       isNull,
     );
     expect(store.purge(now.add(const Duration(seconds: 2))), 1);
   });
 
-  test('schema is v7 and checksum protects the released migration', () {
+  test('schema is v8 and checksum protects every released migration', () {
     final database = PosLocalDatabase.inMemory(binding);
     addTearDown(database.close);
-    expect(database.database.select('PRAGMA user_version').single.values.first, 7);
+    expect(
+      database.database.select('PRAGMA user_version').single.values.first,
+      8,
+    );
     expect(
       database.database
           .select('SELECT COUNT(*) value FROM local_schema_history')
           .single['value'],
-      7,
+      8,
     );
   });
 }

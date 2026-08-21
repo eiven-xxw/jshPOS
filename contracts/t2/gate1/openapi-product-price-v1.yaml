@@ -127,6 +127,31 @@ paths:
       x-permission: catalog:package:query
       parameters: [{ name: storeId, in: query, required: true, schema: { type: integer, format: int64, minimum: 1 } }]
       responses: { "200": { $ref: "#/components/responses/Success" } }
+  /packages/{packageVersion}/content:
+    get:
+      operationId: downloadCatalogPackageContent
+      summary: 下载经过摘要和 Ed25519 签名的 canonical 商品价格包
+      x-requirement-id: T2-DPK-001
+      x-permission: catalog:package:query
+      parameters:
+        - name: packageVersion
+          in: path
+          required: true
+          schema: { type: integer, format: int64, minimum: 1 }
+        - name: storeId
+          in: query
+          required: true
+          schema: { type: integer, format: int64, minimum: 1 }
+      responses:
+        "200":
+          description: 原始 canonical 包；摘要、签名密钥 ID 和签名分别由 X-JSH-* 响应头返回
+          headers:
+            X-JSH-Payload-Sha256: { schema: { type: string, pattern: '^[a-f0-9]{64}$' } }
+            X-JSH-Signing-Key-Id: { schema: { type: string, minLength: 1, maxLength: 128 } }
+            X-JSH-Signature: { schema: { type: string, minLength: 80, maxLength: 128 } }
+          content:
+            application/octet-stream:
+              schema: { type: string, format: binary }
 components:
   securitySchemes:
     saToken: { type: apiKey, in: header, name: Authorization }

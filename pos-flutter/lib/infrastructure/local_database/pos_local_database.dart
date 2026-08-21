@@ -11,6 +11,7 @@ import 's9_manual_schema.dart';
 import 's9_transaction_schema.dart';
 import 's10_settlement_schema.dart';
 import 's11_member_schema.dart';
+import 'gate6g_catalog_schema.dart';
 
 typedef FailureInjector = void Function(String checkpoint);
 
@@ -120,7 +121,11 @@ final class PosLocalDatabase {
       _migrateToMemberV7();
       version = S11MemberSchema.version;
     }
-    if (version != S11MemberSchema.version) {
+    if (version == S11MemberSchema.version) {
+      _migrateToCatalogV8();
+      version = Gate6gCatalogSchema.version;
+    }
+    if (version != Gate6gCatalogSchema.version) {
       throw StateError('LOCAL_SCHEMA_UNSUPPORTED: $version');
     }
     _verifySchemaChecksum();
@@ -149,6 +154,9 @@ final class PosLocalDatabase {
           .toString(),
       S11MemberSchema.version: sha256
           .convert(utf8.encode(S11MemberSchema.v7))
+          .toString(),
+      Gate6gCatalogSchema.version: sha256
+          .convert(utf8.encode(Gate6gCatalogSchema.v8))
           .toString(),
     };
     for (final entry in expected.entries) {
@@ -292,6 +300,32 @@ final class PosLocalDatabase {
     if (violations.isNotEmpty) {
       throw StateError(
         'LOCAL_DB_INTEGRITY_FAILED: foreign key violations after v7',
+      );
+    }
+  }
+
+  /// 追加 Gate 6G 商品价格包不可变槽位和 ACTIVE 指针；中断时整体回滚。
+  void _migrateToCatalogV8() {
+    transaction(() {
+      database.execute(Gate6gCatalogSchema.v8);
+      final checksum = sha256
+          .convert(utf8.encode(Gate6gCatalogSchema.v8))
+          .toString();
+      database.execute(
+        'INSERT INTO local_schema_history(version,description,checksum_sha256,installed_at) VALUES(8,?,?,?)',
+        [
+          'gate6g-catalog-price-package-projection',
+          checksum,
+          DateTime.now().toUtc().toIso8601String(),
+        ],
+      );
+      checkpoint('migration.v8.before-version');
+      database.execute('PRAGMA user_version=${Gate6gCatalogSchema.version}');
+    });
+    final violations = database.select('PRAGMA foreign_key_check');
+    if (violations.isNotEmpty) {
+      throw StateError(
+        'LOCAL_DB_INTEGRITY_FAILED: foreign key violations after v8',
       );
     }
   }

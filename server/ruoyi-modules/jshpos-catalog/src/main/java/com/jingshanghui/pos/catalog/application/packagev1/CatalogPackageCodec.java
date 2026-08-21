@@ -79,7 +79,8 @@ public final class CatalogPackageCodec {
         return value.replace("\\", "\\\\").replace("|", "\\p").replace("\r", "\\r").replace("\n", "\\n");
     }
 
-    private static String sha256(byte[] payload) {
+    /** 计算包的标准小写 SHA-256，下载边界复核对象内容时复用。 */
+    public static String sha256(byte[] payload) {
         try {
             return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(payload));
         } catch (NoSuchAlgorithmException exception) {

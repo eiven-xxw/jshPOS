@@ -1,6 +1,8 @@
 package com.jingshanghui.pos.catalog.application.service;
 
 import com.jingshanghui.pos.catalog.application.model.CatalogViews.PackageView;
+import com.jingshanghui.pos.catalog.application.model.CatalogViews.PackageArtifact;
+import com.jingshanghui.pos.catalog.application.packagev1.CatalogPackageCodec;
 import com.jingshanghui.pos.catalog.application.packagev1.PackageObjectPort;
 import com.jingshanghui.pos.catalog.application.packagev1.PackageSigningPort;
 import com.jingshanghui.pos.catalog.infrastructure.persistence.mapper.CatalogMapper;
@@ -70,5 +72,17 @@ class CatalogPackageServiceTest {
         when(mapper.findLatestPackage("TENANT_A", 11L)).thenReturn(stored);
         assertThatThrownBy(() -> configured.publish(11L, 3, 1)).isInstanceOf(ServiceException.class)
             .hasMessageContaining("严格连续");
+
+        byte[] downloaded = "canonical-package".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        byte[] signature = new byte[64];
+        PackageView downloadable = new PackageView(100L, 11L, 1L, 0L, "1.0",
+            CatalogPackageCodec.sha256(downloaded), "Ed25519", "kms-key-1",
+            "tenant/TENANT_A/object/catalog.jshpkg", 2, Instant.parse("2026-08-16T00:00:00Z"));
+        when(mapper.findPackage("TENANT_A", 11L, 1L)).thenReturn(downloadable);
+        when(objects.get(downloadable.objectKey()))
+            .thenReturn(new PackageObjectPort.StoredObject(downloaded, signature));
+        PackageArtifact artifact = configured.download(11L, 1L);
+        assertThat(artifact.payload()).isEqualTo(downloaded);
+        assertThat(artifact.signature()).hasSize(64);
     }
 }

@@ -20,14 +20,14 @@ const binding = TrustedDeviceBinding(
 );
 
 void main() {
-  test('SQLite V7 preserves Sprint 3 sync while avoiding T1 probe tables', () {
+  test('SQLite V8 preserves Sprint 3 sync while avoiding T1 probe tables', () {
     final fixture = SyncFixture();
     addTearDown(fixture.close);
     expect(
       fixture.db.database.select('PRAGMA user_version').single.values.first,
-      7,
+      8,
     );
-    expect(fixture.count('local_schema_history'), 7);
+    expect(fixture.count('local_schema_history'), 8);
     expect(fixture.count('local_inbox'), 0);
     expect(
       fixture.db.database
