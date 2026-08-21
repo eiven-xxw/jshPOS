@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-DAT-001",
+  "mysql": {
+    "migrationMode": "FLYWAY_FORWARD_ONLY",
+    "publishedMigrationMutationAllowed": false,
+    "tableCountExpected": 159,
+    "primaryKeyRequired": true,
+    "tenantColumn": {"name": "tenant_id", "type": "VARCHAR(20)", "indexed": true},
+    "multiTenantControlPlaneExceptions": [
+      {"table": "bak_backup_set", "scope": "tenant_ids_csv + tenant_scope_sha256", "reason": "一个恢复集合可覆盖经授权的多个租户"},
+      {"table": "bak_backup_object", "scope": "tenant_scope_sha256 + backup_id", "reason": "对象继承恢复集合的不可变租户范围"},
+      {"table": "bak_restore_drill", "scope": "backup_id", "reason": "演练继承被恢复集合的租户范围"},
+      {"table": "bak_restore_check", "scope": "drill_id", "reason": "校验继承恢复演练和备份租户范围"},
+      {"table": "bak_audit", "scope": "backup_id/drill_id", "reason": "控制面审计继承备份或演练租户范围"}
+    ],
+    "tableChineseCommentRequired": true,
+    "floatOrDoubleAllowedForMoneyQuantity": false,
+    "money": "最小货币单位整数；成本和中间值DECIMAL/BigDecimal",
+    "quantity": "DECIMAL(19,6)/BigDecimal或已冻结整数分数"
+  },
+  "sqlite": {
+    "currentVersion": 7,
+    "journalMode": "WAL",
+    "synchronous": "FULL",
+    "publishedSchemaChecksumRequired": true,
+    "migrationTransactionRequired": true,
+    "unknownVersion": "FAIL_CLOSED",
+    "deviceTenantBindingMismatch": "FAIL_CLOSED"
+  },
+  "initialization": {
+    "seedId": "GATE6G-SYNTHETIC-SEED-V1",
+    "realDataAllowed": false,
+    "officialApiOnlyAfterPlatformBootstrap": true,
+    "directBusinessTableWriteAllowed": false
+  },
+  "rebuild": {
+    "projectionsAreDisposable": true,
+    "authoritySources": ["Owner facts", "immutable ledgers", "Inbox/Outbox checkpoints"],
+    "reportMayOverwriteAuthority": false
+  },
+  "retention": {
+    "authoritativeFacts": "不物理删除；按已批准归档批次迁移且保留摘要和审计",
+    "projections": "可丢弃并重建",
+    "stagingAndTemporaryFiles": "成功或失败后按运行手册限时清理",
+    "syntheticSeed": "仅非生产环境；按seedId受控清理"
+  }
+}

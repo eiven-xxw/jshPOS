@@ -76,6 +76,7 @@ final class PosLocalDatabase {
             DateTime.now().toUtc().toIso8601String(),
           ],
         );
+        checkpoint('migration.v1.before-version');
         database.execute('PRAGMA user_version=${Gate2Schema.version}');
       });
       version = Gate2Schema.version;
@@ -94,6 +95,7 @@ final class PosLocalDatabase {
             DateTime.now().toUtc().toIso8601String(),
           ],
         );
+        checkpoint('migration.v2.before-version');
         database.execute('PRAGMA user_version=${S3SyncSchema.version}');
       });
       version = S3SyncSchema.version;
@@ -170,15 +172,16 @@ final class PosLocalDatabase {
         final checksum = sha256
             .convert(utf8.encode(S9PromotionSchema.v3))
             .toString();
-        database.execute(
-          'INSERT INTO local_schema_history(version,description,checksum_sha256,installed_at) VALUES(3,?,?,?)',
+      database.execute(
+        'INSERT INTO local_schema_history(version,description,checksum_sha256,installed_at) VALUES(3,?,?,?)',
           [
             'gate5a-promotion-package-quote-snapshot',
             checksum,
             DateTime.now().toUtc().toIso8601String(),
-          ],
-        );
-        database.execute('PRAGMA user_version=${S9PromotionSchema.version}');
+        ],
+      );
+      checkpoint('migration.v3.before-version');
+      database.execute('PRAGMA user_version=${S9PromotionSchema.version}');
       });
     } finally {
       database.execute('PRAGMA foreign_keys=ON');
@@ -205,6 +208,7 @@ final class PosLocalDatabase {
           DateTime.now().toUtc().toIso8601String(),
         ],
       );
+      checkpoint('migration.v4.before-version');
       database.execute('PRAGMA user_version=${S9ManualSchema.version}');
     });
     final violations = database.select('PRAGMA foreign_key_check');
@@ -229,6 +233,7 @@ final class PosLocalDatabase {
           DateTime.now().toUtc().toIso8601String(),
         ],
       );
+      checkpoint('migration.v5.before-version');
       database.execute('PRAGMA user_version=${S9TransactionSchema.version}');
     });
     final violations = database.select('PRAGMA foreign_key_check');
@@ -254,6 +259,7 @@ final class PosLocalDatabase {
           DateTime.now().toUtc().toIso8601String(),
         ],
       );
+      checkpoint('migration.v6.before-version');
       database.execute('PRAGMA user_version=${S10SettlementSchema.version}');
     });
     final violations = database.select('PRAGMA foreign_key_check');
@@ -279,6 +285,7 @@ final class PosLocalDatabase {
           DateTime.now().toUtc().toIso8601String(),
         ],
       );
+      checkpoint('migration.v7.before-version');
       database.execute('PRAGMA user_version=${S11MemberSchema.version}');
     });
     final violations = database.select('PRAGMA foreign_key_check');

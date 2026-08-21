@@ -1,0 +1,64 @@
+{
+  "schemaVersion": "1.0",
+  "seedId": "GATE6G-SYNTHETIC-SEED-V1",
+  "synthetic": true,
+  "containsRealPii": false,
+  "containsSecret": false,
+  "currency": "CNY",
+  "timezone": "Asia/Shanghai",
+  "tenants": [
+    {
+      "tenantId": "900000000000000001",
+      "name": "虚构甲零售集团",
+      "organizations": [{"orgUnitId": "910000000000000001", "code": "A-HQ", "name": "虚构甲总部"}],
+      "stores": [
+        {"storeId": "911000000000000001", "orgUnitId": "910000000000000001", "code": "A-CVS-01", "name": "虚构甲便利一店", "industryTemplate": "CONVENIENCE_STORE", "businessDayStart": "06:00:00"},
+        {"storeId": "911000000000000002", "orgUnitId": "910000000000000001", "code": "A-SNK-01", "name": "虚构甲零食一店", "industryTemplate": "SNACK_DISCOUNT", "businessDayStart": "05:00:00"}
+      ],
+      "terminals": [
+        {"deviceId": "01J00000000000000000000001", "storeId": "911000000000000001", "terminalCode": "A-CVS-POS-01"},
+        {"deviceId": "01J00000000000000000000002", "storeId": "911000000000000002", "terminalCode": "A-SNK-POS-01"}
+      ]
+    },
+    {
+      "tenantId": "900000000000000002",
+      "name": "虚构乙社区商业",
+      "organizations": [{"orgUnitId": "920000000000000001", "code": "B-HQ", "name": "虚构乙总部"}],
+      "stores": [
+        {"storeId": "921000000000000001", "orgUnitId": "920000000000000001", "code": "B-SUP-01", "name": "虚构乙社区超市", "industryTemplate": "COMMUNITY_SUPERMARKET", "businessDayStart": "04:00:00"},
+        {"storeId": "921000000000000002", "orgUnitId": "920000000000000001", "code": "B-CVS-01", "name": "虚构乙便利二店", "industryTemplate": "CONVENIENCE_STORE", "businessDayStart": "06:00:00"}
+      ],
+      "terminals": [
+        {"deviceId": "01J00000000000000000000003", "storeId": "921000000000000001", "terminalCode": "B-SUP-POS-01"},
+        {"deviceId": "01J00000000000000000000004", "storeId": "921000000000000002", "terminalCode": "B-CVS-POS-01"}
+      ]
+    }
+  ],
+  "catalog": {
+    "products": [
+      {"skuId": "930000000000000001", "barcode": "6900000000001", "name": "虚构瓶装水", "unit": "瓶", "priceMinor": 200},
+      {"skuId": "930000000000000002", "barcode": "6900000000002", "name": "虚构袋装零食", "unit": "袋", "priceMinor": 990},
+      {"skuId": "930000000000000003", "barcode": "6900000000003", "name": "虚构称重蔬菜", "unit": "千克", "priceMinor": 1280}
+    ],
+    "priceVersion": 1,
+    "packageVersion": 1
+  },
+  "applicationSequence": [
+    "POST /api/v1/foundation/org-units",
+    "POST /api/v1/foundation/stores",
+    "POST /api/v1/catalog/categories",
+    "POST /api/v1/catalog/brands",
+    "POST /api/v1/catalog/units",
+    "POST /api/v1/catalog/products",
+    "POST /api/v1/catalog/price-books",
+    "POST /api/v1/catalog/price-books/{bookId}/publish",
+    "POST /api/v1/catalog/packages",
+    "POST /api/v1/terminal-activations"
+  ],
+  "cleanup": {
+    "productionAllowed": false,
+    "selector": "seedId",
+    "order": ["投影与临时文件", "终端与会话", "商品价格版本", "门店组织", "租户测试壳"],
+    "authorityFactDeletionAllowed": false
+  }
+}

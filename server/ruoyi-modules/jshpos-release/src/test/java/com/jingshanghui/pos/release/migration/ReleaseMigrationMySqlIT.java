@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.*;
 
-/** Gate 6E MySQL 8.4 空库迁移、权限、冻结身份、状态机和只追加保护集成测试。 */
+/** Gate 6G MySQL 8.4 空库迁移、元数据、权限、冻结身份、状态机和只追加保护集成测试。 */
 class ReleaseMigrationMySqlIT {
     private final String url = required("GATE6B_MYSQL_JDBC_URL");
     private final String username = required("GATE6B_MYSQL_USERNAME");
@@ -26,11 +26,41 @@ class ReleaseMigrationMySqlIT {
             .collect(Collectors.toSet());
         assertThat(applied.remove("0")).isTrue();
         assertThat(applied).containsExactlyInAnyOrderElementsOf(expected);
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("202608200042");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("202608210051");
         assertThat(flyway.migrate().migrationsExecuted).isZero();
         flyway.validate();
+        assertGate6GDataMetadata();
         assertSchemaAndGuards();
         assertHundredThousandAppendOnlyEventsRemainQueryable();
+    }
+
+    /** 验证所有正式表的主键、中文表说明和租户隔离列；备份控制面五表使用冻结租户集合。 */
+    private void assertGate6GDataMetadata() throws SQLException {
+        Set<String> controlPlane = Set.of("bak_backup_set", "bak_backup_object", "bak_restore_drill",
+            "bak_restore_check", "bak_audit");
+        Set<String> tables = new LinkedHashSet<>();
+        try (Connection c = DriverManager.getConnection(url, username, password);
+             PreparedStatement query = c.prepareStatement("SELECT table_name,table_comment FROM information_schema.tables WHERE table_schema=DATABASE() AND table_type='BASE TABLE' AND table_name NOT IN ('sys_menu','jshpos_flyway_schema_history') ORDER BY table_name");
+             ResultSet rows = query.executeQuery()) {
+            while (rows.next()) {
+                String table = rows.getString(1);
+                String comment = rows.getString(2);
+                tables.add(table);
+                assertThat(comment.codePoints().anyMatch(code -> code >= 0x4E00 && code <= 0x9FFF))
+                    .as("Chinese table comment for %s", table).isTrue();
+                try (ResultSet primary = c.getMetaData().getPrimaryKeys(c.getCatalog(), null, table)) {
+                    assertThat(primary.next()).as("primary key for %s", table).isTrue();
+                }
+            }
+        }
+        assertThat(tables).hasSize(159);
+        try (Connection c = DriverManager.getConnection(url, username, password);
+             PreparedStatement query = c.prepareStatement("SELECT t.table_name FROM information_schema.tables t LEFT JOIN information_schema.columns c ON c.table_schema=t.table_schema AND c.table_name=t.table_name AND c.column_name='tenant_id' WHERE t.table_schema=DATABASE() AND t.table_type='BASE TABLE' AND t.table_name NOT IN ('sys_menu','jshpos_flyway_schema_history') AND c.column_name IS NULL ORDER BY t.table_name");
+             ResultSet rows = query.executeQuery()) {
+            Set<String> withoutTenant = new LinkedHashSet<>();
+            while (rows.next()) withoutTenant.add(rows.getString(1));
+            assertThat(withoutTenant).containsExactlyInAnyOrderElementsOf(controlPlane);
+        }
     }
 
     private void assertHundredThousandAppendOnlyEventsRemainQueryable() throws SQLException {
@@ -117,6 +147,7 @@ class ReleaseMigrationMySqlIT {
         for(int v=13;v<=35;v++) versions.add("20260817"+String.format("%04d",v));
         versions.add("202608180038"); versions.add("202608180039");
         versions.add("202608200040"); versions.add("202608200041"); versions.add("202608200042");
+        for(int v=43;v<=51;v++) versions.add("20260821"+String.format("%04d",v));
         return versions;
     }
     private static String required(String name) { String value=System.getenv(name); if(value==null||value.isBlank()) throw new IllegalStateException(name+" must be provided by CI"); return value; }
