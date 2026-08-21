@@ -130,7 +130,7 @@ jobs:
           mysql_container="$(docker ps --filter publish=3306 --format '{{.ID}}' | head -1)"
           redis_container="$(docker ps --filter publish=6379 --format '{{.ID}}' | head -1)"
           test -n "$mysql_container" && test -n "$redis_container"
-          docker exec "$mysql_container" mysql -uroot -psynthetic_gate6h_root -e "CREATE DATABASE jshpos_gate6h_runtime CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+          docker exec "$mysql_container" mysql -uroot -psynthetic_gate6h_root -e "CREATE DATABASE jshpos_gate6h_runtime"
           docker exec -i "$mysql_container" mysql --default-character-set=utf8mb4 -uroot -psynthetic_gate6h_root jshpos_gate6h_runtime < server/script/sql/ry_vue_5.X.sql
           docker exec "$redis_container" redis-cli CONFIG SET requirepass synthetic_gate6h_redis_runtime
           started_ms="$(date +%s%3N)"
