@@ -17,6 +17,7 @@
 | S17-CI-001 | GitHub run `32451615660` / `pos-linux` | Gate 6E 退货退款正式运行码行覆盖率 `88.05% < 90%` | 补齐搜索、改量、提交、UNKNOWN 恢复、权限拒绝与无引用失败关闭测试；同口径 `349/385=90.65%`，136 项 Flutter 测试通过 | 本地已关闭，等待新提交全量 CI 独立确认 |
 | S17-CI-002 | GitHub run `32451615660` / `runtime-stack-smoke` | RuoYi 基线 SQL 的中文用户昵称被 MySQL 客户端默认字符集错误解读，在 `sys_user.nick_name` 导入失败 | 不修改已封存 SQL 或放宽列长；运行栈导入命令显式使用 `--default-character-set=utf8mb4` | 本地静态已关闭，等待新提交 MySQL 8.4 运行栈复验 |
 | S17-CI-003 | GitHub run `32452393104` / `runtime-stack-smoke` | 正式 JAR 启动执行 Flyway V202608160004 时，RuoYi 空环境 `sys_menu` 缺少权限契约已经使用的 `route_name` | 不修改任何已发布 Flyway；在 RuoYi 空环境脚本的旧位置参数菜单种子全部完成后前向增加 `route_name`，并新增机器审计固定顺序 | 本地静态已关闭，等待新提交正式 JAR + MySQL 8.4 复验 |
+| S17-CI-004 | GitHub run `32453174850` / `runtime-stack-smoke` | 正式 JAR 按生产配置对 Redis 执行认证，但 CI Redis 未配置密码，Redisson 失败关闭 | 为合成 Redis 显式启用独立密码，应用通过命令行注入同值并由DAT机器审计核对两端一致；未关闭缓存或认证 | 本地静态已关闭，等待新提交正式 JAR + Redis 7.4 复验 |
 
 ## 性能基线
 

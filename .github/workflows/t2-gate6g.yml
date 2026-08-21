@@ -225,8 +225,12 @@ jobs:
         run: |
           mkdir -p artifacts/t2/gate6g/runtime-stack
           mysql_container="$(docker ps --filter publish=3306 --format '{{.ID}}' | head -1)"
+          redis_container="$(docker ps --filter publish=6379 --format '{{.ID}}' | head -1)"
           test -n "$mysql_container"
+          test -n "$redis_container"
           docker exec -i "$mysql_container" mysql --default-character-set=utf8mb4 -uroot -psynthetic_gate6g_runtime_root jshpos_gate6g_runtime < server/script/sql/ry_vue_5.X.sql
+          docker exec "$redis_container" redis-cli CONFIG SET requirepass synthetic_gate6g_redis_runtime
+          docker exec "$redis_container" redis-cli -a synthetic_gate6g_redis_runtime ping
           server_jar="$(find downloaded/server -name ruoyi-admin.jar -type f -print -quit)"
           test -s "$server_jar"
           java -jar "$server_jar" \
@@ -236,7 +240,7 @@ jobs:
             --spring.datasource.dynamic.datasource.master.username=root \
             --spring.datasource.dynamic.datasource.master.password=synthetic_gate6g_runtime_root \
             --spring.data.redis.host=127.0.0.1 --spring.data.redis.port=6379 \
-            --spring.data.redis.password= --spring.boot.admin.client.enabled=false \
+            --spring.data.redis.password=synthetic_gate6g_redis_runtime --spring.boot.admin.client.enabled=false \
             --spring.boot.admin.client.username=gate6g-health \
             --spring.boot.admin.client.password=synthetic_gate6g_health_only \
             --snail-job.enabled=false --captcha.enable=false \

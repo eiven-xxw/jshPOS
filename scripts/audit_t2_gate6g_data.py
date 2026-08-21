@@ -162,11 +162,17 @@ def bootstrap_summary() -> tuple[dict, list[str]]:
         failures.append("RuoYi sys_menu 必须在位置参数种子完成后前向补充 route_name")
     if "mysql --default-character-set=utf8mb4" not in workflow_text:
         failures.append("MySQL 空环境导入未显式锁定 utf8mb4 客户端字符集")
+    redis_password = "synthetic_gate6g_redis_runtime"
+    redis_server_configured = f"CONFIG SET requirepass {redis_password}" in workflow_text
+    redis_client_configured = f"--spring.data.redis.password={redis_password}" in workflow_text
+    if not redis_server_configured or not redis_client_configured:
+        failures.append("运行栈 Redis 服务端与正式客户端的合成认证配置不一致")
     return {
         "path": source.relative_to(ROOT).as_posix(),
         "sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
         "routeNameCompatibility": route_column is not None and route_column.start() > last_seed,
         "utf8mb4ClientImport": "mysql --default-character-set=utf8mb4" in workflow_text,
+        "syntheticRedisAuthenticationAligned": redis_server_configured and redis_client_configured,
     }, failures
 
 
