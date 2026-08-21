@@ -223,3 +223,26 @@ final class PosReprintRequestView {
   final String outboxEventRef;
   final bool duplicate;
 }
+
+/// ORD-004 页面可展示的取消或反向处置结果；不暴露底层表或跨 Owner 细节。
+final class PosOrderDispositionView {
+  const PosOrderDispositionView({
+    required this.dispositionRef,
+    required this.orderRef,
+    required this.dispositionType,
+    required this.fromStatus,
+    required this.effectiveStatus,
+    required this.requestDigest,
+    required this.outboxEventRef,
+    required this.duplicate,
+  });
+
+  final String dispositionRef;
+  final String orderRef;
+  final String dispositionType;
+  final String fromStatus;
+  final String effectiveStatus;
+  final String requestDigest;
+  final String outboxEventRef;
+  final bool duplicate;
+}

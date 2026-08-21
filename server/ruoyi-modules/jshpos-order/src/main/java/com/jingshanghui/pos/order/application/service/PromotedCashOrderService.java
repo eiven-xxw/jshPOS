@@ -54,6 +54,7 @@ public class PromotedCashOrderService implements PromotedOrderSubmissionPort {
     private final ScopeAuthorizationService authorizationService;
     private final IdempotencyService idempotency;
     private final OrderJournalService journal;
+    private final OrderFinalityGuardService finalityGuard;
     private final UlidGenerator ulids;
 
     /** 在一个服务端事务内保存订单、快照绑定、现金、审计、幂等与Outbox。 */
@@ -85,6 +86,8 @@ public class PromotedCashOrderService implements PromotedOrderSubmissionPort {
             throw conflict("ORDER_SNAPSHOT_HASH_MISMATCH", "POS订单快照摘要不一致");
         }
 
+        finalityGuard.reserveCompletion(principal.tenantId(), command.orderId(), command.commandId(),
+            requestHash, at);
         promotedOrders.insertOrder(new OrderWrite(principal.tenantId(), command.orderId(), command.localOrderNo(),
             command.storeId(), command.terminalId(), command.shiftId(), principal.userId(), command.businessDate(),
             command.storeTimezone(), totals.grossMinor(), totals.discountMinor(), totals.surchargeMinor(),

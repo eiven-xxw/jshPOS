@@ -266,6 +266,46 @@ public interface OrderMapper {
                            @Param("reasonText") String reasonText, @Param("requestHash") String requestHash,
                            @Param("documentHash") String documentHash, @Param("at") LocalDateTime at);
 
+    /** 取消墓碑或成交后路由只追加；数据库触发器同时禁止更新和删除。 */
+    @Insert("""
+        INSERT INTO ord_order_disposition(disposition_id,tenant_id,source_event_id,order_id,store_id,
+          terminal_id,shift_id,actor_user_id,business_date,disposition_type,from_status,effective_status,
+          reason_code,reason_text,authorization_ref,order_snapshot_sha256,request_sha256,
+          order_aggregate_version,occurred_at)
+        VALUES(#{dispositionId},#{tenantId},#{sourceEventId},#{orderId},#{storeId},#{terminalId},
+          #{shiftId},#{actorId},#{businessDate},#{dispositionType},#{fromStatus},#{effectiveStatus},
+          #{reasonCode},#{reasonText},#{authorizationRef},#{snapshotHash},#{requestHash},#{version},#{at})
+        """)
+    int insertOrderDisposition(@Param("tenantId") String tenantId,
+                               @Param("sourceEventId") String sourceEventId,
+                               @Param("dispositionId") String dispositionId,
+                               @Param("orderId") String orderId, @Param("storeId") Long storeId,
+                               @Param("terminalId") String terminalId, @Param("shiftId") String shiftId,
+                               @Param("actorId") Long actorId, @Param("businessDate") LocalDate businessDate,
+                               @Param("dispositionType") String dispositionType,
+                               @Param("fromStatus") String fromStatus,
+                               @Param("effectiveStatus") String effectiveStatus,
+                               @Param("reasonCode") String reasonCode, @Param("reasonText") String reasonText,
+                               @Param("authorizationRef") String authorizationRef,
+                               @Param("snapshotHash") String snapshotHash,
+                               @Param("requestHash") String requestHash, @Param("version") long version,
+                                 @Param("at") LocalDateTime at);
+
+    @Insert("""
+        INSERT INTO ord_order_finality_guard(tenant_id,order_id,finality_type,source_id,request_sha256,created_at)
+        VALUES(#{tenantId},#{orderId},#{finalityType},#{sourceId},#{requestHash},#{at})
+        """)
+    int insertOrderFinalityGuard(@Param("tenantId") String tenantId,
+                                 @Param("orderId") String orderId,
+                                 @Param("finalityType") String finalityType,
+                                 @Param("sourceId") String sourceId,
+                                 @Param("requestHash") String requestHash,
+                                 @Param("at") LocalDateTime at);
+
+    @Select("SELECT COUNT(*) FROM ord_order_disposition WHERE tenant_id=#{tenantId} AND order_id=#{orderId} AND disposition_type='CANCEL_BEFORE_COMPLETION'")
+    int countCancellationDisposition(@Param("tenantId") String tenantId,
+                                     @Param("orderId") String orderId);
+
     @Insert("""
         INSERT INTO ord_audit_event(audit_id,tenant_id,action_code,aggregate_type,aggregate_id,actor_user_id,
           approver_user_id,command_id,trace_id,before_status,after_status,amount_minor,currency,request_sha256,

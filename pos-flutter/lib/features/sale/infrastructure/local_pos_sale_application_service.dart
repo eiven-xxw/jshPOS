@@ -273,6 +273,54 @@ final class LocalPosSaleApplicationService
   }
 
   @override
+  Future<PosSaleWorkspace> cancelCurrentSale({
+    required String reasonCode,
+    required String reasonText,
+  }) async {
+    final basket = _requireBasket();
+    final shift = _requireOpenShift();
+    try {
+      checkout.cancelBasket(
+        commandId: ulids.next(),
+        idempotencyKey: 'cancel:${basket.orderId}',
+        basket: basket,
+        shiftId: shift['shift_id']! as String,
+        reasonCode: reasonCode,
+        reasonText: reasonText,
+        occurredAt: _now().toUtc(),
+      );
+      _basket = _newBasket();
+      _clearQuote();
+      return _workspace();
+    } on PosDomainException catch (error) {
+      throw PosSaleFailure(error.code, error.message);
+    }
+  }
+
+  @override
+  Future<PosSaleWorkspace> cancelHeldSale({
+    required String saleRef,
+    required String reasonCode,
+    required String reasonText,
+  }) async {
+    final shift = _requireOpenShift();
+    try {
+      checkout.cancelPersistedOrder(
+        commandId: ulids.next(),
+        idempotencyKey: 'cancel:$saleRef',
+        orderId: saleRef,
+        shiftId: shift['shift_id']! as String,
+        reasonCode: reasonCode,
+        reasonText: reasonText,
+        occurredAt: _now().toUtc(),
+      );
+      return _workspace();
+    } on PosDomainException catch (error) {
+      throw PosSaleFailure(error.code, error.message);
+    }
+  }
+
+  @override
   Future<PosCashSettlementView> settleCash({
     required String tenderedAmount,
     required String idempotencyKey,
@@ -430,6 +478,37 @@ final class LocalPosSaleApplicationService
         reprintNo: result.reprintNo,
         documentDigest: result.documentSha256,
         executionStatus: result.executionStatus,
+        outboxEventRef: result.outboxEventId,
+        duplicate: result.duplicate,
+      );
+    } on PosDomainException catch (error) {
+      throw PosSaleFailure(error.code, error.message);
+    }
+  }
+
+  @override
+  Future<PosOrderDispositionView> routeCompletedSaleToReturn(
+    String orderRef,
+  ) async {
+    final shift = _requireOpenShift();
+    try {
+      final result = checkout.routeCompletedOrder(
+        commandId: ulids.next(),
+        idempotencyKey: 'route:return:$orderRef',
+        orderId: orderRef,
+        actionShiftId: shift['shift_id']! as String,
+        routeCode: 'RETURN_REFUND_REQUIRED',
+        reasonCode: 'CUSTOMER_RETURN_REQUESTED',
+        reasonText: '收银端进入原单退货退款流程',
+        occurredAt: _now().toUtc(),
+      );
+      return PosOrderDispositionView(
+        dispositionRef: result.dispositionId,
+        orderRef: result.orderId,
+        dispositionType: result.dispositionType,
+        fromStatus: result.fromStatus,
+        effectiveStatus: result.effectiveStatus,
+        requestDigest: result.requestSha256,
         outboxEventRef: result.outboxEventId,
         duplicate: result.duplicate,
       );

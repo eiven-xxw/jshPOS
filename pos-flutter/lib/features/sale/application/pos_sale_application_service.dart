@@ -34,6 +34,19 @@ abstract interface class PosSaleApplicationService {
   /// 按稳定挂单引用恢复，Owner 必须重新校验班次、状态和版本。
   Future<PosSaleWorkspace> resumeHeldSale(String saleRef);
 
+  /// 取消当前未完成购物篮；必须保留行快照、审计、幂等结果与 Outbox。
+  Future<PosSaleWorkspace> cancelCurrentSale({
+    required String reasonCode,
+    required String reasonText,
+  });
+
+  /// 取消当前可信班次内的挂单；不得物理删除挂单或订单行。
+  Future<PosSaleWorkspace> cancelHeldSale({
+    required String saleRef,
+    required String reasonCode,
+    required String reasonText,
+  });
+
   /// 现金成交只提交收款字符串与稳定幂等键，不允许页面拼装订单事实。
   Future<PosCashSettlementView> settleCash({
     required String tenderedAmount,
@@ -50,6 +63,9 @@ abstract interface class PosSaleApplicationService {
     required String reasonText,
     required String idempotencyKey,
   });
+
+  /// 已完成订单只追加反向处置路由，正常入口固定指向既有原单退货退款。
+  Future<PosOrderDispositionView> routeCompletedSaleToReturn(String orderRef);
 
   /// 刷新正式同步应用服务的积压、重试和死信只读状态。
   Future<PosSaleWorkspace> refreshSyncStatus();

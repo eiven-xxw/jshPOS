@@ -125,6 +125,34 @@ def validate() -> dict:
     if stage in {"POS011_IMPLEMENTATION", "POS011_INDEPENDENT_VERIFIED"}:
         fail(not any("V202608210054" in item for item in changed),
              "POS011 未验证前不得预建 ORD004 迁移")
+    if stage in {"ORD004_IMPLEMENTATION", "FIRST_BATCH_VERIFIED"}:
+        required_ord004 = [
+            "docs/t2-gate7b/06_T2_ORD004设计准入.md",
+            "contracts/t2/gate7b/order-disposition-events-v1.schema.json",
+            "pos-flutter/lib/infrastructure/local_database/gate7b_order_disposition_schema.dart",
+            "pos-flutter/test/gate7b/order_disposition_test.dart",
+            "server/ruoyi-modules/jshpos-order/src/main/resources/db/migration/V202608210054__gate7b_order_disposition.sql",
+            "server/ruoyi-modules/jshpos-order/src/main/java/com/jingshanghui/pos/order/application/service/OrderDispositionService.java",
+            "server/ruoyi-modules/jshpos-order/src/main/java/com/jingshanghui/pos/order/application/service/CashOrderService.java",
+            "server/ruoyi-modules/jshpos-order/src/main/java/com/jingshanghui/pos/order/application/service/OrderFinalityGuardService.java",
+            "server/ruoyi-modules/jshpos-order/src/main/java/com/jingshanghui/pos/order/infrastructure/persistence/mapper/OrderMapper.java",
+            "server/ruoyi-modules/jshpos-sync/src/main/java/com/jingshanghui/pos/sync/application/service/OrderDispositionEventDispatcher.java",
+        ]
+        for path in required_ord004:
+            text(path)
+        disposition_sqlite = text(required_ord004[2])
+        disposition_mysql = text(required_ord004[4]).lower()
+        for token in ("CANCEL_BEFORE_COMPLETION", "RETURN_REFUND_REQUIRED", "append-only"):
+            fail(token in disposition_sqlite, f"ORD004 SQLite 边界缺失: {token}")
+        for token in ("cancel_before_completion", "return_refund_required", "append-only"):
+            fail(token in disposition_mysql, f"ORD004 MySQL 边界缺失: {token}")
+        runtime = (checkout + text(required_ord004[5]) + text(required_ord004[6])
+                   + text(required_ord004[7]) + text(required_ord004[8])
+                   + text(required_ord004[9]) + sync)
+        for token in ("cancelBasket", "routeCompletedOrder", "order.cancelled.v1",
+                      "order.reversal-routed.v1", "insertOrderFinalityGuard",
+                      "reserveCompletion", "countCancellationDisposition"):
+            fail(token in runtime, f"ORD004 运行时/同步/墓碑边界缺失: {token}")
     return {
         "schemaVersion": "1.0", "gate": "T2-GATE7B-SPRINT-S20-POS-OPERATIONS-FIRST-BATCH",
         "status": "PASS", "stage": stage, "baselineCommit": BASELINE,

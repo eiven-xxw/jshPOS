@@ -26,7 +26,7 @@ class ReleaseMigrationMySqlIT {
             .collect(Collectors.toSet());
         assertThat(applied.remove("0")).isTrue();
         assertThat(applied).containsExactlyInAnyOrderElementsOf(expected);
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("202608210053");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("202608210054");
         assertThat(flyway.migrate().migrationsExecuted).isZero();
         flyway.validate();
         assertGate6GDataMetadata();
@@ -53,7 +53,7 @@ class ReleaseMigrationMySqlIT {
                 }
             }
         }
-        assertThat(tables).hasSize(163);
+        assertThat(tables).hasSize(165);
         try (Connection c = DriverManager.getConnection(url, username, password);
              PreparedStatement query = c.prepareStatement("SELECT t.table_name FROM information_schema.tables t LEFT JOIN information_schema.columns c ON c.table_schema=t.table_schema AND c.table_name=t.table_name AND c.column_name='tenant_id' WHERE t.table_schema=DATABASE() AND t.table_type='BASE TABLE' AND t.table_name NOT IN ('sys_menu','jshpos_flyway_schema_history') AND c.column_name IS NULL ORDER BY t.table_name");
              ResultSet rows = query.executeQuery()) {
@@ -147,7 +147,7 @@ class ReleaseMigrationMySqlIT {
         for(int v=13;v<=35;v++) versions.add("20260817"+String.format("%04d",v));
         versions.add("202608180038"); versions.add("202608180039");
         versions.add("202608200040"); versions.add("202608200041"); versions.add("202608200042");
-        for(int v=43;v<=53;v++) versions.add("20260821"+String.format("%04d",v));
+        for(int v=43;v<=54;v++) versions.add("20260821"+String.format("%04d",v));
         return versions;
     }
     private static String required(String name) { String value=System.getenv(name); if(value==null||value.isBlank()) throw new IllegalStateException(name+" must be provided by CI"); return value; }

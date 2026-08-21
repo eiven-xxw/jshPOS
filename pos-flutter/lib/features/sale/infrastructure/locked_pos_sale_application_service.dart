@@ -33,6 +33,19 @@ final class LockedPosSaleApplicationService
   Future<PosSaleWorkspace> holdCurrentSale() async => _unavailable();
 
   @override
+  Future<PosSaleWorkspace> cancelCurrentSale({
+    required String reasonCode,
+    required String reasonText,
+  }) async => _unavailable();
+
+  @override
+  Future<PosSaleWorkspace> cancelHeldSale({
+    required String saleRef,
+    required String reasonCode,
+    required String reasonText,
+  }) async => _unavailable();
+
+  @override
   Future<PosSaleWorkspace> loadWorkspace() async => _unavailable();
 
   @override
@@ -46,6 +59,11 @@ final class LockedPosSaleApplicationService
     required String reasonText,
     required String idempotencyKey,
   }) async => _unavailable();
+
+  @override
+  Future<PosOrderDispositionView> routeCompletedSaleToReturn(
+    String orderRef,
+  ) async => _unavailable();
 
   @override
   Future<PosSaleWorkspace> refreshPromotionQuote() async => _unavailable();

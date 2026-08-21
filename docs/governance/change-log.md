@@ -193,5 +193,6 @@
 | CR-T2G7B-003 | 2026-08-21 | POS010_CLOSED_POS011_ADMITTED | POS010封存提交 `12ca1183f10b6886333b6a2d466655be48a6aebe` 的闭环 Run `32488566595` 全绿后，按串行规则将POS011准入为IN_PROGRESS | T2-POS-010、T2-POS-011、T2-ORD-004、ADR-043 | 仅实现语义收据、软件预览、补打请求及审计；真实打印继续BLOCKED且ORD004继续DRAFT |
 | CR-T2G7B-004 | 2026-08-21 | VERIFIED_POS011_AWAITING_CLOSURE_CI | 首个实现候选 Run `32493603840` 如实保留 MySQL 全迁移测试期望仍停留 V52 的失败；V53 迁移本身成功，修正版本清单后候选提交 `f19406dbb8c8a31818969766cbb6f548320d9f22` 的 Run `32494347095` 六个 Job 全绿，POS011 更新为 VERIFIED | T2-POS-011、T2-PRN-001、ADR-043 | Artifact 9450997935、9451038714、9451046814、9451058981、9451106909、9451232486；等待封存提交闭环 CI，真实打印仍 BLOCKED，ORD004 继续 DRAFT，外部执行为 0 |
 | CR-T2G7B-005 | 2026-08-21 | POS011_CLOSED_ORD004_ADMITTED | POS011封存提交 `94a315ee2aa0304e7a02dfb20182eef0e0281e7a` 的闭环 Run `32495308502` 六个 Job 全绿后，冻结未完成交易取消和已完成交易只追加反向处置路由设计并将 ORD004 准入为 IN_PROGRESS | T2-POS-011、T2-ORD-004、ADR-043 | 禁止回退成交、资金、库存、成本、促销和审计事实；UNKNOWN 不得通过取消或重建命令掩盖；外部状态与执行仍不变 |
+| CR-T2G7B-006 | 2026-08-21 | IMPLEMENTED_ORD004_AWAITING_INDEPENDENT_CI | 完成 SQLite V11、MySQL V54、取消/成交数据库级终局仲裁、未完成单取消、挂单作废、已成交只追加退货/补偿路由、同步 Dispatcher、权限、审计、幂等、原子回滚与 Flutter 页面；本地 Flutter 全量、服务端全量和治理门禁通过 | T2-ORD-004、T2-MIG-001、T2-CI-001、ADR-043 | ORD004 继续 IN_PROGRESS，等待 GitHub 六 Job 独立验证；不回退成交及其他 Owner 事实，不进行 Provider/真实设备/伙伴/完整 Alpha/生产执行 |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。

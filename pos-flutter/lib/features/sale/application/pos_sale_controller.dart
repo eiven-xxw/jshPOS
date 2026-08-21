@@ -15,6 +15,7 @@ final class PosSalePageState {
     this.settlement,
     this.printPreview,
     this.reprintRequest,
+    this.disposition,
     this.errorCode,
     this.safeMessage,
   });
@@ -27,6 +28,7 @@ final class PosSalePageState {
   final PosCashSettlementView? settlement;
   final PosPrintPreviewView? printPreview;
   final PosReprintRequestView? reprintRequest;
+  final PosOrderDispositionView? disposition;
   final String? errorCode;
   final String? safeMessage;
 
@@ -127,6 +129,30 @@ final class PosSaleController {
   Future<PosSalePageState> resume(String saleRef) => _run(
     permission: PosPermission.saleOperate,
     operation: () => saleService.resumeHeldSale(saleRef),
+  );
+
+  Future<PosSalePageState> cancelCurrent({
+    required String reasonCode,
+    required String reasonText,
+  }) => _run(
+    permission: PosPermission.orderCancel,
+    operation: () => saleService.cancelCurrentSale(
+      reasonCode: reasonCode,
+      reasonText: reasonText,
+    ),
+  );
+
+  Future<PosSalePageState> cancelHeld({
+    required String saleRef,
+    required String reasonCode,
+    required String reasonText,
+  }) => _run(
+    permission: PosPermission.orderCancel,
+    operation: () => saleService.cancelHeldSale(
+      saleRef: saleRef,
+      reasonCode: reasonCode,
+      reasonText: reasonText,
+    ),
   );
 
   Future<PosSalePageState> refreshSync() => _run(
@@ -234,6 +260,32 @@ final class PosSaleController {
     }
   }
 
+  Future<PosSalePageState> routeCompletedSaleToReturn(String orderRef) =>
+      _flight ??= _routeCompletedSaleToReturn(orderRef)
+          .whenComplete(() => _flight = null);
+
+  Future<PosSalePageState> _routeCompletedSaleToReturn(String orderRef) async {
+    try {
+      sessionService.requirePermission(PosPermission.orderDispose);
+      _state = _copy(phase: PosSalePagePhase.busy, clearError: true);
+      final result = await saleService.routeCompletedSaleToReturn(orderRef);
+      return _state = PosSalePageState(
+        phase: PosSalePagePhase.settled,
+        workspace: _state.workspace,
+        settlement: _state.settlement,
+        printPreview: _state.printPreview,
+        reprintRequest: _state.reprintRequest,
+        disposition: result,
+      );
+    } on PosSessionFailure catch (error) {
+      return _failure(error.code, error.message);
+    } on PosSaleFailure catch (error) {
+      return _failure(error.code, error.message);
+    } catch (_) {
+      return _failure('ORDER_DISPOSITION_FAILED', '反向处置路由失败，请使用原命令恢复。');
+    }
+  }
+
   /// 成交完成后由应用服务创建新篮，页面不复用已冻结的原交易命令。
   Future<PosSalePageState> startNextSale() {
     _state = const PosSalePageState.loading();
@@ -286,6 +338,7 @@ final class PosSaleController {
     List<PosProductView>? searchResults,
     PosPrintPreviewView? printPreview,
     PosReprintRequestView? reprintRequest,
+    PosOrderDispositionView? disposition,
     String? errorCode,
     String? safeMessage,
     bool clearError = false,
@@ -296,6 +349,7 @@ final class PosSaleController {
     settlement: _state.settlement,
     printPreview: printPreview ?? _state.printPreview,
     reprintRequest: reprintRequest ?? _state.reprintRequest,
+    disposition: disposition ?? _state.disposition,
     errorCode: clearError ? null : errorCode ?? _state.errorCode,
     safeMessage: clearError ? null : safeMessage ?? _state.safeMessage,
   );

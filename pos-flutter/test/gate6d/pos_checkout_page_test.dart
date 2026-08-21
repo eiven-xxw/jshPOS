@@ -116,6 +116,53 @@ void main() {
     expect(find.textContaining('仅预览'), findsOneWidget);
   });
 
+  testWidgets('未完成交易取消必须填写原因', (tester) async {
+    final fixture = await SaleFixture.ready();
+    await tester.pumpWidget(
+      MaterialApp(home: PosCheckoutPage(controller: fixture.controller)),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('cancelCurrentSale')));
+    await tester.pumpAndSettle();
+    expect(find.text('取消当前交易'), findsOneWidget);
+    expect(
+      tester
+          .widget<FilledButton>(
+            find.byKey(const Key('confirmOrderCancellation')),
+          )
+          .onPressed,
+      isNull,
+    );
+    await tester.enterText(
+      find.byKey(const Key('orderCancelReason')),
+      '虚构顾客付款前取消',
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('confirmOrderCancellation')));
+    await tester.pumpAndSettle();
+    expect(fixture.sale.cancelReasonCode, 'CUSTOMER_CANCELLED');
+    expect(fixture.sale.cancelReasonText, '虚构顾客付款前取消');
+    expect(fixture.controller.state.workspace?.lines, isEmpty);
+  });
+
+  testWidgets('已成交交易只登记原单退货路由', (tester) async {
+    final completed = await SaleFixture.ready();
+    await tester.pumpWidget(
+      MaterialApp(home: PosCheckoutPage(controller: completed.controller)),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('cashSettlement')));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('cashTenderedInput')), '20.00');
+    await tester.tap(find.byKey(const Key('cashTenderedSubmit')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('routeCompletedReturn')));
+    await tester.pumpAndSettle();
+    expect(completed.sale.routedOrderRef, 'order:001');
+    expect(find.textContaining('成交状态与历史事实保持不变'), findsOneWidget);
+  });
+
   testWidgets('未配置正式应用组合根时显示安全锁定错误并允许重试', (tester) async {
     final fixture = await SaleFixture.ready();
     final controller = PosSaleController(

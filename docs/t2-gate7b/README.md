@@ -11,4 +11,6 @@
 `f19406d` 的 Run `32494347095` 独立验证。当前状态为
 `VERIFIED / VERIFIED / IN_PROGRESS`；POS-011 封存提交 `94a315e` 的 Run
 `32495308502` 已闭环全绿，ORD-004 随后完成设计准入。外部支付、设备、打印、
-伙伴、完整 Alpha 和生产发布状态不变。
+伙伴、完整 Alpha 和生产发布状态不变。ORD-004 的 SQLite V11、MySQL V54、
+取消/成交终局仲裁、同步和正式 POS 页面现已完成本地实现与回归，状态仍为
+`IN_PROGRESS`，必须等待独立 GitHub 六 Job 全绿后才能更新为 `VERIFIED`。

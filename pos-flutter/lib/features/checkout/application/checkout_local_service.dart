@@ -379,6 +379,418 @@ final class CheckoutLocalService {
     });
   }
 
+  /// 将当前内存购物篮固化为取消事实；不删除订单行，也不产生资金或库存效果。
+  OrderDispositionResult cancelBasket({
+    required String commandId,
+    required String idempotencyKey,
+    required Basket basket,
+    required String shiftId,
+    required String reasonCode,
+    required String reasonText,
+    required DateTime occurredAt,
+  }) {
+    if (basket.lines.isEmpty) {
+      throw const PosDomainException('ORDER_STATE_CONFLICT', 'basket is empty');
+    }
+    return _cancelBeforeCompletion(
+      commandId: commandId,
+      idempotencyKey: idempotencyKey,
+      orderId: basket.orderId,
+      shiftId: shiftId,
+      reasonCode: reasonCode,
+      reasonText: reasonText,
+      occurredAt: occurredAt,
+      basket: basket,
+    );
+  }
+
+  /// 取消已持久化的挂单或未完成订单；只允许可信当前班次内的未支付事实。
+  OrderDispositionResult cancelPersistedOrder({
+    required String commandId,
+    required String idempotencyKey,
+    required String orderId,
+    required String shiftId,
+    required String reasonCode,
+    required String reasonText,
+    required DateTime occurredAt,
+  }) => _cancelBeforeCompletion(
+    commandId: commandId,
+    idempotencyKey: idempotencyKey,
+    orderId: orderId,
+    shiftId: shiftId,
+    reasonCode: reasonCode,
+    reasonText: reasonText,
+    occurredAt: occurredAt,
+  );
+
+  /// 已完成交易只追加受控反向处置路由，订单状态和既有事实保持不变。
+  OrderDispositionResult routeCompletedOrder({
+    required String commandId,
+    required String idempotencyKey,
+    required String orderId,
+    required String actionShiftId,
+    required String routeCode,
+    required String reasonCode,
+    required String reasonText,
+    String? authorizationRef,
+    required DateTime occurredAt,
+  }) {
+    _requireCommand(commandId, idempotencyKey);
+    _requireDispositionInput(reasonCode, reasonText);
+    const routes = {
+      'RETURN_REFUND_REQUIRED',
+      'PAYMENT_REVERSAL_OBSERVATION_REQUIRED',
+      'EXPLICIT_COMPENSATION_REQUIRED',
+    };
+    if (!UlidGenerator.isCanonical(orderId) ||
+        !routes.contains(routeCode) ||
+        (routeCode != 'RETURN_REFUND_REQUIRED' &&
+            (authorizationRef == null ||
+                authorizationRef.length < 16 ||
+                authorizationRef.length > 128))) {
+      throw const PosDomainException(
+        'ORDER_DISPOSITION_INVALID',
+        'completed-order disposition is invalid',
+      );
+    }
+    return localDatabase.transaction(() {
+      final shift = _requireOpenShift(actionShiftId);
+      final orders = _db.select(
+        '''SELECT * FROM local_order WHERE tenant_id=? AND store_id=? AND terminal_id=?
+           AND order_id=?''',
+        [_binding.tenantId, _binding.storeId, _binding.terminalId, orderId],
+      );
+      if (orders.length != 1) {
+        throw const PosDomainException(
+          'RESOURCE_NOT_VISIBLE',
+          'completed order is unavailable',
+        );
+      }
+      final order = orders.single;
+      final fromStatus = order['status']! as String;
+      if (!const {'CONFIRMED', 'COMPLETED'}.contains(fromStatus) ||
+          order['payment_status'] != 'PAID') {
+        throw const PosDomainException(
+          'ORDER_DISPOSITION_REQUIRED',
+          'order is not an immutable completed transaction',
+        );
+      }
+      final snapshotHash = _persistedOrderHash(orderId);
+      final requestHash = _dispositionHash(
+        orderId: orderId,
+        shiftId: actionShiftId,
+        businessDate: shift['business_date']! as String,
+        dispositionType: routeCode,
+        fromStatus: fromStatus,
+        effectiveStatus: fromStatus,
+        reasonCode: reasonCode,
+        reasonText: reasonText,
+        authorizationRef: authorizationRef,
+        snapshotHash: snapshotHash,
+      );
+      final duplicate = _idempotent<OrderDispositionResult>(
+        'ROUTE_ORDER_DISPOSITION',
+        idempotencyKey,
+        requestHash,
+        OrderDispositionResult.fromJson,
+      );
+      if (duplicate != null) return duplicate;
+      final at = occurredAt.toUtc().toIso8601String();
+      final dispositionId = ulids.next();
+      final version = order['record_version']! as int;
+      _insertOrderDisposition(
+        dispositionId: dispositionId,
+        orderId: orderId,
+        shiftId: actionShiftId,
+        businessDate: shift['business_date']! as String,
+        dispositionType: routeCode,
+        fromStatus: fromStatus,
+        effectiveStatus: fromStatus,
+        reasonCode: reasonCode,
+        reasonText: reasonText,
+        authorizationRef: authorizationRef,
+        snapshotHash: snapshotHash,
+        commandId: commandId,
+        idempotencyKey: idempotencyKey,
+        requestHash: requestHash,
+        aggregateVersion: version,
+        at: at,
+      );
+      localDatabase.checkpoint('order.disposition.inserted');
+      final eventId = _appendOutbox(
+        stream: 'order.command',
+        eventType: 'order.reversal-routed.v1',
+        aggregateId: dispositionId,
+        aggregateVersion: 1,
+        correlationId: commandId,
+        payload: _dispositionPayload(
+          dispositionId: dispositionId,
+          orderId: orderId,
+          shiftId: actionShiftId,
+          businessDate: shift['business_date']! as String,
+          dispositionType: routeCode,
+          fromStatus: fromStatus,
+          effectiveStatus: fromStatus,
+          reasonCode: reasonCode,
+          reasonText: reasonText,
+          authorizationRef: authorizationRef,
+          snapshotHash: snapshotHash,
+          requestHash: requestHash,
+          aggregateVersion: version,
+          occurredAt: at,
+        ),
+        occurredAt: at,
+      );
+      _audit(
+        'ORDER_REVERSAL_ROUTED',
+        'ORDER',
+        orderId,
+        commandId,
+        fromStatus,
+        fromStatus,
+        null,
+        requestHash,
+        at,
+      );
+      final result = OrderDispositionResult(
+        dispositionId: dispositionId,
+        orderId: orderId,
+        dispositionType: routeCode,
+        fromStatus: fromStatus,
+        effectiveStatus: fromStatus,
+        requestSha256: requestHash,
+        outboxEventId: eventId,
+      );
+      _saveIdempotency(
+        'ROUTE_ORDER_DISPOSITION',
+        commandId,
+        idempotencyKey,
+        requestHash,
+        orderId,
+        result.toJson(),
+        at,
+      );
+      return result;
+    });
+  }
+
+  OrderDispositionResult _cancelBeforeCompletion({
+    required String commandId,
+    required String idempotencyKey,
+    required String orderId,
+    required String shiftId,
+    required String reasonCode,
+    required String reasonText,
+    required DateTime occurredAt,
+    Basket? basket,
+  }) {
+    _requireCommand(commandId, idempotencyKey);
+    _requireDispositionInput(reasonCode, reasonText);
+    if (!UlidGenerator.isCanonical(orderId) ||
+        !UlidGenerator.isCanonical(shiftId)) {
+      throw const PosDomainException(
+        'ORDER_DISPOSITION_INVALID',
+        'order or shift identity is invalid',
+      );
+    }
+    return localDatabase.transaction(() {
+      final shift = _requireOpenShift(shiftId);
+      var orders = _db.select(
+        '''SELECT * FROM local_order WHERE tenant_id=? AND store_id=? AND terminal_id=?
+           AND cashier_id=? AND shift_id=? AND order_id=?''',
+        [
+          _binding.tenantId,
+          _binding.storeId,
+          _binding.terminalId,
+          _binding.cashierId,
+          shiftId,
+          orderId,
+        ],
+      );
+      if (orders.isEmpty && basket != null) {
+        _insertDraftOrder(basket, shiftId, occurredAt);
+        orders = _db.select(
+          'SELECT * FROM local_order WHERE tenant_id=? AND order_id=?',
+          [_binding.tenantId, orderId],
+        );
+      }
+      if (orders.length != 1 ||
+          orders.single['business_date'] != shift['business_date']) {
+        throw const PosDomainException(
+          'RESOURCE_NOT_VISIBLE',
+          'unfinished order is outside trusted shift or business date',
+        );
+      }
+      final order = orders.single;
+      final fromStatus = order['status']! as String;
+      if (fromStatus == 'CANCELLED') {
+        final prior = _db.select(
+          '''SELECT * FROM local_order_disposition WHERE tenant_id=? AND order_id=?
+             AND disposition_type='CANCEL_BEFORE_COMPLETION' AND idempotency_key=?''',
+          [_binding.tenantId, orderId, idempotencyKey],
+        );
+        if (prior.length != 1) {
+          throw const PosDomainException(
+            'ORDER_STATE_CONFLICT',
+            'cancelled order cannot accept a new command',
+          );
+        }
+        final disposition = prior.single;
+        final priorHash = _dispositionHash(
+          orderId: orderId,
+          shiftId: shiftId,
+          businessDate: shift['business_date']! as String,
+          dispositionType: 'CANCEL_BEFORE_COMPLETION',
+          fromStatus: disposition['from_status']! as String,
+          effectiveStatus: 'CANCELLED',
+          reasonCode: reasonCode,
+          reasonText: reasonText,
+          snapshotHash: disposition['order_snapshot_sha256']! as String,
+        );
+        final duplicate = _idempotent<OrderDispositionResult>(
+          'CANCEL_ORDER',
+          idempotencyKey,
+          priorHash,
+          OrderDispositionResult.fromJson,
+        );
+        if (duplicate != null) return duplicate;
+      }
+      final snapshotHash = _persistedOrderHash(orderId);
+      final requestHash = _dispositionHash(
+        orderId: orderId,
+        shiftId: shiftId,
+        businessDate: shift['business_date']! as String,
+        dispositionType: 'CANCEL_BEFORE_COMPLETION',
+        fromStatus: const {'DRAFT', 'PENDING_PAYMENT'}.contains(fromStatus)
+            ? fromStatus
+            : 'DRAFT',
+        effectiveStatus: 'CANCELLED',
+        reasonCode: reasonCode,
+        reasonText: reasonText,
+        snapshotHash: snapshotHash,
+      );
+      final duplicate = _idempotent<OrderDispositionResult>(
+        'CANCEL_ORDER',
+        idempotencyKey,
+        requestHash,
+        OrderDispositionResult.fromJson,
+      );
+      if (duplicate != null) return duplicate;
+      if (!const {'DRAFT', 'PENDING_PAYMENT'}.contains(fromStatus) ||
+          order['payment_status'] != 'UNPAID' ||
+          _localCashPaymentCount(orderId) != 0) {
+        throw const PosDomainException(
+          'ORDER_CANCELLATION_BLOCKED',
+          'completed, paid or unknown transaction cannot be cancelled',
+        );
+      }
+      if (basket != null) _verifyPersistedLines(basket);
+      final priorVersion = order['record_version']! as int;
+      _db.execute(
+        '''UPDATE local_order SET status='CANCELLED',record_version=record_version+1
+           WHERE tenant_id=? AND order_id=? AND status=? AND payment_status='UNPAID'
+             AND record_version=?''',
+        [_binding.tenantId, orderId, fromStatus, priorVersion],
+      );
+      if (_db.updatedRows != 1) {
+        throw const PosDomainException(
+          'ORDER_VERSION_CONFLICT',
+          'cancel conflict',
+        );
+      }
+      final at = occurredAt.toUtc().toIso8601String();
+      final version = priorVersion + 1;
+      final dispositionId = ulids.next();
+      _db.execute(
+        '''INSERT INTO local_order_state_history(history_id,tenant_id,order_id,command_id,
+           from_status,to_status,aggregate_version,actor_id,reason_code,occurred_at)
+           VALUES(?,?,?,?,?,'CANCELLED',?,?,?,?)''',
+        [
+          ulids.next(),
+          _binding.tenantId,
+          orderId,
+          commandId,
+          fromStatus,
+          version,
+          _binding.cashierId,
+          reasonCode,
+          at,
+        ],
+      );
+      _insertOrderDisposition(
+        dispositionId: dispositionId,
+        orderId: orderId,
+        shiftId: shiftId,
+        businessDate: shift['business_date']! as String,
+        dispositionType: 'CANCEL_BEFORE_COMPLETION',
+        fromStatus: fromStatus,
+        effectiveStatus: 'CANCELLED',
+        reasonCode: reasonCode,
+        reasonText: reasonText,
+        snapshotHash: snapshotHash,
+        commandId: commandId,
+        idempotencyKey: idempotencyKey,
+        requestHash: requestHash,
+        aggregateVersion: version,
+        at: at,
+      );
+      localDatabase.checkpoint('order.cancelled');
+      final eventId = _appendOutbox(
+        stream: 'order.command',
+        eventType: 'order.cancelled.v1',
+        aggregateId: dispositionId,
+        aggregateVersion: 1,
+        correlationId: commandId,
+        payload: _dispositionPayload(
+          dispositionId: dispositionId,
+          orderId: orderId,
+          shiftId: shiftId,
+          businessDate: shift['business_date']! as String,
+          dispositionType: 'CANCEL_BEFORE_COMPLETION',
+          fromStatus: fromStatus,
+          effectiveStatus: 'CANCELLED',
+          reasonCode: reasonCode,
+          reasonText: reasonText,
+          snapshotHash: snapshotHash,
+          requestHash: requestHash,
+          aggregateVersion: version,
+          occurredAt: at,
+        ),
+        occurredAt: at,
+      );
+      _audit(
+        'ORDER_CANCELLED',
+        'ORDER',
+        orderId,
+        commandId,
+        fromStatus,
+        'CANCELLED',
+        null,
+        requestHash,
+        at,
+      );
+      final result = OrderDispositionResult(
+        dispositionId: dispositionId,
+        orderId: orderId,
+        dispositionType: 'CANCEL_BEFORE_COMPLETION',
+        fromStatus: fromStatus,
+        effectiveStatus: 'CANCELLED',
+        requestSha256: requestHash,
+        outboxEventId: eventId,
+      );
+      _saveIdempotency(
+        'CANCEL_ORDER',
+        commandId,
+        idempotencyKey,
+        requestHash,
+        orderId,
+        result.toJson(),
+        at,
+      );
+      return result;
+    });
+  }
+
   CashSaleResult completeCashSale(CashSaleCommand command) {
     _requireCommand(command.commandId, command.idempotencyKey);
     if (!UlidGenerator.isCanonical(command.basket.orderId) ||
@@ -1731,6 +2143,198 @@ final class CheckoutLocalService {
     );
     _insertLines(basket);
   }
+
+  void _requireDispositionInput(String reasonCode, String reasonText) {
+    if (!RegExp(r'^[A-Z][A-Z0-9_]{1,31}$').hasMatch(reasonCode) ||
+        reasonText.trim().isEmpty ||
+        reasonText.length > 256) {
+      throw const PosDomainException(
+        'ORDER_DISPOSITION_INVALID',
+        'reason code or text is invalid',
+      );
+    }
+  }
+
+  int _localCashPaymentCount(String orderId) =>
+      _db.select(
+            'SELECT COUNT(*) c FROM local_cash_payment WHERE tenant_id=? AND order_id=?',
+            [_binding.tenantId, orderId],
+          ).single['c']!
+          as int;
+
+  String _persistedOrderHash(String orderId) {
+    final orders = _db.select(
+      '''SELECT order_id,local_order_no,store_id,terminal_id,shift_id,cashier_id,
+         business_date,store_timezone,status,draft_disposition,payment_status,currency,
+         gross_amount_minor,discount_amount_minor,surcharge_amount_minor,receivable_amount_minor,
+         received_amount_minor,record_version,snapshot_sha256
+         FROM local_order WHERE tenant_id=? AND order_id=?''',
+      [_binding.tenantId, orderId],
+    );
+    if (orders.length != 1) {
+      throw const PosDomainException(
+        'RESOURCE_NOT_VISIBLE',
+        'order snapshot is unavailable',
+      );
+    }
+    final order = orders.single;
+    final frozenHash = order['snapshot_sha256'] as String?;
+    if (frozenHash != null && RegExp(r'^[a-f0-9]{64}$').hasMatch(frozenHash)) {
+      return frozenHash;
+    }
+    final lines = _db.select(
+      '''SELECT line_id,line_no,sku_id,unit_id,quantity_decimal,unit_price_minor,
+         gross_amount_minor,discount_amount_minor,surcharge_amount_minor,payable_amount_minor
+         FROM local_order_line WHERE tenant_id=? AND order_id=? ORDER BY line_no''',
+      [_binding.tenantId, orderId],
+    );
+    return _hash([
+      order['order_id'],
+      order['local_order_no'],
+      order['store_id'],
+      order['terminal_id'],
+      order['shift_id'],
+      order['cashier_id'],
+      order['business_date'],
+      order['store_timezone'],
+      order['status'],
+      order['draft_disposition'],
+      order['payment_status'],
+      order['currency'],
+      order['gross_amount_minor'],
+      order['discount_amount_minor'],
+      order['surcharge_amount_minor'],
+      order['receivable_amount_minor'],
+      order['received_amount_minor'],
+      order['record_version'],
+      order['snapshot_sha256'],
+      ...lines.expand(
+        (line) => [
+          line['line_id'],
+          line['line_no'],
+          line['sku_id'],
+          line['unit_id'],
+          line['quantity_decimal'],
+          line['unit_price_minor'],
+          line['gross_amount_minor'],
+          line['discount_amount_minor'],
+          line['surcharge_amount_minor'],
+          line['payable_amount_minor'],
+        ],
+      ),
+    ]);
+  }
+
+  String _dispositionHash({
+    required String orderId,
+    required String shiftId,
+    required String businessDate,
+    required String dispositionType,
+    required String fromStatus,
+    required String effectiveStatus,
+    required String reasonCode,
+    required String reasonText,
+    String? authorizationRef,
+    required String snapshotHash,
+  }) => _hash([
+    dispositionType,
+    orderId,
+    _binding.storeId,
+    _binding.terminalId,
+    _binding.cashierId,
+    shiftId,
+    businessDate,
+    fromStatus,
+    effectiveStatus,
+    reasonCode,
+    reasonText.trim(),
+    authorizationRef ?? '',
+    snapshotHash,
+  ]);
+
+  void _insertOrderDisposition({
+    required String dispositionId,
+    required String orderId,
+    required String shiftId,
+    required String businessDate,
+    required String dispositionType,
+    required String fromStatus,
+    required String effectiveStatus,
+    required String reasonCode,
+    required String reasonText,
+    String? authorizationRef,
+    required String snapshotHash,
+    required String commandId,
+    required String idempotencyKey,
+    required String requestHash,
+    required int aggregateVersion,
+    required String at,
+  }) {
+    _db.execute(
+      '''INSERT INTO local_order_disposition(disposition_id,tenant_id,order_id,store_id,
+         terminal_id,shift_id,cashier_id,business_date,disposition_type,from_status,
+         effective_status,reason_code,reason_text,authorization_ref,order_snapshot_sha256,
+         command_id,idempotency_key,request_sha256,aggregate_version,occurred_at)
+         VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
+      [
+        dispositionId,
+        _binding.tenantId,
+        orderId,
+        _binding.storeId,
+        _binding.terminalId,
+        shiftId,
+        _binding.cashierId,
+        businessDate,
+        dispositionType,
+        fromStatus,
+        effectiveStatus,
+        reasonCode,
+        reasonText.trim(),
+        authorizationRef,
+        snapshotHash,
+        commandId,
+        idempotencyKey,
+        requestHash,
+        aggregateVersion,
+        at,
+      ],
+    );
+  }
+
+  Map<String, Object?> _dispositionPayload({
+    required String dispositionId,
+    required String orderId,
+    required String shiftId,
+    required String businessDate,
+    required String dispositionType,
+    required String fromStatus,
+    required String effectiveStatus,
+    required String reasonCode,
+    required String reasonText,
+    String? authorizationRef,
+    required String snapshotHash,
+    required String requestHash,
+    required int aggregateVersion,
+    required String occurredAt,
+  }) => {
+    'dispositionId': dispositionId,
+    'orderId': orderId,
+    'storeId': _binding.storeId,
+    'terminalId': _binding.terminalId,
+    'cashierId': _binding.cashierId,
+    'shiftId': shiftId,
+    'businessDate': businessDate,
+    'dispositionType': dispositionType,
+    'fromStatus': fromStatus,
+    'effectiveStatus': effectiveStatus,
+    'reasonCode': reasonCode,
+    'reasonText': reasonText.trim(),
+    'authorizationRef': authorizationRef,
+    'orderSnapshotSha256': snapshotHash,
+    'requestSha256': requestHash,
+    'aggregateVersion': aggregateVersion,
+    'occurredAt': occurredAt,
+  };
 
   void _verifyPromotionSettlement(PromotedCashSaleCommand command) {
     final quoteRows = _db.select(

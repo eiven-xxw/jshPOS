@@ -29,6 +29,7 @@ public class SyncFactProcessor {
     private final PromotedOrderEventDispatcher promotedOrderEvents;
     private final ShiftEventDispatcher shiftEvents;
     private final ReceiptEventDispatcher receiptEvents;
+    private final OrderDispositionEventDispatcher orderDispositionEvents;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public EventAck apply(DeviceContext context, EventEnvelope event) {
@@ -57,6 +58,9 @@ public class SyncFactProcessor {
             promotedOrderEvents.apply(context, event);
         } else if (event.eventType().startsWith("receipt.")) {
             receiptEvents.apply(context, event);
+        } else if (event.eventType().equals("order.cancelled.v1")
+            || event.eventType().equals("order.reversal-routed.v1")) {
+            orderDispositionEvents.apply(context, event);
         }
         mapper.insertBusinessFact(ids.next(), context.tenantId(), event.eventId(), event.stream(), event.eventType(),
             event.aggregateId(), event.aggregateVersion(), serialize(event), event.payloadHash(), now);

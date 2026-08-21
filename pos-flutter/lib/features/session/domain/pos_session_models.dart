@@ -27,6 +27,8 @@ enum PosPermission {
   returnApprove('return:request:approve'),
   printPreview('pos:print:preview'),
   printReprint('pos:print:reprint'),
+  orderCancel('pos:order:cancel'),
+  orderDispose('pos:order:dispose'),
   syncView('pos:sync:view');
 
   const PosPermission(this.wireCode);

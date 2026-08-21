@@ -14,6 +14,7 @@ import 's11_member_schema.dart';
 import 'gate6g_catalog_schema.dart';
 import 'gate7b_cash_operation_schema.dart';
 import 'gate7b_receipt_schema.dart';
+import 'gate7b_order_disposition_schema.dart';
 
 typedef FailureInjector = void Function(String checkpoint);
 
@@ -135,7 +136,11 @@ final class PosLocalDatabase {
       _migrateToReceiptV10();
       version = Gate7bReceiptSchema.version;
     }
-    if (version != Gate7bReceiptSchema.version) {
+    if (version == Gate7bReceiptSchema.version) {
+      _migrateToOrderDispositionV11();
+      version = Gate7bOrderDispositionSchema.version;
+    }
+    if (version != Gate7bOrderDispositionSchema.version) {
       throw StateError('LOCAL_SCHEMA_UNSUPPORTED: $version');
     }
     _verifySchemaChecksum();
@@ -174,6 +179,9 @@ final class PosLocalDatabase {
       Gate7bReceiptSchema.version: sha256
           .convert(utf8.encode(Gate7bReceiptSchema.v10))
           .toString(),
+      Gate7bOrderDispositionSchema.version: sha256
+          .convert(utf8.encode(Gate7bOrderDispositionSchema.v11))
+          .toString(),
     };
     for (final entry in expected.entries) {
       final rows = database.select(
@@ -205,6 +213,34 @@ final class PosLocalDatabase {
       checkpoint('migration.v10.before-version');
       database.execute('PRAGMA user_version=${Gate7bReceiptSchema.version}');
     });
+  }
+
+  /// 追加 ORD-004 只追加处置事实；迁移中断时表、历史和版本整体回滚。
+  void _migrateToOrderDispositionV11() {
+    transaction(() {
+      database.execute(Gate7bOrderDispositionSchema.v11);
+      final checksum = sha256
+          .convert(utf8.encode(Gate7bOrderDispositionSchema.v11))
+          .toString();
+      database.execute(
+        'INSERT INTO local_schema_history(version,description,checksum_sha256,installed_at) VALUES(11,?,?,?)',
+        [
+          'gate7b-order-cancel-reverse-disposition',
+          checksum,
+          DateTime.now().toUtc().toIso8601String(),
+        ],
+      );
+      checkpoint('migration.v11.before-version');
+      database.execute(
+        'PRAGMA user_version=${Gate7bOrderDispositionSchema.version}',
+      );
+    });
+    final violations = database.select('PRAGMA foreign_key_check');
+    if (violations.isNotEmpty) {
+      throw StateError(
+        'LOCAL_DB_INTEGRITY_FAILED: foreign key violations after v11',
+      );
+    }
   }
 
   void _migrateToPromotionV3() {

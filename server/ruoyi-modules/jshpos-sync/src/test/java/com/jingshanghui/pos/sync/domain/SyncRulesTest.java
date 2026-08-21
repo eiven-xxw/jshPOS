@@ -19,6 +19,8 @@ class SyncRulesTest {
         assertThat(SyncRules.supportsPosFact("receipt.document-frozen.v1")).isTrue();
         assertThat(SyncRules.supportsPosFact("receipt.reprint-requested.v1")).isTrue();
         assertThat(SyncRules.supportsPosFact("shift.cash-movement.recorded.v1")).isTrue();
+        assertThat(SyncRules.supportsPosFact("order.cancelled.v1")).isTrue();
+        assertThat(SyncRules.supportsPosFact("order.reversal-routed.v1")).isTrue();
         assertThat(SyncRules.supportsPosFact("shift.drawer-requested.v1")).isTrue();
         assertThat(SyncRules.supportsPosFact("payment.completed.v1")).isFalse();
         assertThat(SyncRules.clampPullLimit(-1)).isEqualTo(1);

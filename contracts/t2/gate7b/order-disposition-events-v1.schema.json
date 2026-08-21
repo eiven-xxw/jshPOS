@@ -4,7 +4,7 @@
   "title": "Gate 7B order cancellation and reverse-disposition events",
   "type": "object",
   "additionalProperties": false,
-  "required": ["dispositionId", "orderId", "storeId", "terminalId", "cashierId", "shiftId", "businessDate", "dispositionType", "fromStatus", "effectiveStatus", "reasonCode", "reasonText", "requestSha256", "aggregateVersion"],
+  "required": ["dispositionId", "orderId", "storeId", "terminalId", "cashierId", "shiftId", "businessDate", "dispositionType", "fromStatus", "effectiveStatus", "reasonCode", "reasonText", "orderSnapshotSha256", "requestSha256", "aggregateVersion", "occurredAt"],
   "properties": {
     "dispositionId": { "$ref": "#/$defs/ulid" },
     "orderId": { "$ref": "#/$defs/ulid" },
@@ -19,6 +19,7 @@
     "reasonCode": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]{1,31}$" },
     "reasonText": { "type": "string", "minLength": 1, "maxLength": 256 },
     "authorizationRef": { "type": ["string", "null"], "minLength": 16, "maxLength": 128 },
+    "orderSnapshotSha256": { "$ref": "#/$defs/sha256" },
     "requestSha256": { "$ref": "#/$defs/sha256" },
     "aggregateVersion": { "type": "integer", "minimum": 1 },
     "occurredAt": { "type": "string", "format": "date-time" }

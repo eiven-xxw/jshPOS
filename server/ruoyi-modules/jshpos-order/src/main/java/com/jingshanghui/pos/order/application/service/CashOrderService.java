@@ -44,6 +44,7 @@ public class CashOrderService {
     private final OrderPriceResolutionPort priceBookService;
     private final IdempotencyService idempotency;
     private final OrderJournalService journal;
+    private final OrderFinalityGuardService finalityGuard;
     private final UlidGenerator ulids;
     private final Clock clock;
 
@@ -73,6 +74,8 @@ public class CashOrderService {
         LocalDateTime at = LocalDateTime.ofInstant(command.occurredAt(), ZoneOffset.UTC);
         String snapshotJson = snapshot(command, principal);
         String snapshotHash = CanonicalHash.sha256(snapshotJson);
+        finalityGuard.reserveCompletion(principal.tenantId(), command.orderId(), command.commandId(),
+            requestHash, at);
         mapper.insertCompletedOrder(principal.tenantId(), command.orderId(), command.localOrderNo(), command.storeId(),
             command.terminalId(), command.shiftId(), principal.userId(), command.businessDate(), command.storeTimezone(),
             total, total, command.catalogVersion(), command.priceVersion(), command.industryTemplateVersion(),

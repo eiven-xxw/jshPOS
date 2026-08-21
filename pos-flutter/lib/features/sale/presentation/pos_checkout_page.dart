@@ -104,6 +104,27 @@ class _PosCheckoutPageState extends State<PosCheckoutPage> {
     await _showSettlementResult(_state.settlement!);
   }
 
+  Future<void> _openCancellation({String? heldSaleRef}) async {
+    final input = await showDialog<_OrderCancelInput>(
+      context: context,
+      builder: (_) => _OrderCancelDialog(heldSale: heldSaleRef != null),
+    );
+    if (input == null) return;
+    await _execute(
+      () => heldSaleRef == null
+          ? widget.controller.cancelCurrent(
+              reasonCode: input.reasonCode,
+              reasonText: input.reasonText,
+            )
+          : widget.controller.cancelHeld(
+              saleRef: heldSaleRef,
+              reasonCode: input.reasonCode,
+              reasonText: input.reasonText,
+            ),
+      restoreScannerFocus: true,
+    );
+  }
+
   Future<void> _showSettlementResult(PosCashSettlementView result) async {
     await showDialog<void>(
       context: context,
@@ -132,6 +153,26 @@ class _PosCheckoutPageState extends State<PosCheckoutPage> {
           ),
         ),
         actions: [
+          TextButton.icon(
+            key: const Key('routeCompletedReturn'),
+            onPressed: () async {
+              await widget.controller.routeCompletedSaleToReturn(
+                result.orderRef,
+              );
+              if (!dialogContext.mounted) return;
+              Navigator.pop(dialogContext);
+              if (!mounted) return;
+              setState(() {});
+              final disposition = _state.disposition;
+              if (disposition != null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('已登记原单退货退款入口；成交状态与历史事实保持不变。')),
+                );
+              }
+            },
+            icon: const Icon(Icons.assignment_return_outlined),
+            label: const Text('原单退货'),
+          ),
           TextButton.icon(
             key: const Key('previewPrintTask'),
             onPressed: () async {
@@ -535,6 +576,14 @@ class _PosCheckoutPageState extends State<PosCheckoutPage> {
                     restoreScannerFocus: true,
                   ),
           ),
+          _ActionButton(
+            key: const Key('cancelCurrentSale'),
+            icon: Icons.cancel_outlined,
+            label: '取消本单',
+            onPressed: _state.busy || workspace.lines.isEmpty
+                ? null
+                : _openCancellation,
+          ),
         ],
       ),
       if (workspace.heldSales.isNotEmpty) ...[
@@ -548,14 +597,26 @@ class _PosCheckoutPageState extends State<PosCheckoutPage> {
             subtitle: Text(
               '${held.lineCount} 行 · ${_money(held.receivableAmountMinor)}',
             ),
-            trailing: FilledButton.tonal(
-              onPressed: _state.busy
-                  ? null
-                  : () => _execute(
-                      () => widget.controller.resume(held.saleRef),
-                      restoreScannerFocus: true,
-                    ),
-              child: const Text('取单'),
+            trailing: Wrap(
+              spacing: 8,
+              children: [
+                OutlinedButton(
+                  key: Key('cancelHeld:${held.saleRef}'),
+                  onPressed: _state.busy
+                      ? null
+                      : () => _openCancellation(heldSaleRef: held.saleRef),
+                  child: const Text('取消'),
+                ),
+                FilledButton.tonal(
+                  onPressed: _state.busy
+                      ? null
+                      : () => _execute(
+                          () => widget.controller.resume(held.saleRef),
+                          restoreScannerFocus: true,
+                        ),
+                  child: const Text('取单'),
+                ),
+              ],
             ),
           ),
         ),
@@ -941,6 +1002,96 @@ class _CashSettlementDialogState extends State<_CashSettlementDialog> {
     if (_tendered.text.trim().isEmpty) return;
     Navigator.pop(context, _tendered.text.trim());
   }
+}
+
+final class _OrderCancelInput {
+  const _OrderCancelInput(this.reasonCode, this.reasonText);
+
+  final String reasonCode;
+  final String reasonText;
+}
+
+/// 取消必须二次确认并填写原因；页面只提交意图，不直接改订单状态。
+final class _OrderCancelDialog extends StatefulWidget {
+  const _OrderCancelDialog({required this.heldSale});
+
+  final bool heldSale;
+
+  @override
+  State<_OrderCancelDialog> createState() => _OrderCancelDialogState();
+}
+
+final class _OrderCancelDialogState extends State<_OrderCancelDialog> {
+  final _reason = TextEditingController();
+  String _reasonCode = 'CUSTOMER_CANCELLED';
+
+  @override
+  void dispose() {
+    _reason.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+    title: Text(widget.heldSale ? '取消挂单' : '取消当前交易'),
+    content: SizedBox(
+      width: 440,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          DropdownButtonFormField<String>(
+            initialValue: _reasonCode,
+            decoration: const InputDecoration(
+              labelText: '原因类型',
+              border: OutlineInputBorder(),
+            ),
+            items: const [
+              DropdownMenuItem(
+                value: 'CUSTOMER_CANCELLED',
+                child: Text('顾客取消'),
+              ),
+              DropdownMenuItem(value: 'ENTRY_ERROR', child: Text('录入有误')),
+              DropdownMenuItem(
+                value: 'HELD_ORDER_ABANDONED',
+                child: Text('挂单放弃'),
+              ),
+            ],
+            onChanged: (value) => setState(() => _reasonCode = value!),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            key: const Key('orderCancelReason'),
+            controller: _reason,
+            maxLength: 256,
+            autofocus: true,
+            onChanged: (_) => setState(() {}),
+            decoration: const InputDecoration(
+              labelText: '取消说明（必填）',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text('取消只适用于未完成交易；已成交订单必须走原单退货退款。'),
+        ],
+      ),
+    ),
+    actions: [
+      TextButton(
+        onPressed: () => Navigator.pop(context),
+        child: const Text('返回'),
+      ),
+      FilledButton(
+        key: const Key('confirmOrderCancellation'),
+        onPressed: _reason.text.trim().isEmpty
+            ? null
+            : () => Navigator.pop(
+                context,
+                _OrderCancelInput(_reasonCode, _reason.text.trim()),
+              ),
+        child: const Text('确认取消'),
+      ),
+    ],
+  );
 }
 
 class _FocusScannerIntent extends Intent {

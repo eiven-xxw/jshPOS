@@ -31,6 +31,7 @@ class OrderMigrationMySqlIT {
         assertTablesAndPermissions();
         assertTwoTenantCashConstraints();
         assertPromotedOrderConstraints();
+        assertOrderFinalityAndDispositionConstraints();
     }
 
     private void createFrameworkMenuFixture() throws SQLException {
@@ -53,7 +54,8 @@ class OrderMigrationMySqlIT {
             "ord_state_history", "ord_cash_payment", "shf_cash_ledger", "ord_print_job",
             "ord_event_outbox", "ord_idempotency", "ord_audit_event", "ord_promotion_binding",
             "ord_cash_refund", "shf_cash_movement", "shf_drawer_event",
-            "ord_receipt_document", "ord_print_request");
+            "ord_receipt_document", "ord_print_request", "ord_order_disposition",
+            "ord_order_finality_guard");
         try (Connection connection = DriverManager.getConnection(url, username, password);
              Statement statement = connection.createStatement()) {
             for (String table : tables) {
@@ -74,10 +76,37 @@ class OrderMigrationMySqlIT {
                 assertThat(rows.next()).isTrue();
                 assertThat(rows.getInt(1)).isEqualTo(2);
             }
+            try (var rows = statement.executeQuery("SELECT COUNT(DISTINCT perms) FROM sys_menu WHERE menu_id IN (9200212,9200213)")) {
+                assertThat(rows.next()).isTrue();
+                assertThat(rows.getInt(1)).isEqualTo(2);
+            }
             try (var rows = statement.executeQuery("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name LIKE 'syn\\_%'")) {
                 assertThat(rows.next()).isTrue();
                 assertThat(rows.getInt(1)).isZero();
             }
+        }
+    }
+
+    /** 数据库唯一键必须串行化同一订单的取消/成交竞争，处置与仲裁事实均只追加。 */
+    private void assertOrderFinalityAndDispositionConstraints() throws SQLException {
+        String order = "01K2A000000000000000000201";
+        String source = "01K2A000000000000000000202";
+        String disposition = "01K2A000000000000000000203";
+        try (Connection connection = DriverManager.getConnection(url, username, password);
+             Statement statement = connection.createStatement()) {
+            statement.executeUpdate("INSERT INTO ord_order_finality_guard(tenant_id,order_id,finality_type,source_id,request_sha256,created_at) VALUES('TENANT_A','" + order + "','CANCELLED','" + source + "',REPEAT('a',64),UTC_TIMESTAMP(3))");
+            assertThatThrownBy(() -> statement.executeUpdate("INSERT INTO ord_order_finality_guard(tenant_id,order_id,finality_type,source_id,request_sha256,created_at) VALUES('TENANT_A','" + order + "','COMPLETED','01K2A000000000000000000204',REPEAT('b',64),UTC_TIMESTAMP(3))"))
+                .isInstanceOf(SQLException.class);
+            assertThatThrownBy(() -> statement.executeUpdate("UPDATE ord_order_finality_guard SET finality_type='COMPLETED' WHERE tenant_id='TENANT_A' AND order_id='" + order + "'"))
+                .isInstanceOf(SQLException.class).hasMessageContaining("append-only");
+            assertThatThrownBy(() -> statement.executeUpdate("DELETE FROM ord_order_finality_guard WHERE tenant_id='TENANT_A' AND order_id='" + order + "'"))
+                .isInstanceOf(SQLException.class).hasMessageContaining("append-only");
+
+            statement.executeUpdate("INSERT INTO ord_order_disposition(disposition_id,tenant_id,source_event_id,order_id,store_id,terminal_id,shift_id,actor_user_id,business_date,disposition_type,from_status,effective_status,reason_code,reason_text,order_snapshot_sha256,request_sha256,order_aggregate_version,occurred_at) VALUES('" + disposition + "','TENANT_A','01K2A000000000000000000205','" + order + "',1101,'01K2A000000000000000000011','01K2A000000000000000000021',101,'2026-08-21','CANCEL_BEFORE_COMPLETION','DRAFT','CANCELLED','CUSTOMER_CANCEL','虚构取消',REPEAT('c',64),REPEAT('d',64),2,UTC_TIMESTAMP(3))");
+            assertThatThrownBy(() -> statement.executeUpdate("INSERT INTO ord_order_disposition(disposition_id,tenant_id,source_event_id,order_id,store_id,terminal_id,shift_id,actor_user_id,business_date,disposition_type,from_status,effective_status,reason_code,reason_text,order_snapshot_sha256,request_sha256,order_aggregate_version,occurred_at) VALUES('01K2A000000000000000000206','TENANT_A','01K2A000000000000000000207','" + order + "',1101,'01K2A000000000000000000011','01K2A000000000000000000021',101,'2026-08-21','CANCEL_BEFORE_COMPLETION','DRAFT','CANCELLED','CUSTOMER_CANCEL','重复取消',REPEAT('c',64),REPEAT('e',64),2,UTC_TIMESTAMP(3))"))
+                .isInstanceOf(SQLException.class);
+            assertThatThrownBy(() -> statement.executeUpdate("UPDATE ord_order_disposition SET reason_text='篡改' WHERE disposition_id='" + disposition + "'"))
+                .isInstanceOf(SQLException.class).hasMessageContaining("append-only");
         }
     }
 

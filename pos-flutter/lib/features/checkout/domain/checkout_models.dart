@@ -554,6 +554,53 @@ final class ReceiptReprintResult {
   };
 }
 
+/// ORD-004 取消或反向处置路由结果；成交后 effectiveStatus 必须保持原状态。
+final class OrderDispositionResult {
+  const OrderDispositionResult({
+    required this.dispositionId,
+    required this.orderId,
+    required this.dispositionType,
+    required this.fromStatus,
+    required this.effectiveStatus,
+    required this.requestSha256,
+    required this.outboxEventId,
+    this.duplicate = false,
+  });
+
+  factory OrderDispositionResult.fromJson(
+    Map<String, Object?> json, {
+    bool duplicate = false,
+  }) => OrderDispositionResult(
+    dispositionId: json['dispositionId']! as String,
+    orderId: json['orderId']! as String,
+    dispositionType: json['dispositionType']! as String,
+    fromStatus: json['fromStatus']! as String,
+    effectiveStatus: json['effectiveStatus']! as String,
+    requestSha256: json['requestSha256']! as String,
+    outboxEventId: json['outboxEventId']! as String,
+    duplicate: duplicate,
+  );
+
+  final String dispositionId;
+  final String orderId;
+  final String dispositionType;
+  final String fromStatus;
+  final String effectiveStatus;
+  final String requestSha256;
+  final String outboxEventId;
+  final bool duplicate;
+
+  Map<String, Object?> toJson() => {
+    'dispositionId': dispositionId,
+    'orderId': orderId,
+    'dispositionType': dispositionType,
+    'fromStatus': fromStatus,
+    'effectiveStatus': effectiveStatus,
+    'requestSha256': requestSha256,
+    'outboxEventId': outboxEventId,
+  };
+}
+
 String _canonicalValues(Iterable<Object?> values) => values.map((value) {
   final text = '$value';
   return '${text.length}:$text;';

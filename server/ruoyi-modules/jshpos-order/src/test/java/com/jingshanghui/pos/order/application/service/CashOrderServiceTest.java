@@ -44,8 +44,9 @@ class CashOrderServiceTest {
     private final UlidGenerator ulids = new UlidGenerator(clock);
     private final IdempotencyService idempotency = new IdempotencyService(mapper, ulids, new ObjectMapper());
     private final OrderJournalService journal = new OrderJournalService(mapper, ulids);
+    private final OrderFinalityGuardService finalityGuard = new OrderFinalityGuardService(mapper);
     private final CashOrderService service = new CashOrderService(
-        mapper, context, authorization, prices, idempotency, journal, ulids, clock);
+        mapper, context, authorization, prices, idempotency, journal, finalityGuard, ulids, clock);
 
     @BeforeEach
     void configureTrustedSyntheticTenant() {
@@ -105,6 +106,17 @@ class CashOrderServiceTest {
             original.tenderedAmountMinor(), original.lines(), original.occurredAt());
         assertThatThrownBy(() -> service.submit(forged)).isInstanceOf(ServiceException.class)
             .hasMessageContaining("PERMISSION_DENIED");
+    }
+
+    @Test
+    void cancellationTombstonePreventsLateCompletion() {
+        when(mapper.countCancellationDisposition("TENANT_A", ORDER)).thenReturn(1);
+
+        assertThatThrownBy(() -> service.submit(command(1299, "TENANT_BASE")))
+            .isInstanceOf(ServiceException.class).hasMessageContaining("ORDER_CANCELLATION_BLOCKED");
+
+        verify(mapper, never()).insertCompletedOrder(any(), any(), any(), any(), any(), any(), any(),
+            any(), any(), anyLong(), anyLong(), anyLong(), anyLong(), any(), any(), any(), any(), any(), any());
     }
 
     private CashOrder command(long unitPrice, String source) {

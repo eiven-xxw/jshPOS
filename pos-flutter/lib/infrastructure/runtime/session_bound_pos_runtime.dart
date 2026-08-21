@@ -352,6 +352,24 @@ final class SessionBoundPosRuntime
   Future<PosSaleWorkspace> resumeHeldSale(String saleRef) =>
       _ready.sale.resumeHeldSale(saleRef);
   @override
+  Future<PosSaleWorkspace> cancelCurrentSale({
+    required String reasonCode,
+    required String reasonText,
+  }) => _ready.sale.cancelCurrentSale(
+    reasonCode: reasonCode,
+    reasonText: reasonText,
+  );
+  @override
+  Future<PosSaleWorkspace> cancelHeldSale({
+    required String saleRef,
+    required String reasonCode,
+    required String reasonText,
+  }) => _ready.sale.cancelHeldSale(
+    saleRef: saleRef,
+    reasonCode: reasonCode,
+    reasonText: reasonText,
+  );
+  @override
   Future<PosCashSettlementView> settleCash({
     required String tenderedAmount,
     required String idempotencyKey,
@@ -374,6 +392,9 @@ final class SessionBoundPosRuntime
     reasonText: reasonText,
     idempotencyKey: idempotencyKey,
   );
+  @override
+  Future<PosOrderDispositionView> routeCompletedSaleToReturn(String orderRef) =>
+      _ready.sale.routeCompletedSaleToReturn(orderRef);
   @override
   Future<PosSaleWorkspace> refreshSyncStatus() =>
       _ready.sale.refreshSyncStatus();

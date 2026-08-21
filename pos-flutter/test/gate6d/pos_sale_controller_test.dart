@@ -68,6 +68,44 @@ void main() {
       expect(fixture.sale.loadCount, 2);
     });
 
+    test('交易取消与成交后退货入口执行独立权限并只调用应用端口', () async {
+      final fixture = await SaleFixture.ready();
+      await fixture.controller.initialize();
+
+      final cancelled = await fixture.controller.cancelCurrent(
+        reasonCode: 'CUSTOMER_CANCELLED',
+        reasonText: '虚构顾客付款前取消',
+      );
+      final held = await fixture.controller.cancelHeld(
+        saleRef: 'held:001',
+        reasonCode: 'HELD_ORDER_ABANDONED',
+        reasonText: '虚构顾客放弃挂单',
+      );
+      final routed = await fixture.controller.routeCompletedSaleToReturn(
+        'order:001',
+      );
+
+      expect(cancelled.workspace?.lines, isEmpty);
+      expect(held.phase, PosSalePagePhase.ready);
+      expect(fixture.sale.cancelledSaleRef, 'held:001');
+      expect(fixture.sale.cancelReasonCode, 'HELD_ORDER_ABANDONED');
+      expect(routed.disposition?.effectiveStatus, 'COMPLETED');
+      expect(fixture.sale.routedOrderRef, 'order:001');
+
+      final denied = await SaleFixture.ready(
+        permissions: {PosPermission.sessionLogin, PosPermission.saleOperate},
+      );
+      await denied.controller.initialize();
+      expect(
+        (await denied.controller.cancelCurrent(
+          reasonCode: 'ENTRY_ERROR',
+          reasonText: '不得执行',
+        )).errorCode,
+        'PERMISSION_DENIED',
+      );
+      expect(denied.sale.cancelCount, 0);
+    });
+
     test('重复扫码共享同一航班且只产生一次应用服务调用', () async {
       final completer = Completer<PosSaleWorkspace>();
       final fixture = await SaleFixture.ready(scanCompleter: completer);
@@ -167,6 +205,15 @@ void main() {
         ),
         service.holdCurrentSale,
         () => service.resumeHeldSale('held:001'),
+        () => service.cancelCurrentSale(
+          reasonCode: 'ENTRY_ERROR',
+          reasonText: '虚构取消',
+        ),
+        () => service.cancelHeldSale(
+          saleRef: 'held:001',
+          reasonCode: 'HELD_ORDER_ABANDONED',
+          reasonText: '虚构取消',
+        ),
         () => service.settleCash(
           tenderedAmount: '20.00',
           idempotencyKey: 'cash:stable',
@@ -178,6 +225,7 @@ void main() {
           reasonText: '顾客要求补打',
           idempotencyKey: 'reprint:order:001:0001',
         ),
+        () => service.routeCompletedSaleToReturn('order:001'),
         service.refreshSyncStatus,
       ];
 
@@ -311,6 +359,8 @@ final class SaleFixture {
               PosPermission.cashSettle,
               PosPermission.printPreview,
               PosPermission.printReprint,
+              PosPermission.orderCancel,
+              PosPermission.orderDispose,
               PosPermission.syncView,
             },
       ),
@@ -346,6 +396,11 @@ final class FakePosSaleApplicationService implements PosSaleApplicationService {
   String? lastSupervisor;
   String? resumeRef;
   String? idempotencyKey;
+  int cancelCount = 0;
+  String? cancelledSaleRef;
+  String? cancelReasonCode;
+  String? cancelReasonText;
+  String? routedOrderRef;
 
   void _fail() {
     if (failure != null) throw failure!;
@@ -416,6 +471,32 @@ final class FakePosSaleApplicationService implements PosSaleApplicationService {
   }
 
   @override
+  Future<PosSaleWorkspace> cancelCurrentSale({
+    required String reasonCode,
+    required String reasonText,
+  }) async {
+    cancelCount++;
+    cancelReasonCode = reasonCode;
+    cancelReasonText = reasonText;
+    _fail();
+    return saleWorkspace(lines: const []);
+  }
+
+  @override
+  Future<PosSaleWorkspace> cancelHeldSale({
+    required String saleRef,
+    required String reasonCode,
+    required String reasonText,
+  }) async {
+    cancelCount++;
+    cancelledSaleRef = saleRef;
+    cancelReasonCode = reasonCode;
+    cancelReasonText = reasonText;
+    _fail();
+    return saleWorkspace();
+  }
+
+  @override
   Future<PosSaleWorkspace> resumeHeldSale(String saleRef) async {
     resumeRef = saleRef;
     _fail();
@@ -453,6 +534,24 @@ final class FakePosSaleApplicationService implements PosSaleApplicationService {
       documentDigest: List.filled(64, 'a').join(),
       executionStatus: 'BLOCKED_EXTERNAL',
       outboxEventRef: '01K2A000000000000000000092',
+      duplicate: false,
+    );
+  }
+
+  @override
+  Future<PosOrderDispositionView> routeCompletedSaleToReturn(
+    String orderRef,
+  ) async {
+    routedOrderRef = orderRef;
+    _fail();
+    return PosOrderDispositionView(
+      dispositionRef: '01K2A000000000000000000093',
+      orderRef: orderRef,
+      dispositionType: 'RETURN_REFUND_REQUIRED',
+      fromStatus: 'COMPLETED',
+      effectiveStatus: 'COMPLETED',
+      requestDigest: List.filled(64, 'b').join(),
+      outboxEventRef: '01K2A000000000000000000094',
       duplicate: false,
     );
   }

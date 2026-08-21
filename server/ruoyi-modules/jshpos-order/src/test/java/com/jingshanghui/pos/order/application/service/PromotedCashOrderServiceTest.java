@@ -56,8 +56,9 @@ class PromotedCashOrderServiceTest {
     private final UlidGenerator ulids = new UlidGenerator(clock);
     private final IdempotencyService idempotency = new IdempotencyService(mapper, ulids, new ObjectMapper());
     private final OrderJournalService journal = new OrderJournalService(mapper, ulids);
+    private final OrderFinalityGuardService finalityGuard = new OrderFinalityGuardService(mapper);
     private final PromotedCashOrderService service = new PromotedCashOrderService(repository, mapper, promotions,
-        context, authorization, idempotency, journal, ulids);
+        context, authorization, idempotency, journal, finalityGuard, ulids);
 
     @BeforeEach
     void configureTrustedSyntheticContext() {
