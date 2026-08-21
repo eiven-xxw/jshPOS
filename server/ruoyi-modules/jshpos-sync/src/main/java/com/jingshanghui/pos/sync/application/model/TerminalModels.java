@@ -260,11 +260,20 @@ public final class TerminalModels {
      * @param storeId 可信门店ID
      * @param terminalId 终端业务标识
      * @param boundUserId 绑定服务用户ID
+     * @param storeName 门店显示名，不参与授权
+     * @param storeTimezone 门店业务时区
+     * @param businessDate 当前业务日
+     * @param terminalName 终端显示名，不参与授权
+     * @param status 已验证终端状态
      * @param protocolVersion 已验证协议版本
      * @param schemaVersion 已验证Schema版本
      * @param credentialVersion 已验证凭据版本
+     * @param validUntil 设备凭据有效期
      */
     public record AuthenticatedDevice(String tenantId, String deviceId, Long orgUnitId, Long storeId,
-                                      String terminalId, Long boundUserId, String protocolVersion,
-                                      String schemaVersion, long credentialVersion) { }
+                                      String terminalId, Long boundUserId, String storeName,
+                                      String storeTimezone, java.time.LocalDate businessDate,
+                                      String terminalName, String status, String protocolVersion,
+                                      String schemaVersion, long credentialVersion,
+                                      java.time.Instant validUntil) { }
 }

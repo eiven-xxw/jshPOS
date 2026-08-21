@@ -5,6 +5,7 @@ import com.jingshanghui.pos.sync.application.model.TerminalModels.AuthenticatedD
 import com.jingshanghui.pos.sync.application.model.TerminalModels.CredentialRecord;
 import com.jingshanghui.pos.sync.application.model.TerminalModels.DeviceAuthRecord;
 import com.jingshanghui.pos.sync.application.port.TerminalRegistryPort;
+import com.jingshanghui.pos.foundation.application.port.TrustedDeviceStoreContextPort;
 import com.jingshanghui.pos.sync.domain.SyncHash;
 import com.jingshanghui.pos.sync.domain.SyncIdGenerator;
 import com.jingshanghui.pos.sync.domain.SyncRules;
@@ -29,6 +30,7 @@ public class TerminalAuthenticationService {
     private final TerminalRegistryPort port;
     private final TerminalSecretProtector secretProtector;
     private final SyncIdGenerator idGenerator;
+    private final TrustedDeviceStoreContextPort storeContextPort;
     private final Clock clock;
 
     // 认证拒绝仍需提交克隆阻断与安全审计；本服务在抛错前不写任何业务成功事实。
@@ -70,9 +72,11 @@ public class TerminalAuthenticationService {
             appendRejected(device, "VERSION_REJECTED", "应用、协议或 Schema 兼容窗口失败", now);
             throw new ServiceException("TRM_VERSION_REJECTED: 终端版本不在兼容窗口", 409);
         }
+        var store = storeContextPort.resolve(device.tenantId(), device.orgUnitId(), device.storeId(), clock.instant());
         return new AuthenticatedDevice(device.tenantId(), device.deviceId(), device.orgUnitId(), device.storeId(),
-            device.terminalId(), device.boundUserId(), command.protocolVersion(), command.schemaVersion(),
-            credential.credentialVersion());
+            device.terminalId(), device.boundUserId(), store.storeName(), store.zoneId(), store.businessDate(),
+            "终端 " + device.terminalId(), device.status(), command.protocolVersion(), command.schemaVersion(),
+            credential.credentialVersion(), credential.expiresAt().toInstant(ZoneOffset.UTC));
     }
 
     private void appendRejected(DeviceAuthRecord device, String action, String reason, LocalDateTime now) {
