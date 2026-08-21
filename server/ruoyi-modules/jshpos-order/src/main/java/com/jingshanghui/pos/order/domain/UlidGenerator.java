@@ -1,5 +1,6 @@
 package com.jingshanghui.pos.order.domain;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.math.BigInteger;
@@ -14,6 +15,7 @@ public class UlidGenerator {
     private final SecureRandom random;
     private final Clock clock;
 
+    @Autowired
     public UlidGenerator(Clock clock) {
         this(clock, new SecureRandom());
     }

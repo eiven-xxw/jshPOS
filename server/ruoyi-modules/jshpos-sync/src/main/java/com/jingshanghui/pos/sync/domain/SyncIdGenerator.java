@@ -1,5 +1,6 @@
 package com.jingshanghui.pos.sync.domain;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.math.BigInteger;
@@ -13,6 +14,7 @@ public class SyncIdGenerator {
     private final Clock clock;
     private final SecureRandom random;
 
+    @Autowired
     public SyncIdGenerator(Clock clock) {
         this(clock, new SecureRandom());
     }

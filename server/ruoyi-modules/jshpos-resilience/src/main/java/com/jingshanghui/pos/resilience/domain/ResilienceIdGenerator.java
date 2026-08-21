@@ -1,5 +1,6 @@
 package com.jingshanghui.pos.resilience.domain;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.math.BigInteger;
@@ -13,6 +14,7 @@ public final class ResilienceIdGenerator {
     private final Clock clock;
     private final SecureRandom random;
 
+    @Autowired
     public ResilienceIdGenerator(Clock clock) { this(clock, new SecureRandom()); }
     ResilienceIdGenerator(Clock clock, SecureRandom random) { this.clock = clock; this.random = random; }
 

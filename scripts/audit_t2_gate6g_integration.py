@@ -60,6 +60,29 @@ def inspect_cross_owner_imports() -> tuple[list[dict], list[dict]]:
     return forbidden, shared_types
 
 
+def inspect_component_constructors() -> list[dict]:
+    """多构造器 Spring 组件必须显式指定唯一生产注入入口。"""
+    failures: list[dict] = []
+    for path in (ROOT / "server/ruoyi-modules").glob("jshpos-*/src/main/java/**/*.java"):
+        source = path.read_text(encoding="utf-8", errors="replace")
+        if "@Component" not in source:
+            continue
+        class_match = re.search(r"\bclass\s+([A-Za-z0-9_]+)", source)
+        if class_match is None:
+            continue
+        name = class_match.group(1)
+        constructors = re.findall(
+            rf"(?m)^\s*(?:public|protected|private)?\s*{re.escape(name)}\s*\(",
+            source,
+        )
+        if len(constructors) > 1 and not re.search(
+            rf"@Autowired\s+public\s+{re.escape(name)}\s*\(",
+            source,
+        ):
+            failures.append({"path": relative(path), "constructorCount": len(constructors)})
+    return failures
+
+
 def inspect_surefire(root: pathlib.Path | None) -> dict:
     if root is None:
         return {"checked": False, "requiredSuites": sorted(REQUIRED_SUITES)}
@@ -131,6 +154,9 @@ def main() -> None:
     forbidden_imports, shared_types = inspect_cross_owner_imports()
     if forbidden_imports:
         failures.append(f"cross-owner service or infrastructure imports: {len(forbidden_imports)}")
+    ambiguous_components = inspect_component_constructors()
+    if ambiguous_components:
+        failures.append(f"ambiguous Spring component constructors: {len(ambiguous_components)}")
     surefire = inspect_surefire(surefire_root)
     if surefire.get("missing") or surefire.get("failedOrSkipped"):
         failures.append("required integration regression suite missing, failed or skipped")
@@ -146,6 +172,7 @@ def main() -> None:
         "failureSeeds": seeds,
         "forbiddenCrossOwnerImports": forbidden_imports,
         "sharedContractTypeImports": shared_types,
+        "ambiguousComponentConstructors": ambiguous_components,
         "serverJar": server_jar_evidence,
         "surefire": surefire,
         "externalBoundaries": contract.get("externalBoundaries"),

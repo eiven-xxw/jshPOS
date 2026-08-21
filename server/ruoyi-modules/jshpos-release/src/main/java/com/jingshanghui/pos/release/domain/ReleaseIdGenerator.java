@@ -1,5 +1,6 @@
 package com.jingshanghui.pos.release.domain;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.math.BigInteger;
@@ -13,6 +14,7 @@ public final class ReleaseIdGenerator {
     private final Clock clock;
     private final SecureRandom random;
 
+    @Autowired
     public ReleaseIdGenerator(Clock clock) { this(clock, new SecureRandom()); }
     ReleaseIdGenerator(Clock clock, SecureRandom random) { this.clock = clock; this.random = random; }
 
