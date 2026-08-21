@@ -42,7 +42,7 @@ def main() -> None:
         "DOWNLOAD_REPLAY": ("issuesAndConsumesSingleUseTokenAfterDigestVerification", "rejected_after_first_use"),
         "ARTIFACT_TAMPER": ("rejectsOversizedExportAndDetectsArtifactTampering", "ARTIFACT_DIGEST_MISMATCH"),
         "MILLION_MYSQL": ("assertMillionRowProjectionCapacity", "1_000_000"),
-        "FORWARD_MIGRATION": ("migratesAllFilesThroughV35AndEnforcesReportingIsolation", "202608170035"),
+        "FORWARD_MIGRATION": ("migratesAllFilesThroughV43AndEnforcesReportingIsolation", "202608210043"),
         "PAYMENT_MATCHED": ("classifiesMissingMatchedAndEveryDifferenceInStablePriority", "payment-matched"),
         "REFUND_MATCHED": ("PAYMENT 或 REFUND", "refund-matched"),
         "FACT_BEFORE_BILL": ("factBeforeBillCreatesMissingBillAndIsIdempotent", "fact-before-bill"),

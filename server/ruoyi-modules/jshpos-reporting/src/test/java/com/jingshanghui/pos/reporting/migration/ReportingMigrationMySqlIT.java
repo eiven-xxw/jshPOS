@@ -18,18 +18,18 @@ class ReportingMigrationMySqlIT {
     private final String username=required("GATE5D_MYSQL_USERNAME");
     private final String password=required("GATE5D_MYSQL_PASSWORD");
 
-    @Test void migratesAllFilesThroughV35AndEnforcesReportingIsolation() throws Exception {
+    @Test void migratesAllFilesThroughV43AndEnforcesReportingIsolation() throws Exception {
         createFrameworkMenuFixture();
         Flyway flyway=Flyway.configure().dataSource(url,username,password)
             .locations("classpath:db/migration").table("jshpos_flyway_schema_history")
             .baselineOnMigrate(true).baselineVersion("0").cleanDisabled(true).load();
-        // 当前模块 classpath 明确包含 Gate 0 两个基线迁移与 Reporting V32-V35，
-        // 版本号不是连续文件数量，必须同时校验实际文件数和最高版本。
-        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(6);
+        // 当前模块 classpath 包含 Gate 0 两个基线迁移、Gate 6E/Gate 6G 两个
+        // Foundation 前向迁移与 Reporting V32-V35；禁止因新增合法前向迁移固守旧计数。
+        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(8);
         assertThat(flyway.migrate().migrationsExecuted).isZero();
         flyway.validate();
         assertThat(flyway.info().current()).isNotNull();
-        assertThat(flyway.info().current().getVersion().toString()).isEqualTo("202608170035");
+        assertThat(flyway.info().current().getVersion().toString()).isEqualTo("202608210043");
         assertTablesAndPermissions();
         assertTenantCompositeIdentityAndImmutableSourceContent();
         assertMoneyConservationConstraint();
