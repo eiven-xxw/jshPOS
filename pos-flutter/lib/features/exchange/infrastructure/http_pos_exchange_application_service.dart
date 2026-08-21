@@ -58,7 +58,7 @@ final class HttpPosExchangeApplicationService
           '原退货或新销售已绑定其他换货，不能重复关联。',
         );
       }
-      return refresh(prior.single['exchange_id']! as String);
+      return refreshExchange(prior.single['exchange_id']! as String);
     }
     final order = database.database.select(
       '''SELECT business_date,status FROM local_order
