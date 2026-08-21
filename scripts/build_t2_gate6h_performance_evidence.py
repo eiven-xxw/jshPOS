@@ -53,6 +53,8 @@ def flutter_metrics(path: pathlib.Path) -> dict:
             event = json.loads(line)
         except json.JSONDecodeError:
             continue
+        if not isinstance(event, dict):
+            continue
         if event.get("type") == "testStart":
             test = event["test"]
             names[test["id"]] = test["name"]
