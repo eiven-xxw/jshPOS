@@ -58,7 +58,7 @@ final class PosExchangeController {
       recoverableExchangeRef: ref,
     );
     try {
-      final view = await service.refresh(ref);
+      final view = await service.refreshExchange(ref);
       return state = PosExchangePageState(
         phase: PosExchangePagePhase.loaded,
         view: view,

@@ -9,7 +9,7 @@ abstract interface class PosExchangeApplicationService {
   });
 
   /// 按原 exchangeRef 观察；UNKNOWN 时禁止创建新换货或 Owner 命令。
-  Future<PosExchangeView> refresh(String exchangeRef);
+  Future<PosExchangeView> refreshExchange(String exchangeRef);
 
   /// 独立审批换货关联；审批身份由服务端会话确定，客户端不得提交审批人。
   Future<PosExchangeView> approve({

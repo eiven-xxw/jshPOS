@@ -15,7 +15,7 @@ final class LockedPosExchangeApplicationService
   );
 
   @override
-  Future<PosExchangeView> refresh(String exchangeRef) =>
+  Future<PosExchangeView> refreshExchange(String exchangeRef) =>
       throw const PosExchangeFailure(
         'EXCHANGE_RUNTIME_UNAVAILABLE',
         '换货正式运行时尚未装配。',

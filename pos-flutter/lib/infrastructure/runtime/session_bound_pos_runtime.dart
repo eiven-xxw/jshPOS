@@ -437,8 +437,8 @@ final class SessionBoundPosRuntime
     required String reasonCode,
   }) => _ready.exchange.create(source: source, reasonCode: reasonCode);
   @override
-  Future<PosExchangeView> refresh(String exchangeRef) =>
-      _ready.exchange.refresh(exchangeRef);
+  Future<PosExchangeView> refreshExchange(String exchangeRef) =>
+      _ready.exchange.refreshExchange(exchangeRef);
   @override
   Future<PosExchangeView> approve({
     required String exchangeRef,

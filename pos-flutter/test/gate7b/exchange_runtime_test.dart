@@ -155,7 +155,7 @@ final class _FakeExchangeService implements PosExchangeApplicationService {
   }
 
   @override
-  Future<PosExchangeView> refresh(String exchangeRef) async {
+  Future<PosExchangeView> refreshExchange(String exchangeRef) async {
     refreshCount++;
     return _view(PosExchangeStatus.draft);
   }

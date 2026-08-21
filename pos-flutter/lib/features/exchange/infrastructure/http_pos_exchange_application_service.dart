@@ -151,7 +151,7 @@ final class HttpPosExchangeApplicationService
   }
 
   @override
-  Future<PosExchangeView> refresh(String exchangeRef) async {
+  Future<PosExchangeView> refreshExchange(String exchangeRef) async {
     _requireUlid(exchangeRef);
     final rows = database.database.select(
       '''SELECT * FROM local_exchange_command
