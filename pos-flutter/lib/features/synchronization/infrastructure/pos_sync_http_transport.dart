@@ -74,10 +74,7 @@ final class PosSyncHttpTransport implements PosSyncTransport {
   }
 
   @override
-  Future<void> acknowledge(
-    SyncAckCommand command,
-    String correlationId,
-  ) async {
+  Future<void> acknowledge(SyncAckCommand command, String correlationId) async {
     await _request(
       'POST',
       'sync/ack',
@@ -124,7 +121,10 @@ final class PosSyncHttpTransport implements PosSyncTransport {
     try {
       final request = await _client.openUrl(method, target).timeout(timeout);
       request.headers
-        ..set(HttpHeaders.authorizationHeader, 'Bearer ${await accessTokenProvider()}')
+        ..set(
+          HttpHeaders.authorizationHeader,
+          'Bearer ${await accessTokenProvider()}',
+        )
         ..set('X-Device-Id', deviceId)
         ..set('X-Correlation-Id', correlationId)
         ..set(HttpHeaders.acceptHeader, ContentType.json.mimeType);
@@ -138,7 +138,8 @@ final class PosSyncHttpTransport implements PosSyncTransport {
         throw SyncTransportException(
           'SYNC_HTTP_${response.statusCode}',
           text.isEmpty ? 'remote synchronization request failed' : text,
-          retryable: response.statusCode == 408 ||
+          retryable:
+              response.statusCode == 408 ||
               response.statusCode == 429 ||
               response.statusCode >= 500,
           statusCode: response.statusCode,
@@ -161,11 +162,7 @@ final class PosSyncHttpTransport implements PosSyncTransport {
     } on SyncTransportException {
       rethrow;
     } on TimeoutException catch (error) {
-      throw SyncTransportException(
-        'SYNC_TIMEOUT',
-        '$error',
-        retryable: true,
-      );
+      throw SyncTransportException('SYNC_TIMEOUT', '$error', retryable: true);
     } on SocketException catch (error) {
       throw SyncTransportException(
         'SYNC_NETWORK_UNAVAILABLE',

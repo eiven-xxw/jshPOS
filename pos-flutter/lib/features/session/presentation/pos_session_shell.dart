@@ -6,6 +6,7 @@ import '../../sale/presentation/pos_checkout_page.dart';
 import '../../return_refund/application/pos_return_application_service.dart';
 import '../../return_refund/application/pos_return_controller.dart';
 import '../../return_refund/presentation/pos_return_page.dart';
+import '../../shift/application/pos_shift_application_service.dart';
 import '../application/pos_session_service.dart';
 import '../domain/pos_session_models.dart';
 
@@ -15,12 +16,14 @@ final class PosSessionShell extends StatefulWidget {
     required this.sessionService,
     required this.saleService,
     required this.returnService,
+    required this.shiftService,
     super.key,
   });
 
   final PosSessionService sessionService;
   final PosSaleApplicationService saleService;
   final PosReturnApplicationService returnService;
+  final PosShiftApplicationService shiftService;
 
   @override
   State<PosSessionShell> createState() => _PosSessionShellState();
@@ -67,6 +70,105 @@ class _PosSessionShellState extends State<PosSessionShell> {
     _loginController.clear();
     _secretController.clear();
     if (mounted) setState(() {});
+  }
+
+  Future<void> _openShift() async {
+    final terminal = _state.terminal;
+    final employee = _state.employee;
+    if (terminal == null || employee == null) return;
+    final openingCash = await _cashDialog(
+      title: '开启班次',
+      label: '备用金（元）',
+      confirm: '确认开班',
+    );
+    if (openingCash == null || !mounted) return;
+    try {
+      final shift = await widget.shiftService.open(
+        businessDate: terminal.businessDate,
+        openingCash: openingCash,
+        idempotencyKey:
+            'open:${terminal.terminalId}:${terminal.businessDate}:${employee.employeeId}',
+      );
+      widget.sessionService.acceptOpenedShift(shift);
+      if (mounted) setState(() {});
+    } on PosSessionFailure catch (error) {
+      _showFailure(error);
+    } catch (_) {
+      _showFailure(
+        const PosSessionFailure('SHIFT_OPEN_FAILED', '开班失败，请核对金额和班次状态。'),
+      );
+    }
+  }
+
+  Future<void> _closeShift() async {
+    final shift = _state.shift;
+    if (shift == null) return;
+    final actualCash = await _cashDialog(
+      title: '关闭班次',
+      label: '实点现金（元）',
+      confirm: '确认关班',
+    );
+    if (actualCash == null || !mounted) return;
+    try {
+      await widget.shiftService.close(
+        shiftId: shift.shiftId,
+        actualCash: actualCash,
+        idempotencyKey: 'close:${shift.shiftId}:$actualCash',
+      );
+      widget.sessionService.acceptClosedShift(shift.shiftId);
+      if (mounted) setState(() {});
+    } on PosSessionFailure catch (error) {
+      _showFailure(error);
+    } catch (_) {
+      _showFailure(
+        const PosSessionFailure('SHIFT_CLOSE_FAILED', '关班失败；差异超限时须由主管完成独立审批。'),
+      );
+    }
+  }
+
+  Future<String?> _cashDialog({
+    required String title,
+    required String label,
+    required String confirm,
+  }) async {
+    var input = '';
+    return showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(title),
+        content: TextField(
+          key: Key('$title-cash'),
+          autofocus: true,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          onChanged: (value) => input = value.trim(),
+          decoration: InputDecoration(
+            labelText: label,
+            prefixText: '¥ ',
+            border: const OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('取消'),
+          ),
+          FilledButton(
+            key: Key('$title-submit'),
+            onPressed: () {
+              if (input.isNotEmpty) Navigator.pop(dialogContext, input);
+            },
+            child: Text(confirm),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showFailure(PosSessionFailure error) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('${error.message}（${error.code}）')));
   }
 
   @override
@@ -275,7 +377,7 @@ class _PosSessionShellState extends State<PosSessionShell> {
                   ? _state.hasPermission(PosPermission.shiftOpen)
                   : _state.hasPermission(PosPermission.saleOperate),
               onTap: shift == null
-                  ? null
+                  ? _openShift
                   : () => Navigator.of(context).push(
                       MaterialPageRoute<void>(
                         builder: (_) => PosCheckoutPage(
@@ -286,6 +388,14 @@ class _PosSessionShellState extends State<PosSessionShell> {
                         ),
                       ),
                     ),
+            ),
+            _PermissionTile(
+              label: '关闭班次',
+              icon: Icons.lock_clock,
+              enabled:
+                  shift != null &&
+                  _state.hasPermission(PosPermission.shiftClose),
+              onTap: shift == null ? null : _closeShift,
             ),
             _PermissionTile(
               label: '原单退货退款',

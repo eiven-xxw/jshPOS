@@ -263,6 +263,40 @@ final class PosSessionService {
     }
   }
 
+  /// 本地 Checkout Owner 成功开班后，才将页面会话切换为可交易状态。
+  PosSessionState acceptOpenedShift(PosShiftContext shift) {
+    final before = _state;
+    if (before.phase != PosSessionPhase.readyNoShift ||
+        before.terminal == null ||
+        before.employee == null ||
+        !shift.isOpen ||
+        shift.businessDate != before.terminal!.businessDate) {
+      throw const PosSessionFailure('SHIFT_CONTEXT_INVALID', '开班结果与当前可信会话不一致。');
+    }
+    return _state = PosSessionState(
+      phase: PosSessionPhase.readyWithShift,
+      device: before.device,
+      terminal: before.terminal,
+      employee: before.employee,
+      shift: shift,
+    );
+  }
+
+  /// Checkout Owner 确认关班后清除会话内班次；失败时不得由页面自行清除。
+  PosSessionState acceptClosedShift(String shiftId) {
+    final before = _state;
+    if (before.phase != PosSessionPhase.readyWithShift ||
+        before.shift?.shiftId != shiftId) {
+      throw const PosSessionFailure('SHIFT_CONTEXT_INVALID', '关班结果与当前可信会话不一致。');
+    }
+    return _state = PosSessionState(
+      phase: PosSessionPhase.readyNoShift,
+      device: before.device,
+      terminal: before.terminal,
+      employee: before.employee,
+    );
+  }
+
   PosSessionState _lock(DeviceSnapshot? device, PosSessionFailure error) {
     return _state = PosSessionState(
       phase: PosSessionPhase.locked,

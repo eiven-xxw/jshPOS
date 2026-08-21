@@ -15,6 +15,7 @@ import 'package:jshpos_pos/features/promotion/domain/manual_adjustment_engine.da
 import 'package:jshpos_pos/features/promotion/domain/promotion_engine.dart';
 import 'package:jshpos_pos/features/promotion/infrastructure/promotion_package_installer.dart';
 import 'package:jshpos_pos/features/sale/infrastructure/local_pos_sale_application_service.dart';
+import 'package:jshpos_pos/features/sale/domain/pos_sale_models.dart';
 import 'package:jshpos_pos/features/shift/domain/shift_models.dart';
 import 'package:jshpos_pos/infrastructure/local_database/pos_local_database.dart';
 
@@ -82,6 +83,55 @@ void main() {
       expect(resumed.heldSales, isEmpty);
     },
   );
+
+  test('formal product search quantity and sync branches stay inside application service', () async {
+    final fixture = await _Fixture.create();
+    addTearDown(fixture.close);
+
+    await fixture.service.loadWorkspace();
+    final products = await fixture.service.searchProducts('柠檬');
+    var workspace = await fixture.service.addProduct(
+      products.single.productRef,
+    );
+    workspace = await fixture.service.addProduct(products.single.productRef);
+    expect(workspace.lines.single.quantity, '2');
+
+    workspace = await fixture.service.changeQuantity(
+      workspace.lines.single.lineRef,
+      '-1',
+    );
+    expect(workspace.lines.single.quantity, '1');
+    workspace = await fixture.service.changeQuantity(
+      workspace.lines.single.lineRef,
+      '0',
+    );
+    expect(workspace.lines, isEmpty);
+    expect((await fixture.service.refreshPromotionQuote()).lines, isEmpty);
+
+    final sync = await fixture.service.refreshSyncStatus();
+    expect(sync.syncStatus.online, isFalse);
+    expect(sync.syncStatus.safeMessage, contains('Outbox'));
+    await expectLater(
+      fixture.service.changeQuantity('missing-line', '1'),
+      throwsA(
+        isA<PosSaleFailure>().having(
+          (error) => error.code,
+          'code',
+          'SALE_LINE_NOT_FOUND',
+        ),
+      ),
+    );
+    await expectLater(
+      fixture.service.previewPrintTask('01K2A000000000000000009999'),
+      throwsA(
+        isA<PosSaleFailure>().having(
+          (error) => error.code,
+          'code',
+          'PRINT_TASK_NOT_FOUND',
+        ),
+      ),
+    );
+  });
 }
 
 final class _Fixture {

@@ -121,6 +121,8 @@ final class LocalPosSaleApplicationService
         ? _addWhole(current.single.quantity.canonical, 1)
         : requested == '-1'
         ? _addWhole(current.single.quantity.canonical, -1)
+        : requested == '0'
+        ? '0'
         : ExactQuantity.parse(requested).canonical;
     final rebuilt = <BasketLine>[];
     var lineNo = 0;
@@ -561,6 +563,7 @@ String _addWhole(String source, int whole) {
   if (target < BigInt.zero) {
     throw const PosSaleFailure('SALE_QUANTITY_INVALID', '商品数量不能小于零。');
   }
+  if (target == BigInt.zero) return '0';
   if (scale == 0) return target.toString();
   final padded = target.toString().padLeft(scale + 1, '0');
   return ExactQuantity.parse(

@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:jshpos_pos/app/jshpos_app.dart';
 import 'package:jshpos_pos/features/session/application/pos_session_repository.dart';
 import 'package:jshpos_pos/features/session/domain/pos_session_models.dart';
+import 'package:jshpos_pos/features/shift/application/pos_shift_application_service.dart';
 import 'package:pos_device_adapter/pos_device_adapter.dart';
 
 void main() {
@@ -77,6 +78,74 @@ void main() {
     expect(find.textContaining('账号不存在'), findsNothing);
     expect(find.textContaining('wrong-secret'), findsNothing);
   });
+
+  testWidgets('开关班页面只在正式班次应用服务成功后更新会话', (tester) async {
+    final repository = _FakeSessionRepository(startWithoutShift: true);
+    final shiftService = _FakeShiftApplicationService();
+    await tester.pumpWidget(
+      JshposApp(
+        deviceGateway: const _FakeDeviceGateway(),
+        sessionRepository: repository,
+        shiftService: shiftService,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byKey(const Key('employeeLogin')), 'cashier01');
+    await tester.enterText(
+      find.byKey(const Key('employeeSecret')),
+      'synthetic-pin',
+    );
+    await tester.tap(find.byKey(const Key('employeeLoginSubmit')));
+    await tester.pumpAndSettle();
+    expect(find.text('未开班'), findsOneWidget);
+
+    await tester.tap(find.text('开启班次'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('开启班次-cash')), '100.00');
+    await tester.tap(find.byKey(const Key('开启班次-submit')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('班次进行中'), findsOneWidget);
+    expect(shiftService.openingCash, '100.00');
+
+    await tester.tap(find.text('关闭班次'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('关闭班次-cash')), '100.00');
+    await tester.tap(find.byKey(const Key('关闭班次-submit')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('未开班'), findsOneWidget);
+    expect(shiftService.closedShiftId, _shift.shiftId);
+  });
+
+  testWidgets('班次应用失败仅展示稳定错误且不伪造开班成功', (tester) async {
+    final repository = _FakeSessionRepository(startWithoutShift: true);
+    await tester.pumpWidget(
+      JshposApp(
+        deviceGateway: const _FakeDeviceGateway(),
+        sessionRepository: repository,
+        shiftService: _FakeShiftApplicationService(failOpen: true),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byKey(const Key('employeeLogin')), 'cashier01');
+    await tester.enterText(
+      find.byKey(const Key('employeeSecret')),
+      'synthetic-pin',
+    );
+    await tester.tap(find.byKey(const Key('employeeLoginSubmit')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('开启班次'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('开启班次-cash')), '100.00');
+    await tester.tap(find.byKey(const Key('开启班次-submit')));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('SHIFT_OPEN_BLOCKED'), findsOneWidget);
+    expect(find.text('未开班'), findsOneWidget);
+  });
 }
 
 class _FakeDeviceGateway implements PosDeviceGateway {
@@ -96,9 +165,13 @@ class _FakeDeviceGateway implements PosDeviceGateway {
 }
 
 class _FakeSessionRepository implements PosSessionRepository {
-  _FakeSessionRepository({this.failAuthentication = false});
+  _FakeSessionRepository({
+    this.failAuthentication = false,
+    bool startWithoutShift = false,
+  }) : initialShift = startWithoutShift ? null : _shift;
 
   final bool failAuthentication;
+  final PosShiftContext? initialShift;
   int logoutCount = 0;
 
   @override
@@ -111,15 +184,18 @@ class _FakeSessionRepository implements PosSessionRepository {
     EmployeeLoginCommand command,
   ) async {
     if (failAuthentication) throw StateError('synthetic invalid credential');
-    return PosLoginResult(employee: _employee, shift: _shift);
+    return PosLoginResult(employee: _employee, shift: initialShift);
   }
 
   @override
   Future<PosSessionRefresh> refresh(
     TrustedTerminalContext terminal,
     EmployeeSession employee,
-  ) async =>
-      PosSessionRefresh(terminal: terminal, employee: employee, shift: _shift);
+  ) async => PosSessionRefresh(
+    terminal: terminal,
+    employee: employee,
+    shift: initialShift,
+  );
 
   @override
   Future<void> logout(
@@ -128,6 +204,36 @@ class _FakeSessionRepository implements PosSessionRepository {
     String correlationId,
   ) async {
     logoutCount++;
+  }
+}
+
+final class _FakeShiftApplicationService implements PosShiftApplicationService {
+  _FakeShiftApplicationService({this.failOpen = false});
+
+  final bool failOpen;
+  String? openingCash;
+  String? closedShiftId;
+
+  @override
+  Future<PosShiftContext> open({
+    required String businessDate,
+    required String openingCash,
+    required String idempotencyKey,
+  }) async {
+    if (failOpen) {
+      throw const PosSessionFailure('SHIFT_OPEN_BLOCKED', '班次状态不允许开班。');
+    }
+    this.openingCash = openingCash;
+    return _shift;
+  }
+
+  @override
+  Future<void> close({
+    required String shiftId,
+    required String actualCash,
+    required String idempotencyKey,
+  }) async {
+    closedShiftId = shiftId;
   }
 }
 
@@ -156,6 +262,8 @@ final _employee = EmployeeSession(
   roles: {'CASHIER'},
   permissions: {
     PosPermission.sessionLogin,
+    PosPermission.shiftOpen,
+    PosPermission.shiftClose,
     PosPermission.saleOperate,
     PosPermission.cashSettle,
     PosPermission.syncView,

@@ -33,7 +33,9 @@ final class ExactDecimal {
         ? parts.first
         : '${parts.first}${parts[1]}';
     if (digits.length > 20) {
-      throw const FormatException('PRM-DECIMAL-004: decimal precision exceeded');
+      throw const FormatException(
+        'PRM-DECIMAL-004: decimal precision exceeded',
+      );
     }
     return ExactDecimal._(BigInt.parse(digits), scale);
   }
@@ -352,8 +354,7 @@ final class PromotionEngine {
     final lineDiscounts = {
       for (final entry in state.entries) entry.key: entry.value.discount,
     };
-    if (_sumMinor(lineDiscounts.values) != discount ||
-        discount > gross) {
+    if (_sumMinor(lineDiscounts.values) != discount || discount > gross) {
       throw StateError('PRM-ENGINE-004: amount conservation failed');
     }
     return PromotionQuote(
@@ -436,8 +437,9 @@ final class PromotionEngine {
           final count = line.source.quantity.floorDivide(
             ExactDecimal._(BigInt.from(nth), 0),
           );
-          return _rate(value.discountRate)
-              .multiplyMinorHalfUp(_multiplyMinor(line.source.unitPriceMinor, count));
+          return _rate(value.discountRate).multiplyMinorHalfUp(
+            _multiplyMinor(line.source.unitPriceMinor, count),
+          );
         });
       case PromotionRuleType.thresholdAmountOff:
         final current = _sumMinor(lines.map(_current));
@@ -500,7 +502,10 @@ final class PromotionEngine {
           maxInt(
             0,
             current -
-                minInt(current, _multiplyMinor(_money(value.bundlePriceMinor), sets)),
+                minInt(
+                  current,
+                  _multiplyMinor(_money(value.bundlePriceMinor), sets),
+                ),
           ),
         );
     }

@@ -49,9 +49,7 @@ void main() {
     );
     addTearDown(transport.close);
 
-    final result = await transport.bootstrap(
-      '01K2A000000000000000000071',
-    );
+    final result = await transport.bootstrap('01K2A000000000000000000071');
     await handled;
     expect(result.storeId, '1101');
     expect(result.protocolVersion, '1.0');
@@ -66,8 +64,9 @@ void main() {
       expect(request.headers.value('X-Tenant-Id'), isNull);
       request.response.headers.contentType = ContentType.json;
       if (request.uri.path.endsWith('/sync/push')) {
-        final body = jsonDecode(await utf8.decoder.bind(request).join())
-            as Map<String, Object?>;
+        final body = jsonDecode(
+          await utf8.decoder.bind(request).join(),
+        ) as Map<String, Object?>;
         final events = body['events']! as List<Object?>;
         final event = events.single! as Map<String, Object?>;
         request.response.write(
@@ -122,8 +121,9 @@ void main() {
           }),
         );
       } else if (request.uri.path.endsWith('/sync/ack')) {
-        final body = jsonDecode(await utf8.decoder.bind(request).join())
-            as Map<String, Object?>;
+        final body = jsonDecode(
+          await utf8.decoder.bind(request).join(),
+        ) as Map<String, Object?>;
         expect(body['stream'], 'sync.control');
         expect(body['appliedChangeIds'], hasLength(1));
         request.response.statusCode = HttpStatus.noContent;
@@ -161,17 +161,11 @@ void main() {
     );
 
     final pushed = await transport.push(
-      SyncPushBatch(
-        batchId: '01K2A000000000000000000093',
-        events: [event],
-      ),
+      SyncPushBatch(batchId: '01K2A000000000000000000093', events: [event]),
     );
     expect(pushed.acks.single.status, 'ACCEPTED_PENDING');
     expect(pushed.acks.single.retryAfterMs, 1250);
-    final result = await transport.result(
-      event.eventId,
-      event.correlationId,
-    );
+    final result = await transport.result(event.eventId, event.correlationId);
     expect(result.status, 'ACCEPTED');
     final page = await transport.pull(
       stream: 'sync.control',
@@ -206,32 +200,35 @@ void main() {
     );
   });
 
-  test('HTTP retryable failure is explicit and preserves status evidence', () async {
-    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
-    addTearDown(() => server.close(force: true));
-    final handled = server.first.then((request) async {
-      request.response.statusCode = HttpStatus.serviceUnavailable;
-      request.response.write('synthetic outage');
-      await request.response.close();
-    });
-    final transport = PosSyncHttpTransport(
-      baseUri: Uri.parse(
-        'http://${server.address.address}:${server.port}/api/pos/v1/',
-      ),
-      deviceId: '01K2A000000000000000000011',
-      accessTokenProvider: () async => 'synthetic-session',
-    );
-    addTearDown(transport.close);
+  test(
+    'HTTP retryable failure is explicit and preserves status evidence',
+    () async {
+      final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+      addTearDown(() => server.close(force: true));
+      final handled = server.first.then((request) async {
+        request.response.statusCode = HttpStatus.serviceUnavailable;
+        request.response.write('synthetic outage');
+        await request.response.close();
+      });
+      final transport = PosSyncHttpTransport(
+        baseUri: Uri.parse(
+          'http://${server.address.address}:${server.port}/api/pos/v1/',
+        ),
+        deviceId: '01K2A000000000000000000011',
+        accessTokenProvider: () async => 'synthetic-session',
+      );
+      addTearDown(transport.close);
 
-    await expectLater(
-      transport.bootstrap('01K2A000000000000000000071'),
-      throwsA(
-        isA<SyncTransportException>()
-            .having((error) => error.code, 'code', 'SYNC_HTTP_503')
-            .having((error) => error.retryable, 'retryable', isTrue)
-            .having((error) => error.statusCode, 'statusCode', 503),
-      ),
-    );
-    await handled;
-  });
+      await expectLater(
+        transport.bootstrap('01K2A000000000000000000071'),
+        throwsA(
+          isA<SyncTransportException>()
+              .having((error) => error.code, 'code', 'SYNC_HTTP_503')
+              .having((error) => error.retryable, 'retryable', isTrue)
+              .having((error) => error.statusCode, 'statusCode', 503),
+        ),
+      );
+      await handled;
+    },
+  );
 }

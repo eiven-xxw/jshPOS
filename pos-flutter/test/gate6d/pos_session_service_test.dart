@@ -380,6 +380,27 @@ void main() {
       expect(state.phase, PosSessionPhase.locked);
       expect(state.errorCode, 'TERMINAL_CAPABILITY_MISMATCH');
     });
+
+    test('只有 Checkout Owner 成功结果才能改变会话内开关班状态', () async {
+      final fixture = _Fixture(loginResult: PosLoginResult(employee: employee));
+      await fixture.service.bootstrap();
+      await fixture.service.login(
+        loginName: 'cashier01',
+        secret: 'synthetic-pin',
+      );
+
+      final opened = fixture.service.acceptOpenedShift(shift);
+      final closed = fixture.service.acceptClosedShift(shift.shiftId);
+
+      expect(opened.phase, PosSessionPhase.readyWithShift);
+      expect(opened.shift?.shiftId, shift.shiftId);
+      expect(closed.phase, PosSessionPhase.readyNoShift);
+      expect(closed.shift, isNull);
+      expect(
+        () => fixture.service.acceptClosedShift(shift.shiftId),
+        throwsA(isA<PosSessionFailure>()),
+      );
+    });
   });
 
   group('T2-POS-007 会话值对象与默认失败关闭仓储', () {
