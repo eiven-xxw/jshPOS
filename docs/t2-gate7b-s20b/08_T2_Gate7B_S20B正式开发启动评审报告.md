@@ -2,7 +2,7 @@
 
 ## 1. 评审结论
 
-`PREPARED / CONDITIONAL PASS RECOMMENDATION / AWAITING SPONSOR CONFIRMATION`。
+`CONDITIONAL PASS / AWAITING SPONSOR CONFIRMATION`。
 
 仓库事实审计确认 `T2-EXG-001` 与 `T2-PAY-004` 是真实缺口，且可在不复制资金、库存、
 订单、促销或退款状态机的前提下补全。独立 CR 建议将基础换货纳入商业 V1；两项需求
@@ -37,9 +37,19 @@
 
 ## 5. CI 与封存证据
 
-本报告首先作为候选评审材料提交；候选 GitHub CI 通过后，应在本节回填 commit、Run、
-Job、Artifact 与 SHA-256，并以独立治理提交完成封存。CI 未通过前，本报告自动为
-`IN_PROGRESS / NO-GO`，不得用局部检查或重跑单 Job 代替。
+候选提交 `cf9a86b59f9e6cec3e235cc99cc515867f06e1ac` 的 GitHub Actions
+[Run 32503811852](https://github.com/eiven-xxw/jshPOS/actions/runs/32503811852)
+一次通过全部四个 Job：
+
+- `governance-ubuntu`：RTM、契约、第一批接受、CR/ADR、S20-B 准入门禁通过；
+- `governance-windows`：UTF-8、路径与相同治理门禁跨平台通过；
+- `scope-boundary`：相对 `a9e368a2...` 的正式运行时、迁移、依赖和外部执行均为 0；
+- `evidence`：制品索引构建通过。
+
+最终证据 Artifact 为 `9454511483`，GitHub SHA-256 为
+`b46a287d5436a07a0c09f5d285e8620add52c61058c613729f09180f9f1b1cf4`；
+其他三份制品及摘要见《S20-B 证据索引》。没有失败重跑、跳过用例或放宽门禁。
+本报告回填提交仍须完整复跑闭环 CI；若失败，结论自动退回 `IN_PROGRESS / NO-GO`。
 
 ## 6. 最终建议
 

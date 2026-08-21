@@ -58,7 +58,13 @@
     "productionDeployments": 0,
     "commercialClaimAllowed": false
   },
-  "candidateEvidence": null,
+  "candidateEvidence": {
+    "commit": "cf9a86b59f9e6cec3e235cc99cc515867f06e1ac",
+    "workflowRun": 32503811852,
+    "workflowConclusion": "success",
+    "evidenceArtifactId": 9454511483,
+    "evidenceArtifactSha256": "b46a287d5436a07a0c09f5d285e8620add52c61058c613729f09180f9f1b1cf4"
+  },
   "nextGate": {
     "automaticStartAllowed": false,
     "requiresSponsorConfirmation": true,
