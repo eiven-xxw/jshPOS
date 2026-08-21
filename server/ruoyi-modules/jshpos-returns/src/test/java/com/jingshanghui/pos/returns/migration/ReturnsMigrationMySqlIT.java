@@ -24,7 +24,7 @@ class ReturnsMigrationMySqlIT {
         Flyway flyway = Flyway.configure().dataSource(url, username, password)
             .locations("classpath:db/migration").table("jshpos_flyway_schema_history")
             .baselineOnMigrate(true).baselineVersion("0").cleanDisabled(true).load();
-        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(21);
+        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(30);
         assertThat(flyway.migrate().migrationsExecuted).isZero();
         flyway.validate();
         assertThat(flyway.info().current()).isNotNull();
