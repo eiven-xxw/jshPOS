@@ -12,6 +12,8 @@ import '../features/sale/application/pos_sale_application_service.dart';
 import '../features/sale/infrastructure/locked_pos_sale_application_service.dart';
 import '../features/return_refund/application/pos_return_application_service.dart';
 import '../features/return_refund/infrastructure/locked_pos_return_application_service.dart';
+import '../features/exchange/application/pos_exchange_application_service.dart';
+import '../features/exchange/infrastructure/locked_pos_exchange_application_service.dart';
 
 class JshposApp extends StatelessWidget {
   const JshposApp({
@@ -21,6 +23,7 @@ class JshposApp extends StatelessWidget {
     this.sessionRepository,
     this.saleService,
     this.returnService,
+    this.exchangeService,
     this.shiftService,
   });
 
@@ -29,6 +32,7 @@ class JshposApp extends StatelessWidget {
   final PosSessionRepository? sessionRepository;
   final PosSaleApplicationService? saleService;
   final PosReturnApplicationService? returnService;
+  final PosExchangeApplicationService? exchangeService;
   final PosShiftApplicationService? shiftService;
 
   @override
@@ -54,6 +58,8 @@ class JshposApp extends StatelessWidget {
         saleService: saleService ?? const LockedPosSaleApplicationService(),
         returnService:
             returnService ?? const LockedPosReturnApplicationService(),
+        exchangeService:
+            exchangeService ?? const LockedPosExchangeApplicationService(),
         shiftService: shiftService ?? const LockedPosShiftApplicationService(),
       ),
     );

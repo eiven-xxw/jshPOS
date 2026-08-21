@@ -32,6 +32,24 @@ class ReturnsMigrationSqlPolicyTest {
             .contains("return:request:read").doesNotContain("provider");
     }
 
+    @Test
+    void exchangeMigrationFreezesTwoOwnerLegsAndAppendOnlyRecoveryEvidence() throws Exception {
+        String sql = resource("/db/migration/V202608220055__gate7b_exchange_orchestration.sql");
+        assertThat(sql).contains("add column request_command_id")
+            .contains("create table ret_exchange").contains("create table ret_exchange_leg")
+            .contains("create table ret_exchange_event").contains("create table ret_exchange_idempotency")
+            .contains("original_order_id<>new_order_id")
+            .contains("leg_type='return' and owner_code='return'")
+            .contains("leg_type='sale' and owner_code='order'")
+            .contains("trg_ret_exchange_leg_no_update").contains("trg_ret_exchange_event_no_delete")
+            .doesNotContain("create table pay_").doesNotContain("create table inv_")
+            .doesNotContain(" float").doesNotContain(" double");
+        String permission = resource("/db/migration/V202608220056__gate7b_exchange_permissions.sql");
+        assertThat(permission).contains("pos:exchange:read").contains("pos:exchange:create")
+            .contains("pos:exchange:approve").contains("pos:exchange:recover")
+            .doesNotContain("provider");
+    }
+
     private String resource(String name) throws Exception {
         try (var stream = getClass().getResourceAsStream(name)) {
             assertThat(stream).isNotNull();

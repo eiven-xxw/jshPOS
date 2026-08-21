@@ -2,6 +2,9 @@ import 'package:cryptography/cryptography.dart';
 import 'package:pos_device_adapter/pos_device_adapter.dart';
 
 import '../../features/catalog/infrastructure/catalog_package_installer.dart';
+import '../../features/exchange/application/pos_exchange_application_service.dart';
+import '../../features/exchange/domain/pos_exchange_models.dart';
+import '../../features/exchange/infrastructure/http_pos_exchange_application_service.dart';
 import '../../features/checkout/application/checkout_local_service.dart';
 import '../../features/checkout/domain/checkout_models.dart';
 import '../../features/checkout/domain/ulid_generator.dart';
@@ -32,12 +35,14 @@ final class PosBusinessRuntime {
     required this.database,
     required this.sale,
     required this.returns,
+    required this.exchange,
     required this.shift,
   });
 
   final PosLocalDatabase database;
   final PosSaleApplicationService sale;
   final PosReturnApplicationService returns;
+  final PosExchangeApplicationService exchange;
   final PosShiftApplicationService shift;
 }
 
@@ -183,10 +188,18 @@ final class FilePosBusinessRuntimeAssembler
         returnWarehouseIdProvider: () => returnWarehouseId,
         ulids: ulids,
       );
+      final exchange = HttpPosExchangeApplicationService(
+        baseUri: baseUri.resolve('api/v1/'),
+        binding: binding,
+        database: database,
+        accessTokenProvider: accessTokenProvider,
+        ulids: ulids,
+      );
       return PosBusinessRuntime(
         database: database,
         sale: sale,
         returns: returns,
+        exchange: exchange,
         shift: shift,
       );
     } catch (_) {
@@ -248,6 +261,7 @@ final class SessionBoundPosRuntime
         PosSessionRepository,
         PosSaleApplicationService,
         PosReturnApplicationService,
+        PosExchangeApplicationService,
         PosShiftApplicationService {
   SessionBoundPosRuntime({required this.sessions, required this.assembler});
 
@@ -417,6 +431,36 @@ final class SessionBoundPosRuntime
   @override
   Future<PosReturnSubmissionView> refreshReturnStatus(String returnRef) =>
       _ready.returns.refreshReturnStatus(returnRef);
+  @override
+  Future<PosExchangeView> create({
+    required PosExchangeSource source,
+    required String reasonCode,
+  }) => _ready.exchange.create(source: source, reasonCode: reasonCode);
+  @override
+  Future<PosExchangeView> refresh(String exchangeRef) =>
+      _ready.exchange.refresh(exchangeRef);
+  @override
+  Future<PosExchangeView> approve({
+    required String exchangeRef,
+    required String correlationRef,
+    required String reasonCode,
+  }) => _ready.exchange.approve(
+    exchangeRef: exchangeRef,
+    correlationRef: correlationRef,
+    reasonCode: reasonCode,
+  );
+  @override
+  Future<PosExchangeView> recover({
+    required String exchangeRef,
+    required String correlationRef,
+    required String targetLeg,
+    required String reasonCode,
+  }) => _ready.exchange.recover(
+    exchangeRef: exchangeRef,
+    correlationRef: correlationRef,
+    targetLeg: targetLeg,
+    reasonCode: reasonCode,
+  );
   @override
   Future<PosShiftContext> open({
     required String businessDate,

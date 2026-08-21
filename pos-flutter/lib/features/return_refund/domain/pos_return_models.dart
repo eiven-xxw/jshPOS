@@ -196,6 +196,7 @@ final class PosReturnWorkspace {
 final class PosReturnSubmissionView {
   PosReturnSubmissionView({
     required this.returnRef,
+    required this.requestCommandRef,
     required this.orderRef,
     required this.status,
     required this.refundableAmountMinor,
@@ -208,6 +209,7 @@ final class PosReturnSubmissionView {
   }) {
     for (final value in [
       returnRef,
+      requestCommandRef,
       orderRef,
       promotionSnapshotRef,
       correlationRef,
@@ -222,6 +224,7 @@ final class PosReturnSubmissionView {
   }
 
   final String returnRef;
+  final String requestCommandRef;
   final String orderRef;
   final PosReturnSagaStatus status;
   final int refundableAmountMinor;

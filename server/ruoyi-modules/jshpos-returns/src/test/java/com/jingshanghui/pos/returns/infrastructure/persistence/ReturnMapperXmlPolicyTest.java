@@ -31,4 +31,23 @@ class ReturnMapperXmlPolicyTest {
         assertThat(source).doesNotContain("@Select").doesNotContain("@Insert")
             .doesNotContain("@Update").doesNotContain("@Delete");
     }
+
+    @Test
+    void exchangeMapperUsesControlledStateUpdatesAndNeverWritesOtherOwners() throws Exception {
+        try (var stream = getClass().getResourceAsStream("/mapper/returns/ExchangeMapper.xml")) {
+            assertThat(stream).isNotNull();
+            String xml = new String(stream.readAllBytes(), StandardCharsets.UTF_8).toLowerCase();
+            assertThat(xml).doesNotContain("select *").contains("tenant_id=#{tenantid}")
+                .contains("<select id=\"lockexchange\"").contains("for update")
+                .contains("insert into ret_exchange_leg").contains("insert into ret_exchange_event")
+                .contains("insert into ret_inbox").contains("insert into ret_outbox")
+                .contains("status=#{nextstatus}").contains("record_version=#{expectedversion}")
+                .doesNotContain("delete from ret_").doesNotContain("update ord_")
+                .doesNotContain("update pay_").doesNotContain("update inv_").doesNotContain("update prm_");
+        }
+        String source = java.nio.file.Files.readString(java.nio.file.Path.of(System.getProperty("user.dir"),
+            "src/main/java/com/jingshanghui/pos/returns/infrastructure/persistence/mapper/ExchangeMapper.java"));
+        assertThat(source).doesNotContain("@Select").doesNotContain("@Insert")
+            .doesNotContain("@Update").doesNotContain("@Delete");
+    }
 }

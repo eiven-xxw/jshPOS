@@ -15,6 +15,7 @@ import 'gate6g_catalog_schema.dart';
 import 'gate7b_cash_operation_schema.dart';
 import 'gate7b_receipt_schema.dart';
 import 'gate7b_order_disposition_schema.dart';
+import 'gate7b_exchange_schema.dart';
 
 typedef FailureInjector = void Function(String checkpoint);
 
@@ -140,7 +141,11 @@ final class PosLocalDatabase {
       _migrateToOrderDispositionV11();
       version = Gate7bOrderDispositionSchema.version;
     }
-    if (version != Gate7bOrderDispositionSchema.version) {
+    if (version == Gate7bOrderDispositionSchema.version) {
+      _migrateToExchangeV12();
+      version = Gate7bExchangeSchema.version;
+    }
+    if (version != Gate7bExchangeSchema.version) {
       throw StateError('LOCAL_SCHEMA_UNSUPPORTED: $version');
     }
     _verifySchemaChecksum();
@@ -181,6 +186,9 @@ final class PosLocalDatabase {
           .toString(),
       Gate7bOrderDispositionSchema.version: sha256
           .convert(utf8.encode(Gate7bOrderDispositionSchema.v11))
+          .toString(),
+      Gate7bExchangeSchema.version: sha256
+          .convert(utf8.encode(Gate7bExchangeSchema.v12))
           .toString(),
     };
     for (final entry in expected.entries) {
@@ -239,6 +247,32 @@ final class PosLocalDatabase {
     if (violations.isNotEmpty) {
       throw StateError(
         'LOCAL_DB_INTEGRITY_FAILED: foreign key violations after v11',
+      );
+    }
+  }
+
+  /// 追加 EXG-001 本地稳定命令日志；中断时表、历史与版本整体回滚。
+  void _migrateToExchangeV12() {
+    transaction(() {
+      database.execute(Gate7bExchangeSchema.v12);
+      final checksum = sha256
+          .convert(utf8.encode(Gate7bExchangeSchema.v12))
+          .toString();
+      database.execute(
+        'INSERT INTO local_schema_history(version,description,checksum_sha256,installed_at) VALUES(12,?,?,?)',
+        [
+          'gate7b-exchange-command-journal',
+          checksum,
+          DateTime.now().toUtc().toIso8601String(),
+        ],
+      );
+      checkpoint('migration.v12.before-version');
+      database.execute('PRAGMA user_version=${Gate7bExchangeSchema.version}');
+    });
+    final violations = database.select('PRAGMA foreign_key_check');
+    if (violations.isNotEmpty) {
+      throw StateError(
+        'LOCAL_DB_INTEGRITY_FAILED: foreign key violations after v12',
       );
     }
   }

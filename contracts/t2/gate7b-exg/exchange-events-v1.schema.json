@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.jingshanghui.example/t2/gate7b-exg/exchange-events-v1.schema.json",
+  "title": "T2-EXG-001 exchange event envelope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "eventId", "eventType", "aggregateId", "aggregateVersion", "tenantId", "correlationId", "payloadSha256", "occurredAt", "payload"],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "eventId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "eventType": {"enum": ["exchange.created.v1", "exchange.completed.v1"]},
+    "aggregateId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "aggregateVersion": {"type": "integer", "minimum": 1},
+    "tenantId": {"type": "string", "minLength": 1, "maxLength": 20},
+    "correlationId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "payloadSha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "occurredAt": {"type": "string", "format": "date-time"},
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["exchangeId", "returnId", "newOrderId"],
+      "properties": {
+        "exchangeId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+        "returnId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+        "newOrderId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"}
+      }
+    }
+  }
+}

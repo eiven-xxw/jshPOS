@@ -225,7 +225,7 @@ class ReturnOrchestrationServiceTest {
         Long gross = status == Status.PENDING_APPROVAL || status == Status.PROMOTION_PENDING ? null : 1000L;
         Long discount = gross == null ? null : 100L;
         Long refundable = gross == null ? null : 900L;
-        return new ReturnRow(RETURN, "d".repeat(64), ORDER, 1101L, TERMINAL, SHIFT, WAREHOUSE, DAY,
+        return new ReturnRow(RETURN, "d".repeat(64), "01K5R000000000000000000099", ORDER, 1101L, TERMINAL, SHIFT, WAREHOUSE, DAY,
             status == Status.PAYMENT_PENDING || status == Status.PAYMENT_UNKNOWN ? "PROVIDER_NEUTRAL" : "CASH",
             status == Status.PAYMENT_PENDING || status == Status.PAYMENT_UNKNOWN ? CASH_PAYMENT : null,
             status == Status.PAYMENT_PENDING || status == Status.PAYMENT_UNKNOWN ? null : CASH_PAYMENT,

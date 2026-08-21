@@ -154,23 +154,29 @@ final class PosSaleWorkspace {
 /// 现金成交结果只展示已持久化的订单、找零、快照和 Outbox 标识。
 final class PosCashSettlementView {
   const PosCashSettlementView({
+    required this.commandRef,
     required this.orderRef,
     required this.localOrderNo,
     required this.receivableAmountMinor,
     required this.tenderedAmountMinor,
     required this.changeAmountMinor,
     required this.snapshotDigest,
+    required this.quoteFingerprint,
+    required this.settlementFingerprint,
     required this.outboxEventRef,
     required this.completedAt,
     required this.duplicate,
   });
 
+  final String commandRef;
   final String orderRef;
   final String localOrderNo;
   final int receivableAmountMinor;
   final int tenderedAmountMinor;
   final int changeAmountMinor;
   final String snapshotDigest;
+  final String quoteFingerprint;
+  final String settlementFingerprint;
   final String outboxEventRef;
   final DateTime completedAt;
   final bool duplicate;

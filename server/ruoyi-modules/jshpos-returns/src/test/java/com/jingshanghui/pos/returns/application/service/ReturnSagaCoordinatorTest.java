@@ -141,7 +141,7 @@ class ReturnSagaCoordinatorTest {
                             String inventoryEvent) {
         var line = new ReturnLineView("01K5X000000000000000000001", "01K5A000000000000000000001",
             701L, 301L, BigDecimal.ONE, 1000L, 100L, 900L, BigDecimal.ONE, 900L);
-        return new ReturnView(RETURN, ORDER, 1101L, "01K5T000000000000000000001",
+        return new ReturnView(RETURN, "01K5R000000000000000000099", ORDER, 1101L, "01K5T000000000000000000001",
             "01K5H000000000000000000001", "01K5W000000000000000000001",
             LocalDate.parse("2026-08-17"), kind,
             "PROVIDER_NEUTRAL".equals(kind) ? "01K5P000000000000000000001" : null,

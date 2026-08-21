@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-EXG-001",
+  "seedPolicy": "固定输入、固定预期；实际失败 seed 追加而不覆盖",
+  "vectors": [
+    {"id":"EXG-S20B-001","scenario":"happy path with distinct approver","expected":"COMPLETED_AND_TWO_OWNER_FACTS_PRESERVED"},
+    {"id":"EXG-S20B-002","scenario":"same idempotency key same content","expected":"ORIGINAL_RESULT_DUPLICATE_TRUE"},
+    {"id":"EXG-S20B-003","scenario":"same idempotency key different content","expected":"IDEMPOTENCY_CONTENT_MISMATCH"},
+    {"id":"EXG-S20B-004","scenario":"requester approves own exchange","expected":"SEGREGATION_OF_DUTIES_DENIED"},
+    {"id":"EXG-S20B-005","scenario":"cross tenant exchange lookup","expected":"NOT_FOUND_OR_SCOPE_DENIED"},
+    {"id":"EXG-S20B-006","scenario":"cross store exchange mutation","expected":"STORE_SCOPE_DENIED"},
+    {"id":"EXG-S20B-007","scenario":"return owner UNKNOWN","expected":"RETURN_UNKNOWN_QUERY_ONLY"},
+    {"id":"EXG-S20B-008","scenario":"sale owner UNKNOWN","expected":"SALE_UNKNOWN_QUERY_ONLY"},
+    {"id":"EXG-S20B-009","scenario":"return amount differs from frozen amount","expected":"FAIL_CLOSED_NO_SALE_ADVANCE"},
+    {"id":"EXG-S20B-010","scenario":"sale amount differs from frozen amount","expected":"FAIL_CLOSED_NO_COMPLETION"},
+    {"id":"EXG-S20B-011","scenario":"sale snapshot or quote fingerprint differs","expected":"FAIL_CLOSED_NO_COMPLETION"},
+    {"id":"EXG-S20B-012","scenario":"ACK lost after server accepted create","expected":"REUSE_EXCHANGE_AND_COMMAND_IDS"},
+    {"id":"EXG-S20B-013","scenario":"process killed before HTTP","expected":"LOCAL_PREPARED_OR_SUBMITTING_RECOVERABLE"},
+    {"id":"EXG-S20B-014","scenario":"duplicate and out of order owner observation","expected":"INBOX_IDEMPOTENT_OR_STATE_CONFLICT_NO_DUPLICATE_FACT"},
+    {"id":"EXG-S20B-015","scenario":"same observation id different digest","expected":"CONTENT_CONFLICT_QUARANTINED"},
+    {"id":"EXG-S20B-016","scenario":"return succeeds and sale terminally fails","expected":"MANUAL_RECOVERY_REQUIRED"},
+    {"id":"EXG-S20B-017","scenario":"manual recover RETURN leg","expected":"OBSERVE_ORIGINAL_RETURN_COMMAND_ONLY"},
+    {"id":"EXG-S20B-018","scenario":"manual recover SALE leg after refund complete","expected":"OBSERVE_ORIGINAL_SALE_COMMAND_ONLY"},
+    {"id":"EXG-S20B-019","scenario":"SQLite identity update or delete","expected":"ABORT_APPEND_ONLY"},
+    {"id":"EXG-S20B-020","scenario":"MySQL leg event idempotency update or delete","expected":"TRIGGER_REJECTS"}
+  ],
+  "externalExecution": {
+    "providerNetworkCalls": 0,
+    "realFundsTransactions": 0,
+    "realDeviceCommands": 0,
+    "realPeripheralCommands": 0,
+    "partnerContacts": 0,
+    "onsitePilots": 0,
+    "fullAlphaRuns": 0,
+    "productionDeployments": 0,
+    "commercialClaimAllowed": false
+  }
+}

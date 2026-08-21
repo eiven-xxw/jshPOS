@@ -203,6 +203,7 @@ Map<String, Object?> _returnView(Map<String, Object?>? request, String status) {
     'code': 200,
     'data': <String, Object?>{
       'returnId': returnId,
+      'requestCommandId': '01K5A000000000000000000099',
       'orderId': orderId,
       'status': status,
       'refundableAmountMinor': status == 'PENDING_APPROVAL' ? null : 900,

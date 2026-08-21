@@ -10,6 +10,7 @@ public final class ReturnPersistenceParams {
 
     /** 退货申请头写入。 */
     public record ReturnWrite(String returnId, String tenantId, String idempotencyKey, String requestSha256,
+                              String requestCommandId,
                               String orderId, Long storeId, String terminalId, String refundShiftId,
                               String warehouseId, LocalDate businessDate, String settlementKind,
                               String paymentId, String originalCashPaymentId, String promotionSnapshotId,

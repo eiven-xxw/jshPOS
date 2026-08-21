@@ -338,6 +338,7 @@ PosReturnLineView returnLine({
 PosReturnSubmissionView returnSubmission(PosReturnSagaStatus status) =>
     PosReturnSubmissionView(
       returnRef: returnRef,
+      requestCommandRef: '01K2A000000000000000000043',
       orderRef: orderRef,
       status: status,
       refundableAmountMinor: 600,

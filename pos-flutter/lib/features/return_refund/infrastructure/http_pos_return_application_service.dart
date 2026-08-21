@@ -292,6 +292,7 @@ final class HttpPosReturnApplicationService
     final version = _integer(data, 'recordVersion');
     return PosReturnSubmissionView(
       returnRef: returnRef,
+      requestCommandRef: _text(data, 'requestCommandId'),
       orderRef: _text(data, 'orderId'),
       status: PosReturnSagaStatus.fromWire(_text(data, 'status')),
       refundableAmountMinor:

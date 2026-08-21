@@ -8,3 +8,5 @@
 - 复杂锁、累计聚合、状态条件更新和只追加事实使用 Repository/Mapper XML，禁止 `SELECT *`、通用更新或删除。
 - 核心服务、命令、状态机、持久化模型、复杂 SQL 与数据库字段必须具备有效中文注释。
 - Provider SDK/HTTP、真实回调、账单下载、生产密钥和真实资金继续禁止；Fake 证据不得解除支付沙箱、实机或试点阻断。
+- EXG-001 的 `ret_exchange*` 只保存换货 Saga、两条腿关联和只追加观察；原退货退款继续由既有 `ret_return*` 负责，新销售继续由 Order Owner 负责。禁止在本模块创建销售、收款、促销、库存或成本事实。
+- 换货头为 `CONTROLLED_WRITE + XML`，腿、事件、Inbox、幂等和业务载荷为 `APPEND_ONLY + XML`；任何 `UNKNOWN` 只能观察原聚合，禁止创建替代命令。

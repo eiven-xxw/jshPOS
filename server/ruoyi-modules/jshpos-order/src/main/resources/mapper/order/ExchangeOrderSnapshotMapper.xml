@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jingshanghui.pos.order.infrastructure.persistence.mapper.ExchangeOrderSnapshotMapper">
+    <!-- 新销售尚未同步时无行；一旦存在，只返回 Order Owner 权威字段和不可变绑定摘要。 -->
+    <select id="find" resultType="com.jingshanghui.pos.order.application.port.ExchangeOrderSnapshotPort$ExchangeOrderSnapshot">
+        SELECT o.order_id AS orderId,o.store_id AS storeId,o.terminal_id AS terminalId,
+               o.business_date AS businessDate,o.status,o.payment_status AS paymentStatus,o.currency,
+               o.receivable_amount_minor AS receivableAmountMinor,b.quote_fingerprint AS quoteFingerprint,
+               b.settlement_fingerprint AS settlementFingerprint,b.order_snapshot_sha256 AS orderSnapshotSha256
+        FROM ord_sales_order o
+        LEFT JOIN ord_promotion_binding b ON b.tenant_id=o.tenant_id AND b.order_id=o.order_id
+        WHERE o.tenant_id=#{tenantId} AND o.order_id=#{orderId}
+    </select>
+</mapper>

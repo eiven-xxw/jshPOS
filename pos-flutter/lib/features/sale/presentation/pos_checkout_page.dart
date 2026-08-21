@@ -6,9 +6,10 @@ import '../domain/pos_sale_models.dart';
 
 /// POS-008 正式收银页面；只渲染应用服务投影并发送用户意图。
 final class PosCheckoutPage extends StatefulWidget {
-  const PosCheckoutPage({required this.controller, super.key});
+  const PosCheckoutPage({required this.controller, this.onExchangeSettlement, super.key});
 
   final PosSaleController controller;
+  final Future<void> Function(PosCashSettlementView result)? onExchangeSettlement;
 
   @override
   State<PosCheckoutPage> createState() => _PosCheckoutPageState();
@@ -153,6 +154,16 @@ class _PosCheckoutPageState extends State<PosCheckoutPage> {
           ),
         ),
         actions: [
+          if (widget.onExchangeSettlement != null)
+            TextButton.icon(
+              key: const Key('completeExchangeLink'),
+              onPressed: () async {
+                Navigator.pop(dialogContext);
+                await widget.onExchangeSettlement!(result);
+              },
+              icon: const Icon(Icons.swap_horiz),
+              label: const Text('完成换货关联'),
+            ),
           TextButton.icon(
             key: const Key('routeCompletedReturn'),
             onPressed: () async {

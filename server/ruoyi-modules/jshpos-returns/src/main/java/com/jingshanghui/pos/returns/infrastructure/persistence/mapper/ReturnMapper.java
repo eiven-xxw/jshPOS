@@ -52,7 +52,8 @@ public interface ReturnMapper {
                             @Param("deliveredAt") LocalDateTime deliveredAt);
 
     /** Saga 头持久化投影。 */
-    record ReturnRow(String returnId, String requestSha256, String orderId, Long storeId, String terminalId,
+    record ReturnRow(String returnId, String requestSha256, String requestCommandId,
+                     String orderId, Long storeId, String terminalId,
                      String refundShiftId, String warehouseId, java.time.LocalDate businessDate,
                      String settlementKind, String paymentId, String originalCashPaymentId,
                      String promotionSnapshotId, String promotionSnapshotSha256, String status,

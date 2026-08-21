@@ -12,23 +12,23 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/** Gate 5B CI 在干净 MySQL 8.4 中验证 19 个实际迁移文件到最高版本 V27、JSON 不可变触发器与权限。 */
+/** EXG-001 CI 在干净 MySQL 8.4 中验证全部迁移、只追加关联、触发器与权限。 */
 class ReturnsMigrationMySqlIT {
     private final String url = required("GATE5B_MYSQL_JDBC_URL");
     private final String username = required("GATE5B_MYSQL_USERNAME");
     private final String password = required("GATE5B_MYSQL_PASSWORD");
 
     @Test
-    void migratesAllNineteenFilesThroughV27AndEnforcesReturnAppendOnlyConstraints() throws Exception {
+    void migratesAllFilesThroughV56AndEnforcesReturnAndExchangeAppendOnlyConstraints() throws Exception {
         createFrameworkMenuFixture();
         Flyway flyway = Flyway.configure().dataSource(url, username, password)
             .locations("classpath:db/migration").table("jshpos_flyway_schema_history")
             .baselineOnMigrate(true).baselineVersion("0").cleanDisabled(true).load();
-        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(19);
+        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(21);
         assertThat(flyway.migrate().migrationsExecuted).isZero();
         flyway.validate();
         assertThat(flyway.info().current()).isNotNull();
-        assertThat(flyway.info().current().getVersion().toString()).isEqualTo("202608170027");
+        assertThat(flyway.info().current().getVersion().toString()).isEqualTo("202608220056");
         assertTablesAndPermissions();
         assertCashLedgerIndexRepair();
         assertImmutableOutboxAndGuards();
@@ -51,7 +51,8 @@ class ReturnsMigrationMySqlIT {
 
     private void assertTablesAndPermissions() throws SQLException {
         Set<String> tables = Set.of("ord_cash_refund", "ret_order_guard", "ret_return", "ret_return_line",
-            "ret_state_history", "ret_inbox", "ret_outbox", "ret_idempotency");
+            "ret_state_history", "ret_inbox", "ret_outbox", "ret_idempotency", "ret_exchange",
+            "ret_exchange_leg", "ret_exchange_event", "ret_exchange_idempotency");
         try (Connection connection = DriverManager.getConnection(url, username, password);
              Statement statement = connection.createStatement()) {
             for (String table : tables) {
@@ -64,6 +65,11 @@ class ReturnsMigrationMySqlIT {
                 "SELECT COUNT(DISTINCT perms) FROM sys_menu WHERE menu_id BETWEEN 9201000 AND 9201003")) {
                 assertThat(rows.next()).isTrue();
                 assertThat(rows.getInt(1)).isEqualTo(3);
+            }
+            try (var rows = statement.executeQuery(
+                "SELECT COUNT(DISTINCT perms) FROM sys_menu WHERE menu_id BETWEEN 9201004 AND 9201007")) {
+                assertThat(rows.next()).isTrue();
+                assertThat(rows.getInt(1)).isEqualTo(4);
             }
             try (var rows = statement.executeQuery("SELECT COUNT(*) FROM information_schema.tables "
                 + "WHERE table_schema=DATABASE() AND table_name LIKE 'syn\\_%'")) {

@@ -4,8 +4,13 @@ import '../../sale/application/pos_sale_application_service.dart';
 import '../../sale/application/pos_sale_controller.dart';
 import '../../sale/presentation/pos_checkout_page.dart';
 import '../../experience/domain/industry_experience_profile.dart';
+import '../../exchange/application/pos_exchange_application_service.dart';
+import '../../exchange/application/pos_exchange_controller.dart';
+import '../../exchange/domain/pos_exchange_models.dart';
+import '../../exchange/presentation/pos_exchange_page.dart';
 import '../../return_refund/application/pos_return_application_service.dart';
 import '../../return_refund/application/pos_return_controller.dart';
+import '../../return_refund/domain/pos_return_models.dart';
 import '../../return_refund/presentation/pos_return_page.dart';
 import '../../shift/application/pos_shift_application_service.dart';
 import '../../shift/presentation/pos_cash_management_page.dart';
@@ -19,6 +24,7 @@ final class PosSessionShell extends StatefulWidget {
     required this.sessionService,
     required this.saleService,
     required this.returnService,
+    required this.exchangeService,
     required this.shiftService,
     super.key,
   });
@@ -27,6 +33,7 @@ final class PosSessionShell extends StatefulWidget {
   final String industryTemplateVersion;
   final PosSaleApplicationService saleService;
   final PosReturnApplicationService returnService;
+  final PosExchangeApplicationService exchangeService;
   final PosShiftApplicationService shiftService;
 
   @override
@@ -447,6 +454,12 @@ class _PosSessionShellState extends State<PosSessionShell> {
                             sessionService: widget.sessionService,
                             returnService: widget.returnService,
                           ),
+                          onStartExchange:
+                              _state.hasPermission(PosPermission.exchangeRead) &&
+                                  _state.hasPermission(PosPermission.exchangeCreate)
+                              ? (submission) =>
+                                    _openExchangeCheckout(context, submission)
+                              : null,
                         ),
                       ),
                     ),
@@ -485,6 +498,39 @@ class _PosSessionShellState extends State<PosSessionShell> {
           ),
         ),
       );
+
+  Future<void> _openExchangeCheckout(
+    BuildContext context,
+    PosReturnSubmissionView originalReturn,
+  ) => Navigator.of(context).push(
+    MaterialPageRoute<void>(
+      builder: (_) => PosCheckoutPage(
+        controller: PosSaleController(
+          sessionService: widget.sessionService,
+          saleService: widget.saleService,
+        ),
+        onExchangeSettlement: (newSale) => Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => PosExchangePage(
+              controller: PosExchangeController(
+                service: widget.exchangeService,
+                source: PosExchangeSource(
+                  originalReturn: originalReturn,
+                  newSale: newSale,
+                ),
+              ),
+              allowApprove: _state.hasPermission(
+                PosPermission.exchangeApprove,
+              ),
+              allowRecover: _state.hasPermission(
+                PosPermission.exchangeRecover,
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
 }
 
 class _CenteredPanel extends StatelessWidget {

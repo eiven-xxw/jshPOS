@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jingshanghui.pos.returns.infrastructure.persistence.mapper.ExchangeMapper">
+    <select id="findIdempotency" resultType="com.jingshanghui.pos.returns.infrastructure.persistence.mapper.ExchangeMapper$IdempotencyRow">
+        SELECT request_sha256 AS requestSha256,exchange_id AS exchangeId
+        FROM ret_exchange_idempotency
+        WHERE tenant_id=#{tenantId} AND command_type=#{commandType} AND idempotency_key=#{idempotencyKey}
+    </select>
+    <insert id="insertIdempotency">
+        INSERT INTO ret_exchange_idempotency(tenant_id,command_type,idempotency_key,request_sha256,exchange_id,created_at)
+        VALUES(#{tenantId},#{commandType},#{idempotencyKey},#{requestSha256},#{exchangeId},#{createdAt})
+    </insert>
+    <insert id="insertExchange">
+        INSERT INTO ret_exchange(exchange_id,tenant_id,idempotency_key,request_sha256,return_id,original_order_id,
+          original_return_command_id,new_order_id,new_sale_command_id,store_id,terminal_id,business_date,currency,
+          expected_refund_amount_minor,expected_sale_receivable_minor,quote_fingerprint,
+          new_sale_plan_sha256,status,reason_code,requester_user_id,correlation_id,occurred_at,
+          record_version,updated_at)
+        VALUES(#{exchangeId},#{tenantId},#{idempotencyKey},#{requestSha256},#{returnId},#{originalOrderId},
+          #{originalReturnCommandId},#{newOrderId},#{newSaleCommandId},#{storeId},#{terminalId},#{businessDate},'CNY',
+          #{expectedRefundAmountMinor},#{expectedSaleReceivableMinor},#{quoteFingerprint},
+          #{newSalePlanSha256},'DRAFT',#{reasonCode},#{requesterUserId},#{correlationId},#{occurredAt},1,
+          #{occurredAt})
+    </insert>
+    <insert id="insertLeg">
+        INSERT INTO ret_exchange_leg(leg_id,tenant_id,exchange_id,leg_type,owner_code,owner_aggregate_id,
+          owner_command_id,expected_amount_minor,frozen_sha256,created_at)
+        VALUES(#{legId},#{tenantId},#{exchangeId},#{legType},#{ownerCode},#{ownerAggregateId},
+          #{ownerCommandId},#{expectedAmountMinor},#{frozenSha256},#{createdAt})
+    </insert>
+    <insert id="insertEvent">
+        INSERT INTO ret_exchange_event(event_id,tenant_id,exchange_id,from_status,to_status,owner_code,
+          owner_aggregate_id,owner_event_id,payload_sha256,aggregate_version,actor_user_id,reason_code,occurred_at)
+        VALUES(#{eventId},#{tenantId},#{exchangeId},#{fromStatus},#{toStatus},#{ownerCode},
+          #{ownerAggregateId},#{ownerEventId},#{payloadSha256},#{aggregateVersion},#{actorUserId},#{reasonCode},
+          #{occurredAt})
+    </insert>
+    <select id="findInbox" resultType="com.jingshanghui.pos.returns.infrastructure.persistence.mapper.ExchangeMapper$InboxRow">
+        SELECT event_id AS eventId,owner_code AS ownerCode,aggregate_id AS aggregateId,payload_sha256 AS payloadSha256
+        FROM ret_inbox WHERE tenant_id=#{tenantId} AND event_id=#{eventId}
+    </select>
+    <insert id="insertInbox">
+        INSERT INTO ret_inbox(event_id,tenant_id,owner_code,aggregate_id,payload_sha256,received_at)
+        VALUES(#{eventId},#{tenantId},#{ownerCode},#{aggregateId},#{payloadSha256},#{receivedAt})
+    </insert>
+    <insert id="insertOutbox">
+        INSERT INTO ret_outbox(event_id,tenant_id,event_type,aggregate_id,aggregate_version,correlation_id,
+          payload_json,payload_sha256,delivery_state,available_at)
+        VALUES(#{eventId},#{tenantId},#{eventType},#{aggregateId},#{aggregateVersion},#{correlationId},
+          CAST(#{payloadJson} AS JSON),#{payloadSha256},'PENDING',#{availableAt})
+    </insert>
+    <sql id="exchangeColumns">
+        exchange_id AS exchangeId,request_sha256 AS requestSha256,return_id AS returnId,
+        original_order_id AS originalOrderId,original_return_command_id AS originalReturnCommandId,
+        new_order_id AS newOrderId,new_sale_command_id AS newSaleCommandId,store_id AS storeId,
+        terminal_id AS terminalId,business_date AS businessDate,currency,
+        expected_refund_amount_minor AS expectedRefundAmountMinor,
+        actual_refund_amount_minor AS actualRefundAmountMinor,
+        expected_sale_receivable_minor AS expectedSaleReceivableMinor,
+        actual_sale_receivable_minor AS actualSaleReceivableMinor,quote_fingerprint AS quoteFingerprint,
+        new_sale_plan_sha256 AS newSalePlanSha256,
+        actual_new_order_snapshot_sha256 AS actualNewOrderSnapshotSha256,status,
+        requester_user_id AS requesterUserId,approver_user_id AS approverUserId,reason_code AS reasonCode,
+        correlation_id AS correlationId,record_version AS recordVersion,updated_at AS updatedAt
+    </sql>
+    <select id="findExchange" resultType="com.jingshanghui.pos.returns.infrastructure.persistence.mapper.ExchangeMapper$ExchangeRow">
+        SELECT <include refid="exchangeColumns"/> FROM ret_exchange
+        WHERE tenant_id=#{tenantId} AND exchange_id=#{exchangeId}
+    </select>
+    <select id="lockExchange" resultType="com.jingshanghui.pos.returns.infrastructure.persistence.mapper.ExchangeMapper$ExchangeRow">
+        SELECT <include refid="exchangeColumns"/> FROM ret_exchange
+        WHERE tenant_id=#{tenantId} AND exchange_id=#{exchangeId}
+        FOR UPDATE
+    </select>
+    <select id="listLegs" resultType="com.jingshanghui.pos.returns.infrastructure.persistence.mapper.ExchangeMapper$LegRow">
+        SELECT leg_id AS legId,leg_type AS legType,owner_code AS ownerCode,
+               owner_aggregate_id AS ownerAggregateId,owner_command_id AS ownerCommandId,
+               expected_amount_minor AS expectedAmountMinor,frozen_sha256 AS frozenSha256
+        FROM ret_exchange_leg
+        WHERE tenant_id=#{tenantId} AND exchange_id=#{exchangeId}
+        ORDER BY CASE leg_type WHEN 'RETURN' THEN 1 ELSE 2 END,leg_id
+    </select>
+    <update id="advance">
+        UPDATE ret_exchange SET status=#{nextStatus},approver_user_id=COALESCE(approver_user_id,#{approverUserId}),
+          actual_refund_amount_minor=COALESCE(actual_refund_amount_minor,#{actualRefundAmountMinor}),
+          actual_sale_receivable_minor=COALESCE(actual_sale_receivable_minor,#{actualSaleReceivableMinor}),
+          actual_new_order_snapshot_sha256=COALESCE(actual_new_order_snapshot_sha256,#{actualNewOrderSnapshotSha256}),
+          record_version=record_version+1,updated_at=#{updatedAt}
+        WHERE tenant_id=#{tenantId} AND exchange_id=#{exchangeId} AND status=#{expectedStatus}
+          AND record_version=#{expectedVersion}
+    </update>
+</mapper>

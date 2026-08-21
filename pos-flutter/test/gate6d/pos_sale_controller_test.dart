@@ -315,6 +315,7 @@ final product = const PosProductView(
 );
 
 final settlement = PosCashSettlementView(
+  commandRef: '01K2A000000000000000000050',
   orderRef: 'order:001',
   localOrderNo: 'POS-20260820-0001',
   receivableAmountMinor: 1200,
@@ -322,6 +323,10 @@ final settlement = PosCashSettlementView(
   changeAmountMinor: 800,
   snapshotDigest:
       'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+  quoteFingerprint:
+      'cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
+  settlementFingerprint:
+      'dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd',
   outboxEventRef: 'event:001',
   completedAt: fixtureNow,
   duplicate: false,

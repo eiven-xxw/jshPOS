@@ -10,7 +10,7 @@ public final class ReturnViews {
     private ReturnViews() { }
 
     /** 可恢复 Saga 当前检查点。 */
-    public record ReturnView(String returnId, String orderId, Long storeId, String terminalId,
+    public record ReturnView(String returnId, String requestCommandId, String orderId, Long storeId, String terminalId,
                              String refundShiftId, String warehouseId, LocalDate businessDate,
                              String settlementKind, String paymentId, String originalCashPaymentId,
                              String promotionSnapshotId, String promotionSnapshotSha256, String status,

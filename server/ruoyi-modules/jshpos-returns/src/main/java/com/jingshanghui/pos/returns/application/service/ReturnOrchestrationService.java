@@ -162,7 +162,7 @@ public class ReturnOrchestrationService {
         order.lines().forEach(line -> source.put(line.lineId(), line));
         LocalDateTime at = utc(command.occurredAt());
         mapper.insertReturn(new ReturnWrite(command.returnId(), principal.tenantId(), command.idempotencyKey(),
-            requestHash, command.orderId(), command.storeId(), command.terminalId(), command.refundShiftId(),
+            requestHash, command.commandId(), command.orderId(), command.storeId(), command.terminalId(), command.refundShiftId(),
             command.warehouseId(), command.businessDate(), normalized.kind().name(), command.paymentId(),
             order.cashPaymentId(), order.promotionSnapshotId(), order.promotionSnapshotSha256(),
             command.reasonCode(), principal.userId(), command.correlationId(), at));
@@ -550,7 +550,7 @@ public class ReturnOrchestrationService {
                 line.requestedQuantity(), line.grossAmountMinor(), line.recoveredDiscountMinor(),
                 line.refundableAmountMinor(), line.cumulativeQuantity(), line.cumulativePayableAmountMinor()))
             .toList();
-        return new ReturnView(row.returnId(), row.orderId(), row.storeId(), row.terminalId(), row.refundShiftId(),
+        return new ReturnView(row.returnId(), row.requestCommandId(), row.orderId(), row.storeId(), row.terminalId(), row.refundShiftId(),
             row.warehouseId(), row.businessDate(), row.settlementKind(), row.paymentId(), row.originalCashPaymentId(),
             row.promotionSnapshotId(), row.promotionSnapshotSha256(), row.status(), row.grossAmountMinor(),
             row.recoveredDiscountMinor(), row.refundableAmountMinor(), row.promotionEventId(), row.paymentEventId(),

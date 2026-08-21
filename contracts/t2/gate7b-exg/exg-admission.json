@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "1.0",
+  "gate": "T2-GATE7B-SPRINT-S20B-EXG001-RUNTIME",
+  "baselineCommit": "4d184a1cf5998c91d9cc9db359a4d5ed0d16e0c3",
+  "branch": "t2/gate7b-sprint20b-exg-runtime",
+  "decision": "CONDITIONAL_GO_EXG001_ONLY",
+  "requirement": {
+    "id": "T2-EXG-001",
+    "status": "IN_PROGRESS",
+    "owner": "ReturnOrchestration",
+    "implementation": "ORIGINAL_RETURN_REFUND_PLUS_NEW_SALE_PLUS_APPEND_ONLY_LINK"
+  },
+  "dataAccess": [
+    {"object": "ret_exchange", "strategy": "CONTROLLED_WRITE", "sqlMode": "XML"},
+    {"object": "ret_exchange_leg", "strategy": "APPEND_ONLY", "sqlMode": "XML"},
+    {"object": "ret_exchange_event", "strategy": "APPEND_ONLY", "sqlMode": "XML"},
+    {"object": "local_exchange_command", "strategy": "CONTROLLED_STATUS_PROJECTION", "sqlMode": "SQL"},
+    {"object": "local_exchange_event", "strategy": "APPEND_ONLY", "sqlMode": "SQL"}
+  ],
+  "preservedStates": {
+    "T2-PAY-004": "DRAFT",
+    "T2-PAY-002": "BLOCKED",
+    "T2-HWD-001": "BLOCKED",
+    "T2-PRN-001": "BLOCKED",
+    "T2-PAR-001": "BLOCKED",
+    "T2-UAT-001": "DRAFT",
+    "T2-REL-001": "DRAFT",
+    "T2-JSH-001": "DEFERRED",
+    "T2-LIC-001": "DEFERRED"
+  },
+  "externalExecution": {
+    "providerNetworkCalls": 0,
+    "realFundsTransactions": 0,
+    "realDeviceCommands": 0,
+    "realPeripheralCommands": 0,
+    "partnerContacts": 0,
+    "onsitePilots": 0,
+    "fullAlphaRuns": 0,
+    "productionDeployments": 0,
+    "commercialClaimAllowed": false
+  },
+  "nextRequirement": {
+    "id": "T2-PAY-004",
+    "status": "DRAFT",
+    "automaticStartAllowed": false,
+    "requiresExgIndependentVerifiedAndSponsorConfirmation": true
+  }
+}

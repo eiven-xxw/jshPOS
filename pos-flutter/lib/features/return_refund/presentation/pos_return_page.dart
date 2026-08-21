@@ -6,9 +6,10 @@ import '../domain/pos_return_models.dart';
 
 /// POS-009 原单退货退款正式页面；只向 Controller 发送用户意图。
 final class PosReturnPage extends StatefulWidget {
-  const PosReturnPage({required this.controller, super.key});
+  const PosReturnPage({required this.controller, this.onStartExchange, super.key});
 
   final PosReturnController controller;
+  final ValueChanged<PosReturnSubmissionView>? onStartExchange;
 
   @override
   State<PosReturnPage> createState() => _PosReturnPageState();
@@ -442,6 +443,17 @@ class _PosReturnPageState extends State<PosReturnPage> {
                     : () => _run(widget.controller.refreshStatus()),
                 icon: const Icon(Icons.refresh),
                 label: const Text('查询原申请状态'),
+              ),
+            ),
+          if (submission.status == PosReturnSagaStatus.completed &&
+              widget.onStartExchange != null)
+            SizedBox(
+              height: 52,
+              child: FilledButton.icon(
+                key: const Key('startExchangeSale'),
+                onPressed: () => widget.onStartExchange!(submission),
+                icon: const Icon(Icons.swap_horiz),
+                label: const Text('继续选择换购商品'),
               ),
             ),
         ],

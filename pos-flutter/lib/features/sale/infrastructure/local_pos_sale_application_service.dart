@@ -357,8 +357,7 @@ final class LocalPosSaleApplicationService
         .toList(growable: false);
     final occurredAt = _now().toUtc();
     try {
-      final result = checkout.completePromotedCashSale(
-        PromotedCashSaleCommand(
+      final command = PromotedCashSaleCommand(
           commandId: ulids.next(),
           idempotencyKey: idempotencyKey,
           basket: basket,
@@ -380,18 +379,21 @@ final class LocalPosSaleApplicationService
           manualEventRefs: _manualEvents,
           tenderedAmountMinor: _parseYuan(tenderedAmount),
           occurredAt: occurredAt,
-        ),
-      );
+        );
+      final result = checkout.completePromotedCashSale(command);
       final localOrderNo = basket.localOrderNo;
       _basket = null;
       _clearQuote();
       return PosCashSettlementView(
+        commandRef: command.commandId,
         orderRef: result.orderId,
         localOrderNo: localOrderNo,
         receivableAmountMinor: result.receivableAmountMinor,
         tenderedAmountMinor: result.tenderedAmountMinor,
         changeAmountMinor: result.changeAmountMinor,
         snapshotDigest: result.orderSnapshotHash,
+        quoteFingerprint: command.quoteFingerprint,
+        settlementFingerprint: command.settlementFingerprint,
         outboxEventRef: result.outboxEventId,
         completedAt: occurredAt,
         duplicate: result.duplicate,

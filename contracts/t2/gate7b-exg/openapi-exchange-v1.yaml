@@ -1,0 +1,212 @@
+openapi: 3.1.0
+info:
+  title: 鲸熵汇 T2-EXG-001 基础换货编排 API
+  version: 1.0.0
+  description: >-
+    只编排原单退货退款、新销售和只追加关联。租户、操作者与审批人均来自
+    服务端可信上下文；接口不创建第三笔资金、库存、促销或订单事实。
+x-requirement-id: T2-EXG-001
+x-runtime-admission: IN_PROGRESS
+x-provider-network-calls: 0
+servers:
+  - url: /api/v1
+security:
+  - bearerAuth: []
+paths:
+  /pos/exchanges:
+    post:
+      operationId: createExchange
+      summary: 原子冻结换货头、RETURN/SALE 两条腿、幂等、审计和 Outbox
+      x-permission: pos:exchange:create
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateExchange' }
+      responses:
+        '200': { $ref: '#/components/responses/ExchangeSuccess' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /pos/exchanges/{exchangeId}:
+    get:
+      operationId: getExchange
+      summary: 查询可信租户和门店范围内的换货检查点
+      x-permission: pos:exchange:read
+      parameters:
+        - $ref: '#/components/parameters/ExchangeId'
+      responses:
+        '200': { $ref: '#/components/responses/ExchangeSuccess' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /pos/exchanges/{exchangeId}/approve:
+    post:
+      operationId: approveExchange
+      summary: 由非申请人审批冻结换货
+      x-permission: pos:exchange:approve
+      parameters:
+        - $ref: '#/components/parameters/ExchangeId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ApproveExchange' }
+      responses:
+        '200': { $ref: '#/components/responses/ExchangeSuccess' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /pos/exchanges/{exchangeId}/observe:
+    post:
+      operationId: observeExchange
+      summary: 仅查询或推进原退货、新销售命令的已有检查点
+      description: UNKNOWN 时禁止生成替代退款或销售命令。
+      x-permission: pos:exchange:read
+      parameters:
+        - $ref: '#/components/parameters/ExchangeId'
+      responses:
+        '200': { $ref: '#/components/responses/ExchangeSuccess' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /pos/exchanges/{exchangeId}/recover:
+    post:
+      operationId: recoverExchange
+      summary: 受权恢复已有 RETURN 或 SALE 检查点
+      x-permission: pos:exchange:recover
+      parameters:
+        - $ref: '#/components/parameters/ExchangeId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RecoverExchange' }
+      responses:
+        '200': { $ref: '#/components/responses/ExchangeSuccess' }
+        '409': { $ref: '#/components/responses/Conflict' }
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
+  parameters:
+    ExchangeId:
+      name: exchangeId
+      in: path
+      required: true
+      schema: { type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$' }
+  schemas:
+    CreateExchange:
+      type: object
+      additionalProperties: false
+      required: [commandId, idempotencyKey, exchangeId, returnId, originalOrderId,
+        originalReturnCommandId, newOrderId, newSaleCommandId, storeId, terminalId,
+        businessDate, expectedRefundAmountMinor, expectedSaleReceivableMinor,
+        quoteFingerprint, newSalePlanSha256, reasonCode, correlationId, occurredAt]
+      properties:
+        commandId: { $ref: '#/components/schemas/Ulid' }
+        idempotencyKey: { type: string, minLength: 1, maxLength: 96 }
+        exchangeId: { $ref: '#/components/schemas/Ulid' }
+        returnId: { $ref: '#/components/schemas/Ulid' }
+        originalOrderId: { $ref: '#/components/schemas/Ulid' }
+        originalReturnCommandId: { $ref: '#/components/schemas/Ulid' }
+        newOrderId: { $ref: '#/components/schemas/Ulid' }
+        newSaleCommandId: { $ref: '#/components/schemas/Ulid' }
+        storeId: { type: integer, minimum: 1 }
+        terminalId: { $ref: '#/components/schemas/Ulid' }
+        businessDate: { type: string, format: date }
+        expectedRefundAmountMinor: { type: integer, minimum: 1 }
+        expectedSaleReceivableMinor: { type: integer, minimum: 1 }
+        quoteFingerprint: { $ref: '#/components/schemas/Sha256' }
+        newSalePlanSha256: { $ref: '#/components/schemas/Sha256' }
+        reasonCode: { type: string, pattern: '^[A-Z0-9_]{2,32}$' }
+        correlationId: { $ref: '#/components/schemas/Ulid' }
+        occurredAt: { type: string, format: date-time }
+    ApproveExchange:
+      type: object
+      additionalProperties: false
+      required: [commandId, reasonCode, correlationId, occurredAt]
+      properties:
+        commandId: { $ref: '#/components/schemas/Ulid' }
+        reasonCode: { type: string, pattern: '^[A-Z0-9_]{2,32}$' }
+        correlationId: { $ref: '#/components/schemas/Ulid' }
+        occurredAt: { type: string, format: date-time }
+    RecoverExchange:
+      type: object
+      additionalProperties: false
+      required: [commandId, targetLeg, reasonCode, correlationId, occurredAt]
+      properties:
+        commandId: { $ref: '#/components/schemas/Ulid' }
+        targetLeg: { type: string, enum: [RETURN, SALE] }
+        reasonCode: { type: string, pattern: '^[A-Z0-9_]{2,32}$' }
+        correlationId: { $ref: '#/components/schemas/Ulid' }
+        occurredAt: { type: string, format: date-time }
+    ExchangeLeg:
+      type: object
+      additionalProperties: false
+      required: [legId, legType, ownerCode, ownerAggregateId, ownerCommandId,
+        expectedAmountMinor, frozenSha256]
+      properties:
+        legId: { $ref: '#/components/schemas/Ulid' }
+        legType: { type: string, enum: [RETURN, SALE] }
+        ownerCode: { type: string, enum: [RETURN, ORDER] }
+        ownerAggregateId: { $ref: '#/components/schemas/Ulid' }
+        ownerCommandId: { $ref: '#/components/schemas/Ulid' }
+        expectedAmountMinor: { type: integer, minimum: 1 }
+        frozenSha256: { $ref: '#/components/schemas/Sha256' }
+    ExchangeView:
+      type: object
+      additionalProperties: false
+      required: [exchangeId, returnId, originalOrderId, originalReturnCommandId,
+        newOrderId, newSaleCommandId, storeId, terminalId, businessDate, currency,
+        expectedRefundAmountMinor, expectedSaleReceivableMinor, displayDifferenceMinor,
+        quoteFingerprint, newSalePlanSha256, status, requesterUserId, reasonCode,
+        correlationId, recordVersion, legs, updatedAt, duplicate]
+      properties:
+        exchangeId: { $ref: '#/components/schemas/Ulid' }
+        returnId: { $ref: '#/components/schemas/Ulid' }
+        originalOrderId: { $ref: '#/components/schemas/Ulid' }
+        originalReturnCommandId: { $ref: '#/components/schemas/Ulid' }
+        newOrderId: { $ref: '#/components/schemas/Ulid' }
+        newSaleCommandId: { $ref: '#/components/schemas/Ulid' }
+        storeId: { type: integer }
+        terminalId: { $ref: '#/components/schemas/Ulid' }
+        businessDate: { type: string, format: date }
+        currency: { type: string, const: CNY }
+        expectedRefundAmountMinor: { type: integer }
+        actualRefundAmountMinor: { type: [integer, 'null'] }
+        expectedSaleReceivableMinor: { type: integer }
+        actualSaleReceivableMinor: { type: [integer, 'null'] }
+        displayDifferenceMinor: { type: integer, description: 仅展示，不是资金事实 }
+        quoteFingerprint: { $ref: '#/components/schemas/Sha256' }
+        newSalePlanSha256: { $ref: '#/components/schemas/Sha256' }
+        actualNewOrderSnapshotSha256:
+          oneOf: [{ $ref: '#/components/schemas/Sha256' }, { type: 'null' }]
+        status:
+          type: string
+          enum: [DRAFT, APPROVED, RETURN_PENDING, RETURN_UNKNOWN, RETURN_COMPLETED,
+            SALE_PENDING, SALE_UNKNOWN, COMPLETED, FAILED, MANUAL_RECOVERY_REQUIRED, CLOSED]
+        requesterUserId: { type: integer }
+        approverUserId: { type: [integer, 'null'] }
+        reasonCode: { type: string }
+        correlationId: { $ref: '#/components/schemas/Ulid' }
+        recordVersion: { type: integer, minimum: 1 }
+        legs: { type: array, minItems: 2, maxItems: 2, items: { $ref: '#/components/schemas/ExchangeLeg' } }
+        updatedAt: { type: string, format: date-time }
+        duplicate: { type: boolean }
+    Envelope:
+      type: object
+      required: [code, msg]
+      properties:
+        code: { type: integer }
+        msg: { type: string }
+        data: { $ref: '#/components/schemas/ExchangeView' }
+    Error:
+      type: object
+      required: [code, msg]
+      properties:
+        code: { type: integer }
+        msg: { type: string }
+    Ulid: { type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$' }
+    Sha256: { type: string, pattern: '^[a-f0-9]{64}$' }
+  responses:
+    ExchangeSuccess:
+      description: 当前换货权威检查点
+      content: { application/json: { schema: { $ref: '#/components/schemas/Envelope' } } }
+    Conflict:
+      description: 状态、内容、金额、租户或 Owner 事实冲突
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    NotFound:
+      description: 不存在或不在可信范围内
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }

@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.*;
 
-/** Gate 6G MySQL 8.4 空库迁移、元数据、权限、冻结身份、状态机和只追加保护集成测试。 */
+/** Gate 7B MySQL 8.4 空库迁移、元数据、权限、冻结身份、状态机和只追加保护集成测试。 */
 class ReleaseMigrationMySqlIT {
     private final String url = required("GATE6B_MYSQL_JDBC_URL");
     private final String username = required("GATE6B_MYSQL_USERNAME");
@@ -26,7 +26,7 @@ class ReleaseMigrationMySqlIT {
             .collect(Collectors.toSet());
         assertThat(applied.remove("0")).isTrue();
         assertThat(applied).containsExactlyInAnyOrderElementsOf(expected);
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("202608210054");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("202608220056");
         assertThat(flyway.migrate().migrationsExecuted).isZero();
         flyway.validate();
         assertGate6GDataMetadata();
@@ -53,7 +53,7 @@ class ReleaseMigrationMySqlIT {
                 }
             }
         }
-        assertThat(tables).hasSize(165);
+        assertThat(tables).hasSize(169);
         try (Connection c = DriverManager.getConnection(url, username, password);
              PreparedStatement query = c.prepareStatement("SELECT t.table_name FROM information_schema.tables t LEFT JOIN information_schema.columns c ON c.table_schema=t.table_schema AND c.table_name=t.table_name AND c.column_name='tenant_id' WHERE t.table_schema=DATABASE() AND t.table_type='BASE TABLE' AND t.table_name NOT IN ('sys_menu','jshpos_flyway_schema_history') AND c.column_name IS NULL ORDER BY t.table_name");
              ResultSet rows = query.executeQuery()) {
@@ -148,6 +148,7 @@ class ReleaseMigrationMySqlIT {
         versions.add("202608180038"); versions.add("202608180039");
         versions.add("202608200040"); versions.add("202608200041"); versions.add("202608200042");
         for(int v=43;v<=54;v++) versions.add("20260821"+String.format("%04d",v));
+        versions.add("202608220055"); versions.add("202608220056");
         return versions;
     }
     private static String required(String name) { String value=System.getenv(name); if(value==null||value.isBlank()) throw new IllegalStateException(name+" must be provided by CI"); return value; }

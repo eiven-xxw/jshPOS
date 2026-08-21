@@ -19,11 +19,11 @@
         VALUES(#{tenantId},#{commandType},#{idempotencyKey},#{requestSha256},#{aggregateId},#{createdAt})
     </insert>
     <insert id="insertReturn">
-        INSERT INTO ret_return(return_id,tenant_id,idempotency_key,request_sha256,order_id,store_id,terminal_id,
+        INSERT INTO ret_return(return_id,tenant_id,idempotency_key,request_sha256,request_command_id,order_id,store_id,terminal_id,
           refund_shift_id,warehouse_id,business_date,settlement_kind,payment_id,original_cash_payment_id,
           promotion_snapshot_id,promotion_snapshot_sha256,status,reason_code,requester_user_id,correlation_id,
           occurred_at,record_version)
-        VALUES(#{returnId},#{tenantId},#{idempotencyKey},#{requestSha256},#{orderId},#{storeId},#{terminalId},
+        VALUES(#{returnId},#{tenantId},#{idempotencyKey},#{requestSha256},#{requestCommandId},#{orderId},#{storeId},#{terminalId},
           #{refundShiftId},#{warehouseId},#{businessDate},#{settlementKind},#{paymentId},#{originalCashPaymentId},
           #{promotionSnapshotId},#{promotionSnapshotSha256},'PENDING_APPROVAL',#{reasonCode},#{requesterUserId},
           #{correlationId},#{occurredAt},1)
@@ -33,7 +33,8 @@
         VALUES(#{returnLineId},#{tenantId},#{returnId},#{orderLineId},#{skuId},#{unitId},#{requestedQuantity})
     </insert>
     <sql id="returnColumns">
-        return_id AS returnId,request_sha256 AS requestSha256,order_id AS orderId,store_id AS storeId,
+        return_id AS returnId,request_sha256 AS requestSha256,request_command_id AS requestCommandId,
+        order_id AS orderId,store_id AS storeId,
         terminal_id AS terminalId,refund_shift_id AS refundShiftId,warehouse_id AS warehouseId,
         business_date AS businessDate,settlement_kind AS settlementKind,payment_id AS paymentId,
         original_cash_payment_id AS originalCashPaymentId,promotion_snapshot_id AS promotionSnapshotId,
