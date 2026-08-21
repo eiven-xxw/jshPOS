@@ -36,6 +36,14 @@
 - 18 项只代表经仓库和权威文档确认的内部产品候选，不代表商业需求已经最终批准；
 - Gate 7A 不运行 Provider、真实设备、伙伴、完整 Alpha 或生产环境，不能产生相应证据。
 
-## 5. 待 CI 回填
+## 5. 候选 CI 证据
 
-候选提交、GitHub Run、Artifact ID、Artifact SHA-256、Ubuntu/Windows 结果与最终封存提交将在流水线结束后写入最终封板说明。回填不得改变 RTM 业务状态或证据等级。
+| 字段 | 值 |
+|---|---|
+| 候选提交 | `526ff3c1bd45e6d27695186e918065a15dd7034d` |
+| GitHub Actions Run | `32484421509` |
+| Jobs | Ubuntu、Windows、范围边界、证据索引全部 `success` |
+| 最终证据 Artifact | `9447302706` |
+| Artifact SHA-256 | `a53fd230990710fad8887b0ae6789f9e26fe4c031ab81faa298a33ac5e82d5be` |
+
+证据回填后的治理闭环提交必须复跑同一流水线；最终提交、Run 和 Artifact 由最终交付说明记录。该复跑不得改变 RTM 业务状态或证据等级。

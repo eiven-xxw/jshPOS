@@ -16,6 +16,9 @@
 | 推荐下一批 | `T2-POS-010 → T2-POS-011 → T2-ORD-004` |
 | 外部执行 | 全部为 0 |
 | 最高证据等级 | `STATIC_GOVERNANCE_AND_REPOSITORY_AUDIT` |
+| 候选提交 | `526ff3c1bd45e6d27695186e918065a15dd7034d` |
+| 候选 CI | GitHub Actions Run `32484421509` 四 Job 全绿 |
+| 候选证据 | Artifact `9447302706`；SHA-256 `a53fd230990710fad8887b0ae6789f9e26fe4c031ab81faa298a33ac5e82d5be` |
 
 ## 2. 已完成交付
 
@@ -73,6 +76,8 @@
 - 修改已发布迁移、降低门禁或以 Fake 解除外部阻断；
 - 启动换货、组合支付或后续 Gate 的未授权实现。
 
-## 7. 待回填封板证据
+## 7. 封板证据
 
-Gate 7A 候选提交、GitHub Actions Run、Artifact ID、SHA-256 与最终封存提交在 CI 完成后回填证据索引和最终交付说明。项目发起人确认前不得自动启动 Gate 7B。
+候选提交 `526ff3c1bd45e6d27695186e918065a15dd7034d` 的 GitHub Actions Run `32484421509` 已完成 `governance-ubuntu`、`governance-windows`、`scope-boundary` 和 `evidence` 四个 Job，结论均为 `success`。最终证据 Artifact 为 `9447302706`，GitHub 记录的 SHA-256 为 `a53fd230990710fad8887b0ae6789f9e26fe4c031ab81faa298a33ac5e82d5be`。
+
+回填证据后的治理闭环提交必须再运行同一流水线；最终闭环提交与 Run 由交付说明记录。项目发起人确认前不得自动启动 Gate 7B。

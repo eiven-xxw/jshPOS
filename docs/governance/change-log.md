@@ -187,5 +187,6 @@
 | CR-T2G6I-003 | 2026-08-21 | PREPARED_NO_GO_AWAITING_CONFIRMATION | 候选提交 `87c5ac10bd89052644e05589a0942fde3a8e80de` 的 GitHub Actions Run `32478124733` 在 Ubuntu、Windows、离线边界和证据索引四个 Job 首次全绿；最终证据 Artifact `9445051059`，摘要 `d01a378627f50905a8ff7ef4f1d91c669e4eae418cae6a328053de0458f13edb` | T2-PAY-002、T2-HWD-001、T2-PRN-001、T2-PAR-001、T2-LIC-001、T2-UAT-001、T2-REL-001、ADR-041 | 仅证明STATIC_GOVERNANCE_FREEZE和零执行边界可重复；不解除任何BLOCKED/DEFERRED/DRAFT，不构成完整Alpha或发布准入 |
 | CR-T2G7A-001 | 2026-08-21 | APPROVED_AUDIT_ONLY | 项目发起人授权从 `d66c252587561428def95058d67bc830e391a9ab` 启动 Gate 7A；只做商业V1既有能力审计、原子RTM、契约、验收和Gate7B至7E计划 | 64项既有ACCEPTED需求、18项Gate7候选、ADR-042 | 不新增正式运行时；外部四项BLOCKED、UAT/REL DRAFT、JSH/LIC DEFERRED且全部外部执行为0 |
 | CR-T2G7A-002 | 2026-08-21 | AUDIT_PREPARED_AWAITING_CI | 复核64项已接受能力与15个Owner且硬失败为0；确认18项原子差距全部登记DRAFT并冻结Gate7B至7E依赖和Gate7B第一批建议 | T2-POS-010至T2-E2E-004、ADR-042 | 等待Ubuntu、Windows、范围边界和证据索引门禁；不得自动启动Gate7B或批量提升状态 |
+| CR-T2G7A-003 | 2026-08-21 | CANDIDATE_CI_GREEN_AWAITING_CONFIRMATION | 候选提交 `526ff3c1bd45e6d27695186e918065a15dd7034d` 的 GitHub Actions Run `32484421509` 四Job首次全绿；证据Artifact `9447302706` 摘要 `a53fd230990710fad8887b0ae6789f9e26fe4c031ab81faa298a33ac5e82d5be` | T2-POS-010至T2-E2E-004、ADR-042 | 仅STATIC治理与仓库审计；回填后复跑闭环CI且等待发起人确认；不得自动启动Gate7B |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。

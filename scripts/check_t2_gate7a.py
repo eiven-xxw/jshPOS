@@ -91,6 +91,13 @@ def validate_contract(rows: dict[str, dict[str, str]]) -> dict:
     ):
         fail(external.get(field) == 0, f"external execution must remain zero: {field}")
     fail(external.get("commercialClaimAllowed") is False, "commercial claim must remain forbidden")
+    candidate = contract.get("candidateEvidence", {})
+    fail(candidate.get("commit") == "526ff3c1bd45e6d27695186e918065a15dd7034d" and
+         candidate.get("workflowRun") == 32484421509 and candidate.get("workflowConclusion") == "success" and
+         candidate.get("evidenceArtifactId") == 9447302706 and
+         candidate.get("evidenceArtifactSha256") ==
+         "a53fd230990710fad8887b0ae6789f9e26fe4c031ab81faa298a33ac5e82d5be",
+         "candidate CI evidence drift")
     next_gate = contract.get("nextGate", {})
     fail(next_gate.get("automaticStartAllowed") is False and
          next_gate.get("firstBatch") == EXPECTED_GATE_ORDER["Gate7B"][:3], "next gate boundary drift")

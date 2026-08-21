@@ -39,6 +39,13 @@
     "productionDeployments": 0,
     "commercialClaimAllowed": false
   },
+  "candidateEvidence": {
+    "commit": "526ff3c1bd45e6d27695186e918065a15dd7034d",
+    "workflowRun": 32484421509,
+    "workflowConclusion": "success",
+    "evidenceArtifactId": 9447302706,
+    "evidenceArtifactSha256": "a53fd230990710fad8887b0ae6789f9e26fe4c031ab81faa298a33ac5e82d5be"
+  },
   "nextGate": {
     "name": "T2 Gate 7B / Sprint S20",
     "automaticStartAllowed": false,
