@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jingshanghui.example/contracts/t2/gate7b-s20b/tender-plan-events-v1.schema.json",
+  "title": "Gate 7B second batch provider-neutral tender plan event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "eventType", "eventId", "tenderPlanId", "tenantId", "storeId", "orderId", "status", "receivableAmountMinor", "succeededAmountMinor", "unresolvedAmountMinor", "remainingAmountMinor", "currency", "planSha256", "correlationId", "causationId", "aggregateVersion", "allocations", "occurredAt"],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "eventType": { "enum": ["tender.plan-frozen.v1", "tender.allocation-processing.v1", "tender.allocation-unknown.v1", "tender.allocation-succeeded.v1", "tender.plan-fully-paid.v1", "tender.plan-recovery-required.v1"] },
+    "eventId": { "$ref": "#/$defs/ulid" },
+    "tenderPlanId": { "$ref": "#/$defs/ulid" },
+    "tenantId": { "type": "string", "pattern": "^[0-9A-Za-z_-]{1,20}$" },
+    "storeId": { "type": "string", "pattern": "^[1-9][0-9]{0,18}$" },
+    "orderId": { "$ref": "#/$defs/ulid" },
+    "status": { "enum": ["DRAFT", "FROZEN", "COLLECTING", "UNKNOWN", "PAID", "FAILED", "CANCELLED", "MANUAL_RECOVERY_REQUIRED"] },
+    "receivableAmountMinor": { "type": "integer", "minimum": 0 },
+    "succeededAmountMinor": { "type": "integer", "minimum": 0 },
+    "unresolvedAmountMinor": { "type": "integer", "minimum": 0 },
+    "remainingAmountMinor": { "type": "integer", "minimum": 0 },
+    "currency": { "const": "CNY" },
+    "planSha256": { "$ref": "#/$defs/sha256" },
+    "correlationId": { "$ref": "#/$defs/ulid" },
+    "causationId": { "$ref": "#/$defs/ulid" },
+    "aggregateVersion": { "type": "integer", "minimum": 1 },
+    "allocations": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["allocationId", "sequence", "tenderKind", "plannedAmountMinor", "status", "externalExecutionState"],
+        "properties": {
+          "allocationId": { "$ref": "#/$defs/ulid" },
+          "sequence": { "type": "integer", "minimum": 1, "maximum": 8 },
+          "tenderKind": { "enum": ["CASH", "ELECTRONIC"] },
+          "plannedAmountMinor": { "type": "integer", "minimum": 1 },
+          "status": { "enum": ["PLANNED", "PROCESSING", "UNKNOWN", "SUCCEEDED", "FAILED", "CANCELLED"] },
+          "paymentId": { "oneOf": [{ "$ref": "#/$defs/ulid" }, { "type": "null" }] },
+          "cashTenderId": { "oneOf": [{ "$ref": "#/$defs/ulid" }, { "type": "null" }] },
+          "externalExecutionState": { "enum": ["NOT_APPLICABLE", "BLOCKED_EXTERNAL"] }
+        }
+      }
+    },
+    "occurredAt": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "ulid": { "type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$" },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

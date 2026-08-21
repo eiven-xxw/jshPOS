@@ -26,6 +26,7 @@ ALLOWED_STAGES = {
     ("VERIFIED", "VERIFIED", "DRAFT"): "POS011_INDEPENDENT_VERIFIED",
     ("VERIFIED", "VERIFIED", "IN_PROGRESS"): "ORD004_IMPLEMENTATION",
     ("VERIFIED", "VERIFIED", "VERIFIED"): "FIRST_BATCH_VERIFIED",
+    ("ACCEPTED", "ACCEPTED", "ACCEPTED"): "FIRST_BATCH_ACCEPTED",
 }
 
 
@@ -104,7 +105,7 @@ def validate() -> dict:
         fail(not any(any(version in item for version in forbidden) for item in changed),
              "POS010 未验证前不得预建 POS011/ORD004 迁移")
     if stage in {"POS011_IMPLEMENTATION", "POS011_INDEPENDENT_VERIFIED",
-                 "ORD004_IMPLEMENTATION", "FIRST_BATCH_VERIFIED"}:
+                 "ORD004_IMPLEMENTATION", "FIRST_BATCH_VERIFIED", "FIRST_BATCH_ACCEPTED"}:
         required_pos011 = [
             "docs/t2-gate7b/04_T2_POS011设计准入.md",
             "contracts/t2/gate7b/receipt-events-v1.schema.json",
@@ -125,7 +126,7 @@ def validate() -> dict:
     if stage in {"POS011_IMPLEMENTATION", "POS011_INDEPENDENT_VERIFIED"}:
         fail(not any("V202608210054" in item for item in changed),
              "POS011 未验证前不得预建 ORD004 迁移")
-    if stage in {"ORD004_IMPLEMENTATION", "FIRST_BATCH_VERIFIED"}:
+    if stage in {"ORD004_IMPLEMENTATION", "FIRST_BATCH_VERIFIED", "FIRST_BATCH_ACCEPTED"}:
         required_ord004 = [
             "docs/t2-gate7b/06_T2_ORD004设计准入.md",
             "contracts/t2/gate7b/order-disposition-events-v1.schema.json",
@@ -153,7 +154,7 @@ def validate() -> dict:
                       "order.reversal-routed.v1", "insertOrderFinalityGuard",
                       "reserveCompletion", "countCancellationDisposition"):
             fail(token in runtime, f"ORD004 运行时/同步/墓碑边界缺失: {token}")
-    if stage == "FIRST_BATCH_VERIFIED":
+    if stage in {"FIRST_BATCH_VERIFIED", "FIRST_BATCH_ACCEPTED"}:
         for path in (
             "docs/t2-gate7b/03_T2_POS010独立验证报告.md",
             "docs/t2-gate7b/05_T2_POS011独立验证报告.md",
@@ -161,6 +162,8 @@ def validate() -> dict:
             "docs/t2-gate7b/08_T2_Gate7B_SprintS20第一批周门禁报告.md",
         ):
             text(path)
+    if stage == "FIRST_BATCH_ACCEPTED":
+        text("docs/t2-gate7b/09_第一批项目发起人接受记录.md")
     return {
         "schemaVersion": "1.0", "gate": "T2-GATE7B-SPRINT-S20-POS-OPERATIONS-FIRST-BATCH",
         "status": "PASS", "stage": stage, "baselineCommit": BASELINE,

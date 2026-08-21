@@ -11,18 +11,18 @@
   ],
   "requirements": {
     "T2-POS-010": {
-      "status": "VERIFIED",
-      "admission": "INDEPENDENT_CI_VERIFIED_RUN_32487652575",
+      "status": "ACCEPTED",
+      "admission": "SPONSOR_ACCEPTED_2026_08_22",
       "evidenceCeiling": "SOFTWARE_EXECUTION"
     },
     "T2-POS-011": {
-      "status": "VERIFIED",
-      "admission": "INDEPENDENT_CI_VERIFIED_RUN_32494347095",
+      "status": "ACCEPTED",
+      "admission": "SPONSOR_ACCEPTED_2026_08_22",
       "evidenceCeiling": "SOFTWARE_EXECUTION"
     },
     "T2-ORD-004": {
-      "status": "VERIFIED",
-      "admission": "INDEPENDENT_CI_VERIFIED_RUN_32499856217",
+      "status": "ACCEPTED",
+      "admission": "SPONSOR_ACCEPTED_2026_08_22",
       "evidenceCeiling": "SOFTWARE_EXECUTION"
     }
   },

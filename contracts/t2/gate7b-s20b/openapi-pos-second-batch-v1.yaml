@@ -1,0 +1,297 @@
+openapi: 3.1.0
+info:
+  title: 鲸熵汇 Gate 7B 第二批换货与组合支付设计契约
+  version: 1.0.0-draft
+  description: >-
+    仅用于 T2-EXG-001 与 T2-PAY-004 正式开发准入评审；当前没有对应运行时，
+    T2-PAY-002 解阻前任何电子份额必须失败关闭为 BLOCKED_EXTERNAL。
+x-runtime-admission: DRAFT_DESIGN_ONLY
+x-tenant-boundary: tenant_id 只来自服务端可信上下文，禁止从请求体或普通 Header 授权
+servers:
+  - url: /api/v1
+security:
+  - bearerAuth: []
+paths:
+  /pos/exchanges/previews:
+    post:
+      operationId: previewExchange
+      summary: 预检原单退货与新销售的换货关联
+      x-requirement-id: T2-EXG-001
+      parameters:
+        - $ref: '#/components/parameters/CorrelationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ExchangePreviewRequest' }
+      responses:
+        '200':
+          description: 只读预检结果；不产生退货、销售、资金或库存事实
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ExchangePreview' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /pos/exchanges:
+    post:
+      operationId: createExchange
+      summary: 创建换货 Saga 与冻结关联
+      x-requirement-id: T2-EXG-001
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/CorrelationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateExchangeRequest' }
+      responses:
+        '202':
+          description: 已接受原命令；后续必须用原命令身份查询或恢复
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ExchangeView' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/Rejected' }
+  /pos/exchanges/{exchangeId}:
+    get:
+      operationId: getExchange
+      summary: 查询换货 Saga 及两条腿的权威状态
+      x-requirement-id: T2-EXG-001
+      parameters:
+        - $ref: '#/components/parameters/ExchangeId'
+        - $ref: '#/components/parameters/CorrelationId'
+      responses:
+        '200':
+          description: 换货状态
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ExchangeView' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /payments/tender-plans:
+    post:
+      operationId: createTenderPlan
+      summary: 创建冻结的 Provider 无关支付份额计划
+      x-requirement-id: T2-PAY-004
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/CorrelationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateTenderPlanRequest' }
+      responses:
+        '201':
+          description: 计划已冻结；金额之和必须精确等于订单应收
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TenderPlanView' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/Rejected' }
+  /payments/tender-plans/{planId}:
+    get:
+      operationId: getTenderPlan
+      summary: 查询支付计划与份额权威状态
+      x-requirement-id: T2-PAY-004
+      parameters:
+        - $ref: '#/components/parameters/PlanId'
+        - $ref: '#/components/parameters/CorrelationId'
+      responses:
+        '200':
+          description: 支付计划
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TenderPlanView' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /payments/tender-plans/{planId}/allocations/{allocationId}/collect:
+    post:
+      operationId: collectTenderAllocation
+      summary: 以原命令身份收取一个支付份额
+      description: >-
+        份额严格串行；存在 PROCESSING/UNKNOWN 时禁止创建替代命令。
+        ELECTRONIC 在 T2-PAY-002 解阻前返回 PAYMENT_EXTERNAL_BLOCKED。
+      x-requirement-id: T2-PAY-004
+      parameters:
+        - $ref: '#/components/parameters/PlanId'
+        - $ref: '#/components/parameters/AllocationId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/CorrelationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CollectAllocationRequest' }
+      responses:
+        '202':
+          description: 已接受；可能处于 PROCESSING 或 UNKNOWN
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TenderPlanView' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/Rejected' }
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema: { type: string, minLength: 16, maxLength: 128 }
+    CorrelationId:
+      name: X-Correlation-Id
+      in: header
+      required: true
+      schema: { type: string, minLength: 16, maxLength: 128 }
+    ExchangeId:
+      name: exchangeId
+      in: path
+      required: true
+      schema: { type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$' }
+    PlanId:
+      name: planId
+      in: path
+      required: true
+      schema: { type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$' }
+    AllocationId:
+      name: allocationId
+      in: path
+      required: true
+      schema: { type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$' }
+  schemas:
+    Money:
+      type: object
+      additionalProperties: false
+      required: [currency, amountMinor]
+      properties:
+        currency: { type: string, const: CNY }
+        amountMinor: { type: integer, minimum: 0 }
+    ReturnLine:
+      type: object
+      additionalProperties: false
+      required: [originalOrderLineId, quantity]
+      properties:
+        originalOrderLineId: { type: string, minLength: 1, maxLength: 64 }
+        quantity: { type: string, pattern: '^([1-9][0-9]*)(\\.[0-9]{1,6})?$' }
+    NewSaleLine:
+      type: object
+      additionalProperties: false
+      required: [skuId, unitId, quantity]
+      properties:
+        skuId: { type: string, minLength: 1, maxLength: 64 }
+        unitId: { type: string, minLength: 1, maxLength: 64 }
+        quantity: { type: string, pattern: '^([1-9][0-9]*)(\\.[0-9]{1,6})?$' }
+    ExchangePreviewRequest:
+      type: object
+      additionalProperties: false
+      required: [originalOrderId, returnLines, newSaleLines]
+      properties:
+        originalOrderId: { type: string, minLength: 1, maxLength: 64 }
+        returnLines: { type: array, minItems: 1, maxItems: 20, items: { $ref: '#/components/schemas/ReturnLine' } }
+        newSaleLines: { type: array, minItems: 1, maxItems: 20, items: { $ref: '#/components/schemas/NewSaleLine' } }
+    CreateExchangeRequest:
+      allOf:
+        - $ref: '#/components/schemas/ExchangePreviewRequest'
+        - type: object
+          required: [previewFingerprint, reasonCode]
+          properties:
+            previewFingerprint: { type: string, pattern: '^[a-f0-9]{64}$' }
+            reasonCode: { type: string, minLength: 1, maxLength: 32 }
+    ExchangePreview:
+      type: object
+      additionalProperties: false
+      required: [previewFingerprint, originalRefund, newSaleReceivable, displayDelta]
+      properties:
+        previewFingerprint: { type: string, pattern: '^[a-f0-9]{64}$' }
+        originalRefund: { $ref: '#/components/schemas/Money' }
+        newSaleReceivable: { $ref: '#/components/schemas/Money' }
+        displayDelta:
+          description: 仅供展示，允许负数；不得据此创造净额资金事实
+          type: integer
+    ExchangeView:
+      type: object
+      additionalProperties: false
+      required: [exchangeId, state, originalReturnCommandId, newSaleCommandId, version, correlationId]
+      properties:
+        exchangeId: { type: string }
+        state:
+          type: string
+          enum: [DRAFT, APPROVED, RETURN_PENDING, RETURN_UNKNOWN, RETURN_COMPLETED, SALE_PENDING, SALE_UNKNOWN, COMPLETED, FAILED, MANUAL_RECOVERY_REQUIRED, CLOSED]
+        originalReturnCommandId: { type: string }
+        newSaleCommandId: { type: string }
+        version: { type: integer, minimum: 0 }
+        correlationId: { type: string }
+    TenderAllocationInput:
+      type: object
+      additionalProperties: false
+      required: [allocationId, sequence, tenderType, amount]
+      properties:
+        allocationId: { type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$' }
+        sequence: { type: integer, minimum: 1, maximum: 8 }
+        tenderType: { type: string, enum: [CASH, ELECTRONIC] }
+        amount: { $ref: '#/components/schemas/Money' }
+    CreateTenderPlanRequest:
+      type: object
+      additionalProperties: false
+      required: [orderId, orderSnapshotHash, receivable, allocations]
+      properties:
+        orderId: { type: string, minLength: 1, maxLength: 64 }
+        orderSnapshotHash: { type: string, pattern: '^[a-f0-9]{64}$' }
+        receivable: { $ref: '#/components/schemas/Money' }
+        allocations:
+          type: array
+          minItems: 2
+          maxItems: 8
+          items: { $ref: '#/components/schemas/TenderAllocationInput' }
+    CollectAllocationRequest:
+      type: object
+      additionalProperties: false
+      required: [planVersion, allocationHash]
+      properties:
+        planVersion: { type: integer, minimum: 0 }
+        allocationHash: { type: string, pattern: '^[a-f0-9]{64}$' }
+        cashTendered:
+          description: 仅 CASH 份额允许；实际交付现金可大于应用到订单的冻结份额，差额为找零
+          oneOf:
+            - $ref: '#/components/schemas/Money'
+            - type: 'null'
+    TenderAllocationView:
+      allOf:
+        - $ref: '#/components/schemas/TenderAllocationInput'
+        - type: object
+          required: [state]
+          properties:
+            state: { type: string, enum: [PLANNED, PROCESSING, UNKNOWN, SUCCEEDED, FAILED, CANCELLED] }
+            observationRef: { type: [string, 'null'] }
+    TenderPlanView:
+      type: object
+      additionalProperties: false
+      required: [planId, state, orderId, receivable, allocations, version, correlationId]
+      properties:
+        planId: { type: string }
+        state: { type: string, enum: [DRAFT, FROZEN, COLLECTING, UNKNOWN, PAID, FAILED, CANCELLED, MANUAL_RECOVERY_REQUIRED] }
+        orderId: { type: string }
+        receivable: { $ref: '#/components/schemas/Money' }
+        allocations: { type: array, items: { $ref: '#/components/schemas/TenderAllocationView' } }
+        version: { type: integer, minimum: 0 }
+        correlationId: { type: string }
+    Error:
+      type: object
+      additionalProperties: false
+      required: [code, message, correlationId]
+      properties:
+        code:
+          type: string
+          enum: [EXCHANGE_PREVIEW_STALE, EXCHANGE_RETURN_UNKNOWN, EXCHANGE_MANUAL_RECOVERY_REQUIRED, TENDER_SUM_MISMATCH, TENDER_SEQUENCE_BLOCKED, PAYMENT_EXTERNAL_BLOCKED, PAYMENT_UNKNOWN_QUERY_ONLY, IDEMPOTENCY_CONTENT_MISMATCH, TENANT_SCOPE_DENIED, RESOURCE_NOT_FOUND]
+        message: { type: string }
+        correlationId: { type: string }
+  responses:
+    Conflict:
+      description: 状态、版本、幂等内容或顺序冲突
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    Rejected:
+      description: 业务不变量、权限或外部阻断拒绝
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    NotFound:
+      description: 资源不存在或不在可信租户/门店范围内
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }

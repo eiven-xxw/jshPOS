@@ -1,0 +1,16 @@
+requirement_id,store,object,owner,access_strategy,sql_mode,mutation_boundary,migration_action,compatibility,rollback
+T2-EXG-001,MySQL,ret_exchange,ReturnOrchestration,CONTROLLED_WRITE,XML,具名Saga状态和乐观版本迁移,ADD_NEW_TABLE,旧退货与订单路径不变,前向修复并停用新入口
+T2-EXG-001,MySQL,ret_exchange_leg,ReturnOrchestration,APPEND_ONLY,XML,冻结RETURN与SALE两条腿及原命令身份,ADD_NEW_TABLE,无旧消费者依赖,只追加关闭事实
+T2-EXG-001,MySQL,ret_exchange_event,ReturnOrchestration,APPEND_ONLY,XML,Owner观察与恢复事件只追加,ADD_NEW_TABLE,事件Schema按版本演进,追加纠正事件
+T2-EXG-001,SQLite,local_exchange_plan,POS,CONTROLLED_WRITE,SQL,本地Saga检查点和乐观版本迁移,ADD_NEW_TABLE,旧客户端不显示换货入口,安全前向修复
+T2-EXG-001,SQLite,local_exchange_leg,POS,APPEND_ONLY,SQL,冻结原退货与新销售命令身份,ADD_NEW_TABLE,旧成交和退货表不变,追加关闭事实
+T2-PAY-004,MySQL,pay_tender_plan,Payment,CONTROLLED_WRITE,XML,具名计划状态和精确金额投影,ADD_NEW_TABLE,单支付路径不创建计划,停用新入口并观察收敛
+T2-PAY-004,MySQL,pay_tender_allocation,Payment,CONTROLLED_WRITE,XML,份额状态只能按状态机条件迁移,ADD_NEW_TABLE,最多八份且现金最多一份,安全前向修复
+T2-PAY-004,MySQL,pay_tender_history,Payment,APPEND_ONLY,XML,计划与份额状态历史只追加,ADD_NEW_TABLE,事件版本兼容,追加纠正事实
+T2-PAY-004,MySQL,pay_payment_intent,Payment,CONTROLLED_WRITE,XML,混合路径绑定tender计划和份额且移除一单一意图限制,ALTER_FORWARD_ONLY,历史记录绑定为空并沿用旧路径,禁用混合入口且不得还原历史DDL
+T2-PAY-004,MySQL,ord_cash_tender,Order,APPEND_ONLY,XML,部分现金收款事实只追加,ADD_NEW_TABLE,全现金继续使用ord_cash_payment,追加冲正或退款事实
+T2-PAY-004,MySQL,shf_cash_ledger,Order,APPEND_ONLY,XML,新增部分现金来源引用但历史流水不变,ALTER_FORWARD_ONLY,旧行字段为空且口径兼容,禁用新入口并前向修复
+T2-PAY-004,SQLite,local_tender_plan,POS,CONTROLLED_WRITE,SQL,冻结份额和支付进度投影,ADD_NEW_TABLE,旧现金结算继续原路径,安全前向修复
+T2-PAY-004,SQLite,local_tender_allocation,POS,CONTROLLED_WRITE,SQL,份额状态条件迁移并禁止覆盖成功事实,ADD_NEW_TABLE,未知新能力的旧客户端失败关闭,安全前向修复
+T2-PAY-004,SQLite,local_tender_event,POS,APPEND_ONLY,SQL,支付份额观察和恢复事实只追加,ADD_NEW_TABLE,事件版本兼容,追加纠正事实
+T2-PAY-004,SQLite,local_cash_tender,POS,APPEND_ONLY,SQL,部分现金事实班次账本审计Outbox同事务,ADD_NEW_TABLE,全现金路径保持不变,追加退款或冲正事实

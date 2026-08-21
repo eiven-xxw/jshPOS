@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "1.0",
+  "evidenceLevel": "DESIGN_VECTOR_ONLY",
+  "vectors": [
+    {"id":"EXG-001","requirementId":"T2-EXG-001","scenario":"cash return and new cash sale complete","expected":"COMPLETED_WITH_TWO_INDEPENDENT_FACTS"},
+    {"id":"EXG-002","requirementId":"T2-EXG-001","scenario":"same idempotency key with changed new basket","expected":"IDEMPOTENCY_CONTENT_CONFLICT"},
+    {"id":"EXG-003","requirementId":"T2-EXG-001","scenario":"return UNKNOWN before new sale","expected":"RETURN_UNKNOWN_AND_NO_NEW_SALE_COMMAND"},
+    {"id":"EXG-004","requirementId":"T2-EXG-001","scenario":"return completed then sale process crashes","expected":"MANUAL_RECOVERY_REQUIRED_AND_REUSE_ORIGINAL_SALE_COMMAND"},
+    {"id":"EXG-005","requirementId":"T2-EXG-001","scenario":"price and promotion changed after original sale","expected":"RETURN_USES_ORIGINAL_SNAPSHOT_NEW_SALE_USES_NEW_FROZEN_QUOTE"},
+    {"id":"EXG-006","requirementId":"T2-EXG-001","scenario":"cross tenant original order replacement","expected":"TENANT_SCOPE_DENIED"},
+    {"id":"EXG-007","requirementId":"T2-EXG-001","scenario":"duplicate and out of order owner observations","expected":"EVENTUAL_CONVERGENCE_WITHOUT_DUPLICATE_EFFECT"},
+    {"id":"PAY-001","requirementId":"T2-PAY-004","scenario":"cash plus provider-neutral plan amounts equal receivable","expected":"PLAN_FROZEN_ELECTRONIC_BLOCKED_EXTERNAL"},
+    {"id":"PAY-002","requirementId":"T2-PAY-004","scenario":"allocation sum differs from receivable","expected":"TENDER_PLAN_AMOUNT_MISMATCH"},
+    {"id":"PAY-003","requirementId":"T2-PAY-004","scenario":"electronic allocation becomes UNKNOWN","expected":"UNKNOWN_BLOCKED_AND_NO_REPLACEMENT_COMMAND"},
+    {"id":"PAY-004","requirementId":"T2-PAY-004","scenario":"cash allocation is not last","expected":"TENDER_SEQUENCE_INVALID"},
+    {"id":"PAY-005","requirementId":"T2-PAY-004","scenario":"cash tender exceeds allocation","expected":"CHANGE_EQUALS_TENDERED_MINUS_ALLOCATION"},
+    {"id":"PAY-006","requirementId":"T2-PAY-004","scenario":"crash after owner success before local acknowledgement","expected":"QUERY_OR_REPLAY_ORIGINAL_ALLOCATION_ID"},
+    {"id":"PAY-007","requirementId":"T2-PAY-004","scenario":"same allocation key with changed amount","expected":"IDEMPOTENCY_CONTENT_CONFLICT"},
+    {"id":"PAY-008","requirementId":"T2-PAY-004","scenario":"all authoritative allocations succeeded exactly","expected":"FULLY_PAID_AND_ORDER_COMPLETION_ALLOWED"},
+    {"id":"PAY-009","requirementId":"T2-PAY-004","scenario":"cross tenant plan or allocation injection","expected":"TENANT_SCOPE_DENIED"},
+    {"id":"PAY-010","requirementId":"T2-PAY-004","scenario":"refund mixed tenders","expected":"REFUND_TO_ORIGINAL_TENDER_ONLY"}
+  ],
+  "externalExecution": {"providerNetworkCalls":0,"realFundsTransactions":0,"realDeviceCommands":0,"commercialClaimAllowed":false}
+}

@@ -412,17 +412,26 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
 - `T2-PAY-002/HWD-001/PRN-001/PAR-001` 继续 `BLOCKED`，`T2-UAT-001/REL-001` 继续 `DRAFT`，`T2-JSH-001/LIC-001` 继续 `DEFERRED`。允许外部端口失败关闭，但不得模拟成功或用内部证据解除 `SANDBOX/REAL_DEVICE/PILOT` 阻断。
 - Provider 网络、真实资金、真实设备/外设命令、伙伴联系、现场试点、完整 Alpha、生产部署和商业声明必须全部为 0。完成 Gate 7A 报告与 CI 后必须等待项目发起人确认，不得自动启动 Gate 7B。
 
-## 4.33 当前 T2 Gate 7B / Sprint S20：POS 交易运营第一批条件准入
+## 4.33 T2 Gate 7B / Sprint S20：POS 交易运营第一批已封存
 
 - 项目发起人已于 2026-08-21 接受 Gate 7A，并授权从封板提交 `fd255f45115015fa0bab91f1fd8b1c14c2acc51e` 建立 `t2/gate7b-sprint20-pos-operations`，严格按 `T2-POS-010 → T2-POS-011 → T2-ORD-004` 串行开发。
-- `T2-POS-010` 已由候选 Run `32487652575` 独立验证并由 Run `32488566595` 闭环；`T2-POS-011` 已由候选 Run `32494347095` 独立验证并由封存提交 `94a315ee2aa0304e7a02dfb20182eef0e0281e7a` 的 Run `32495308502` 闭环。现只允许 `T2-ORD-004` 按已冻结设计进入 `IN_PROGRESS`。
+- `T2-POS-010` 已由候选 Run `32487652575` 独立验证并由 Run `32488566595` 闭环；`T2-POS-011` 已由候选 Run `32494347095` 独立验证并由封存提交 `94a315ee2aa0304e7a02dfb20182eef0e0281e7a` 的 Run `32495308502` 闭环；`T2-ORD-004` 已由 Run `32499856217` 独立验证。项目发起人已于 2026-08-22 将三项全部更新为 `ACCEPTED`，证据上限仍为内部软件执行。
 - ORD-004 仅允许把 `DRAFT/PENDING_PAYMENT` 且无成功或未知资金、无库存出库的交易迁移为 `CANCELLED`；`COMPLETED/CONFIRMED` 及已有资金、库存、成本、促销和审计事实不得回退、删除或覆盖，只能追加 `RETURN_REFUND_REQUIRED/PAYMENT_REVERSAL_OBSERVATION_REQUIRED/EXPLICIT_COMPENSATION_REQUIRED` 处置路由。
 - 购物篮取消、挂单取消、未完成本地单作废、服务端取消墓碑和成交后处置路由必须使用稳定幂等键、内容摘要、可信租户/门店/终端/员工/班次/业务日、只追加处置事实、审计和 Outbox；同键异内容、跨租户、业务日漂移、支付 `PROCESSING/UNKNOWN/SUCCEEDED`、库存已出或状态竞态必须失败关闭。
 - POS-010 复用 Checkout/Order Owner，在独立只追加表记录非销售现金移动和非销售钱箱请求；现金移动、班次理论现金/版本、审计、幂等结果和 Outbox 必须同事务，钱箱请求金额恒为零且不得伪造设备成功。
 - 本地权限来自已认证员工会话，服务端仍执行权限和门店范围校验；`tenant_id`、门店、终端、员工、班次和业务日只来自可信上下文。现金移动输入必须为正数最小货币单位整数，Owner 冻结其正负方向。
 - SQLite/Flyway 只允许独立前向迁移，已发布迁移不得修改；现金和审计事实不得更新或删除。真实钱箱未解阻时设备执行状态固定为 `BLOCKED_EXTERNAL`，真实外设命令必须为 0。
 - `T2-EXG-001/PAY-004` 与 Gate 7C—7E 继续 `DRAFT`；`T2-PAY-002/HWD-001/PRN-001/PAR-001` 继续 `BLOCKED`，`T2-UAT-001/REL-001` 继续 `DRAFT`，`T2-JSH-001/LIC-001` 继续 `DEFERRED`。
-- Provider 网络、真实资金、真实设备/外设命令、伙伴联系、现场试点、完整 Alpha、生产部署和商业声明继续为 0。完成第一批后提交周门禁报告等待确认，不得自动进入第二批或后续 Gate。
+- Provider 网络、真实资金、真实设备/外设命令、伙伴联系、现场试点、完整 Alpha、生产部署和商业声明继续为 0。本节记录第一批历史边界；当前准入以 4.34 为准。
+
+## 4.34 当前 T2 Gate 7B / Sprint S20-B：第二批准入准备
+
+- 项目发起人已于 2026-08-22 接受第一批 `CONDITIONAL PASS`，授权 `T2-POS-010/POS-011/ORD-004` 更新为 `ACCEPTED`，并从封存提交 `a9e368a2f09dcfb4565f4bc392e4f77d5c664805` 建立 `t2/gate7b-sprint20b-pos-operations`。
+- 本阶段只允许 `T2-EXG-001` 独立 CR、仓库事实与范围影响分析，以及 `T2-EXG-001/PAY-004` 的 Owner、状态机、不变量、API/事件、迁移、页面、故障向量和验收设计；禁止新增或修改任何正式运行时、Mapper、数据库迁移、Flutter/Vue 页面、Provider 或设备适配器。
+- `T2-EXG-001` 必须保持“原单退货退款 + 新销售 + 只追加关联”的编排语义；Return、Order、Payment、Inventory、Promotion 各写自己的事实，禁止建立独立换货资金/库存状态机或跨 Owner Mapper。
+- `T2-PAY-004` 必须使用 Provider 无关 tender plan 和精确份额守恒；订单有任何支付 `PROCESSING/UNKNOWN` 时禁止重建或替换业务命令。电子份额继续受 `T2-PAY-002` 阻断，生产路径不得模拟成功。
+- 两项必须保持 `DRAFT`，ADR-044 保持 `Proposed`。完成准备报告后等待项目发起人确认；未经确认不得转为 READY/IN_PROGRESS，不得编码，不得启动 Gate 7C。
+- `T2-PAY-002/HWD-001/PRN-001/PAR-001` 继续 `BLOCKED`，`T2-UAT-001/REL-001` 继续 `DRAFT`，`T2-JSH-001/LIC-001` 继续 `DEFERRED`；Provider 网络、真实资金、真实设备/外设命令、伙伴联系、现场试点、完整 Alpha、生产部署和商业声明全部为 0。
 
 ## 5. 工程与测试规则
 

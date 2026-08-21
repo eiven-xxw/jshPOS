@@ -9,8 +9,8 @@
 `T2-POS-010` 已由 GitHub Run `32487652575` 独立验证，并由封存提交
 `12ca1183` 的 Run `32488566595` 完成闭环；`T2-POS-011` 已由候选提交
 `f19406d` 的 Run `32494347095` 独立验证；`T2-ORD-004` 已由候选提交
-`c815958` 的 Run `32499856217` 完成七类门禁独立验证。当前第一批状态为
-`VERIFIED / VERIFIED / VERIFIED`，均尚未经项目发起人更新为 `ACCEPTED`。
-外部支付、设备、打印、伙伴、完整 Alpha 和生产发布状态不变。第一批周门禁
-结论为 `CONDITIONAL PASS / AWAITING SPONSOR CONFIRMATION`，不得自动启动
-`T2-EXG-001`、`T2-PAY-004` 或 Gate 7C—7E。
+`c815958` 的 Run `32499856217` 完成七类门禁独立验证。项目发起人已于
+2026-08-22 接受第一批 `CONDITIONAL PASS`，三项均更新为 `ACCEPTED`；该接受只覆盖
+内部软件执行。当前已从封存提交 `a9e368a2f09dcfb4565f4bc392e4f77d5c664805`
+进入 S20-B 第二批准入准备，材料位于 `docs/t2-gate7b-s20b/`。
+`T2-EXG-001`、`T2-PAY-004` 继续 `DRAFT`，不得自动编码或进入 Gate 7C。

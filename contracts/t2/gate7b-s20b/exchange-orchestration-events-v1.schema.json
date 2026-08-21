@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jingshanghui.example/contracts/t2/gate7b-s20b/exchange-orchestration-events-v1.schema.json",
+  "title": "Gate 7B second batch exchange orchestration event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "eventType", "eventId", "exchangeId", "tenantId", "originalOrderId", "originalReturnCommandId", "newSaleCommandId", "storeId", "terminalId", "businessDate", "status", "originalRefundAmountMinor", "newSaleReceivableMinor", "differenceAmountMinor", "currency", "correlationId", "causationId", "aggregateVersion", "payloadSha256", "occurredAt"],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "eventType": { "enum": ["exchange.plan-created.v1", "exchange.return-completed.v1", "exchange.sale-completed.v1", "exchange.recovery-required.v1", "exchange.completed.v1"] },
+    "eventId": { "$ref": "#/$defs/ulid" },
+    "exchangeId": { "$ref": "#/$defs/ulid" },
+    "tenantId": { "type": "string", "pattern": "^[0-9A-Za-z_-]{1,20}$" },
+    "originalOrderId": { "$ref": "#/$defs/ulid" },
+    "originalReturnCommandId": { "$ref": "#/$defs/ulid" },
+    "newSaleCommandId": { "$ref": "#/$defs/ulid" },
+    "returnId": { "oneOf": [{ "$ref": "#/$defs/ulid" }, { "type": "null" }] },
+    "newOrderId": { "oneOf": [{ "$ref": "#/$defs/ulid" }, { "type": "null" }] },
+    "storeId": { "type": "string", "pattern": "^[1-9][0-9]{0,18}$" },
+    "terminalId": { "$ref": "#/$defs/ulid" },
+    "businessDate": { "type": "string", "format": "date" },
+    "status": { "enum": ["DRAFT", "APPROVED", "RETURN_PENDING", "RETURN_UNKNOWN", "RETURN_COMPLETED", "SALE_PENDING", "SALE_UNKNOWN", "COMPLETED", "FAILED", "MANUAL_RECOVERY_REQUIRED", "CLOSED"] },
+    "originalRefundAmountMinor": { "type": "integer", "minimum": 0 },
+    "newSaleReceivableMinor": { "type": "integer", "minimum": 0 },
+    "differenceAmountMinor": { "type": "integer" },
+    "currency": { "const": "CNY" },
+    "reasonCode": { "type": ["string", "null"], "pattern": "^[A-Z][A-Z0-9_]{1,31}$" },
+    "authorizationRef": { "type": ["string", "null"], "minLength": 16, "maxLength": 128 },
+    "correlationId": { "$ref": "#/$defs/ulid" },
+    "causationId": { "$ref": "#/$defs/ulid" },
+    "aggregateVersion": { "type": "integer", "minimum": 1 },
+    "payloadSha256": { "$ref": "#/$defs/sha256" },
+    "occurredAt": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "ulid": { "type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$" },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

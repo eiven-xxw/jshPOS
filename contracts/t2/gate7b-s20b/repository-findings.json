@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "1.0",
+  "baselineCommit": "a9e368a2f09dcfb4565f4bc392e4f77d5c664805",
+  "result": "PASS_WITH_CONFIRMED_GAPS",
+  "findings": [
+    {
+      "id": "S20B-REP-001",
+      "capability": "original-return-refund-saga",
+      "present": true,
+      "evidence": "jshpos-returns ReturnOrchestrationService/ReturnSagaCoordinator and ret_* V26/V27",
+      "reuse": "mandatory"
+    },
+    {
+      "id": "S20B-REP-002",
+      "capability": "new-sale-and-cash-settlement",
+      "present": true,
+      "evidence": "Flutter checkout and jshpos-order accepted cash order path",
+      "reuse": "mandatory"
+    },
+    {
+      "id": "S20B-REP-003",
+      "capability": "exchange-runtime-or-link",
+      "present": false,
+      "evidence": "no production exchange aggregate, table, application service or POS exchange journey",
+      "gap": "T2-EXG-001"
+    },
+    {
+      "id": "S20B-REP-004",
+      "capability": "provider-neutral-payment-core",
+      "present": true,
+      "evidence": "jshpos-payment intent/attempt/UNKNOWN/refund/reconciliation core",
+      "reuse": "mandatory"
+    },
+    {
+      "id": "S20B-REP-005",
+      "capability": "tender-plan-and-multiple-allocations",
+      "present": false,
+      "evidence": "pay_payment_intent has tenant/order unique key and no pay_tender_* production objects",
+      "gap": "T2-PAY-004"
+    },
+    {
+      "id": "S20B-REP-006",
+      "capability": "partial-cash-tender",
+      "present": false,
+      "evidence": "ord_cash_payment is unique per order and net amount equals full receivable",
+      "gap": "T2-PAY-004"
+    }
+  ],
+  "hardRules": {
+    "exchangeCreatesNoMoneyOrInventoryStateMachine": true,
+    "orderCompletionRequiresExactSucceededTenderSum": true,
+    "unknownNeverCreatesReplacementCommand": true,
+    "electronicRuntimeBlockedUntilPay002": true,
+    "publishedMigrationsRemainImmutable": true
+  }
+}

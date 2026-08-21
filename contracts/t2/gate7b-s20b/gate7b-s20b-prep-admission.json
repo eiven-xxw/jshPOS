@@ -1,0 +1,67 @@
+{
+  "schemaVersion": "1.0",
+  "gate": "T2-GATE7B-SPRINT-S20B-SECOND-BATCH-PREP",
+  "baselineCommit": "a9e368a2f09dcfb4565f4bc392e4f77d5c664805",
+  "branch": "t2/gate7b-sprint20b-pos-operations",
+  "decision": "CONDITIONAL_GO_PREP_ONLY",
+  "evidenceLevel": "STATIC_DESIGN_AND_REPOSITORY_AUDIT",
+  "firstBatchAccepted": {
+    "T2-POS-010": "ACCEPTED",
+    "T2-POS-011": "ACCEPTED",
+    "T2-ORD-004": "ACCEPTED"
+  },
+  "serialOrder": ["T2-EXG-001", "T2-PAY-004"],
+  "requirements": {
+    "T2-EXG-001": {
+      "status": "DRAFT",
+      "crStatus": "PROPOSED_CONDITIONAL_GO_AWAITING_SPONSOR",
+      "recommendedNextState": "IN_PROGRESS_AFTER_EXPLICIT_CONFIRMATION",
+      "runtimeAllowed": false,
+      "owner": "ReturnOrchestration",
+      "evidenceCeiling": "STATIC_DESIGN"
+    },
+    "T2-PAY-004": {
+      "status": "DRAFT",
+      "admission": "DESIGN_PREPARED_AFTER_EXG_CR_REVIEW",
+      "recommendedNextState": "DRAFT_UNTIL_EXG_INDEPENDENT_VERIFIED",
+      "runtimeAllowed": false,
+      "owner": "Payment",
+      "electronicAllocationBoundary": "BLOCKED_BY_T2_PAY_002",
+      "evidenceCeiling": "STATIC_DESIGN"
+    }
+  },
+  "scope": {
+    "runtimeFilesChanged": 0,
+    "databaseMigrationsAdded": 0,
+    "providerAdaptersAdded": 0,
+    "deviceAdaptersChanged": 0,
+    "gate7cStarted": false
+  },
+  "preservedStates": {
+    "T2-PAY-002": "BLOCKED",
+    "T2-HWD-001": "BLOCKED",
+    "T2-PRN-001": "BLOCKED",
+    "T2-PAR-001": "BLOCKED",
+    "T2-UAT-001": "DRAFT",
+    "T2-REL-001": "DRAFT",
+    "T2-JSH-001": "DEFERRED",
+    "T2-LIC-001": "DEFERRED"
+  },
+  "externalExecution": {
+    "providerNetworkCalls": 0,
+    "realFundsTransactions": 0,
+    "realDeviceCommands": 0,
+    "realPeripheralCommands": 0,
+    "partnerContacts": 0,
+    "onsitePilots": 0,
+    "fullAlphaRuns": 0,
+    "productionDeployments": 0,
+    "commercialClaimAllowed": false
+  },
+  "candidateEvidence": null,
+  "nextGate": {
+    "automaticStartAllowed": false,
+    "requiresSponsorConfirmation": true,
+    "recommendedOrder": ["T2-EXG-001", "T2-PAY-004"]
+  }
+}
