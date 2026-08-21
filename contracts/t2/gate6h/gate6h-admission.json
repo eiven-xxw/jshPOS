@@ -7,8 +7,8 @@
   "evidenceCeiling": "INTERNAL_RELEASE_CANDIDATE",
   "sequentialRequirements": [
     {"order": 1, "id": "T2-UX-001", "status": "VERIFIED", "dependsOn": []},
-    {"order": 2, "id": "T2-PERF-001", "status": "IN_PROGRESS", "dependsOn": ["T2-UX-001"]},
-    {"order": 3, "id": "T2-OPS-001", "status": "DRAFT", "dependsOn": ["T2-PERF-001"]},
+    {"order": 2, "id": "T2-PERF-001", "status": "VERIFIED", "dependsOn": ["T2-UX-001"]},
+    {"order": 3, "id": "T2-OPS-001", "status": "IN_PROGRESS", "dependsOn": ["T2-PERF-001"]},
     {"order": 4, "id": "T2-RC-001", "status": "DRAFT", "dependsOn": ["T2-OPS-001"]}
   ],
   "preservedStates": {

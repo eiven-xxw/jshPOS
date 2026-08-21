@@ -1,0 +1,36 @@
+spring:
+  datasource:
+    dynamic:
+      p6spy: false
+      datasource:
+        master:
+          url: ${JSH_POS_MYSQL_JDBC_URL}
+          username: ${JSH_POS_MYSQL_USERNAME}
+          password: ${JSH_POS_MYSQL_PASSWORD}
+  data:
+    redis:
+      host: ${JSH_POS_REDIS_HOST}
+      port: ${JSH_POS_REDIS_PORT}
+      password: ${JSH_POS_REDIS_PASSWORD}
+  boot:
+    admin:
+      client:
+        enabled: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,logfile
+  endpoint:
+    health:
+      show-details: when_authorized
+    logfile:
+      external-file: ${JSH_POS_LOG_FILE}
+
+logging:
+  file:
+    name: ${JSH_POS_LOG_FILE}
+
+snail-job:
+  enabled: false

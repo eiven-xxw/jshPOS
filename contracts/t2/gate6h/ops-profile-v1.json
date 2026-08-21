@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-OPS-001",
+  "classification": "INTERNAL_SYNTHETIC_OPERATIONS",
+  "requiredCapabilities": [
+    "pinnedDataServices", "secretlessRepositoryConfig", "healthAndMetrics",
+    "correlationLogs", "diagnosticManifest", "syntheticBackupRestore",
+    "syntheticUpgradeRollback", "incidentRunbook"
+  ],
+  "healthSignals": [
+    "server.health", "mysql.health", "redis.health", "flyway.validate",
+    "outbox.backlog", "sync.deadletter", "payment.unknown", "refund.unknown",
+    "backup.last_success", "release.failed"
+  ],
+  "diagnosticPolicy": {
+    "contentExported": false,
+    "manifestOnly": true,
+    "sha256Required": true,
+    "secretOrPiiMatchFailsClosed": true,
+    "retentionDays": 7
+  },
+  "targets": {
+    "syntheticRestoreRpoSeconds": 900,
+    "syntheticRestoreRtoSeconds": 3600,
+    "commercialSla": false
+  },
+  "externalExecution": {
+    "providerNetworkCalls": 0, "realFunds": 0, "realDeviceCommands": 0,
+    "partnerContacts": 0, "onsitePilots": 0, "fullAlphaRuns": 0,
+    "productionDeployments": 0, "unauthorizedCloudWrites": 0
+  }
+}
