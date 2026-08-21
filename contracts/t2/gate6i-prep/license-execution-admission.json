@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-LIC-001",
+  "track": "COMMERCIAL_LICENSE_CLOSURE",
+  "status": "DEFERRED",
+  "commercialReleaseBlocker": true,
+  "components": [
+    {
+      "name": "Aviator",
+      "currentDecision": "PENDING_REPLACE_OR_LEGAL_APPROVAL",
+      "preferredPath": "REPLACE_WITH_APPROVED_RULE_DSL_OR_OBTAIN_WRITTEN_LEGAL_APPROVAL",
+      "owners": ["ARCHITECTURE_OWNER", "LEGAL_OWNER"],
+      "deadlineGate": "BEFORE_T2_REL_001_READY",
+      "requiredEvidence": ["USAGE_INVENTORY","REPLACEMENT_ADR_OR_LEGAL_OPINION","REGRESSION_RESULT","FINAL_SBOM_LICENSE_RESULT"],
+      "closureState": "OPEN"
+    },
+    {
+      "name": "simple-http",
+      "currentDecision": "PENDING_REPLACE_OR_LEGAL_APPROVAL",
+      "preferredPath": "REPLACE_WITH_EXISTING_APPROVED_HTTP_CLIENT_OR_OBTAIN_WRITTEN_LEGAL_APPROVAL",
+      "owners": ["ARCHITECTURE_OWNER", "SECURITY_OWNER"],
+      "deadlineGate": "BEFORE_T2_REL_001_READY",
+      "requiredEvidence": ["USAGE_INVENTORY","REPLACEMENT_ADR_OR_LEGAL_OPINION","NETWORK_POLICY_REGRESSION","FINAL_SBOM_LICENSE_RESULT"],
+      "closureState": "OPEN"
+    },
+    {
+      "name": "MySQL Connector/J",
+      "currentDecision": "PENDING_DISTRIBUTION_MODEL_LEGAL_REVIEW",
+      "preferredPath": "OBTAIN_DISTRIBUTION_MODEL_LEGAL_APPROVAL_OR_CHANGE_DEPLOYMENT_DISTRIBUTION_MODEL",
+      "owners": ["LEGAL_OWNER", "RELEASE_OWNER"],
+      "deadlineGate": "BEFORE_T2_REL_001_READY",
+      "requiredEvidence": ["DISTRIBUTION_MODEL","WRITTEN_LEGAL_OPINION","NOTICE_AND_OFFER_REQUIREMENTS","RELEASE_BOM_APPROVAL"],
+      "closureState": "OPEN"
+    }
+  ],
+  "closedComponentCount": 0,
+  "requiredClosedComponentCount": 3,
+  "executionAdmission": "NO_GO_COMMERCIAL_RELEASE",
+  "nextDecision": "ASSIGN_NAMED_PEOPLE_AND_CLOSE_EACH_COMPONENT_WITH_REVIEWABLE_EVIDENCE"
+}

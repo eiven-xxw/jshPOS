@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0",
+  "requirementIds": ["T2-HWD-001", "T2-PRN-001"],
+  "track": "REAL_DEVICE_AND_PERIPHERALS",
+  "statuses": {"T2-HWD-001":"BLOCKED","T2-PRN-001":"BLOCKED"},
+  "hostCandidates": [
+    {"role":"PRIMARY_DOCUMENT_CANDIDATE","vendor":"商米","modelFamily":"T3 PRO MAX / L15B1","exactSku":null,"firmwareBuild":null,"controlledSdkReference":null,"state":"MISSING_CONTROLLED_BUNDLE"},
+    {"role":"COMPATIBLE_DOCUMENT_CANDIDATE","vendor":"iMin","modelFamily":"D4 Pro","exactSku":null,"firmwareBuild":null,"controlledSdkReference":null,"state":"MISSING_CONTROLLED_BUNDLE"}
+  ],
+  "capabilityBundles": [
+    {"id":"HWD-PRIMARY","name":"主认证机精确SKU固件SDK样机与联系人","state":"MISSING"},
+    {"id":"HWD-COMPATIBLE","name":"兼容机精确SKU固件SDK样机与联系人","state":"MISSING"},
+    {"id":"PRN-A","name":"主机内置打印SDK接口耗材切刀与故障恢复","state":"MISSING"},
+    {"id":"PRN-B","name":"外置打印机精确型号协议驱动与故障恢复","state":"MISSING"},
+    {"id":"SCANNER","name":"扫码设备精确型号配置与重复输入行为","state":"MISSING"},
+    {"id":"SCALE","name":"电子秤精确型号协议校准计量合规与异常行为","state":"MISSING"},
+    {"id":"CASH-DRAWER","name":"钱箱精确型号电气接口脉冲和状态能力","state":"MISSING"},
+    {"id":"CUSTOMER-DISPLAY","name":"客显精确型号接口隐私遮挡与恢复","state":"MISSING"},
+    {"id":"APK-UPGRADE","name":"APK安装静默升级回退和重启授权","state":"MISSING"},
+    {"id":"WARRANTY-RMA","name":"保修RMA EOL和具名技术联系人","state":"MISSING"}
+  ],
+  "verifiedBundleCount": 0,
+  "requiredBundleCount": 10,
+  "verifiedDocumentStatus": "NOT_ACHIEVED",
+  "executionAdmission": "NO_GO",
+  "realDeviceCommandsAllowed": false,
+  "realDeviceCommands": 0,
+  "realPeripheralCommandsAllowed": false,
+  "realPeripheralCommands": 0,
+  "nextDecision": "RECEIVE_CONTROLLED_MODEL_SDK_SAMPLE_AND_AUTHORIZATION_BUNDLES"
+}

@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-PAY-002",
+  "track": "PAYMENT_SANDBOX",
+  "status": "BLOCKED",
+  "selectedProvider": {
+    "code": "LAKALA",
+    "name": "拉卡拉",
+    "scope": "CONTROLLED_DOCUMENT_CANDIDATE_ONLY",
+    "providerCommitment": false
+  },
+  "evidenceStateMachine": [
+    "MISSING",
+    "RECEIVED_UNVERIFIED",
+    "VERIFIED_DOCUMENT",
+    "EXECUTION_APPROVED",
+    "EXECUTED_EXTERNAL"
+  ],
+  "mandatoryItems": [
+    {"id":"PAY-AUTH","name":"授权沙箱与自动化测试授权","state":"MISSING","opaqueReference":null,"sha256":null},
+    {"id":"PAY-MERCHANT","name":"测试商户及适用产品权限","state":"MISSING","opaqueReference":null,"sha256":null},
+    {"id":"PAY-TERMINAL","name":"测试终端及绑定规则","state":"MISSING","opaqueReference":null,"sha256":null},
+    {"id":"PAY-API","name":"锁定版本的支付查询退款接口及变更政策","state":"MISSING","opaqueReference":null,"sha256":null},
+    {"id":"PAY-SIGN","name":"签名验签证书轮换和防重放规则","state":"MISSING","opaqueReference":null,"sha256":null},
+    {"id":"PAY-CALLBACK","name":"回调域名验签重试乱序幂等说明","state":"MISSING","opaqueReference":null,"sha256":null},
+    {"id":"PAY-BILL","name":"账单格式样例下载窗口与对账口径","state":"MISSING","opaqueReference":null,"sha256":null},
+    {"id":"PAY-LIMIT","name":"限流超时维护窗口与升级路径","state":"MISSING","opaqueReference":null,"sha256":null},
+    {"id":"PAY-NETWORK","name":"沙箱网络与出口回调白名单","state":"MISSING","opaqueReference":null,"sha256":null},
+    {"id":"PAY-SECRET","name":"Secret系统引用轮换到期和吊销规则","state":"MISSING","opaqueReference":null,"sha256":null},
+    {"id":"PAY-CONTACT","name":"可验证商务与技术联系人目录引用","state":"MISSING","opaqueReference":null,"sha256":null}
+  ],
+  "receivedItemCount": 0,
+  "requiredItemCount": 11,
+  "verifiedDocumentStatus": "NOT_ACHIEVED",
+  "executionAdmission": "NO_GO",
+  "providerNetworkAllowed": false,
+  "providerNetworkCalls": 0,
+  "realFundsAllowed": false,
+  "realFundsTransactions": 0,
+  "nextDecision": "RECEIVE_ALL_CONTROLLED_METADATA_THEN_SUBMIT_INDEPENDENT_REVIEW"
+}

@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-PAR-001",
+  "track": "DESIGN_PARTNERS",
+  "status": "BLOCKED",
+  "targetRequired": 5,
+  "verifiedRealTargetCount": 0,
+  "verifiedWrittenIntentRequired": 3,
+  "verifiedWrittenIntentCount": 0,
+  "authorizedMaskedSampleCount": 0,
+  "retentionDeletionAgreementCount": 0,
+  "legacyReconciliationReadyCount": 0,
+  "onsiteBoundaryConfirmedCount": 0,
+  "slots": [
+    {"opaqueId":"PAR-01","industry":"CONVENIENCE","identityState":"MISSING","writtenIntentState":"MISSING"},
+    {"opaqueId":"PAR-02","industry":"CONVENIENCE","identityState":"MISSING","writtenIntentState":"MISSING"},
+    {"opaqueId":"PAR-03","industry":"SNACK_DISCOUNT","identityState":"MISSING","writtenIntentState":"MISSING"},
+    {"opaqueId":"PAR-04","industry":"COMMUNITY_SUPERMARKET","identityState":"MISSING","writtenIntentState":"MISSING"},
+    {"opaqueId":"PAR-05","industry":"COMMUNITY_SUPERMARKET","identityState":"MISSING","writtenIntentState":"MISSING"}
+  ],
+  "verifiedDocumentStatus": "NOT_ACHIEVED",
+  "executionAdmission": "NO_GO",
+  "contactAllowed": false,
+  "partnerContacts": 0,
+  "onsitePilotAllowed": false,
+  "onsitePilots": 0,
+  "nextDecision": "BUSINESS_OWNER_PROVIDES_CONTROLLED_IDENTITIES_AND_WRITTEN_INTENTS"
+}

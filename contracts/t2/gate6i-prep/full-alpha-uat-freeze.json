@@ -1,0 +1,73 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-UAT-001",
+  "status": "DRAFT",
+  "decision": "NO_GO_FULL_ALPHA",
+  "fullAlphaAllowed": false,
+  "softwareCandidate": {
+    "classification": "INTERNAL_RELEASE_CANDIDATE",
+    "commit": "e2bd699ad565845c363ffe478320eb2b3f9a0015",
+    "workflowRun": 32471050486,
+    "artifactId": 9443017031,
+    "artifactSha256": "9cc79a2248d780c4f818ac811014b67c9f0cca066a1022a058b7685696c07418"
+  },
+  "entryBlockers": ["T2-PAY-002","T2-HWD-001","T2-PRN-001","T2-PAR-001"],
+  "releaseBlockers": ["T2-LIC-001","T2-REL-001"],
+  "environment": {
+    "topologyState": "FROZEN_NOT_PROVISIONED",
+    "authorizedSandboxRequired": true,
+    "realDeviceLabRequired": true,
+    "partnerAuthorizedDataRequired": true,
+    "productionDataAllowed": false,
+    "productionSecretsAllowed": false,
+    "dataDestructionEvidenceRequired": true
+  },
+  "merchantStoreTerminalMatrix": [
+    {"opaqueMerchant":"UAT-MER-01","industry":"CONVENIENCE","storesRequired":2,"terminalsPerStoreRequired":2,"state":"BLOCKED_EXTERNAL_INPUT"},
+    {"opaqueMerchant":"UAT-MER-02","industry":"SNACK_DISCOUNT","storesRequired":1,"terminalsPerStoreRequired":2,"state":"BLOCKED_EXTERNAL_INPUT"},
+    {"opaqueMerchant":"UAT-MER-03","industry":"COMMUNITY_SUPERMARKET","storesRequired":1,"terminalsPerStoreRequired":2,"state":"BLOCKED_EXTERNAL_INPUT"}
+  ],
+  "raci": [
+    {"role":"PROJECT_SPONSOR","accountability":"GO_NO_GO_AND_SCOPE_APPROVAL","assignmentState":"ROLE_DEFINED_PERSON_UNASSIGNED"},
+    {"role":"QA_OWNER","accountability":"UAT_PLAN_DEFECT_AND_EVIDENCE","assignmentState":"ROLE_DEFINED_PERSON_UNASSIGNED"},
+    {"role":"PAYMENT_OWNER","accountability":"SANDBOX_AND_RECONCILIATION","assignmentState":"ROLE_DEFINED_PERSON_UNASSIGNED"},
+    {"role":"DEVICE_OWNER","accountability":"HOST_PERIPHERAL_AND_UPGRADE","assignmentState":"ROLE_DEFINED_PERSON_UNASSIGNED"},
+    {"role":"PARTNER_OWNER","accountability":"PARTNER_AUTHORIZATION_AND_RECONCILIATION","assignmentState":"ROLE_DEFINED_PERSON_UNASSIGNED"},
+    {"role":"SECURITY_PRIVACY_OWNER","accountability":"SECRET_PII_RETENTION_AND_DESTRUCTION","assignmentState":"ROLE_DEFINED_PERSON_UNASSIGNED"},
+    {"role":"SRE_OWNER","accountability":"OBSERVABILITY_BACKUP_RESTORE_AND_ROLLBACK","assignmentState":"ROLE_DEFINED_PERSON_UNASSIGNED"},
+    {"role":"RELEASE_OWNER","accountability":"ARTIFACT_MIGRATION_AND_RELEASE_DECISION","assignmentState":"ROLE_DEFINED_PERSON_UNASSIGNED"}
+  ],
+  "testDomains": [
+    {"id":"UAT-TEN","name":"租户组织门店权限与审计","state":"FROZEN_NOT_EXECUTED"},
+    {"id":"UAT-CAT","name":"商品价格导入数据包与迁移","state":"FROZEN_NOT_EXECUTED"},
+    {"id":"UAT-SALE","name":"开班销售现金挂取单关班","state":"FROZEN_NOT_EXECUTED"},
+    {"id":"UAT-PAY","name":"支付成功失败超时UNKNOWN查询回调退款账单对账","state":"BLOCKED_BY_T2_PAY_002"},
+    {"id":"UAT-HOST","name":"主认证和兼容Android主机","state":"BLOCKED_BY_T2_HWD_001"},
+    {"id":"UAT-PRN","name":"两种打印连续打印重印断电恢复","state":"BLOCKED_BY_T2_PRN_001"},
+    {"id":"UAT-PERIPHERAL","name":"扫码电子秤钱箱客显","state":"BLOCKED_BY_T2_HWD_001"},
+    {"id":"UAT-OFF","name":"离线同步重复乱序ACK丢失与积压恢复","state":"FROZEN_NOT_EXECUTED"},
+    {"id":"UAT-INV","name":"库存采购盘点调拨成本与对账","state":"FROZEN_NOT_EXECUTED"},
+    {"id":"UAT-PRM","name":"促销人工优惠原快照退货退款","state":"FROZEN_NOT_EXECUTED"},
+    {"id":"UAT-MEM","name":"会员隐私等级积分和删除限制","state":"FROZEN_NOT_EXECUTED"},
+    {"id":"UAT-RPT","name":"报表导出逐日守恒和权限脱敏","state":"FROZEN_NOT_EXECUTED"},
+    {"id":"UAT-UPG","name":"服务端Web Schema数据包APK升级回退","state":"BLOCKED_FOR_REAL_DEVICE_EXECUTION"},
+    {"id":"UAT-BAK","name":"备份恢复RPO RTO和数据清除","state":"FROZEN_NOT_EXECUTED"},
+    {"id":"UAT-NFR","name":"容量性能安全可观测与故障注入","state":"FROZEN_NOT_EXECUTED"},
+    {"id":"UAT-PAR","name":"设计伙伴旧系统逐日对账和现场边界","state":"BLOCKED_BY_T2_PAR_001"}
+  ],
+  "defectPolicy": {
+    "p0": "资金重复或丢失、跨租户泄漏、库存成本不可重建、数据不可恢复、关键交易不可用或不可安全回退",
+    "p1": "核心旅程无可接受替代、对账不守恒、主要设备支付能力不稳定、关键权限审计缺失或恢复目标未达",
+    "startRule": "PAY HWD PRN PAR四项分别取得执行准入确认且环境数据角色停止条件就绪",
+    "acceptRule": "P0=0且P1=0，全部强制用例证据合格并由指定角色签署"
+  },
+  "evidenceGrades": ["STATIC","SOFTWARE_EXECUTION","SANDBOX","REAL_DEVICE","PILOT","FULL_ALPHA"],
+  "externalExecution": {
+    "providerNetworkCalls": 0,
+    "realDeviceCommands": 0,
+    "realPeripheralCommands": 0,
+    "partnerContacts": 0,
+    "onsitePilots": 0,
+    "fullAlphaRuns": 0
+  }
+}

@@ -37,8 +37,9 @@ def main() -> None:
     statuses = tuple(item.get("status") for item in requirements)
     if tuple(item.get("id") for item in requirements) != SEQUENCE:
         fail("requirement sequence drift")
-    first_unverified = next((index for index, value in enumerate(statuses) if value != "VERIFIED"), len(statuses))
-    allowed = all(value == "VERIFIED" for value in statuses[:first_unverified]) and (
+    completed = {"VERIFIED", "ACCEPTED"}
+    first_unverified = next((index for index, value in enumerate(statuses) if value not in completed), len(statuses))
+    allowed = all(value in completed for value in statuses[:first_unverified]) and (
         first_unverified == len(statuses)
         or statuses[first_unverified] == "IN_PROGRESS" and all(value == "DRAFT" for value in statuses[first_unverified + 1:])
     )

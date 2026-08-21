@@ -181,5 +181,8 @@
 | CR-T2G6H-005 | 2026-08-21 | VERIFIED_OPS001_IN_PROGRESS_RC001 | Run 32466344881 治理、UX、性能与OPS全绿；固定镜像健康、脱敏诊断、百万事实合成恢复和17项升级回退向量通过，按序准入RC-001 | T2-OPS-001、T2-RC-001、ADR-040 | Artifact 9441216696；证据仍为内部合成，不形成生产灾备、真实设备发布或商业SLA |
 | CR-T2G6H-006 | 2026-08-21 | RC001_FAILED_SEED_FIXED | Run 32468077141 十项门禁成功但同窗运行栈健康探针因候选未绑定合成只读健康凭据返回401，RC正确跳过；恢复与既有运行契约一致的合成健康凭据后全量重跑 | T2-RC-001、ADR-040 | 失败Run永久保留，不将401改为忽略、不关闭健康探针、不降低认证或其他门禁 |
 | CR-T2G6H-007 | 2026-08-21 | VERIFIED_RC001_GATE6H_CONDITIONAL_PASS | Run 32469509542 十二Job全绿，同窗运行栈、安全与临时Ed25519签名候选通过；UX/PERF/OPS/RC依序全部VERIFIED并提交发起人确认 | T2-UX-001、T2-PERF-001、T2-OPS-001、T2-RC-001、ADR-040 | Artifact 9442421137，摘要4c7f27c7…；仅内部候选，外部P0与LIC未关闭，完整Alpha/试点/生产/商业均NO-GO |
+| CR-T2G6H-008 | 2026-08-21 | ACCEPTED | 项目发起人确认 Gate 6H `CONDITIONAL PASS`，同意将 UX/PERF/OPS/RC 四项由 VERIFIED 更新为 ACCEPTED | T2-UX-001、T2-PERF-001、T2-OPS-001、T2-RC-001、ADR-040 | RC 仍仅为 INTERNAL_RELEASE_CANDIDATE；不代表 SANDBOX、REAL_DEVICE、PILOT、FULL_ALPHA、PRODUCTION 或商业 SLA |
+| CR-T2G6I-001 | 2026-08-21 | APPROVED_PREP_ONLY | 项目发起人按 CONDITIONAL GO 启动 Gate 6I-Prep，授权四条独立外部/许可证准入材料和完整 Alpha UAT 冻结 | T2-PAY-002、T2-HWD-001、T2-PRN-001、T2-PAR-001、T2-LIC-001、T2-UAT-001、T2-REL-001、ADR-041 | 仅准备和离线核验；外部四项保持 BLOCKED，UAT/REL保持DRAFT，LIC/JSH保持DEFERRED；所有外部执行为0 |
+| CR-T2G6I-002 | 2026-08-21 | PREPARED_NO_GO_AWAITING_CI | 完成支付0/11、硬件打印0/10、伙伴0/5与0/3、许可证0/3四条独立准入快照，冻结完整Alpha三业态环境、八角色RACI、十六测试域、P0/P1与数据清除规则，并建立Ubuntu/Windows/离线边界/证据索引四Job门禁 | T2-PAY-002、T2-HWD-001、T2-PRN-001、T2-PAR-001、T2-LIC-001、T2-UAT-001、T2-REL-001、ADR-041 | 只形成STATIC_GOVERNANCE_FREEZE；等待GitHub CI，所有外部执行、完整Alpha和生产发布仍为0 |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。

@@ -70,7 +70,7 @@ def main() -> None:
         resolved[stage] = {pattern: single(root, pattern) for pattern in patterns}
 
     governance = load(resolved["governance"]["gate6h-governance.json"])
-    expected = {"T2-UX-001": "VERIFIED", "T2-PERF-001": "VERIFIED", "T2-OPS-001": "VERIFIED", "T2-RC-001": "VERIFIED"}
+    expected = {"T2-UX-001": "ACCEPTED", "T2-PERF-001": "ACCEPTED", "T2-OPS-001": "ACCEPTED", "T2-RC-001": "ACCEPTED"}
     if governance.get("result") != "PASS" or governance.get("statuses") != expected:
         fail("same-commit serial governance evidence invalid")
     performance = load(resolved["performance"]["performance-baseline.json"])
