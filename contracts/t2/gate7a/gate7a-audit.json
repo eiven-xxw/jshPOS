@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "1.0",
+  "gate": "T2-GATE7A-SPRINT-S19-V1-BUSINESS-GAP-AUDIT",
+  "baselineCommit": "d66c252587561428def95058d67bc830e391a9ab",
+  "branch": "t2/gate7a-sprint19-v1-business-gap",
+  "decision": "CONDITIONAL_GO_AUDIT_ONLY",
+  "evidenceLevel": "STATIC_GOVERNANCE_AND_REPOSITORY_AUDIT",
+  "acceptedRequirementAudit": {
+    "count": 64,
+    "source": "scripts/audit_t2_gate6g_core.py",
+    "hardFailures": 0,
+    "ownerModuleCount": 15,
+    "rule": "accepted capability is classified and traced; it must not be reimplemented"
+  },
+  "gapRegister": {
+    "confirmedGapCount": 18,
+    "status": "DRAFT",
+    "runtimeAllowed": false,
+    "source": "contracts/t2/gate7a/v1-gap-register.csv"
+  },
+  "preservedStates": {
+    "T2-PAY-002": "BLOCKED",
+    "T2-HWD-001": "BLOCKED",
+    "T2-PRN-001": "BLOCKED",
+    "T2-PAR-001": "BLOCKED",
+    "T2-UAT-001": "DRAFT",
+    "T2-REL-001": "DRAFT",
+    "T2-JSH-001": "DEFERRED",
+    "T2-LIC-001": "DEFERRED"
+  },
+  "externalExecution": {
+    "providerNetworkCalls": 0,
+    "realFundsTransactions": 0,
+    "realDeviceCommands": 0,
+    "realPeripheralCommands": 0,
+    "partnerContacts": 0,
+    "onsitePilots": 0,
+    "fullAlphaRuns": 0,
+    "productionDeployments": 0,
+    "commercialClaimAllowed": false
+  },
+  "nextGate": {
+    "name": "T2 Gate 7B / Sprint S20",
+    "automaticStartAllowed": false,
+    "firstBatch": [
+      "T2-POS-010",
+      "T2-POS-011",
+      "T2-ORD-004"
+    ]
+  }
+}

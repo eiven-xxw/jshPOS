@@ -1,0 +1,16 @@
+capability_family,accepted_requirements,current_page_or_journey,current_api,current_owner_schema,current_test_evidence,classification,next_action
+租户组织权限配置审计,T2-IAM-001|T2-ORG-001|T2-RBAC-001|T2-CFG-001|T2-AUD-001,Vue组织门店员工权限经营工作台,Foundation正式REST,Foundation表与Flyway,Gate0及Gate6G逐项覆盖,ACCEPTED_REUSE,归入V1汇总不重复开发
+商品条码多单位价格导入,T2-PRD-001|T2-PRD-002|T2-PRD-003|T2-PRD-004|T2-PRC-001|T2-PRC-002|T2-DPK-001,Vue商品价格导入与POS商品包,Gate1及Gate6G OpenAPI,Catalog表与Flyway,Gate1与Gate6G全链审计,ACCEPTED_REUSE,仅扩展秤码价签不得重建Catalog
+班次购物篮现金挂单交班,T2-POS-001|T2-POS-002|T2-POS-003|T2-POS-004|T2-POS-005,Flutter开班销售挂取关班,Gate2订单班次契约,SQLite local_shift/order/cash/outbox,Gate2双平台与故障证据,PARTIAL_EXTENSION,补现金收支钱箱事件
+订单成交促销快照,T2-ORD-001|T2-ORD-002|T2-ORD-003|T2-POS-006,Flutter促销现金成交,Order与Gate5B契约,Order MySQL与POS SQLite,Gate5B跨端固定向量,PARTIAL_EXTENSION,补取消反向处置和可选换货
+同步离线,T2-OFF-001|T2-SYN-001,Flutter同步积压状态,正式push/pull/ack契约,POS Outbox与服务端Inbox,重复乱序ACK丢失重启,ACCEPTED_REUSE,异常中心只消费状态不得重建同步内核
+Provider无关支付退款对账,T2-PAY-001|T2-PAY-003|T2-REF-001|T2-REC-001|T2-REF-002,Flutter原单退货退款,Gate3A与Gate5B契约,Payment和Return Owner表,UNKNOWN回调退款对账合成向量,PARTIAL_EXTENSION,组合支付单独准入；真实Provider仍BLOCKED
+库存盘点采购成本调拨,T2-INV-001|T2-INV-002|T2-INV-003|T2-INV-004|T2-PUR-001|T2-CST-001|T2-TRF-001,Vue库存供应成本运营页,各Owner正式API,不可变库存成本在途流水,Gate4A至4D测试与MySQL,PARTIAL_EXTENSION,补规则化补货和条件批次效期
+促销优惠分摊,T2-PRM-001|T2-PRM-002|T2-PRM-003,Flutter报价人工优惠与Vue发布,Promotion正式API,Promotion规则版本快照表,Java和Dart黄金向量,ACCEPTED_REUSE,会员权益联动不得复制促销算法
+会员等级积分,T2-MEM-001|T2-MEM-002,Vue会员积分运营与POS最小令牌,Member正式API,会员隐私积分等级只追加事实,Gate5C隐私积分重建测试,PARTIAL_EXTENSION,补会员价权益成交快照
+报表导出,T2-RPT-001|T2-RPT-002,Vue销售库存成本支付报表,Reporting正式API,可丢弃投影和安全导出,百万事实重建与越权测试,PARTIAL_EXTENSION,补门店日结与统一异常入口
+终端备份升级,T2-TRM-001|T2-BAK-001|T2-UPG-001,Vue终端发布运营页,Terminal Resilience Release API,终端注册备份发布表,合成恢复升级回退,ACCEPTED_WITH_EXTERNAL_BOUNDARY,实机证据继续BLOCKED
+前后台产品化,T2-POS-007|T2-POS-008|T2-POS-009|T2-ADM-001|T2-ADM-002|T2-UX-001,Flutter POS与Vue经营后台,167项正式REST与OpenAPI,只经Owner端口,Widget组件权限租户回归,ACCEPTED_REUSE,新增页面仍只调用正式应用端口
+内部装配与候选,T2-E2E-001|T2-E2E-002|T2-CORE-001|T2-API-001|T2-DAT-001|T2-INT-001|T2-E2E-003|T2-PERF-001|T2-OPS-001|T2-RC-001,三业态合成旅程,正式服务端Web Flutter契约,15个Owner与正式MySQL SQLite,Gate6G和6H完整CI,ACCEPTED_REUSE,Gate7E形成更高但仍仅内部的候选
+商业SaaS运营,V1-SAA-001,RuoYi租户套餐基础页,框架系统API,sys_tenant与sys_tenant_package,框架回归但无商业Owner闭环,CONFIRMED_GAP,拆分SAA SUB SVC并逐项CR
+外部支付硬件伙伴连接器,T2-PAY-002|T2-HWD-001|T2-PRN-001|T2-PAR-001|T2-JSH-001,失败关闭或无页面执行入口,禁止Provider设备伙伴连接器执行,无真实外部事实,外部执行计数为0,EXTERNAL_BLOCKED_DEFERRED,保持原状态后置独立解阻

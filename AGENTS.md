@@ -402,6 +402,16 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
 - 仓库、日志、CI 和普通制品只允许不透明材料引用、SHA-256 与非敏感状态；Secret、真实 PII、生产密钥、真实商户/终端标识、设备证书、伙伴身份联系方式和受控原文不得进入仓库。误收时立即隔离、通知、轮换或删除，不得测试其有效性。
 - 本阶段 Provider 网络、真实资金、真实设备命令、伙伴联系、现场试点、完整 Alpha、生产部署和商业声明必须全部为 0。完成后提交四条独立执行准入报告与《T2完整Alpha UAT启动评审报告》等待项目发起人逐项确认，不得自动进入外部执行或完整 Alpha。
 
+## 4.32 当前 T2 Gate 7A / Sprint S19：商业 V1 内部业务差距审计条件准入
+
+- 项目发起人已于 2026-08-21 授权从 Gate 6I-Prep 封存提交 `d66c252587561428def95058d67bc830e391a9ab` 建立 `t2/gate7a-sprint19-v1-business-gap`；本阶段只允许需求审计、原子 RTM、契约、验收与串行开发计划，不得新增正式业务运行时、迁移或外部适配器。
+- 必须以 Requirement→旅程/页面→API→Application→Domain→Repository/Mapper→MySQL/SQLite→事件/Outbox→权限/审计→测试→CI 的链路复核全部既有 `ACCEPTED` 能力。证据完整的能力只能归入 V1 汇总或在原 Owner 内受控扩展，不得重复创建模块、状态机、表或 Requirement。
+- 确认缺失的候选按 Gate 7B POS 交易运营、Gate 7C 商品门店供应与条件社区超市能力、Gate 7D 日结异常开通与经营管理、Gate 7E 内部汇总验收拆分；所有新增 Requirement 在本阶段必须保持 `DRAFT`。
+- Gate 7B 第一批只建议 `T2-POS-010 → T2-POS-011 → T2-ORD-004`；项目发起人未确认 Gate 7A 报告前不得进入 READY/IN_PROGRESS。`T2-EXG-001/MEM-003/SAA-001/SUB-001/SVC-001` 还必须取得独立 CR 才可 READY。
+- 储值预付、复杂优惠券/预算、发票应付总账税务、批次成本、复杂 WMS、加盟结算、供应链金融、连接器、AI、任意 SQL 与跨租户经营大盘不得准入。条件批次效期不含批次成本、库位、波次或复杂 WMS。
+- `T2-PAY-002/HWD-001/PRN-001/PAR-001` 继续 `BLOCKED`，`T2-UAT-001/REL-001` 继续 `DRAFT`，`T2-JSH-001/LIC-001` 继续 `DEFERRED`。允许外部端口失败关闭，但不得模拟成功或用内部证据解除 `SANDBOX/REAL_DEVICE/PILOT` 阻断。
+- Provider 网络、真实资金、真实设备/外设命令、伙伴联系、现场试点、完整 Alpha、生产部署和商业声明必须全部为 0。完成 Gate 7A 报告与 CI 后必须等待项目发起人确认，不得自动启动 Gate 7B。
+
 ## 5. 工程与测试规则
 
 - 服务端采用 RuoYi-Vue-Plus 模块化单体，不得把领域逻辑写入 Controller、通用工具类或框架系统模块。
