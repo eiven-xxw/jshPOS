@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "1.0",
+  "phase": "T2-PAY002-CONTROLLED-DOCUMENT-VERIFICATION",
+  "baselineCommit": "7ccc50112d954c1d4c9bdd3464da4b3a2eb9ec3e",
+  "branch": "t2/pay002-controlled-doc-verification-20260821",
+  "requirementId": "T2-PAY-002",
+  "status": "BLOCKED",
+  "provider": {
+    "code": "LAKALA",
+    "name": "拉卡拉",
+    "scope": "CONTROLLED_DOCUMENT_VERIFICATION_CANDIDATE_ONLY"
+  },
+  "authorization": {
+    "decision": "APPROVED_OFFLINE_VERIFICATION_ONLY",
+    "approvedAt": "2026-08-21",
+    "providerNetworkAllowed": false,
+    "executionAdmissionAllowed": false
+  },
+  "submittedValueClassification": "UNFILLED_PLACEHOLDER_NOT_A_MATERIAL_ID",
+  "receivedMaterialIds": [],
+  "receivedMaterialCount": 0,
+  "requiredMaterialCount": 11,
+  "bundleStatus": "MISSING",
+  "verifiedDocumentStatus": "NOT_ACHIEVED",
+  "items": [
+    {"id":"PAY-AUTH","name":"授权沙箱及自动化测试授权","materialId":null,"status":"MISSING"},
+    {"id":"PAY-MERCHANT","name":"测试商户与适用产品权限","materialId":null,"status":"MISSING"},
+    {"id":"PAY-TERMINAL","name":"测试终端及绑定规则","materialId":null,"status":"MISSING"},
+    {"id":"PAY-API","name":"锁定版本的支付查询退款接口和错误码","materialId":null,"status":"MISSING"},
+    {"id":"PAY-SIGN","name":"签名验签证书轮换与防重放配置","materialId":null,"status":"MISSING"},
+    {"id":"PAY-CALLBACK","name":"回调域名验签重试乱序与幂等规则","materialId":null,"status":"MISSING"},
+    {"id":"PAY-BILL","name":"账单格式样例下载窗口与对账口径","materialId":null,"status":"MISSING"},
+    {"id":"PAY-LIMIT","name":"限流超时维护窗口与升级路径","materialId":null,"status":"MISSING"},
+    {"id":"PAY-NETWORK","name":"沙箱域名出口和回调白名单","materialId":null,"status":"MISSING"},
+    {"id":"PAY-SECRET","name":"Secret保管轮换到期删除与吊销规则","materialId":null,"status":"MISSING"},
+    {"id":"PAY-CONTACT","name":"可验证商务技术安全联系人","materialId":null,"status":"MISSING"}
+  ],
+  "requiredVerificationFields": [
+    "source", "authorizationSignature", "applicableProduct", "interfaceVersion", "scope",
+    "sha256", "custodian", "effectiveAt", "expiresAt", "rotationRule", "deletionRevocationRule"
+  ],
+  "counters": {
+    "providerNetworkCalls": 0,
+    "realFunds": 0,
+    "productionSecretsReceived": 0,
+    "realPaymentRecordsReceived": 0
+  },
+  "executionAdmission": "NO_GO",
+  "nextAction": "PROVIDE_REAL_OPAQUE_MATERIAL_IDS_AND_CONTROLLED_ACCESS_REFERENCES"
+}

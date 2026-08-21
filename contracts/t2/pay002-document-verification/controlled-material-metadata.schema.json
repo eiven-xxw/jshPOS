@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jshpos.example/contracts/t2/pay002-controlled-material-metadata.schema.json",
+  "title": "T2-PAY-002 受控材料非敏感元数据",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "materialId", "category", "provider", "source", "authorizationSignatureStatus",
+    "applicableProduct", "interfaceVersion", "scope", "sha256", "sizeBytes", "custodianRef",
+    "classification", "receivedAt", "effectiveAt", "expiresAt", "rotationRule",
+    "deletionRevocationRule", "controlledLocationRef"
+  ],
+  "properties": {
+    "materialId": {"type":"string","pattern":"^PAY-LKL-CTL-[0-9]{4}-[A-Z0-9]{6,32}$"},
+    "category": {"enum":["AUTHORIZATION","TEST_IDENTITY","API_CONTRACT","SIGNATURE_CALLBACK","REFUND_BILL","LIMIT_NETWORK","SECRET_CUSTODY","CONTACT"]},
+    "provider": {"const":"LAKALA"},
+    "source": {"type":"string","minLength":3,"maxLength":200},
+    "authorizationSignatureStatus": {"enum":["VERIFIED","NOT_APPLICABLE"]},
+    "applicableProduct": {"type":"string","minLength":1,"maxLength":200},
+    "interfaceVersion": {"type":"string","minLength":1,"maxLength":100},
+    "scope": {"type":"string","minLength":1,"maxLength":500},
+    "sha256": {"type":"string","pattern":"^[0-9a-f]{64}$"},
+    "sizeBytes": {"type":"integer","minimum":1},
+    "custodianRef": {"type":"string","pattern":"^CUST-[A-Z0-9-]{4,40}$"},
+    "classification": {"enum":["INTERNAL","CONFIDENTIAL","SECRET_REFERENCE_ONLY"]},
+    "receivedAt": {"type":"string","format":"date-time"},
+    "effectiveAt": {"type":["string","null"],"format":"date-time"},
+    "expiresAt": {"type":["string","null"],"format":"date-time"},
+    "rotationRule": {"type":"string","minLength":1,"maxLength":500},
+    "deletionRevocationRule": {"type":"string","minLength":1,"maxLength":500},
+    "controlledLocationRef": {"type":"string","pattern":"^CTRL-[A-Z0-9-]{4,64}$"}
+  }
+}
