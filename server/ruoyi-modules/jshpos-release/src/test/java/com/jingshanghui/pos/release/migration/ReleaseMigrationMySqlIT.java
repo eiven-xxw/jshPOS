@@ -26,7 +26,7 @@ class ReleaseMigrationMySqlIT {
             .collect(Collectors.toSet());
         assertThat(applied.remove("0")).isTrue();
         assertThat(applied).containsExactlyInAnyOrderElementsOf(expected);
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("202608210052");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("202608210053");
         assertThat(flyway.migrate().migrationsExecuted).isZero();
         flyway.validate();
         assertGate6GDataMetadata();
@@ -147,7 +147,7 @@ class ReleaseMigrationMySqlIT {
         for(int v=13;v<=35;v++) versions.add("20260817"+String.format("%04d",v));
         versions.add("202608180038"); versions.add("202608180039");
         versions.add("202608200040"); versions.add("202608200041"); versions.add("202608200042");
-        for(int v=43;v<=52;v++) versions.add("20260821"+String.format("%04d",v));
+        for(int v=43;v<=53;v++) versions.add("20260821"+String.format("%04d",v));
         return versions;
     }
     private static String required(String name) { String value=System.getenv(name); if(value==null||value.isBlank()) throw new IllegalStateException(name+" must be provided by CI"); return value; }
