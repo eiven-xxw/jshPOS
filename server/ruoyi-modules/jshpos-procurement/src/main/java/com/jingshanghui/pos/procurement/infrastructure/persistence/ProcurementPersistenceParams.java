@@ -18,7 +18,8 @@ public final class ProcurementPersistenceParams {
     }
     public record OrderWrite(String orderId, String tenantId, String supplierId, Long storeId,
                              String warehouseId, LocalDate expectedDate, int toleranceBps,
-                             String requestSha256, String correlationId, Long creatorUserId, LocalDateTime at) {
+                             String sourceType, String sourceId, String requestSha256,
+                             String correlationId, Long creatorUserId, LocalDateTime at) {
     }
     public record OrderLineWrite(String orderLineId, String tenantId, String orderId, Long skuId,
                                  Long purchaseUnitId, long numerator, long denominator,

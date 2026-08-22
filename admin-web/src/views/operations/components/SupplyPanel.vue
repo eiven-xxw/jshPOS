@@ -139,11 +139,13 @@
           </el-form-item>
         </el-form>
       </el-tab-pane>
+      <el-tab-pane label="缺货预警与补货"><ReplenishmentPanel /></el-tab-pane>
     </el-tabs>
   </div>
 </template>
 
 <script setup lang="ts">
+import ReplenishmentPanel from './ReplenishmentPanel.vue';
 import {
   changeSupplierState,
   confirmProcurementReceipt,

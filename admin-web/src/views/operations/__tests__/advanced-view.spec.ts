@@ -5,10 +5,11 @@ const read = (relative: string) => readFileSync(new URL(relative, import.meta.ur
 const view = read('../advanced/index.vue');
 const inventory = read('../components/InventoryCostPanel.vue');
 const supply = read('../components/SupplyPanel.vue');
+const replenishment = read('../components/ReplenishmentPanel.vue');
 const commercial = read('../components/CustomerPromotionPanel.vue');
 const release = read('../components/ReleasePanel.vue');
 const orchestration = read('../useControlledOperation.ts');
-const runtimeSources = [view, inventory, supply, commercial, release, orchestration].join('\n');
+const runtimeSources = [view, inventory, supply, replenishment, commercial, release, orchestration].join('\n');
 
 describe('T2-ADM-002 advanced operations UI', () => {
   it('covers every admitted Owner through formal components or an existing formal page', () => {
@@ -20,6 +21,14 @@ describe('T2-ADM-002 advanced operations UI', () => {
     }
     for (const token of ['createProcurementOrder', 'confirmProcurementReceipt', 'transitionProcurementReturn', 'receiveTransfer']) {
       expect(supply).toContain(token);
+    }
+    for (const token of [
+      'createReplenishmentPolicy',
+      'generateReplenishmentSuggestions',
+      'transitionReplenishmentSuggestion',
+      'createReplenishmentPurchaseDraft'
+    ]) {
+      expect(replenishment).toContain(token);
     }
     for (const token of ['createPromotionRule', 'transitionPromotionRule', 'recordMemberConsent', 'adjustMemberPoints']) {
       expect(commercial).toContain(token);

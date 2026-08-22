@@ -34,6 +34,8 @@ import com.jingshanghui.pos.procurement.application.model.ProcurementViews.Retur
 import com.jingshanghui.pos.procurement.application.model.ProcurementViews.Supplier;
 import com.jingshanghui.pos.procurement.domain.ProcurementHash;
 import com.jingshanghui.pos.procurement.domain.ProcurementRules;
+import com.jingshanghui.pos.procurement.application.port.ReplenishmentProcurementSnapshotPort;
+import com.jingshanghui.pos.procurement.application.port.ReplenishmentPurchaseDraftPort;
 import com.jingshanghui.pos.procurement.infrastructure.persistence.ProcurementPersistenceParams.*;
 import com.jingshanghui.pos.procurement.infrastructure.persistence.mapper.ProcurementMapper;
 import lombok.RequiredArgsConstructor;
@@ -60,7 +62,7 @@ import java.util.Map;
  */
 @Service
 @RequiredArgsConstructor
-public class ProcurementService {
+public class ProcurementService implements ReplenishmentProcurementSnapshotPort, ReplenishmentPurchaseDraftPort {
 
     private final ProcurementMapper mapper;
     private final TrustedTenantContext tenantContext;
@@ -137,7 +139,7 @@ public class ProcurementService {
         }
         LocalDateTime at = now();
         mapper.insertOrder(new OrderWrite(command.orderId(), principal.tenantId(), command.supplierId(),
-            command.storeId(), command.warehouseId(), command.expectedDate(), tolerance, requestHash,
+            command.storeId(), command.warehouseId(), command.expectedDate(), tolerance, "MANUAL", null, requestHash,
             command.correlationId(), principal.userId(), at));
         for (com.jingshanghui.pos.procurement.application.model.ProcurementCommands.OrderLine line
             : command.lines().stream().sorted(Comparator.comparing(
@@ -433,6 +435,84 @@ public class ProcurementService {
         if (head == null) throw new ServiceException("PUR-RECEIPT-005: 收货单不存在或不可见", 404);
         authorizationService.requireStoreAccess(head.storeId());
         return new ReceiptDetail(head, mapper.findReceiptLines(tenantId, receiptId));
+    }
+
+    /** 为补货 Owner 提供供应商权威快照，调用方不能自行声明供应商有效。 */
+    @Override
+    @Transactional(readOnly = true)
+    public SupplierSnapshot requireActiveSupplier(String supplierId) {
+        ProcurementRules.ulid(supplierId, "supplierId");
+        String tenantId = tenantContext.requireTenantId();
+        Supplier supplier = mapper.findSupplier(tenantId, supplierId);
+        if (supplier == null || !"ACTIVE".equals(supplier.status())) {
+            throw new ServiceException("RPL-SUP-001: 供应商不存在、不可见或已停用", 409);
+        }
+        return new SupplierSnapshot(supplier.supplierId(), supplier.code(), supplier.name(), supplier.status());
+    }
+
+    /** 已确认在途量由采购 Owner 按冻结采购单位换算汇总。 */
+    @Override
+    @Transactional(readOnly = true)
+    public BigDecimal confirmedInTransitBase(String warehouseId, Long skuId, String supplierId) {
+        ProcurementRules.ulid(warehouseId, "warehouseId");
+        ProcurementRules.ulid(supplierId, "supplierId");
+        if (skuId == null || skuId <= 0) {
+            throw new ServiceException("RPL-INPUT-002: skuId 非法", 400);
+        }
+        BigDecimal value = mapper.sumConfirmedInTransitBase(tenantContext.requireTenantId(), warehouseId,
+            skuId, supplierId);
+        return value == null ? BigDecimal.ZERO.setScale(6) : value.setScale(6);
+    }
+
+    /**
+     * 由已审批建议创建采购草稿。此端口只写 Procurement Owner 自有表，审批前不产生采购承诺、库存或成本效果。
+     */
+    @Override
+    @Transactional
+    public DraftResult createReplenishmentDraft(DraftCommand command) {
+        ProcurementRules.ulid(command.purchaseOrderId(), "purchaseOrderId");
+        ProcurementRules.ulid(command.suggestionId(), "suggestionId");
+        ProcurementRules.ulid(command.orderLineId(), "orderLineId");
+        ProcurementRules.ulid(command.supplierId(), "supplierId");
+        ProcurementRules.ulid(command.warehouseId(), "warehouseId");
+        requireCorrelation(command.correlationId());
+        TrustedPrincipal principal = tenantContext.requirePrincipal();
+        authorizationService.requireStoreAccess(command.storeId());
+        Supplier supplier = mapper.lockSupplier(principal.tenantId(), command.supplierId());
+        if (supplier == null || !"ACTIVE".equals(supplier.status())) {
+            throw new ServiceException("RPL-SUP-001: 供应商不存在、不可见或已停用", 409);
+        }
+        SkuUnitSnapshot unit = catalogPort.requireUnit(command.skuId(), command.purchaseUnitId());
+        if (unit.numerator() != command.conversionNumerator()
+            || unit.denominator() != command.conversionDenominator()) {
+            throw new ServiceException("RPL-UNIT-001: 采购单位换算已变化，建议必须过期重算", 409);
+        }
+        BigDecimal ordered = ProcurementRules.quantity(command.orderedQuantity(), "orderedQuantity");
+        ProcurementRules.toBaseQuantity(ordered, unit.numerator(), unit.denominator());
+        String requestHash = ProcurementHash.sha256(ProcurementHash.canonical(List.of(
+            command.purchaseOrderId(), command.suggestionId(), command.supplierId(), command.storeId(),
+            command.warehouseId(), command.expectedDate(), command.orderLineId(), command.skuId(),
+            command.purchaseUnitId(), command.conversionNumerator(), command.conversionDenominator(),
+            ordered, command.unitPriceMinor(), command.taxRateBps())));
+        OrderHead existing = mapper.findOrder(principal.tenantId(), command.purchaseOrderId());
+        if (existing != null) {
+            if (!requestHash.equals(mapper.findOrderRequestHash(principal.tenantId(), command.purchaseOrderId()))) {
+                throw new ServiceException("RPL-IDEM-003: 相同采购草稿标识对应不同建议内容", 409);
+            }
+            return new DraftResult(existing.orderId(), existing.status(), true);
+        }
+        LocalDateTime at = now();
+        mapper.insertOrder(new OrderWrite(command.purchaseOrderId(), principal.tenantId(), command.supplierId(),
+            command.storeId(), command.warehouseId(), command.expectedDate(), 0, "REPLENISHMENT",
+            command.suggestionId(), requestHash, command.correlationId(), principal.userId(), at));
+        mapper.insertOrderLine(new OrderLineWrite(command.orderLineId(), principal.tenantId(),
+            command.purchaseOrderId(), command.skuId(), command.purchaseUnitId(), unit.numerator(),
+            unit.denominator(), ordered, ProcurementRules.money(command.unitPriceMinor()),
+            ProcurementRules.taxRate(command.taxRateBps()), at));
+        audit(principal, command.storeId(), "REPLENISHMENT_DRAFT_CREATED", "PURCHASE_ORDER",
+            command.purchaseOrderId(), command.suggestionId(), command.correlationId(), null, "DRAFT",
+            "SOURCE_REPLENISHMENT", at);
+        return new DraftResult(command.purchaseOrderId(), "DRAFT", false);
     }
 
     private void validateOrder(CreateOrder command) {

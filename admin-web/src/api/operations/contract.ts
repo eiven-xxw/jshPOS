@@ -9,6 +9,7 @@ export const OPERATIONS_ENDPOINTS = Object.freeze({
   stocktakes: '/api/v1/inventory/stocktakes',
   costing: '/api/inventory',
   procurement: '/api/v1/procurement',
+  replenishment: '/api/v1/replenishment',
   transfers: '/api/v1/inventory/transfers',
   promotions: '/api/v1/promotions',
   members: '/api/v1/members',

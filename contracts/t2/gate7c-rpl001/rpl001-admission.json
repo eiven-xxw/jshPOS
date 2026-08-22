@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "1.0",
+  "gate": "T2-GATE7C-SPRINT-S21C-RPL001",
+  "baselineCommit": "f0d2f7b989d7dbaf535569e37c4a3c84d6fd61b9",
+  "branch": "t2/gate7c-sprint21c-rpl001-replenishment",
+  "decision": "RPL001_APPROVED_IN_PROGRESS",
+  "requirement": {"id": "T2-RPL-001", "status": "IN_PROGRESS", "owner": "Replenishment"},
+  "calculation": {"quantityScale": 6, "multipleRounding": "CEILING", "predictionAllowed": false,
+    "automaticOrderingAllowed": false, "automaticApprovalAllowed": false},
+  "dataAccess": [
+    {"tables": "rpl_*", "owner": "Replenishment", "accessPolicy": "CONTROLLED_AND_APPEND_ONLY", "sqlMode": "HYBRID"},
+    {"tables": "inv_*", "owner": "Inventory", "accessPolicy": "READ_PORT_ONLY"},
+    {"tables": "pur_*/sup_*", "owner": "Procurement", "accessPolicy": "READ_AND_DRAFT_PORT_ONLY"},
+    {"tables": "cat_*", "owner": "Catalog", "accessPolicy": "READ_PORT_ONLY"}
+  ],
+  "preservedStates": {"T2-DMT-001": "DRAFT", "T2-ONB-001": "DRAFT", "T2-LOT-001": "DRAFT",
+    "T2-PAY-002": "BLOCKED", "T2-HWD-001": "BLOCKED", "T2-PRN-001": "BLOCKED",
+    "T2-PAR-001": "BLOCKED"},
+  "externalExecution": {"providerNetworkCalls": 0, "realFundsTransactions": 0,
+    "realDeviceCommands": 0, "realPeripheralCommands": 0, "fullAlphaRuns": 0,
+    "productionDeployments": 0, "commercialClaimAllowed": false}
+}

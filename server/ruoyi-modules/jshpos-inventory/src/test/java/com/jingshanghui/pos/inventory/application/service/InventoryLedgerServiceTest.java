@@ -215,6 +215,25 @@ class InventoryLedgerServiceTest {
         verify(mapper).rebuildBalance(any());
     }
 
+    @Test
+    void exposesReplenishmentSnapshotFromTrustedWarehousePolicyAndBalanceOnly() {
+        effectiveWarehousePolicy();
+        when(mapper.findBalance("TENANT_A", WAREHOUSE, 701L))
+            .thenReturn(new BalanceView("d".repeat(64), WAREHOUSE, 701L, "SALEABLE",
+                new BigDecimal("10.000000"), new BigDecimal("2.000000"), new BigDecimal("1.000000"),
+                new BigDecimal("0.500000"), 8, 4));
+
+        var snapshot = service.requireReplenishmentSnapshot(WAREHOUSE, 701L);
+
+        assertThat(snapshot.storeId()).isEqualTo(1101L);
+        assertThat(snapshot.availableQuantity()).isEqualByComparingTo("6.500000");
+        assertThat(snapshot.lastLedgerSequence()).isEqualTo(8);
+        assertThat(snapshot.balanceVersion()).isEqualTo(4);
+        verify(authorization).requireStoreAccess(1101L);
+        verify(mapper, never()).updateBalance(any());
+        verify(mapper, never()).insertLedger(any());
+    }
+
     private void saleSnapshot(BigDecimal quantity) {
         when(orders.requireSnapshot(ORDER)).thenReturn(new InventoryOrderSnapshot(ORDER, 1101L,
             "COMPLETED", "PAID", LocalDate.of(2026, 8, 16),

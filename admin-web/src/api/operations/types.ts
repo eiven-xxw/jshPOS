@@ -120,6 +120,63 @@ export interface ProcurementReceiptDetail extends OwnerOperationView {
   }>;
 }
 
+/** 服务端冻结并解释的补货建议；前端不得由库存值自行推导建议数量。 */
+export interface ReplenishmentSuggestion extends OwnerOperationView {
+  suggestionId: string;
+  policyVersionId: string;
+  storeId: Id64;
+  warehouseId: string;
+  skuId: Id64;
+  skuCode: string;
+  supplierId: string;
+  availableQuantity: ExactDecimal;
+  confirmedInTransitQuantity: ExactDecimal;
+  effectiveQuantity: ExactDecimal;
+  minimumBaseQuantity: ExactDecimal;
+  maximumBaseQuantity: ExactDecimal;
+  requiredBaseQuantity: ExactDecimal;
+  suggestedPurchaseQuantity: ExactDecimal;
+  reasonCode: string;
+  state: string;
+  purchaseOrderId?: string;
+  failureCode?: string;
+  version: number;
+}
+
+export interface ReplenishmentPolicy extends OwnerOperationView {
+  policyVersionId: string;
+  storeId: Id64;
+  warehouseId: string;
+  versionNo: number;
+  state: string;
+  effectiveFrom: string;
+  contentSha256?: string;
+  version: number;
+}
+
+export interface ReplenishmentPolicyCreateRequest {
+  policyVersionId: string;
+  storeId: string;
+  warehouseId: string;
+  versionNo: number;
+  effectiveFrom: string;
+  items: Array<{
+    policyItemId: string;
+    skuId: string;
+    purchaseUnitId: string;
+    supplierId: string;
+    minimumBaseQuantity: ExactDecimal;
+    maximumBaseQuantity: ExactDecimal;
+    minimumOrderQuantity: ExactDecimal;
+    orderMultiple: ExactDecimal;
+    includeConfirmedInTransit: boolean;
+    unitPriceMinor: string;
+    taxRateBps: number;
+  }>;
+  idempotencyKey: string;
+  correlationId: string;
+}
+
 export interface TransferDetail extends OwnerOperationView {
   head: {
     transferId: string;

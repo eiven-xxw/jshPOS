@@ -483,6 +483,17 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
 - 完成后必须提交 `T2-LBL-001` 独立周门禁报告并等待项目发起人确认；不得自动准入 `T2-RPL-001` 或 Gate 7D，不得宣称真实打印、Alpha、生产或商业验收通过。
 - `T2-LBL-001` 候选提交 `69bd772556925f0cf09dc198e3eec969b6247977` 已在 GitHub Actions Run `32571686495` 完成九类制品与完整门禁，现仅为 `VERIFIED / AWAITING SPONSOR ACCEPTANCE`；`T2-RPL-001` 及后续需求继续 `DRAFT`，`T2-PRN-001` 和真实打印继续 `BLOCKED`。
 
+## 4.39 当前 T2 Gate 7C / Sprint S21-C：T2-RPL-001 独立正式开发
+
+- 项目发起人已于 2026-08-22 接受 `T2-LBL-001 CONDITIONAL PASS` 并授权其更新为 `ACCEPTED`；该接受只覆盖内部价签软件流程，真实打印、厂商 SDK 与 `REAL_DEVICE` 继续 `BLOCKED`。
+- 仅授权从封存提交 `f0d2f7b989d7dbaf535569e37c4a3c84d6fd61b9` 建立 `t2/gate7c-sprint21c-rpl001-replenishment`，独立实现 `T2-RPL-001`；`T2-DMT-001/ONB-001/LOT-001` 与 Gate 7D 后续继续 `DRAFT`。
+- Replenishment Owner 独占 `rpl_*` 规则版本、生成运行、建议、状态事件、审计和 Outbox；Inventory Owner 只通过可信进程内端口提供可重建余额与最后流水序号，Procurement Owner 只通过正式端口创建采购 `DRAFT`，禁止跨 Owner Mapper 或直接更新 `inv_*`/`pur_*`。
+- 商业 V1 只准入最低/最高库存、最小订货量、订货倍数、冻结单位换算和可选已批准在途量的确定性计算；禁止预测式 AI、黑盒评分、自动下单、自动审批或自动形成库存/成本效果。
+- 建议必须冻结规则身份、库存流水序号、余额版本、各数量输入、在途量、单位换算、计算明细和内容摘要；重复同摘要返回原结果，同键异摘要拒绝，较新库存事实必须使旧开放建议显式 `STALE`。
+- 转采购草稿只允许通过 Procurement Owner 端口，绑定原建议和稳定幂等键；供应商失效、单位换算变化、库存事实后移、跨租户/仓库或同键异内容必须失败关闭，审批前不得产生采购承诺、收货、库存或成本效果。
+- 数量统一 `DECIMAL(19,6)/BigDecimal` 并使用 `CEILING` 向上满足采购倍数；禁止 `float/double`。所有 `tenant_id` 由可信上下文注入，覆盖 Mapper/XML、任务、缓存、导出和对象存储攻击。
+- `T2-PAY-002/HWD-001/PRN-001/PAR-001` 继续 `BLOCKED`，外部执行、完整 Alpha、现场试点和生产部署保持 0。完成后必须提交独立周门禁报告等待确认，不得自动启动后续需求。
+
 ## 5. 工程与测试规则
 
 - 服务端采用 RuoYi-Vue-Plus 模块化单体，不得把领域逻辑写入 Controller、通用工具类或框架系统模块。

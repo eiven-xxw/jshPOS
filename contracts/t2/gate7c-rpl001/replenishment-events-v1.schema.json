@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.jingshanghui.example/t2/gate7c/replenishment-events-v1.schema.json",
+  "title": "T2-RPL-001 replenishment event envelope",
+  "type": "object",
+  "required": ["schemaVersion", "eventId", "eventType", "aggregateId", "aggregateVersion",
+    "tenantId", "storeId", "correlationId", "payloadSha256", "occurredAt", "payload"],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "eventId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "eventType": {"enum": ["replenishment.policy.published.v1", "replenishment.suggestion.generated.v1",
+      "replenishment.suggestion.state-changed.v1", "replenishment.purchase-draft.created.v1"]},
+    "aggregateId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "aggregateVersion": {"type": "integer", "minimum": 1},
+    "tenantId": {"type": "string", "minLength": 1, "maxLength": 20},
+    "storeId": {"type": "integer", "minimum": 1},
+    "correlationId": {"type": "string", "minLength": 1, "maxLength": 96},
+    "payloadSha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "occurredAt": {"type": "string", "format": "date-time"},
+    "payload": {"type": "object"}
+  },
+  "additionalProperties": false
+}

@@ -12,7 +12,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/** 在干净 MySQL 8.4 执行 V1—V15，并验证采购和盘点数据库级不变量。 */
+/** 在干净 MySQL 8.4 执行模块迁移，并验证采购、盘点和补货数据库级不变量。 */
 class ProcurementMigrationMySqlIT {
 
     private final String url = required("GATE4B_MYSQL_JDBC_URL");
@@ -20,12 +20,12 @@ class ProcurementMigrationMySqlIT {
     private final String password = required("GATE4B_MYSQL_PASSWORD");
 
     @Test
-    void migratesFifteenVersionsAndEnforcesGate4bConstraints() throws Exception {
+    void migratesSixteenVersionsAndEnforcesGate7cConstraints() throws Exception {
         createFrameworkMenuFixture();
         Flyway flyway = Flyway.configure().dataSource(url, username, password)
             .locations("classpath:db/migration").table("jshpos_flyway_schema_history")
             .baselineOnMigrate(true).baselineVersion("0").cleanDisabled(true).load();
-        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(15);
+        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(16);
         assertThat(flyway.migrate().migrationsExecuted).isZero();
         flyway.validate();
         assertTablesPermissionsAndNoDeferredRuntime();
@@ -52,6 +52,9 @@ class ProcurementMigrationMySqlIT {
             "sup_supplier", "pur_purchase_order", "pur_purchase_order_line", "pur_receipt",
             "pur_receipt_line", "pur_purchase_return", "pur_purchase_return_line",
             "pur_audit_event", "pur_event_outbox");
+        tables = new java.util.HashSet<>(tables);
+        tables.addAll(Set.of("rpl_policy_version", "rpl_policy_item", "rpl_generation_run",
+            "rpl_suggestion", "rpl_suggestion_event", "rpl_audit_event", "rpl_event_outbox"));
         try (Connection connection = DriverManager.getConnection(url, username, password);
              Statement statement = connection.createStatement()) {
             for (String table : tables) {
@@ -64,6 +67,11 @@ class ProcurementMigrationMySqlIT {
                 "SELECT COUNT(*) FROM sys_menu WHERE menu_id BETWEEN 9200510 AND 9200533")) {
                 assertThat(rows.next()).isTrue();
                 assertThat(rows.getInt(1)).isEqualTo(20);
+            }
+            try (var rows = statement.executeQuery(
+                "SELECT COUNT(*) FROM sys_menu WHERE menu_id BETWEEN 9200534 AND 9200539")) {
+                assertThat(rows.next()).isTrue();
+                assertThat(rows.getInt(1)).isEqualTo(6);
             }
             try (var rows = statement.executeQuery(
                 "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() " +
@@ -95,6 +103,15 @@ class ProcurementMigrationMySqlIT {
                 .isInstanceOf(SQLException.class).hasMessageContaining("immutable");
             assertThatThrownBy(() -> statement.executeUpdate("INSERT INTO pur_purchase_order(order_id,tenant_id,supplier_id,store_id,warehouse_id,expected_date,status,over_receipt_tolerance_bps,request_sha256,correlation_id,creator_user_id,version,created_at,updated_at) VALUES('01K2A000000000000000000105','TENANT_A','01K2A000000000000000000101',1101,'01K2A000000000000000000010','2026-08-20','DRAFT',1001,REPEAT('c',64),'trace-y',101,0,UTC_TIMESTAMP(3),UTC_TIMESTAMP(3))"))
                 .isInstanceOf(SQLException.class);
+
+            statement.executeUpdate("INSERT INTO rpl_policy_version(policy_version_id,tenant_id,store_id,warehouse_id,version_no,state,effective_from,idempotency_key,request_sha256,actor_user_id,version,created_at,updated_at) VALUES('01K2A000000000000000000201','TENANT_A',1101,'01K2A000000000000000000010',1,'DRAFT',UTC_TIMESTAMP(3),'idem-rpl-policy',REPEAT('d',64),101,0,UTC_TIMESTAMP(3),UTC_TIMESTAMP(3))");
+            statement.executeUpdate("INSERT INTO rpl_policy_item(policy_item_id,tenant_id,policy_version_id,sku_id,sku_code,base_unit_id,purchase_unit_id,conversion_numerator,conversion_denominator,supplier_id,minimum_base_quantity,maximum_base_quantity,minimum_order_quantity,order_multiple,include_confirmed_in_transit,unit_price_minor,tax_rate_bps,item_sha256,created_at) VALUES('01K2A000000000000000000202','TENANT_A','01K2A000000000000000000201',701,'A-SKU',301,301,1,1,'01K2A000000000000000000101',5,20,1,2,TRUE,100,0,REPEAT('e',64),UTC_TIMESTAMP(3))");
+            assertThatThrownBy(() -> statement.executeUpdate("INSERT INTO rpl_policy_item(policy_item_id,tenant_id,policy_version_id,sku_id,sku_code,base_unit_id,purchase_unit_id,conversion_numerator,conversion_denominator,supplier_id,minimum_base_quantity,maximum_base_quantity,minimum_order_quantity,order_multiple,include_confirmed_in_transit,unit_price_minor,tax_rate_bps,item_sha256,created_at) VALUES('01K2A000000000000000000203','TENANT_A','01K2A000000000000000000201',801,'B-SKU',301,301,1,1,'01K2A000000000000000000101',5,20,1,2,TRUE,100,0,REPEAT('f',64),UTC_TIMESTAMP(3))"))
+                .isInstanceOf(SQLException.class);
+            assertThatThrownBy(() -> statement.executeUpdate("UPDATE rpl_policy_item SET maximum_base_quantity=21 WHERE tenant_id='TENANT_A' AND policy_item_id='01K2A000000000000000000202'"))
+                .isInstanceOf(SQLException.class).hasMessageContaining("immutable");
+            assertThatThrownBy(() -> statement.executeUpdate("UPDATE pur_purchase_order SET source_id='01K2A000000000000000000202' WHERE tenant_id='TENANT_A' AND order_id='01K2A000000000000000000102'"))
+                .isInstanceOf(SQLException.class).hasMessageContaining("immutable");
         }
     }
 

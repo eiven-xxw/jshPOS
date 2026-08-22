@@ -11,6 +11,9 @@ import type {
   ProcurementOrderCreateRequest,
   ProcurementOrderDetail,
   ProcurementReceiptDetail,
+  ReplenishmentPolicy,
+  ReplenishmentPolicyCreateRequest,
+  ReplenishmentSuggestion,
   PromotionRuleCreateRequest,
   ReleaseCreateRequest,
   ReleaseSummary,
@@ -112,6 +115,46 @@ export const transitionProcurementReturn = (
   data: { correlationId: string; eventId?: string }
 ): AxiosPromise<OwnerOperationView> =>
   post(`${OPERATIONS_ENDPOINTS.procurement}/returns/${ownerUlid(purchaseReturnId, 'purchaseReturnId')}/${action}`, data);
+
+export const createReplenishmentPolicy = (data: ReplenishmentPolicyCreateRequest): AxiosPromise<{ policy: ReplenishmentPolicy }> =>
+  post(`${OPERATIONS_ENDPOINTS.replenishment}/policies`, data);
+export const transitionReplenishmentPolicy = (
+  policyVersionId: string,
+  action: 'publish' | 'retire',
+  data: { expectedVersion: number; idempotencyKey: string; reason: string; correlationId: string }
+): AxiosPromise<{ policy: ReplenishmentPolicy }> =>
+  post(`${OPERATIONS_ENDPOINTS.replenishment}/policies/${ownerUlid(policyVersionId, 'policyVersionId')}/${action}`, data);
+export const listReplenishmentPolicies = (storeId: string, state?: string): AxiosPromise<ReplenishmentPolicy[]> =>
+  request({
+    url: `${OPERATIONS_ENDPOINTS.replenishment}/policies`,
+    method: 'get',
+    params: { storeId: platformId(storeId, 'storeId'), state, limit: 100 }
+  });
+export const generateReplenishmentSuggestions = (data: {
+  generationRunId: string;
+  policyVersionId: string;
+  calculationAt: string;
+  idempotencyKey: string;
+  correlationId: string;
+}): AxiosPromise<{ suggestions: ReplenishmentSuggestion[]; duplicate: boolean }> =>
+  post(`${OPERATIONS_ENDPOINTS.replenishment}/suggestions/generate`, data);
+export const listReplenishmentSuggestions = (storeId: string, state?: string): AxiosPromise<ReplenishmentSuggestion[]> =>
+  request({
+    url: `${OPERATIONS_ENDPOINTS.replenishment}/suggestions`,
+    method: 'get',
+    params: { storeId: platformId(storeId, 'storeId'), state, limit: 100 }
+  });
+export const transitionReplenishmentSuggestion = (
+  suggestionId: string,
+  action: 'review' | 'approve' | 'reject',
+  data: { expectedVersion: number; idempotencyKey: string; reason: string; correlationId: string }
+): AxiosPromise<ReplenishmentSuggestion> =>
+  post(`${OPERATIONS_ENDPOINTS.replenishment}/suggestions/${ownerUlid(suggestionId, 'suggestionId')}/${action}`, data);
+export const createReplenishmentPurchaseDraft = (
+  suggestionId: string,
+  data: { expectedVersion: number; purchaseOrderId: string; expectedDate: string; idempotencyKey: string; correlationId: string }
+): AxiosPromise<ReplenishmentSuggestion> =>
+  post(`${OPERATIONS_ENDPOINTS.replenishment}/suggestions/${ownerUlid(suggestionId, 'suggestionId')}/purchase-draft`, data);
 
 export const createTransfer = (data: TransferCreateRequest): AxiosPromise<TransferDetail> => post(OPERATIONS_ENDPOINTS.transfers, data);
 export const getTransfer = (transferId: string): AxiosPromise<TransferDetail> =>

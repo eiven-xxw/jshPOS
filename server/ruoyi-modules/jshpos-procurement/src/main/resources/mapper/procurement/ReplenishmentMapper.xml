@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jingshanghui.pos.procurement.infrastructure.persistence.mapper.ReplenishmentMapper">
+
+    <resultMap id="policy" type="com.jingshanghui.pos.procurement.application.model.ReplenishmentModels$PolicyView">
+        <constructor><arg column="policyVersionId" javaType="java.lang.String"/><arg column="storeId" javaType="java.lang.Long"/>
+            <arg column="warehouseId" javaType="java.lang.String"/><arg column="versionNo" javaType="int"/>
+            <arg column="state" javaType="java.lang.String"/><arg column="effectiveFrom" javaType="java.time.LocalDateTime"/>
+            <arg column="contentSha256" javaType="java.lang.String"/><arg column="version" javaType="long"/></constructor>
+    </resultMap>
+    <resultMap id="policyItem" type="com.jingshanghui.pos.procurement.application.model.ReplenishmentModels$PolicyItemView">
+        <constructor><arg column="policyItemId" javaType="java.lang.String"/><arg column="policyVersionId" javaType="java.lang.String"/>
+            <arg column="skuId" javaType="java.lang.Long"/><arg column="skuCode" javaType="java.lang.String"/>
+            <arg column="baseUnitId" javaType="java.lang.Long"/><arg column="purchaseUnitId" javaType="java.lang.Long"/>
+            <arg column="conversionNumerator" javaType="long"/><arg column="conversionDenominator" javaType="long"/>
+            <arg column="supplierId" javaType="java.lang.String"/><arg column="minimumBaseQuantity" javaType="java.math.BigDecimal"/>
+            <arg column="maximumBaseQuantity" javaType="java.math.BigDecimal"/><arg column="minimumOrderQuantity" javaType="java.math.BigDecimal"/>
+            <arg column="orderMultiple" javaType="java.math.BigDecimal"/><arg column="includeConfirmedInTransit" javaType="boolean"/>
+            <arg column="unitPriceMinor" javaType="long"/><arg column="taxRateBps" javaType="int"/>
+            <arg column="itemSha256" javaType="java.lang.String"/></constructor>
+    </resultMap>
+    <resultMap id="run" type="com.jingshanghui.pos.procurement.application.model.ReplenishmentModels$GenerationRunView">
+        <constructor><arg column="generationRunId" javaType="java.lang.String"/><arg column="policyVersionId" javaType="java.lang.String"/>
+            <arg column="storeId" javaType="java.lang.Long"/><arg column="warehouseId" javaType="java.lang.String"/>
+            <arg column="calculationAt" javaType="java.time.LocalDateTime"/><arg column="requestSha256" javaType="java.lang.String"/>
+            <arg column="state" javaType="java.lang.String"/><arg column="suggestionCount" javaType="int"/>
+            <arg column="version" javaType="long"/></constructor>
+    </resultMap>
+    <resultMap id="suggestion" type="com.jingshanghui.pos.procurement.application.model.ReplenishmentModels$SuggestionView">
+        <constructor><arg column="suggestionId" javaType="java.lang.String"/><arg column="generationRunId" javaType="java.lang.String"/>
+            <arg column="policyVersionId" javaType="java.lang.String"/><arg column="policyItemId" javaType="java.lang.String"/>
+            <arg column="storeId" javaType="java.lang.Long"/><arg column="warehouseId" javaType="java.lang.String"/>
+            <arg column="skuId" javaType="java.lang.Long"/><arg column="skuCode" javaType="java.lang.String"/>
+            <arg column="baseUnitId" javaType="java.lang.Long"/><arg column="purchaseUnitId" javaType="java.lang.Long"/>
+            <arg column="supplierId" javaType="java.lang.String"/><arg column="onHandQuantity" javaType="java.math.BigDecimal"/>
+            <arg column="reservedQuantity" javaType="java.math.BigDecimal"/><arg column="frozenQuantity" javaType="java.math.BigDecimal"/>
+            <arg column="safetyStockQuantity" javaType="java.math.BigDecimal"/><arg column="availableQuantity" javaType="java.math.BigDecimal"/>
+            <arg column="confirmedInTransitQuantity" javaType="java.math.BigDecimal"/><arg column="effectiveQuantity" javaType="java.math.BigDecimal"/>
+            <arg column="minimumBaseQuantity" javaType="java.math.BigDecimal"/><arg column="maximumBaseQuantity" javaType="java.math.BigDecimal"/>
+            <arg column="requiredBaseQuantity" javaType="java.math.BigDecimal"/><arg column="suggestedPurchaseQuantity" javaType="java.math.BigDecimal"/>
+            <arg column="minimumOrderQuantity" javaType="java.math.BigDecimal"/><arg column="orderMultiple" javaType="java.math.BigDecimal"/>
+            <arg column="conversionNumerator" javaType="long"/><arg column="conversionDenominator" javaType="long"/>
+            <arg column="inputLedgerSequence" javaType="long"/><arg column="inputBalanceVersion" javaType="long"/>
+            <arg column="reasonCode" javaType="java.lang.String"/><arg column="state" javaType="java.lang.String"/>
+            <arg column="contentSha256" javaType="java.lang.String"/><arg column="purchaseOrderId" javaType="java.lang.String"/>
+            <arg column="failureCode" javaType="java.lang.String"/><arg column="reviewerUserId" javaType="java.lang.Long"/>
+            <arg column="approverUserId" javaType="java.lang.Long"/><arg column="createdAt" javaType="java.time.LocalDateTime"/>
+            <arg column="version" javaType="long"/></constructor>
+    </resultMap>
+
+    <sql id="policyColumns">policy_version_id AS policyVersionId,store_id AS storeId,warehouse_id AS warehouseId,
+      version_no AS versionNo,state,effective_from AS effectiveFrom,content_sha256 AS contentSha256,version</sql>
+    <sql id="suggestionColumns">suggestion_id AS suggestionId,generation_run_id AS generationRunId,
+      policy_version_id AS policyVersionId,policy_item_id AS policyItemId,store_id AS storeId,warehouse_id AS warehouseId,
+      sku_id AS skuId,sku_code AS skuCode,base_unit_id AS baseUnitId,purchase_unit_id AS purchaseUnitId,supplier_id AS supplierId,
+      on_hand_quantity AS onHandQuantity,reserved_quantity AS reservedQuantity,frozen_quantity AS frozenQuantity,
+      safety_stock_quantity AS safetyStockQuantity,available_quantity AS availableQuantity,
+      confirmed_in_transit_quantity AS confirmedInTransitQuantity,effective_quantity AS effectiveQuantity,
+      minimum_base_quantity AS minimumBaseQuantity,maximum_base_quantity AS maximumBaseQuantity,
+      required_base_quantity AS requiredBaseQuantity,suggested_purchase_quantity AS suggestedPurchaseQuantity,
+      minimum_order_quantity AS minimumOrderQuantity,order_multiple AS orderMultiple,
+      conversion_numerator AS conversionNumerator,conversion_denominator AS conversionDenominator,
+      input_ledger_sequence AS inputLedgerSequence,input_balance_version AS inputBalanceVersion,
+      reason_code AS reasonCode,state,content_sha256 AS contentSha256,purchase_order_id AS purchaseOrderId,
+      failure_code AS failureCode,reviewer_user_id AS reviewerUserId,approver_user_id AS approverUserId,
+      created_at AS createdAt,version</sql>
+
+    <insert id="insertPolicy">INSERT INTO rpl_policy_version(policy_version_id,tenant_id,store_id,warehouse_id,version_no,
+      state,effective_from,idempotency_key,request_sha256,actor_user_id,version,created_at,updated_at)
+      VALUES(#{policyVersionId},#{tenantId},#{storeId},#{warehouseId},#{versionNo},'DRAFT',#{effectiveFrom},
+      #{idempotencyKey},#{requestSha256},#{actorUserId},0,#{at},#{at})</insert>
+    <insert id="insertPolicyItem">INSERT INTO rpl_policy_item(policy_item_id,tenant_id,policy_version_id,sku_id,sku_code,
+      base_unit_id,purchase_unit_id,conversion_numerator,conversion_denominator,supplier_id,minimum_base_quantity,
+      maximum_base_quantity,minimum_order_quantity,order_multiple,include_confirmed_in_transit,unit_price_minor,
+      tax_rate_bps,item_sha256,created_at) VALUES(#{policyItemId},#{tenantId},#{policyVersionId},#{skuId},#{skuCode},
+      #{baseUnitId},#{purchaseUnitId},#{conversionNumerator},#{conversionDenominator},#{supplierId},#{minimumBaseQuantity},
+      #{maximumBaseQuantity},#{minimumOrderQuantity},#{orderMultiple},#{includeConfirmedInTransit},#{unitPriceMinor},
+      #{taxRateBps},#{itemSha256},#{at})</insert>
+    <select id="findPolicy" resultMap="policy">SELECT <include refid="policyColumns"/> FROM rpl_policy_version
+      WHERE tenant_id=#{tenantId} AND policy_version_id=#{policyVersionId}</select>
+    <select id="findPolicyByIdempotencyKey" resultMap="policy">SELECT <include refid="policyColumns"/>
+      FROM rpl_policy_version WHERE tenant_id=#{tenantId} AND idempotency_key=#{idempotencyKey}</select>
+    <select id="lockPolicy" resultMap="policy">SELECT <include refid="policyColumns"/> FROM rpl_policy_version
+      WHERE tenant_id=#{tenantId} AND policy_version_id=#{policyVersionId} FOR UPDATE</select>
+    <select id="findPolicyRequestHash" resultType="string">SELECT request_sha256 FROM rpl_policy_version
+      WHERE tenant_id=#{tenantId} AND policy_version_id=#{policyVersionId}</select>
+    <select id="listPolicies" resultMap="policy">SELECT <include refid="policyColumns"/> FROM rpl_policy_version
+      WHERE tenant_id=#{tenantId} AND store_id=#{storeId}<if test="state != null"> AND state=#{state}</if>
+      ORDER BY version_no DESC LIMIT #{limit}</select>
+    <select id="findPolicyItems" resultMap="policyItem">SELECT policy_item_id AS policyItemId,
+      policy_version_id AS policyVersionId,sku_id AS skuId,sku_code AS skuCode,base_unit_id AS baseUnitId,
+      purchase_unit_id AS purchaseUnitId,conversion_numerator AS conversionNumerator,
+      conversion_denominator AS conversionDenominator,supplier_id AS supplierId,
+      minimum_base_quantity AS minimumBaseQuantity,maximum_base_quantity AS maximumBaseQuantity,
+      minimum_order_quantity AS minimumOrderQuantity,order_multiple AS orderMultiple,
+      include_confirmed_in_transit AS includeConfirmedInTransit,unit_price_minor AS unitPriceMinor,
+      tax_rate_bps AS taxRateBps,item_sha256 AS itemSha256 FROM rpl_policy_item
+      WHERE tenant_id=#{tenantId} AND policy_version_id=#{policyVersionId} ORDER BY policy_item_id</select>
+    <update id="updatePolicyState">UPDATE rpl_policy_version SET state=#{nextState},content_sha256=#{contentSha256},
+      version=version+1,updated_at=#{at} WHERE tenant_id=#{tenantId} AND policy_version_id=#{policyVersionId}
+      AND state=#{expectedState} AND version=#{expectedVersion}</update>
+
+    <insert id="insertRun">INSERT INTO rpl_generation_run(generation_run_id,tenant_id,policy_version_id,store_id,
+      warehouse_id,calculation_at,idempotency_key,request_sha256,state,suggestion_count,actor_user_id,version,created_at,updated_at)
+      VALUES(#{generationRunId},#{tenantId},#{policyVersionId},#{storeId},#{warehouseId},#{calculationAt},
+      #{idempotencyKey},#{requestSha256},'RUNNING',0,#{actorUserId},0,#{at},#{at})</insert>
+    <select id="findRun" resultMap="run">SELECT generation_run_id AS generationRunId,policy_version_id AS policyVersionId,
+      store_id AS storeId,warehouse_id AS warehouseId,calculation_at AS calculationAt,request_sha256 AS requestSha256,
+      state,suggestion_count AS suggestionCount,version FROM rpl_generation_run
+      WHERE tenant_id=#{tenantId} AND generation_run_id=#{generationRunId}</select>
+    <select id="findRunByIdempotencyKey" resultMap="run">SELECT generation_run_id AS generationRunId,
+      policy_version_id AS policyVersionId,store_id AS storeId,warehouse_id AS warehouseId,
+      calculation_at AS calculationAt,request_sha256 AS requestSha256,state,suggestion_count AS suggestionCount,version
+      FROM rpl_generation_run WHERE tenant_id=#{tenantId} AND idempotency_key=#{idempotencyKey}</select>
+    <update id="completeRun">UPDATE rpl_generation_run SET state='COMPLETED',suggestion_count=#{suggestionCount},
+      version=version+1,updated_at=#{at} WHERE tenant_id=#{tenantId} AND generation_run_id=#{generationRunId}
+      AND state='RUNNING' AND version=#{expectedVersion}</update>
+
+    <insert id="insertSuggestion">INSERT INTO rpl_suggestion(suggestion_id,tenant_id,generation_run_id,policy_version_id,
+      policy_item_id,store_id,warehouse_id,sku_id,sku_code,base_unit_id,purchase_unit_id,supplier_id,on_hand_quantity,
+      reserved_quantity,frozen_quantity,safety_stock_quantity,available_quantity,confirmed_in_transit_quantity,
+      effective_quantity,minimum_base_quantity,maximum_base_quantity,required_base_quantity,suggested_purchase_quantity,
+      minimum_order_quantity,order_multiple,conversion_numerator,conversion_denominator,input_ledger_sequence,
+      input_balance_version,reason_code,state,content_sha256,actor_user_id,version,created_at,updated_at)
+      VALUES(#{suggestionId},#{tenantId},#{generationRunId},#{policyVersionId},#{policyItemId},#{storeId},#{warehouseId},
+      #{skuId},#{skuCode},#{baseUnitId},#{purchaseUnitId},#{supplierId},#{onHandQuantity},#{reservedQuantity},
+      #{frozenQuantity},#{safetyStockQuantity},#{availableQuantity},#{confirmedInTransitQuantity},#{effectiveQuantity},
+      #{minimumBaseQuantity},#{maximumBaseQuantity},#{requiredBaseQuantity},#{suggestedPurchaseQuantity},
+      #{minimumOrderQuantity},#{orderMultiple},#{conversionNumerator},#{conversionDenominator},#{inputLedgerSequence},
+      #{inputBalanceVersion},#{reasonCode},'GENERATED',#{contentSha256},#{actorUserId},0,#{at},#{at})</insert>
+    <select id="findSuggestion" resultMap="suggestion">SELECT <include refid="suggestionColumns"/> FROM rpl_suggestion
+      WHERE tenant_id=#{tenantId} AND suggestion_id=#{suggestionId}</select>
+    <select id="lockSuggestion" resultMap="suggestion">SELECT <include refid="suggestionColumns"/> FROM rpl_suggestion
+      WHERE tenant_id=#{tenantId} AND suggestion_id=#{suggestionId} FOR UPDATE</select>
+    <select id="listSuggestionsByRun" resultMap="suggestion">SELECT <include refid="suggestionColumns"/> FROM rpl_suggestion
+      WHERE tenant_id=#{tenantId} AND generation_run_id=#{generationRunId} ORDER BY suggestion_id</select>
+    <select id="listSuggestions" resultMap="suggestion">SELECT <include refid="suggestionColumns"/> FROM rpl_suggestion
+      WHERE tenant_id=#{tenantId} AND store_id=#{storeId}<if test="state != null"> AND state=#{state}</if>
+      ORDER BY created_at DESC,suggestion_id LIMIT #{limit}</select>
+    <select id="listOpenSuggestionsForUpdate" resultMap="suggestion">SELECT <include refid="suggestionColumns"/>
+      FROM rpl_suggestion WHERE tenant_id=#{tenantId} AND warehouse_id=#{warehouseId} AND sku_id=#{skuId}
+      AND state IN ('GENERATED','REVIEWED','APPROVED') ORDER BY created_at FOR UPDATE</select>
+    <update id="updateSuggestionState">UPDATE rpl_suggestion SET state=#{nextState},purchase_order_id=#{purchaseOrderId},
+      failure_code=#{failureCode},reviewer_user_id=COALESCE(#{reviewerUserId},reviewer_user_id),
+      approver_user_id=COALESCE(#{approverUserId},approver_user_id),version=version+1,updated_at=#{at}
+      WHERE tenant_id=#{tenantId} AND suggestion_id=#{suggestionId} AND state=#{expectedState} AND version=#{expectedVersion}</update>
+
+    <select id="findIdempotency" resultType="com.jingshanghui.pos.procurement.application.model.ReplenishmentModels$IdempotencyView">
+      SELECT idempotency_key AS idempotencyKey,command_sha256 AS commandSha256,suggestion_id AS aggregateId,
+        result_state AS resultState,result_reference_id AS resultReferenceId FROM rpl_suggestion_event
+      WHERE tenant_id=#{tenantId} AND idempotency_key=#{idempotencyKey}</select>
+    <select id="findAuditIdempotency" resultType="com.jingshanghui.pos.procurement.application.model.ReplenishmentModels$IdempotencyView">
+      SELECT command_id AS idempotencyKey,request_sha256 AS commandSha256,aggregate_id AS aggregateId,
+        after_value AS resultState,CAST(NULL AS CHAR(26)) AS resultReferenceId FROM rpl_audit_event
+      WHERE tenant_id=#{tenantId} AND command_id=#{idempotencyKey}</select>
+    <insert id="insertEvent">INSERT INTO rpl_suggestion_event(event_id,tenant_id,store_id,suggestion_id,event_type,
+      idempotency_key,command_sha256,result_state,result_reference_id,actor_user_id,correlation_id,payload_json,
+      payload_sha256,created_at) VALUES(#{eventId},#{tenantId},#{storeId},#{suggestionId},#{eventType},
+      #{idempotencyKey},#{commandSha256},#{resultState},#{resultReferenceId},#{actorUserId},#{correlationId},
+      #{payloadJson},#{payloadSha256},#{at})</insert>
+    <insert id="insertAudit">INSERT INTO rpl_audit_event(audit_id,tenant_id,store_id,action_code,aggregate_type,
+      aggregate_id,actor_user_id,command_id,correlation_id,before_value,after_value,request_sha256,reason_code,created_at)
+      VALUES(#{auditId},#{tenantId},#{storeId},#{actionCode},#{aggregateType},#{aggregateId},#{actorUserId},
+      #{commandId},#{correlationId},#{beforeValue},#{afterValue},#{requestSha256},#{reasonCode},#{at})</insert>
+    <insert id="insertOutbox">INSERT INTO rpl_event_outbox(event_id,tenant_id,event_type,aggregate_id,
+      aggregate_version,correlation_id,payload_json,payload_sha256,status,created_at)
+      VALUES(#{eventId},#{tenantId},#{eventType},#{aggregateId},#{aggregateVersion},#{correlationId},
+      #{payloadJson},#{payloadSha256},'PENDING',#{at})</insert>
+</mapper>

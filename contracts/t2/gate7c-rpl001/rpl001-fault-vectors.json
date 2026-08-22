@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0",
+  "evidenceLevel": "INTERNAL_SOFTWARE_EXECUTION",
+  "vectors": [
+    {"id": "RPL-GEN-001", "case": "available-at-minimum", "expected": "NO_SUGGESTION"},
+    {"id": "RPL-GEN-002", "case": "below-minimum-fill-to-maximum", "expected": "GENERATED"},
+    {"id": "RPL-GEN-003", "case": "zero-stock", "expected": "GENERATED"},
+    {"id": "RPL-GEN-004", "case": "negative-stock", "expected": "GENERATED_AND_EXPLAINED"},
+    {"id": "RPL-CALC-001", "case": "minimum-order", "expected": "CEILING_TO_MINIMUM"},
+    {"id": "RPL-CALC-002", "case": "order-multiple", "expected": "CEILING_TO_MULTIPLE"},
+    {"id": "RPL-CALC-003", "case": "unit-conversion", "expected": "EXACT_DECIMAL"},
+    {"id": "RPL-TRANSIT-001", "case": "approved-in-transit-included", "expected": "DEDUCT_FROM_REQUIRED"},
+    {"id": "RPL-TRANSIT-002", "case": "draft-in-transit-excluded", "expected": "IGNORE"},
+    {"id": "RPL-IDEM-001", "case": "same-run-same-hash", "expected": "RETURN_STORED_RESULT"},
+    {"id": "RPL-IDEM-002", "case": "same-run-different-hash", "expected": "REJECT_409"},
+    {"id": "RPL-ORDER-001", "case": "older-ledger-checkpoint", "expected": "REJECT_409"},
+    {"id": "RPL-ORDER-002", "case": "new-ledger-checkpoint", "expected": "STALE_OLD_OPEN_SUGGESTION"},
+    {"id": "RPL-STATE-001", "case": "concurrent-review", "expected": "ONE_VERSION_WINS"},
+    {"id": "RPL-STATE-002", "case": "approve-without-review", "expected": "REJECT_409"},
+    {"id": "RPL-STATE-003", "case": "terminal-state-replay", "expected": "RETURN_STORED_RESULT"},
+    {"id": "RPL-DRAFT-001", "case": "active-supplier-and-frozen-unit", "expected": "PURCHASE_DRAFTED"},
+    {"id": "RPL-DRAFT-002", "case": "inactive-supplier", "expected": "FAILED_NO_PURCHASE_EFFECT"},
+    {"id": "RPL-DRAFT-003", "case": "unit-conversion-changed", "expected": "STALE_NO_PURCHASE_EFFECT"},
+    {"id": "RPL-DRAFT-004", "case": "duplicate-purchase-draft", "expected": "RETURN_ORIGINAL_DRAFT"},
+    {"id": "RPL-TENANT-001", "case": "cross-tenant-policy", "expected": "NOT_FOUND"},
+    {"id": "RPL-TENANT-002", "case": "cross-store-suggestion", "expected": "FORBIDDEN"},
+    {"id": "RPL-MIG-001", "case": "migration-interrupted", "expected": "FAIL_CLOSED_FORWARD_FIX"},
+    {"id": "RPL-CAP-001", "case": "one-million-synthetic-trend", "expected": "TREND_ONLY_NO_SLA"}
+  ],
+  "externalExecution": {"providerNetworkCalls": 0, "realDeviceCommands": 0,
+    "realPeripheralCommands": 0, "fullAlphaRuns": 0, "productionDeployments": 0}
+}

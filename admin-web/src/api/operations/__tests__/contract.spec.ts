@@ -8,6 +8,7 @@ describe('Gate 6E operations client contract', () => {
       'stocktakes',
       'costing',
       'procurement',
+      'replenishment',
       'transfers',
       'promotions',
       'members',

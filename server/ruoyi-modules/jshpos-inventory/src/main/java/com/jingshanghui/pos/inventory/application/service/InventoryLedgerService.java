@@ -14,6 +14,8 @@ import com.jingshanghui.pos.inventory.application.port.AuthoritativeInventoryMov
 import com.jingshanghui.pos.inventory.application.port.AuthoritativeInventoryMovementPort.OwnedMovement;
 import com.jingshanghui.pos.inventory.application.port.AuthoritativeCostPostingPort;
 import com.jingshanghui.pos.inventory.application.port.AuthoritativeCostPostingPort.PostedInventoryLedger;
+import com.jingshanghui.pos.inventory.application.port.ReplenishmentInventorySnapshotPort;
+import com.jingshanghui.pos.inventory.application.port.ReplenishmentInventorySnapshotPort.InventorySnapshot;
 import com.jingshanghui.pos.inventory.application.model.InventoryViews.ApplyResult;
 import com.jingshanghui.pos.inventory.application.model.InventoryViews.BalanceView;
 import com.jingshanghui.pos.inventory.application.model.InventoryViews.CommandView;
@@ -65,7 +67,7 @@ import java.util.Map;
  */
 @Service
 @RequiredArgsConstructor
-public class InventoryLedgerService implements AuthoritativeInventoryMovementPort {
+public class InventoryLedgerService implements AuthoritativeInventoryMovementPort, ReplenishmentInventorySnapshotPort {
 
     private final InventoryMapper mapper;
     private final TrustedTenantContext tenantContext;
@@ -194,6 +196,26 @@ public class InventoryLedgerService implements AuthoritativeInventoryMovementPor
     public List<LedgerView> findLedger(String warehouseId, Long skuId) {
         BalanceView balance = findBalance(warehouseId, skuId);
         return mapper.findLedger(tenantContext.requireTenantId(), balance.dimensionKey());
+    }
+
+    /** 为确定性补货提供当前余额与流水检查点；不暴露 Mapper，也不修改任何库存事实。 */
+    @Override
+    @Transactional(readOnly = true)
+    public InventorySnapshot requireReplenishmentSnapshot(String warehouseId, Long skuId) {
+        InventoryRules.requireUlid(warehouseId, "warehouseId");
+        requireSku(skuId);
+        String tenantId = tenantContext.requireTenantId();
+        PolicyView policy = requireWarehousePolicy(tenantId, warehouseId);
+        authorizationService.requireStoreAccess(policy.storeId());
+        BalanceView balance = mapper.findBalance(tenantId, warehouseId, skuId);
+        if (balance == null) {
+            throw new ServiceException("INV-BALANCE-001: 库存维度不存在或不可见", 404);
+        }
+        return new InventorySnapshot(policy.storeId(), warehouseId, skuId,
+            balance.onHandQuantity(), balance.reservedQuantity(), balance.frozenQuantity(),
+            balance.safetyStockQuantity(), InventoryRules.available(balance.onHandQuantity(),
+            balance.reservedQuantity(), balance.frozenQuantity(), balance.safetyStockQuantity()),
+            balance.lastLedgerSequence(), balance.recordVersion());
     }
 
     /** 管理员受控重建余额投影；只聚合流水，不修改任何库存事实。 */

@@ -3,8 +3,8 @@
   "gate": "T2-GATE7C-SPRINT-S21B-LBL001",
   "baselineCommit": "a290ca7833abccf4d04872fdb93378cf8cd27646",
   "branch": "t2/gate7c-sprint21b-lbl001-shelf-label",
-  "decision": "LBL001_VERIFIED_AWAITING_SPONSOR_ACCEPTANCE",
-  "requirement": {"id": "T2-LBL-001", "status": "VERIFIED", "owner": "ShelfLabel"},
+  "decision": "LBL001_ACCEPTED_INTERNAL_SOFTWARE_ONLY",
+  "requirement": {"id": "T2-LBL-001", "status": "ACCEPTED", "owner": "ShelfLabel"},
   "dataAccess": [
     {"table": "lbl_template", "accessPolicy": "CRUD_ENTITY", "sqlMode": "HYBRID"},
     {"table": "lbl_label_task", "accessPolicy": "CONTROLLED_WRITE", "sqlMode": "HYBRID"},
@@ -13,6 +13,6 @@
     {"table": "lbl_task_exception", "accessPolicy": "APPEND_ONLY", "sqlMode": "XML"}
   ],
   "allowedTemplateFields": ["productName", "skuCode", "barcode", "unitName", "oldPrice", "newPrice", "storeName", "priceVersion", "effectiveAt", "taskStatus", "exceptionReason"],
-  "preservedStates": {"T2-RPL-001": "DRAFT", "T2-DMT-001": "DRAFT", "T2-ONB-001": "DRAFT", "T2-LOT-001": "DRAFT", "T2-PAY-002": "BLOCKED", "T2-HWD-001": "BLOCKED", "T2-PRN-001": "BLOCKED", "T2-PAR-001": "BLOCKED"},
+  "preservedStates": {"T2-RPL-001": "IN_PROGRESS", "T2-DMT-001": "DRAFT", "T2-ONB-001": "DRAFT", "T2-LOT-001": "DRAFT", "T2-PAY-002": "BLOCKED", "T2-HWD-001": "BLOCKED", "T2-PRN-001": "BLOCKED", "T2-PAR-001": "BLOCKED"},
   "externalExecution": {"providerNetworkCalls": 0, "realFundsTransactions": 0, "realDeviceCommands": 0, "realPeripheralCommands": 0, "realPrintSuccesses": 0, "fullAlphaRuns": 0, "productionDeployments": 0, "commercialClaimAllowed": false}
 }

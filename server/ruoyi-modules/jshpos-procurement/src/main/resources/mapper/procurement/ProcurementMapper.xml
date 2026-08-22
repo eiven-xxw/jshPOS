@@ -84,9 +84,9 @@
       WHERE tenant_id=#{tenantId} AND supplier_id=#{supplierId} AND status=#{expectedState} AND version=#{expectedVersion}</update>
 
     <insert id="insertOrder">INSERT INTO pur_purchase_order(order_id,tenant_id,supplier_id,store_id,warehouse_id,expected_date,
-      status,over_receipt_tolerance_bps,request_sha256,correlation_id,creator_user_id,version,created_at,updated_at)
+      status,over_receipt_tolerance_bps,source_type,source_id,request_sha256,correlation_id,creator_user_id,version,created_at,updated_at)
       VALUES(#{orderId},#{tenantId},#{supplierId},#{storeId},#{warehouseId},#{expectedDate},'DRAFT',#{toleranceBps},
-      #{requestSha256},#{correlationId},#{creatorUserId},0,#{at},#{at})</insert>
+      #{sourceType},#{sourceId},#{requestSha256},#{correlationId},#{creatorUserId},0,#{at},#{at})</insert>
     <insert id="insertOrderLine">INSERT INTO pur_purchase_order_line(order_line_id,tenant_id,order_id,sku_id,purchase_unit_id,
       conversion_numerator,conversion_denominator,ordered_quantity,received_quantity,unit_price_minor,tax_rate_bps,created_at,updated_at)
       VALUES(#{orderLineId},#{tenantId},#{orderId},#{skuId},#{purchaseUnitId},#{numerator},#{denominator},
@@ -108,6 +108,18 @@
       WHERE tenant_id=#{tenantId} AND order_line_id=#{orderLineId}</update>
     <select id="countIncompleteOrderLines" resultType="int">SELECT COUNT(*) FROM pur_purchase_order_line
       WHERE tenant_id=#{tenantId} AND order_id=#{orderId} AND received_quantity&lt;ordered_quantity</select>
+    <!-- 已确认在途只统计已审批且未完全收货的采购承诺，按冻结换算折算基础单位。 -->
+    <select id="sumConfirmedInTransitBase" resultType="java.math.BigDecimal">
+      SELECT CAST(COALESCE(SUM((ol.ordered_quantity-ol.received_quantity)
+        * ol.conversion_numerator / ol.conversion_denominator),0) AS DECIMAL(19,6))
+      FROM pur_purchase_order o
+      INNER JOIN pur_purchase_order_line ol
+        ON ol.tenant_id=o.tenant_id AND ol.order_id=o.order_id
+      WHERE o.tenant_id=#{tenantId} AND o.warehouse_id=#{warehouseId}
+        AND o.supplier_id=#{supplierId} AND ol.sku_id=#{skuId}
+        AND o.status IN ('APPROVED','PARTIALLY_RECEIVED')
+        AND ol.received_quantity&lt;ol.ordered_quantity
+    </select>
 
     <insert id="insertReceipt">INSERT INTO pur_receipt(receipt_id,tenant_id,order_id,source_event_id,store_id,warehouse_id,
       status,correlation_id,actor_user_id,version,created_at,updated_at)

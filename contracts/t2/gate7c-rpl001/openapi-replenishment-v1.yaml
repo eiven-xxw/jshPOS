@@ -1,0 +1,67 @@
+openapi: 3.0.3
+info:
+  title: T2-RPL-001 Deterministic Replenishment API
+  version: 1.0.0
+servers:
+  - url: /api/v1/procurement/replenishment
+paths:
+  /policies:
+    get:
+      operationId: listReplenishmentPolicies
+      responses:
+        '200': {description: Trusted-scope policy versions}
+    post:
+      operationId: createReplenishmentPolicy
+      description: tenant_id is injected from trusted server context.
+      responses:
+        '200': {description: Idempotent DRAFT policy}
+        '409': {description: Same key different content or invalid deterministic rule}
+  /policies/{policyVersionId}/publish:
+    post:
+      operationId: publishReplenishmentPolicy
+      responses:
+        '200': {description: Immutable PUBLISHED policy}
+  /policies/{policyVersionId}/retire:
+    post:
+      operationId: retireReplenishmentPolicy
+      responses:
+        '200': {description: RETIRED policy; history remains immutable}
+  /runs:
+    post:
+      operationId: generateReplenishmentSuggestions
+      description: Uses authoritative inventory checkpoint and optional approved in-transit facts.
+      responses:
+        '200': {description: Idempotent generation result}
+        '409': {description: Stale checkpoint, hash conflict or invalid source fact}
+  /suggestions:
+    get:
+      operationId: listReplenishmentSuggestions
+      responses:
+        '200': {description: Trusted store-scoped suggestions}
+  /suggestions/{suggestionId}/review:
+    post:
+      operationId: reviewReplenishmentSuggestion
+      responses:
+        '200': {description: REVIEWED}
+  /suggestions/{suggestionId}/approve:
+    post:
+      operationId: approveReplenishmentSuggestion
+      responses:
+        '200': {description: APPROVED}
+  /suggestions/{suggestionId}/reject:
+    post:
+      operationId: rejectReplenishmentSuggestion
+      responses:
+        '200': {description: REJECTED with audited reason}
+  /suggestions/{suggestionId}/purchase-draft:
+    post:
+      operationId: createPurchaseDraftFromSuggestion
+      description: Procurement Owner creates DRAFT only; no inventory or cost effect.
+      responses:
+        '200': {description: PURCHASE_DRAFTED and bound purchase order ID}
+        '409': {description: Supplier/unit/checkpoint conflict or same key different content}
+components:
+  securitySchemes:
+    trustedSession: {type: apiKey, in: header, name: Authorization}
+security:
+  - trustedSession: []

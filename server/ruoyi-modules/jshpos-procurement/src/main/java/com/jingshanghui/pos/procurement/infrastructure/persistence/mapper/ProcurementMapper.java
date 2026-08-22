@@ -12,6 +12,7 @@ import com.jingshanghui.pos.procurement.application.port.ProcurementCostSourcePo
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
+import java.math.BigDecimal;
 
 /** 采购复杂锁与聚合 SQL 边界；每个查询显式包含 tenant_id。 */
 public interface ProcurementMapper {
@@ -40,6 +41,10 @@ public interface ProcurementMapper {
     int updateOrderStatus(OrderStatusUpdate update);
     int updateOrderLineReceived(OrderLineReceivedUpdate update);
     int countIncompleteOrderLines(@Param("tenantId") String tenantId, @Param("orderId") String orderId);
+    BigDecimal sumConfirmedInTransitBase(@Param("tenantId") String tenantId,
+                                         @Param("warehouseId") String warehouseId,
+                                         @Param("skuId") Long skuId,
+                                         @Param("supplierId") String supplierId);
 
     int insertReceipt(ReceiptWrite write);
     int insertReceiptLine(ReceiptLineWrite write);
