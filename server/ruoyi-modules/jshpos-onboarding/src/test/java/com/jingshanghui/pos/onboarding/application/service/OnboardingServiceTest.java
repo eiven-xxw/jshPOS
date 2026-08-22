@@ -6,6 +6,7 @@ import com.jingshanghui.pos.foundation.application.security.ScopeAuthorizationSe
 import com.jingshanghui.pos.onboarding.application.model.OnboardingModels.*;
 import com.jingshanghui.pos.onboarding.application.port.OnboardingOwnerGateway;
 import com.jingshanghui.pos.onboarding.application.port.OnboardingPersistencePort;
+import com.jingshanghui.pos.onboarding.domain.OnboardingRules;
 import com.jingshanghui.pos.onboarding.domain.OnboardingStates.CheckStatus;
 import com.jingshanghui.pos.order.domain.UlidGenerator;
 import org.dromara.common.core.exception.ServiceException;
@@ -145,6 +146,37 @@ class OnboardingServiceTest {
             "open-key-001", "trace-002"))).isInstanceOf(ServiceException.class)
             .hasMessageContaining("禁止形成 OPENED");
         verifyNoInteractions(owners);
+    }
+
+    @Test
+    void opensOnlyAfterEveryRequiredInternalAndExternalCheckPasses() {
+        PlanRecord ready = plan("READY_TO_OPEN", 5, 2, 102L);
+        PlanRecord opened = plan("OPENED", 6, 2, 102L);
+        List<CheckRecord> checks = java.util.stream.Stream.concat(
+            OnboardingRules.INTERNAL_CHECKS.stream().map(code -> passedCheck(code, false)),
+            OnboardingRules.EXTERNAL_CHECKS.stream().map(code -> passedCheck(code, true)))
+            .toList();
+        when(persistence.lockPlan("TENANT_A", PLAN_ID)).thenReturn(ready);
+        when(persistence.listLatestChecks("TENANT_A", PLAN_ID)).thenReturn(checks);
+        when(owners.open(ready, "全部检查通过")).thenReturn(new OwnerOpenResult(20L, "ACTIVE", 3));
+        when(persistence.changeState(any())).thenReturn(1);
+        when(persistence.findPlan("TENANT_A", PLAN_ID)).thenReturn(opened);
+
+        PlanDetail result = service.open(new ReasonCommand(PLAN_ID, "全部检查通过",
+            "open-key-002", "trace-003"));
+
+        assertThat(result.plan().state()).isEqualTo("OPENED");
+        verify(owners).open(ready, "全部检查通过");
+        verify(persistence).insertCommand(any());
+        verify(persistence).appendState(any());
+        verify(persistence).appendAudit(any());
+        verify(persistence).appendOutbox(any());
+    }
+
+    private static CheckRecord passedCheck(String code, boolean external) {
+        return new CheckRecord(PLAN_ID, "TENANT_A", PLAN_ID, 1, code,
+            external ? "EXTERNAL" : "INTERNAL", true, external, "VERIFIED_DOCUMENT", HASH,
+            CheckStatus.PASS, "检查通过", LocalDateTime.MIN);
     }
 
     private static OwnerSnapshot snapshot(int targetVersion) {
