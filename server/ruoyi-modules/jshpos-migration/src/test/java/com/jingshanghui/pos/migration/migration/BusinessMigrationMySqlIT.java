@@ -93,8 +93,17 @@ class BusinessMigrationMySqlIT {
                 VALUES('01K2A000000000000000000002','TENANT_A','01K2A000000000000000000001','MEMBER','1.0',
                   REPEAT('c',64),'members.csv','UTF-8',1,0,'PREFLIGHT_PASSED','SYNTHETIC','CUSTODY:SYN-1',128,101,UTC_TIMESTAMP(6))
                 """);
+            // 空文件也必须先落脱敏失败事实，不能被字节数约束阻断后留在 PREFLIGHTING。
+            statement.executeUpdate("""
+                INSERT INTO mig_file(file_id,tenant_id,batch_id,data_type,mapping_version,source_sha256,
+                  safe_filename,charset_name,row_count,error_count,state,source_system,custody_reference,file_bytes,
+                  uploader_user_id,created_at)
+                VALUES('01K2A000000000000000000005','TENANT_A','01K2A000000000000000000001','CATALOG','1.0',
+                  'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855','rejected.csv','REJECTED',
+                  0,1,'PREFLIGHT_FAILED','SYNTHETIC','CUSTODY:SYN-EMPTY',0,101,UTC_TIMESTAMP(6))
+                """);
             assertThatThrownBy(() -> statement.executeUpdate("""
-                INSERT INTO mig_staging_row(row_id,tenant_id,batch_id,file_id,data_type,row_number,row_sha256,
+                INSERT INTO mig_staging_row(row_id,tenant_id,batch_id,file_id,data_type,source_row_number,row_sha256,
                   cipher_text,key_version,content_hmac,state,expires_at,created_at)
                 VALUES('01K2B000000000000000000003','TENANT_B','01K2B000000000000000000001',
                   '01K2A000000000000000000002','MEMBER',2,REPEAT('d',64),'cipher','kms-v1',REPEAT('e',64),
@@ -102,14 +111,14 @@ class BusinessMigrationMySqlIT {
                 """))
                 .isInstanceOf(SQLException.class);
             statement.executeUpdate("""
-                INSERT INTO mig_staging_row(row_id,tenant_id,batch_id,file_id,data_type,row_number,row_sha256,
+                INSERT INTO mig_staging_row(row_id,tenant_id,batch_id,file_id,data_type,source_row_number,row_sha256,
                   cipher_text,key_version,content_hmac,state,expires_at,created_at)
                 VALUES('01K2A000000000000000000003','TENANT_A','01K2A000000000000000000001',
                   '01K2A000000000000000000002','MEMBER',2,REPEAT('d',64),'cipher','kms-v1',REPEAT('e',64),
                   'READY',UTC_TIMESTAMP(6)+INTERVAL 30 DAY,UTC_TIMESTAMP(6))
                 """);
             statement.executeUpdate("""
-                INSERT INTO mig_preflight_error(error_id,tenant_id,batch_id,file_id,data_type,row_number,field_name,
+                INSERT INTO mig_preflight_error(error_id,tenant_id,batch_id,file_id,data_type,source_row_number,field_name,
                   error_code,masked_message,created_at)
                 VALUES('01K2A000000000000000000004','TENANT_A','01K2A000000000000000000001',
                   '01K2A000000000000000000002','MEMBER',0,NULL,'DMT-SYN-001','masked',UTC_TIMESTAMP(6))

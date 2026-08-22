@@ -10,10 +10,10 @@
       mapping_version AS mappingVersion,source_sha256 AS sourceSha256,safe_filename AS safeFilename,
       charset_name AS charset,row_count AS rowCount,error_count AS errorCount,state,
       source_system AS sourceSystem,custody_reference AS custodyReference</sql>
-    <sql id="errorColumns">error_id AS errorId,data_type AS dataType,row_number AS rowNumber,
+    <sql id="errorColumns">error_id AS errorId,data_type AS dataType,source_row_number AS rowNumber,
       field_name AS fieldName,error_code AS errorCode,masked_message AS maskedMessage</sql>
     <sql id="stagingColumns">row_id AS rowId,batch_id AS batchId,file_id AS fileId,data_type AS dataType,
-      row_number AS rowNumber,row_sha256 AS rowSha256,cipher_text AS cipherText,
+      source_row_number AS rowNumber,row_sha256 AS rowSha256,cipher_text AS cipherText,
       key_version AS keyVersion,content_hmac AS contentHmac,state</sql>
 
     <select id="findBatch" resultType="com.jingshanghui.pos.migration.application.port.BusinessMigrationPersistencePort$BatchRecord">
@@ -64,7 +64,7 @@
       WHERE tenant_id=#{tenantId} AND batch_id=#{batchId} ORDER BY created_at,file_id
     </select>
     <insert id="insertPreflightError">
-      INSERT INTO mig_preflight_error(error_id,tenant_id,batch_id,file_id,data_type,row_number,field_name,
+      INSERT INTO mig_preflight_error(error_id,tenant_id,batch_id,file_id,data_type,source_row_number,field_name,
         error_code,masked_message,created_at)
       VALUES(#{errorId},#{tenantId},#{batchId},#{fileId},#{dataType},#{rowNumber},#{fieldName},
         #{errorCode},#{maskedMessage},#{at})
@@ -72,18 +72,18 @@
     <select id="listPreflightErrors" resultType="com.jingshanghui.pos.migration.application.port.BusinessMigrationPersistencePort$PreflightErrorRecord">
       SELECT <include refid="errorColumns"/> FROM mig_preflight_error
       WHERE tenant_id=#{tenantId} AND batch_id=#{batchId}
-      ORDER BY data_type,row_number,error_id LIMIT 500
+      ORDER BY data_type,source_row_number,error_id LIMIT 500
     </select>
     <select id="listPreflightErrorsPage" resultType="com.jingshanghui.pos.migration.application.port.BusinessMigrationPersistencePort$PreflightErrorRecord">
       SELECT <include refid="errorColumns"/> FROM mig_preflight_error
       WHERE tenant_id=#{tenantId} AND batch_id=#{batchId}
-      ORDER BY data_type,row_number,error_id LIMIT #{limit} OFFSET #{offset}
+      ORDER BY data_type,source_row_number,error_id LIMIT #{limit} OFFSET #{offset}
     </select>
     <select id="countPreflightErrors" resultType="int">
       SELECT COUNT(*) FROM mig_preflight_error WHERE tenant_id=#{tenantId} AND batch_id=#{batchId}
     </select>
     <insert id="insertStagingRow">
-      INSERT INTO mig_staging_row(row_id,tenant_id,batch_id,file_id,data_type,row_number,row_sha256,cipher_text,
+      INSERT INTO mig_staging_row(row_id,tenant_id,batch_id,file_id,data_type,source_row_number,row_sha256,cipher_text,
         key_version,content_hmac,state,expires_at,created_at)
       VALUES(#{rowId},#{tenantId},#{batchId},#{fileId},#{dataType},#{rowNumber},#{rowSha256},#{cipherText},
         #{keyVersion},#{contentHmac},'READY',#{expiresAt},#{at})
@@ -96,7 +96,7 @@
     <select id="listStagingRows" resultType="com.jingshanghui.pos.migration.application.port.BusinessMigrationPersistencePort$StagingRecord">
       SELECT <include refid="stagingColumns"/> FROM mig_staging_row
       WHERE tenant_id=#{tenantId} AND batch_id=#{batchId}
-      ORDER BY FIELD(data_type,'CATALOG','SUPPLIER','MEMBER','OPENING_INVENTORY'),row_number,row_id
+      ORDER BY FIELD(data_type,'CATALOG','SUPPLIER','MEMBER','OPENING_INVENTORY'),source_row_number,row_id
     </select>
     <select id="countStagingRows" resultType="int">
       SELECT COUNT(*) FROM mig_staging_row WHERE tenant_id=#{tenantId} AND batch_id=#{batchId}

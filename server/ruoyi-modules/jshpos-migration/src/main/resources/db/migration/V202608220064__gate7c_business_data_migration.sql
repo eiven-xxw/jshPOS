@@ -42,7 +42,7 @@ CREATE TABLE mig_file (
     CONSTRAINT fk_mig_file_batch FOREIGN KEY (tenant_id,batch_id) REFERENCES mig_batch(tenant_id,batch_id),
     CONSTRAINT ck_mig_file_hash CHECK (source_sha256 REGEXP '^[a-f0-9]{64}$'),
     CONSTRAINT ck_mig_file_count CHECK (row_count BETWEEN 0 AND 100000 AND error_count>=0),
-    CONSTRAINT ck_mig_file_bytes CHECK (file_bytes BETWEEN 1 AND 67108864)
+    CONSTRAINT ck_mig_file_bytes CHECK (file_bytes BETWEEN 0 AND 67108864)
 ) ENGINE=InnoDB COMMENT='原文件最小化登记，不保存文件内容';
 
 CREATE TABLE mig_staging_row (
@@ -51,7 +51,7 @@ CREATE TABLE mig_staging_row (
     batch_id VARCHAR(26) NOT NULL COMMENT '迁移批次ULID',
     file_id VARCHAR(26) NOT NULL COMMENT '来源文件登记ULID',
     data_type VARCHAR(32) NOT NULL COMMENT '资料类型',
-    row_number INT NOT NULL COMMENT '来源文件1基数据行号',
+    source_row_number INT NOT NULL COMMENT '来源文件1基数据行号',
     row_sha256 CHAR(64) NOT NULL COMMENT '规范行SHA-256',
     cipher_text MEDIUMTEXT NOT NULL COMMENT 'AES-256-GCM规范行密文，清理后为空串',
     key_version VARCHAR(64) NOT NULL COMMENT '仓库外staging密钥版本',
@@ -62,23 +62,23 @@ CREATE TABLE mig_staging_row (
     cleaned_at DATETIME(6) NULL COMMENT '受审计清理UTC时间',
     PRIMARY KEY (row_id),
     UNIQUE KEY uk_mig_stage_tenant_row (tenant_id,batch_id,row_id),
-    UNIQUE KEY uk_mig_stage_file_number (tenant_id,file_id,row_number),
-    KEY idx_mig_stage_batch_type (tenant_id,batch_id,data_type,row_number),
+    UNIQUE KEY uk_mig_stage_file_number (tenant_id,file_id,source_row_number),
+    KEY idx_mig_stage_batch_type (tenant_id,batch_id,data_type,source_row_number),
     KEY idx_mig_stage_expiry (state,expires_at),
     CONSTRAINT fk_mig_stage_batch FOREIGN KEY (tenant_id,batch_id) REFERENCES mig_batch(tenant_id,batch_id),
     CONSTRAINT fk_mig_stage_file FOREIGN KEY (tenant_id,batch_id,file_id)
       REFERENCES mig_file(tenant_id,batch_id,file_id),
     CONSTRAINT ck_mig_stage_hash CHECK (row_sha256 REGEXP '^[a-f0-9]{64}$'),
-    CONSTRAINT ck_mig_stage_row CHECK (row_number BETWEEN 2 AND 100001)
+    CONSTRAINT ck_mig_stage_row CHECK (source_row_number BETWEEN 2 AND 100001)
 ) ENGINE=InnoDB COMMENT='Migration Owner加密隔离规范行暂存';
 
 CREATE TABLE mig_preflight_error (
     error_id VARCHAR(26) NOT NULL COMMENT '预检错误ULID', tenant_id VARCHAR(20) NOT NULL COMMENT '可信租户标识',
     batch_id VARCHAR(26) NOT NULL COMMENT '迁移批次ULID', file_id VARCHAR(26) NOT NULL COMMENT '文件登记ULID',
-    data_type VARCHAR(32) NOT NULL COMMENT '资料类型', row_number INT NOT NULL COMMENT '来源数据行号，文件级为0',
+    data_type VARCHAR(32) NOT NULL COMMENT '资料类型', source_row_number INT NOT NULL COMMENT '来源数据行号，文件级为0',
     field_name VARCHAR(64) NULL COMMENT '错误字段名，不含原始值', error_code VARCHAR(64) NOT NULL COMMENT '稳定错误码',
     masked_message VARCHAR(512) NOT NULL COMMENT '不含PII的脱敏错误说明', created_at DATETIME(6) NOT NULL COMMENT '记录UTC时间',
-    PRIMARY KEY(error_id), KEY idx_mig_error_batch(tenant_id,batch_id,data_type,row_number),
+    PRIMARY KEY(error_id), KEY idx_mig_error_batch(tenant_id,batch_id,data_type,source_row_number),
     CONSTRAINT fk_mig_error_batch FOREIGN KEY(tenant_id,batch_id) REFERENCES mig_batch(tenant_id,batch_id),
     CONSTRAINT fk_mig_error_file FOREIGN KEY(tenant_id,batch_id,file_id)
       REFERENCES mig_file(tenant_id,batch_id,file_id)
@@ -175,7 +175,7 @@ CREATE TRIGGER trg_mig_audit_no_delete BEFORE DELETE ON mig_audit_event FOR EACH
 CREATE TRIGGER trg_mig_stage_guard BEFORE UPDATE ON mig_staging_row FOR EACH ROW BEGIN
   IF NOT (OLD.state='READY' AND NEW.state='CLEANED' AND NEW.cipher_text='' AND NEW.content_hmac=''
       AND OLD.row_id=NEW.row_id AND OLD.tenant_id=NEW.tenant_id AND OLD.batch_id=NEW.batch_id
-      AND OLD.file_id=NEW.file_id AND OLD.data_type=NEW.data_type AND OLD.row_number=NEW.row_number
+      AND OLD.file_id=NEW.file_id AND OLD.data_type=NEW.data_type AND OLD.source_row_number=NEW.source_row_number
       AND OLD.row_sha256=NEW.row_sha256 AND OLD.key_version=NEW.key_version) THEN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='mig_staging_row only permits audited cleanup';
   END IF;
