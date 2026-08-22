@@ -7,7 +7,7 @@
   "requirement": {"id": "T2-PRD-005", "status": "ACCEPTED", "owner": "Catalog/POS/Order"},
   "template": {"symbology": "EAN13", "length": 13, "positionBase": 1,
     "kinds": ["WEIGHT", "AMOUNT"], "rounding": "HALF_EVEN", "currency": "CNY"},
-  "preservedStates": {"T2-LBL-001": "IN_PROGRESS", "T2-RPL-001": "DRAFT", "T2-DMT-001": "DRAFT",
+  "preservedStates": {"T2-LBL-001": "VERIFIED", "T2-RPL-001": "DRAFT", "T2-DMT-001": "DRAFT",
     "T2-ONB-001": "DRAFT", "T2-LOT-001": "DRAFT", "T2-PAY-002": "BLOCKED",
     "T2-HWD-001": "BLOCKED", "T2-PRN-001": "BLOCKED", "T2-PAR-001": "BLOCKED"},
   "externalExecution": {"providerNetworkCalls": 0, "realFundsTransactions": 0,

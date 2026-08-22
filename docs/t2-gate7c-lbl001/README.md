@@ -5,5 +5,6 @@
 3. `03_T2_LBL001证据索引.md`（完整 CI 绿灯后封存）
 4. `04_T2_RPL001下一步操作指令.md`（仅作为项目发起人后续确认输入）
 
-当前 `T2-LBL-001 = IN_PROGRESS`。`T2-PRN-001` 仍为 `BLOCKED`；软件预览、
-人工换签确认和失败关闭端口都不构成真实打印成功证据。
+当前 `T2-LBL-001 = VERIFIED / AWAITING SPONSOR ACCEPTANCE`。`T2-PRN-001`
+仍为 `BLOCKED`；软件预览、Unavailable Device Adapter 和人工换签确认均不得形成
+真实打印证据。`T2-RPL-001` 继续 `DRAFT`，未经项目发起人确认不得启动。

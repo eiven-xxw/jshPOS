@@ -481,6 +481,7 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
 - 新增表必须先登记访问策略：模板为 `CRUD_ENTITY + HYBRID`，任务为 `CONTROLLED_WRITE + HYBRID`，任务项/异常/事件为 `APPEND_ONLY` 或具名状态迁移，复杂列表与预览 SQL 进入 XML；所有 SQL 显式携带可信 `tenant_id` 和门店范围。
 - 仅允许两个虚构租户、多门店、三业态和合成价格/任务数据；Provider 网络、真实资金、真实设备/外设、完整 Alpha、现场试点和生产执行保持 0。
 - 完成后必须提交 `T2-LBL-001` 独立周门禁报告并等待项目发起人确认；不得自动准入 `T2-RPL-001` 或 Gate 7D，不得宣称真实打印、Alpha、生产或商业验收通过。
+- `T2-LBL-001` 候选提交 `69bd772556925f0cf09dc198e3eec969b6247977` 已在 GitHub Actions Run `32571686495` 完成九类制品与完整门禁，现仅为 `VERIFIED / AWAITING SPONSOR ACCEPTANCE`；`T2-RPL-001` 及后续需求继续 `DRAFT`，`T2-PRN-001` 和真实打印继续 `BLOCKED`。
 
 ## 5. 工程与测试规则
 

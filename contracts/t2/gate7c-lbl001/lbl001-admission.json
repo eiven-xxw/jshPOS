@@ -3,8 +3,8 @@
   "gate": "T2-GATE7C-SPRINT-S21B-LBL001",
   "baselineCommit": "a290ca7833abccf4d04872fdb93378cf8cd27646",
   "branch": "t2/gate7c-sprint21b-lbl001-shelf-label",
-  "decision": "LBL001_APPROVED_IN_PROGRESS",
-  "requirement": {"id": "T2-LBL-001", "status": "IN_PROGRESS", "owner": "ShelfLabel"},
+  "decision": "LBL001_VERIFIED_AWAITING_SPONSOR_ACCEPTANCE",
+  "requirement": {"id": "T2-LBL-001", "status": "VERIFIED", "owner": "ShelfLabel"},
   "dataAccess": [
     {"table": "lbl_template", "accessPolicy": "CRUD_ENTITY", "sqlMode": "HYBRID"},
     {"table": "lbl_label_task", "accessPolicy": "CONTROLLED_WRITE", "sqlMode": "HYBRID"},
