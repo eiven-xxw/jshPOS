@@ -1,0 +1,24 @@
+openapi: 3.1.0
+info:
+  title: 鲸熵汇 T2-PRD-005 秤码金额码 API
+  version: 1.0.0
+  x-requirement-id: T2-PRD-005
+  x-real-device-commands: 0
+paths:
+  /api/v1/catalog/weighted-barcode-templates:
+    post:
+      operationId: createWeightedBarcodeTemplate
+      security: [{ bearerAuth: [] }]
+      responses: {'200': {description: 已创建 DRAFT 模板}}
+  /api/v1/catalog/weighted-barcode-templates/{templateId}/publish:
+    put:
+      operationId: publishWeightedBarcodeTemplate
+      parameters: [{name: templateId, in: path, required: true, schema: {type: integer, format: int64}}]
+      responses: {'200': {description: 已发布且内容不可变}}
+  /api/v1/catalog/weighted-barcodes/resolve:
+    post:
+      operationId: resolveWeightedBarcodePreview
+      responses: {'200': {description: 返回冻结解析快照}}
+components:
+  securitySchemes:
+    bearerAuth: {type: http, scheme: bearer}

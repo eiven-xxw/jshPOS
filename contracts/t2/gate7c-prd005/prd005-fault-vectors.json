@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-PRD-005",
+  "rounding": "HALF_EVEN",
+  "vectors": [
+    {"id":"PRD005-001","case":"leading zero sku segment","expected":"PRESERVED"},
+    {"id":"PRD005-002","case":"invalid EAN13 check digit","expected":"CAT-WBC-CHECKSUM"},
+    {"id":"PRD005-003","case":"weight scale 3","expected":"EXACT_QUANTITY"},
+    {"id":"PRD005-004","case":"amount scale 2","expected":"AUTHORITATIVE_MINOR_AMOUNT"},
+    {"id":"PRD005-005","case":"overlapping fields","expected":"CAT-WBC-TEMPLATE"},
+    {"id":"PRD005-006","case":"same priority ambiguity","expected":"CAT-WBC-AMBIGUOUS"},
+    {"id":"PRD005-007","case":"future template","expected":"NO_MATCH"},
+    {"id":"PRD005-008","case":"expired template","expected":"NO_MATCH"},
+    {"id":"PRD005-009","case":"store overrides tenant","expected":"STORE_TEMPLATE"},
+    {"id":"PRD005-010","case":"cross tenant template","expected":"RESOURCE_NOT_VISIBLE"},
+    {"id":"PRD005-011","case":"package digest changed","expected":"REJECT_ATOMICALLY"},
+    {"id":"PRD005-012","case":"held cart template changes","expected":"ORIGINAL_SNAPSHOT"},
+    {"id":"PRD005-013","case":"old client new schema","expected":"FAIL_CLOSED"},
+    {"id":"PRD005-014","case":"real scale SDK scan","expected":"ZERO_MATCH"}
+  ]
+}

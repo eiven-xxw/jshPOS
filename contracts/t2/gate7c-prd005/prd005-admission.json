@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "1.0",
+  "gate": "T2-GATE7C-SPRINT-S21A-PRD005",
+  "baselineCommit": "b3caf80072996a06f669ecff8213ecaefb27e3b6",
+  "branch": "t2/gate7c-sprint21a-prd005-weighted-barcode",
+  "decision": "PRD005_DESIGN_ADMITTED_IN_PROGRESS",
+  "requirement": {"id": "T2-PRD-005", "status": "IN_PROGRESS", "owner": "Catalog/POS/Order"},
+  "template": {"symbology": "EAN13", "length": 13, "positionBase": 1,
+    "kinds": ["WEIGHT", "AMOUNT"], "rounding": "HALF_EVEN", "currency": "CNY"},
+  "preservedStates": {"T2-LBL-001": "DRAFT", "T2-RPL-001": "DRAFT", "T2-DMT-001": "DRAFT",
+    "T2-ONB-001": "DRAFT", "T2-LOT-001": "DRAFT", "T2-PAY-002": "BLOCKED",
+    "T2-HWD-001": "BLOCKED", "T2-PRN-001": "BLOCKED", "T2-PAR-001": "BLOCKED"},
+  "externalExecution": {"providerNetworkCalls": 0, "realFundsTransactions": 0,
+    "realDeviceCommands": 0, "realPeripheralCommands": 0, "fullAlphaRuns": 0,
+    "productionDeployments": 0, "commercialClaimAllowed": false}
+}

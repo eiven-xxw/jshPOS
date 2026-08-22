@@ -458,6 +458,17 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
 - `T2-HWD-001/PRN-001/PAR-001` 继续 `BLOCKED`，`T2-UAT-001/REL-001` 与 Gate 7C—7E 继续 `DRAFT`，`T2-JSH-001/LIC-001` 继续 `DEFERRED`；Provider 网络、真实资金、设备/外设命令、伙伴执行、完整 Alpha、生产部署和商业声明全部为 0。
 - 候选提交 `dce3acb3f15d53120c1211c5cf663ce957a4edd3` 的 GitHub Actions Run `32544144916` 已完成九类门禁全绿；`T2-PAY-004` 当前为 `VERIFIED` 并等待项目发起人确认，确认前不得更新为 `ACCEPTED`，不得自动进入 Gate 7C。
 
+## 4.37 当前 T2 Gate 7C / Sprint S21-A：T2-PRD-005 独立正式开发
+
+- 项目发起人已于 2026-08-22 接受 `T2-PAY-004 CONDITIONAL PASS` 并授权其更新为 `ACCEPTED`；仅授权从封板提交 `b3caf80072996a06f669ecff8213ecaefb27e3b6` 建立 `t2/gate7c-sprint21a-prd005-weighted-barcode`，独立实现 `T2-PRD-005`。
+- Catalog Owner 独占版本化 EAN-13 秤码/金额码模板、发布状态、摘要、事件和审计；POS 通过签名 Catalog 数据包解析，Order Owner 只冻结解析快照，禁止复制模板发布或价格算法。
+- 原始码按二进制字符串保存并保留前导零；字段位置使用 1 基下标。重量、数量、单位换算和单价使用 `BigDecimal/DECIMAL`，金额使用最小货币单位整数，舍入固定为 `HALF_EVEN`，禁止浮点数。
+- 重量码冻结模板版本、SKU、主单位、精确数量、成交单价和金额；金额码以编码金额为权威并按单位精度反算数量，同时冻结舍入与人工复核标志。校验失败、模板歧义、过期、越界、溢出、摘要不一致和旧包不兼容必须失败关闭。
+- 门店模板优先于租户模板；同一作用域、前缀、长度和有效窗口的歧义在发布前拒绝。已发布模板内容不可变，停用和纠正只能使用状态迁移或新版本，MySQL/SQLite 已发布迁移不得修改。
+- `T2-HWD-001` 继续 `BLOCKED`；仅允许键盘楔入或合成扫码输入，不得访问电子秤/扫码厂商 SDK、串口、蓝牙或真实设备，不得用软件证据替代 `REAL_DEVICE`。
+- `T2-LBL-001/RPL-001/DMT-001/ONB-001/LOT-001` 及 Gate 7D—7E 继续 `DRAFT`；`T2-PAY-002/HWD-001/PRN-001/PAR-001` 继续 `BLOCKED`，`T2-UAT-001/REL-001` 继续 `DRAFT`，`T2-JSH-001/LIC-001` 继续 `DEFERRED`。
+- 完成后必须提交 `T2-PRD-005` 独立周门禁报告并等待项目发起人确认；不得自动准入 `T2-LBL-001`、`T2-RPL-001` 或 Gate 7D。
+
 ## 5. 工程与测试规则
 
 - 服务端采用 RuoYi-Vue-Plus 模块化单体，不得把领域逻辑写入 Controller、通用工具类或框架系统模块。

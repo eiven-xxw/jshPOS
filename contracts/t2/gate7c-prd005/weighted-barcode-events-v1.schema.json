@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jingshanghui.local/contracts/gate7c/weighted-barcode-events-v1.schema.json",
+  "title": "T2-PRD-005 weighted barcode template event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "eventId", "eventType", "tenantId", "templateId", "versionNo", "contentSha256"],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "eventId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "eventType": {"enum": ["weighted-barcode-template.published.v1", "weighted-barcode-template.retired.v1"]},
+    "tenantId": {"type": "string", "minLength": 1, "maxLength": 20},
+    "templateId": {"type": "integer", "minimum": 1},
+    "versionNo": {"type": "integer", "minimum": 1},
+    "contentSha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  }
+}
