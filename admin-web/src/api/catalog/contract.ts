@@ -5,8 +5,15 @@ export const CATALOG_ENDPOINTS = Object.freeze({
   products: '/api/v1/catalog/products',
   imports: '/api/v1/catalog/imports',
   priceBooks: '/api/v1/catalog/price-books',
-  packages: '/api/v1/catalog/packages'
+  packages: '/api/v1/catalog/packages',
+  shelfLabels: '/api/v1/catalog/shelf-labels'
 });
+
+/** 构造不含租户值的稳定写命令标识。 */
+export function shelfLabelCommandIdentity(prefix: string): { idempotencyKey: string; correlationId: string } {
+  const random = globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  return { idempotencyKey: `${prefix}:${random}`, correlationId: `lbl:${random}` };
+}
 
 export function trustedCatalogPayload<T>(value: T): T {
   assertNoClientTenantOverride(value);

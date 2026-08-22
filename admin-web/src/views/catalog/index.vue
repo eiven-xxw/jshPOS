@@ -17,6 +17,7 @@
           <el-button v-hasPermi="['catalog:product:manage']" type="primary" @click="openProductDialog">新增商品</el-button>
           <el-button v-hasPermi="['catalog:import:preflight']" type="warning" @click="importDialog = true">导入预检</el-button>
           <el-button v-hasPermi="['catalog:price:manage']" type="success" @click="priceDialog = true">价格版本</el-button>
+          <el-button v-hasPermi="['catalog:label:task:read']" type="primary" plain @click="shelfLabelDrawer = true">货架价签</el-button>
         </el-space>
       </template>
 
@@ -171,6 +172,7 @@
         <el-button v-if="currentBook" type="success" @click="publishBook">发布版本</el-button>
       </template>
     </el-dialog>
+    <ShelfLabelPanel v-model="shelfLabelDrawer" :stores="stores" />
   </div>
 </template>
 
@@ -194,6 +196,7 @@ import { listStores } from '@/api/foundation';
 import type { StoreVO } from '@/api/foundation/types';
 import { normalizeProductUnits } from '@/views/operations/model';
 import type { ProductUnitDraft } from '@/views/operations/model';
+import ShelfLabelPanel from './components/ShelfLabelPanel.vue';
 
 const loading = ref(false);
 const products = ref<ProductVO[]>([]);
@@ -201,6 +204,7 @@ const definitionDialog = ref(false);
 const productDialog = ref(false);
 const importDialog = ref(false);
 const priceDialog = ref(false);
+const shelfLabelDrawer = ref(false);
 const stores = ref<StoreVO[]>([]);
 const categoryForm = reactive({ code: '', name: '', sortNo: 0 });
 const brandForm = reactive({ code: '', name: '' });

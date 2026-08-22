@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jingshanghui.pos.catalog.infrastructure.persistence.mapper.ShelfLabelTaskMapper">
+    <select id="findBySource" resultType="com.jingshanghui.pos.catalog.application.port.ShelfLabelRepository$StoredTask">
+        SELECT task_id AS taskId, source_event_sha256 AS sourceEventSha256
+        FROM lbl_label_task
+        WHERE tenant_id = #{tenantId} AND source_event_key = #{sourceEventKey}
+        LIMIT 1
+    </select>
+
+    <!-- 聚合任务项状态形成可丢弃任务投影；分页上限由应用层固定。 -->
+    <select id="listTasks" resultType="com.jingshanghui.pos.catalog.application.model.ShelfLabelModels$TaskView">
+        SELECT t.task_id AS taskId, t.source_event_key AS sourceEventKey,
+               t.source_event_type AS sourceEventType, t.source_price_book_id AS sourcePriceBookId,
+               t.source_price_version AS sourcePriceVersion, t.store_id AS storeId,
+               t.store_name AS storeName, t.effective_at AS effectiveAt, t.state,
+               COUNT(i.item_id) AS itemCount,
+               SUM(i.state IN ('PENDING','PREVIEW_READY')) AS pendingCount,
+               SUM(i.state = 'EXCEPTION') AS exceptionCount,
+               t.created_at AS createdAt, t.version
+        FROM lbl_label_task t
+        JOIN lbl_label_task_item i ON i.tenant_id = t.tenant_id AND i.task_id = t.task_id
+        WHERE t.tenant_id = #{tenantId}
+          AND t.store_id IN
+          <foreach collection="storeIds" item="storeId" open="(" separator="," close=")">#{storeId}</foreach>
+        <if test="state != null and state != ''">AND t.state = #{state}</if>
+        GROUP BY t.task_id, t.source_event_key, t.source_event_type, t.source_price_book_id,
+                 t.source_price_version, t.store_id, t.store_name, t.effective_at, t.state,
+                 t.created_at, t.version
+        ORDER BY t.effective_at DESC, t.task_id DESC
+        LIMIT #{limit}
+    </select>
+
+    <select id="findTaskView" resultType="com.jingshanghui.pos.catalog.application.model.ShelfLabelModels$TaskView">
+        SELECT t.task_id AS taskId, t.source_event_key AS sourceEventKey,
+               t.source_event_type AS sourceEventType, t.source_price_book_id AS sourcePriceBookId,
+               t.source_price_version AS sourcePriceVersion, t.store_id AS storeId,
+               t.store_name AS storeName, t.effective_at AS effectiveAt, t.state,
+               COUNT(i.item_id) AS itemCount,
+               SUM(i.state IN ('PENDING','PREVIEW_READY')) AS pendingCount,
+               SUM(i.state = 'EXCEPTION') AS exceptionCount,
+               t.created_at AS createdAt, t.version
+        FROM lbl_label_task t
+        LEFT JOIN lbl_label_task_item i ON i.tenant_id = t.tenant_id AND i.task_id = t.task_id
+        WHERE t.tenant_id = #{tenantId} AND t.task_id = #{taskId}
+        GROUP BY t.task_id, t.source_event_key, t.source_event_type, t.source_price_book_id,
+                 t.source_price_version, t.store_id, t.store_name, t.effective_at, t.state,
+                 t.created_at, t.version
+    </select>
+
+    <update id="markDispatchBlocked">
+        UPDATE lbl_label_task
+        SET state = 'DISPATCH_BLOCKED', updated_at = #{updatedAt}, version = version + 1
+        WHERE tenant_id = #{tenantId} AND task_id = #{taskId} AND version = #{version}
+          AND state NOT IN ('COMPLETED','SUPERSEDED')
+    </update>
+
+    <update id="refreshProjection">
+        UPDATE lbl_label_task t
+        SET t.state = (
+              SELECT CASE
+                WHEN SUM(i.state = 'EXCEPTION') &gt; 0 THEN 'EXCEPTION'
+                WHEN SUM(i.state = 'REPLACED_CONFIRMED') + SUM(i.state = 'SUPERSEDED') = COUNT(*) THEN
+                  CASE WHEN SUM(i.state = 'REPLACED_CONFIRMED') &gt; 0 THEN 'COMPLETED' ELSE 'SUPERSEDED' END
+                WHEN SUM(i.state = 'REPLACED_CONFIRMED') &gt; 0 THEN 'IN_PROGRESS'
+                WHEN SUM(i.state = 'PREVIEW_READY') + SUM(i.state = 'SUPERSEDED') = COUNT(*) THEN 'PREVIEW_READY'
+                ELSE 'PENDING'
+              END
+              FROM lbl_label_task_item i
+              WHERE i.tenant_id = #{tenantId} AND i.task_id = #{taskId}
+            ),
+            t.updated_at = #{updatedAt}, t.version = t.version + 1
+        WHERE t.tenant_id = #{tenantId} AND t.task_id = #{taskId}
+    </update>
+</mapper>

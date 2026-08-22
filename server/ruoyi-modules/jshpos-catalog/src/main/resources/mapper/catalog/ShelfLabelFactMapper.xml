@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jingshanghui.pos.catalog.infrastructure.persistence.mapper.ShelfLabelFactMapper">
+    <select id="findCommand" resultType="com.jingshanghui.pos.catalog.application.port.ShelfLabelRepository$StoredCommand">
+        SELECT event_type AS eventType, command_sha256 AS commandSha256, task_id AS taskId, item_id AS itemId
+        FROM lbl_task_event
+        WHERE tenant_id = #{tenantId} AND idempotency_key = #{idempotencyKey}
+        LIMIT 1
+    </select>
+
+    <insert id="insertEvent">
+        INSERT INTO lbl_task_event(event_id, tenant_id, task_id, item_id, event_type, idempotency_key,
+          command_sha256, payload_sha256, payload_json, actor_user_id, correlation_id, occurred_at)
+        VALUES(#{eventId}, #{tenantId}, #{taskId}, #{itemId}, #{eventType}, #{idempotencyKey},
+          #{commandSha256}, #{payloadSha256}, CAST(#{payloadJson} AS JSON), #{actorUserId}, #{correlationId}, #{occurredAt})
+    </insert>
+
+    <insert id="insertException">
+        INSERT INTO lbl_task_exception(exception_id, tenant_id, task_id, item_id, exception_code,
+          reason, resolution_type, actor_user_id, correlation_id, occurred_at)
+        VALUES(#{exceptionId}, #{tenantId}, #{taskId}, #{itemId}, #{exceptionCode},
+          #{reason}, #{resolutionType}, #{actorUserId}, #{correlationId}, #{occurredAt})
+    </insert>
+</mapper>

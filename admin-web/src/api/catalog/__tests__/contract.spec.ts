@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { assertMinorAmount, assertPositiveExactInteger, CATALOG_ENDPOINTS, trustedCatalogPayload } from '../contract';
+import { assertMinorAmount, assertPositiveExactInteger, CATALOG_ENDPOINTS, shelfLabelCommandIdentity, trustedCatalogPayload } from '../contract';
 
 describe('Gate 1 catalog contract', () => {
   it('uses only versioned first-party catalog endpoints', () => {
-    expect(Object.values(CATALOG_ENDPOINTS)).toHaveLength(5);
+    expect(Object.values(CATALOG_ENDPOINTS)).toHaveLength(6);
     expect(Object.values(CATALOG_ENDPOINTS).every((path) => path.startsWith('/api/v1/catalog'))).toBe(true);
   });
 
@@ -31,5 +31,12 @@ describe('Gate 1 catalog contract', () => {
     const id = '1844674407370955161';
     const payload = trustedCatalogPayload({ skuId: id });
     expect(payload.skuId).toBe(id);
+  });
+
+  it('creates stable-format label command identities without tenant claims', () => {
+    const identity = shelfLabelCommandIdentity('preview');
+    expect(identity.idempotencyKey).toMatch(/^preview:/);
+    expect(identity.correlationId).toMatch(/^lbl:/);
+    expect(JSON.stringify(identity).toLowerCase()).not.toContain('tenant');
   });
 });

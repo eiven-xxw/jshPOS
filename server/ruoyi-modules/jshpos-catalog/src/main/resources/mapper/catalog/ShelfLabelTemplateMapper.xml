@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jingshanghui.pos.catalog.infrastructure.persistence.mapper.ShelfLabelTemplateMapper">
+    <select id="findTemplateCommand" resultType="com.jingshanghui.pos.catalog.application.port.ShelfLabelRepository$StoredTemplateCommand">
+        SELECT template_id AS templateId, create_request_sha256 AS requestSha256
+        FROM lbl_template
+        WHERE tenant_id = #{tenantId} AND create_idempotency_key = #{idempotencyKey}
+        LIMIT 1
+    </select>
+
+    <!-- 门店模板优先于租户模板；所有条件都显式携带可信 tenant_id。 -->
+    <select id="findPublishedTemplate" resultType="com.jingshanghui.pos.catalog.application.model.ShelfLabelModels$TemplateView">
+        SELECT template_id AS templateId, template_code AS templateCode, template_name AS templateName,
+               version_no AS versionNo, scope_type AS scopeType, store_id AS storeId,
+               body_template AS bodyTemplate, state, content_sha256 AS contentSha256,
+               published_at AS publishedAt, version
+        FROM lbl_template
+        WHERE tenant_id = #{tenantId}
+          AND state = 'PUBLISHED'
+          AND (scope_type = 'TENANT' OR (scope_type = 'STORE' AND store_id = #{storeId}))
+        ORDER BY (scope_type = 'STORE') DESC, version_no DESC, template_id DESC
+        LIMIT 1
+    </select>
+
+    <select id="listTemplates" resultType="com.jingshanghui.pos.catalog.application.model.ShelfLabelModels$TemplateView">
+        SELECT template_id AS templateId, template_code AS templateCode, template_name AS templateName,
+               version_no AS versionNo, scope_type AS scopeType, store_id AS storeId,
+               body_template AS bodyTemplate, state, content_sha256 AS contentSha256,
+               published_at AS publishedAt, version
+        FROM lbl_template
+        WHERE tenant_id = #{tenantId}
+          AND (scope_type = 'TENANT'
+            <if test="storeIds != null and !storeIds.isEmpty()">
+              OR (scope_type = 'STORE' AND store_id IN
+                <foreach collection="storeIds" item="storeId" open="(" separator="," close=")">#{storeId}</foreach>)
+            </if>
+          )
+          <if test="state != null and state != ''">AND state = #{state}</if>
+        ORDER BY template_code, version_no DESC, template_id DESC
+        LIMIT #{limit}
+    </select>
+</mapper>

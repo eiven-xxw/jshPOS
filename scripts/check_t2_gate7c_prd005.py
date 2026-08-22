@@ -18,8 +18,10 @@ def main() -> None:
     with (ROOT / "docs/governance/rtm.csv").open(encoding="utf-8", newline="") as handle:
         rows = {row["requirement_id"]: row for row in csv.DictReader(handle)}
     fail(rows["T2-PAY-004"]["status"] == "ACCEPTED", "PAY004 未按发起人指令接受")
-    fail(rows["T2-PRD-005"]["status"] in {"IN_PROGRESS", "VERIFIED"}, "PRD005 未准入或越界")
-    for requirement in ("T2-LBL-001", "T2-RPL-001", "T2-DMT-001", "T2-ONB-001", "T2-LOT-001"):
+    fail(rows["T2-PRD-005"]["status"] in {"IN_PROGRESS", "VERIFIED", "ACCEPTED"}, "PRD005 未准入或越界")
+    fail(rows["T2-LBL-001"]["status"] in ({"DRAFT"} if rows["T2-PRD-005"]["status"] != "ACCEPTED"
+         else {"DRAFT", "IN_PROGRESS", "VERIFIED"}), "LBL001 准入时序越界")
+    for requirement in ("T2-RPL-001", "T2-DMT-001", "T2-ONB-001", "T2-LOT-001"):
         fail(rows[requirement]["status"] == "DRAFT", f"{requirement} 被提前准入")
     for requirement in ("T2-PAY-002", "T2-HWD-001", "T2-PRN-001", "T2-PAR-001"):
         fail(rows[requirement]["status"] == "BLOCKED", f"{requirement} 阻断漂移")
@@ -48,7 +50,10 @@ def main() -> None:
     fail(golden.get("roundingMode") == "HALF_EVEN", "跨端金标舍入模式漂移")
     fail({case["kind"] for case in golden.get("cases", [])} == {"WEIGHT", "AMOUNT"}, "跨端金标未覆盖两类条码")
     fail(all(len(case["expected"]["parseSha256"]) == 64 for case in golden["cases"]), "跨端摘要金标无效")
-    feature_roots = [ROOT / "server/ruoyi-modules/jshpos-catalog/src",
+    feature_roots = [ROOT / "server/ruoyi-modules/jshpos-catalog/src/main/java/com/jingshanghui/pos/catalog/domain/WeightedBarcodeRules.java",
+                     ROOT / "server/ruoyi-modules/jshpos-catalog/src/main/java/com/jingshanghui/pos/catalog/application/service/WeightedBarcodeService.java",
+                     ROOT / "server/ruoyi-modules/jshpos-catalog/src/main/java/com/jingshanghui/pos/catalog/application/port/WeightedBarcodeSnapshotVerificationPort.java",
+                     ROOT / "server/ruoyi-modules/jshpos-catalog/src/main/java/com/jingshanghui/pos/catalog/interfaces/rest/WeightedBarcodeController.java",
                      ROOT / "pos-flutter/lib/features/catalog",
                      ROOT / "pos-flutter/lib/infrastructure/local_database/gate7c_weighted_barcode_schema.dart"]
     sources = "\n".join(path.read_text(encoding="utf-8", errors="ignore") for base in feature_roots if base.exists()

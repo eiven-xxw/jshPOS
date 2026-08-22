@@ -7,6 +7,8 @@ import com.jingshanghui.pos.catalog.application.price.PriceResolution;
 import com.jingshanghui.pos.catalog.application.price.PriceResolution.Candidate;
 import com.jingshanghui.pos.catalog.application.price.PriceResolution.ResolvedPrice;
 import com.jingshanghui.pos.catalog.application.port.OrderPriceResolutionPort;
+import com.jingshanghui.pos.catalog.application.port.ShelfLabelPriceEventPort;
+import com.jingshanghui.pos.catalog.application.model.ShelfLabelModels.PriceBookEvent;
 import com.jingshanghui.pos.catalog.domain.CatalogRules;
 import com.jingshanghui.pos.catalog.infrastructure.persistence.mapper.CatalogMapper;
 import com.jingshanghui.pos.foundation.application.audit.DomainAuditService;
@@ -38,6 +40,7 @@ public class PriceBookService implements OrderPriceResolutionPort {
     private final DomainAuditService auditService;
     private final Clock clock;
     private final CatalogOutboxService outboxService;
+    private final ShelfLabelPriceEventPort shelfLabelPriceEventPort;
 
     @Transactional
     public PriceBookView create(String code, String name, int versionNo, String scopeType, Long storeId) {
@@ -103,6 +106,8 @@ public class PriceBookService implements OrderPriceResolutionPort {
         outboxService.append(tenantId, "price-book.published.v1", "PRICE_BOOK", bookId, after.versionNo(),
             "{\"priceBookId\":" + bookId + ",\"versionNo\":" + after.versionNo() +
                 ",\"contentSha256\":\"" + hash + "\"}");
+        shelfLabelPriceEventPort.handle(new PriceBookEvent("PRICE_BOOK_PUBLISHED", bookId, after.versionNo(),
+            after.scopeType(), after.storeId(), hash, clock.instant()));
         return after;
     }
 
@@ -117,6 +122,11 @@ public class PriceBookService implements OrderPriceResolutionPort {
         PriceBookView after = requireBook(tenantId, bookId);
         auditService.append("PRICE_BOOK_RETIRED", "PRICE_BOOK", bookId, before, after,
             Map.of("contentSha256", before.contentSha256()));
+        String payload = "{\"priceBookId\":" + bookId + ",\"versionNo\":" + before.versionNo() +
+            ",\"contentSha256\":\"" + before.contentSha256() + "\"}";
+        outboxService.append(tenantId, "price-book.retired.v1", "PRICE_BOOK", bookId, before.versionNo(), payload);
+        shelfLabelPriceEventPort.handle(new PriceBookEvent("PRICE_BOOK_RETIRED", bookId, before.versionNo(),
+            before.scopeType(), before.storeId(), before.contentSha256(), clock.instant()));
         return after;
     }
 

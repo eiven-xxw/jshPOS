@@ -116,3 +116,73 @@ export interface PackageVO {
   recordCount: number;
   generatedAt: string;
 }
+
+export type ShelfLabelTemplateState = 'DRAFT' | 'PUBLISHED' | 'RETIRED';
+export type ShelfLabelItemState = 'PENDING' | 'PREVIEW_READY' | 'REPLACED_CONFIRMED' | 'EXCEPTION' | 'SUPERSEDED';
+export type ShelfLabelTaskState = 'PENDING' | 'PREVIEW_READY' | 'IN_PROGRESS' | 'COMPLETED' | 'EXCEPTION' | 'SUPERSEDED' | 'DISPATCH_BLOCKED';
+
+export interface ShelfLabelTemplateVO {
+  templateId: Id64;
+  templateCode: string;
+  templateName: string;
+  versionNo: number;
+  scopeType: 'TENANT' | 'STORE';
+  storeId?: Id64;
+  bodyTemplate: string;
+  state: ShelfLabelTemplateState;
+  contentSha256?: string;
+  publishedAt?: string;
+  version: number;
+}
+
+export interface ShelfLabelTaskVO {
+  taskId: Id64;
+  sourceEventKey: string;
+  sourceEventType: 'PRICE_BOOK_PUBLISHED' | 'PRICE_BOOK_RETIRED';
+  sourcePriceBookId: Id64;
+  sourcePriceVersion: number;
+  storeId: Id64;
+  storeName: string;
+  effectiveAt: string;
+  state: ShelfLabelTaskState;
+  itemCount: number;
+  pendingCount: number;
+  exceptionCount: number;
+  createdAt: string;
+  version: number;
+}
+
+export interface ShelfLabelTaskItemVO {
+  itemId: Id64;
+  taskId: Id64;
+  storeId: Id64;
+  storeName: string;
+  skuId: Id64;
+  skuCode: string;
+  productName: string;
+  unitId: Id64;
+  unitName: string;
+  barcode?: string;
+  oldPriceMinor?: number;
+  newPriceMinor?: number;
+  currency: 'CNY';
+  sourcePriceVersion: number;
+  effectiveAt: string;
+  state: ShelfLabelItemState;
+  exceptionReason?: string;
+  version: number;
+}
+
+export interface ShelfLabelTaskDetailVO {
+  task: ShelfLabelTaskVO;
+  items: ShelfLabelTaskItemVO[];
+}
+
+export interface ShelfLabelPreviewVO {
+  templateId: Id64;
+  templateVersion: number;
+  templateSha256: string;
+  item: ShelfLabelTaskItemVO;
+  renderedText: string;
+  previewSha256: string;
+}

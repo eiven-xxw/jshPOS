@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jingshanghui.pos.catalog.infrastructure.persistence.mapper.ShelfLabelTaskItemMapper">
+    <sql id="itemColumns">
+        i.item_id AS itemId, i.task_id AS taskId, i.store_id AS storeId, i.store_name AS storeName,
+        i.sku_id AS skuId, i.sku_code AS skuCode, i.product_name AS productName,
+        i.unit_id AS unitId, i.unit_name AS unitName, i.barcode,
+        i.old_price_minor AS oldPriceMinor, i.new_price_minor AS newPriceMinor, i.currency,
+        i.source_price_version AS sourcePriceVersion, i.effective_at AS effectiveAt,
+        i.state, i.exception_reason AS exceptionReason, i.version
+    </sql>
+
+    <select id="findLatestOpenItem" resultType="com.jingshanghui.pos.catalog.application.port.ShelfLabelRepository$LatestOpenItem">
+        SELECT item_id AS itemId, effective_at AS effectiveAt, scope_priority AS scopePriority,
+               source_price_version AS sourcePriceVersion, source_price_book_id AS sourcePriceBookId
+        FROM lbl_label_task_item
+        WHERE tenant_id = #{tenantId} AND store_id = #{storeId} AND sku_id = #{skuId} AND unit_id = #{unitId}
+          AND state IN ('PENDING','PREVIEW_READY','EXCEPTION')
+        ORDER BY effective_at DESC, scope_priority DESC, source_price_version DESC,
+                 source_price_book_id DESC, item_id DESC
+        LIMIT 1
+    </select>
+
+    <select id="findOpenTaskIds" resultType="java.lang.Long">
+        SELECT DISTINCT task_id
+        FROM lbl_label_task_item
+        WHERE tenant_id = #{tenantId} AND store_id = #{storeId} AND sku_id = #{skuId} AND unit_id = #{unitId}
+          AND state IN ('PENDING','PREVIEW_READY','EXCEPTION')
+        ORDER BY task_id
+    </select>
+
+    <!-- 只将比新来源更旧的未完成项标记为 SUPERSEDED，已确认历史永不回写。 -->
+    <update id="supersedeOpenItems">
+        UPDATE lbl_label_task_item
+        SET state = 'SUPERSEDED', exception_reason = NULL, updated_at = #{updatedAt}, version = version + 1
+        WHERE tenant_id = #{tenantId} AND store_id = #{storeId} AND sku_id = #{skuId} AND unit_id = #{unitId}
+          AND item_id &lt;&gt; #{replacingItemId}
+          AND state IN ('PENDING','PREVIEW_READY','EXCEPTION')
+          AND (
+            effective_at &lt; #{effectiveAt}
+            OR (effective_at = #{effectiveAt} AND scope_priority &lt; #{scopePriority})
+            OR (effective_at = #{effectiveAt} AND scope_priority = #{scopePriority}
+                AND source_price_version &lt; #{sourcePriceVersion})
+            OR (effective_at = #{effectiveAt} AND scope_priority = #{scopePriority}
+                AND source_price_version = #{sourcePriceVersion} AND source_price_book_id &lt; #{sourcePriceBookId})
+          )
+    </update>
+
+    <select id="listTaskItems" resultType="com.jingshanghui.pos.catalog.application.model.ShelfLabelModels$TaskItemView">
+        SELECT <include refid="itemColumns"/>
+        FROM lbl_label_task_item i
+        WHERE i.tenant_id = #{tenantId} AND i.task_id = #{taskId}
+        ORDER BY i.effective_at, i.sku_code, i.unit_id, i.item_id
+    </select>
+
+    <select id="findTaskItem" resultType="com.jingshanghui.pos.catalog.application.model.ShelfLabelModels$TaskItemView">
+        SELECT <include refid="itemColumns"/>
+        FROM lbl_label_task_item i
+        WHERE i.tenant_id = #{tenantId} AND i.item_id = #{itemId}
+        LIMIT 1
+    </select>
+
+    <update id="transition">
+        UPDATE lbl_label_task_item
+        SET state = #{targetState}, exception_reason = #{exceptionReason},
+            updated_at = #{updatedAt}, version = version + 1
+        WHERE tenant_id = #{tenantId} AND item_id = #{itemId}
+          AND state = #{expectedState} AND version = #{version}
+    </update>
+</mapper>

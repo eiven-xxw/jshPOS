@@ -20,7 +20,7 @@ class CatalogMigrationMySqlIT {
     private final String password = required("GATE1_MYSQL_PASSWORD");
 
     @Test
-    void migratesAllEightVersionsRepeatablyAndEnforcesCatalogTenantConstraints() throws Exception {
+    void migratesAllNineVersionsRepeatablyAndEnforcesCatalogTenantConstraints() throws Exception {
         createFrameworkMenuFixture();
         Flyway flyway = Flyway.configure()
             .dataSource(url, username, password)
@@ -30,12 +30,13 @@ class CatalogMigrationMySqlIT {
             .baselineVersion("0")
             .cleanDisabled(true)
             .load();
-        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(8);
+        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(9);
         assertThat(flyway.migrate().migrationsExecuted).isZero();
         flyway.validate();
         assertTablesAndPermissions();
         assertCrossTenantBarcodeUnitAndPriceGuards();
         assertWeightedBarcodeTenantAndAppendOnlyGuards();
+        assertShelfLabelTenantSnapshotAndAppendOnlyGuards();
     }
 
     private void createFrameworkMenuFixture() throws SQLException {
@@ -60,7 +61,8 @@ class CatalogMigrationMySqlIT {
         Set<String> tables = Set.of("cat_category", "cat_brand", "cat_unit", "cat_spu", "cat_sku",
             "cat_sku_unit", "cat_barcode", "cat_import_batch", "cat_import_record", "cat_import_error",
             "cat_catalog_binding", "prc_price_book", "prc_price_item", "dpk_catalog_package", "cat_event_outbox",
-            "cat_weighted_barcode_template", "cat_weighted_barcode_history");
+            "cat_weighted_barcode_template", "cat_weighted_barcode_history", "lbl_template",
+            "lbl_label_task", "lbl_label_task_item", "lbl_task_event", "lbl_task_exception");
         try (Connection connection = DriverManager.getConnection(url, username, password)) {
             for (String table : tables) {
                 try (var rows = connection.getMetaData().getTables(connection.getCatalog(), null, table, new String[]{"TABLE"})) {
@@ -76,6 +78,11 @@ class CatalogMigrationMySqlIT {
                  var rows = statement.executeQuery("SELECT COUNT(DISTINCT perms) FROM sys_menu WHERE menu_id BETWEEN 9200111 AND 9200114")) {
                 assertThat(rows.next()).isTrue();
                 assertThat(rows.getInt(1)).isEqualTo(4);
+            }
+            try (Statement statement = connection.createStatement();
+                 var rows = statement.executeQuery("SELECT COUNT(DISTINCT perms) FROM sys_menu WHERE menu_id BETWEEN 9200115 AND 9200120")) {
+                assertThat(rows.next()).isTrue();
+                assertThat(rows.getInt(1)).isEqualTo(6);
             }
         }
     }
@@ -147,6 +154,35 @@ class CatalogMigrationMySqlIT {
                 WHERE tenant_id='TENANT_A' AND history_id=12002
                 """))
                 .isInstanceOf(SQLException.class).hasMessageContaining("append only");
+        }
+    }
+
+    /** 在 MySQL 8.4 证明价签模板、快照、租户外键和只追加事实均由数据库失败关闭。 */
+    private void assertShelfLabelTenantSnapshotAndAppendOnlyGuards() throws SQLException {
+        try (Connection connection = DriverManager.getConnection(url, username, password);
+             Statement statement = connection.createStatement()) {
+            statement.executeUpdate("INSERT INTO prc_price_book(price_book_id,tenant_id,book_code,book_name,version_no,scope_type,store_id,state) VALUES(13001,'TENANT_A','LBL-BASE','Label Base',2,'TENANT_BASE',NULL,'DRAFT')");
+            statement.executeUpdate("INSERT INTO prc_price_item(price_item_id,tenant_id,price_book_id,sku_id,unit_id,amount_minor,currency,effective_from) VALUES(13002,'TENANT_A',13001,701,301,990,'CNY','2026-08-22 08:00:00')");
+            statement.executeUpdate("UPDATE prc_price_book SET state='PUBLISHED',content_sha256=REPEAT('b',64),published_at=CURRENT_TIMESTAMP,version=version+1 WHERE tenant_id='TENANT_A' AND price_book_id=13001 AND state='DRAFT'");
+            assertThatThrownBy(() -> statement.executeUpdate("INSERT INTO lbl_template(template_id,tenant_id,template_code,template_name,version_no,scope_type,store_id,body_template,create_idempotency_key,create_request_sha256,state,created_at) VALUES(14000,'TENANT_A','CROSS','Cross',1,'STORE',2101,'{{productName}}','lbl-template-cross',REPEAT('a',64),'DRAFT',CURRENT_TIMESTAMP)"))
+                .isInstanceOf(SQLException.class);
+            statement.executeUpdate("INSERT INTO lbl_template(template_id,tenant_id,template_code,template_name,version_no,scope_type,store_id,body_template,create_idempotency_key,create_request_sha256,state,created_at) VALUES(14001,'TENANT_A','DEFAULT','Default',1,'STORE',1101,'{{productName}} {{newPrice}}','lbl-template-default',REPEAT('a',64),'DRAFT',CURRENT_TIMESTAMP)");
+            statement.executeUpdate("UPDATE lbl_template SET state='PUBLISHED',content_sha256=REPEAT('c',64),published_at=CURRENT_TIMESTAMP,version=version+1 WHERE tenant_id='TENANT_A' AND template_id=14001 AND state='DRAFT'");
+            assertThatThrownBy(() -> statement.executeUpdate("UPDATE lbl_template SET body_template='{{skuCode}}' WHERE tenant_id='TENANT_A' AND template_id=14001"))
+                .isInstanceOf(SQLException.class).hasMessageContaining("immutable");
+            assertThatThrownBy(() -> statement.executeUpdate("INSERT INTO lbl_label_task(task_id,tenant_id,source_event_key,source_event_type,source_event_sha256,source_price_book_id,source_price_version,store_id,store_name,effective_at,state,created_at,updated_at) VALUES(15000,'TENANT_A','price-book.published.v1:13001:2:2101','PRICE_BOOK_PUBLISHED',REPEAT('d',64),13001,2,2101,'Cross Store','2026-08-22 08:00:00','PENDING',CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)"))
+                .isInstanceOf(SQLException.class);
+            statement.executeUpdate("INSERT INTO lbl_label_task(task_id,tenant_id,source_event_key,source_event_type,source_event_sha256,source_price_book_id,source_price_version,store_id,store_name,effective_at,state,created_at,updated_at) VALUES(15001,'TENANT_A','price-book.published.v1:13001:2:1101','PRICE_BOOK_PUBLISHED',REPEAT('d',64),13001,2,1101,'A Store','2026-08-22 08:00:00','PENDING',CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)");
+            statement.executeUpdate("INSERT INTO lbl_label_task_item(item_id,tenant_id,task_id,source_price_book_id,source_price_item_id,source_price_version,scope_priority,store_id,store_name,sku_id,sku_code,product_name,unit_id,unit_name,barcode,old_price_minor,new_price_minor,currency,effective_at,state,snapshot_sha256,created_at,updated_at) VALUES(16001,'TENANT_A',15001,13001,13002,2,1,1101,'A Store',701,'A-SKU','A',301,'Piece','001234',890,990,'CNY','2026-08-22 08:00:00','PENDING',REPEAT('e',64),CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)");
+            statement.executeUpdate("UPDATE lbl_label_task_item SET state='PREVIEW_READY',updated_at=CURRENT_TIMESTAMP,version=version+1 WHERE tenant_id='TENANT_A' AND item_id=16001");
+            assertThatThrownBy(() -> statement.executeUpdate("UPDATE lbl_label_task_item SET new_price_minor=1 WHERE tenant_id='TENANT_A' AND item_id=16001"))
+                .isInstanceOf(SQLException.class).hasMessageContaining("immutable");
+            statement.executeUpdate("INSERT INTO lbl_task_event(event_id,tenant_id,task_id,item_id,event_type,idempotency_key,command_sha256,payload_sha256,payload_json,actor_user_id,correlation_id,occurred_at) VALUES(17001,'TENANT_A',15001,16001,'SHELF_LABEL_PREVIEWED','lbl-preview-mysql-001',REPEAT('f',64),REPEAT('a',64),JSON_OBJECT('preview','synthetic'),101,'corr-lbl-mysql-001',CURRENT_TIMESTAMP)");
+            assertThatThrownBy(() -> statement.executeUpdate("DELETE FROM lbl_task_event WHERE tenant_id='TENANT_A' AND event_id=17001"))
+                .isInstanceOf(SQLException.class).hasMessageContaining("append-only");
+            statement.executeUpdate("INSERT INTO lbl_task_exception(exception_id,tenant_id,task_id,item_id,exception_code,reason,resolution_type,actor_user_id,correlation_id,occurred_at) VALUES(18001,'TENANT_A',15001,16001,'PRINTER_UNAVAILABLE','Synthetic blocked','BLOCKED_EXTERNAL',101,'corr-lbl-mysql-002',CURRENT_TIMESTAMP)");
+            assertThatThrownBy(() -> statement.executeUpdate("UPDATE lbl_task_exception SET reason='tampered' WHERE tenant_id='TENANT_A' AND exception_id=18001"))
+                .isInstanceOf(SQLException.class).hasMessageContaining("append-only");
         }
     }
 

@@ -54,6 +54,19 @@ class CatalogMigrationSqlPolicyTest {
         assertThat(sql).doesNotContain("float", "double", "create table jsh_order", "provider_http");
     }
 
+    @Test
+    void shelfLabelMigrationFreezesSnapshotsAndKeepsPrinterFailClosed() throws IOException {
+        String sql = resource("/db/migration/V202608220061__gate7c_shelf_label.sql").toLowerCase();
+        for (String table : new String[]{"lbl_template", "lbl_label_task", "lbl_label_task_item",
+            "lbl_task_event", "lbl_task_exception"}) {
+            assertThat(sql).contains("create table " + table);
+        }
+        assertThat(sql).contains("trg_lbl_template_published_immutable", "trg_lbl_item_snapshot_immutable",
+            "trg_lbl_event_no_update", "trg_lbl_event_no_delete", "catalog:label:task:dispatch",
+            "软件任务投影状态，不表示真实打印成功", "由可信认证上下文注入的租户标识");
+        assertThat(sql).doesNotContain("provider_http", "serialport", "bluetooth", "usb", "print_success");
+    }
+
     private String resource(String name) throws IOException {
         try (var input = getClass().getResourceAsStream(name)) {
             assertThat(input).isNotNull();

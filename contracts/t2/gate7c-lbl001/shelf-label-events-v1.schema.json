@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.jingshanghui.example/t2/gate7c/shelf-label-events-v1.schema.json",
+  "title": "ShelfLabel Owner v1 append-only events",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["eventId", "schemaVersion", "eventType", "tenantId", "idempotencyKey", "commandSha256", "payloadSha256", "correlationId", "occurredAt"],
+  "properties": {
+    "eventId": {"type": "string", "pattern": "^[0-9]{1,20}$"},
+    "schemaVersion": {"const": "1.0"},
+    "eventType": {
+      "enum": [
+        "SHELF_LABEL_TEMPLATE_CREATED",
+        "SHELF_LABEL_TEMPLATE_PUBLISHED",
+        "SHELF_LABEL_TEMPLATE_RETIRED",
+        "SHELF_LABEL_TASK_CREATED",
+        "SHELF_LABEL_PREVIEWED",
+        "SHELF_LABEL_PREVIEW_FAILED",
+        "SHELF_LABEL_REPLACEMENT_CONFIRMED",
+        "SHELF_LABEL_EXCEPTION_RECORDED",
+        "SHELF_LABEL_DISPATCH_BLOCKED"
+      ]
+    },
+    "tenantId": {"type": "string", "minLength": 1, "maxLength": 20},
+    "taskId": {"type": ["string", "null"], "pattern": "^[0-9]{1,20}$"},
+    "itemId": {"type": ["string", "null"], "pattern": "^[0-9]{1,20}$"},
+    "idempotencyKey": {"type": "string", "minLength": 8, "maxLength": 160},
+    "commandSha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "payloadSha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "correlationId": {"type": "string", "minLength": 1, "maxLength": 96},
+    "occurredAt": {"type": "string", "format": "date-time"}
+  }
+}

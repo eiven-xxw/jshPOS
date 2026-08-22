@@ -1,0 +1,65 @@
+openapi: 3.1.0
+info:
+  title: 鲸熵汇 T2-LBL-001 货架价签 API
+  version: 1.0.0
+  x-requirement-id: T2-LBL-001
+  x-printer-evidence: BLOCKED
+  x-real-device-commands: 0
+paths:
+  /api/v1/catalog/shelf-labels/templates:
+    get:
+      operationId: listShelfLabelTemplates
+      security: [{bearerAuth: []}]
+      responses: {'200': {description: 仅返回可信租户和门店数据范围内的模板}}
+    post:
+      operationId: createShelfLabelTemplate
+      security: [{bearerAuth: []}]
+      responses: {'200': {description: 已幂等创建纯文本 DRAFT 模板}}
+  /api/v1/catalog/shelf-labels/templates/{templateId}/publish:
+    post:
+      operationId: publishShelfLabelTemplate
+      parameters: [{$ref: '#/components/parameters/TemplateId'}]
+      responses: {'200': {description: 已发布不可变模板版本}}
+  /api/v1/catalog/shelf-labels/templates/{templateId}/retire:
+    post:
+      operationId: retireShelfLabelTemplate
+      parameters: [{$ref: '#/components/parameters/TemplateId'}]
+      responses: {'200': {description: 已只追加停用模板}}
+  /api/v1/catalog/shelf-labels/tasks:
+    get:
+      operationId: listShelfLabelTasks
+      security: [{bearerAuth: []}]
+      responses: {'200': {description: 按可信门店数据范围返回任务}}
+  /api/v1/catalog/shelf-labels/tasks/{taskId}:
+    get:
+      operationId: getShelfLabelTask
+      parameters: [{$ref: '#/components/parameters/TaskId'}]
+      responses: {'200': {description: 返回任务和不可变价格快照}}
+  /api/v1/catalog/shelf-labels/items/{itemId}/preview:
+    post:
+      operationId: previewShelfLabelItem
+      parameters: [{$ref: '#/components/parameters/ItemId'}]
+      responses: {'200': {description: 只返回结构化快照与纯文本预览}}
+  /api/v1/catalog/shelf-labels/items/{itemId}/confirm:
+    post:
+      operationId: confirmShelfLabelReplacement
+      parameters: [{$ref: '#/components/parameters/ItemId'}]
+      responses: {'200': {description: 受权人工换签确认，不表示打印成功}}
+  /api/v1/catalog/shelf-labels/items/{itemId}/exceptions:
+    post:
+      operationId: recordShelfLabelException
+      parameters: [{$ref: '#/components/parameters/ItemId'}]
+      responses: {'200': {description: 已追加异常与审计事实}}
+  /api/v1/catalog/shelf-labels/tasks/{taskId}/dispatch:
+    post:
+      operationId: verifyShelfLabelDispatchFailsClosed
+      parameters: [{$ref: '#/components/parameters/TaskId'}]
+      responses:
+        '200': {description: 返回 DISPATCH_BLOCKED，不得返回真实打印成功}
+components:
+  parameters:
+    TemplateId: {name: templateId, in: path, required: true, schema: {type: integer, format: int64}}
+    TaskId: {name: taskId, in: path, required: true, schema: {type: integer, format: int64}}
+    ItemId: {name: itemId, in: path, required: true, schema: {type: integer, format: int64}}
+  securitySchemes:
+    bearerAuth: {type: http, scheme: bearer}

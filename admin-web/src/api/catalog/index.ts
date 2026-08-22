@@ -14,7 +14,14 @@ import type {
   PriceBookVO,
   ProductState,
   ProductVO,
-  ResolvedPriceVO
+  ResolvedPriceVO,
+  ShelfLabelPreviewVO,
+  ShelfLabelTaskDetailVO,
+  ShelfLabelTaskItemVO,
+  ShelfLabelTaskState,
+  ShelfLabelTaskVO,
+  ShelfLabelTemplateState,
+  ShelfLabelTemplateVO
 } from './types';
 
 export { CATALOG_ENDPOINTS } from './contract';
@@ -79,3 +86,93 @@ export const publishPackage = (storeId: Id64, packageVersion: number, previousVe
 
 export const latestPackage = (storeId: Id64): AxiosPromise<PackageVO> =>
   request({ url: `${CATALOG_ENDPOINTS.packages}/latest`, method: 'get', params: { storeId } });
+
+export const listShelfLabelTemplates = (state?: ShelfLabelTemplateState): AxiosPromise<ShelfLabelTemplateVO[]> =>
+  request({ url: `${CATALOG_ENDPOINTS.shelfLabels}/templates`, method: 'get', params: { state, limit: 200 } });
+
+export const createShelfLabelTemplate = (data: {
+  templateCode: string;
+  templateName: string;
+  versionNo: number;
+  scopeType: 'TENANT' | 'STORE';
+  storeId?: Id64;
+  bodyTemplate: string;
+  idempotencyKey: string;
+  correlationId: string;
+}): AxiosPromise<ShelfLabelTemplateVO> =>
+  request({ url: `${CATALOG_ENDPOINTS.shelfLabels}/templates`, method: 'post', data: trustedCatalogPayload(data) });
+
+export const publishShelfLabelTemplate = (
+  templateId: Id64,
+  expectedVersion: number,
+  identity: { idempotencyKey: string; correlationId: string }
+): AxiosPromise<ShelfLabelTemplateVO> =>
+  request({
+    url: `${CATALOG_ENDPOINTS.shelfLabels}/templates/${templateId}/publish`,
+    method: 'post',
+    data: trustedCatalogPayload({ expectedVersion, ...identity })
+  });
+
+export const retireShelfLabelTemplate = (
+  templateId: Id64,
+  expectedVersion: number,
+  identity: { idempotencyKey: string; correlationId: string }
+): AxiosPromise<ShelfLabelTemplateVO> =>
+  request({
+    url: `${CATALOG_ENDPOINTS.shelfLabels}/templates/${templateId}/retire`,
+    method: 'post',
+    data: trustedCatalogPayload({ expectedVersion, ...identity })
+  });
+
+export const listShelfLabelTasks = (storeId?: Id64, state?: ShelfLabelTaskState): AxiosPromise<ShelfLabelTaskVO[]> =>
+  request({ url: `${CATALOG_ENDPOINTS.shelfLabels}/tasks`, method: 'get', params: { storeId, state, limit: 200 } });
+
+export const getShelfLabelTask = (taskId: Id64): AxiosPromise<ShelfLabelTaskDetailVO> =>
+  request({ url: `${CATALOG_ENDPOINTS.shelfLabels}/tasks/${taskId}`, method: 'get' });
+
+export const previewShelfLabelItem = (
+  itemId: Id64,
+  templateId: Id64 | undefined,
+  identity: { idempotencyKey: string; correlationId: string }
+): AxiosPromise<ShelfLabelPreviewVO> =>
+  request({
+    url: `${CATALOG_ENDPOINTS.shelfLabels}/items/${itemId}/preview`,
+    method: 'post',
+    data: trustedCatalogPayload({ templateId, ...identity })
+  });
+
+export const confirmShelfLabelReplacement = (
+  itemId: Id64,
+  expectedVersion: number,
+  reason: string,
+  identity: { idempotencyKey: string; correlationId: string }
+): AxiosPromise<ShelfLabelTaskItemVO> =>
+  request({
+    url: `${CATALOG_ENDPOINTS.shelfLabels}/items/${itemId}/confirm`,
+    method: 'post',
+    data: trustedCatalogPayload({ expectedVersion, reason, ...identity })
+  });
+
+export const recordShelfLabelException = (
+  itemId: Id64,
+  expectedVersion: number,
+  reason: string,
+  identity: { idempotencyKey: string; correlationId: string }
+): AxiosPromise<ShelfLabelTaskItemVO> =>
+  request({
+    url: `${CATALOG_ENDPOINTS.shelfLabels}/items/${itemId}/exceptions`,
+    method: 'post',
+    data: trustedCatalogPayload({ expectedVersion, reason, ...identity })
+  });
+
+export const dispatchShelfLabelTask = (
+  taskId: Id64,
+  expectedVersion: number,
+  previewSha256: string,
+  identity: { idempotencyKey: string; correlationId: string }
+): AxiosPromise<ShelfLabelTaskVO> =>
+  request({
+    url: `${CATALOG_ENDPOINTS.shelfLabels}/tasks/${taskId}/dispatch`,
+    method: 'post',
+    data: trustedCatalogPayload({ expectedVersion, previewSha256, ...identity })
+  });

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jingshanghui.pos.catalog.infrastructure.persistence.mapper.ShelfLabelSourceMapper">
+    <!-- 价格项、商品、单位和首选条码由各 Owner 权威表只读冻结；禁止 SELECT *。 -->
+    <select id="listPriceSources" resultType="com.jingshanghui.pos.catalog.application.port.ShelfLabelSourcePort$PriceSource">
+        SELECT i.price_item_id AS priceItemId, s.sku_id AS skuId, s.sku_code AS skuCode,
+               s.sku_name AS productName, u.unit_id AS unitId, u.unit_name AS unitName,
+               (SELECT bc.barcode_value
+                  FROM cat_sku_unit su2
+                  JOIN cat_barcode bc ON bc.tenant_id = su2.tenant_id AND bc.sku_unit_id = su2.sku_unit_id
+                 WHERE su2.tenant_id = i.tenant_id AND su2.sku_id = i.sku_id
+                   AND su2.unit_id = i.unit_id AND bc.status = 'ACTIVE'
+                 ORDER BY bc.barcode_id LIMIT 1) AS barcode,
+               i.amount_minor AS amountMinor, i.currency,
+               i.effective_from AS effectiveFrom, i.effective_to AS effectiveTo
+        FROM prc_price_item i
+        JOIN prc_price_book b ON b.tenant_id = i.tenant_id AND b.price_book_id = i.price_book_id
+        JOIN cat_sku s ON s.tenant_id = i.tenant_id AND s.sku_id = i.sku_id
+        JOIN cat_unit u ON u.tenant_id = i.tenant_id AND u.unit_id = i.unit_id
+        WHERE i.tenant_id = #{tenantId} AND i.price_book_id = #{priceBookId}
+          AND b.state IN ('PUBLISHED', 'RETIRED')
+        ORDER BY i.effective_from, i.sku_id, i.unit_id, i.price_item_id
+    </select>
+
+    <!-- 解析排除当前发布版本后的门店权威价；门店覆盖优先，随后按版本和稳定主键确定。 -->
+    <select id="resolveAmount" resultType="java.lang.Long">
+        SELECT i.amount_minor
+        FROM prc_price_item i
+        JOIN prc_price_book b ON b.tenant_id = i.tenant_id AND b.price_book_id = i.price_book_id
+        WHERE i.tenant_id = #{tenantId}
+          AND i.sku_id = #{skuId} AND i.unit_id = #{unitId}
+          AND b.state = 'PUBLISHED'
+          AND b.price_book_id &lt;&gt; #{excludedPriceBookId}
+          AND (b.scope_type = 'TENANT_BASE' OR (b.scope_type = 'STORE' AND b.store_id = #{storeId}))
+          AND i.effective_from &lt;= #{effectiveAt}
+          AND (i.effective_to IS NULL OR i.effective_to &gt; #{effectiveAt})
+        ORDER BY (b.scope_type = 'STORE') DESC, b.version_no DESC, b.price_book_id DESC, i.price_item_id DESC
+        LIMIT 1
+    </select>
+</mapper>

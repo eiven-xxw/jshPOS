@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-LBL-001",
+  "evidenceLevel": "INTERNAL_SYNTHETIC_SOFTWARE",
+  "printerEvidence": "BLOCKED",
+  "vectors": [
+    {"id":"LBL001-001","case":"first tenant price publish","expected":"TASK_PER_ACCESSIBLE_STORE"},
+    {"id":"LBL001-002","case":"future effective price","expected":"FROZEN_EFFECTIVE_AT"},
+    {"id":"LBL001-003","case":"store override","expected":"STORE_PRIORITY"},
+    {"id":"LBL001-004","case":"bulk price publish","expected":"ONE_TASK_MANY_ITEMS"},
+    {"id":"LBL001-005","case":"retire with fallback","expected":"ROLLBACK_LABEL_TASK"},
+    {"id":"LBL001-006","case":"retire without fallback","expected":"EXCEPTION_NO_ZERO_PRICE"},
+    {"id":"LBL001-007","case":"duplicate source key same digest","expected":"IDEMPOTENT_REPLAY"},
+    {"id":"LBL001-008","case":"same source key changed digest","expected":"LBL_IDEMPOTENCY_CONFLICT"},
+    {"id":"LBL001-009","case":"out of order newer then older","expected":"OLDER_SUPERSEDED"},
+    {"id":"LBL001-010","case":"late newer event","expected":"OLD_OPEN_ITEMS_SUPERSEDED"},
+    {"id":"LBL001-011","case":"script path formula control injection","expected":"TEMPLATE_REJECTED"},
+    {"id":"LBL001-012","case":"cross tenant task swap","expected":"RESOURCE_NOT_VISIBLE"},
+    {"id":"LBL001-013","case":"cross store access","expected":"DATA_SCOPE_DENIED"},
+    {"id":"LBL001-014","case":"preview failure and retry","expected":"EXCEPTION_THEN_PREVIEW_READY"},
+    {"id":"LBL001-015","case":"process restart and command replay","expected":"ORIGINAL_IDEMPOTENCY_RESULT"},
+    {"id":"LBL001-016","case":"one million synthetic task item trend","expected":"PAGED_INDEXED_TREND_ONLY"},
+    {"id":"LBL001-017","case":"V61 migration interrupted","expected":"SAFE_FORWARD_REPAIR"},
+    {"id":"LBL001-018","case":"printer dispatch","expected":"DISPATCH_BLOCKED_NO_DEVICE_CALL"}
+  ]
+}
