@@ -1,0 +1,90 @@
+openapi: 3.1.0
+info:
+  title: 鲸熵汇门店开通 API
+  version: 1.0.0
+servers:
+  - url: /api/v1
+paths:
+  /onboarding/plans:
+    post:
+      operationId: createOnboardingPlan
+      security: [{bearerAuth: []}]
+      parameters: [{$ref: '#/components/parameters/IdempotencyKey'}, {$ref: '#/components/parameters/CorrelationId'}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CreatePlan'}
+      responses:
+        '200': {description: 稳定计划结果}
+        '409': {description: 同键异内容或版本冲突}
+  /onboarding/plans/{planId}:
+    get:
+      operationId: getOnboardingPlan
+      security: [{bearerAuth: []}]
+      parameters: [{$ref: '#/components/parameters/PlanId'}]
+      responses: {'200': {description: 计划、快照、检查点和最新检查}}
+  /onboarding/plans/{planId}/preflight:
+    post:
+      operationId: preflightOnboardingPlan
+      security: [{bearerAuth: []}]
+      parameters: [{$ref: '#/components/parameters/PlanId'}, {$ref: '#/components/parameters/IdempotencyKey'}, {$ref: '#/components/parameters/CorrelationId'}]
+      responses: {'200': {description: 白名单差异和冻结快照}, '409': {description: 来源/目标/模板版本漂移}}
+  /onboarding/plans/{planId}/approve:
+    post:
+      operationId: approveOnboardingPlan
+      security: [{bearerAuth: []}]
+      parameters: [{$ref: '#/components/parameters/PlanId'}, {$ref: '#/components/parameters/IdempotencyKey'}, {$ref: '#/components/parameters/CorrelationId'}]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: '#/components/schemas/Reason'}}}
+      responses: {'200': {description: 审批成功}, '403': {description: 创建人与审批人未分离}}
+  /onboarding/plans/{planId}/apply:
+    post:
+      operationId: applyOnboardingPlan
+      security: [{bearerAuth: []}]
+      parameters: [{$ref: '#/components/parameters/PlanId'}, {$ref: '#/components/parameters/IdempotencyKey'}, {$ref: '#/components/parameters/CorrelationId'}]
+      responses: {'200': {description: Owner 步骤检查点}, '409': {description: 快照漂移或部分失败}}
+  /onboarding/plans/{planId}/checks:
+    post:
+      operationId: checkOnboardingPlan
+      security: [{bearerAuth: []}]
+      parameters: [{$ref: '#/components/parameters/PlanId'}, {$ref: '#/components/parameters/IdempotencyKey'}, {$ref: '#/components/parameters/CorrelationId'}]
+      responses: {'200': {description: 新检查 run；外部阻断不会伪装 PASS}}
+  /onboarding/plans/{planId}/open:
+    post:
+      operationId: openStoreFromOnboardingPlan
+      security: [{bearerAuth: []}]
+      parameters: [{$ref: '#/components/parameters/PlanId'}, {$ref: '#/components/parameters/IdempotencyKey'}, {$ref: '#/components/parameters/CorrelationId'}]
+      responses: {'200': {description: 全部必需检查通过后的开店里程碑}, '409': {description: 外部或内部检查未通过}}
+  /onboarding/plans/{planId}/cancel:
+    post:
+      operationId: cancelOnboardingPlan
+      security: [{bearerAuth: []}]
+      parameters: [{$ref: '#/components/parameters/PlanId'}, {$ref: '#/components/parameters/IdempotencyKey'}, {$ref: '#/components/parameters/CorrelationId'}]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: '#/components/schemas/Reason'}}}
+      responses: {'200': {description: 仅未应用计划可取消}, '409': {description: 已产生 Owner 效果}}
+components:
+  securitySchemes:
+    bearerAuth: {type: http, scheme: bearer}
+  parameters:
+    PlanId: {name: planId, in: path, required: true, schema: {type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'}}
+    IdempotencyKey: {name: Idempotency-Key, in: header, required: true, schema: {type: string, minLength: 8, maxLength: 64}}
+    CorrelationId: {name: X-Correlation-ID, in: header, required: true, schema: {type: string, minLength: 1, maxLength: 64}}
+  schemas:
+    CreatePlan:
+      type: object
+      additionalProperties: false
+      required: [targetStoreId, templateId, templateVersionId]
+      properties:
+        sourceStoreId: {type: [integer, 'null'], minimum: 1}
+        targetStoreId: {type: integer, minimum: 1}
+        templateId: {type: integer, minimum: 1}
+        templateVersionId: {type: integer, minimum: 1}
+    Reason:
+      type: object
+      additionalProperties: false
+      required: [reason]
+      properties: {reason: {type: string, minLength: 2, maxLength: 200}}

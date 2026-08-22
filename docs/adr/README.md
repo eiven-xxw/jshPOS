@@ -57,3 +57,5 @@ ADR 一经接受不得删除或静默改写。需要改变决策时，新建 ADR
 | ADR-045 | [Gate 7C 秤码、金额码与成交计量快照](ADR-045-gate7c-weighted-barcode.md) | Accepted |
 | ADR-046 | [Gate 7C 版本化货架价签与真实打印边界](ADR-046-gate7c-shelf-label.md) | Accepted |
 | ADR-047 | [Gate 7C 确定性补货建议与采购草稿边界](ADR-047-gate7c-deterministic-replenishment.md) | Accepted |
+| ADR-048 | [Gate 7C 可恢复开业资料迁移与 Owner 写入边界](ADR-048-gate7c-recoverable-business-migration.md) | Accepted |
+| ADR-049 | [Gate 7C 门店开通编排、模板白名单与外部失败关闭](ADR-049-gate7c-store-onboarding.md) | Accepted |

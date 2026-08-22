@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jingshanghui.example/contracts/store-onboarding-events-v1.schema.json",
+  "title": "门店开通事件 v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["eventId", "eventType", "schemaVersion", "aggregateId", "occurredAt", "correlationId", "payload"],
+  "properties": {
+    "eventId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "eventType": {"enum": ["onboarding.plan.created.v1", "onboarding.plan.preflighted.v1",
+      "onboarding.plan.approved.v1", "onboarding.plan.applied.v1", "onboarding.plan.checked.v1",
+      "onboarding.store.opened.v1", "onboarding.plan.cancelled.v1"]},
+    "schemaVersion": {"const": 1},
+    "aggregateId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "occurredAt": {"type": "string", "format": "date-time"},
+    "correlationId": {"type": "string", "minLength": 1, "maxLength": 64},
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "targetStoreId", "snapshotSha256"],
+      "properties": {
+        "state": {"type": "string"},
+        "targetStoreId": {"type": "integer", "minimum": 1},
+        "sourceStoreId": {"type": ["integer", "null"], "minimum": 1},
+        "templateVersionId": {"type": "integer", "minimum": 1},
+        "snapshotSha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "checkRun": {"type": ["integer", "null"], "minimum": 1}
+      }
+    }
+  }
+}

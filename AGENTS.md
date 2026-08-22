@@ -509,6 +509,18 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
 - `T2-DMT-001` 修复候选 `276d3489d77317badfa4a99e797a17f3fb87ad64` 已在 GitHub Actions Run `32585460410` 完成九个 Job 与完整门禁，现仅为 `VERIFIED / AWAITING SPONSOR ACCEPTANCE`；真实商户迁移和生产容量证据仍为 0，`T2-ONB-001/LOT-001` 继续 `DRAFT`。
 - 完成后必须提交 `T2-DMT-001` 独立周门禁报告等待确认；不得自动准入 `T2-ONB-001/LOT-001` 或 Gate 7D，不得宣称生产容量、真实数据迁移、Alpha、生产或商业验收通过。
 
+## 4.41 当前 T2 Gate 7C / Sprint S21-E：T2-ONB-001 独立正式开发
+
+- 项目发起人已于 2026-08-23 接受 `T2-DMT-001 CONDITIONAL PASS` 并授权其更新为 `ACCEPTED`；接受范围仅为内部软件执行、虚构数据或明确授权脱敏样本，100k 是内部上限且 1m 只代表合成趋势。
+- 仅授权从 DMT 封存提交 `8b7d830a7b9b786978c4707e7890fcecec06db8f` 建立 `t2/gate7c-sprint21e-onb001-store-onboarding`，独立实现 `T2-ONB-001`；`T2-LOT-001` 与 Gate 7D 后续需求继续 `DRAFT`。
+- 新增独立 `jshpos-onboarding` 作为 Onboarding Owner，独占开店计划、冻结配置快照、审批、步骤检查点、检查结果、里程碑、审计和 Outbox；不得拥有或复制其他 Owner 的业务事实。
+- 可复制范围只允许营业时间/业务日、UI 布局选择、设备能力期望、行业模板引用、商品/价格范围引用、权限/小票/审批模板引用；禁止复制 Secret、终端凭据、会员身份、交易、库存余额、成本、积分、审计、Inbox/Outbox 或历史流水。
+- 三业态差异只能通过 `CONVENIENCE/SNACK_DISCOUNT/COMMUNITY_SUPERMARKET` 的已发布版本化模板表达；核心状态机、金额、库存、成本、促销、支付和退款算法不得按业态分叉。
+- 开店状态必须覆盖 `DRAFT/PREFLIGHTING/PREFLIGHT_FAILED/READY/APPROVED/APPLYING/APPLIED/CHECKING/CHECK_FAILED/READY_TO_OPEN/OPENED/FAILED/COMPENSATION_REQUIRED/CANCELLED`；同键异内容失败关闭，部分 Owner 成功使用原计划/原命令恢复或受审计补偿，禁止删除已产生事实。
+- 支付、硬件和打印未解阻时检查结果只能为 `BLOCKED/UNAVAILABLE`；内部检查通过可以形成 `READY_TO_OPEN` 软件里程碑，但不得把外部阻断写为 `PASS`，完整 `OPENED` 的商业证据仍须真实外部解阻与后续 UAT。
+- `T2-PAY-002/HWD-001/PRN-001/PAR-001` 继续 `BLOCKED`，`T2-JSH-001/LIC-001` 继续 `DEFERRED`；Provider 网络、真实资金、真实设备/外设、未经授权真实 PII、伙伴现场、完整 Alpha、生产和商业声明保持 0。
+- 完成后必须提交 `T2-ONB-001` 独立周门禁报告等待确认；不得自动准入 `T2-LOT-001` 或 Gate 7D。
+
 ## 5. 工程与测试规则
 
 - 服务端采用 RuoYi-Vue-Plus 模块化单体，不得把领域逻辑写入 Controller、通用工具类或框架系统模块。
