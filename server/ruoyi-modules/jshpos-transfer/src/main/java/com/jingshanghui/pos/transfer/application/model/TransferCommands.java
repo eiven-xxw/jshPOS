@@ -19,15 +19,35 @@ public final class TransferCommands {
                                String reason, String correlationId) { }
 
     public record DispatchTransfer(String transferId, String dispatchId, String eventId,
-                                   long expectedVersion, String correlationId) { }
+                                   long expectedVersion, String correlationId,
+                                   List<DispatchLotSplit> lotSplits) {
+        public DispatchTransfer { lotSplits = lotSplits == null ? List.of() : List.copyOf(lotSplits); }
+        public DispatchTransfer(String transferId, String dispatchId, String eventId,
+                                long expectedVersion, String correlationId) {
+            this(transferId, dispatchId, eventId, expectedVersion, correlationId, List.of());
+        }
+    }
+
+    public record DispatchLotSplit(String transferLineId, String lotId, BigDecimal baseQuantity) { }
 
     public record ReceiveTransfer(String transferId, String receiptId, String eventId,
                                   long expectedVersion, boolean finalReceipt,
-                                  List<ReceiveLine> lines, String correlationId) {
-        public ReceiveTransfer { lines = lines == null ? List.of() : List.copyOf(lines); }
+                                  List<ReceiveLine> lines, String correlationId,
+                                  List<ReceiveLotSplit> lotSplits) {
+        public ReceiveTransfer {
+            lines = lines == null ? List.of() : List.copyOf(lines);
+            lotSplits = lotSplits == null ? List.of() : List.copyOf(lotSplits);
+        }
+        public ReceiveTransfer(String transferId, String receiptId, String eventId,
+                               long expectedVersion, boolean finalReceipt,
+                               List<ReceiveLine> lines, String correlationId) {
+            this(transferId, receiptId, eventId, expectedVersion, finalReceipt, lines, correlationId, List.of());
+        }
     }
 
     public record ReceiveLine(String receiptLineId, String transferLineId, BigDecimal receivedQuantity) { }
+
+    public record ReceiveLotSplit(String receiptLineId, String sourceLotId, BigDecimal baseQuantity) { }
 
     public record ResolveDifference(String transferId, String commandId, long expectedVersion,
                                     List<DifferenceLine> lines, String reason, String correlationId) {

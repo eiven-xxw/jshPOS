@@ -109,7 +109,7 @@ public class ReturnSagaCoordinator {
             line.unitId(), line.requestedQuantity(), MovementType.SALE_RETURN_IN)));
         var result = inventory.applyOwnedMovement(new OwnedMovement(current.inventoryEventId(), "REFUND",
             current.returnId(), current.warehouseId(), current.storeId(), current.businessDate(),
-            current.correlationId(), lines));
+            current.correlationId(), lines, current.orderId()));
         String payloadHash = ReturnHash.sha256(ReturnHash.canonical(List.of(result.eventId(), result.sourceType(),
             result.sourceId(), result.affectedLines(), result.negativeAlert())));
         return returns.acceptInventory(current.inventoryEventId(), result, payloadHash, now);

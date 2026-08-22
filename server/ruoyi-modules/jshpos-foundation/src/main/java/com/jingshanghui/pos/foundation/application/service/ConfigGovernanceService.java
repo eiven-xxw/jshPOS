@@ -8,6 +8,8 @@ import com.jingshanghui.pos.foundation.application.context.TrustedTenantContext;
 import com.jingshanghui.pos.foundation.application.model.FoundationViews.ConfigBindingView;
 import com.jingshanghui.pos.foundation.application.model.FoundationViews.ConfigTemplateView;
 import com.jingshanghui.pos.foundation.application.model.FoundationViews.ConfigVersionView;
+import com.jingshanghui.pos.foundation.application.port.StoreIndustryTransitionGuardPort;
+import com.jingshanghui.pos.foundation.application.port.StoreIndustryTransitionGuardPort.IndustryTransition;
 import com.jingshanghui.pos.foundation.application.security.ScopeAuthorizationService;
 import com.jingshanghui.pos.foundation.domain.CanonicalJson;
 import com.jingshanghui.pos.foundation.domain.FoundationRules;
@@ -20,6 +22,7 @@ import com.jingshanghui.pos.foundation.infrastructure.persistence.mapper.ConfigT
 import com.jingshanghui.pos.foundation.infrastructure.persistence.mapper.ConfigTemplateVersionMapper;
 import lombok.RequiredArgsConstructor;
 import org.dromara.common.core.exception.ServiceException;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,6 +44,7 @@ public class ConfigGovernanceService {
     private final DomainAuditService auditService;
     private final FoundationMetrics metrics;
     private final Clock clock;
+    private final ObjectProvider<StoreIndustryTransitionGuardPort> industryTransitionGuards;
 
     @Transactional(readOnly = true)
     public List<ConfigTemplateView> listTemplates() {
@@ -131,6 +135,9 @@ public class ConfigGovernanceService {
         ConfigTemplateVersionEntity version = requireVersion(command.configVersionId());
         if (!command.templateId().equals(version.getTemplateId()) || !"PUBLISHED".equals(version.getState())) {
             throw new ServiceException("FND-CFG-010: 只能激活本模板已发布版本", 409);
+        }
+        if ("STORE".equals(targetType)) {
+            requireSafeIndustryTransition(command.targetId(), command.templateId());
         }
         ConfigBindingEntity binding = findBinding(command.templateId(), targetType, command.targetId());
         ConfigBindingView before = binding == null ? null : toBindingView(binding);
@@ -232,6 +239,22 @@ public class ConfigGovernanceService {
             query.eq(ConfigBindingEntity::getTargetId, targetId);
         }
         return bindingMapper.selectOne(query, false);
+    }
+
+    private void requireSafeIndustryTransition(Long storeId, Long targetTemplateId) {
+        ConfigBindingEntity current = bindingMapper.selectOne(new LambdaQueryWrapper<ConfigBindingEntity>()
+            .eq(ConfigBindingEntity::getTargetType, "STORE")
+            .eq(ConfigBindingEntity::getTargetId, storeId)
+            .orderByDesc(ConfigBindingEntity::getActivatedAt)
+            .last("LIMIT 1"), false);
+        if (current == null || current.getTemplateId().equals(targetTemplateId)) {
+            return;
+        }
+        ConfigTemplateEntity from = requireTemplate(current.getTemplateId());
+        ConfigTemplateEntity to = requireTemplate(targetTemplateId);
+        IndustryTransition transition = new IndustryTransition(storeId, from.getTemplateId(), from.getIndustry(),
+            to.getTemplateId(), to.getIndustry());
+        industryTransitionGuards.orderedStream().forEach(guard -> guard.requireCanActivate(transition));
     }
 
     private ConfigTemplateView toTemplateView(ConfigTemplateEntity entity) {

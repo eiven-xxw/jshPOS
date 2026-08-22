@@ -13,6 +13,8 @@ import com.jingshanghui.pos.foundation.infrastructure.persistence.entity.ConfigT
 import com.jingshanghui.pos.foundation.infrastructure.persistence.mapper.ConfigBindingMapper;
 import com.jingshanghui.pos.foundation.infrastructure.persistence.mapper.ConfigTemplateMapper;
 import com.jingshanghui.pos.foundation.infrastructure.persistence.mapper.ConfigTemplateVersionMapper;
+import com.jingshanghui.pos.foundation.application.port.StoreIndustryTransitionGuardPort;
+import org.springframework.beans.factory.ObjectProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -23,12 +25,14 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.Map;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doThrow;
 
 class ConfigGovernanceServiceTest {
 
@@ -47,15 +51,17 @@ class ConfigGovernanceServiceTest {
     private final ScopeAuthorizationService authorization = mock(ScopeAuthorizationService.class);
     private final DomainAuditService audit = mock(DomainAuditService.class);
     private final FoundationMetrics metrics = mock(FoundationMetrics.class);
+    private final ObjectProvider<StoreIndustryTransitionGuardPort> transitionGuards = mock(ObjectProvider.class);
     private final Clock clock = Clock.fixed(Instant.parse("2026-08-16T00:00:00Z"), ZoneOffset.UTC);
     private final ConfigGovernanceService service = new ConfigGovernanceService(
-        templates, versions, bindings, context, authorization, audit, metrics, clock
+        templates, versions, bindings, context, authorization, audit, metrics, clock, transitionGuards
     );
 
     @BeforeEach
     void setUp() {
         when(context.requireTenantId()).thenReturn("TENANT_A");
         when(context.requirePrincipal()).thenReturn(new TrustedPrincipal("TENANT_A", 10L, 1L, "alice"));
+        when(transitionGuards.orderedStream()).thenReturn(Stream.empty());
         when(templates.insert(any(ConfigTemplateEntity.class))).thenAnswer(invocation -> {
             ConfigTemplateEntity entity = invocation.getArgument(0);
             entity.setTemplateId(100L);
@@ -216,12 +222,36 @@ class ConfigGovernanceServiceTest {
         assertThatThrownBy(() -> service.rollback(500L)).hasMessageContaining("FND-CFG-011");
     }
 
+    @Test
+    void invokesOwnerGuardBeforeChangingStoreIndustryTemplate() {
+        StoreIndustryTransitionGuardPort guard = mock(StoreIndustryTransitionGuardPort.class);
+        when(transitionGuards.orderedStream()).thenReturn(Stream.of(guard));
+        ConfigBindingEntity current = new ConfigBindingEntity();
+        current.setTemplateId(100L);
+        current.setTargetType("STORE");
+        current.setTargetId(1101L);
+        when(bindings.selectOne(any(), org.mockito.ArgumentMatchers.eq(false))).thenReturn(current);
+        when(versions.selectById(2001L)).thenReturn(version(2001L, 200L, "PUBLISHED"));
+        when(templates.selectById(100L)).thenReturn(template(100L, "ACTIVE", "COMMUNITY_SUPERMARKET"));
+        when(templates.selectById(200L)).thenReturn(template(200L, "ACTIVE", "CONVENIENCE"));
+        doThrow(new org.dromara.common.core.exception.ServiceException("LOT-POLICY-013: 存在批次事实", 409))
+            .when(guard).requireCanActivate(any());
+
+        assertThatThrownBy(() -> service.activate(
+            new ConfigGovernanceService.ActivateConfig(200L, 2001L, "STORE", 1101L)))
+            .hasMessageContaining("LOT-POLICY-013");
+    }
+
     private ConfigTemplateEntity template(long id, String status) {
+        return template(id, status, "CONVENIENCE");
+    }
+
+    private ConfigTemplateEntity template(long id, String status, String industry) {
         ConfigTemplateEntity entity = new ConfigTemplateEntity();
         entity.setTemplateId(id);
         entity.setTemplateCode("CONVENIENCE");
         entity.setTemplateName("Synthetic");
-        entity.setIndustry("CONVENIENCE");
+        entity.setIndustry(industry);
         entity.setStatus(status);
         entity.setVersion(0);
         return entity;

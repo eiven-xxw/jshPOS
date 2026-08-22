@@ -57,7 +57,8 @@ public class TransferController {
     public R<TransferDetail> dispatch(@PathVariable @Pattern(regexp = ULID) String transferId,
                                       @Valid @RequestBody TransferRequests.Dispatch request) {
         return R.ok(service.dispatch(new DispatchTransfer(transferId, request.dispatchId(), request.eventId(),
-            request.expectedVersion(), request.correlationId())));
+            request.expectedVersion(), request.correlationId(), request.lotSplits().stream().map(split ->
+                new DispatchLotSplit(split.transferLineId(), split.lotId(), split.baseQuantity())).toList())));
     }
 
     @PostMapping("/{transferId}/receipts")
@@ -68,7 +69,8 @@ public class TransferController {
         return R.ok(service.receive(new ReceiveTransfer(transferId, request.receiptId(), request.eventId(),
             request.expectedVersion(), request.finalReceipt(), request.lines().stream().map(line ->
             new ReceiveLine(line.receiptLineId(), line.transferLineId(), line.receivedQuantity())).toList(),
-            request.correlationId())));
+            request.correlationId(), request.lotSplits().stream().map(split ->
+                new ReceiveLotSplit(split.receiptLineId(), split.sourceLotId(), split.baseQuantity())).toList())));
     }
 
     @PostMapping("/{transferId}/difference")

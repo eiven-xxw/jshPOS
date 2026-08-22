@@ -6,6 +6,7 @@
   "decision": "LOT001_APPROVED_IN_PROGRESS",
   "requirement": {"id": "T2-LOT-001", "status": "IN_PROGRESS", "owner": "Inventory/Catalog"},
   "industryPolicy": {"enabled": ["COMMUNITY_SUPERMARKET"], "disabled": ["CONVENIENCE", "SNACK_DISCOUNT"]},
+  "industryTransitionPolicy": "BLOCK_NON_COMMUNITY_SWITCH_AFTER_ANY_LOT_FACT",
   "states": ["AVAILABLE", "NEAR_EXPIRY", "EXPIRED", "DEPLETED", "BLOCKED"],
   "fefoOrder": ["expiry_date ASC", "received_date ASC", "lot_id ASC"],
   "persistence": [
@@ -17,8 +18,10 @@
     {"table":"inv_lot_allocation","owner":"Inventory","accessPolicy":"APPEND_ONLY","sqlMode":"XML"},
     {"table":"inv_lot_expiry_projection","owner":"Inventory","accessPolicy":"READ_PROJECTION","sqlMode":"XML"},
     {"table":"inv_lot_audit_event","owner":"Inventory","accessPolicy":"APPEND_ONLY","sqlMode":"XML"},
-    {"table":"inv_lot_outbox","owner":"Inventory","accessPolicy":"CONTROLLED_WRITE","sqlMode":"XML"}
+    {"table":"inv_lot_outbox","owner":"Inventory","accessPolicy":"CONTROLLED_WRITE","sqlMode":"XML"},
+    {"table":"inv_lot_package_release","owner":"Inventory","accessPolicy":"APPEND_ONLY","sqlMode":"XML"}
   ],
+  "frozenLotPolicyFields": ["policyVersionId", "nearExpiryDays", "expiryDate"],
   "limits": {"maxCommandLines":500,"maxAllocationsPerLine":100,"maxPackageLots":100000,"quantityScale":6},
   "nonGoals": ["LOT_COSTING","BIN_LOCATION","WAVE","CROSS_DOCK","PROCESSING","SERIAL_NUMBER","COLD_CHAIN","QUALITY_INSPECTION","RECALL","AUTO_SCRAP","COMPLEX_WMS"],
   "preservedStates": {"T2-PAY-002":"BLOCKED","T2-HWD-001":"BLOCKED","T2-PRN-001":"BLOCKED","T2-PAR-001":"BLOCKED","T2-JSH-001":"DEFERRED","T2-LIC-001":"DEFERRED","T2-CLS-001":"DRAFT","T2-EXC-001":"DRAFT"},

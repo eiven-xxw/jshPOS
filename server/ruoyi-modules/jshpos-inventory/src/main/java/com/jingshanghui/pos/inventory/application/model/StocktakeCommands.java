@@ -27,6 +27,18 @@ public final class StocktakeCommands {
     public record Review(String stocktakeId, String decision, String reason, String correlationId) {
     }
 
-    public record Approve(String stocktakeId, String eventId, String correlationId) {
+    public record Approve(String stocktakeId, String eventId, String correlationId,
+                          List<LotAdjustment> lotAdjustments) {
+        public Approve {
+            lotAdjustments = lotAdjustments == null ? List.of() : List.copyOf(lotAdjustments);
+        }
+
+        public Approve(String stocktakeId, String eventId, String correlationId) {
+            this(stocktakeId, eventId, correlationId, List.of());
+        }
     }
+
+    /** 盘点差异的批次拆分，方向必须与盘点行冻结差异一致。 */
+    public record LotAdjustment(String stocktakeLineId, String lotId, BigDecimal baseQuantity,
+                                String movementType) { }
 }

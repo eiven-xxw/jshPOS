@@ -290,9 +290,9 @@ void main() {
           .single
           .values
           .first,
-      14,
+      15,
     );
-    expect(fixture.count('local_schema_history'), 14);
+    expect(fixture.count('local_schema_history'), 15);
     expect(
       fixture.scalar(
         "SELECT COUNT(*) FROM sqlite_master WHERE name='local_order_disposition'",

@@ -18,6 +18,7 @@ import 'gate7b_order_disposition_schema.dart';
 import 'gate7b_exchange_schema.dart';
 import 'gate7b_tender_schema.dart';
 import 'gate7c_weighted_barcode_schema.dart';
+import 'gate7c_lot_expiry_schema.dart';
 
 typedef FailureInjector = void Function(String checkpoint);
 
@@ -155,7 +156,11 @@ final class PosLocalDatabase {
       _migrateToWeightedBarcodeV14();
       version = Gate7cWeightedBarcodeSchema.version;
     }
-    if (version != Gate7cWeightedBarcodeSchema.version) {
+    if (version == Gate7cWeightedBarcodeSchema.version) {
+      _migrateToLotExpiryV15();
+      version = Gate7cLotExpirySchema.version;
+    }
+    if (version != Gate7cLotExpirySchema.version) {
       throw StateError('LOCAL_SCHEMA_UNSUPPORTED: $version');
     }
     _verifySchemaChecksum();
@@ -205,6 +210,9 @@ final class PosLocalDatabase {
           .toString(),
       Gate7cWeightedBarcodeSchema.version: sha256
           .convert(utf8.encode(Gate7cWeightedBarcodeSchema.v14))
+          .toString(),
+      Gate7cLotExpirySchema.version: sha256
+          .convert(utf8.encode(Gate7cLotExpirySchema.v15))
           .toString(),
     };
     for (final entry in expected.entries) {
@@ -343,6 +351,32 @@ final class PosLocalDatabase {
     if (violations.isNotEmpty) {
       throw StateError(
         'LOCAL_DB_INTEGRITY_FAILED: foreign key violations after v14',
+      );
+    }
+  }
+
+  /// 追加 LOT-001 批次包、FEFO 分配和不可变本地批次流水。
+  void _migrateToLotExpiryV15() {
+    transaction(() {
+      database.execute(Gate7cLotExpirySchema.v15);
+      final checksum = sha256
+          .convert(utf8.encode(Gate7cLotExpirySchema.v15))
+          .toString();
+      database.execute(
+        'INSERT INTO local_schema_history(version,description,checksum_sha256,installed_at) VALUES(15,?,?,?)',
+        [
+          'gate7c-community-lot-expiry-fefo',
+          checksum,
+          DateTime.now().toUtc().toIso8601String(),
+        ],
+      );
+      checkpoint('migration.v15.before-version');
+      database.execute('PRAGMA user_version=${Gate7cLotExpirySchema.version}');
+    });
+    final violations = database.select('PRAGMA foreign_key_check');
+    if (violations.isNotEmpty) {
+      throw StateError(
+        'LOCAL_DB_INTEGRITY_FAILED: foreign key violations after v15',
       );
     }
   }

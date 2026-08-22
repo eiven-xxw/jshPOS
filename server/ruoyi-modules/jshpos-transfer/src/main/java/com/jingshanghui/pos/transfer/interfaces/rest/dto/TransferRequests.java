@@ -41,18 +41,39 @@ public final class TransferRequests {
     public record Dispatch(@Pattern(regexp = ULID) String dispatchId,
                            @Pattern(regexp = ULID) String eventId,
                            @PositiveOrZero long expectedVersion,
-                           @NotBlank @Size(max = 96) String correlationId) { }
+                           @NotBlank @Size(max = 96) String correlationId,
+                           @Size(max = 1000) List<@Valid DispatchLotSplit> lotSplits) {
+        public Dispatch(String dispatchId, String eventId, long expectedVersion, String correlationId) {
+            this(dispatchId, eventId, expectedVersion, correlationId, List.of());
+        }
+    }
+
+    public record DispatchLotSplit(@Pattern(regexp = ULID) String transferLineId,
+                                   @Pattern(regexp = ULID) String lotId,
+                                   @NotNull @DecimalMin(value = "0", inclusive = false)
+                                   @Digits(integer = 13, fraction = 6) BigDecimal baseQuantity) { }
 
     public record Receive(@Pattern(regexp = ULID) String receiptId,
                           @Pattern(regexp = ULID) String eventId,
                           @PositiveOrZero long expectedVersion, boolean finalReceipt,
                           @NotEmpty @Size(max = 500) List<@Valid ReceiveLine> lines,
-                          @NotBlank @Size(max = 96) String correlationId) { }
+                          @NotBlank @Size(max = 96) String correlationId,
+                          @Size(max = 1000) List<@Valid ReceiveLotSplit> lotSplits) {
+        public Receive(String receiptId, String eventId, long expectedVersion, boolean finalReceipt,
+                       List<ReceiveLine> lines, String correlationId) {
+            this(receiptId, eventId, expectedVersion, finalReceipt, lines, correlationId, List.of());
+        }
+    }
 
     public record ReceiveLine(@Pattern(regexp = ULID) String receiptLineId,
                               @Pattern(regexp = ULID) String transferLineId,
                               @NotNull @DecimalMin(value = "0", inclusive = false)
                               @Digits(integer = 13, fraction = 6) BigDecimal receivedQuantity) { }
+
+    public record ReceiveLotSplit(@Pattern(regexp = ULID) String receiptLineId,
+                                  @Pattern(regexp = ULID) String sourceLotId,
+                                  @NotNull @DecimalMin(value = "0", inclusive = false)
+                                  @Digits(integer = 13, fraction = 6) BigDecimal baseQuantity) { }
 
     public record Difference(@Pattern(regexp = ULID) String commandId, @PositiveOrZero long expectedVersion,
                              @NotEmpty @Size(max = 500) List<@Valid DifferenceLine> lines,

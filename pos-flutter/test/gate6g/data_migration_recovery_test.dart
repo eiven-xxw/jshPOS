@@ -37,13 +37,13 @@ void main() {
       final recovered = PosLocalDatabase.openPath(path, binding);
       expect(
         recovered.database.select('PRAGMA user_version').single.values.first,
-        14,
+        15,
       );
       expect(
         recovered.database
             .select('SELECT COUNT(*) AS value FROM local_schema_history')
             .single['value'],
-        14,
+        15,
       );
       expect(
         recovered.database.select('PRAGMA quick_check').single.values.first,

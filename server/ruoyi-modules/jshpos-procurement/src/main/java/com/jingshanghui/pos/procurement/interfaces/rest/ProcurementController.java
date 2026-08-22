@@ -15,6 +15,8 @@ import org.dromara.common.log.enums.BusinessType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 /** 采购 API；确认收货和原收货退货的库存效果由服务端 Owner 端口生成。 */
 @Validated
 @RestController
@@ -97,7 +99,10 @@ public class ProcurementController {
     public R<ReceiptDetail> confirmReceipt(@PathVariable @Pattern(regexp = ULID) String receiptId,
                                            @Valid @RequestBody ProcurementRequests.Confirm request) {
         return R.ok(service.confirmReceipt(new ConfirmReceipt(receiptId, request.eventId(),
-            request.correlationId())));
+            request.correlationId(), request.lotSplits() == null ? List.of() : request.lotSplits().stream()
+                .map(split -> new com.jingshanghui.pos.procurement.application.model.ProcurementCommands.ReceiptLotSplit(
+                    split.receiptLineId(), split.baseQuantity(), split.supplierLotCode(), split.internalLotCode(),
+                    split.productionDate(), split.receivedDate(), split.explicitExpiryDate())).toList())));
     }
 
     @PostMapping("/receipts/{receiptId}/returns")
@@ -126,7 +131,9 @@ public class ProcurementController {
     public R<ReturnHead> approveReturn(@PathVariable @Pattern(regexp = ULID) String purchaseReturnId,
                                        @Valid @RequestBody ProcurementRequests.ReturnApprove request) {
         return R.ok(service.approveReturn(new ApproveReturn(purchaseReturnId, request.eventId(),
-            request.correlationId())));
+            request.correlationId(), request.lotSplits().stream().map(split ->
+                new com.jingshanghui.pos.procurement.application.model.ProcurementCommands.ReturnLotSplit(
+                    split.returnLineId(), split.lotId(), split.baseQuantity())).toList())));
     }
 
     @GetMapping("/orders/{orderId}")

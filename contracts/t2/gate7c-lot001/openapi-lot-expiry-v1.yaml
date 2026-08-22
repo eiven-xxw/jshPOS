@@ -9,7 +9,8 @@ paths:
     post:
       operationId: publishLotPolicy
       security: [{bearerAuth: []}]
-      parameters: [{$ref: '#/components/parameters/IdempotencyKey'}, {$ref: '#/components/parameters/CorrelationId'}]
+      description: policyVersionId 即稳定幂等键，同版本异内容失败关闭。
+      parameters: [{$ref: '#/components/parameters/CorrelationId'}]
       requestBody:
         required: true
         content: {application/json: {schema: {$ref: '#/components/schemas/PublishPolicy'}}}
@@ -21,15 +22,19 @@ paths:
       parameters:
         - {name: storeId, in: query, required: true, schema: {type: integer, minimum: 1}}
         - {name: skuId, in: query, required: true, schema: {type: integer, minimum: 1}}
+        - {name: effectiveAt, in: query, required: false, schema: {type: string, format: date-time}}
       responses: {'200': {description: 当前可信策略}, '404': {description: 未启用}}
   /inventory/lots:
     get:
       operationId: listLots
       security: [{bearerAuth: []}]
       parameters:
+        - {name: storeId, in: query, required: true, schema: {type: integer, minimum: 1}}
         - {name: warehouseId, in: query, required: true, schema: {type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'}}
         - {name: skuId, in: query, required: true, schema: {type: integer, minimum: 1}}
+        - {name: businessDate, in: query, required: true, schema: {type: string, format: date}}
         - {name: status, in: query, required: false, schema: {type: string, enum: [AVAILABLE, NEAR_EXPIRY, EXPIRED, DEPLETED, BLOCKED]}}
+        - {name: limit, in: query, required: false, schema: {type: integer, minimum: 1, maximum: 500, default: 100}}
       responses: {'200': {description: FEFO 稳定排序的批次投影}}
   /inventory/lots/alerts:
     get:
@@ -37,13 +42,32 @@ paths:
       security: [{bearerAuth: []}]
       parameters:
         - {name: storeId, in: query, required: true, schema: {type: integer, minimum: 1}}
+        - {name: warehouseId, in: query, required: true, schema: {type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'}}
         - {name: businessDate, in: query, required: true, schema: {type: string, format: date}}
+        - {name: limit, in: query, required: false, schema: {type: integer, minimum: 1, maximum: 500, default: 100}}
       responses: {'200': {description: 版本化临期与过期投影}}
+  /inventory/lots/package:
+    get:
+      operationId: downloadLatestSignedLotPackage
+      security: [{bearerAuth: []}]
+      parameters:
+        - {name: storeId, in: query, required: true, schema: {type: integer, minimum: 1}}
+        - {name: warehouseId, in: query, required: true, schema: {type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'}}
+      responses: {'200': {description: 下载最后一次封存的 Ed25519 签名包}, '404': {description: 尚未发布}}
+    post:
+      operationId: publishSignedLotPackage
+      security: [{bearerAuth: []}]
+      parameters:
+        - {name: storeId, in: query, required: true, schema: {type: integer, minimum: 1}}
+        - {name: warehouseId, in: query, required: true, schema: {type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'}}
+        - {name: Idempotency-Key, in: header, required: true, schema: {type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'}}
+        - {$ref: '#/components/parameters/CorrelationId'}
+      responses: {'200': {description: 独立单调版本的签名包}, '409': {description: 同键异内容或并发版本冲突}, '503': {description: KMS/HSM 签名端口未配置}}
   /inventory/lots/rebuild:
     post:
       operationId: rebuildLotProjection
       security: [{bearerAuth: []}]
-      parameters: [{$ref: '#/components/parameters/IdempotencyKey'}, {$ref: '#/components/parameters/CorrelationId'}]
+      parameters: [{$ref: '#/components/parameters/CorrelationId'}]
       requestBody:
         required: true
         content: {application/json: {schema: {$ref: '#/components/schemas/Rebuild'}}}
@@ -52,8 +76,7 @@ components:
   securitySchemes:
     bearerAuth: {type: http, scheme: bearer}
   parameters:
-    IdempotencyKey: {name: Idempotency-Key, in: header, required: true, schema: {type: string, minLength: 8, maxLength: 64}}
-    CorrelationId: {name: X-Correlation-ID, in: header, required: true, schema: {type: string, minLength: 1, maxLength: 64}}
+    CorrelationId: {name: X-Correlation-ID, in: header, required: true, schema: {type: string, minLength: 1, maxLength: 96}}
   schemas:
     PublishPolicy:
       type: object
@@ -71,8 +94,10 @@ components:
     Rebuild:
       type: object
       additionalProperties: false
-      required: [warehouseId, skuId]
+      required: [commandId, storeId, warehouseId, skuId, businessDate]
       properties:
+        commandId: {type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'}
+        storeId: {type: integer, minimum: 1}
         warehouseId: {type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'}
         skuId: {type: integer, minimum: 1}
-
+        businessDate: {type: string, format: date}

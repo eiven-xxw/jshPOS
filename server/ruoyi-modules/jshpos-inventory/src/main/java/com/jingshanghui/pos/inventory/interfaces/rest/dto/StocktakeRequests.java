@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import jakarta.validation.Valid;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -43,6 +44,16 @@ public final class StocktakeRequests {
     }
 
     public record Approve(@Pattern(regexp = ULID) String eventId,
-                          @NotBlank @Size(max = 96) String correlationId) {
+                          @NotBlank @Size(max = 96) String correlationId,
+                          @Size(max = 1000) List<@Valid LotAdjustment> lotAdjustments) {
+        public Approve(String eventId, String correlationId) {
+            this(eventId, correlationId, List.of());
+        }
     }
+
+    public record LotAdjustment(@Pattern(regexp = ULID) String stocktakeLineId,
+                                @Pattern(regexp = ULID) String lotId,
+                                @NotNull @DecimalMin(value = "0", inclusive = false)
+                                @Digits(integer = 13, fraction = 6) BigDecimal baseQuantity,
+                                @Pattern(regexp = "^(STOCKTAKE_GAIN|STOCKTAKE_LOSS)$") String movementType) { }
 }

@@ -53,6 +53,8 @@ class StocktakeServiceTest {
     private final ScopeAuthorizationService authorization = mock(ScopeAuthorizationService.class);
     private final InventoryCatalogSnapshotPort catalog = mock(InventoryCatalogSnapshotPort.class);
     private final AuthoritativeInventoryMovementPort movement = mock(AuthoritativeInventoryMovementPort.class);
+    private final com.jingshanghui.pos.inventory.application.port.AuthoritativeLotMovementPort lots =
+        mock(com.jingshanghui.pos.inventory.application.port.AuthoritativeLotMovementPort.class);
     private final StoreService stores = mock(StoreService.class);
     private final Clock clock = Clock.fixed(NOW, ZoneOffset.UTC);
     private StocktakeService service;
@@ -62,7 +64,7 @@ class StocktakeServiceTest {
         when(context.requireTenantId()).thenReturn("TENANT_A");
         when(context.requirePrincipal()).thenReturn(new TrustedPrincipal("TENANT_A", 303L, 1L, "approver"));
         service = new StocktakeService(mapper, inventoryMapper, context, authorization, catalog, movement,
-            stores, new UlidGenerator(clock), new ObjectMapper(), clock);
+            lots, stores, new UlidGenerator(clock), new ObjectMapper(), clock);
     }
 
     @Test
@@ -131,14 +133,18 @@ class StocktakeServiceTest {
         when(stores.businessDate(1101L, NOW)).thenReturn(new BusinessDateView(1101L, "Asia/Shanghai",
             LocalTime.of(6, 0), NOW, LocalDate.of(2026, 8, 17)));
         when(mapper.findHead("TENANT_A", STOCKTAKE)).thenReturn(head("POSTED", false, 3, 101L, 202L, 303L));
+        when(lots.requiresLotTracking(1101L, 701L, LocalDate.of(2026, 8, 17))).thenReturn(true);
 
-        service.approve(new Approve(STOCKTAKE, EVENT, "trace-gain"));
+        service.approve(new Approve(STOCKTAKE, EVENT, "trace-gain", List.of(
+            new com.jingshanghui.pos.inventory.application.model.StocktakeCommands.LotAdjustment(
+                LINE, "01K2A000000000000000000180", new BigDecimal("1.5"), "STOCKTAKE_GAIN"))));
 
         ArgumentCaptor<OwnedMovement> captured = ArgumentCaptor.forClass(OwnedMovement.class);
         verify(movement).applyOwnedMovement(captured.capture());
         assertThat(captured.getValue().lines()).hasSize(1);
         assertThat(captured.getValue().lines().get(0).movementType()).isEqualTo(MovementType.STOCKTAKE_GAIN);
         assertThat(captured.getValue().lines().get(0).quantity()).isEqualByComparingTo("1.5");
+        verify(lots).applyExplicit(any());
 
         reset(movement);
         when(context.requirePrincipal()).thenReturn(new TrustedPrincipal("TENANT_A", 202L, 1L, "reviewer"));

@@ -19,9 +19,15 @@ public interface AuthoritativeInventoryMovementPort {
     /** 一次来源聚合的原子库存命令。 */
     record OwnedMovement(String eventId, String sourceType, String sourceId, String warehouseId,
                          Long storeId, LocalDate businessDate, String correlationId,
-                         List<OwnedMovementLine> lines) {
+                         List<OwnedMovementLine> lines, String originalSourceId) {
         public OwnedMovement {
             lines = lines == null ? List.of() : List.copyOf(lines);
+        }
+
+        public OwnedMovement(String eventId, String sourceType, String sourceId, String warehouseId,
+                             Long storeId, LocalDate businessDate, String correlationId,
+                             List<OwnedMovementLine> lines) {
+            this(eventId, sourceType, sourceId, warehouseId, storeId, businessDate, correlationId, lines, null);
         }
     }
 

@@ -11,6 +11,12 @@ import com.jingshanghui.pos.foundation.application.service.StoreService;
 import com.jingshanghui.pos.inventory.application.port.AuthoritativeInventoryMovementPort;
 import com.jingshanghui.pos.inventory.application.port.AuthoritativeInventoryMovementPort.OwnedMovement;
 import com.jingshanghui.pos.inventory.application.port.AuthoritativeInventoryMovementPort.OwnedMovementLine;
+import com.jingshanghui.pos.inventory.application.port.AuthoritativeLotMovementPort;
+import com.jingshanghui.pos.inventory.application.model.LotInventoryModels.CommandSource;
+import com.jingshanghui.pos.inventory.application.model.LotInventoryModels.ExplicitCommand;
+import com.jingshanghui.pos.inventory.application.model.LotInventoryModels.ExplicitLine;
+import com.jingshanghui.pos.inventory.application.model.LotInventoryModels.TransferReceiveCommand;
+import com.jingshanghui.pos.inventory.application.model.LotInventoryModels.TransferReceiveLine;
 import com.jingshanghui.pos.inventory.domain.InventoryStates.MovementType;
 import com.jingshanghui.pos.order.domain.UlidGenerator;
 import com.jingshanghui.pos.transfer.application.model.TransferCommands.*;
@@ -56,6 +62,7 @@ public class TransferService {
     private final ScopeAuthorizationService authorizationService;
     private final InventoryCatalogSnapshotPort catalogPort;
     private final AuthoritativeInventoryMovementPort movementPort;
+    private final AuthoritativeLotMovementPort lotMovementPort;
     private final StoreService storeService;
     private final UlidGenerator ulids;
     private final ObjectMapper objectMapper;
@@ -123,8 +130,7 @@ public class TransferService {
         TrustedPrincipal principal = tenantContext.requirePrincipal();
         TransferHead head = requireLocked(principal.tenantId(), command.transferId());
         authorizeBoth(head);
-        String hash = TransferHash.sha256(TransferHash.canonical(List.of(command.transferId(), command.dispatchId(),
-            command.eventId(), command.expectedVersion())));
+        String hash = hashDispatch(command);
         if (beginCommand(principal.tenantId(), command.eventId(), command.transferId(), "DISPATCH", hash)) {
             return detail(command.transferId());
         }
@@ -138,6 +144,7 @@ public class TransferService {
         mapper.insertDispatch(new DispatchWrite(command.dispatchId(), principal.tenantId(), head.transferId(),
             command.eventId(), businessDate, command.correlationId(), at));
         List<OwnedMovementLine> movements = new ArrayList<>();
+        Map<String, OwnedMovementLine> movementByTransferLine = new LinkedHashMap<>();
         for (TransferLine line : mapper.findLines(principal.tenantId(), head.transferId())) {
             String dispatchLineId = ulids.next();
             mapper.insertDispatchLine(new DispatchLineWrite(dispatchLineId, principal.tenantId(), command.dispatchId(),
@@ -146,12 +153,15 @@ public class TransferService {
             mapper.insertTransit(new TransitWrite(ulids.next(), principal.tenantId(), head.transferId(),
                 line.transferLineId(), "DISPATCHED", dispatchLineId, line.requestedQuantity(), null, businessDate,
                 command.correlationId(), at));
-            movements.add(new OwnedMovementLine(dispatchLineId, line.skuId(), line.baseUnitId(),
-                line.requestedQuantity(), MovementType.TRANSFER_OUT));
+            OwnedMovementLine movement = new OwnedMovementLine(dispatchLineId, line.skuId(), line.baseUnitId(),
+                line.requestedQuantity(), MovementType.TRANSFER_OUT);
+            movements.add(movement);
+            movementByTransferLine.put(line.transferLineId(), movement);
         }
         updateStatus(head, Status.IN_TRANSIT, null, null, at, null, at);
         movementPort.applyOwnedMovement(new OwnedMovement(command.eventId(), "TRANSFER_DISPATCH", command.dispatchId(),
             head.sourceWarehouseId(), head.sourceStoreId(), businessDate, command.correlationId(), movements));
+        applyDispatchLots(command, head, movementByTransferLine, businessDate);
         applied(principal.tenantId(), command.eventId(), at);
         audit(principal, head.sourceStoreId(), "TRANSFER_DISPATCHED", head.transferId(), command.eventId(),
             command.correlationId(), head.status(), Status.IN_TRANSIT.name(), "SOURCE_OWNER_POSTED", at);
@@ -189,6 +199,7 @@ public class TransferService {
         mapper.insertReceipt(new ReceiptWrite(command.receiptId(), principal.tenantId(), head.transferId(),
             command.eventId(), command.finalReceipt(), businessDate, command.correlationId(), at));
         List<OwnedMovementLine> movements = new ArrayList<>();
+        Map<String, DispatchLine> dispatchByReceiptLine = new LinkedHashMap<>();
         for (ReceiveLine input : command.lines()) {
             TransferLine line = mapper.lockLine(principal.tenantId(), head.transferId(), input.transferLineId());
             DispatchLine dispatchLine = byLine.get(input.transferLineId());
@@ -204,6 +215,7 @@ public class TransferService {
                 command.correlationId(), at));
             movements.add(new OwnedMovementLine(input.receiptLineId(), line.skuId(), line.baseUnitId(),
                 quantity, MovementType.TRANSFER_IN));
+            dispatchByReceiptLine.put(input.receiptLineId(), dispatchLine);
         }
         boolean anyOpen = mapper.findLines(principal.tenantId(), head.transferId()).stream().anyMatch(line ->
             TransferRules.openTransit(line.dispatchedQuantity(), line.receivedQuantity(),
@@ -213,6 +225,7 @@ public class TransferService {
         updateStatus(head, next, null, null, null, next == Status.CLOSED ? at : null, at);
         movementPort.applyOwnedMovement(new OwnedMovement(command.eventId(), "TRANSFER_RECEIPT", command.receiptId(),
             head.destinationWarehouseId(), head.destinationStoreId(), businessDate, command.correlationId(), movements));
+        applyReceiveLots(command, head, movements, dispatchByReceiptLine, businessDate);
         applied(principal.tenantId(), command.eventId(), at);
         audit(principal, head.destinationStoreId(), "TRANSFER_RECEIVED", head.transferId(), command.eventId(),
             command.correlationId(), head.status(), next.name(), command.finalReceipt() ? "FINAL" : "PARTIAL", at);
@@ -222,6 +235,81 @@ public class TransferService {
                 "sourceWarehouseId", head.sourceWarehouseId(),
                 "destinationWarehouseId", head.destinationWarehouseId(), "businessDate", businessDate.toString()), at);
         return detail(head.transferId());
+    }
+
+    /** 发出批次按调拨行完整拆分，并与来源仓 TRANSFER_OUT 总账逐行守恒。 */
+    private void applyDispatchLots(DispatchTransfer command, TransferHead head,
+                                   Map<String, OwnedMovementLine> movementByTransferLine,
+                                   LocalDate businessDate) {
+        Map<String, List<DispatchLotSplit>> byLine = command.lotSplits().stream()
+            .collect(java.util.stream.Collectors.groupingBy(DispatchLotSplit::transferLineId));
+        List<ExplicitLine> lotLines = new ArrayList<>();
+        for (Map.Entry<String, OwnedMovementLine> entry : movementByTransferLine.entrySet()) {
+            OwnedMovementLine movement = entry.getValue();
+            boolean required = lotMovementPort.requiresLotTracking(head.sourceStoreId(), movement.skuId(), businessDate);
+            List<DispatchLotSplit> splits = byLine.remove(entry.getKey());
+            if (!required) {
+                if (splits != null && !splits.isEmpty()) {
+                    throw new ServiceException("TRF-LOT-001: 未启用批次的调拨发出禁止提交批次拆分", 409);
+                }
+                continue;
+            }
+            if (splits == null || splits.isEmpty()) {
+                throw new ServiceException("TRF-LOT-002: 已启用批次的调拨发出缺少批次拆分", 409);
+            }
+            BigDecimal total = splits.stream().map(DispatchLotSplit::baseQuantity)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            if (total.compareTo(movement.quantity()) != 0) {
+                throw new ServiceException("TRF-LOT-003: 发出批次拆分与仓库总账数量不守恒", 409);
+            }
+            splits.forEach(split -> lotLines.add(new ExplicitLine(movement.sourceLineId(), split.lotId(),
+                movement.skuId(), movement.baseUnitId(), split.baseQuantity(), MovementType.TRANSFER_OUT.name())));
+        }
+        if (!byLine.isEmpty()) throw new ServiceException("TRF-LOT-004: 发出批次拆分引用了未知调拨行", 409);
+        if (!lotLines.isEmpty()) {
+            lotMovementPort.applyExplicit(new ExplicitCommand(new CommandSource(command.eventId(),
+                "TRANSFER_DISPATCH", command.dispatchId(), head.sourceWarehouseId(), head.sourceStoreId(),
+                businessDate, command.correlationId()), MovementType.TRANSFER_OUT.name(), lotLines));
+        }
+    }
+
+    /** 目的仓只引用原发出批次，Inventory Owner 负责继承日期、批号及剩余可收上限。 */
+    private void applyReceiveLots(ReceiveTransfer command, TransferHead head, List<OwnedMovementLine> movements,
+                                  Map<String, DispatchLine> dispatchByReceiptLine, LocalDate businessDate) {
+        Map<String, List<ReceiveLotSplit>> byLine = command.lotSplits().stream()
+            .collect(java.util.stream.Collectors.groupingBy(ReceiveLotSplit::receiptLineId));
+        List<TransferReceiveLine> lotLines = new ArrayList<>();
+        for (OwnedMovementLine movement : movements) {
+            boolean required = lotMovementPort.requiresLotTracking(head.destinationStoreId(), movement.skuId(), businessDate);
+            List<ReceiveLotSplit> splits = byLine.remove(movement.sourceLineId());
+            if (!required) {
+                if (splits != null && !splits.isEmpty()) {
+                    throw new ServiceException("TRF-LOT-005: 未启用批次的调拨收货禁止提交批次拆分", 409);
+                }
+                continue;
+            }
+            if (splits == null || splits.isEmpty()) {
+                throw new ServiceException("TRF-LOT-006: 已启用批次的调拨收货缺少来源批次", 409);
+            }
+            BigDecimal total = splits.stream().map(ReceiveLotSplit::baseQuantity)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            if (total.compareTo(movement.quantity()) != 0) {
+                throw new ServiceException("TRF-LOT-007: 收货批次拆分与仓库总账数量不守恒", 409);
+            }
+            DispatchLine dispatch = dispatchByReceiptLine.get(movement.sourceLineId());
+            if (dispatch == null) throw new ServiceException("TRF-LOT-008: 原发出行不存在", 409);
+            splits.forEach(split -> lotLines.add(new TransferReceiveLine(movement.sourceLineId(),
+                dispatch.dispatchLineId(), split.sourceLotId(), movement.skuId(), movement.baseUnitId(),
+                split.baseQuantity())));
+        }
+        if (!byLine.isEmpty()) throw new ServiceException("TRF-LOT-009: 收货批次拆分引用了未知收货行", 409);
+        if (!lotLines.isEmpty()) {
+            DispatchHead dispatch = mapper.findDispatchByTransfer(tenantContext.requireTenantId(), head.transferId());
+            if (dispatch == null) throw new ServiceException("TRF-LOT-010: 调拨发出事实不存在", 409);
+            lotMovementPort.receiveTransfer(new TransferReceiveCommand(new CommandSource(command.eventId(),
+                "TRANSFER_RECEIPT", command.receiptId(), head.destinationWarehouseId(), head.destinationStoreId(),
+                businessDate, command.correlationId()), dispatch.dispatchId(), lotLines));
+        }
     }
 
     /** 审批最终短少差异，只冲销在途，不伪造目的仓入库。 */
@@ -441,6 +529,12 @@ public class TransferService {
         TransferRules.ulid(command.dispatchId(), "dispatchId");
         TransferRules.ulid(command.eventId(), "eventId");
         TransferRules.text(command.correlationId(), 96, "TRF-INPUT-001");
+        if (command.lotSplits().size() > 1000) throw new ServiceException("TRF-LOT-011: 发出批次拆分超过上限", 409);
+        command.lotSplits().forEach(split -> {
+            TransferRules.ulid(split.transferLineId(), "transferLineId");
+            TransferRules.ulid(split.lotId(), "lotId");
+            TransferRules.quantity(split.baseQuantity(), "lotBaseQuantity");
+        });
     }
 
     private void validateReceive(ReceiveTransfer command) {
@@ -455,6 +549,12 @@ public class TransferService {
         }
         command.lines().forEach(line -> { TransferRules.ulid(line.receiptLineId(), "receiptLineId");
             TransferRules.ulid(line.transferLineId(), "transferLineId"); });
+        if (command.lotSplits().size() > 1000) throw new ServiceException("TRF-LOT-012: 收货批次拆分超过上限", 409);
+        command.lotSplits().forEach(split -> {
+            TransferRules.ulid(split.receiptLineId(), "receiptLineId");
+            TransferRules.ulid(split.sourceLotId(), "sourceLotId");
+            TransferRules.quantity(split.baseQuantity(), "lotBaseQuantity");
+        });
     }
 
     private void validateDifference(ResolveDifference command) {
@@ -499,6 +599,20 @@ public class TransferService {
         command.lines().stream().sorted(Comparator.comparing(ReceiveLine::receiptLineId)).forEach(line -> {
             values.add(line.receiptLineId()); values.add(line.transferLineId()); values.add(line.receivedQuantity());
         });
+        command.lotSplits().stream().sorted(Comparator.comparing(ReceiveLotSplit::receiptLineId)
+            .thenComparing(ReceiveLotSplit::sourceLotId)).forEach(line -> {
+                values.add(line.receiptLineId()); values.add(line.sourceLotId()); values.add(line.baseQuantity());
+            });
+        return TransferHash.sha256(TransferHash.canonical(values));
+    }
+
+    private String hashDispatch(DispatchTransfer command) {
+        List<Object> values = new ArrayList<>(List.of(command.transferId(), command.dispatchId(), command.eventId(),
+            command.expectedVersion()));
+        command.lotSplits().stream().sorted(Comparator.comparing(DispatchLotSplit::transferLineId)
+            .thenComparing(DispatchLotSplit::lotId)).forEach(line -> {
+                values.add(line.transferLineId()); values.add(line.lotId()); values.add(line.baseQuantity());
+            });
         return TransferHash.sha256(TransferHash.canonical(values));
     }
 

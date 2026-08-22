@@ -73,7 +73,10 @@ public class StocktakeController {
     @Log(title = "审批盘点并生成库存流水", businessType = BusinessType.UPDATE)
     public R<Detail> approve(@PathVariable @Pattern(regexp = ULID) String stocktakeId,
                              @Valid @RequestBody StocktakeRequests.Approve request) {
-        return R.ok(service.approve(new Approve(stocktakeId, request.eventId(), request.correlationId())));
+        return R.ok(service.approve(new Approve(stocktakeId, request.eventId(), request.correlationId(),
+            request.lotAdjustments().stream().map(value ->
+                new com.jingshanghui.pos.inventory.application.model.StocktakeCommands.LotAdjustment(
+                    value.stocktakeLineId(), value.lotId(), value.baseQuantity(), value.movementType())).toList())));
     }
 
     @GetMapping("/{stocktakeId}")

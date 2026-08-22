@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jingshanghui.pos.inventory.infrastructure.persistence.mapper.LotInventoryMapper">
+    <resultMap id="lotView" type="com.jingshanghui.pos.inventory.application.model.LotInventoryModels$LotView">
+        <constructor>
+            <arg column="lotId" javaType="java.lang.String"/><arg column="storeId" javaType="java.lang.Long"/>
+            <arg column="warehouseId" javaType="java.lang.String"/><arg column="skuId" javaType="java.lang.Long"/>
+            <arg column="baseUnitId" javaType="java.lang.Long"/><arg column="supplierLotCode" javaType="java.lang.String"/>
+            <arg column="internalLotCode" javaType="java.lang.String"/><arg column="productionDate" javaType="java.time.LocalDate"/>
+            <arg column="receivedDate" javaType="java.time.LocalDate"/><arg column="expiryDate" javaType="java.time.LocalDate"/>
+            <arg column="policyVersionId" javaType="java.lang.String"/><arg column="nearExpiryDays" javaType="int"/>
+            <arg column="onHandQuantity" javaType="java.math.BigDecimal"/>
+            <arg column="lastLedgerSequence" javaType="long"/><arg column="expiryStatus" javaType="java.lang.String"/>
+            <arg column="updatedAt" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+    <resultMap id="allocationView" type="com.jingshanghui.pos.inventory.application.model.LotInventoryModels$AllocationView">
+        <constructor>
+            <arg column="allocationId" javaType="java.lang.String"/><arg column="sourceId" javaType="java.lang.String"/>
+            <arg column="sourceLineId" javaType="java.lang.String"/><arg column="lotId" javaType="java.lang.String"/>
+            <arg column="skuId" javaType="java.lang.Long"/><arg column="quantity" javaType="java.math.BigDecimal"/>
+            <arg column="allocationType" javaType="java.lang.String"/><arg column="policyVersionId" javaType="java.lang.String"/>
+            <arg column="expiryDate" javaType="java.time.LocalDate"/>
+        </constructor>
+    </resultMap>
+
+    <select id="findCommand" resultType="com.jingshanghui.pos.inventory.application.model.LotInventoryModels$CommandView">
+        SELECT source_event_id AS eventId,request_sha256 AS requestSha256,status,affected_lines AS affectedLines,
+               applied_at AS appliedAt
+        FROM inv_lot_command WHERE tenant_id=#{tenantId} AND source_event_id=#{eventId}
+    </select>
+    <insert id="insertCommand">
+        INSERT INTO inv_lot_command(source_event_id,tenant_id,request_sha256,source_type,source_id,warehouse_id,
+          store_id,correlation_id,actor_user_id,status,affected_lines,created_at)
+        VALUES(#{eventId},#{tenantId},#{requestSha256},#{sourceType},#{sourceId},#{warehouseId},#{storeId},
+          #{correlationId},#{actorUserId},'PROCESSING',0,#{createdAt})
+    </insert>
+    <update id="completeCommand">
+        UPDATE inv_lot_command SET status='APPLIED',affected_lines=#{affectedLines},applied_at=#{appliedAt}
+        WHERE tenant_id=#{tenantId} AND source_event_id=#{eventId} AND status='PROCESSING'
+    </update>
+    <select id="findGenericMovement" resultType="com.jingshanghui.pos.inventory.application.model.LotInventoryModels$GenericMovementView">
+        SELECT MIN(movement_type) AS movementType,ABS(SUM(quantity_delta)) AS absoluteQuantity
+        FROM inv_stock_ledger
+        WHERE tenant_id=#{tenantId} AND source_event_id=#{eventId} AND source_line_id=#{sourceLineId}
+          AND warehouse_id=#{warehouseId} AND sku_id=#{skuId}
+        GROUP BY source_event_id,source_line_id,warehouse_id,sku_id
+    </select>
+
+    <sql id="lotColumns">
+        i.lot_id AS lotId,i.store_id AS storeId,i.warehouse_id AS warehouseId,i.sku_id AS skuId,
+        i.base_unit_id AS baseUnitId,i.supplier_lot_code AS supplierLotCode,
+        i.internal_lot_code AS internalLotCode,i.production_date AS productionDate,
+        i.received_date AS receivedDate,i.expiry_date AS expiryDate,i.policy_version_id AS policyVersionId,
+        i.near_expiry_days AS nearExpiryDays,
+        b.on_hand_quantity AS onHandQuantity,b.last_ledger_sequence AS lastLedgerSequence,
+        COALESCE(p.expiry_status,'AVAILABLE') AS expiryStatus,b.updated_at AS updatedAt
+    </sql>
+    <select id="findLotByIdentityHash" resultMap="lotView">
+        SELECT <include refid="lotColumns"/> FROM inv_lot_identity i
+        JOIN inv_lot_balance b ON b.tenant_id=i.tenant_id AND b.lot_id=i.lot_id
+        LEFT JOIN inv_lot_expiry_projection p ON p.tenant_id=i.tenant_id AND p.lot_id=i.lot_id
+        WHERE i.tenant_id=#{tenantId} AND i.warehouse_id=#{warehouseId} AND i.sku_id=#{skuId}
+          AND i.content_sha256=#{contentSha256} LIMIT 1
+    </select>
+    <select id="findLot" resultMap="lotView">
+        SELECT <include refid="lotColumns"/> FROM inv_lot_identity i
+        JOIN inv_lot_balance b ON b.tenant_id=i.tenant_id AND b.lot_id=i.lot_id
+        LEFT JOIN inv_lot_expiry_projection p ON p.tenant_id=i.tenant_id AND p.lot_id=i.lot_id
+        WHERE i.tenant_id=#{tenantId} AND i.lot_id=#{lotId}
+    </select>
+    <insert id="insertIdentity">
+        INSERT INTO inv_lot_identity(lot_id,tenant_id,store_id,warehouse_id,sku_id,base_unit_id,
+          supplier_lot_code,internal_lot_code,production_date,received_date,expiry_date,policy_version_id,
+          near_expiry_days,content_sha256,created_at)
+        VALUES(#{lotId},#{tenantId},#{storeId},#{warehouseId},#{skuId},#{baseUnitId},#{supplierLotCode},
+          #{internalLotCode},#{productionDate},#{receivedDate},#{expiryDate},#{policyVersionId},#{nearExpiryDays},
+          #{contentSha256},#{createdAt})
+    </insert>
+    <insert id="insertBalanceIfAbsent">
+        INSERT IGNORE INTO inv_lot_balance(tenant_id,lot_id,on_hand_quantity,last_ledger_sequence,record_version,updated_at)
+        VALUES(#{tenantId},#{lotId},0,0,0,#{updatedAt})
+    </insert>
+    <select id="lockLot" resultMap="lotView">
+        SELECT <include refid="lotColumns"/> FROM inv_lot_identity i
+        JOIN inv_lot_balance b ON b.tenant_id=i.tenant_id AND b.lot_id=i.lot_id
+        LEFT JOIN inv_lot_expiry_projection p ON p.tenant_id=i.tenant_id AND p.lot_id=i.lot_id
+        WHERE i.tenant_id=#{tenantId} AND i.lot_id=#{lotId} FOR UPDATE
+    </select>
+    <select id="lockFefoCandidates" resultMap="lotView">
+        SELECT <include refid="lotColumns"/> FROM inv_lot_identity i
+        JOIN inv_lot_balance b ON b.tenant_id=i.tenant_id AND b.lot_id=i.lot_id
+        LEFT JOIN inv_lot_expiry_projection p ON p.tenant_id=i.tenant_id AND p.lot_id=i.lot_id
+        WHERE i.tenant_id=#{tenantId} AND i.warehouse_id=#{warehouseId} AND i.sku_id=#{skuId}
+          AND b.on_hand_quantity&gt;0 AND i.expiry_date&gt;=#{businessDate}
+        ORDER BY i.expiry_date ASC,i.received_date ASC,i.lot_id ASC LIMIT #{limit} FOR UPDATE
+    </select>
+    <update id="updateBalance">
+        UPDATE inv_lot_balance SET on_hand_quantity=#{onHandQuantity},last_ledger_sequence=#{lastLedgerSequence},
+          record_version=record_version+1,updated_at=#{updatedAt}
+        WHERE tenant_id=#{tenantId} AND lot_id=#{lotId} AND record_version=#{expectedVersion}
+    </update>
+    <insert id="insertLedger">
+        INSERT INTO inv_lot_ledger(ledger_id,tenant_id,lot_id,ledger_sequence,quantity_before,quantity_delta,
+          quantity_after,movement_type,source_type,source_id,source_line_id,source_event_id,business_date,
+          actor_user_id,correlation_id,occurred_at)
+        VALUES(#{ledgerId},#{tenantId},#{lotId},#{ledgerSequence},#{quantityBefore},#{quantityDelta},
+          #{quantityAfter},#{movementType},#{sourceType},#{sourceId},#{sourceLineId},#{sourceEventId},
+          #{businessDate},#{actorUserId},#{correlationId},#{occurredAt})
+    </insert>
+    <insert id="insertAllocation">
+        INSERT INTO inv_lot_allocation(allocation_id,tenant_id,allocation_type,source_id,source_line_id,
+          original_source_id,original_source_line_id,lot_id,sku_id,quantity,policy_version_id,expiry_date,
+          source_event_id,created_at)
+        VALUES(#{allocationId},#{tenantId},#{allocationType},#{sourceId},#{sourceLineId},#{originalSourceId},
+          #{originalSourceLineId},#{lotId},#{skuId},#{quantity},#{policyVersionId},#{expiryDate},#{sourceEventId},#{createdAt})
+    </insert>
+    <select id="findAllocationsByEvent" resultMap="allocationView">
+        SELECT allocation_id AS allocationId,source_id AS sourceId,source_line_id AS sourceLineId,
+          lot_id AS lotId,sku_id AS skuId,quantity,allocation_type AS allocationType,
+          policy_version_id AS policyVersionId,expiry_date AS expiryDate
+        FROM inv_lot_allocation WHERE tenant_id=#{tenantId} AND source_event_id=#{eventId}
+        ORDER BY allocation_id
+    </select>
+    <select id="lockReturnableAllocations" resultMap="allocationView">
+        SELECT s.allocation_id AS allocationId,s.source_id AS sourceId,s.source_line_id AS sourceLineId,
+          s.lot_id AS lotId,s.sku_id AS skuId,
+          (s.quantity-COALESCE(SUM(r.quantity),0)) AS quantity,s.allocation_type AS allocationType,
+          s.policy_version_id AS policyVersionId,s.expiry_date AS expiryDate
+        FROM inv_lot_allocation s
+        LEFT JOIN inv_lot_allocation r ON r.tenant_id=s.tenant_id AND r.allocation_type='RETURN'
+          AND r.original_source_id=s.source_id AND r.original_source_line_id=s.source_line_id AND r.lot_id=s.lot_id
+        WHERE s.tenant_id=#{tenantId} AND s.allocation_type='SALE' AND s.source_id=#{originalSourceId}
+          AND s.source_line_id=#{originalSourceLineId} AND s.sku_id=#{skuId}
+        GROUP BY s.allocation_id,s.source_id,s.source_line_id,s.lot_id,s.sku_id,s.quantity,
+          s.allocation_type,s.policy_version_id,s.expiry_date
+        HAVING quantity&gt;0 ORDER BY s.allocation_id FOR UPDATE
+    </select>
+    <select id="lockTransferableAllocation" resultMap="allocationView">
+        SELECT s.allocation_id AS allocationId,s.source_id AS sourceId,s.source_line_id AS sourceLineId,
+          s.lot_id AS lotId,s.sku_id AS skuId,
+          (s.quantity-COALESCE(SUM(r.quantity),0)) AS quantity,s.allocation_type AS allocationType,
+          s.policy_version_id AS policyVersionId,s.expiry_date AS expiryDate
+        FROM inv_lot_allocation s
+        LEFT JOIN inv_lot_allocation r ON r.tenant_id=s.tenant_id AND r.allocation_type='EXPLICIT'
+          AND r.original_source_id=s.source_id AND r.original_source_line_id=s.allocation_id
+        WHERE s.tenant_id=#{tenantId} AND s.allocation_type='EXPLICIT' AND s.source_id=#{dispatchId}
+          AND s.source_line_id=#{dispatchLineId} AND s.lot_id=#{sourceLotId} AND s.sku_id=#{skuId}
+        GROUP BY s.allocation_id,s.source_id,s.source_line_id,s.lot_id,s.sku_id,s.quantity,
+          s.allocation_type,s.policy_version_id,s.expiry_date
+        HAVING quantity&gt;0 FOR UPDATE
+    </select>
+    <insert id="upsertExpiryProjection">
+        INSERT INTO inv_lot_expiry_projection(tenant_id,lot_id,expiry_status,as_of_business_date,
+          near_expiry_days,on_hand_quantity,last_ledger_sequence,updated_at)
+        VALUES(#{tenantId},#{lotId},#{expiryStatus},#{asOfBusinessDate},#{nearExpiryDays},#{onHandQuantity},
+          #{lastLedgerSequence},#{updatedAt})
+        ON DUPLICATE KEY UPDATE expiry_status=VALUES(expiry_status),as_of_business_date=VALUES(as_of_business_date),
+          near_expiry_days=VALUES(near_expiry_days),on_hand_quantity=VALUES(on_hand_quantity),
+          last_ledger_sequence=VALUES(last_ledger_sequence),updated_at=VALUES(updated_at)
+    </insert>
+    <insert id="insertAudit">
+        INSERT INTO inv_lot_audit_event(audit_id,tenant_id,store_id,action_code,aggregate_id,actor_user_id,
+          command_id,correlation_id,request_sha256,reason_code,occurred_at)
+        VALUES(#{auditId},#{tenantId},#{storeId},#{actionCode},#{aggregateId},#{actorUserId},#{commandId},
+          #{correlationId},#{requestSha256},#{reasonCode},#{occurredAt})
+    </insert>
+    <insert id="insertOutbox">
+        INSERT INTO inv_lot_outbox(event_id,tenant_id,event_type,aggregate_id,aggregate_version,correlation_id,
+          payload_json,payload_sha256,delivery_state,available_at)
+        VALUES(#{eventId},#{tenantId},#{eventType},#{aggregateId},#{aggregateVersion},#{correlationId},
+          CAST(#{payloadJson} AS JSON),#{payloadSha256},'PENDING',#{availableAt})
+    </insert>
+    <select id="findNearExpiry" resultMap="lotView">
+        SELECT <include refid="lotColumns"/> FROM inv_lot_identity i
+        JOIN inv_lot_balance b ON b.tenant_id=i.tenant_id AND b.lot_id=i.lot_id
+        LEFT JOIN inv_lot_expiry_projection p ON p.tenant_id=i.tenant_id AND p.lot_id=i.lot_id
+        WHERE i.tenant_id=#{tenantId} AND i.store_id=#{storeId} AND i.warehouse_id=#{warehouseId}
+          AND b.on_hand_quantity&gt;0
+        ORDER BY i.expiry_date,i.lot_id LIMIT 500
+    </select>
+    <select id="findPackageLots" resultMap="lotView">
+        SELECT <include refid="lotColumns"/> FROM inv_lot_identity i
+        JOIN inv_lot_balance b ON b.tenant_id=i.tenant_id AND b.lot_id=i.lot_id
+        LEFT JOIN inv_lot_expiry_projection p ON p.tenant_id=i.tenant_id AND p.lot_id=i.lot_id
+        WHERE i.tenant_id=#{tenantId} AND i.store_id=#{storeId} AND i.warehouse_id=#{warehouseId}
+          AND b.on_hand_quantity&gt;0
+        ORDER BY i.sku_id,i.expiry_date,i.received_date,i.lot_id LIMIT #{limit}
+    </select>
+    <select id="findLots" resultMap="lotView">
+        SELECT <include refid="lotColumns"/> FROM inv_lot_identity i
+        JOIN inv_lot_balance b ON b.tenant_id=i.tenant_id AND b.lot_id=i.lot_id
+        LEFT JOIN inv_lot_expiry_projection p ON p.tenant_id=i.tenant_id AND p.lot_id=i.lot_id
+        WHERE i.tenant_id=#{tenantId} AND i.store_id=#{storeId} AND i.warehouse_id=#{warehouseId}
+          AND i.sku_id=#{skuId}
+        ORDER BY i.expiry_date,i.received_date,i.lot_id LIMIT #{limit}
+    </select>
+    <select id="countLotFacts" resultType="long">
+        SELECT COUNT(*) FROM inv_lot_identity
+        WHERE tenant_id=#{tenantId} AND store_id=#{storeId} AND sku_id=#{skuId}
+    </select>
+    <select id="countStoreLotFacts" resultType="long">
+        SELECT COUNT(*) FROM inv_lot_identity WHERE tenant_id=#{tenantId} AND store_id=#{storeId}
+    </select>
+    <select id="aggregateLedger" resultType="com.jingshanghui.pos.inventory.application.model.LotInventoryModels$LedgerProjection">
+        SELECT COALESCE(SUM(quantity_delta),0) AS ledgerQuantity,
+          COALESCE(MAX(ledger_sequence),0) AS lastLedgerSequence
+        FROM inv_lot_ledger WHERE tenant_id=#{tenantId} AND lot_id=#{lotId}
+    </select>
+    <update id="rebuildBalance">
+        UPDATE inv_lot_balance SET on_hand_quantity=#{onHandQuantity},
+          last_ledger_sequence=#{lastLedgerSequence},record_version=record_version+1,updated_at=#{updatedAt}
+        WHERE tenant_id=#{tenantId} AND lot_id=#{lotId}
+    </update>
+    <resultMap id="lotPackageRelease" type="com.jingshanghui.pos.inventory.application.model.LotInventoryModels$LotPackageRelease">
+        <constructor>
+            <arg column="releaseId" javaType="java.lang.String"/><arg column="packageVersion" javaType="long"/>
+            <arg column="previousVersion" javaType="long"/><arg column="sourceSha256" javaType="java.lang.String"/>
+            <arg column="payloadBytes" javaType="_byte[]"/><arg column="payloadSha256" javaType="java.lang.String"/>
+            <arg column="signingKeyId" javaType="java.lang.String"/><arg column="signatureBytes" javaType="_byte[]"/>
+            <arg column="recordCount" javaType="int"/><arg column="generatedAt" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+    <sql id="lotPackageColumns">
+        release_id AS releaseId,package_version AS packageVersion,previous_version AS previousVersion,
+        source_sha256 AS sourceSha256,payload_bytes AS payloadBytes,payload_sha256 AS payloadSha256,
+        signing_key_id AS signingKeyId,signature_bytes AS signatureBytes,record_count AS recordCount,
+        generated_at AS generatedAt
+    </sql>
+    <select id="lockLatestPackage" resultMap="lotPackageRelease">
+        SELECT <include refid="lotPackageColumns"/> FROM inv_lot_package_release
+        WHERE tenant_id=#{tenantId} AND store_id=#{storeId} AND warehouse_id=#{warehouseId}
+        ORDER BY package_version DESC LIMIT 1 FOR UPDATE
+    </select>
+    <select id="findLatestPackage" resultMap="lotPackageRelease">
+        SELECT <include refid="lotPackageColumns"/> FROM inv_lot_package_release
+        WHERE tenant_id=#{tenantId} AND store_id=#{storeId} AND warehouse_id=#{warehouseId}
+        ORDER BY package_version DESC LIMIT 1
+    </select>
+    <select id="findPackageByRelease" resultMap="lotPackageRelease">
+        SELECT <include refid="lotPackageColumns"/> FROM inv_lot_package_release
+        WHERE tenant_id=#{tenantId} AND release_id=#{releaseId}
+    </select>
+    <insert id="insertPackageRelease">
+        INSERT INTO inv_lot_package_release(release_id,tenant_id,store_id,warehouse_id,package_version,
+          previous_version,source_sha256,payload_sha256,payload_bytes,signing_key_id,signature_bytes,
+          record_count,generated_at)
+        VALUES(#{releaseId},#{tenantId},#{storeId},#{warehouseId},#{packageVersion},#{previousVersion},
+          #{sourceSha256},#{payloadSha256},#{payloadBytes},#{signingKeyId},#{signatureBytes},#{recordCount},#{generatedAt})
+    </insert>
+</mapper>

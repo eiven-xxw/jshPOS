@@ -26,7 +26,7 @@ void main() {
       addTearDown(database.close);
       expect(
         database.database.select('PRAGMA user_version').single.values.first,
-        14,
+        15,
       );
       final keyPair = await Ed25519().newKeyPair();
       final trustedKey = await keyPair.extractPublicKey();

@@ -72,6 +72,8 @@ class TransferServiceTest {
     private final ScopeAuthorizationService authorization = mock(ScopeAuthorizationService.class);
     private final InventoryCatalogSnapshotPort catalog = mock(InventoryCatalogSnapshotPort.class);
     private final AuthoritativeInventoryMovementPort movement = mock(AuthoritativeInventoryMovementPort.class);
+    private final com.jingshanghui.pos.inventory.application.port.AuthoritativeLotMovementPort lots =
+        mock(com.jingshanghui.pos.inventory.application.port.AuthoritativeLotMovementPort.class);
     private final StoreService stores = mock(StoreService.class);
     private TransferService service;
 
@@ -80,7 +82,7 @@ class TransferServiceTest {
         when(context.requirePrincipal()).thenReturn(new TrustedPrincipal("TENANT_A", 101L, 1L, "alice"));
         when(context.requireTenantId()).thenReturn("TENANT_A");
         Clock clock = Clock.fixed(NOW, ZoneOffset.UTC);
-        service = new TransferService(mapper, context, authorization, catalog, movement, stores,
+        service = new TransferService(mapper, context, authorization, catalog, movement, lots, stores,
             new UlidGenerator(clock), new ObjectMapper().findAndRegisterModules(), clock);
     }
 
@@ -98,8 +100,11 @@ class TransferServiceTest {
             LocalTime.of(6, 0), NOW, LocalDate.of(2026, 8, 17)));
         when(movement.applyOwnedMovement(any())).thenReturn(new ApplyResult(EVENT, "TRANSFER_DISPATCH",
             DISPATCH, 1, false, false));
+        when(lots.requiresLotTracking(1101L, 701L, LocalDate.of(2026, 8, 17))).thenReturn(true);
 
-        service.dispatch(new DispatchTransfer(TRANSFER, DISPATCH, EVENT, 2, "trace-dispatch"));
+        service.dispatch(new DispatchTransfer(TRANSFER, DISPATCH, EVENT, 2, "trace-dispatch", List.of(
+            new com.jingshanghui.pos.transfer.application.model.TransferCommands.DispatchLotSplit(
+                LINE, "01K2A000000000000000000180", new BigDecimal("10")))));
 
         InOrder order = inOrder(mapper, movement);
         order.verify(mapper).insertDispatch(any(DispatchWrite.class));
@@ -115,6 +120,7 @@ class TransferServiceTest {
         });
         verify(authorization, times(2)).requireStoreAccess(1101L);
         verify(authorization, times(2)).requireStoreAccess(1102L);
+        verify(lots).applyExplicit(any());
         ArgumentCaptor<OutboxWrite> outbox = ArgumentCaptor.forClass(OutboxWrite.class);
         verify(mapper).insertOutbox(outbox.capture());
         var payload = new ObjectMapper().findAndRegisterModules().readTree(outbox.getValue().payloadJson());
@@ -207,7 +213,7 @@ class TransferServiceTest {
         TransferMapper postMapper = mock(TransferMapper.class);
         when(postMapper.lockOrder("TENANT_A", TRANSFER)).thenReturn(head("IN_TRANSIT", 3, 100L, 102L));
         TransferService postService = new TransferService(postMapper, context, authorization, catalog, movement,
-            stores, new UlidGenerator(Clock.fixed(NOW, ZoneOffset.UTC)), new ObjectMapper().findAndRegisterModules(),
+            lots, stores, new UlidGenerator(Clock.fixed(NOW, ZoneOffset.UTC)), new ObjectMapper().findAndRegisterModules(),
             Clock.fixed(NOW, ZoneOffset.UTC));
         assertThatThrownBy(() -> postService.cancel(new StateCommand(TRANSFER,
             "01K2A000000000000000000020", 3, "cancel", "trace-cancel")))

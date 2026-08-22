@@ -16,6 +16,7 @@ import com.jingshanghui.pos.inventory.infrastructure.persistence.InventoryPersis
 import com.jingshanghui.pos.inventory.infrastructure.persistence.InventoryPersistenceParams.BalanceUpdate;
 import com.jingshanghui.pos.inventory.infrastructure.persistence.mapper.InventoryMapper;
 import com.jingshanghui.pos.inventory.application.port.AuthoritativeCostPostingPort;
+import com.jingshanghui.pos.inventory.application.port.AuthoritativeLotMovementPort;
 import com.jingshanghui.pos.order.application.port.InventoryOrderSnapshotPort;
 import com.jingshanghui.pos.order.application.port.InventoryOrderSnapshotPort.InventoryLineSnapshot;
 import com.jingshanghui.pos.order.application.port.InventoryOrderSnapshotPort.InventoryOrderSnapshot;
@@ -61,6 +62,7 @@ class InventoryLedgerServiceTest {
     private final InventoryOrderSnapshotPort orders = mock(InventoryOrderSnapshotPort.class);
     private final InventoryRefundSnapshotPort refunds = mock(InventoryRefundSnapshotPort.class);
     private final AuthoritativeCostPostingPort costing = mock(AuthoritativeCostPostingPort.class);
+    private final AuthoritativeLotMovementPort lots = mock(AuthoritativeLotMovementPort.class);
     private final Clock clock = Clock.fixed(NOW, ZoneOffset.UTC);
     private InventoryLedgerService service;
 
@@ -68,7 +70,7 @@ class InventoryLedgerServiceTest {
     void setUp() {
         when(tenantContext.requirePrincipal()).thenReturn(new TrustedPrincipal("TENANT_A", 101L, 1L, "alice"));
         when(tenantContext.requireTenantId()).thenReturn("TENANT_A");
-        service = new InventoryLedgerService(mapper, tenantContext, authorization, orders, refunds, costing,
+        service = new InventoryLedgerService(mapper, tenantContext, authorization, orders, refunds, costing, lots,
             new UlidGenerator(clock), clock, new ObjectMapper());
     }
 

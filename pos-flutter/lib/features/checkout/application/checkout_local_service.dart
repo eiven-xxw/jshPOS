@@ -9,6 +9,7 @@ import '../domain/checkout_models.dart';
 import '../domain/exact_quantity.dart';
 import '../domain/promoted_order_snapshot_codec.dart';
 import '../domain/ulid_generator.dart';
+import 'lot_checkout_allocator.dart';
 
 final class PosDomainException implements Exception {
   const PosDomainException(this.code, this.message);
@@ -899,6 +900,17 @@ final class CheckoutLocalService {
         submittedVersion = priorVersion + 1;
         completedVersion = priorVersion + 3;
       }
+      final lotSnapshot =
+          LotCheckoutAllocator(
+            database: localDatabase,
+            ulids: ulids,
+          ).freezeSale(
+            basket: command.basket,
+            businessDate: command.businessDate,
+            industryTemplateVersion: command.industryTemplateVersion,
+            commandId: command.commandId,
+            occurredAt: at,
+          );
       localDatabase.checkpoint('order.snapshot');
       final paymentId = ulids.next();
       final change = command.tenderedAmountMinor - gross;
@@ -971,6 +983,8 @@ final class CheckoutLocalService {
           'shiftId': command.shiftId,
           'receivableAmountMinor': gross,
           'snapshotHash': 'sha256:$snapshotHash',
+          if (lotSnapshot != null)
+            'lotSnapshotHash': 'sha256:${lotSnapshot.payloadSha256}',
         },
         occurredAt: at,
       );
@@ -1009,6 +1023,20 @@ final class CheckoutLocalService {
         },
         occurredAt: at,
       );
+      if (lotSnapshot != null) {
+        _appendOutbox(
+          stream: 'order.command',
+          eventType: 'inventory.lot-sale.requested.v1',
+          aggregateId: command.basket.orderId,
+          aggregateVersion: completedVersion,
+          correlationId: command.commandId,
+          payload: {
+            ...lotSnapshot.payload,
+            'payloadSha256': 'sha256:${lotSnapshot.payloadSha256}',
+          },
+          occurredAt: at,
+        );
+      }
       localDatabase.checkpoint('outbox.appended');
       _audit(
         'CASH_ORDER_COMPLETED',
@@ -1181,6 +1209,17 @@ final class CheckoutLocalService {
         submittedVersion = priorVersion + 1;
         completedVersion = priorVersion + 3;
       }
+      final lotSnapshot =
+          LotCheckoutAllocator(
+            database: localDatabase,
+            ulids: ulids,
+          ).freezeSale(
+            basket: command.basket,
+            businessDate: command.businessDate,
+            industryTemplateVersion: command.industryTemplateVersion,
+            commandId: command.commandId,
+            occurredAt: at,
+          );
       localDatabase.checkpoint('promoted.order.snapshot');
 
       _insertPromotionSnapshot(command, promotionHash, at);
@@ -1307,6 +1346,8 @@ final class CheckoutLocalService {
           'packageVersion': command.packageVersion,
           'manualEventRefs': command.manualEventRefs,
           'orderSnapshotHash': 'sha256:$orderSnapshotHash',
+          if (lotSnapshot != null)
+            'lotSnapshotHash': 'sha256:${lotSnapshot.payloadSha256}',
           'lines': command.lines.map((line) => line.toSnapshot()).toList(),
         },
         occurredAt: at,
@@ -1355,6 +1396,20 @@ final class CheckoutLocalService {
         },
         occurredAt: at,
       );
+      if (lotSnapshot != null) {
+        _appendOutbox(
+          stream: 'order.command',
+          eventType: 'inventory.lot-sale.requested.v1',
+          aggregateId: command.basket.orderId,
+          aggregateVersion: completedVersion,
+          correlationId: command.commandId,
+          payload: {
+            ...lotSnapshot.payload,
+            'payloadSha256': 'sha256:${lotSnapshot.payloadSha256}',
+          },
+          occurredAt: at,
+        );
+      }
       _appendReceiptFrozenEvent(
         receipt: receipt,
         printJobId: printJobId,

@@ -20,16 +20,17 @@ class InventoryMigrationMySqlIT {
     private final String password = required("GATE4A_MYSQL_PASSWORD");
 
     @Test
-    void migratesThirteenVersionsAndEnforcesTenantLedgerAndPolicyInvariants() throws Exception {
+    void migratesSixteenVersionsAndEnforcesTenantLedgerLotAndPolicyInvariants() throws Exception {
         createFrameworkMenuFixture();
         Flyway flyway = Flyway.configure().dataSource(url, username, password)
             .locations("classpath:db/migration").table("jshpos_flyway_schema_history")
             .baselineOnMigrate(true).baselineVersion("0").cleanDisabled(true).load();
-        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(13);
+        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(16);
         assertThat(flyway.migrate().migrationsExecuted).isZero();
         flyway.validate();
         assertTablesAndPermissions();
         assertTwoTenantInventoryConstraints();
+        assertLotTenantQuantityAndImmutabilityConstraints();
     }
 
     private void createFrameworkMenuFixture() throws SQLException {
@@ -50,7 +51,10 @@ class InventoryMigrationMySqlIT {
     private void assertTablesAndPermissions() throws SQLException {
         Set<String> tables = Set.of("inv_stock_policy_version", "inv_stock_command", "inv_stock_balance",
             "inv_stock_ledger", "inv_stock_anomaly", "inv_audit_event", "inv_event_outbox",
-            "inv_stocktake", "inv_stocktake_line", "inv_stocktake_count", "inv_stocktake_adjustment");
+            "inv_stocktake", "inv_stocktake_line", "inv_stocktake_count", "inv_stocktake_adjustment",
+            "cat_lot_policy_version", "inv_lot_identity", "inv_lot_command", "inv_lot_balance",
+            "inv_lot_ledger", "inv_lot_allocation", "inv_lot_expiry_projection", "inv_lot_audit_event",
+            "inv_lot_outbox", "inv_lot_package_release");
         try (Connection connection = DriverManager.getConnection(url, username, password);
              Statement statement = connection.createStatement()) {
             for (String table : tables) {
@@ -61,6 +65,11 @@ class InventoryMigrationMySqlIT {
             }
             try (var rows = statement.executeQuery(
                 "SELECT COUNT(*) FROM sys_menu WHERE menu_id BETWEEN 9200500 AND 9200505")) {
+                assertThat(rows.next()).isTrue();
+                assertThat(rows.getInt(1)).isEqualTo(6);
+            }
+            try (var rows = statement.executeQuery(
+                "SELECT COUNT(*) FROM sys_menu WHERE menu_id BETWEEN 9200560 AND 9200565")) {
                 assertThat(rows.next()).isTrue();
                 assertThat(rows.getInt(1)).isEqualTo(6);
             }
@@ -77,6 +86,28 @@ class InventoryMigrationMySqlIT {
                 assertThat(rows.next()).isTrue();
                 assertThat(rows.getInt(1)).isZero();
             }
+        }
+    }
+
+    private void assertLotTenantQuantityAndImmutabilityConstraints() throws SQLException {
+        try (Connection connection = DriverManager.getConnection(url, username, password);
+             Statement statement = connection.createStatement()) {
+            statement.executeUpdate("INSERT INTO jsh_config_template(template_id,tenant_id,template_code,template_name,industry,status) VALUES(19001,'TENANT_A','COMMUNITY','Community','COMMUNITY_SUPERMARKET','ACTIVE')");
+            statement.executeUpdate("INSERT INTO jsh_config_template_version(config_version_id,tenant_id,template_id,version_no,schema_version,state,content_json,content_sha256,published_by,published_at) VALUES(19101,'TENANT_A',19001,1,'1.0','PUBLISHED',JSON_OBJECT(),REPEAT('a',64),101,UTC_TIMESTAMP(3))");
+            statement.executeUpdate("INSERT INTO cat_lot_policy_version(tenant_id,policy_version_id,store_id,sku_id,enabled,expiry_basis,shelf_life_days,near_expiry_days,industry,template_version_id,effective_from,content_sha256,state,published_by,published_at) VALUES('TENANT_A','01K2A000000000000000000181',1101,701,1,'EXPLICIT_EXPIRY_DATE',NULL,3,'COMMUNITY_SUPERMARKET',19101,UTC_TIMESTAMP(6),REPEAT('b',64),'PUBLISHED',101,UTC_TIMESTAMP(6))");
+            statement.executeUpdate("INSERT INTO inv_lot_identity(lot_id,tenant_id,store_id,warehouse_id,sku_id,base_unit_id,internal_lot_code,received_date,expiry_date,policy_version_id,near_expiry_days,content_sha256,created_at) VALUES('01K2A000000000000000000182','TENANT_A',1101,'01K2A000000000000000000010',701,301,'LOT-A','2026-08-23','2026-09-23','01K2A000000000000000000181',3,REPEAT('c',64),UTC_TIMESTAMP(3))");
+            statement.executeUpdate("INSERT INTO inv_lot_balance(tenant_id,lot_id,on_hand_quantity,last_ledger_sequence,record_version,updated_at) VALUES('TENANT_A','01K2A000000000000000000182',0,0,0,UTC_TIMESTAMP(3))");
+            assertThatThrownBy(() -> statement.executeUpdate("UPDATE inv_lot_identity SET expiry_date='2026-10-01' WHERE tenant_id='TENANT_A' AND lot_id='01K2A000000000000000000182'"))
+                .isInstanceOf(SQLException.class).hasMessageContaining("immutable");
+            assertThatThrownBy(() -> statement.executeUpdate("INSERT INTO inv_lot_identity(lot_id,tenant_id,store_id,warehouse_id,sku_id,base_unit_id,internal_lot_code,received_date,expiry_date,policy_version_id,near_expiry_days,content_sha256,created_at) VALUES('01K2B000000000000000000182','TENANT_B',2101,'01K2B000000000000000000010',801,401,'LOT-B','2026-08-23','2026-09-23','01K2A000000000000000000181',3,REPEAT('d',64),UTC_TIMESTAMP(3))"))
+                .isInstanceOf(SQLException.class);
+            assertThatThrownBy(() -> statement.executeUpdate("INSERT INTO inv_lot_identity(lot_id,tenant_id,store_id,warehouse_id,sku_id,base_unit_id,internal_lot_code,received_date,expiry_date,policy_version_id,near_expiry_days,content_sha256,created_at) VALUES('01K2A000000000000000000183','TENANT_A',1101,'01K2A000000000000000000010',701,301,'LOT-EXPIRED','2026-08-23','2026-08-22','01K2A000000000000000000181',3,REPEAT('e',64),UTC_TIMESTAMP(3))"))
+                .isInstanceOf(SQLException.class);
+            statement.executeUpdate("INSERT INTO inv_lot_package_release(release_id,tenant_id,store_id,warehouse_id,package_version,previous_version,source_sha256,payload_sha256,payload_bytes,signing_key_id,signature_bytes,record_count,generated_at) VALUES('01K2A000000000000000000184','TENANT_A',1101,'01K2A000000000000000000010',1,0,REPEAT('a',64),REPEAT('b',64),X'7B7D','kms-test',REPEAT(X'01',64),1,UTC_TIMESTAMP(6))");
+            assertThatThrownBy(() -> statement.executeUpdate("UPDATE inv_lot_package_release SET record_count=2 WHERE tenant_id='TENANT_A' AND release_id='01K2A000000000000000000184'"))
+                .isInstanceOf(SQLException.class).hasMessageContaining("immutable");
+            assertThatThrownBy(() -> statement.executeUpdate("INSERT INTO inv_lot_package_release(release_id,tenant_id,store_id,warehouse_id,package_version,previous_version,source_sha256,payload_sha256,payload_bytes,signing_key_id,signature_bytes,record_count,generated_at) VALUES('01K2A000000000000000000185','TENANT_A',1101,'01K2A000000000000000000010',3,1,REPEAT('c',64),REPEAT('d',64),X'7B7D','kms-test',REPEAT(X'02',64),1,UTC_TIMESTAMP(6))"))
+                .isInstanceOf(SQLException.class);
         }
     }
 

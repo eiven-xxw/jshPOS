@@ -30,13 +30,14 @@ class CatalogMigrationMySqlIT {
             .baselineVersion("0")
             .cleanDisabled(true)
             .load();
-        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(9);
+        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(10);
         assertThat(flyway.migrate().migrationsExecuted).isZero();
         flyway.validate();
         assertTablesAndPermissions();
         assertCrossTenantBarcodeUnitAndPriceGuards();
         assertWeightedBarcodeTenantAndAppendOnlyGuards();
         assertShelfLabelTenantSnapshotAndAppendOnlyGuards();
+        assertLotPolicyTenantTemplateAndAppendOnlyGuards();
     }
 
     private void createFrameworkMenuFixture() throws SQLException {
@@ -62,7 +63,8 @@ class CatalogMigrationMySqlIT {
             "cat_sku_unit", "cat_barcode", "cat_import_batch", "cat_import_record", "cat_import_error",
             "cat_catalog_binding", "prc_price_book", "prc_price_item", "dpk_catalog_package", "cat_event_outbox",
             "cat_weighted_barcode_template", "cat_weighted_barcode_history", "lbl_template",
-            "lbl_label_task", "lbl_label_task_item", "lbl_task_event", "lbl_task_exception");
+            "lbl_label_task", "lbl_label_task_item", "lbl_task_event", "lbl_task_exception",
+            "cat_lot_policy_version");
         try (Connection connection = DriverManager.getConnection(url, username, password)) {
             for (String table : tables) {
                 try (var rows = connection.getMetaData().getTables(connection.getCatalog(), null, table, new String[]{"TABLE"})) {
@@ -183,6 +185,24 @@ class CatalogMigrationMySqlIT {
             statement.executeUpdate("INSERT INTO lbl_task_exception(exception_id,tenant_id,task_id,item_id,exception_code,reason,resolution_type,actor_user_id,correlation_id,occurred_at) VALUES(18001,'TENANT_A',15001,16001,'PRINTER_UNAVAILABLE','Synthetic blocked','BLOCKED_EXTERNAL',101,'corr-lbl-mysql-002',CURRENT_TIMESTAMP)");
             assertThatThrownBy(() -> statement.executeUpdate("UPDATE lbl_task_exception SET reason='tampered' WHERE tenant_id='TENANT_A' AND exception_id=18001"))
                 .isInstanceOf(SQLException.class).hasMessageContaining("append-only");
+        }
+    }
+
+    /** 证明批次策略的租户门店、SKU、已发布模板和只追加约束。 */
+    private void assertLotPolicyTenantTemplateAndAppendOnlyGuards() throws SQLException {
+        try (Connection connection = DriverManager.getConnection(url, username, password);
+             Statement statement = connection.createStatement()) {
+            statement.executeUpdate("INSERT INTO jsh_config_template(template_id,tenant_id,template_code,template_name,industry,status) VALUES(19001,'TENANT_A','COMMUNITY','Community','COMMUNITY_SUPERMARKET','ACTIVE'),(19002,'TENANT_B','CONVENIENCE','Convenience','CONVENIENCE','ACTIVE')");
+            statement.executeUpdate("INSERT INTO jsh_config_template_version(config_version_id,tenant_id,template_id,version_no,schema_version,state,content_json,content_sha256,published_by,published_at) VALUES(19101,'TENANT_A',19001,1,'1.0','PUBLISHED',JSON_OBJECT(),REPEAT('a',64),101,UTC_TIMESTAMP(3)),(19102,'TENANT_B',19002,1,'1.0','PUBLISHED',JSON_OBJECT(),REPEAT('b',64),201,UTC_TIMESTAMP(3))");
+            statement.executeUpdate("INSERT INTO cat_lot_policy_version(tenant_id,policy_version_id,store_id,sku_id,enabled,expiry_basis,shelf_life_days,near_expiry_days,industry,template_version_id,effective_from,content_sha256,state,published_by,published_at) VALUES('TENANT_A','01K2A000000000000000000181',1101,701,1,'PRODUCTION_DATE',30,3,'COMMUNITY_SUPERMARKET',19101,UTC_TIMESTAMP(6),REPEAT('c',64),'PUBLISHED',101,UTC_TIMESTAMP(6))");
+            assertThatThrownBy(() -> statement.executeUpdate("UPDATE cat_lot_policy_version SET near_expiry_days=5 WHERE tenant_id='TENANT_A' AND policy_version_id='01K2A000000000000000000181'"))
+                .isInstanceOf(SQLException.class).hasMessageContaining("immutable");
+            assertThatThrownBy(() -> statement.executeUpdate("INSERT INTO cat_lot_policy_version(tenant_id,policy_version_id,store_id,sku_id,enabled,expiry_basis,shelf_life_days,near_expiry_days,industry,template_version_id,effective_from,content_sha256,state,published_by,published_at) VALUES('TENANT_A','01K2A000000000000000000182',2101,701,1,'PRODUCTION_DATE',30,3,'COMMUNITY_SUPERMARKET',19101,UTC_TIMESTAMP(6),REPEAT('d',64),'PUBLISHED',101,UTC_TIMESTAMP(6))"))
+                .isInstanceOf(SQLException.class);
+            assertThatThrownBy(() -> statement.executeUpdate("INSERT INTO cat_lot_policy_version(tenant_id,policy_version_id,store_id,sku_id,enabled,expiry_basis,shelf_life_days,near_expiry_days,industry,template_version_id,effective_from,content_sha256,state,published_by,published_at) VALUES('TENANT_A','01K2A000000000000000000183',1101,801,1,'PRODUCTION_DATE',30,3,'COMMUNITY_SUPERMARKET',19101,UTC_TIMESTAMP(6),REPEAT('e',64),'PUBLISHED',101,UTC_TIMESTAMP(6))"))
+                .isInstanceOf(SQLException.class);
+            assertThatThrownBy(() -> statement.executeUpdate("INSERT INTO cat_lot_policy_version(tenant_id,policy_version_id,store_id,sku_id,enabled,expiry_basis,shelf_life_days,near_expiry_days,industry,template_version_id,effective_from,content_sha256,state,published_by,published_at) VALUES('TENANT_A','01K2A000000000000000000184',1101,701,1,'PRODUCTION_DATE',30,3,'COMMUNITY_SUPERMARKET',19102,UTC_TIMESTAMP(6),REPEAT('f',64),'PUBLISHED',101,UTC_TIMESTAMP(6))"))
+                .isInstanceOf(SQLException.class);
         }
     }
 

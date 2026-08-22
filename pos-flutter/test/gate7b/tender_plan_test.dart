@@ -42,7 +42,7 @@ void main() {
 
       expect(
         database.database.select('PRAGMA user_version').single.values.first,
-        14,
+        15,
       );
       expect(result.status, PosTenderPlanStatus.frozen);
       expect(result.allocations.map((item) => item.amountMinor), [1000, 299]);

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jingshanghui.pos.catalog.infrastructure.persistence.mapper.LotPolicyMapper">
+    <resultMap id="policyView" type="com.jingshanghui.pos.catalog.application.model.LotPolicyModels$PolicyView">
+        <constructor>
+            <arg column="policyVersionId" javaType="java.lang.String"/><arg column="storeId" javaType="java.lang.Long"/>
+            <arg column="skuId" javaType="java.lang.Long"/><arg column="enabled" javaType="boolean"/>
+            <arg column="expiryBasis" javaType="java.lang.String"/><arg column="shelfLifeDays" javaType="java.lang.Integer"/>
+            <arg column="nearExpiryDays" javaType="int"/><arg column="industry" javaType="java.lang.String"/>
+            <arg column="templateVersionId" javaType="java.lang.Long"/><arg column="effectiveFrom" javaType="java.time.Instant"/>
+            <arg column="contentSha256" javaType="java.lang.String"/><arg column="state" javaType="java.lang.String"/>
+        </constructor>
+    </resultMap>
+    <select id="findById" resultMap="policyView">
+        SELECT policy_version_id AS policyVersionId,store_id AS storeId,sku_id AS skuId,enabled,
+          expiry_basis AS expiryBasis,shelf_life_days AS shelfLifeDays,near_expiry_days AS nearExpiryDays,
+          industry,template_version_id AS templateVersionId,effective_from AS effectiveFrom,
+          content_sha256 AS contentSha256,state
+        FROM cat_lot_policy_version
+        WHERE tenant_id=#{tenantId} AND policy_version_id=#{policyVersionId}
+    </select>
+    <select id="findEffective" resultMap="policyView">
+        SELECT policy_version_id AS policyVersionId,store_id AS storeId,sku_id AS skuId,enabled,
+          expiry_basis AS expiryBasis,shelf_life_days AS shelfLifeDays,near_expiry_days AS nearExpiryDays,
+          industry,template_version_id AS templateVersionId,effective_from AS effectiveFrom,
+          content_sha256 AS contentSha256,state
+        FROM cat_lot_policy_version
+        WHERE tenant_id=#{tenantId} AND store_id=#{storeId} AND sku_id=#{skuId}
+          AND state='PUBLISHED' AND effective_from&lt;=#{effectiveAt}
+        ORDER BY effective_from DESC,policy_version_id DESC LIMIT 1
+    </select>
+    <select id="listEffective" resultMap="policyView">
+        SELECT policyVersionId,storeId,skuId,enabled,expiryBasis,shelfLifeDays,nearExpiryDays,industry,
+          templateVersionId,effectiveFrom,contentSha256,state
+        FROM (
+          SELECT policy_version_id AS policyVersionId,store_id AS storeId,sku_id AS skuId,enabled,
+            expiry_basis AS expiryBasis,shelf_life_days AS shelfLifeDays,near_expiry_days AS nearExpiryDays,
+            industry,template_version_id AS templateVersionId,effective_from AS effectiveFrom,
+            content_sha256 AS contentSha256,state,
+            ROW_NUMBER() OVER(PARTITION BY sku_id ORDER BY effective_from DESC,policy_version_id DESC) AS rn
+          FROM cat_lot_policy_version
+          WHERE tenant_id=#{tenantId} AND store_id=#{storeId} AND state='PUBLISHED' AND effective_from&lt;=#{effectiveAt}
+        ) ranked WHERE rn=1 ORDER BY skuId
+    </select>
+    <insert id="insertPublished">
+        INSERT INTO cat_lot_policy_version(tenant_id,policy_version_id,store_id,sku_id,enabled,expiry_basis,
+          shelf_life_days,near_expiry_days,industry,template_version_id,effective_from,content_sha256,state,
+          published_by,published_at)
+        VALUES(#{tenantId},#{policyVersionId},#{storeId},#{skuId},#{enabled},#{expiryBasis},#{shelfLifeDays},
+          #{nearExpiryDays},#{industry},#{templateVersionId},#{effectiveFrom},#{contentSha256},'PUBLISHED',
+          #{publishedBy},#{publishedAt})
+    </insert>
+</mapper>

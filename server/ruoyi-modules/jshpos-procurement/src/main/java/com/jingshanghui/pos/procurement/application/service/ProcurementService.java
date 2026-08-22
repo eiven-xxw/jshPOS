@@ -11,6 +11,12 @@ import com.jingshanghui.pos.foundation.application.service.StoreService;
 import com.jingshanghui.pos.inventory.application.port.AuthoritativeInventoryMovementPort;
 import com.jingshanghui.pos.inventory.application.port.AuthoritativeInventoryMovementPort.OwnedMovement;
 import com.jingshanghui.pos.inventory.application.port.AuthoritativeInventoryMovementPort.OwnedMovementLine;
+import com.jingshanghui.pos.inventory.application.port.AuthoritativeLotMovementPort;
+import com.jingshanghui.pos.inventory.application.model.LotInventoryModels.CommandSource;
+import com.jingshanghui.pos.inventory.application.model.LotInventoryModels.ExplicitCommand;
+import com.jingshanghui.pos.inventory.application.model.LotInventoryModels.ExplicitLine;
+import com.jingshanghui.pos.inventory.application.model.LotInventoryModels.ReceiveCommand;
+import com.jingshanghui.pos.inventory.application.model.LotInventoryModels.ReceiveLine;
 import com.jingshanghui.pos.inventory.domain.InventoryStates.MovementType;
 import com.jingshanghui.pos.order.domain.UlidGenerator;
 import com.jingshanghui.pos.procurement.application.model.ProcurementCommands.ApproveOrder;
@@ -18,6 +24,8 @@ import com.jingshanghui.pos.procurement.application.model.ProcurementCommands.Ap
 import com.jingshanghui.pos.procurement.application.model.ProcurementCommands.ChangeSupplierState;
 import com.jingshanghui.pos.procurement.application.model.ProcurementCommands.CloseOrder;
 import com.jingshanghui.pos.procurement.application.model.ProcurementCommands.ConfirmReceipt;
+import com.jingshanghui.pos.procurement.application.model.ProcurementCommands.ReceiptLotSplit;
+import com.jingshanghui.pos.procurement.application.model.ProcurementCommands.ReturnLotSplit;
 import com.jingshanghui.pos.procurement.application.model.ProcurementCommands.CreateOrder;
 import com.jingshanghui.pos.procurement.application.model.ProcurementCommands.CreateReceipt;
 import com.jingshanghui.pos.procurement.application.model.ProcurementCommands.CreateReturn;
@@ -71,6 +79,7 @@ public class ProcurementService implements ReplenishmentProcurementSnapshotPort,
     private final ScopeAuthorizationService authorizationService;
     private final InventoryCatalogSnapshotPort catalogPort;
     private final AuthoritativeInventoryMovementPort movementPort;
+    private final AuthoritativeLotMovementPort lotMovementPort;
     private final StoreService storeService;
     private final UlidGenerator ulids;
     private final ObjectMapper objectMapper;
@@ -282,6 +291,10 @@ public class ProcurementService implements ReplenishmentProcurementSnapshotPort,
             if (!command.eventId().equals(receipt.sourceEventId())) {
                 throw new ServiceException("PUR-IDEM-003: 相同 receiptId 对应不同确认事件", 409);
             }
+            OrderHead order = requireLockedOrder(principal.tenantId(), receipt.orderId());
+            LocalDate businessDate = storeService.businessDate(order.storeId(), clock.instant()).businessDate();
+            applyReceiptLots(command, receipt, order,
+                mapper.findReceiptLines(principal.tenantId(), command.receiptId()), businessDate);
             return receiptDetail(command.receiptId());
         }
         if (!"DRAFT".equals(receipt.status())) throw new ServiceException("PUR-RECEIPT-007: 收货单不可确认", 409);
@@ -289,7 +302,8 @@ public class ProcurementService implements ReplenishmentProcurementSnapshotPort,
         ProcurementRules.requireReceivable(order.status());
         LocalDateTime at = now();
         List<OwnedMovementLine> movements = new ArrayList<>();
-        for (ReceiptLine receiptLine : mapper.findReceiptLines(principal.tenantId(), command.receiptId())) {
+        List<ReceiptLine> confirmedLines = mapper.findReceiptLines(principal.tenantId(), command.receiptId());
+        for (ReceiptLine receiptLine : confirmedLines) {
             OrderLine line = mapper.lockOrderLine(principal.tenantId(), order.orderId(), receiptLine.orderLineId());
             if (line == null) throw new ServiceException("PUR-RECEIPT-003: 采购单行不存在或不可见", 404);
             ProcurementRules.requireWithinReceiptLimit(line.orderedQuantity(), line.receivedQuantity(),
@@ -311,6 +325,7 @@ public class ProcurementService implements ReplenishmentProcurementSnapshotPort,
         movementPort.applyOwnedMovement(new OwnedMovement(command.eventId(), "PURCHASE_RECEIPT",
             command.receiptId(), order.warehouseId(), order.storeId(), businessDate,
             command.correlationId(), movements));
+        applyReceiptLots(command, receipt, order, confirmedLines, businessDate);
         audit(principal, order.storeId(), "PURCHASE_RECEIPT_CONFIRMED", "PURCHASE_RECEIPT",
             command.receiptId(), command.eventId(), command.correlationId(), "DRAFT", "CONFIRMED",
             "INVENTORY_LEDGER_APPENDED", at);
@@ -318,6 +333,41 @@ public class ProcurementService implements ReplenishmentProcurementSnapshotPort,
             command.correlationId(), Map.of("receiptId", command.receiptId(), "orderId", order.orderId(),
                 "sourceEventId", command.eventId(), "lineCount", movements.size()), at);
         return receiptDetail(command.receiptId());
+    }
+
+    /** 社区超市启用 SKU 必须将收货基础数量完整拆分到批次，与总账同事务守恒。 */
+    private void applyReceiptLots(ConfirmReceipt command, ReceiptHead receipt, OrderHead order,
+                                  List<ReceiptLine> receiptLines, LocalDate businessDate) {
+        Map<String, List<ReceiptLotSplit>> byLine = command.lotSplits().stream()
+            .collect(java.util.stream.Collectors.groupingBy(ReceiptLotSplit::receiptLineId));
+        List<ReceiveLine> lotLines = new ArrayList<>();
+        for (ReceiptLine line : receiptLines) {
+            boolean required = lotMovementPort.requiresLotTracking(order.storeId(), line.skuId(), businessDate);
+            List<ReceiptLotSplit> splits = byLine.remove(line.receiptLineId());
+            if (!required) {
+                if (splits != null && !splits.isEmpty()) {
+                    throw new ServiceException("PUR-LOT-001: 未启用批次的商品禁止提交批次拆分", 409);
+                }
+                continue;
+            }
+            if (splits == null || splits.isEmpty()) {
+                throw new ServiceException("PUR-LOT-002: 已启用批次的收货行缺少批次拆分", 409);
+            }
+            BigDecimal total = splits.stream().map(ReceiptLotSplit::baseQuantity)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            if (total.compareTo(line.baseQuantity()) != 0) {
+                throw new ServiceException("PUR-LOT-003: 批次拆分与收货基础数量不守恒", 409);
+            }
+            splits.forEach(split -> lotLines.add(new ReceiveLine(split.receiptLineId(), line.skuId(),
+                line.baseUnitId(), split.baseQuantity(), split.supplierLotCode(), split.internalLotCode(),
+                split.productionDate(), split.receivedDate(), split.explicitExpiryDate())));
+        }
+        if (!byLine.isEmpty()) throw new ServiceException("PUR-LOT-004: 批次拆分引用了未知收货行", 409);
+        if (!lotLines.isEmpty()) {
+            lotMovementPort.receive(new ReceiveCommand(new CommandSource(command.eventId(), "PURCHASE_RECEIPT",
+                receipt.receiptId(), order.warehouseId(), order.storeId(), businessDate,
+                command.correlationId()), lotLines));
+        }
     }
 
     /** 创建原收货退货草稿，不改变累计退货和库存。 */
@@ -389,6 +439,15 @@ public class ProcurementService implements ReplenishmentProcurementSnapshotPort,
             if (!command.eventId().equals(value.sourceEventId())) {
                 throw new ServiceException("PUR-IDEM-004: 相同 purchaseReturnId 对应不同审批事件", 409);
             }
+            ReceiptHead receipt = mapper.lockReceipt(principal.tenantId(), value.receiptId());
+            if (receipt == null) throw new ServiceException("PUR-RETURN-002: 原收货不存在或不可见", 404);
+            authorizationService.requireStoreAccess(receipt.storeId());
+            List<OwnedMovementLine> replayMovements = mapper.findReturnLines(principal.tenantId(),
+                    command.purchaseReturnId()).stream()
+                .map(input -> new OwnedMovementLine(input.returnLineId(), input.skuId(), input.baseUnitId(),
+                    input.baseQuantity(), MovementType.PURCHASE_RETURN_OUT)).toList();
+            LocalDate businessDate = storeService.businessDate(receipt.storeId(), clock.instant()).businessDate();
+            applyReturnLots(command, receipt, replayMovements, businessDate);
             return value;
         }
         if (!"PENDING_APPROVAL".equals(value.status())) {
@@ -424,6 +483,7 @@ public class ProcurementService implements ReplenishmentProcurementSnapshotPort,
         movementPort.applyOwnedMovement(new OwnedMovement(command.eventId(), "PURCHASE_RETURN",
             command.purchaseReturnId(), receipt.warehouseId(), receipt.storeId(), businessDate,
             command.correlationId(), movements));
+        applyReturnLots(command, receipt, movements, businessDate);
         audit(principal, receipt.storeId(), "PURCHASE_RETURN_POSTED", "PURCHASE_RETURN",
             command.purchaseReturnId(), command.eventId(), command.correlationId(), "PENDING_APPROVAL", "POSTED",
             "INVENTORY_LEDGER_APPENDED", at);
@@ -432,6 +492,41 @@ public class ProcurementService implements ReplenishmentProcurementSnapshotPort,
                 "receiptId", receipt.receiptId(), "sourceEventId", command.eventId(),
                 "lineCount", movements.size()), at);
         return mapper.findReturn(principal.tenantId(), command.purchaseReturnId());
+    }
+
+    /** 已启用批次商品的采购退货必须完整指定原仓批次，且与总账退货行逐行守恒。 */
+    private void applyReturnLots(ApproveReturn command, ReceiptHead receipt,
+                                 List<OwnedMovementLine> movements, LocalDate businessDate) {
+        Map<String, List<ReturnLotSplit>> byLine = command.lotSplits().stream()
+            .collect(java.util.stream.Collectors.groupingBy(ReturnLotSplit::returnLineId));
+        List<ExplicitLine> lotLines = new ArrayList<>();
+        for (OwnedMovementLine movement : movements) {
+            boolean required = lotMovementPort.requiresLotTracking(receipt.storeId(), movement.skuId(), businessDate);
+            List<ReturnLotSplit> splits = byLine.remove(movement.sourceLineId());
+            if (!required) {
+                if (splits != null && !splits.isEmpty()) {
+                    throw new ServiceException("PUR-LOT-005: 未启用批次的采购退货禁止提交批次拆分", 409);
+                }
+                continue;
+            }
+            if (splits == null || splits.isEmpty()) {
+                throw new ServiceException("PUR-LOT-006: 已启用批次的采购退货缺少批次拆分", 409);
+            }
+            BigDecimal total = splits.stream().map(ReturnLotSplit::baseQuantity)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            if (total.compareTo(movement.quantity()) != 0) {
+                throw new ServiceException("PUR-LOT-007: 退货批次拆分与仓库总账数量不守恒", 409);
+            }
+            splits.forEach(split -> lotLines.add(new ExplicitLine(split.returnLineId(), split.lotId(),
+                movement.skuId(), movement.baseUnitId(), split.baseQuantity(),
+                MovementType.PURCHASE_RETURN_OUT.name())));
+        }
+        if (!byLine.isEmpty()) throw new ServiceException("PUR-LOT-008: 批次拆分引用了未知采购退货行", 409);
+        if (!lotLines.isEmpty()) {
+            lotMovementPort.applyExplicit(new ExplicitCommand(new CommandSource(command.eventId(),
+                "PURCHASE_RETURN", command.purchaseReturnId(), receipt.warehouseId(), receipt.storeId(),
+                businessDate, command.correlationId()), "MIXED", lotLines));
+        }
     }
 
     @Transactional(readOnly = true)
@@ -562,6 +657,13 @@ public class ProcurementService implements ReplenishmentProcurementSnapshotPort,
         ProcurementRules.ulid(command.receiptId(), "receiptId");
         ProcurementRules.ulid(command.eventId(), "eventId");
         requireCorrelation(command.correlationId());
+        if (command.lotSplits().size() > 1000) {
+            throw new ServiceException("PUR-LOT-009: 收货批次拆分超过1000项", 409);
+        }
+        command.lotSplits().forEach(split -> {
+            ProcurementRules.ulid(split.receiptLineId(), "receiptLineId");
+            ProcurementRules.quantity(split.baseQuantity(), "lotBaseQuantity");
+        });
     }
 
     private void validateReturnDraft(CreateReturn command) {
@@ -580,6 +682,14 @@ public class ProcurementService implements ReplenishmentProcurementSnapshotPort,
         ProcurementRules.ulid(command.purchaseReturnId(), "purchaseReturnId");
         ProcurementRules.ulid(command.eventId(), "eventId");
         requireCorrelation(command.correlationId());
+        if (command.lotSplits().size() > 1000) {
+            throw new ServiceException("PUR-LOT-010: 退货批次拆分超过1000项", 409);
+        }
+        command.lotSplits().forEach(split -> {
+            ProcurementRules.ulid(split.returnLineId(), "returnLineId");
+            ProcurementRules.ulid(split.lotId(), "lotId");
+            ProcurementRules.quantity(split.baseQuantity(), "lotBaseQuantity");
+        });
     }
 
     private String hashOrder(CreateOrder command) {

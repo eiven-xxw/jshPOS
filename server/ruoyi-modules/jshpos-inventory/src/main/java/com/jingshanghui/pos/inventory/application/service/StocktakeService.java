@@ -12,6 +12,7 @@ import com.jingshanghui.pos.inventory.application.model.InventoryViews.ApplyResu
 import com.jingshanghui.pos.inventory.application.model.InventoryViews.BalanceView;
 import com.jingshanghui.pos.inventory.application.model.InventoryViews.PolicyView;
 import com.jingshanghui.pos.inventory.application.model.StocktakeCommands.Approve;
+import com.jingshanghui.pos.inventory.application.model.StocktakeCommands.LotAdjustment;
 import com.jingshanghui.pos.inventory.application.model.StocktakeCommands.Create;
 import com.jingshanghui.pos.inventory.application.model.StocktakeCommands.RecordCount;
 import com.jingshanghui.pos.inventory.application.model.StocktakeCommands.Review;
@@ -22,6 +23,10 @@ import com.jingshanghui.pos.inventory.application.model.StocktakeViews.Line;
 import com.jingshanghui.pos.inventory.application.port.AuthoritativeInventoryMovementPort;
 import com.jingshanghui.pos.inventory.application.port.AuthoritativeInventoryMovementPort.OwnedMovement;
 import com.jingshanghui.pos.inventory.application.port.AuthoritativeInventoryMovementPort.OwnedMovementLine;
+import com.jingshanghui.pos.inventory.application.port.AuthoritativeLotMovementPort;
+import com.jingshanghui.pos.inventory.application.model.LotInventoryModels.CommandSource;
+import com.jingshanghui.pos.inventory.application.model.LotInventoryModels.ExplicitCommand;
+import com.jingshanghui.pos.inventory.application.model.LotInventoryModels.ExplicitLine;
 import com.jingshanghui.pos.inventory.domain.InventoryHash;
 import com.jingshanghui.pos.inventory.domain.InventoryRules;
 import com.jingshanghui.pos.inventory.domain.InventoryStates.MovementType;
@@ -70,6 +75,7 @@ public class StocktakeService {
     private final ScopeAuthorizationService authorizationService;
     private final InventoryCatalogSnapshotPort catalogPort;
     private final AuthoritativeInventoryMovementPort movementPort;
+    private final AuthoritativeLotMovementPort lotMovementPort;
     private final StoreService storeService;
     private final UlidGenerator ulids;
     private final ObjectMapper objectMapper;
@@ -239,6 +245,7 @@ public class StocktakeService {
             result = movementPort.applyOwnedMovement(new OwnedMovement(command.eventId(), "STOCKTAKE",
                 command.stocktakeId(), head.warehouseId(), head.storeId(), businessDate,
                 command.correlationId(), movements));
+            applyLotAdjustments(command, head, lines, movements, businessDate);
             for (OwnedMovementLine movement : movements) {
                 Line line = lines.stream().filter(value -> value.lineId().equals(movement.sourceLineId())).findFirst()
                     .orElseThrow();
@@ -252,6 +259,41 @@ public class StocktakeService {
             command.correlationId(), "REVIEWED", "POSTED", movements.isEmpty() ? "ZERO_VARIANCE" : "LEDGER_APPENDED", at);
         writePostedEvent(principal.tenantId(), head, command, movements.size(), result, at);
         return detail(command.stocktakeId());
+    }
+
+    /** 对启用批次的盘盈盘亏逐总账行校验拆分，支持同一 SKU 差异跨多个批次。 */
+    private void applyLotAdjustments(Approve command, Head head, List<Line> lines,
+                                     List<OwnedMovementLine> movements, LocalDate businessDate) {
+        Map<String, List<LotAdjustment>> byLine = command.lotAdjustments().stream()
+            .collect(java.util.stream.Collectors.groupingBy(LotAdjustment::stocktakeLineId));
+        List<ExplicitLine> explicitLines = new ArrayList<>();
+        for (OwnedMovementLine movement : movements) {
+            boolean required = lotMovementPort.requiresLotTracking(head.storeId(), movement.skuId(), businessDate);
+            List<LotAdjustment> splits = byLine.remove(movement.sourceLineId());
+            if (!required) {
+                if (splits != null && !splits.isEmpty()) {
+                    throw new ServiceException("INV-STK-LOT-001: 未启用批次的盘点行禁止提交批次拆分", 409);
+                }
+                continue;
+            }
+            if (splits == null || splits.isEmpty()) {
+                throw new ServiceException("INV-STK-LOT-002: 已启用批次的盘点差异缺少批次拆分", 409);
+            }
+            BigDecimal total = splits.stream().map(LotAdjustment::baseQuantity)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            if (total.compareTo(movement.quantity()) != 0
+                || splits.stream().anyMatch(split -> !movement.movementType().name().equals(split.movementType()))) {
+                throw new ServiceException("INV-STK-LOT-003: 批次拆分数量或方向与冻结盘点差异不一致", 409);
+            }
+            splits.forEach(split -> explicitLines.add(new ExplicitLine(split.stocktakeLineId(), split.lotId(),
+                movement.skuId(), movement.baseUnitId(), split.baseQuantity(), split.movementType())));
+        }
+        if (!byLine.isEmpty()) throw new ServiceException("INV-STK-LOT-004: 批次拆分引用了未知盘点差异行", 409);
+        if (!explicitLines.isEmpty()) {
+            lotMovementPort.applyExplicit(new ExplicitCommand(new CommandSource(command.eventId(), "STOCKTAKE",
+                command.stocktakeId(), head.warehouseId(), head.storeId(), businessDate,
+                command.correlationId()), "MIXED", explicitLines));
+        }
     }
 
     @Transactional(readOnly = true)

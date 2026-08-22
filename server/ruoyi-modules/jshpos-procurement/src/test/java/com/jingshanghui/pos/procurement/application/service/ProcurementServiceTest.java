@@ -10,6 +10,7 @@ import com.jingshanghui.pos.foundation.application.security.ScopeAuthorizationSe
 import com.jingshanghui.pos.foundation.application.service.StoreService;
 import com.jingshanghui.pos.inventory.application.model.InventoryViews.ApplyResult;
 import com.jingshanghui.pos.inventory.application.port.AuthoritativeInventoryMovementPort;
+import com.jingshanghui.pos.inventory.application.port.AuthoritativeLotMovementPort;
 import com.jingshanghui.pos.inventory.application.port.AuthoritativeInventoryMovementPort.OwnedMovement;
 import com.jingshanghui.pos.inventory.domain.InventoryStates.MovementType;
 import com.jingshanghui.pos.order.domain.UlidGenerator;
@@ -55,6 +56,7 @@ class ProcurementServiceTest {
     private final ScopeAuthorizationService authorization = mock(ScopeAuthorizationService.class);
     private final InventoryCatalogSnapshotPort catalog = mock(InventoryCatalogSnapshotPort.class);
     private final AuthoritativeInventoryMovementPort movement = mock(AuthoritativeInventoryMovementPort.class);
+    private final AuthoritativeLotMovementPort lots = mock(AuthoritativeLotMovementPort.class);
     private final StoreService stores = mock(StoreService.class);
     private final Clock clock = Clock.fixed(NOW, ZoneOffset.UTC);
     private ProcurementService service;
@@ -63,7 +65,7 @@ class ProcurementServiceTest {
     void setUp() {
         when(context.requireTenantId()).thenReturn("TENANT_A");
         when(context.requirePrincipal()).thenReturn(new TrustedPrincipal("TENANT_A", 202L, 1L, "operator"));
-        service = new ProcurementService(mapper, context, authorization, catalog, movement, stores,
+        service = new ProcurementService(mapper, context, authorization, catalog, movement, lots, stores,
             new UlidGenerator(clock), new ObjectMapper(), clock);
     }
 
@@ -109,8 +111,12 @@ class ProcurementServiceTest {
         when(stores.businessDate(1101L, NOW)).thenReturn(new BusinessDateView(1101L, "Asia/Shanghai",
             LocalTime.of(6, 0), NOW, LocalDate.of(2026, 8, 17)));
         when(mapper.findReceipt("TENANT_A", RECEIPT)).thenReturn(receipt("CONFIRMED", EVENT, 1));
+        when(lots.requiresLotTracking(1101L, 701L, LocalDate.of(2026, 8, 17))).thenReturn(true);
 
-        service.confirmReceipt(new ConfirmReceipt(RECEIPT, EVENT, "trace-confirm"));
+        service.confirmReceipt(new ConfirmReceipt(RECEIPT, EVENT, "trace-confirm", List.of(
+            new com.jingshanghui.pos.procurement.application.model.ProcurementCommands.ReceiptLotSplit(
+                RECEIPT_LINE, new BigDecimal("24"), "SUP-LOT-A", "LOT-A",
+                LocalDate.of(2026, 8, 1), LocalDate.of(2026, 8, 17), LocalDate.of(2026, 9, 1)))));
 
         ArgumentCaptor<OwnedMovement> captured = ArgumentCaptor.forClass(OwnedMovement.class);
         verify(movement).applyOwnedMovement(captured.capture());
@@ -118,6 +124,7 @@ class ProcurementServiceTest {
         assertThat(captured.getValue().lines().get(0).quantity()).isEqualByComparingTo("24");
         assertThat(captured.getValue().lines().get(0).movementType()).isEqualTo(MovementType.PURCHASE_RECEIPT_IN);
         verify(mapper).updateOrderLineReceived(any());
+        verify(lots).receive(any());
     }
 
     @Test
@@ -134,13 +141,17 @@ class ProcurementServiceTest {
             RETURN, 1, false, false));
         when(stores.businessDate(1101L, NOW)).thenReturn(new BusinessDateView(1101L, "Asia/Shanghai",
             LocalTime.of(6, 0), NOW, LocalDate.of(2026, 8, 17)));
+        when(lots.requiresLotTracking(1101L, 701L, LocalDate.of(2026, 8, 17))).thenReturn(true);
 
-        service.approveReturn(new ApproveReturn(RETURN, EVENT, "trace-return"));
+        service.approveReturn(new ApproveReturn(RETURN, EVENT, "trace-return", List.of(
+            new com.jingshanghui.pos.procurement.application.model.ProcurementCommands.ReturnLotSplit(
+                RETURN_LINE, "01K2A000000000000000000180", new BigDecimal("12")))));
 
         ArgumentCaptor<OwnedMovement> captured = ArgumentCaptor.forClass(OwnedMovement.class);
         verify(movement).applyOwnedMovement(captured.capture());
         assertThat(captured.getValue().lines().get(0).movementType()).isEqualTo(MovementType.PURCHASE_RETURN_OUT);
         assertThat(captured.getValue().lines().get(0).quantity()).isEqualByComparingTo("12");
+        verify(lots).applyExplicit(any());
 
         when(context.requirePrincipal()).thenReturn(new TrustedPrincipal("TENANT_A", 101L, 1L, "requester"));
         when(mapper.lockReturn("TENANT_A", RETURN)).thenReturn(returnHead("PENDING_APPROVAL", null, 1, 101L, null));

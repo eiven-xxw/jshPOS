@@ -68,7 +68,21 @@ public final class ProcurementRequests {
     }
 
     public record Confirm(@Pattern(regexp = ULID) String eventId,
-                          @NotBlank @Size(max = 96) String correlationId) {
+                          @NotBlank @Size(max = 96) String correlationId,
+                          @Size(max = 1000) List<@Valid ReceiptLotSplit> lotSplits) {
+        public Confirm(String eventId, String correlationId) {
+            this(eventId, correlationId, List.of());
+        }
+    }
+
+    public record ReceiptLotSplit(@Pattern(regexp = ULID) String receiptLineId,
+                                  @NotNull @DecimalMin(value = "0", inclusive = false)
+                                  @Digits(integer = 13, fraction = 6) BigDecimal baseQuantity,
+                                  @Size(max = 96) String supplierLotCode,
+                                  @Size(max = 96) String internalLotCode,
+                                  LocalDate productionDate,
+                                  @NotNull LocalDate receivedDate,
+                                  LocalDate explicitExpiryDate) {
     }
 
     public record ReceiptLine(@Pattern(regexp = ULID) String receiptLineId,
@@ -84,8 +98,17 @@ public final class ProcurementRequests {
     }
 
     public record ReturnApprove(@Pattern(regexp = ULID) String eventId,
-                                @NotBlank @Size(max = 96) String correlationId) {
+                                @NotBlank @Size(max = 96) String correlationId,
+                                @Size(max = 1000) List<@Valid ReturnLotSplit> lotSplits) {
+        public ReturnApprove(String eventId, String correlationId) {
+            this(eventId, correlationId, List.of());
+        }
     }
+
+    public record ReturnLotSplit(@Pattern(regexp = ULID) String returnLineId,
+                                 @Pattern(regexp = ULID) String lotId,
+                                 @NotNull @DecimalMin(value = "0", inclusive = false)
+                                 @Digits(integer = 13, fraction = 6) BigDecimal baseQuantity) { }
 
     public record ReturnLine(@Pattern(regexp = ULID) String returnLineId,
                              @Pattern(regexp = ULID) String receiptLineId,

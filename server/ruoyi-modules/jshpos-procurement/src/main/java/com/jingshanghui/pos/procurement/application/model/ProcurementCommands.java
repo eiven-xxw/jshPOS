@@ -44,10 +44,24 @@ public final class ProcurementCommands {
         }
     }
 
-    public record ConfirmReceipt(String receiptId, String eventId, String correlationId) {
+    public record ConfirmReceipt(String receiptId, String eventId, String correlationId,
+                                 List<ReceiptLotSplit> lotSplits) {
+        public ConfirmReceipt {
+            lotSplits = lotSplits == null ? List.of() : List.copyOf(lotSplits);
+        }
+
+        public ConfirmReceipt(String receiptId, String eventId, String correlationId) {
+            this(receiptId, eventId, correlationId, List.of());
+        }
     }
 
     public record ReceiptLine(String receiptLineId, String orderLineId, BigDecimal receivedQuantity) {
+    }
+
+    /** 收货确认时提交的基础单位批次拆分，不含租户、过期状态或成本。 */
+    public record ReceiptLotSplit(String receiptLineId, BigDecimal baseQuantity, String supplierLotCode,
+                                  String internalLotCode, LocalDate productionDate, LocalDate receivedDate,
+                                  LocalDate explicitExpiryDate) {
     }
 
     public record CreateReturn(String purchaseReturnId, String receiptId,
@@ -60,8 +74,19 @@ public final class ProcurementCommands {
     public record SubmitReturn(String purchaseReturnId, String correlationId) {
     }
 
-    public record ApproveReturn(String purchaseReturnId, String eventId, String correlationId) {
+    public record ApproveReturn(String purchaseReturnId, String eventId, String correlationId,
+                                List<ReturnLotSplit> lotSplits) {
+        public ApproveReturn {
+            lotSplits = lotSplits == null ? List.of() : List.copyOf(lotSplits);
+        }
+
+        public ApproveReturn(String purchaseReturnId, String eventId, String correlationId) {
+            this(purchaseReturnId, eventId, correlationId, List.of());
+        }
     }
+
+    /** 采购退货的基础单位批次拆分；批次必须来自可信租户当前仓库。 */
+    public record ReturnLotSplit(String returnLineId, String lotId, BigDecimal baseQuantity) { }
 
     public record ReturnLine(String returnLineId, String receiptLineId, BigDecimal returnQuantity) {
     }

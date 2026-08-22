@@ -1,33 +1,113 @@
 {
-  "$schema":"https://json-schema.org/draft/2020-12/schema",
-  "$id":"https://jingshanghui.example/contracts/lot-expiry-events-v1.schema.json",
-  "title":"批次效期事件 v1",
-  "type":"object",
-  "additionalProperties":false,
-  "required":["eventId","eventType","schemaVersion","aggregateId","occurredAt","correlationId","payload"],
-  "properties":{
-    "eventId":{"type":"string","pattern":"^[0-9A-HJKMNP-TV-Z]{26}$"},
-    "eventType":{"enum":["catalog.lot-policy.published.v1","inventory.lot.received.v1","inventory.lot.allocated.v1","inventory.lot.returned.v1","inventory.lot.expiry-changed.v1","inventory.lot.rebuilt.v1"]},
-    "schemaVersion":{"const":1},
-    "aggregateId":{"type":"string","pattern":"^[0-9A-HJKMNP-TV-Z]{26}$"},
-    "occurredAt":{"type":"string","format":"date-time"},
-    "correlationId":{"type":"string","minLength":1,"maxLength":64},
-    "payload":{
-      "type":"object",
-      "additionalProperties":false,
-      "required":["storeId","warehouseId","skuId","policyVersionId","quantityDecimal","contentSha256"],
-      "properties":{
-        "storeId":{"type":"integer","minimum":1},
-        "warehouseId":{"type":"string","pattern":"^[0-9A-HJKMNP-TV-Z]{26}$"},
-        "skuId":{"type":"integer","minimum":1},
-        "lotId":{"type":["string","null"],"pattern":"^[0-9A-HJKMNP-TV-Z]{26}$"},
-        "policyVersionId":{"type":"string","pattern":"^[0-9A-HJKMNP-TV-Z]{26}$"},
-        "quantityDecimal":{"type":"string","pattern":"^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,6})?$"},
-        "expiryDate":{"type":["string","null"],"format":"date"},
-        "status":{"type":["string","null"],"enum":["AVAILABLE","NEAR_EXPIRY","EXPIRED","DEPLETED","BLOCKED",null]},
-        "contentSha256":{"type":"string","pattern":"^[a-f0-9]{64}$"}
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jingshanghui.example/contracts/lot-expiry-events-v1.schema.json",
+  "title": "批次效期事件 v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["eventId", "eventType", "schemaVersion", "aggregateId", "aggregateVersion", "occurredAt", "correlationId", "payloadSha256", "payload"],
+  "properties": {
+    "eventId": {"oneOf": [{"$ref": "#/$defs/ulid"}, {"$ref": "#/$defs/platformId"}]},
+    "eventType": {"enum": ["catalog.lot-policy.published.v1", "inventory.lot.received.v1", "inventory.lot.allocated.v1", "inventory.lot.returned.v1", "inventory.lot.moved.v1", "inventory.lot.transfer-received.v1", "inventory.lot.rebuilt.v1", "inventory.lot.package-published.v1"]},
+    "schemaVersion": {"const": 1},
+    "aggregateId": {"oneOf": [{"$ref": "#/$defs/ulid"}, {"$ref": "#/$defs/platformId"}]},
+    "aggregateVersion": {"type": "integer", "minimum": 1},
+    "occurredAt": {"type": "string", "format": "date-time"},
+    "correlationId": {"type": "string", "minLength": 1, "maxLength": 96},
+    "payloadSha256": {"$ref": "#/$defs/sha256"},
+    "payload": {"type": "object"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"eventType": {"const": "catalog.lot-policy.published.v1"}}},
+      "then": {"properties": {"payload": {"$ref": "#/$defs/policyPayload"}}}
+    },
+    {
+      "if": {"properties": {"eventType": {"enum": ["inventory.lot.received.v1", "inventory.lot.allocated.v1", "inventory.lot.returned.v1", "inventory.lot.moved.v1", "inventory.lot.transfer-received.v1"]}}},
+      "then": {"properties": {"payload": {"$ref": "#/$defs/movementPayload"}}}
+    },
+    {
+      "if": {"properties": {"eventType": {"const": "inventory.lot.rebuilt.v1"}}},
+      "then": {"properties": {"payload": {"$ref": "#/$defs/rebuildPayload"}}}
+    },
+    {
+      "if": {"properties": {"eventType": {"const": "inventory.lot.package-published.v1"}}},
+      "then": {"properties": {"payload": {"$ref": "#/$defs/packagePayload"}}}
+    }
+  ],
+  "$defs": {
+    "ulid": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "platformId": {"oneOf": [{"type": "integer", "minimum": 1}, {"type": "string", "pattern": "^[1-9][0-9]{0,18}$"}]},
+    "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "quantity": {"type": "number", "exclusiveMinimum": 0, "multipleOf": 0.000001},
+    "policyPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["policyVersionId", "storeId", "skuId", "enabled", "industry", "contentSha256", "correlationId"],
+      "properties": {
+        "policyVersionId": {"$ref": "#/$defs/ulid"},
+        "storeId": {"type": "integer", "minimum": 1},
+        "skuId": {"type": "integer", "minimum": 1},
+        "enabled": {"type": "boolean"},
+        "industry": {"enum": ["COMMUNITY_SUPERMARKET", "CONVENIENCE", "SNACK_DISCOUNT"]},
+        "contentSha256": {"$ref": "#/$defs/sha256"},
+        "correlationId": {"type": "string", "minLength": 1, "maxLength": 96}
+      }
+    },
+    "allocation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["allocationId", "sourceId", "sourceLineId", "lotId", "skuId", "quantity", "allocationType", "policyVersionId", "expiryDate"],
+      "properties": {
+        "allocationId": {"$ref": "#/$defs/ulid"},
+        "sourceId": {"$ref": "#/$defs/ulid"},
+        "sourceLineId": {"$ref": "#/$defs/ulid"},
+        "lotId": {"$ref": "#/$defs/ulid"},
+        "skuId": {"type": "integer", "minimum": 1},
+        "quantity": {"$ref": "#/$defs/quantity"},
+        "allocationType": {"enum": ["SALE", "RETURN", "EXPLICIT"]},
+        "policyVersionId": {"$ref": "#/$defs/ulid"},
+        "expiryDate": {"type": "string", "format": "date"}
+      }
+    },
+    "movementPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sourceEventId", "sourceType", "sourceId", "warehouseId", "businessDate", "allocations"],
+      "properties": {
+        "sourceEventId": {"$ref": "#/$defs/ulid"},
+        "sourceType": {"type": "string", "minLength": 1, "maxLength": 32},
+        "sourceId": {"$ref": "#/$defs/ulid"},
+        "warehouseId": {"$ref": "#/$defs/ulid"},
+        "businessDate": {"type": "string", "format": "date"},
+        "allocations": {"type": "array", "minItems": 1, "maxItems": 500, "items": {"$ref": "#/$defs/allocation"}}
+      }
+    },
+    "rebuildPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["commandId", "warehouseId", "skuId", "businessDate", "lotCount", "changed"],
+      "properties": {
+        "commandId": {"$ref": "#/$defs/ulid"},
+        "warehouseId": {"$ref": "#/$defs/ulid"},
+        "skuId": {"type": "integer", "minimum": 1},
+        "businessDate": {"type": "string", "format": "date"},
+        "lotCount": {"type": "integer", "minimum": 1, "maximum": 500},
+        "changed": {"type": "boolean"}
+      }
+    },
+    "packagePayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["releaseId", "storeId", "warehouseId", "packageVersion", "previousVersion", "payloadSha256", "recordCount"],
+      "properties": {
+        "releaseId": {"$ref": "#/$defs/ulid"},
+        "storeId": {"type": "integer", "minimum": 1},
+        "warehouseId": {"$ref": "#/$defs/ulid"},
+        "packageVersion": {"type": "integer", "minimum": 1},
+        "previousVersion": {"type": "integer", "minimum": 0},
+        "payloadSha256": {"$ref": "#/$defs/sha256"},
+        "recordCount": {"type": "integer", "minimum": 1, "maximum": 100000}
       }
     }
   }
 }
-

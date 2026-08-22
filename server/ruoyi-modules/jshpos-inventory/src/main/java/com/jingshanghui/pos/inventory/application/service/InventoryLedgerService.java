@@ -11,6 +11,12 @@ import com.jingshanghui.pos.inventory.application.model.InventoryCommands.ApplyS
 import com.jingshanghui.pos.inventory.application.model.InventoryCommands.PublishPolicy;
 import com.jingshanghui.pos.inventory.application.model.InventoryCommands.RebuildBalance;
 import com.jingshanghui.pos.inventory.application.port.AuthoritativeInventoryMovementPort;
+import com.jingshanghui.pos.inventory.application.port.AuthoritativeLotMovementPort;
+import com.jingshanghui.pos.inventory.application.model.LotInventoryModels.CommandSource;
+import com.jingshanghui.pos.inventory.application.model.LotInventoryModels.ReturnCommand;
+import com.jingshanghui.pos.inventory.application.model.LotInventoryModels.ReturnLine;
+import com.jingshanghui.pos.inventory.application.model.LotInventoryModels.SaleCommand;
+import com.jingshanghui.pos.inventory.application.model.LotInventoryModels.SaleLine;
 import com.jingshanghui.pos.inventory.application.port.AuthoritativeInventoryMovementPort.OwnedMovement;
 import com.jingshanghui.pos.inventory.application.port.AuthoritativeCostPostingPort;
 import com.jingshanghui.pos.inventory.application.port.AuthoritativeCostPostingPort.PostedInventoryLedger;
@@ -77,6 +83,7 @@ public class InventoryLedgerService implements AuthoritativeInventoryMovementPor
     private final InventoryOrderSnapshotPort orderSnapshotPort;
     private final InventoryRefundSnapshotPort refundSnapshotPort;
     private final AuthoritativeCostPostingPort costPostingPort;
+    private final AuthoritativeLotMovementPort lotMovementPort;
     private final UlidGenerator ulids;
     private final Clock clock;
     private final ObjectMapper objectMapper;
@@ -89,9 +96,19 @@ public class InventoryLedgerService implements AuthoritativeInventoryMovementPor
         InventoryRules.requireSourceState("ORDER", order.status(), order.paymentStatus());
         List<MovementLine> lines = order.lines().stream().map(line -> new MovementLine(line.orderLineId(),
             line.skuId(), line.unitId(), line.quantity(), MovementType.SALE_OUT)).toList();
-        return apply(new SourceApply(command.eventId(), "ORDER", order.orderId(), command.warehouseId(),
+        ApplyResult result = apply(new SourceApply(command.eventId(), "ORDER", order.orderId(), command.warehouseId(),
             command.correlationId(), order.storeId(), order.businessDate(), MovementType.SALE_OUT,
             lines, hashOrder(command, order)));
+        List<SaleLine> tracked = order.lines().stream()
+            .filter(line -> lotMovementPort.requiresLotTracking(order.storeId(), line.skuId(), order.businessDate()))
+            .map(line -> new SaleLine(line.orderLineId(), line.skuId(), line.unitId(), line.quantity()))
+            .toList();
+        if (!tracked.isEmpty()) {
+            lotMovementPort.allocateSale(new SaleCommand(new CommandSource(command.eventId(), "ORDER",
+                order.orderId(), command.warehouseId(), order.storeId(), order.businessDate(),
+                command.correlationId()), tracked));
+        }
+        return result;
     }
 
     /** 从权威成功原单退款快照生成 SALE_RETURN_IN，退货行必须与原订单行交叉一致。 */
@@ -117,9 +134,19 @@ public class InventoryLedgerService implements AuthoritativeInventoryMovementPor
         });
         List<MovementLine> lines = returned.stream().map(line -> new MovementLine(line.orderLineId(),
             line.skuId(), line.unitId(), line.quantity(), MovementType.SALE_RETURN_IN)).toList();
-        return apply(new SourceApply(command.eventId(), "REFUND", refund.refundId(), command.warehouseId(),
+        ApplyResult result = apply(new SourceApply(command.eventId(), "REFUND", refund.refundId(), command.warehouseId(),
             command.correlationId(), refund.storeId(), order.businessDate(), MovementType.SALE_RETURN_IN,
             lines, hashReturn(command, refund, returned)));
+        List<ReturnLine> tracked = returned.stream()
+            .filter(line -> lotMovementPort.requiresLotTracking(order.storeId(), line.skuId(), order.businessDate()))
+            .map(line -> new ReturnLine(line.orderLineId(), line.orderLineId(), line.skuId(), line.unitId(),
+                line.quantity())).toList();
+        if (!tracked.isEmpty()) {
+            lotMovementPort.returnOriginal(new ReturnCommand(new CommandSource(command.eventId(), "REFUND",
+                refund.refundId(), command.warehouseId(), refund.storeId(), order.businessDate(),
+                command.correlationId()), order.orderId(), tracked));
+        }
+        return result;
     }
 
     /**
@@ -145,9 +172,23 @@ public class InventoryLedgerService implements AuthoritativeInventoryMovementPor
             return new MovementLine(line.sourceLineId(), line.skuId(), line.baseUnitId(),
                 InventoryRules.positive(line.quantity(), "quantity"), line.movementType());
         }).toList();
-        return apply(new SourceApply(command.eventId(), command.sourceType(), command.sourceId(),
+        ApplyResult result = apply(new SourceApply(command.eventId(), command.sourceType(), command.sourceId(),
             command.warehouseId(), command.correlationId(), command.storeId(), command.businessDate(),
             null, lines, hashOwned(command, lines)));
+        if ("REFUND".equals(command.sourceType()) && command.originalSourceId() != null) {
+            InventoryRules.requireUlid(command.originalSourceId(), "originalSourceId");
+            List<ReturnLine> tracked = lines.stream()
+                .filter(line -> lotMovementPort.requiresLotTracking(command.storeId(), line.skuId(),
+                    command.businessDate()))
+                .map(line -> new ReturnLine(line.sourceLineId(), line.sourceLineId(), line.skuId(),
+                    line.baseUnitId(), line.quantity())).toList();
+            if (!tracked.isEmpty()) {
+                lotMovementPort.returnOriginal(new ReturnCommand(new CommandSource(command.eventId(),
+                    command.sourceType(), command.sourceId(), command.warehouseId(), command.storeId(),
+                    command.businessDate(), command.correlationId()), command.originalSourceId(), tracked));
+            }
+        }
+        return result;
     }
 
     /** 期初库存只能追加 OPENING_IN；端口不接受成本和 tenant_id，防止客户端构造账本事实。 */
@@ -411,7 +452,8 @@ public class InventoryLedgerService implements AuthoritativeInventoryMovementPor
 
     private String hashOwned(OwnedMovement command, List<MovementLine> lines) {
         List<Object> values = new ArrayList<>(List.of(command.eventId(), command.sourceType(), command.sourceId(),
-            command.warehouseId(), command.storeId(), command.businessDate()));
+            command.warehouseId(), command.storeId(), command.businessDate(),
+            command.originalSourceId() == null ? "" : command.originalSourceId()));
         lines.stream().sorted(Comparator.comparing(MovementLine::sourceLineId)).forEach(line -> {
             values.add(line.sourceLineId()); values.add(line.skuId()); values.add(line.baseUnitId());
             values.add(line.quantity().toPlainString()); values.add(line.movementType().name());
