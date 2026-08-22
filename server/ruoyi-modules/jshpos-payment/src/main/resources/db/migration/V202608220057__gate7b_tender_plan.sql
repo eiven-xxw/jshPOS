@@ -103,6 +103,10 @@ CREATE TABLE pay_tender_history (
   CONSTRAINT ck_pay_tender_history_hash CHECK (payload_sha256 REGEXP '^[a-f0-9]{64}$')
 ) ENGINE=InnoDB COMMENT='组合支付状态只追加历史';
 
+-- 原唯一索引同时被既有订单外键使用；先补独立非唯一索引，再切换为兼容组合支付的条件唯一约束。
+ALTER TABLE pay_payment_intent
+  ADD KEY idx_pay_intent_order_fk (tenant_id,order_id);
+
 ALTER TABLE pay_payment_intent
   DROP INDEX uk_pay_intent_order,
   ADD COLUMN tender_plan_id CHAR(26) CHARACTER SET ascii COLLATE ascii_bin NULL COMMENT '组合支付计划ULID；旧单支付为空' AFTER order_id,

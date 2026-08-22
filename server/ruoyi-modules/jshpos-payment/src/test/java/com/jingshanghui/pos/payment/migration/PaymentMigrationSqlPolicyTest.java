@@ -41,7 +41,8 @@ class PaymentMigrationSqlPolicyTest {
             "payment:tender:create", "payment:tender:read", "payment:tender:collect",
             "payment:tender:cancel", "payment:tender:recover");
         assertThat(sql).contains("foreign key (tenant_id,order_id)",
-            "foreign key (tenant_id,tender_plan_id,tender_allocation_id)");
+            "foreign key (tenant_id,tender_plan_id,tender_allocation_id)",
+            "add key idx_pay_intent_order_fk (tenant_id,order_id)");
         assertThat(sql).doesNotContain("float", " double", "http://", "https://",
             "provider sdk", "callback controller", "sandbox secret");
     }
