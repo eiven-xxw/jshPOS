@@ -12,7 +12,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/** 在干净 MySQL 8.4 执行模块迁移，并验证采购、盘点和补货数据库级不变量。 */
+/** 在干净 MySQL 8.4 执行当前 36 个前向迁移，并验证采购、盘点和补货数据库级不变量。 */
 class ProcurementMigrationMySqlIT {
 
     private final String url = required("GATE4B_MYSQL_JDBC_URL");
@@ -20,14 +20,15 @@ class ProcurementMigrationMySqlIT {
     private final String password = required("GATE4B_MYSQL_PASSWORD");
 
     @Test
-    void migratesSixteenVersionsAndEnforcesGate7cConstraints() throws Exception {
+    void migratesAllThirtySixVersionsAndEnforcesGate7cConstraints() throws Exception {
         createFrameworkMenuFixture();
         Flyway flyway = Flyway.configure().dataSource(url, username, password)
             .locations("classpath:db/migration").table("jshpos_flyway_schema_history")
             .baselineOnMigrate(true).baselineVersion("0").cleanDisabled(true).load();
-        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(16);
+        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(36);
         assertThat(flyway.migrate().migrationsExecuted).isZero();
         flyway.validate();
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("202608220062");
         assertTablesPermissionsAndNoDeferredRuntime();
         assertTenantAndFrozenFactConstraints();
     }
