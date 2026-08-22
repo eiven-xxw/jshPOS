@@ -20,12 +20,12 @@ class OrderMigrationMySqlIT {
     private final String password = required("GATE2_MYSQL_PASSWORD");
 
     @Test
-    void migratesAllElevenVersionsAndEnforcesTenantCashAndAppendOnlyConstraints() throws Exception {
+    void migratesAllEighteenVersionsAndEnforcesTenantCashAndAppendOnlyConstraints() throws Exception {
         createFrameworkMenuFixture();
         Flyway flyway = Flyway.configure().dataSource(url, username, password)
             .locations("classpath:db/migration").table("jshpos_flyway_schema_history")
             .baselineOnMigrate(true).baselineVersion("0").cleanDisabled(true).load();
-        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(11);
+        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(18);
         assertThat(flyway.migrate().migrationsExecuted).isZero();
         flyway.validate();
         assertTablesAndPermissions();

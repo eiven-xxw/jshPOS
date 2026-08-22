@@ -20,7 +20,7 @@ class CatalogMigrationMySqlIT {
     private final String password = required("GATE1_MYSQL_PASSWORD");
 
     @Test
-    void migratesAllFiveVersionsRepeatablyAndEnforcesCatalogTenantConstraints() throws Exception {
+    void migratesAllEightVersionsRepeatablyAndEnforcesCatalogTenantConstraints() throws Exception {
         createFrameworkMenuFixture();
         Flyway flyway = Flyway.configure()
             .dataSource(url, username, password)
@@ -30,7 +30,7 @@ class CatalogMigrationMySqlIT {
             .baselineVersion("0")
             .cleanDisabled(true)
             .load();
-        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(5);
+        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(8);
         assertThat(flyway.migrate().migrationsExecuted).isZero();
         flyway.validate();
         assertTablesAndPermissions();
