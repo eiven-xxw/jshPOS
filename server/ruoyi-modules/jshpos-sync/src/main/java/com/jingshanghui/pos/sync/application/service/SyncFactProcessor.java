@@ -6,6 +6,7 @@ import com.jingshanghui.pos.sync.application.model.SyncModels.BusinessFactRecord
 import com.jingshanghui.pos.sync.application.model.SyncModels.DeviceContext;
 import com.jingshanghui.pos.sync.application.model.SyncModels.EventAck;
 import com.jingshanghui.pos.sync.application.model.SyncModels.EventEnvelope;
+import com.jingshanghui.pos.sync.application.port.PosTenderCommandPort;
 import com.jingshanghui.pos.sync.domain.SyncIdGenerator;
 import com.jingshanghui.pos.sync.domain.SyncRules;
 import com.jingshanghui.pos.sync.infrastructure.persistence.mapper.SyncMapper;
@@ -30,6 +31,7 @@ public class SyncFactProcessor {
     private final ShiftEventDispatcher shiftEvents;
     private final ReceiptEventDispatcher receiptEvents;
     private final OrderDispositionEventDispatcher orderDispositionEvents;
+    private final PosTenderCommandPort tenderCommands;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public EventAck apply(DeviceContext context, EventEnvelope event) {
@@ -61,6 +63,8 @@ public class SyncFactProcessor {
         } else if (event.eventType().equals("order.cancelled.v1")
             || event.eventType().equals("order.reversal-routed.v1")) {
             orderDispositionEvents.apply(context, event);
+        } else if (event.eventType().equals("tender.plan-frozen.v1")) {
+            tenderCommands.apply(context, event);
         }
         mapper.insertBusinessFact(ids.next(), context.tenantId(), event.eventId(), event.stream(), event.eventType(),
             event.aggregateId(), event.aggregateVersion(), serialize(event), event.payloadHash(), now);

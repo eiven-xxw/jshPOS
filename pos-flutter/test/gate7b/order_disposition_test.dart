@@ -281,7 +281,7 @@ void main() {
     });
   });
 
-  test('SQLite V12迁移和摘要历史完整', () {
+  test('SQLite V13迁移和摘要历史完整', () {
     final fixture = _Fixture();
     addTearDown(fixture.close);
     expect(
@@ -290,9 +290,9 @@ void main() {
           .single
           .values
           .first,
-      12,
+      13,
     );
-    expect(fixture.count('local_schema_history'), 12);
+    expect(fixture.count('local_schema_history'), 13);
     expect(
       fixture.scalar(
         "SELECT COUNT(*) FROM sqlite_master WHERE name='local_order_disposition'",

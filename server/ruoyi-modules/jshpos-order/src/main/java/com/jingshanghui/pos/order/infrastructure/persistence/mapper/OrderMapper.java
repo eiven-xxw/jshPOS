@@ -323,14 +323,70 @@ public interface OrderMapper {
                     @Param("reasonCode") String reasonCode, @Param("at") LocalDateTime at);
 
     @Select("""
-        SELECT order_id orderId,local_order_no localOrderNo,store_id storeId,terminal_id terminalId,
-          shift_id shiftId,cashier_user_id cashierUserId,business_date businessDate,status,payment_status paymentStatus,
-          currency,gross_amount_minor grossAmountMinor,receivable_amount_minor receivableAmountMinor,
-          received_amount_minor receivedAmountMinor,snapshot_sha256 snapshotSha256,snapshot_json snapshotJson,
-          record_version recordVersion,occurred_at occurredAt
-        FROM ord_sales_order WHERE tenant_id=#{tenantId} AND order_id=#{orderId}
+        SELECT o.order_id orderId,o.local_order_no localOrderNo,o.store_id storeId,o.terminal_id terminalId,
+          o.shift_id shiftId,o.cashier_user_id cashierUserId,o.business_date businessDate,
+          COALESCE(s.effective_status,o.status) status,
+          COALESCE(s.effective_payment_status,o.payment_status) paymentStatus,
+          o.currency,o.gross_amount_minor grossAmountMinor,o.receivable_amount_minor receivableAmountMinor,
+          COALESCE(s.received_amount_minor,o.received_amount_minor) receivedAmountMinor,
+          o.snapshot_sha256 snapshotSha256,o.snapshot_json snapshotJson,
+          COALESCE(s.order_aggregate_version,o.record_version) recordVersion,o.occurred_at occurredAt
+        FROM ord_sales_order o
+        LEFT JOIN ord_tender_settlement s ON s.tenant_id=o.tenant_id AND s.order_id=o.order_id
+        WHERE o.tenant_id=#{tenantId} AND o.order_id=#{orderId}
         """)
     OrderView findOrder(@Param("tenantId") String tenantId, @Param("orderId") String orderId);
+
+    @Select("""
+        SELECT o.order_id orderId,o.local_order_no localOrderNo,o.store_id storeId,o.terminal_id terminalId,
+          o.shift_id shiftId,o.cashier_user_id cashierUserId,o.business_date businessDate,
+          COALESCE(s.effective_status,o.status) status,
+          COALESCE(s.effective_payment_status,o.payment_status) paymentStatus,
+          o.currency,o.gross_amount_minor grossAmountMinor,o.receivable_amount_minor receivableAmountMinor,
+          COALESCE(s.received_amount_minor,o.received_amount_minor) receivedAmountMinor,
+          o.snapshot_sha256 snapshotSha256,o.snapshot_json snapshotJson,
+          COALESCE(s.order_aggregate_version,o.record_version) recordVersion,o.occurred_at occurredAt
+        FROM ord_sales_order o
+        LEFT JOIN ord_tender_settlement s ON s.tenant_id=o.tenant_id AND s.order_id=o.order_id
+        WHERE o.tenant_id=#{tenantId} AND o.order_id=#{orderId} FOR UPDATE
+        """)
+    OrderView lockOrder(@Param("tenantId") String tenantId, @Param("orderId") String orderId);
+
+    @Select("""
+        SELECT settlement_id settlementId,plan_id planId,order_id orderId,
+          effective_status effectiveStatus,effective_payment_status effectivePaymentStatus,
+          received_amount_minor receivedAmountMinor,currency,
+          order_snapshot_sha256 orderSnapshotSha256,plan_content_sha256 planContentSha256,
+          correlation_id correlationId,order_aggregate_version orderAggregateVersion
+        FROM ord_tender_settlement
+        WHERE tenant_id=#{tenantId} AND order_id=#{orderId}
+        """)
+    TenderSettlementRow findTenderSettlement(@Param("tenantId") String tenantId,
+                                              @Param("orderId") String orderId);
+
+    @Insert("""
+        INSERT INTO ord_tender_settlement(settlement_id,tenant_id,plan_id,order_id,effective_status,
+          effective_payment_status,received_amount_minor,currency,order_snapshot_sha256,
+          plan_content_sha256,correlation_id,order_aggregate_version,occurred_at)
+        VALUES(#{settlementId},#{tenantId},#{planId},#{orderId},'COMPLETED','PAID',#{received},'CNY',
+          #{orderSnapshotHash},#{planContentHash},#{correlationId},#{version},#{at})
+        """)
+    int insertTenderSettlement(@Param("tenantId") String tenantId,
+                               @Param("settlementId") String settlementId,
+                               @Param("planId") String planId, @Param("orderId") String orderId,
+                               @Param("received") long received,
+                               @Param("orderSnapshotHash") String orderSnapshotHash,
+                               @Param("planContentHash") String planContentHash,
+                               @Param("correlationId") String correlationId,
+                               @Param("version") long version, @Param("at") LocalDateTime at);
+
+    /** 原订单快照不更新；组合支付完成通过该只追加事实派生有效订单状态。 */
+    record TenderSettlementRow(String settlementId, String planId, String orderId,
+                               String effectiveStatus, String effectivePaymentStatus,
+                               long receivedAmountMinor, String currency,
+                               String orderSnapshotSha256, String planContentSha256,
+                               String correlationId, long orderAggregateVersion) {
+    }
 
     /** 查询原订单行的精确成交数量和金额，仅供受控支付只读端口使用。 */
     @Select("""

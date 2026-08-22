@@ -71,4 +71,47 @@ public final class PaymentCommands {
     public record TransitionCase(String commandId, String caseId, String targetStatus,
                                  String reasonCode, String reasonText, Instant occurredAt) {
     }
+
+    /**
+     * 冻结一笔订单的 Provider 无关支付计划；份额在冻结后不可修改。
+     * tenant、班次和业务日必须由服务端读取 Order Owner 快照，不接受客户端声明。
+     */
+    public record CreateTenderPlan(String commandId, String idempotencyKey, String planId, String orderId,
+                                   String orderSnapshotSha256, Long storeId, String terminalId,
+                                   long receivableAmountMinor, String currency,
+                                   List<TenderAllocationInput> allocations, Instant occurredAt) {
+        public CreateTenderPlan {
+            allocations = List.copyOf(allocations);
+        }
+    }
+
+    /**
+     * 支付计划中的冻结份额。
+     *
+     * @param allocationId 份额稳定 ULID
+     * @param sequenceNo 从 1 连续递增的严格收取顺序
+     * @param tenderType Provider 无关份额类型 ELECTRONIC/CASH
+     * @param amountMinor 份额金额，单位分
+     */
+    public record TenderAllocationInput(String allocationId, int sequenceNo, String tenderType,
+                                        long amountMinor) {
+    }
+
+    /**
+     * 收取一个份额；现金实收必须不小于份额金额，电子份额在外部解阻前失败关闭。
+     * commandId 和 idempotencyKey 在 UNKNOWN、超时或重启后必须原样复用。
+     */
+    public record CollectTenderAllocation(String commandId, String idempotencyKey, String planId,
+                                          String allocationId, Long tenderedMinor, Instant occurredAt) {
+    }
+
+    /** 无成功或占额份额时取消原计划；只追加历史，不删除计划或份额。 */
+    public record CancelTenderPlan(String commandId, String idempotencyKey, String planId,
+                                   String reasonCode, Instant occurredAt) {
+    }
+
+    /** 受权检查原计划和原命令；UNKNOWN 只能观察，不创建替代资金命令。 */
+    public record RecoverTenderPlan(String commandId, String idempotencyKey, String planId,
+                                    String reasonCode, Instant occurredAt) {
+    }
 }

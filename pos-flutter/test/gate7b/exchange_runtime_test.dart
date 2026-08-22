@@ -19,33 +19,30 @@ const _binding = TrustedDeviceBinding(
 );
 
 void main() {
-  test(
-    'SQLite V12 freezes exchange command journal and append-only event policy',
-    () {
-      final database = PosLocalDatabase.inMemory(_binding);
-      addTearDown(database.close);
-      expect(
-        database.database.select('PRAGMA user_version').single.values.first,
-        12,
-      );
-      expect(
-        database.database
-            .select(
-              "SELECT COUNT(*) value FROM sqlite_master WHERE type='table' AND name IN ('local_exchange_command','local_exchange_event')",
-            )
-            .single['value'],
-        2,
-      );
-      expect(
-        database.database
-            .select(
-              "SELECT COUNT(*) value FROM sqlite_master WHERE type='trigger' AND name LIKE 'local_exchange_%'",
-            )
-            .single['value'],
-        4,
-      );
-    },
-  );
+  test('SQLite V13 preserves exchange command journal and append-only event policy', () {
+    final database = PosLocalDatabase.inMemory(_binding);
+    addTearDown(database.close);
+    expect(
+      database.database.select('PRAGMA user_version').single.values.first,
+      13,
+    );
+    expect(
+      database.database
+          .select(
+            "SELECT COUNT(*) value FROM sqlite_master WHERE type='table' AND name IN ('local_exchange_command','local_exchange_event')",
+          )
+          .single['value'],
+      2,
+    );
+    expect(
+      database.database
+          .select(
+            "SELECT COUNT(*) value FROM sqlite_master WHERE type='trigger' AND name LIKE 'local_exchange_%'",
+          )
+          .single['value'],
+      4,
+    );
+  });
 
   testWidgets(
     'page renders two separate owner legs and creates append-only link',

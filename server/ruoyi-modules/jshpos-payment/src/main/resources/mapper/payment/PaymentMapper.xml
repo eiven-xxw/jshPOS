@@ -54,6 +54,30 @@
             <arg column="recordVersion" javaType="long"/>
         </constructor>
     </resultMap>
+    <resultMap id="tenderPlanView" type="com.jingshanghui.pos.payment.application.model.PaymentViews$TenderPlanView">
+        <constructor>
+            <arg column="planId" javaType="java.lang.String"/><arg column="orderId" javaType="java.lang.String"/>
+            <arg column="orderSnapshotSha256" javaType="java.lang.String"/><arg column="storeId" javaType="java.lang.Long"/>
+            <arg column="terminalId" javaType="java.lang.String"/><arg column="shiftId" javaType="java.lang.String"/>
+            <arg column="businessDate" javaType="java.time.LocalDate"/><arg column="status" javaType="java.lang.String"/>
+            <arg column="receivableAmountMinor" javaType="long"/><arg column="succeededAmountMinor" javaType="long"/>
+            <arg column="occupiedAmountMinor" javaType="long"/><arg column="currency" javaType="java.lang.String"/>
+            <arg column="allocationCount" javaType="int"/><arg column="contentSha256" javaType="java.lang.String"/>
+            <arg column="correlationId" javaType="java.lang.String"/><arg column="recordVersion" javaType="long"/>
+            <arg column="frozenAt" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+    <resultMap id="tenderAllocationView" type="com.jingshanghui.pos.payment.application.model.PaymentViews$TenderAllocationView">
+        <constructor>
+            <arg column="allocationId" javaType="java.lang.String"/><arg column="planId" javaType="java.lang.String"/>
+            <arg column="sequenceNo" javaType="int"/><arg column="tenderType" javaType="java.lang.String"/>
+            <arg column="status" javaType="java.lang.String"/><arg column="amountMinor" javaType="long"/>
+            <arg column="currency" javaType="java.lang.String"/><arg column="allocationSha256" javaType="java.lang.String"/>
+            <arg column="ownerFactId" javaType="java.lang.String"/><arg column="observationRef" javaType="java.lang.String"/>
+            <arg column="collectionCommandId" javaType="java.lang.String"/><arg column="collectionRequestSha256" javaType="java.lang.String"/>
+            <arg column="recordVersion" javaType="long"/>
+        </constructor>
+    </resultMap>
 
     <select id="findIdempotency" resultType="com.jingshanghui.pos.payment.application.model.PaymentViews$IdempotencyView">
         SELECT command_type AS commandType, request_sha256 AS requestSha256,
@@ -297,4 +321,76 @@
             resolution_text=COALESCE(#{resolutionText},resolution_text),record_version=record_version+1
         WHERE tenant_id=#{tenantId} AND case_id=#{caseId} AND record_version=#{version}
     </update>
+
+    <insert id="insertTenderPlan">
+        INSERT INTO pay_tender_plan(plan_id,tenant_id,order_id,order_snapshot_sha256,store_id,terminal_id,
+          shift_id,business_date,status,receivable_amount_minor,succeeded_amount_minor,occupied_amount_minor,
+          currency,allocation_count,content_sha256,correlation_id,record_version,frozen_at)
+        VALUES(#{planId},#{tenantId},#{orderId},#{orderSnapshotHash},#{storeId},#{terminalId},#{shiftId},
+          #{businessDate},'FROZEN',#{receivableAmount},0,0,#{currency},#{allocationCount},#{contentHash},
+          #{correlationId},1,#{at})
+    </insert>
+    <select id="findTenderPlan" resultMap="tenderPlanView">
+        SELECT plan_id AS planId,order_id AS orderId,order_snapshot_sha256 AS orderSnapshotSha256,
+          store_id AS storeId,terminal_id AS terminalId,shift_id AS shiftId,business_date AS businessDate,
+          status,receivable_amount_minor AS receivableAmountMinor,succeeded_amount_minor AS succeededAmountMinor,
+          occupied_amount_minor AS occupiedAmountMinor,currency,allocation_count AS allocationCount,
+          content_sha256 AS contentSha256,correlation_id AS correlationId,record_version AS recordVersion,
+          frozen_at AS frozenAt
+        FROM pay_tender_plan WHERE tenant_id=#{tenantId} AND plan_id=#{planId}
+    </select>
+    <select id="lockTenderPlan" resultMap="tenderPlanView">
+        SELECT plan_id AS planId,order_id AS orderId,order_snapshot_sha256 AS orderSnapshotSha256,
+          store_id AS storeId,terminal_id AS terminalId,shift_id AS shiftId,business_date AS businessDate,
+          status,receivable_amount_minor AS receivableAmountMinor,succeeded_amount_minor AS succeededAmountMinor,
+          occupied_amount_minor AS occupiedAmountMinor,currency,allocation_count AS allocationCount,
+          content_sha256 AS contentSha256,correlation_id AS correlationId,record_version AS recordVersion,
+          frozen_at AS frozenAt
+        FROM pay_tender_plan WHERE tenant_id=#{tenantId} AND plan_id=#{planId} FOR UPDATE
+    </select>
+    <insert id="insertTenderAllocation">
+        INSERT INTO pay_tender_allocation(allocation_id,tenant_id,plan_id,sequence_no,tender_type,status,
+          amount_minor,currency,allocation_sha256,record_version,created_at)
+        VALUES(#{allocationId},#{tenantId},#{planId},#{sequenceNo},#{tenderType},'PLANNED',#{amount},
+          #{currency},#{allocationHash},1,#{at})
+    </insert>
+    <select id="findTenderAllocations" resultMap="tenderAllocationView">
+        SELECT allocation_id AS allocationId,plan_id AS planId,sequence_no AS sequenceNo,tender_type AS tenderType,
+          status,amount_minor AS amountMinor,currency,allocation_sha256 AS allocationSha256,
+          owner_fact_id AS ownerFactId,observation_ref AS observationRef,
+          collection_command_id AS collectionCommandId,collection_request_sha256 AS collectionRequestSha256,
+          record_version AS recordVersion
+        FROM pay_tender_allocation WHERE tenant_id=#{tenantId} AND plan_id=#{planId}
+        ORDER BY sequence_no,allocation_id
+    </select>
+    <select id="lockTenderAllocation" resultMap="tenderAllocationView">
+        SELECT allocation_id AS allocationId,plan_id AS planId,sequence_no AS sequenceNo,tender_type AS tenderType,
+          status,amount_minor AS amountMinor,currency,allocation_sha256 AS allocationSha256,
+          owner_fact_id AS ownerFactId,observation_ref AS observationRef,
+          collection_command_id AS collectionCommandId,collection_request_sha256 AS collectionRequestSha256,
+          record_version AS recordVersion
+        FROM pay_tender_allocation WHERE tenant_id=#{tenantId} AND allocation_id=#{allocationId} FOR UPDATE
+    </select>
+    <update id="updateTenderAllocation">
+        UPDATE pay_tender_allocation SET status=#{status},owner_fact_id=COALESCE(#{ownerFactId},owner_fact_id),
+          collection_command_id=COALESCE(collection_command_id,#{commandId}),
+          collection_request_sha256=COALESCE(collection_request_sha256,#{requestHash}),record_version=record_version+1
+        WHERE tenant_id=#{tenantId} AND allocation_id=#{allocationId} AND record_version=#{version}
+    </update>
+    <update id="cancelTenderAllocation">
+        UPDATE pay_tender_allocation SET status='CANCELLED',record_version=record_version+1
+        WHERE tenant_id=#{tenantId} AND allocation_id=#{allocationId} AND record_version=#{version}
+          AND status IN ('PLANNED','FAILED')
+    </update>
+    <update id="updateTenderPlanProjection">
+        UPDATE pay_tender_plan SET status=#{status},succeeded_amount_minor=#{succeededAmount},
+          occupied_amount_minor=#{occupiedAmount},record_version=record_version+1
+        WHERE tenant_id=#{tenantId} AND plan_id=#{planId} AND record_version=#{version}
+    </update>
+    <insert id="insertTenderHistory">
+        INSERT INTO pay_tender_history(history_id,tenant_id,plan_id,allocation_id,command_id,aggregate_type,
+          from_status,to_status,aggregate_version,payload_sha256,actor_user_id,reason_code,occurred_at)
+        VALUES(#{historyId},#{tenantId},#{planId},#{allocationId},#{commandId},#{aggregateType},#{fromStatus},
+          #{toStatus},#{aggregateVersion},#{payloadHash},#{actorId},#{reasonCode},#{at})
+    </insert>
 </mapper>

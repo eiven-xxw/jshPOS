@@ -1,6 +1,7 @@
 package com.jingshanghui.pos.order.application.port;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -13,11 +14,20 @@ public interface PaymentOrderSnapshotPort {
     OrderPaymentSnapshot requireSnapshot(String orderId);
 
     /** 支付和退款校验所需的最小原单快照。 */
-    record OrderPaymentSnapshot(String orderId, Long storeId, String terminalId, String status,
+    record OrderPaymentSnapshot(String orderId, Long storeId, String terminalId, String shiftId,
+                                Long cashierUserId, LocalDate businessDate, String status,
                                 String paymentStatus, String currency, long receivableAmountMinor,
-                                List<LineSnapshot> lines) {
+                                String snapshotSha256, List<LineSnapshot> lines) {
         public OrderPaymentSnapshot {
             lines = List.copyOf(lines);
+        }
+
+        /** 兼容 Gate 3A 既有单支付测试和只读调用；TenderPlan 不接受缺失冻结上下文。 */
+        public OrderPaymentSnapshot(String orderId, Long storeId, String terminalId, String status,
+                                    String paymentStatus, String currency, long receivableAmountMinor,
+                                    List<LineSnapshot> lines) {
+            this(orderId, storeId, terminalId, null, null, null, status, paymentStatus, currency,
+                receivableAmountMinor, null, lines);
         }
     }
 

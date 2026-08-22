@@ -1,0 +1,235 @@
+openapi: 3.1.0
+info:
+  title: 鲸熵汇 T2-PAY-004 Provider 无关组合支付 API
+  version: 1.0.0
+  x-requirement-id: T2-PAY-004
+  x-evidence-level: INTERNAL_SOFTWARE
+  x-provider-network-calls: 0
+servers:
+  - url: /api/v1
+security:
+  - bearerAuth: []
+paths:
+  /payments/tender-plans:
+    post:
+      operationId: createTenderPlan
+      parameters:
+        - $ref: '#/components/parameters/CommandId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateTenderPlanRequest' }
+      responses:
+        '200':
+          description: 已冻结或返回原幂等结果
+          content: { application/json: { schema: { $ref: '#/components/schemas/TenderPlanEnvelope' } } }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /payments/tender-plans/{planId}:
+    get:
+      operationId: findTenderPlan
+      parameters:
+        - $ref: '#/components/parameters/PlanId'
+      responses:
+        '200':
+          description: 原计划权威状态
+          content: { application/json: { schema: { $ref: '#/components/schemas/TenderPlanEnvelope' } } }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /payments/tender-plans/{planId}/allocations/{allocationId}/collect:
+    post:
+      operationId: collectTenderAllocation
+      parameters:
+        - $ref: '#/components/parameters/PlanId'
+        - $ref: '#/components/parameters/AllocationId'
+        - $ref: '#/components/parameters/CommandId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CollectTenderAllocationRequest' }
+      responses:
+        '200':
+          description: 原份额已由权威 Owner 确认成功
+          content: { application/json: { schema: { $ref: '#/components/schemas/TenderCollectEnvelope' } } }
+        '409':
+          description: 顺序、幂等、UNKNOWN 或 PAYMENT_EXTERNAL_BLOCKED
+          content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } }
+  /payments/tender-plans/{planId}/cancel:
+    post:
+      operationId: cancelTenderPlan
+      parameters:
+        - $ref: '#/components/parameters/PlanId'
+        - $ref: '#/components/parameters/CommandId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TenderPlanActionRequest' }
+      responses:
+        '200':
+          description: 无成功和无占额份额的原计划已只追加取消
+          content: { application/json: { schema: { $ref: '#/components/schemas/TenderPlanEnvelope' } } }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /payments/tender-plans/{planId}/recover:
+    post:
+      operationId: recoverTenderPlan
+      parameters:
+        - $ref: '#/components/parameters/PlanId'
+        - $ref: '#/components/parameters/CommandId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TenderPlanActionRequest' }
+      responses:
+        '200':
+          description: 已审计检查原计划；UNKNOWN 未生成替代命令
+          content: { application/json: { schema: { $ref: '#/components/schemas/TenderPlanEnvelope' } } }
+        '409': { $ref: '#/components/responses/Conflict' }
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
+  parameters:
+    CommandId:
+      name: X-Command-Id
+      in: header
+      required: true
+      schema: { $ref: '#/components/schemas/Ulid' }
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema: { type: string, pattern: '^[A-Za-z0-9._:-]{16,128}$' }
+    PlanId:
+      name: planId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Ulid' }
+    AllocationId:
+      name: allocationId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Ulid' }
+  schemas:
+    Ulid: { type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$' }
+    Sha256: { type: string, pattern: '^[a-f0-9]{64}$' }
+    TenderAllocationInput:
+      type: object
+      additionalProperties: false
+      required: [allocationId, sequenceNo, tenderType, amountMinor]
+      properties:
+        allocationId: { $ref: '#/components/schemas/Ulid' }
+        sequenceNo: { type: integer, minimum: 1, maximum: 8 }
+        tenderType: { type: string, enum: [ELECTRONIC, CASH] }
+        amountMinor: { type: integer, minimum: 1, maximum: 9007199254740991 }
+    CreateTenderPlanRequest:
+      type: object
+      additionalProperties: false
+      required: [planId, orderId, orderSnapshotSha256, storeId, terminalId, receivableAmountMinor, currency, allocations, occurredAt]
+      properties:
+        planId: { $ref: '#/components/schemas/Ulid' }
+        orderId: { $ref: '#/components/schemas/Ulid' }
+        orderSnapshotSha256: { $ref: '#/components/schemas/Sha256' }
+        storeId: { type: string, pattern: '^[1-9][0-9]{0,18}$' }
+        terminalId: { $ref: '#/components/schemas/Ulid' }
+        receivableAmountMinor: { type: integer, minimum: 1, maximum: 9007199254740991 }
+        currency: { const: CNY }
+        allocations: { type: array, minItems: 2, maxItems: 8, items: { $ref: '#/components/schemas/TenderAllocationInput' } }
+        occurredAt: { type: string, format: date-time }
+    CollectTenderAllocationRequest:
+      type: object
+      additionalProperties: false
+      required: [occurredAt]
+      properties:
+        tenderedMinor:
+          description: 仅 CASH 允许；电子份额必须省略
+          type: [integer, 'null']
+          minimum: 0
+        occurredAt: { type: string, format: date-time }
+    TenderPlanActionRequest:
+      type: object
+      additionalProperties: false
+      required: [reasonCode, occurredAt]
+      properties:
+        reasonCode: { type: string, pattern: '^[A-Z0-9_]{2,32}$' }
+        occurredAt: { type: string, format: date-time }
+    TenderAllocationView:
+      allOf:
+        - $ref: '#/components/schemas/TenderAllocationInput'
+        - type: object
+          required: [planId, status, currency, allocationSha256, recordVersion]
+          properties:
+            planId: { $ref: '#/components/schemas/Ulid' }
+            status: { type: string, enum: [PLANNED, PROCESSING, UNKNOWN, SUCCEEDED, FAILED, CANCELLED] }
+            currency: { const: CNY }
+            allocationSha256: { $ref: '#/components/schemas/Sha256' }
+            ownerFactId: { oneOf: [{ $ref: '#/components/schemas/Ulid' }, { type: 'null' }] }
+            observationRef: { type: [string, 'null'], maxLength: 128 }
+            collectionCommandId: { oneOf: [{ $ref: '#/components/schemas/Ulid' }, { type: 'null' }] }
+            collectionRequestSha256: { oneOf: [{ $ref: '#/components/schemas/Sha256' }, { type: 'null' }] }
+            recordVersion: { type: integer, minimum: 1 }
+    TenderPlanView:
+      type: object
+      required: [planId, orderId, orderSnapshotSha256, storeId, terminalId, shiftId, businessDate, status, receivableAmountMinor, succeededAmountMinor, occupiedAmountMinor, currency, allocationCount, contentSha256, correlationId, recordVersion, frozenAt]
+      properties:
+        planId: { $ref: '#/components/schemas/Ulid' }
+        orderId: { $ref: '#/components/schemas/Ulid' }
+        orderSnapshotSha256: { $ref: '#/components/schemas/Sha256' }
+        storeId: { type: integer, format: int64, minimum: 1 }
+        terminalId: { $ref: '#/components/schemas/Ulid' }
+        shiftId: { $ref: '#/components/schemas/Ulid' }
+        businessDate: { type: string, format: date }
+        status: { type: string, enum: [FROZEN, COLLECTING, UNKNOWN, PAID, FAILED, CANCELLED, MANUAL_RECOVERY_REQUIRED] }
+        receivableAmountMinor: { type: integer, minimum: 1 }
+        succeededAmountMinor: { type: integer, minimum: 0 }
+        occupiedAmountMinor: { type: integer, minimum: 0 }
+        currency: { const: CNY }
+        allocationCount: { type: integer, minimum: 2, maximum: 8 }
+        contentSha256: { $ref: '#/components/schemas/Sha256' }
+        correlationId: { $ref: '#/components/schemas/Ulid' }
+        recordVersion: { type: integer, minimum: 1 }
+        frozenAt: { type: string, format: date-time }
+    TenderPlanResult:
+      type: object
+      required: [plan, allocations, duplicate]
+      properties:
+        plan: { $ref: '#/components/schemas/TenderPlanView' }
+        allocations: { type: array, minItems: 2, maxItems: 8, items: { $ref: '#/components/schemas/TenderAllocationView' } }
+        duplicate: { type: boolean }
+    TenderCollectResult:
+      type: object
+      required: [planId, allocationId, tenderType, allocationStatus, planStatus, amountMinor, outcome, duplicate]
+      properties:
+        planId: { $ref: '#/components/schemas/Ulid' }
+        allocationId: { $ref: '#/components/schemas/Ulid' }
+        tenderType: { type: string, enum: [ELECTRONIC, CASH] }
+        allocationStatus: { type: string, enum: [PLANNED, PROCESSING, UNKNOWN, SUCCEEDED, FAILED, CANCELLED] }
+        planStatus: { type: string, enum: [FROZEN, COLLECTING, UNKNOWN, PAID, FAILED, CANCELLED, MANUAL_RECOVERY_REQUIRED] }
+        amountMinor: { type: integer, minimum: 1 }
+        tenderedMinor: { type: [integer, 'null'], minimum: 0 }
+        changeMinor: { type: [integer, 'null'], minimum: 0 }
+        ownerFactId: { oneOf: [{ $ref: '#/components/schemas/Ulid' }, { type: 'null' }] }
+        outcome: { type: string, enum: [SUCCEEDED, BLOCKED_EXTERNAL] }
+        duplicate: { type: boolean }
+    TenderPlanEnvelope:
+      type: object
+      required: [code, msg, data]
+      properties: { code: { type: integer }, msg: { type: string }, data: { $ref: '#/components/schemas/TenderPlanResult' } }
+    TenderCollectEnvelope:
+      type: object
+      required: [code, msg, data]
+      properties: { code: { type: integer }, msg: { type: string }, data: { $ref: '#/components/schemas/TenderCollectResult' } }
+    ErrorEnvelope:
+      type: object
+      properties: { code: { type: integer }, msg: { type: string } }
+  responses:
+    Conflict:
+      description: 状态、金额、顺序、幂等或可信上下文冲突
+      content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } }
+    NotFound:
+      description: 资源不存在或不在可信租户/门店范围
+      content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } }

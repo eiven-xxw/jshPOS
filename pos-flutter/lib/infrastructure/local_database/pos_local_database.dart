@@ -16,6 +16,7 @@ import 'gate7b_cash_operation_schema.dart';
 import 'gate7b_receipt_schema.dart';
 import 'gate7b_order_disposition_schema.dart';
 import 'gate7b_exchange_schema.dart';
+import 'gate7b_tender_schema.dart';
 
 typedef FailureInjector = void Function(String checkpoint);
 
@@ -145,7 +146,11 @@ final class PosLocalDatabase {
       _migrateToExchangeV12();
       version = Gate7bExchangeSchema.version;
     }
-    if (version != Gate7bExchangeSchema.version) {
+    if (version == Gate7bExchangeSchema.version) {
+      _migrateToTenderV13();
+      version = Gate7bTenderSchema.version;
+    }
+    if (version != Gate7bTenderSchema.version) {
       throw StateError('LOCAL_SCHEMA_UNSUPPORTED: $version');
     }
     _verifySchemaChecksum();
@@ -189,6 +194,9 @@ final class PosLocalDatabase {
           .toString(),
       Gate7bExchangeSchema.version: sha256
           .convert(utf8.encode(Gate7bExchangeSchema.v12))
+          .toString(),
+      Gate7bTenderSchema.version: sha256
+          .convert(utf8.encode(Gate7bTenderSchema.v13))
           .toString(),
     };
     for (final entry in expected.entries) {
@@ -273,6 +281,32 @@ final class PosLocalDatabase {
     if (violations.isNotEmpty) {
       throw StateError(
         'LOCAL_DB_INTEGRITY_FAILED: foreign key violations after v12',
+      );
+    }
+  }
+
+  /// 追加 PAY-004 冻结计划、份额与只追加事件；失败时整体回滚。
+  void _migrateToTenderV13() {
+    transaction(() {
+      database.execute(Gate7bTenderSchema.v13);
+      final checksum = sha256
+          .convert(utf8.encode(Gate7bTenderSchema.v13))
+          .toString();
+      database.execute(
+        'INSERT INTO local_schema_history(version,description,checksum_sha256,installed_at) VALUES(13,?,?,?)',
+        [
+          'gate7b-provider-neutral-tender-plan',
+          checksum,
+          DateTime.now().toUtc().toIso8601String(),
+        ],
+      );
+      checkpoint('migration.v13.before-version');
+      database.execute('PRAGMA user_version=${Gate7bTenderSchema.version}');
+    });
+    final violations = database.select('PRAGMA foreign_key_check');
+    if (violations.isNotEmpty) {
+      throw StateError(
+        'LOCAL_DB_INTEGRITY_FAILED: foreign key violations after v13',
       );
     }
   }

@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-PAY-004",
+  "cases": [
+    {
+      "id": "PAY004-GOLDEN-001",
+      "planId": "01K2A000000000000000000082",
+      "orderId": "01K2A000000000000000000083",
+      "orderSnapshotSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "storeId": "1101",
+      "terminalId": "01K2A000000000000000000084",
+      "shiftId": "01K2A000000000000000000085",
+      "businessDate": "2026-08-22",
+      "receivableAmountMinor": 1299,
+      "currency": "CNY",
+      "allocations": [
+        {
+          "allocationId": "01K2A000000000000000000086",
+          "sequenceNo": 1,
+          "tenderType": "ELECTRONIC",
+          "amountMinor": 1000
+        },
+        {
+          "allocationId": "01K2A000000000000000000087",
+          "sequenceNo": 2,
+          "tenderType": "CASH",
+          "amountMinor": 299
+        }
+      ],
+      "expectedContentSha256": "6d9e6491ec19557d581af95b0f17c6d933585dcc77fa9adb99f850e8f805b865"
+    }
+  ]
+}

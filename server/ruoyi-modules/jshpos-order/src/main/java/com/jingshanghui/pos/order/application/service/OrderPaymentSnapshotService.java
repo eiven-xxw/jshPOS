@@ -37,7 +37,8 @@ public class OrderPaymentSnapshotService implements PaymentOrderSnapshotPort {
         if (lines.isEmpty()) {
             throw new ServiceException("PAY-ORDER-002: 原订单缺少不可变行快照", 409);
         }
-        return new OrderPaymentSnapshot(order.orderId(), order.storeId(), order.terminalId(), order.status(),
-            order.paymentStatus(), order.currency(), order.receivableAmountMinor(), lines);
+        return new OrderPaymentSnapshot(order.orderId(), order.storeId(), order.terminalId(), order.shiftId(),
+            order.cashierUserId(), order.businessDate(), order.status(), order.paymentStatus(), order.currency(),
+            order.receivableAmountMinor(), order.snapshotSha256(), lines);
     }
 }

@@ -3,10 +3,18 @@ package com.jingshanghui.pos.payment.interfaces.rest;
 import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.jingshanghui.pos.payment.application.model.PaymentCommands.CreateAttempt;
 import com.jingshanghui.pos.payment.application.model.PaymentCommands.CreateIntent;
+import com.jingshanghui.pos.payment.application.model.PaymentCommands.CancelTenderPlan;
+import com.jingshanghui.pos.payment.application.model.PaymentCommands.CollectTenderAllocation;
+import com.jingshanghui.pos.payment.application.model.PaymentCommands.CreateTenderPlan;
+import com.jingshanghui.pos.payment.application.model.PaymentCommands.RecoverTenderPlan;
+import com.jingshanghui.pos.payment.application.model.PaymentCommands.TenderAllocationInput;
 import com.jingshanghui.pos.payment.application.model.PaymentViews.AttemptResult;
 import com.jingshanghui.pos.payment.application.model.PaymentViews.PaymentResult;
 import com.jingshanghui.pos.payment.application.model.PaymentViews.PaymentView;
+import com.jingshanghui.pos.payment.application.model.PaymentViews.TenderCollectResult;
+import com.jingshanghui.pos.payment.application.model.PaymentViews.TenderPlanResult;
 import com.jingshanghui.pos.payment.application.service.PaymentCoreService;
+import com.jingshanghui.pos.payment.application.service.TenderPlanService;
 import com.jingshanghui.pos.payment.interfaces.rest.dto.PaymentRequests;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -34,6 +42,7 @@ public class PaymentController {
 
     private static final String ULID = "^[0-9A-HJKMNP-TV-Z]{26}$";
     private final PaymentCoreService service;
+    private final TenderPlanService tenderService;
 
     @PostMapping("/intents")
     @SaCheckPermission("payment:intent:create")
@@ -61,6 +70,68 @@ public class PaymentController {
     @SaCheckPermission("payment:read")
     public R<PaymentView> find(@PathVariable @Pattern(regexp = ULID) String paymentId) {
         return R.ok(service.find(paymentId));
+    }
+
+    @PostMapping("/tender-plans")
+    @SaCheckPermission("payment:tender:create")
+    @Log(title = "冻结组合支付计划", businessType = BusinessType.INSERT)
+    public R<TenderPlanResult> createTenderPlan(
+        @RequestHeader("X-Command-Id") @Pattern(regexp = ULID) String commandId,
+        @RequestHeader("Idempotency-Key") @NotBlank String idempotencyKey,
+        @Valid @RequestBody PaymentRequests.CreateTenderPlan request) {
+        var allocations = request.allocations().stream().map(item -> new TenderAllocationInput(
+            item.allocationId(), item.sequenceNo(), item.tenderType(), item.amountMinor())).toList();
+        return R.ok(tenderService.create(new CreateTenderPlan(commandId, idempotencyKey, request.planId(),
+            request.orderId(), request.orderSnapshotSha256(), parsePlatformId(request.storeId()),
+            request.terminalId(), request.receivableAmountMinor(), request.currency(), allocations,
+            request.occurredAt())));
+    }
+
+    @GetMapping("/tender-plans/{planId}")
+    @SaCheckPermission("payment:tender:read")
+    public R<TenderPlanResult> findTenderPlan(@PathVariable @Pattern(regexp = ULID) String planId) {
+        return R.ok(tenderService.find(planId));
+    }
+
+    @PostMapping("/tender-plans/{planId}/allocations/{allocationId}/collect")
+    @SaCheckPermission("payment:tender:collect")
+    @Log(title = "收取组合支付份额", businessType = BusinessType.UPDATE)
+    public R<TenderCollectResult> collectTenderAllocation(
+        @PathVariable @Pattern(regexp = ULID) String planId,
+        @PathVariable @Pattern(regexp = ULID) String allocationId,
+        @RequestHeader("X-Command-Id") @Pattern(regexp = ULID) String commandId,
+        @RequestHeader("Idempotency-Key") @NotBlank String idempotencyKey,
+        @Valid @RequestBody PaymentRequests.CollectTenderAllocation request) {
+        TenderCollectResult result = tenderService.collect(new CollectTenderAllocation(commandId, idempotencyKey,
+            planId, allocationId, request.tenderedMinor(), request.occurredAt()));
+        if ("PAYMENT_EXTERNAL_BLOCKED".equals(result.outcome())) {
+            throw new ServiceException("PAYMENT_EXTERNAL_BLOCKED: T2-PAY-002 未解阻，电子份额禁止执行", 409);
+        }
+        return R.ok(result);
+    }
+
+    @PostMapping("/tender-plans/{planId}/cancel")
+    @SaCheckPermission("payment:tender:cancel")
+    @Log(title = "取消组合支付计划", businessType = BusinessType.UPDATE)
+    public R<TenderPlanResult> cancelTenderPlan(
+        @PathVariable @Pattern(regexp = ULID) String planId,
+        @RequestHeader("X-Command-Id") @Pattern(regexp = ULID) String commandId,
+        @RequestHeader("Idempotency-Key") @NotBlank String idempotencyKey,
+        @Valid @RequestBody PaymentRequests.TenderPlanAction request) {
+        return R.ok(tenderService.cancel(new CancelTenderPlan(commandId, idempotencyKey, planId,
+            request.reasonCode(), request.occurredAt())));
+    }
+
+    @PostMapping("/tender-plans/{planId}/recover")
+    @SaCheckPermission("payment:tender:recover")
+    @Log(title = "检查组合支付恢复", businessType = BusinessType.OTHER)
+    public R<TenderPlanResult> recoverTenderPlan(
+        @PathVariable @Pattern(regexp = ULID) String planId,
+        @RequestHeader("X-Command-Id") @Pattern(regexp = ULID) String commandId,
+        @RequestHeader("Idempotency-Key") @NotBlank String idempotencyKey,
+        @Valid @RequestBody PaymentRequests.TenderPlanAction request) {
+        return R.ok(tenderService.recover(new RecoverTenderPlan(commandId, idempotencyKey, planId,
+            request.reasonCode(), request.occurredAt())));
     }
 
     private Long parsePlatformId(String value) {

@@ -67,4 +67,19 @@ class OrderMigrationSqlPolicyTest {
             "pos:print:preview", "pos:print:reprint", "content_sha256", "authorization_ref");
         assertThat(sql).doesNotContain("float", "double", "printed'", "device sdk", "http://", "https://");
     }
+
+    @Test
+    void gate7bTenderCashAndOrderSettlementAreAppendOnlyOwnerFacts() throws IOException {
+        String sql;
+        try (var stream = getClass().getResourceAsStream(
+            "/db/migration/V202608220058__gate7b_cash_tender.sql")) {
+            assertThat(stream).isNotNull();
+            sql = new String(stream.readAllBytes(), StandardCharsets.UTF_8).toLowerCase();
+        }
+        assertThat(sql).contains("create table ord_tender_settlement", "create table ord_cash_tender",
+            "原订单快照不更新", "ord_tender_settlement is immutable", "ord_cash_tender is immutable",
+            "tender_receipt", "cash_refund' and signed_amount_minor<0 and cash_payment_id is not null",
+            "foreign key (tenant_id,order_id)", "foreign key (tenant_id,shift_id)", "currency='cny'");
+        assertThat(sql).doesNotContain("update ord_sales_order", "float", " double", "http://", "https://");
+    }
 }

@@ -23,7 +23,8 @@ public final class SyncRules {
         "order.suspended.v1", "order.resumed.v1", "order.submitted.v1",
         "cash.received.v1", "order.completed.v1", "order.submitted.v2", "order.completed.v2",
         "receipt.document-frozen.v1", "receipt.reprint-requested.v1",
-        "order.cancelled.v1", "order.reversal-routed.v1"
+        "order.cancelled.v1", "order.reversal-routed.v1",
+        "tender.plan-frozen.v1"
     );
 
     private SyncRules() {

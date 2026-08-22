@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-PAY-004",
+  "evidenceLevel": "INTERNAL_SOFTWARE",
+  "fixedSeed": 2026082204,
+  "vectors": [
+    {"id": "PAY004-001", "case": "two allocations exact sum", "expected": "FROZEN"},
+    {"id": "PAY004-002", "case": "cash is not last", "expected": "TENDER-CASH-002"},
+    {"id": "PAY004-003", "case": "allocation sum mismatch", "expected": "TENDER-AMOUNT-002"},
+    {"id": "PAY004-004", "case": "collect later allocation first", "expected": "TENDER-SEQUENCE-002"},
+    {"id": "PAY004-005", "case": "electronic collect while PAY-002 blocked", "expected": "PAYMENT_EXTERNAL_BLOCKED"},
+    {"id": "PAY004-006", "case": "UNKNOWN replay", "expected": "TENDER-UNKNOWN-001"},
+    {"id": "PAY004-007", "case": "same idempotency key different content", "expected": "PAY-IDEMPOTENCY-001"},
+    {"id": "PAY004-008", "case": "SQLite crash before commit", "expected": "ZERO_PLAN_ZERO_OUTBOX"},
+    {"id": "PAY004-009", "case": "cash final allocation after confirmed electronic share", "expected": "PLAN_PAID_AND_ORDER_COMPLETED_ATOMICALLY"},
+    {"id": "PAY004-010", "case": "refund split 333/333/334 for 101", "expected": [33, 33, 35]},
+    {"id": "PAY004-011", "case": "cross tenant plan read", "expected": "RESOURCE_NOT_VISIBLE"},
+    {"id": "PAY004-012", "case": "Provider SDK or HTTP client scan", "expected": "ZERO_MATCH"},
+    {"id": "PAY004-013", "case": "cancel after succeeded or UNKNOWN allocation", "expected": "TENDER-CANCEL-001"},
+    {"id": "PAY004-014", "case": "authorized recovery inspection of UNKNOWN", "expected": "QUERY_OR_OBSERVE_ORIGINAL"}
+  ]
+}

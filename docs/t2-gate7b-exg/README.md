@@ -5,5 +5,5 @@
 3. `03_T2_EXG001证据索引.md`
 4. `04_T2_PAY004正式开发启动指令.md`
 
-当前状态：`T2-EXG-001 = VERIFIED`，等待项目发起人确认；
-`T2-PAY-004 = DRAFT`，不得自动启动。
+历史收口状态：`T2-EXG-001 = ACCEPTED`；项目发起人已另行授权
+`T2-PAY-004 = IN_PROGRESS`，当前执行边界见 `../t2-gate7b-pay004/`。

@@ -83,4 +83,34 @@ public final class PaymentRequests {
                                  @NotBlank @Size(max = 512) String reasonText,
                                  @NotNull Instant occurredAt) {
     }
+
+    public record CreateTenderPlan(@Pattern(regexp = ULID) String planId,
+                                   @Pattern(regexp = ULID) String orderId,
+                                   @Pattern(regexp = "^[a-f0-9]{64}$") String orderSnapshotSha256,
+                                   @Pattern(regexp = "^[1-9][0-9]{0,18}$") String storeId,
+                                   @Pattern(regexp = ULID) String terminalId,
+                                   @Min(1) long receivableAmountMinor,
+                                   @Pattern(regexp = "^CNY$") String currency,
+                                   @NotEmpty @Size(min = 2, max = 8)
+                                   List<@Valid TenderAllocation> allocations,
+                                   @NotNull Instant occurredAt) {
+        public CreateTenderPlan {
+            allocations = List.copyOf(allocations);
+        }
+    }
+
+    public record TenderAllocation(@Pattern(regexp = ULID) String allocationId,
+                                   @Min(1) @Max(8) int sequenceNo,
+                                   @Pattern(regexp = "^(CASH|ELECTRONIC)$") String tenderType,
+                                   @Min(1) long amountMinor) {
+    }
+
+    public record CollectTenderAllocation(@Min(0) Long tenderedMinor,
+                                          @NotNull Instant occurredAt) {
+    }
+
+    /** 取消或受控恢复检查使用的具名原因，不接受自由文本与敏感信息。 */
+    public record TenderPlanAction(@Pattern(regexp = "^[A-Z0-9_]{2,32}$") String reasonCode,
+                                   @NotNull Instant occurredAt) {
+    }
 }

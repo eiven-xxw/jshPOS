@@ -9,6 +9,8 @@ import com.jingshanghui.pos.payment.application.model.PaymentViews.Reconciliatio
 import com.jingshanghui.pos.payment.application.model.PaymentViews.RefundView;
 import com.jingshanghui.pos.payment.application.model.PaymentViews.RefundLineView;
 import com.jingshanghui.pos.payment.application.model.PaymentViews.ReservedQuantityView;
+import com.jingshanghui.pos.payment.application.model.PaymentViews.TenderAllocationView;
+import com.jingshanghui.pos.payment.application.model.PaymentViews.TenderPlanView;
 import org.apache.ibatis.annotations.Param;
 
 import java.math.BigDecimal;
@@ -174,4 +176,49 @@ public interface PaymentMapper {
                                  @Param("status") String status, @Param("resolverId") Long resolverId,
                                  @Param("approverId") Long approverId, @Param("resolutionCode") String resolutionCode,
                                  @Param("resolutionText") String resolutionText, @Param("version") long version);
+
+    int insertTenderPlan(@Param("tenantId") String tenantId, @Param("planId") String planId,
+                         @Param("orderId") String orderId, @Param("orderSnapshotHash") String orderSnapshotHash,
+                         @Param("storeId") Long storeId, @Param("terminalId") String terminalId,
+                         @Param("shiftId") String shiftId, @Param("businessDate") LocalDate businessDate,
+                         @Param("receivableAmount") long receivableAmount, @Param("currency") String currency,
+                         @Param("allocationCount") int allocationCount, @Param("contentHash") String contentHash,
+                         @Param("correlationId") String correlationId, @Param("at") LocalDateTime at);
+
+    TenderPlanView findTenderPlan(@Param("tenantId") String tenantId, @Param("planId") String planId);
+
+    TenderPlanView lockTenderPlan(@Param("tenantId") String tenantId, @Param("planId") String planId);
+
+    int insertTenderAllocation(@Param("tenantId") String tenantId, @Param("allocationId") String allocationId,
+                               @Param("planId") String planId, @Param("sequenceNo") int sequenceNo,
+                               @Param("tenderType") String tenderType, @Param("amount") long amount,
+                               @Param("currency") String currency, @Param("allocationHash") String allocationHash,
+                               @Param("at") LocalDateTime at);
+
+    List<TenderAllocationView> findTenderAllocations(@Param("tenantId") String tenantId,
+                                                      @Param("planId") String planId);
+
+    TenderAllocationView lockTenderAllocation(@Param("tenantId") String tenantId,
+                                               @Param("allocationId") String allocationId);
+
+    int updateTenderAllocation(@Param("tenantId") String tenantId, @Param("allocationId") String allocationId,
+                               @Param("status") String status, @Param("ownerFactId") String ownerFactId,
+                               @Param("commandId") String commandId, @Param("requestHash") String requestHash,
+                               @Param("version") long version);
+
+    int cancelTenderAllocation(@Param("tenantId") String tenantId,
+                               @Param("allocationId") String allocationId,
+                               @Param("version") long version);
+
+    int updateTenderPlanProjection(@Param("tenantId") String tenantId, @Param("planId") String planId,
+                                   @Param("status") String status, @Param("succeededAmount") long succeededAmount,
+                                   @Param("occupiedAmount") long occupiedAmount, @Param("version") long version);
+
+    int insertTenderHistory(@Param("historyId") String historyId, @Param("tenantId") String tenantId,
+                            @Param("planId") String planId, @Param("allocationId") String allocationId,
+                            @Param("commandId") String commandId, @Param("aggregateType") String aggregateType,
+                            @Param("fromStatus") String fromStatus, @Param("toStatus") String toStatus,
+                            @Param("aggregateVersion") long aggregateVersion,
+                            @Param("payloadHash") String payloadHash, @Param("actorId") Long actorId,
+                            @Param("reasonCode") String reasonCode, @Param("at") LocalDateTime at);
 }

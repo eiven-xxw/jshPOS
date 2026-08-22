@@ -3,10 +3,10 @@
   "gate": "T2-GATE7B-SPRINT-S20B-EXG001-RUNTIME",
   "baselineCommit": "4d184a1cf5998c91d9cc9db359a4d5ed0d16e0c3",
   "branch": "t2/gate7b-sprint20b-exg-runtime",
-  "decision": "EXG001_VERIFIED_AWAITING_SPONSOR_ACCEPTANCE",
+  "decision": "EXG001_ACCEPTED_BY_SPONSOR",
   "requirement": {
     "id": "T2-EXG-001",
-    "status": "VERIFIED",
+    "status": "ACCEPTED",
     "owner": "ReturnOrchestration",
     "implementation": "ORIGINAL_RETURN_REFUND_PLUS_NEW_SALE_PLUS_APPEND_ONLY_LINK"
   },
@@ -18,7 +18,7 @@
     {"object": "local_exchange_event", "strategy": "APPEND_ONLY", "sqlMode": "SQL"}
   ],
   "preservedStates": {
-    "T2-PAY-004": "DRAFT",
+    "T2-PAY-004": "IN_PROGRESS",
     "T2-PAY-002": "BLOCKED",
     "T2-HWD-001": "BLOCKED",
     "T2-PRN-001": "BLOCKED",
@@ -41,8 +41,8 @@
   },
   "nextRequirement": {
     "id": "T2-PAY-004",
-    "status": "DRAFT",
+    "status": "IN_PROGRESS",
     "automaticStartAllowed": false,
-    "requiresExgIndependentVerifiedAndSponsorConfirmation": true
+    "requiresExgIndependentVerifiedAndSponsorConfirmation": false
   }
 }

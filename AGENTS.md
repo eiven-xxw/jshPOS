@@ -435,6 +435,8 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
 
 ## 4.35 当前 T2 Gate 7B / Sprint S20-B：T2-EXG-001 独立正式开发
 
+> 本节保留 T2-EXG-001 实施时的历史边界；当前执行状态以随后 4.36 节为准。
+
 - 项目发起人已于 2026-08-22 接受 CR-T2G7B-009 和第二批准备阶段 `CONDITIONAL PASS`，授权从封存提交 `4d184a1cf5998c91d9cc9db359a4d5ed0d16e0c3` 建立 `t2/gate7b-sprint20b-exg-runtime`，仅准入 `T2-EXG-001`。
 - ADR-044 已为 `Accepted`。`T2-EXG-001` 已完成独立实现与候选全量 CI，当前为 `VERIFIED` 并等待项目发起人确认；`T2-PAY-004` 必须继续 `DRAFT`，未经项目发起人再次确认不得编码。
 - 换货只能表达为“原单退货退款 + 新销售 + ReturnOrchestration Owner 只追加关联”。原退货退款复用既有 Return/Refund/Promotion/Payment/Inventory Owner，新销售复用既有 Checkout/Order Owner；换货不得复制或覆盖任一 Owner 的状态机、金额、促销、库存或成本事实。
@@ -443,6 +445,18 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
 - MySQL 与 SQLite 只允许独立前向迁移；换货事件与腿关联只追加，Saga 头只允许具名条件状态迁移。Flutter 页面只能调用 Exchange、Return 和 Sale 正式应用端口，禁止直接访问 SQLite、Mapper 或拼装 Owner 事实。
 - `T2-PAY-002/HWD-001/PRN-001/PAR-001` 继续 `BLOCKED`，`T2-UAT-001/REL-001` 继续 `DRAFT`，`T2-JSH-001/LIC-001` 继续 `DEFERRED`；Provider 网络、真实资金、真实设备/外设命令、伙伴联系、现场试点、完整 Alpha、生产部署和商业声明全部为 0。
 - `T2-EXG-001` 独立周门禁报告和证据索引必须随封存提交复跑完整 CI 并等待确认；不得自动准入 `T2-PAY-004` 或 Gate 7C。
+
+## 4.36 当前 T2 Gate 7B / Sprint S20-B：T2-PAY-004 独立正式开发
+
+- 项目发起人已于 2026-08-22 接受 `T2-EXG-001 CONDITIONAL PASS` 并授权其更新为 `ACCEPTED`；仅授权从封板提交 `2cc9f88b8ad2d0530a77a9341d396dd1a2fc1e5f` 建立 `t2/gate7b-sprint20b-pay004-runtime`，独立实现 `T2-PAY-004`。
+- `T2-PAY-004` 采用 Payment Owner 独占的版本化 TenderPlan 与 2—8 个精确份额；份额合计必须逐分等于订单应收，同币种 CNY，现金最多一份且必须位于最后，电子份额严格串行。
+- `SUCCEEDED` 不可回退；`PROCESSING/UNKNOWN` 继续占额并阻断后续份额、取消和替代命令。超时、ACK 丢失、重启或结果未知只能复用原 plan/allocation/command 身份查询或观察，禁止生成替代扣款。
+- 现金份额只能调用 Order/Shift Owner 受控端口追加部分现金事实、班次流水、审计与 Outbox；Payment Mapper 禁止写 `ord_*` 或 `shf_*`。Order Owner 只消费冻结计划和全部份额权威成功结果，不复制支付状态机。
+- `T2-PAY-002` 继续 `BLOCKED`。正式装配不提供电子成功适配器；电子 collect 必须失败关闭为 `PAYMENT_EXTERNAL_BLOCKED`，不得出现 Provider SDK/HTTP、回调、账单、凭据或模拟成功。合成成功观察只允许位于测试范围。
+- 原单退款必须按原成功份额、原介质和累计成功/占额上限恢复；现金退现金，电子份额未解阻时继续受控阻断，禁止转成现金或其他介质规避。
+- MySQL 与 SQLite 只允许独立前向迁移；TenderPlan/Allocation 使用具名条件状态迁移，历史、观察、现金份额、审计与事件只追加。Flutter 页面只能调用 Tender 应用端口，不得直接访问 SQLite、MethodChannel 或拼装资金事实。
+- `T2-HWD-001/PRN-001/PAR-001` 继续 `BLOCKED`，`T2-UAT-001/REL-001` 与 Gate 7C—7E 继续 `DRAFT`，`T2-JSH-001/LIC-001` 继续 `DEFERRED`；Provider 网络、真实资金、设备/外设命令、伙伴执行、完整 Alpha、生产部署和商业声明全部为 0。
+- 完成后必须提交 `T2-PAY-004` 独立周门禁报告并等待项目发起人确认；不得自动进入 Gate 7C。
 
 ## 5. 工程与测试规则
 

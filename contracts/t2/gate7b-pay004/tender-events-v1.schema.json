@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jingshanghui.example/contracts/t2/gate7b-pay004/tender-events-v1.schema.json",
+  "title": "T2-PAY-004 provider-neutral tender event payload",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["planId", "status"],
+  "properties": {
+    "planId": { "$ref": "#/$defs/ulid" },
+    "allocationId": { "$ref": "#/$defs/ulid" },
+    "orderId": { "$ref": "#/$defs/ulid" },
+    "status": {
+      "enum": ["FROZEN", "COLLECTING", "UNKNOWN", "PAID", "FAILED", "CANCELLED", "MANUAL_RECOVERY_REQUIRED", "PLANNED", "PROCESSING", "SUCCEEDED"]
+    },
+    "outcome": { "enum": ["PAYMENT_EXTERNAL_BLOCKED", "QUERY_OR_OBSERVE_ORIGINAL", "SUCCEEDED"] },
+    "receivableAmountMinor": { "type": "integer", "minimum": 1 },
+    "succeededAmountMinor": { "type": "integer", "minimum": 0 },
+    "currency": { "const": "CNY" },
+    "contentSha256": { "$ref": "#/$defs/sha256" },
+    "allocationCount": { "type": "integer", "minimum": 2, "maximum": 8 }
+  },
+  "oneOf": [
+    {
+      "properties": { "status": { "const": "FROZEN" } },
+      "required": ["orderId", "receivableAmountMinor", "currency", "contentSha256", "allocationCount"]
+    },
+    {
+      "required": ["allocationId", "outcome"],
+      "properties": { "outcome": { "const": "PAYMENT_EXTERNAL_BLOCKED" } }
+    },
+    {
+      "required": ["allocationId", "succeededAmountMinor", "receivableAmountMinor", "currency"]
+    },
+    {
+      "properties": { "status": { "const": "CANCELLED" } },
+      "required": ["receivableAmountMinor", "currency", "contentSha256", "allocationCount"]
+    },
+    {
+      "properties": { "outcome": { "const": "QUERY_OR_OBSERVE_ORIGINAL" } },
+      "required": ["outcome"]
+    }
+  ],
+  "$defs": {
+    "ulid": { "type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$" },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

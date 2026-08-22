@@ -19,16 +19,16 @@ class ReturnsMigrationMySqlIT {
     private final String password = required("GATE5B_MYSQL_PASSWORD");
 
     @Test
-    void migratesAllFilesThroughV56AndEnforcesReturnAndExchangeAppendOnlyConstraints() throws Exception {
+    void migratesAllFilesThroughV58AndEnforcesReturnExchangeAndTenderConstraints() throws Exception {
         createFrameworkMenuFixture();
         Flyway flyway = Flyway.configure().dataSource(url, username, password)
             .locations("classpath:db/migration").table("jshpos_flyway_schema_history")
             .baselineOnMigrate(true).baselineVersion("0").cleanDisabled(true).load();
-        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(30);
+        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(32);
         assertThat(flyway.migrate().migrationsExecuted).isZero();
         flyway.validate();
         assertThat(flyway.info().current()).isNotNull();
-        assertThat(flyway.info().current().getVersion().toString()).isEqualTo("202608220056");
+        assertThat(flyway.info().current().getVersion().toString()).isEqualTo("202608220058");
         assertTablesAndPermissions();
         assertCashLedgerIndexRepair();
         assertImmutableOutboxAndGuards();
@@ -52,7 +52,8 @@ class ReturnsMigrationMySqlIT {
     private void assertTablesAndPermissions() throws SQLException {
         Set<String> tables = Set.of("ord_cash_refund", "ret_order_guard", "ret_return", "ret_return_line",
             "ret_state_history", "ret_inbox", "ret_outbox", "ret_idempotency", "ret_exchange",
-            "ret_exchange_leg", "ret_exchange_event", "ret_exchange_idempotency");
+            "ret_exchange_leg", "ret_exchange_event", "ret_exchange_idempotency", "pay_tender_plan",
+            "pay_tender_allocation", "pay_tender_history", "ord_tender_settlement", "ord_cash_tender");
         try (Connection connection = DriverManager.getConnection(url, username, password);
              Statement statement = connection.createStatement()) {
             for (String table : tables) {

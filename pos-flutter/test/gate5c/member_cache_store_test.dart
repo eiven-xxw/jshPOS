@@ -81,13 +81,13 @@ void main() {
     addTearDown(database.close);
     expect(
       database.database.select('PRAGMA user_version').single.values.first,
-      12,
+      13,
     );
     expect(
       database.database
           .select('SELECT COUNT(*) value FROM local_schema_history')
           .single['value'],
-      12,
+      13,
     );
   });
 }

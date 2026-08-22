@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jingshanghui.pos.order.infrastructure.persistence.mapper.TenderCashMapper">
+    <select id="findByAllocation" resultType="com.jingshanghui.pos.order.infrastructure.persistence.mapper.TenderCashMapper$CashTenderRow">
+        SELECT cash_tender_id AS cashTenderId,allocation_id AS allocationId,order_id AS orderId,
+               shift_id AS shiftId,amount_minor AS amountMinor,tendered_minor AS tenderedMinor,
+               change_minor AS changeMinor,request_sha256 AS requestSha256
+        FROM ord_cash_tender
+        WHERE tenant_id=#{tenantId} AND allocation_id=#{allocationId}
+    </select>
+
+    <insert id="insertCashTender">
+        INSERT INTO ord_cash_tender(
+          cash_tender_id,tenant_id,plan_id,allocation_id,order_id,shift_id,store_id,terminal_id,
+          cashier_user_id,business_date,status,amount_minor,tendered_minor,change_minor,currency,
+          request_sha256,correlation_id,occurred_at)
+        VALUES(#{cashTenderId},#{tenantId},#{planId},#{allocationId},#{orderId},#{shiftId},#{storeId},
+          #{terminalId},#{cashierId},#{businessDate},'SUCCEEDED',#{amountMinor},#{tenderedMinor},
+          #{changeMinor},'CNY',#{requestHash},#{correlationId},#{occurredAt})
+    </insert>
+
+    <insert id="insertCashLedger">
+        INSERT INTO shf_cash_ledger(cash_ledger_id,tenant_id,shift_id,order_id,cash_tender_id,
+          movement_type,signed_amount_minor,currency,business_date,occurred_at)
+        VALUES(#{ledgerId},#{tenantId},#{shiftId},#{orderId},#{cashTenderId},'TENDER_RECEIPT',
+          #{amountMinor},'CNY',#{businessDate},#{occurredAt})
+    </insert>
+</mapper>

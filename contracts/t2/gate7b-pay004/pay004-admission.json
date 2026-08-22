@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "1.0",
+  "gate": "T2-GATE7B-SPRINT-S20B-PAY004-RUNTIME",
+  "baselineCommit": "2cc9f88b8ad2d0530a77a9341d396dd1a2fc1e5f",
+  "branch": "t2/gate7b-sprint20b-pay004-runtime",
+  "decision": "PAY004_APPROVED_IN_PROGRESS",
+  "requirement": {
+    "id": "T2-PAY-004",
+    "status": "IN_PROGRESS",
+    "owner": "Payment",
+    "implementation": "PROVIDER_NEUTRAL_TENDER_PLAN_WITH_ORDER_SHIFT_CASH_PORT"
+  },
+  "invariants": {
+    "allocationCountMin": 2,
+    "allocationCountMax": 8,
+    "currency": "CNY",
+    "cashAllocationMax": 1,
+    "cashMustBeLast": true,
+    "sequentialCollection": true,
+    "unknownCreatesReplacementCommand": false,
+    "refundToOriginalTenderOnly": true
+  },
+  "dataAccess": [
+    {"object": "pay_tender_plan", "strategy": "CONTROLLED_WRITE", "sqlMode": "XML"},
+    {"object": "pay_tender_allocation", "strategy": "CONTROLLED_WRITE", "sqlMode": "XML"},
+    {"object": "pay_tender_history", "strategy": "APPEND_ONLY", "sqlMode": "XML"},
+    {"object": "ord_cash_tender", "strategy": "APPEND_ONLY", "sqlMode": "XML"},
+    {"object": "local_tender_plan", "strategy": "CONTROLLED_WRITE", "sqlMode": "SQL"},
+    {"object": "local_tender_allocation", "strategy": "CONTROLLED_WRITE", "sqlMode": "SQL"},
+    {"object": "local_tender_event", "strategy": "APPEND_ONLY", "sqlMode": "SQL"},
+    {"object": "local_outbox", "strategy": "APPEND_ONLY_COMMAND", "sqlMode": "SQL"}
+  ],
+  "crossRuntimeGoldenVector": "contracts/t2/gate7b-pay004/tender-golden-vectors-v1.json",
+  "preservedStates": {
+    "T2-PAY-002": "BLOCKED",
+    "T2-HWD-001": "BLOCKED",
+    "T2-PRN-001": "BLOCKED",
+    "T2-PAR-001": "BLOCKED",
+    "T2-UAT-001": "DRAFT",
+    "T2-REL-001": "DRAFT",
+    "T2-JSH-001": "DEFERRED",
+    "T2-LIC-001": "DEFERRED",
+    "Gate7C": "DRAFT"
+  },
+  "externalExecution": {
+    "providerNetworkCalls": 0,
+    "realFundsTransactions": 0,
+    "realDeviceCommands": 0,
+    "realPeripheralCommands": 0,
+    "partnerContacts": 0,
+    "fullAlphaRuns": 0,
+    "productionDeployments": 0,
+    "commercialClaimAllowed": false
+  }
+}
