@@ -35,7 +35,8 @@ public final class InventoryRules {
         BigDecimal quantity = positive(positiveQuantity, "quantity");
         return switch (type) {
             case SALE_OUT, STOCKTAKE_LOSS, PURCHASE_RETURN_OUT, TRANSFER_OUT -> quantity.negate();
-            case SALE_RETURN_IN, STOCKTAKE_GAIN, PURCHASE_RECEIPT_IN, TRANSFER_IN -> quantity;
+            case SALE_RETURN_IN, STOCKTAKE_GAIN, PURCHASE_RECEIPT_IN, TRANSFER_IN, OPENING_IN,
+                OPENING_ADJUSTMENT -> quantity;
         };
     }
 
@@ -49,6 +50,8 @@ public final class InventoryRules {
             case "REFUND" -> movementType == MovementType.SALE_RETURN_IN;
             case "TRANSFER_DISPATCH" -> movementType == MovementType.TRANSFER_OUT;
             case "TRANSFER_RECEIPT" -> movementType == MovementType.TRANSFER_IN;
+            case "BUSINESS_MIGRATION" -> movementType == MovementType.OPENING_IN;
+            case "BUSINESS_MIGRATION_ADJUSTMENT" -> movementType == MovementType.OPENING_ADJUSTMENT;
             default -> false;
         };
         if (!allowed) {

@@ -13,6 +13,8 @@ import static com.jingshanghui.pos.inventory.domain.InventoryStates.MovementType
 import static com.jingshanghui.pos.inventory.domain.InventoryStates.MovementType.PURCHASE_RETURN_OUT;
 import static com.jingshanghui.pos.inventory.domain.InventoryStates.MovementType.TRANSFER_IN;
 import static com.jingshanghui.pos.inventory.domain.InventoryStates.MovementType.TRANSFER_OUT;
+import static com.jingshanghui.pos.inventory.domain.InventoryStates.MovementType.OPENING_IN;
+import static com.jingshanghui.pos.inventory.domain.InventoryStates.MovementType.OPENING_ADJUSTMENT;
 import static com.jingshanghui.pos.inventory.domain.InventoryStates.NegativeStockMode.ALLOW_AND_ALERT;
 import static com.jingshanghui.pos.inventory.domain.InventoryStates.NegativeStockMode.ALLOW_WITH_PERMISSION;
 import static com.jingshanghui.pos.inventory.domain.InventoryStates.NegativeStockMode.DENY;
@@ -41,6 +43,10 @@ class InventoryRulesTest {
         assertThat(InventoryRules.signedDelta(TRANSFER_OUT, new BigDecimal("2.5")))
             .isEqualByComparingTo("-2.500000");
         assertThat(InventoryRules.signedDelta(TRANSFER_IN, new BigDecimal("2.5")))
+            .isEqualByComparingTo("2.500000");
+        assertThat(InventoryRules.signedDelta(OPENING_IN, new BigDecimal("2.5")))
+            .isEqualByComparingTo("2.500000");
+        assertThat(InventoryRules.signedDelta(OPENING_ADJUSTMENT, new BigDecimal("2.5")))
             .isEqualByComparingTo("2.500000");
     }
 
@@ -104,6 +110,8 @@ class InventoryRulesTest {
         InventoryRules.requireOwnedMovement("PURCHASE_RETURN", PURCHASE_RETURN_OUT);
         InventoryRules.requireOwnedMovement("TRANSFER_DISPATCH", TRANSFER_OUT);
         InventoryRules.requireOwnedMovement("TRANSFER_RECEIPT", TRANSFER_IN);
+        InventoryRules.requireOwnedMovement("BUSINESS_MIGRATION", OPENING_IN);
+        InventoryRules.requireOwnedMovement("BUSINESS_MIGRATION_ADJUSTMENT", OPENING_ADJUSTMENT);
         assertThatThrownBy(() -> InventoryRules.requireOwnedMovement("STOCKTAKE", SALE_OUT))
             .isInstanceOf(ServiceException.class);
         assertThatThrownBy(() -> InventoryRules.requireOwnedMovement("PURCHASE_RECEIPT", PURCHASE_RETURN_OUT))
@@ -111,6 +119,10 @@ class InventoryRulesTest {
         assertThatThrownBy(() -> InventoryRules.requireOwnedMovement("UNKNOWN", STOCKTAKE_GAIN))
             .isInstanceOf(ServiceException.class);
         assertThatThrownBy(() -> InventoryRules.requireOwnedMovement("TRANSFER_DISPATCH", TRANSFER_IN))
+            .isInstanceOf(ServiceException.class);
+        assertThatThrownBy(() -> InventoryRules.requireOwnedMovement("BUSINESS_MIGRATION", SALE_OUT))
+            .isInstanceOf(ServiceException.class);
+        assertThatThrownBy(() -> InventoryRules.requireOwnedMovement("BUSINESS_MIGRATION_ADJUSTMENT", OPENING_IN))
             .isInstanceOf(ServiceException.class);
     }
 }

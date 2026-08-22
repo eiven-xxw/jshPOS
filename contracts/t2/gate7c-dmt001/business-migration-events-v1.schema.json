@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:jshpos:event:business-migration:v1",
+  "title": "BusinessMigrationEventV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["eventId", "tenantId", "batchId", "eventType", "schemaVersion", "payloadHash", "occurredAt"],
+  "properties": {
+    "eventId": {"type": "string", "minLength": 26, "maxLength": 26},
+    "tenantId": {"type": "string", "minLength": 1, "maxLength": 20},
+    "batchId": {"type": "string", "minLength": 26, "maxLength": 26},
+    "eventType": {"enum": ["BATCH_STATE_CHANGED", "OWNER_CHECKPOINT_RECORDED", "RECONCILIATION_COMPLETED", "BATCH_ACTIVATED", "STAGING_CLEANED"]},
+    "schemaVersion": {"const": 1},
+    "payloadHash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "occurredAt": {"type": "string", "format": "date-time"},
+    "correlationId": {"type": "string", "minLength": 1, "maxLength": 64}
+  }
+}

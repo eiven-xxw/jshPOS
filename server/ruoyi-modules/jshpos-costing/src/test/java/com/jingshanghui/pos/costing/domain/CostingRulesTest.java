@@ -69,6 +69,18 @@ class CostingRulesTest {
     }
 
     @Test
+    void valuesOpeningInventoryFromFrozenMigrationCost() {
+        CostTransition first = calculate("OPENING_IN", "0", "0", "0", "0", "10", "123.450000", false);
+        assertTransition(first, "10.000000", "1234.500000", "123.450000", "OPENING_FROZEN_COST", false);
+
+        CostTransition continuous = calculate("OPENING_IN", "10", "1000", "100", "100", "2", "150", false);
+        assertTransition(continuous, "12.000000", "1300.000000", "108.333333", "OPENING_FROZEN_COST", false);
+
+        assertThatThrownBy(() -> calculate("OPENING_IN", "0", "0", "0", "0", "1", null, false))
+            .isInstanceOf(ServiceException.class).hasMessageContaining("CST-COST-MISSING");
+    }
+
+    @Test
     void freezesTransferOutAndInheritsExactlyAtDestination() {
         CostTransition outbound = calculate("TRANSFER_OUT", "10", "1000", "100", "90",
             "-3", null, false);

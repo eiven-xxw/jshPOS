@@ -22,7 +22,11 @@ public final class InventoryStates {
         /** 已审批调拨从来源仓发出的出库。 */
         TRANSFER_OUT,
         /** 已发出调拨在目的仓确认收货的入库。 */
-        TRANSFER_IN
+        TRANSFER_IN,
+        /** 经双人审批和对账的开业期初库存入库。 */
+        OPENING_IN,
+        /** 开业激活后的显式期初修正；不得用于首次导入覆盖余额。 */
+        OPENING_ADJUSTMENT
     }
 
     public enum NegativeStockMode {

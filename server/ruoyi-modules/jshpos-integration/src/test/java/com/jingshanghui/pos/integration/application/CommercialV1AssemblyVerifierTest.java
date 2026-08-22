@@ -16,7 +16,7 @@ class CommercialV1AssemblyVerifierTest {
 
         CommercialV1AssemblyVerifier.AssemblySnapshot snapshot = verifier.verifyNow();
 
-        assertThat(snapshot.ownerBeans()).hasSize(16);
+        assertThat(snapshot.ownerBeans()).hasSize(17);
         assertThat(snapshot.externalBoundaries()).hasSize(5);
         assertThat(snapshot.externalBoundaries().values())
             .allSatisfy(state -> assertThat(state.runtimeStatus()).isEqualTo("UNAVAILABLE"));
@@ -60,7 +60,7 @@ class CommercialV1AssemblyVerifierTest {
             .hasMessageContaining("CORE-ASSEMBLY-002");
 
         verifier.afterSingletonsInstantiated();
-        assertThat(verifier.snapshot().ownerBeans()).hasSize(16);
+        assertThat(verifier.snapshot().ownerBeans()).hasSize(17);
         assertThatThrownBy(() -> verifier.snapshot().ownerBeans().put("rogue", "rogueBean"))
             .isInstanceOf(UnsupportedOperationException.class);
     }

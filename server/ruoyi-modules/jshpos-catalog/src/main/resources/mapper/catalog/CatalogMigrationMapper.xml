@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jingshanghui.pos.catalog.infrastructure.persistence.mapper.CatalogMigrationMapper">
+
+    <!-- 迁移预检只读取 Catalog Owner 权威定义，所有查询显式约束可信 tenant_id。 -->
+    <select id="findCategoryByCode" resultType="com.jingshanghui.pos.catalog.application.model.CatalogViews$DefinitionView">
+      SELECT category_id AS id,category_code AS code,category_name AS name,status
+      FROM cat_category WHERE tenant_id=#{tenantId} AND category_code=#{code}
+    </select>
+    <select id="findBrandByCode" resultType="com.jingshanghui.pos.catalog.application.model.CatalogViews$DefinitionView">
+      SELECT brand_id AS id,brand_code AS code,brand_name AS name,status
+      FROM cat_brand WHERE tenant_id=#{tenantId} AND brand_code=#{code}
+    </select>
+    <select id="findUnitByCode" resultType="com.jingshanghui.pos.catalog.application.model.CatalogViews$DefinitionView">
+      SELECT unit_id AS id,unit_code AS code,unit_name AS name,status
+      FROM cat_unit WHERE tenant_id=#{tenantId} AND unit_code=#{code}
+    </select>
+    <select id="findProductByCode" resultType="com.jingshanghui.pos.catalog.application.model.CatalogViews$ProductView">
+      SELECT s.sku_id AS skuId,s.spu_id AS spuId,p.spu_code AS spuCode,s.sku_code AS skuCode,
+        s.sku_name AS name,p.category_id AS categoryId,p.brand_id AS brandId,
+        s.product_type AS productType,s.status,s.version
+      FROM cat_sku s JOIN cat_spu p ON p.tenant_id=s.tenant_id AND p.spu_id=s.spu_id
+      WHERE s.tenant_id=#{tenantId} AND s.sku_code=#{skuCode}
+    </select>
+    <select id="findProduct" resultType="com.jingshanghui.pos.catalog.application.model.CatalogViews$ProductView">
+      SELECT s.sku_id AS skuId,s.spu_id AS spuId,p.spu_code AS spuCode,s.sku_code AS skuCode,
+        s.sku_name AS name,p.category_id AS categoryId,p.brand_id AS brandId,
+        s.product_type AS productType,s.status,s.version
+      FROM cat_sku s JOIN cat_spu p ON p.tenant_id=s.tenant_id AND p.spu_id=s.spu_id
+      WHERE s.tenant_id=#{tenantId} AND s.sku_id=#{skuId}
+    </select>
+
+    <!-- 绑定是 Catalog Owner 只追加事实；数据库触发器同时拒绝覆盖更新和物理删除。 -->
+    <insert id="insertMigrationBinding">
+      INSERT INTO cat_migration_product(batch_id,tenant_id,row_id,row_sha256,sku_id,base_unit_id,sku_code)
+      VALUES(#{batchId},#{tenantId},#{rowId},#{rowSha256},#{skuId},#{baseUnitId},#{skuCode})
+    </insert>
+    <sql id="bindingColumns">batch_id AS batchId,row_id AS rowId,row_sha256 AS rowSha256,
+      sku_id AS skuId,base_unit_id AS baseUnitId,sku_code AS skuCode</sql>
+    <select id="findMigrationBinding" resultType="com.jingshanghui.pos.catalog.application.port.CatalogMigrationPersistencePort$MigrationBindingView">
+      SELECT <include refid="bindingColumns"/> FROM cat_migration_product
+      WHERE tenant_id=#{tenantId} AND batch_id=#{batchId} AND row_id=#{rowId}
+    </select>
+    <select id="findMigrationBindingBySkuCode" resultType="com.jingshanghui.pos.catalog.application.port.CatalogMigrationPersistencePort$MigrationBindingView">
+      SELECT <include refid="bindingColumns"/> FROM cat_migration_product
+      WHERE tenant_id=#{tenantId} AND batch_id=#{batchId} AND sku_code=#{skuCode}
+    </select>
+    <select id="listMigrationBindings" resultType="com.jingshanghui.pos.catalog.application.port.CatalogMigrationPersistencePort$MigrationBindingView">
+      SELECT <include refid="bindingColumns"/> FROM cat_migration_product
+      WHERE tenant_id=#{tenantId} AND batch_id=#{batchId} ORDER BY row_id
+    </select>
+</mapper>

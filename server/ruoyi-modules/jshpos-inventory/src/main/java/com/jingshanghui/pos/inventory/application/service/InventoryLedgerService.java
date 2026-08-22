@@ -15,6 +15,7 @@ import com.jingshanghui.pos.inventory.application.port.AuthoritativeInventoryMov
 import com.jingshanghui.pos.inventory.application.port.AuthoritativeCostPostingPort;
 import com.jingshanghui.pos.inventory.application.port.AuthoritativeCostPostingPort.PostedInventoryLedger;
 import com.jingshanghui.pos.inventory.application.port.ReplenishmentInventorySnapshotPort;
+import com.jingshanghui.pos.inventory.application.port.BusinessMigrationInventoryPort;
 import com.jingshanghui.pos.inventory.application.port.ReplenishmentInventorySnapshotPort.InventorySnapshot;
 import com.jingshanghui.pos.inventory.application.model.InventoryViews.ApplyResult;
 import com.jingshanghui.pos.inventory.application.model.InventoryViews.BalanceView;
@@ -67,7 +68,8 @@ import java.util.Map;
  */
 @Service
 @RequiredArgsConstructor
-public class InventoryLedgerService implements AuthoritativeInventoryMovementPort, ReplenishmentInventorySnapshotPort {
+public class InventoryLedgerService implements AuthoritativeInventoryMovementPort, ReplenishmentInventorySnapshotPort,
+    BusinessMigrationInventoryPort {
 
     private final InventoryMapper mapper;
     private final TrustedTenantContext tenantContext;
@@ -146,6 +148,18 @@ public class InventoryLedgerService implements AuthoritativeInventoryMovementPor
         return apply(new SourceApply(command.eventId(), command.sourceType(), command.sourceId(),
             command.warehouseId(), command.correlationId(), command.storeId(), command.businessDate(),
             null, lines, hashOwned(command, lines)));
+    }
+
+    /** 期初库存只能追加 OPENING_IN；端口不接受成本和 tenant_id，防止客户端构造账本事实。 */
+    @Override
+    @Transactional
+    public ApplyResult importOpeningInventory(OpeningInventoryCommand command) {
+        if (command == null) throw new ServiceException("DMT-INVENTORY-INPUT: 期初库存命令缺失", 400);
+        InventoryRules.requireUlid(command.batchId(), "batchId");
+        return applyOwnedMovement(new OwnedMovement(command.eventId(), "BUSINESS_MIGRATION", command.batchId(),
+            command.warehouseId(), command.storeId(), command.businessDate(), command.correlationId(),
+            List.of(new AuthoritativeInventoryMovementPort.OwnedMovementLine(command.rowId(), command.skuId(),
+                command.baseUnitId(), command.quantity(), MovementType.OPENING_IN))));
     }
 
     /** 发布后策略不可修改；便利店默认应首先发布 DENY 版本。 */

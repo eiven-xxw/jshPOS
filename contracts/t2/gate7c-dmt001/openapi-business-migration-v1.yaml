@@ -1,0 +1,470 @@
+openapi: 3.0.3
+info:
+  title: 鲸熵汇开业资料迁移 API
+  version: 1.0.0
+  description: T2-DMT-001；tenant_id 只来自可信认证上下文，响应不含原始行、会员身份原文或 staging 密文。
+tags:
+  - name: BusinessMigration
+paths:
+  /api/v1/business-migrations:
+    post:
+      tags: [BusinessMigration]
+      operationId: createBusinessMigration
+      summary: 创建或幂等返回迁移批次
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateBatch" }
+      responses:
+        "200":
+          {
+            description: 创建或返回原批次,
+            content:
+              {
+                application/json:
+                  { schema: { $ref: "#/components/schemas/BatchEnvelope" } },
+              },
+          }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /api/v1/business-migrations/{batchId}:
+    parameters:
+      - { $ref: "#/components/parameters/BatchId" }
+    get:
+      tags: [BusinessMigration]
+      operationId: getBusinessMigration
+      summary: 查询脱敏批次、首 500 条错误和 Owner 检查点
+      responses:
+        "200":
+          {
+            description: 批次详情,
+            content:
+              {
+                application/json:
+                  { schema: { $ref: "#/components/schemas/DetailEnvelope" } },
+              },
+          }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /api/v1/business-migrations/{batchId}/errors:
+    parameters:
+      - { $ref: "#/components/parameters/BatchId" }
+      - {
+          name: page,
+          in: query,
+          schema: { type: integer, minimum: 1, default: 1 },
+        }
+      - {
+          name: pageSize,
+          in: query,
+          schema: { type: integer, minimum: 1, maximum: 500, default: 200 },
+        }
+    get:
+      tags: [BusinessMigration]
+      operationId: pageBusinessMigrationErrors
+      summary: 完整分页读取脱敏字段级或行级预检错误
+      responses:
+        "200":
+          {
+            description: 错误分页,
+            content:
+              {
+                application/json:
+                  {
+                    schema: { $ref: "#/components/schemas/ErrorPageEnvelope" },
+                  },
+              },
+          }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /api/v1/business-migrations/{batchId}/files:
+    parameters:
+      - { $ref: "#/components/parameters/BatchId" }
+    post:
+      tags: [BusinessMigration]
+      operationId: uploadMigrationFile
+      summary: 上传单类资料并执行安全检查、完整预检和加密 staging
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [metadata, file]
+              properties:
+                metadata: { $ref: "#/components/schemas/UploadMetadata" }
+                file:
+                  {
+                    type: string,
+                    format: binary,
+                    description: 最大 64 MiB 的 CSV 或无宏 XLSX,
+                  }
+      responses:
+        "200":
+          {
+            description: 预检或幂等重放结果,
+            content:
+              {
+                application/json:
+                  { schema: { $ref: "#/components/schemas/UploadEnvelope" } },
+              },
+          }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /api/v1/business-migrations/{batchId}/approvals:
+    parameters:
+      - { $ref: "#/components/parameters/BatchId" }
+    post:
+      tags: [BusinessMigration]
+      operationId: approveBusinessMigration
+      summary: 提交双人审批中的一票；同键同内容返回原结果
+      requestBody: { $ref: "#/components/requestBodies/Action" }
+      responses:
+        "200":
+          {
+            description: 审批后批次,
+            content:
+              {
+                application/json:
+                  { schema: { $ref: "#/components/schemas/DetailEnvelope" } },
+              },
+          }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /api/v1/business-migrations/{batchId}/resume:
+    parameters:
+      - { $ref: "#/components/parameters/BatchId" }
+    post:
+      tags: [BusinessMigration]
+      operationId: resumeBusinessMigration
+      summary: 沿原批次、原行和原 Owner 命令推进或恢复 Saga
+      requestBody: { $ref: "#/components/requestBodies/Run" }
+      responses:
+        "200":
+          {
+            description: 当前批次与检查点,
+            content:
+              {
+                application/json:
+                  { schema: { $ref: "#/components/schemas/DetailEnvelope" } },
+              },
+          }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /api/v1/business-migrations/{batchId}/reconcile:
+    parameters:
+      - { $ref: "#/components/parameters/BatchId" }
+    post:
+      tags: [BusinessMigration]
+      operationId: reconcileBusinessMigration
+      summary: 对完整有序 Owner 检查点执行流式摘要和数量对账
+      requestBody: { $ref: "#/components/requestBodies/Run" }
+      responses:
+        "200":
+          {
+            description: 冻结对账结果,
+            content:
+              {
+                application/json:
+                  {
+                    schema:
+                      { $ref: "#/components/schemas/ReconciliationEnvelope" },
+                  },
+              },
+          }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /api/v1/business-migrations/{batchId}/activate:
+    parameters:
+      - { $ref: "#/components/parameters/BatchId" }
+    post:
+      tags: [BusinessMigration]
+      operationId: activateBusinessMigration
+      summary: 双人审批且零差异后激活迁移里程碑和 Catalog 可见版本
+      requestBody: { $ref: "#/components/requestBodies/Run" }
+      responses:
+        "200":
+          {
+            description: 激活或幂等重放结果,
+            content:
+              {
+                application/json:
+                  { schema: { $ref: "#/components/schemas/DetailEnvelope" } },
+              },
+          }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /api/v1/business-migrations/{batchId}/cleanup:
+    parameters:
+      - { $ref: "#/components/parameters/BatchId" }
+    post:
+      tags: [BusinessMigration]
+      operationId: cleanupBusinessMigration
+      summary: 受审计清空加密 staging 内容，不删除批次、检查点和 Owner 事实
+      requestBody: { $ref: "#/components/requestBodies/Run" }
+      responses:
+        "200":
+          {
+            description: 清理或幂等重放结果,
+            content:
+              {
+                application/json:
+                  { schema: { $ref: "#/components/schemas/DetailEnvelope" } },
+              },
+          }
+        "409": { $ref: "#/components/responses/Conflict" }
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer }
+  parameters:
+    BatchId:
+      name: batchId
+      in: path
+      required: true
+      schema: { type: string, pattern: "^[0-9A-HJKMNP-TV-Z]{26}$" }
+  requestBodies:
+    Action:
+      required: true
+      content:
+        {
+          application/json:
+            { schema: { $ref: "#/components/schemas/ActionCommand" } },
+        }
+    Run:
+      required: true
+      content:
+        {
+          application/json:
+            { schema: { $ref: "#/components/schemas/RunCommand" } },
+        }
+  responses:
+    BadRequest:
+      {
+        description: 输入、文件或映射失败关闭,
+        content:
+          {
+            application/json:
+              { schema: { $ref: "#/components/schemas/ErrorEnvelope" } },
+          },
+      }
+    Conflict:
+      {
+        description: 幂等、状态、摘要、审批或并发冲突,
+        content:
+          {
+            application/json:
+              { schema: { $ref: "#/components/schemas/ErrorEnvelope" } },
+          },
+      }
+    NotFound:
+      {
+        description: 批次不存在或不属于可信租户,
+        content:
+          {
+            application/json:
+              { schema: { $ref: "#/components/schemas/ErrorEnvelope" } },
+          },
+      }
+  schemas:
+    DataType:
+      type: string
+      enum: [CATALOG, SUPPLIER, OPENING_INVENTORY, MEMBER]
+    CreateBatch:
+      type: object
+      additionalProperties: false
+      required: [dataTypes, idempotencyKey, correlationId]
+      properties:
+        dataTypes:
+          {
+            type: array,
+            minItems: 1,
+            maxItems: 4,
+            uniqueItems: true,
+            items: { $ref: "#/components/schemas/DataType" },
+          }
+        idempotencyKey: { type: string, minLength: 1, maxLength: 128 }
+        correlationId: { type: string, minLength: 1, maxLength: 64 }
+    UploadMetadata:
+      type: object
+      additionalProperties: false
+      required:
+        [
+          dataType,
+          mappingVersion,
+          charset,
+          sourceSystem,
+          custodyReference,
+          declaredSha256,
+          correlationId,
+        ]
+      properties:
+        dataType: { $ref: "#/components/schemas/DataType" }
+        mappingVersion: { type: string, enum: ["1.0"] }
+        charset: { type: string, enum: [UTF-8, GB18030, XLSX] }
+        sourceSystem: { type: string, minLength: 1, maxLength: 80 }
+        custodyReference: { type: string, minLength: 1, maxLength: 256 }
+        declaredSha256: { type: string, pattern: "^[a-f0-9]{64}$" }
+        correlationId: { type: string, minLength: 1, maxLength: 64 }
+    ActionCommand:
+      type: object
+      additionalProperties: false
+      required: [idempotencyKey, reason, correlationId]
+      properties:
+        idempotencyKey: { type: string, minLength: 1, maxLength: 128 }
+        reason: { type: string, minLength: 1, maxLength: 256 }
+        correlationId: { type: string, minLength: 1, maxLength: 64 }
+    RunCommand:
+      type: object
+      additionalProperties: false
+      required: [idempotencyKey, correlationId]
+      properties:
+        idempotencyKey: { type: string, minLength: 1, maxLength: 128 }
+        reason: { type: string, maxLength: 256 }
+        correlationId: { type: string, minLength: 1, maxLength: 64 }
+    Batch:
+      type: object
+      required:
+        [
+          batchId,
+          state,
+          requestedTypes,
+          fileCount,
+          validRowCount,
+          errorCount,
+          approvalCount,
+          appliedRowCount,
+          version,
+          requestSha256,
+          correlationId,
+          createdAt,
+        ]
+      properties:
+        batchId: { type: string }
+        state: { type: string }
+        requestedTypes:
+          { type: array, items: { $ref: "#/components/schemas/DataType" } }
+        fileCount: { type: integer }
+        validRowCount: { type: integer }
+        errorCount: { type: integer }
+        approvalCount: { type: integer }
+        appliedRowCount: { type: integer }
+        version: { type: integer }
+        requestSha256: { type: string }
+        correlationId: { type: string }
+        createdAt: { type: string, format: date-time }
+    File:
+      type: object
+      properties:
+        fileId: { type: string }
+        batchId: { type: string }
+        dataType: { $ref: "#/components/schemas/DataType" }
+        mappingVersion: { type: string }
+        sourceSha256: { type: string }
+        safeFilename: { type: string }
+        charset: { type: string }
+        rowCount: { type: integer }
+        errorCount: { type: integer }
+        state: { type: string }
+        sourceSystem: { type: string }
+        custodyReference: { type: string }
+    PreflightError:
+      type: object
+      description: 只包含稳定错误码和脱敏说明
+      properties:
+        errorId: { type: string }
+        dataType: { $ref: "#/components/schemas/DataType" }
+        rowNumber: { type: integer }
+        fieldName: { type: string, nullable: true }
+        errorCode: { type: string }
+        maskedMessage: { type: string }
+    Checkpoint:
+      type: object
+      properties:
+        ownerType: { type: string }
+        dataType: { $ref: "#/components/schemas/DataType" }
+        appliedCount: { type: integer }
+        failedCount: { type: integer }
+        resultSha256: { type: string }
+        state: { type: string }
+    Detail:
+      type: object
+      properties:
+        batch: { $ref: "#/components/schemas/Batch" }
+        files: { type: array, items: { $ref: "#/components/schemas/File" } }
+        errors:
+          {
+            type: array,
+            maxItems: 500,
+            items: { $ref: "#/components/schemas/PreflightError" },
+          }
+        checkpoints:
+          { type: array, items: { $ref: "#/components/schemas/Checkpoint" } }
+    ErrorPage:
+      type: object
+      properties:
+        page: { type: integer }
+        pageSize: { type: integer }
+        total: { type: integer }
+        records:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/PreflightError" },
+          }
+    UploadResult:
+      type: object
+      properties:
+        batch: { $ref: "#/components/schemas/Batch" }
+        file: { $ref: "#/components/schemas/File" }
+        acceptedRows: { type: integer }
+        errorCount: { type: integer }
+    Reconciliation:
+      type: object
+      properties:
+        batchId: { type: string }
+        expectedRows: { type: integer }
+        appliedRows: { type: integer }
+        differenceCount: { type: integer }
+        resultSha256: { type: string }
+        go: { type: boolean }
+    BatchEnvelope:
+      type: object
+      properties:
+        {
+          code: { type: integer },
+          msg: { type: string },
+          data: { $ref: "#/components/schemas/Batch" },
+        }
+    DetailEnvelope:
+      type: object
+      properties:
+        {
+          code: { type: integer },
+          msg: { type: string },
+          data: { $ref: "#/components/schemas/Detail" },
+        }
+    ErrorPageEnvelope:
+      type: object
+      properties:
+        {
+          code: { type: integer },
+          msg: { type: string },
+          data: { $ref: "#/components/schemas/ErrorPage" },
+        }
+    UploadEnvelope:
+      type: object
+      properties:
+        {
+          code: { type: integer },
+          msg: { type: string },
+          data: { $ref: "#/components/schemas/UploadResult" },
+        }
+    ReconciliationEnvelope:
+      type: object
+      properties:
+        {
+          code: { type: integer },
+          msg: { type: string },
+          data: { $ref: "#/components/schemas/Reconciliation" },
+        }
+    ErrorEnvelope:
+      type: object
+      properties: { code: { type: integer }, msg: { type: string } }
+security:
+  - bearerAuth: []

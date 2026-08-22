@@ -22,6 +22,7 @@
         <module>jshpos-promotion</module>
         <module>jshpos-returns</module>
         <module>jshpos-member</module>
+        <module>jshpos-migration</module>
         <module>jshpos-reporting</module>
         <module>jshpos-resilience</module>
         <module>jshpos-release</module>

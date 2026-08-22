@@ -36,6 +36,7 @@ import com.jingshanghui.pos.procurement.domain.ProcurementHash;
 import com.jingshanghui.pos.procurement.domain.ProcurementRules;
 import com.jingshanghui.pos.procurement.application.port.ReplenishmentProcurementSnapshotPort;
 import com.jingshanghui.pos.procurement.application.port.ReplenishmentPurchaseDraftPort;
+import com.jingshanghui.pos.procurement.application.port.BusinessMigrationSupplierPort;
 import com.jingshanghui.pos.procurement.infrastructure.persistence.ProcurementPersistenceParams.*;
 import com.jingshanghui.pos.procurement.infrastructure.persistence.mapper.ProcurementMapper;
 import lombok.RequiredArgsConstructor;
@@ -62,7 +63,8 @@ import java.util.Map;
  */
 @Service
 @RequiredArgsConstructor
-public class ProcurementService implements ReplenishmentProcurementSnapshotPort, ReplenishmentPurchaseDraftPort {
+public class ProcurementService implements ReplenishmentProcurementSnapshotPort, ReplenishmentPurchaseDraftPort,
+    BusinessMigrationSupplierPort {
 
     private final ProcurementMapper mapper;
     private final TrustedTenantContext tenantContext;
@@ -95,6 +97,21 @@ public class ProcurementService implements ReplenishmentProcurementSnapshotPort,
         audit(principal, null, "SUPPLIER_CREATED", "SUPPLIER", command.supplierId(), command.supplierId(),
             command.correlationId(), null, "ACTIVE", "CREATED", at);
         return mapper.findSupplier(principal.tenantId(), command.supplierId());
+    }
+
+    /** 开业迁移只复用正式供应商创建规则，不向 Migration Owner 暴露供应商 Mapper。 */
+    @Override
+    @Transactional
+    public SupplierMigrationResult importSupplier(SupplierMigrationCommand command) {
+        if (command == null || command.rowSha256() == null
+            || !command.rowSha256().matches("^[a-f0-9]{64}$")) {
+            throw new ServiceException("DMT-SUPPLIER-INPUT: 供应商迁移行摘要非法", 400);
+        }
+        Supplier before = mapper.findSupplier(tenantContext.requireTenantId(), command.supplierId());
+        Supplier supplier = createSupplier(new CreateSupplier(command.supplierId(), command.code(), command.name(),
+            command.correlationId()));
+        return new SupplierMigrationResult(supplier.supplierId(), supplier.code(), supplier.status(),
+            command.rowSha256(), before != null);
     }
 
     @Transactional

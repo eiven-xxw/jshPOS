@@ -29,6 +29,8 @@ import com.jingshanghui.pos.inventory.application.port.AuthoritativeCostPostingP
 import com.jingshanghui.pos.inventory.application.port.AuthoritativeCostPostingPort.CostPostingResult;
 import com.jingshanghui.pos.inventory.application.port.AuthoritativeCostPostingPort.PostedInventoryLedger;
 import com.jingshanghui.pos.inventory.domain.InventoryHash;
+import com.jingshanghui.pos.inventory.application.port.OpeningInventoryCostSourcePort;
+import com.jingshanghui.pos.inventory.application.port.OpeningInventoryCostSourcePort.OpeningCostSource;
 import com.jingshanghui.pos.order.domain.UlidGenerator;
 import com.jingshanghui.pos.procurement.application.port.ProcurementCostSourcePort;
 import com.jingshanghui.pos.procurement.application.port.ProcurementCostSourcePort.ReceiptCostSource;
@@ -66,6 +68,7 @@ public class CostingService implements AuthoritativeCostPostingPort {
     private final ScopeAuthorizationService authorizationService;
     private final ProcurementCostSourcePort procurementSourcePort;
     private final TransferCostSourcePort transferSourcePort;
+    private final OpeningInventoryCostSourcePort openingSourcePort;
     private final UlidGenerator ulids;
     private final Clock clock;
     private final ObjectMapper objectMapper;
@@ -244,6 +247,7 @@ public class CostingService implements AuthoritativeCostPostingPort {
             case "SALE_RETURN_IN" -> saleReturnSource(tenantId, fact);
             case "TRANSFER_OUT" -> transferDispatchSource(fact);
             case "TRANSFER_IN" -> transferReceiptSource(tenantId, fact);
+            case "OPENING_IN" -> openingSource(fact);
             case "REVERSAL" -> reversalSource(tenantId, fact);
             case "SALE_OUT", "STOCKTAKE_GAIN", "STOCKTAKE_LOSS" -> ResolvedSource.current();
             default -> throw new ServiceException("CST-MOVEMENT-001: 成本移动类型未准入", 409);
@@ -260,6 +264,19 @@ public class CostingService implements AuthoritativeCostPostingPort {
         return new ResolvedSource(null, false, null, null, null,
             List.of(source.dispatchId(), source.transferId(), source.sourceWarehouseId(),
                 source.destinationWarehouseId(), source.currencyCode()));
+    }
+
+    private ResolvedSource openingSource(PostedInventoryLedger fact) {
+        if (!"BUSINESS_MIGRATION".equals(fact.sourceType())) {
+            throw new ServiceException("CST-SOURCE-005: 期初库存缺少权威迁移来源", 409);
+        }
+        OpeningCostSource source = openingSourcePort.requireOpeningLine(fact.sourceLineId());
+        if (!source.skuId().equals(fact.skuId()) || !source.baseUnitId().equals(fact.baseUnitId())
+            || source.baseQuantity().compareTo(fact.quantityDelta()) != 0 || !"CNY".equals(source.currencyCode())) {
+            throw new ServiceException("CST-SOURCE-006: 期初库存来源与库存流水不一致", 409);
+        }
+        return new ResolvedSource(source.unitCostMinor(), false, null, null, null,
+            List.of(source.batchId(), source.rowId(), source.currencyCode()));
     }
 
     private ResolvedSource transferReceiptSource(String tenantId, PostedInventoryLedger fact) {
@@ -416,6 +433,7 @@ public class CostingService implements AuthoritativeCostPostingPort {
             case "PURCHASE_RETURN_OUT" -> "PURCHASE_RETURN".equals(fact.sourceType());
             case "TRANSFER_OUT" -> "TRANSFER_DISPATCH".equals(fact.sourceType());
             case "TRANSFER_IN" -> "TRANSFER_RECEIPT".equals(fact.sourceType());
+            case "OPENING_IN" -> "BUSINESS_MIGRATION".equals(fact.sourceType());
             case "REVERSAL" -> "REVERSAL".equals(fact.sourceType());
             default -> false;
         };

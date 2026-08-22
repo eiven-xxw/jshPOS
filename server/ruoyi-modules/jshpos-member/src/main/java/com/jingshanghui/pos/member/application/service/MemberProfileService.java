@@ -10,6 +10,7 @@ import com.jingshanghui.pos.member.application.model.MemberViews.*;
 import com.jingshanghui.pos.member.application.port.MemberIdentityProtector;
 import com.jingshanghui.pos.member.application.port.MemberIdentityProtector.ProtectedIdentity;
 import com.jingshanghui.pos.member.application.port.MemberPersistencePort;
+import com.jingshanghui.pos.member.application.port.BusinessMigrationMemberPort;
 import com.jingshanghui.pos.member.application.port.MemberPersistencePort.*;
 import com.jingshanghui.pos.member.domain.MemberRules;
 import com.jingshanghui.pos.member.domain.MemberStates;
@@ -30,7 +31,7 @@ import java.util.Set;
 /** T2-MEM-001 会员身份、同意、隐私请求和可逆合并应用服务。 */
 @Service
 @RequiredArgsConstructor
-public class MemberProfileService {
+public class MemberProfileService implements BusinessMigrationMemberPort {
     private static final Set<String> PRIVACY_TYPES = Set.of("ACCESS", "EXPORT", "CORRECT", "DELETE");
     private static final String SHA256 = "^[a-f0-9]{64}$";
     private final TrustedTenantContext tenantContext;
@@ -66,6 +67,21 @@ public class MemberProfileService {
             Map.of("identityType", command.identityType(), "keyVersion", protectedValue.keyVersion()));
         writeCommand(principal.tenantId(), "CREATE_MEMBER", command.commandId(), requestHash, command.memberId(), 0);
         return requireMember(principal.tenantId(), command.memberId());
+    }
+
+    /** 开业迁移复用正式加密身份与命令幂等，不向 Migration Owner 暴露会员私表。 */
+    @Override
+    @Transactional
+    public MemberMigrationResult importMember(MemberMigrationCommand command) {
+        if (command == null || command.rowSha256() == null
+            || !command.rowSha256().matches("^[a-f0-9]{64}$")) {
+            throw new ServiceException("DMT-MEMBER-INPUT: 会员迁移行摘要非法", 400);
+        }
+        MemberView existing = persistence.findMember(tenantContext.requireTenantId(), command.memberId());
+        MemberView result = create(new CreateMember(command.commandId(), command.memberId(), command.identityId(),
+            command.identityType(), command.identityValue(), command.correlationId()));
+        return new MemberMigrationResult(result.memberId(), result.displayName(), result.state(), command.rowSha256(),
+            existing != null);
     }
 
     /** 使用标准化值的 HMAC 精确解析，仅返回脱敏身份；合并别名可路由到目标主体。 */

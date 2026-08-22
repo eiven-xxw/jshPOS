@@ -19,7 +19,7 @@ public final class CostingRules {
     private static final BigDecimal ZERO = new BigDecimal("0.000000");
     private static final Set<String> SUPPORTED = Set.of("PURCHASE_RECEIPT_IN", "PURCHASE_RETURN_OUT",
         "SALE_OUT", "SALE_RETURN_IN", "STOCKTAKE_GAIN", "STOCKTAKE_LOSS",
-        "TRANSFER_OUT", "TRANSFER_IN", "REVERSAL");
+        "TRANSFER_OUT", "TRANSFER_IN", "OPENING_IN", "REVERSAL");
 
     private CostingRules() {
     }
@@ -55,7 +55,8 @@ public final class CostingRules {
         boolean estimated = input.sourceEstimated();
         BigDecimal variance = ZERO;
         BigDecimal afterAmount;
-        if ("PURCHASE_RECEIPT_IN".equals(input.movementType()) || "TRANSFER_IN".equals(input.movementType())) {
+        if ("PURCHASE_RECEIPT_IN".equals(input.movementType()) || "TRANSFER_IN".equals(input.movementType())
+            || "OPENING_IN".equals(input.movementType())) {
             unit = requireUnitCost(input.sourceUnitCostMinor());
             if (beforeQuantity.signum() < 0) {
                 BigDecimal deficitUnit = usableUnit(beforeAverage, beforeLast, input.before().costKnown());
@@ -69,11 +70,13 @@ public final class CostingRules {
                     afterAmount = afterQuantity.multiply(unit).setScale(SCALE, ROUNDING);
                 }
                 method = "TRANSFER_IN".equals(input.movementType())
-                    ? "TRANSFER_NEGATIVE_SETTLEMENT" : "NEGATIVE_SETTLEMENT";
+                    ? "TRANSFER_NEGATIVE_SETTLEMENT" : ("OPENING_IN".equals(input.movementType())
+                    ? "OPENING_NEGATIVE_SETTLEMENT" : "NEGATIVE_SETTLEMENT");
             } else {
                 afterAmount = beforeAmount.add(delta.multiply(unit)).setScale(SCALE, ROUNDING);
                 method = "TRANSFER_IN".equals(input.movementType())
-                    ? "INHERITED_TRANSFER_COST" : "PURCHASE_FROZEN_PRICE";
+                    ? "INHERITED_TRANSFER_COST" : ("OPENING_IN".equals(input.movementType())
+                    ? "OPENING_FROZEN_COST" : "PURCHASE_FROZEN_PRICE");
             }
         } else if ("SALE_RETURN_IN".equals(input.movementType())) {
             unit = input.sourceUnitCostMinor() == null
@@ -188,6 +191,9 @@ public final class CostingRules {
     }
 
     private static BigDecimal requireUnitCost(BigDecimal value) {
+        if (value == null) {
+            throw new ServiceException("CST-COST-MISSING: 需要冻结单位成本的事实不得缺少成本", 409);
+        }
         BigDecimal result = nonNegativeMoney(value, "sourceUnitCostMinor");
         return result;
     }

@@ -15,6 +15,7 @@ import com.jingshanghui.pos.foundation.application.context.TrustedPrincipal;
 import com.jingshanghui.pos.foundation.application.context.TrustedTenantContext;
 import com.jingshanghui.pos.foundation.application.security.ScopeAuthorizationService;
 import com.jingshanghui.pos.inventory.application.port.AuthoritativeCostPostingPort.PostedInventoryLedger;
+import com.jingshanghui.pos.inventory.application.port.OpeningInventoryCostSourcePort;
 import com.jingshanghui.pos.inventory.domain.InventoryHash;
 import com.jingshanghui.pos.order.domain.UlidGenerator;
 import com.jingshanghui.pos.procurement.application.port.ProcurementCostSourcePort;
@@ -58,6 +59,7 @@ class CostingServiceTest {
     private final ScopeAuthorizationService authorization = mock(ScopeAuthorizationService.class);
     private final ProcurementCostSourcePort procurement = mock(ProcurementCostSourcePort.class);
     private final TransferCostSourcePort transfer = mock(TransferCostSourcePort.class);
+    private final OpeningInventoryCostSourcePort opening = mock(OpeningInventoryCostSourcePort.class);
     private final Clock clock = Clock.fixed(NOW, ZoneOffset.UTC);
     private CostingService service;
 
@@ -65,7 +67,7 @@ class CostingServiceTest {
     void setUp() {
         when(tenantContext.requirePrincipal()).thenReturn(new TrustedPrincipal("TENANT_A", 101L, 1L, "alice"));
         when(tenantContext.requireTenantId()).thenReturn("TENANT_A");
-        service = new CostingService(mapper, tenantContext, authorization, procurement, transfer,
+        service = new CostingService(mapper, tenantContext, authorization, procurement, transfer, opening,
             new UlidGenerator(clock), clock, new ObjectMapper());
     }
 

@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jingshanghui.pos.migration.infrastructure.persistence.mapper.BusinessMigrationMapper">
+
+    <!-- 批次投影显式列举状态、版本、摘要与可信租户，禁止通配列查询。 -->
+    <sql id="batchColumns">batch_id AS batchId,tenant_id AS tenantId,requested_types AS requestedTypes,
+      state,idempotency_key AS idempotencyKey,request_sha256 AS requestSha256,
+      correlation_id AS correlationId,version,created_at AS createdAt</sql>
+    <sql id="fileColumns">file_id AS fileId,batch_id AS batchId,data_type AS dataType,
+      mapping_version AS mappingVersion,source_sha256 AS sourceSha256,safe_filename AS safeFilename,
+      charset_name AS charset,row_count AS rowCount,error_count AS errorCount,state,
+      source_system AS sourceSystem,custody_reference AS custodyReference</sql>
+    <sql id="errorColumns">error_id AS errorId,data_type AS dataType,row_number AS rowNumber,
+      field_name AS fieldName,error_code AS errorCode,masked_message AS maskedMessage</sql>
+    <sql id="stagingColumns">row_id AS rowId,batch_id AS batchId,file_id AS fileId,data_type AS dataType,
+      row_number AS rowNumber,row_sha256 AS rowSha256,cipher_text AS cipherText,
+      key_version AS keyVersion,content_hmac AS contentHmac,state</sql>
+
+    <select id="findBatch" resultType="com.jingshanghui.pos.migration.application.port.BusinessMigrationPersistencePort$BatchRecord">
+      SELECT <include refid="batchColumns"/> FROM mig_batch
+      WHERE tenant_id=#{tenantId} AND batch_id=#{batchId}
+    </select>
+    <select id="findBatchByIdempotency" resultType="com.jingshanghui.pos.migration.application.port.BusinessMigrationPersistencePort$BatchRecord">
+      SELECT <include refid="batchColumns"/> FROM mig_batch
+      WHERE tenant_id=#{tenantId} AND idempotency_key=#{key}
+    </select>
+    <insert id="insertBatch">
+      INSERT INTO mig_batch(batch_id,tenant_id,requested_types,state,idempotency_key,request_sha256,
+        correlation_id,creator_user_id,created_at)
+      VALUES(#{batchId},#{tenantId},CAST(#{requestedTypes} AS JSON),#{state},#{idempotencyKey},
+        #{requestSha256},#{correlationId},#{creatorUserId},#{createdAt})
+    </insert>
+    <!-- 乐观版本与原状态必须同时命中；受影响行数不是 1 时由应用层失败关闭。 -->
+    <update id="changeBatchState">
+      UPDATE mig_batch SET state=#{toState},version=version+1,updated_at=#{at}
+      WHERE tenant_id=#{tenantId} AND batch_id=#{batchId} AND state=#{fromState} AND version=#{expectedVersion}
+    </update>
+    <insert id="appendStateEvent">
+      INSERT INTO mig_state_event(event_id,tenant_id,batch_id,from_state,to_state,batch_version,
+        actor_user_id,correlation_id,occurred_at)
+      VALUES(#{eventId},#{tenantId},#{batchId},#{fromState},#{toState},#{batchVersion},
+        #{actorUserId},#{correlationId},#{at})
+    </insert>
+    <insert id="appendAudit">
+      INSERT INTO mig_audit_event(audit_id,tenant_id,batch_id,action,actor_user_id,summary_sha256,
+        correlation_id,occurred_at)
+      VALUES(#{auditId},#{tenantId},#{batchId},#{action},#{actorUserId},#{summarySha256},#{correlationId},#{at})
+    </insert>
+    <insert id="appendOutbox">
+      INSERT INTO mig_outbox(outbox_id,tenant_id,batch_id,event_type,aggregate_version,payload_json,
+        payload_sha256,delivery_state,correlation_id,available_at)
+      VALUES(#{outboxId},#{tenantId},#{batchId},#{eventType},#{aggregateVersion},CAST(#{payloadJson} AS JSON),
+        #{payloadSha256},'NEW',#{correlationId},#{at})
+    </insert>
+    <insert id="insertFile">
+      INSERT INTO mig_file(file_id,tenant_id,batch_id,data_type,mapping_version,source_sha256,safe_filename,
+        charset_name,row_count,error_count,state,source_system,custody_reference,file_bytes,uploader_user_id,created_at)
+      VALUES(#{fileId},#{tenantId},#{batchId},#{dataType},#{mappingVersion},#{sourceSha256},#{safeFilename},
+        #{charset},#{rowCount},#{errorCount},#{state},#{sourceSystem},#{custodyReference},#{fileBytes},
+        #{uploaderUserId},#{at})
+    </insert>
+    <select id="listFiles" resultType="com.jingshanghui.pos.migration.application.port.BusinessMigrationPersistencePort$FileRecord">
+      SELECT <include refid="fileColumns"/> FROM mig_file
+      WHERE tenant_id=#{tenantId} AND batch_id=#{batchId} ORDER BY created_at,file_id
+    </select>
+    <insert id="insertPreflightError">
+      INSERT INTO mig_preflight_error(error_id,tenant_id,batch_id,file_id,data_type,row_number,field_name,
+        error_code,masked_message,created_at)
+      VALUES(#{errorId},#{tenantId},#{batchId},#{fileId},#{dataType},#{rowNumber},#{fieldName},
+        #{errorCode},#{maskedMessage},#{at})
+    </insert>
+    <select id="listPreflightErrors" resultType="com.jingshanghui.pos.migration.application.port.BusinessMigrationPersistencePort$PreflightErrorRecord">
+      SELECT <include refid="errorColumns"/> FROM mig_preflight_error
+      WHERE tenant_id=#{tenantId} AND batch_id=#{batchId}
+      ORDER BY data_type,row_number,error_id LIMIT 500
+    </select>
+    <select id="listPreflightErrorsPage" resultType="com.jingshanghui.pos.migration.application.port.BusinessMigrationPersistencePort$PreflightErrorRecord">
+      SELECT <include refid="errorColumns"/> FROM mig_preflight_error
+      WHERE tenant_id=#{tenantId} AND batch_id=#{batchId}
+      ORDER BY data_type,row_number,error_id LIMIT #{limit} OFFSET #{offset}
+    </select>
+    <select id="countPreflightErrors" resultType="int">
+      SELECT COUNT(*) FROM mig_preflight_error WHERE tenant_id=#{tenantId} AND batch_id=#{batchId}
+    </select>
+    <insert id="insertStagingRow">
+      INSERT INTO mig_staging_row(row_id,tenant_id,batch_id,file_id,data_type,row_number,row_sha256,cipher_text,
+        key_version,content_hmac,state,expires_at,created_at)
+      VALUES(#{rowId},#{tenantId},#{batchId},#{fileId},#{dataType},#{rowNumber},#{rowSha256},#{cipherText},
+        #{keyVersion},#{contentHmac},'READY',#{expiresAt},#{at})
+    </insert>
+    <select id="findStagingRow" resultType="com.jingshanghui.pos.migration.application.port.BusinessMigrationPersistencePort$StagingRecord">
+      SELECT <include refid="stagingColumns"/> FROM mig_staging_row
+      WHERE tenant_id=#{tenantId} AND row_id=#{rowId}
+    </select>
+    <!-- Owner 顺序与行序是 Saga 命令身份的一部分，禁止依赖数据库默认返回顺序。 -->
+    <select id="listStagingRows" resultType="com.jingshanghui.pos.migration.application.port.BusinessMigrationPersistencePort$StagingRecord">
+      SELECT <include refid="stagingColumns"/> FROM mig_staging_row
+      WHERE tenant_id=#{tenantId} AND batch_id=#{batchId}
+      ORDER BY FIELD(data_type,'CATALOG','SUPPLIER','MEMBER','OPENING_INVENTORY'),row_number,row_id
+    </select>
+    <select id="countStagingRows" resultType="int">
+      SELECT COUNT(*) FROM mig_staging_row WHERE tenant_id=#{tenantId} AND batch_id=#{batchId}
+    </select>
+    <insert id="insertApproval">
+      INSERT INTO mig_approval(approval_id,tenant_id,batch_id,approver_user_id,reason_sha256,idempotency_key,
+        correlation_id,approved_at)
+      VALUES(#{approvalId},#{tenantId},#{batchId},#{approverUserId},#{reasonSha256},#{idempotencyKey},
+        #{correlationId},#{at})
+    </insert>
+    <select id="countApprovals" resultType="int">
+      SELECT COUNT(*) FROM mig_approval WHERE tenant_id=#{tenantId} AND batch_id=#{batchId}
+    </select>
+    <select id="hasApproval" resultType="boolean">
+      SELECT COUNT(*)&gt;0 FROM mig_approval
+      WHERE tenant_id=#{tenantId} AND batch_id=#{batchId} AND approver_user_id=#{userId}
+    </select>
+    <select id="findApprovalByIdempotency" resultType="com.jingshanghui.pos.migration.application.port.BusinessMigrationPersistencePort$ApprovalRecord">
+      SELECT approval_id AS approvalId,batch_id AS batchId,approver_user_id AS approverUserId,
+        reason_sha256 AS reasonSha256,idempotency_key AS idempotencyKey
+      FROM mig_approval WHERE tenant_id=#{tenantId} AND batch_id=#{batchId} AND idempotency_key=#{key}
+    </select>
+    <select id="findCheckpoint" resultType="com.jingshanghui.pos.migration.application.port.BusinessMigrationPersistencePort$CheckpointRecord">
+      SELECT checkpoint_id AS checkpointId,batch_id AS batchId,row_id AS rowId,owner_type AS ownerType,
+        data_type AS dataType,command_id AS commandId,request_sha256 AS requestSha256,
+        result_sha256 AS resultSha256,state
+      FROM mig_owner_checkpoint WHERE tenant_id=#{tenantId} AND batch_id=#{batchId} AND row_id=#{rowId}
+    </select>
+    <insert id="insertCheckpoint">
+      INSERT INTO mig_owner_checkpoint(checkpoint_id,tenant_id,batch_id,row_id,owner_type,data_type,command_id,
+        request_sha256,result_sha256,state,correlation_id,created_at)
+      VALUES(#{checkpointId},#{tenantId},#{batchId},#{rowId},#{ownerType},#{dataType},#{commandId},
+        #{requestSha256},#{resultSha256},#{state},#{correlationId},#{at})
+    </insert>
+    <!-- 完整有序检查点由应用层做长度前缀流式摘要，避免 GROUP_CONCAT 截断。 -->
+    <select id="listCheckpointDigests" resultType="com.jingshanghui.pos.migration.application.port.BusinessMigrationPersistencePort$CheckpointDigest">
+      SELECT row_id AS rowId,owner_type AS ownerType,data_type AS dataType,request_sha256 AS requestSha256,
+        result_sha256 AS resultSha256,state
+      FROM mig_owner_checkpoint WHERE tenant_id=#{tenantId} AND batch_id=#{batchId}
+      ORDER BY owner_type,data_type,row_id
+    </select>
+    <select id="countAppliedCheckpoints" resultType="int">
+      SELECT COUNT(*) FROM mig_owner_checkpoint
+      WHERE tenant_id=#{tenantId} AND batch_id=#{batchId} AND state='APPLIED'
+    </select>
+    <insert id="insertReconciliation">
+      INSERT INTO mig_reconciliation(reconciliation_id,tenant_id,batch_id,expected_rows,applied_rows,
+        difference_count,result_sha256,state,actor_user_id,correlation_id,created_at)
+      VALUES(#{reconciliationId},#{tenantId},#{batchId},#{expectedRows},#{appliedRows},#{differenceCount},
+        #{resultSha256},#{state},#{actorUserId},#{correlationId},#{at})
+    </insert>
+    <select id="latestReconciliation" resultType="com.jingshanghui.pos.migration.application.port.BusinessMigrationPersistencePort$ReconciliationRecord">
+      SELECT reconciliation_id AS reconciliationId,batch_id AS batchId,expected_rows AS expectedRows,
+        applied_rows AS appliedRows,difference_count AS differenceCount,result_sha256 AS resultSha256,state
+      FROM mig_reconciliation WHERE tenant_id=#{tenantId} AND batch_id=#{batchId}
+      ORDER BY created_at DESC,reconciliation_id DESC LIMIT 1
+    </select>
+    <!-- 清理只擦除加密 staging 密文与 HMAC，不删除 Owner 事实、检查点或审计。 -->
+    <update id="clearStaging">
+      UPDATE mig_staging_row SET cipher_text='',content_hmac='',state='CLEANED',cleaned_at=#{at}
+      WHERE tenant_id=#{tenantId} AND batch_id=#{batchId} AND state&lt;&gt;'CLEANED'
+    </update>
+</mapper>
