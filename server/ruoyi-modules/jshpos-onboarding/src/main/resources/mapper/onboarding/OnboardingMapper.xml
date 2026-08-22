@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jingshanghui.pos.onboarding.infrastructure.persistence.mapper.OnboardingMapper">
+    <resultMap id="plan" type="com.jingshanghui.pos.onboarding.application.model.OnboardingModels$PlanRecord">
+        <constructor>
+            <arg column="plan_id" javaType="java.lang.String"/><arg column="tenant_id" javaType="java.lang.String"/>
+            <arg column="source_store_id" javaType="java.lang.Long"/><arg column="target_store_id" javaType="java.lang.Long"/>
+            <arg column="template_id" javaType="java.lang.Long"/><arg column="template_version_id" javaType="java.lang.Long"/>
+            <arg column="source_store_version" javaType="java.lang.Integer"/><arg column="target_store_version" javaType="java.lang.Integer"/>
+            <arg column="template_version_no" javaType="java.lang.Integer"/><arg column="template_sha256" javaType="java.lang.String"/>
+            <arg column="industry" javaType="java.lang.String"/><arg column="snapshot_sha256" javaType="java.lang.String"/>
+            <arg column="state" javaType="java.lang.String"/><arg column="idempotency_key" javaType="java.lang.String"/>
+            <arg column="request_sha256" javaType="java.lang.String"/><arg column="creator_user_id" javaType="java.lang.Long"/>
+            <arg column="check_run" javaType="java.lang.Integer"/><arg column="record_version" javaType="java.lang.Integer"/>
+            <arg column="created_at" javaType="java.time.LocalDateTime"/><arg column="updated_at" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+    <sql id="planColumns">plan_id,tenant_id,source_store_id,target_store_id,template_id,template_version_id,
+        source_store_version,target_store_version,template_version_no,template_sha256,industry,snapshot_sha256,
+        state,idempotency_key,request_sha256,creator_user_id,check_run,record_version,created_at,updated_at</sql>
+
+    <select id="findPlan" resultMap="plan">SELECT <include refid="planColumns"/> FROM onb_plan WHERE tenant_id=#{tenantId} AND plan_id=#{planId}</select>
+    <select id="lockPlan" resultMap="plan">SELECT <include refid="planColumns"/> FROM onb_plan WHERE tenant_id=#{tenantId} AND plan_id=#{planId} FOR UPDATE</select>
+    <select id="findPlanByIdempotency" resultMap="plan">SELECT <include refid="planColumns"/> FROM onb_plan WHERE tenant_id=#{tenantId} AND idempotency_key=#{idempotencyKey}</select>
+    <insert id="insertPlan">INSERT INTO onb_plan(plan_id,tenant_id,source_store_id,target_store_id,template_id,
+        template_version_id,source_store_version,target_store_version,template_version_no,template_sha256,industry,
+        snapshot_sha256,state,idempotency_key,request_sha256,creator_user_id,check_run,record_version,created_at,updated_at)
+        VALUES(#{planId},#{tenantId},#{sourceStoreId},#{targetStoreId},#{templateId},#{templateVersionId},
+        #{sourceStoreVersion},#{targetStoreVersion},#{templateVersionNo},#{templateSha256},#{industry},
+        #{snapshotSha256},#{state},#{idempotencyKey},#{requestSha256},#{creatorUserId},0,0,#{at},#{at})</insert>
+    <update id="changeState">UPDATE onb_plan SET state=#{toState},check_run=COALESCE(#{checkRun},check_run),
+        record_version=record_version+1,updated_at=#{at} WHERE tenant_id=#{tenantId} AND plan_id=#{planId}
+        AND state=#{fromState} AND record_version=#{expectedVersion}</update>
+    <insert id="insertSnapshot">INSERT INTO onb_config_snapshot(snapshot_id,tenant_id,plan_id,item_key,content_json,
+        content_sha256,created_at) VALUES(#{snapshotId},#{tenantId},#{planId},#{itemKey},CAST(#{contentJson} AS JSON),
+        #{contentSha256},#{at})</insert>
+    <select id="listSnapshot" resultType="com.jingshanghui.pos.onboarding.application.model.OnboardingModels$SnapshotItem">
+        SELECT snapshot_id snapshotId,tenant_id tenantId,plan_id planId,item_key itemKey,CAST(content_json AS CHAR) contentJson,
+        content_sha256 contentSha256,created_at createdAt FROM onb_config_snapshot WHERE tenant_id=#{tenantId}
+        AND plan_id=#{planId} ORDER BY item_key,snapshot_id</select>
+    <insert id="insertApproval">INSERT INTO onb_approval(approval_id,tenant_id,plan_id,approver_user_id,reason,
+        idempotency_key,request_sha256,approved_at) VALUES(#{approvalId},#{tenantId},#{planId},#{approverUserId},
+        #{reason},#{idempotencyKey},#{requestSha256},#{at})</insert>
+    <select id="listApprovals" resultType="com.jingshanghui.pos.onboarding.application.model.OnboardingModels$ApprovalRecord">
+        SELECT approval_id approvalId,tenant_id tenantId,plan_id planId,approver_user_id approverUserId,reason,
+        idempotency_key idempotencyKey,request_sha256 requestSha256,approved_at approvedAt FROM onb_approval
+        WHERE tenant_id=#{tenantId} AND plan_id=#{planId} ORDER BY approved_at,approval_id</select>
+    <insert id="insertCheckpoint">INSERT INTO onb_step_checkpoint(checkpoint_id,tenant_id,plan_id,step_code,
+        idempotency_key,request_sha256,result_sha256,state,created_at) VALUES(#{checkpointId},#{tenantId},#{planId},
+        #{stepCode},#{idempotencyKey},#{requestSha256},#{resultSha256},#{state},#{at})</insert>
+    <select id="findCheckpoint" resultType="com.jingshanghui.pos.onboarding.application.model.OnboardingModels$CheckpointRecord">
+        SELECT checkpoint_id checkpointId,tenant_id tenantId,plan_id planId,step_code stepCode,
+        idempotency_key idempotencyKey,request_sha256 requestSha256,result_sha256 resultSha256,state,created_at createdAt
+        FROM onb_step_checkpoint WHERE tenant_id=#{tenantId} AND plan_id=#{planId} AND step_code=#{stepCode}</select>
+    <select id="listCheckpoints" resultType="com.jingshanghui.pos.onboarding.application.model.OnboardingModels$CheckpointRecord">
+        SELECT checkpoint_id checkpointId,tenant_id tenantId,plan_id planId,step_code stepCode,
+        idempotency_key idempotencyKey,request_sha256 requestSha256,result_sha256 resultSha256,state,created_at createdAt
+        FROM onb_step_checkpoint WHERE tenant_id=#{tenantId} AND plan_id=#{planId} ORDER BY created_at,checkpoint_id</select>
+    <select id="nextCheckRun" resultType="int">SELECT COALESCE(MAX(run_no),0)+1 FROM onb_check_result WHERE tenant_id=#{tenantId} AND plan_id=#{planId}</select>
+    <insert id="insertCheck">INSERT INTO onb_check_result(check_id,tenant_id,plan_id,run_no,check_code,owner_type,
+        required_flag,external_flag,fact_version,fact_sha256,status,masked_message,checked_at) VALUES(#{checkId},
+        #{tenantId},#{planId},#{runNo},#{checkCode},#{ownerType},#{required},#{external},#{factVersion},#{factSha256},
+        #{status},#{maskedMessage},#{at})</insert>
+    <select id="listLatestChecks" resultType="com.jingshanghui.pos.onboarding.application.model.OnboardingModels$CheckRecord">
+        SELECT check_id checkId,tenant_id tenantId,plan_id planId,run_no runNo,check_code checkCode,owner_type ownerType,
+        required_flag required,external_flag external,fact_version factVersion,fact_sha256 factSha256,status,
+        masked_message maskedMessage,checked_at checkedAt FROM onb_check_result WHERE tenant_id=#{tenantId}
+        AND plan_id=#{planId} AND run_no=(SELECT MAX(x.run_no) FROM onb_check_result x WHERE x.tenant_id=#{tenantId}
+        AND x.plan_id=#{planId}) ORDER BY check_code</select>
+    <select id="findCommand" resultType="com.jingshanghui.pos.onboarding.application.model.OnboardingModels$CommandRecord">
+        SELECT command_id commandId,tenant_id tenantId,plan_id planId,operation,idempotency_key idempotencyKey,
+        request_sha256 requestSha256,result_state resultState,result_sha256 resultSha256,created_at createdAt
+        FROM onb_command_result WHERE tenant_id=#{tenantId} AND operation=#{operation} AND idempotency_key=#{idempotencyKey}</select>
+    <insert id="insertCommand">INSERT INTO onb_command_result(command_id,tenant_id,plan_id,operation,idempotency_key,
+        request_sha256,result_state,result_sha256,created_at) VALUES(#{commandId},#{tenantId},#{planId},#{operation},
+        #{idempotencyKey},#{requestSha256},#{resultState},#{resultSha256},#{at})</insert>
+    <insert id="appendState">INSERT INTO onb_state_event(event_id,tenant_id,plan_id,from_state,to_state,request_sha256,
+        correlation_id,actor_user_id,occurred_at) VALUES(#{eventId},#{tenantId},#{planId},#{fromState},#{toState},
+        #{requestSha256},#{correlationId},#{actorUserId},#{at})</insert>
+    <insert id="appendAudit">INSERT INTO onb_audit_event(audit_id,tenant_id,plan_id,action_code,result,request_sha256,
+        correlation_id,actor_user_id,masked_summary,occurred_at) VALUES(#{auditId},#{tenantId},#{planId},#{actionCode},
+        #{result},#{requestSha256},#{correlationId},#{actorUserId},#{maskedSummary},#{at})</insert>
+    <insert id="appendOutbox">INSERT INTO onb_outbox(outbox_id,tenant_id,plan_id,event_type,schema_version,payload_json,
+        payload_sha256,correlation_id,delivery_state,attempts,created_at) VALUES(#{outboxId},#{tenantId},#{planId},
+        #{eventType},#{schemaVersion},CAST(#{payloadJson} AS JSON),#{payloadSha256},#{correlationId},'PENDING',0,#{at})</insert>
+</mapper>

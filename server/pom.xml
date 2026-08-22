@@ -479,6 +479,11 @@
             </dependency>
             <dependency>
                 <groupId>com.jingshanghui.pos</groupId>
+                <artifactId>jshpos-onboarding</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.jingshanghui.pos</groupId>
                 <artifactId>jshpos-reporting</artifactId>
                 <version>${revision}</version>
             </dependency>

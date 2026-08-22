@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jingshanghui.pos.inventory.infrastructure.persistence.mapper.StoreOnboardingInventoryMapper">
+    <select id="countEffectiveWarehousePolicies" resultType="int">
+        SELECT COUNT(*) FROM inv_stock_policy_version p
+        WHERE p.tenant_id=#{tenantId} AND p.store_id=#{storeId}
+          AND p.effective_from=(SELECT MAX(x.effective_from) FROM inv_stock_policy_version x
+            WHERE x.tenant_id=p.tenant_id AND x.warehouse_id=p.warehouse_id
+              AND x.store_id=p.store_id AND x.effective_from&lt;=UTC_TIMESTAMP(3))
+    </select>
+</mapper>

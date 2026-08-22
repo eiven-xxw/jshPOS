@@ -142,6 +142,10 @@
             <groupId>com.jingshanghui.pos</groupId>
             <artifactId>jshpos-migration</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.jingshanghui.pos</groupId>
+            <artifactId>jshpos-onboarding</artifactId>
+        </dependency>
 
         <!-- Gate 5D 可重建经营报表与安全导出模块 -->
         <dependency>

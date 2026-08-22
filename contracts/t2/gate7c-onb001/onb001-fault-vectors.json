@@ -39,7 +39,7 @@
     {"id":"ONB-036","case":"外部阻断被伪造 PASS","expected":"REJECT"},
     {"id":"ONB-037","case":"BLOCKED 情况尝试 OPENED","expected":"FAIL_CLOSED"},
     {"id":"ONB-038","case":"内部检查全通过外部阻断","expected":"READY_TO_OPEN"},
-    {"id":"ONB-039","case":"全部合成向量 PASS","expected":"OPENED_SYNTHETIC_ONLY"},
+    {"id":"ONB-039","case":"全部内部合成检查 PASS 但外部资料未解阻","expected":"READY_TO_OPEN"},
     {"id":"ONB-040","case":"APPLYING 后取消","expected":"FAIL_CLOSED"},
     {"id":"ONB-041","case":"开店后回退删除","expected":"REJECT"},
     {"id":"ONB-042","case":"跨门店越权读取","expected":"DENIED"},

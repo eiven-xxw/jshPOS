@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jingshanghui.pos.resilience.infrastructure.persistence.mapper.StoreOnboardingBackupMapper">
+    <select id="findLatestPass" resultType="com.jingshanghui.pos.resilience.application.port.StoreOnboardingBackupPort$BackupReadiness">
+        SELECT d.drill_id drillId,d.backup_id backupId,d.ended_at endedAt,
+               d.rpo_seconds rpoSeconds,d.rto_seconds rtoSeconds,d.evidence_sha256 evidenceSha256
+        FROM bak_restore_drill d JOIN bak_backup_set b ON b.backup_id=d.backup_id
+        WHERE d.state='PASS' AND FIND_IN_SET(#{tenantId},b.tenant_ids_csv)&gt;0
+        ORDER BY d.ended_at DESC,d.drill_id DESC LIMIT 1
+    </select>
+</mapper>

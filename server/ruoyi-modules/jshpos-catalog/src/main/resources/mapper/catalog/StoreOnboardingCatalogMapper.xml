@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jingshanghui.pos.catalog.infrastructure.persistence.mapper.StoreOnboardingCatalogMapper">
+    <select id="countActiveSku" resultType="int">
+        SELECT COUNT(*) FROM cat_sku WHERE tenant_id=#{tenantId} AND status='ACTIVE'
+    </select>
+    <select id="countPricedSku" resultType="int">
+        SELECT COUNT(DISTINCT s.sku_id)
+        FROM cat_sku s
+        JOIN cat_sku_unit su ON su.tenant_id=s.tenant_id AND su.sku_id=s.sku_id AND su.primary_unit=TRUE
+        WHERE s.tenant_id=#{tenantId} AND s.status='ACTIVE'
+          AND EXISTS (
+            SELECT 1 FROM prc_price_item i
+            JOIN prc_price_book b ON b.tenant_id=i.tenant_id AND b.price_book_id=i.price_book_id
+            WHERE i.tenant_id=s.tenant_id AND i.sku_id=s.sku_id AND i.unit_id=su.unit_id
+              AND b.state='PUBLISHED' AND (b.scope_type='TENANT_BASE' OR b.store_id=#{storeId})
+              AND i.effective_from&lt;=UTC_TIMESTAMP(6)
+              AND (i.effective_to IS NULL OR i.effective_to&gt;UTC_TIMESTAMP(6))
+          )
+    </select>
+    <select id="findLatestPackage" resultType="com.jingshanghui.pos.catalog.application.model.CatalogViews$PackageView">
+        SELECT package_id packageId,store_id storeId,package_version packageVersion,previous_version previousVersion,
+               schema_version schemaVersion,payload_sha256 payloadSha256,signature_algorithm signatureAlgorithm,
+               signing_key_id signingKeyId,object_key objectKey,record_count recordCount,generated_at generatedAt
+        FROM dpk_catalog_package WHERE tenant_id=#{tenantId} AND store_id=#{storeId}
+        ORDER BY package_version DESC LIMIT 1
+    </select>
+</mapper>
