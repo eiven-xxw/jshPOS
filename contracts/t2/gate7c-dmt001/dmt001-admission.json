@@ -3,8 +3,8 @@
   "gate": "T2-GATE7C-SPRINT-S21D-DMT001",
   "baselineCommit": "fdd2667e48ce4197907416b823ff6cb917a66d6b",
   "branch": "t2/gate7c-sprint21d-dmt001-business-migration",
-  "decision": "DMT001_APPROVED_IN_PROGRESS",
-  "requirement": {"id": "T2-DMT-001", "status": "IN_PROGRESS", "owner": "Migration"},
+  "decision": "DMT001_VERIFIED_CONDITIONAL_PASS",
+  "requirement": {"id": "T2-DMT-001", "status": "VERIFIED", "owner": "Migration"},
   "dataTypes": ["CATALOG", "SUPPLIER", "OPENING_INVENTORY", "MEMBER"],
   "ownerOrder": ["CATALOG", "PROCUREMENT", "MEMBER", "INVENTORY"],
   "persistence": [
