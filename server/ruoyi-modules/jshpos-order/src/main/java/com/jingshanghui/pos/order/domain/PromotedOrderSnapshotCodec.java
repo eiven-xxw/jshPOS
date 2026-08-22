@@ -40,6 +40,9 @@ public final class PromotedOrderSnapshotCodec {
             item.put("surchargeAmountMinor", line.surchargeAmountMinor());
             item.put("payableAmountMinor", line.payableAmountMinor()); item.put("priceSource", line.priceSource());
             item.put("sourceAllocations", line.sourceAllocations());
+            if (line.measuredBarcodeSnapshot() != null) {
+                item.put("measuredBarcodeSnapshot", line.measuredBarcodeSnapshot().toCanonicalMap());
+            }
             lines.add(item);
         });
         Map<String, Object> value = new LinkedHashMap<>();

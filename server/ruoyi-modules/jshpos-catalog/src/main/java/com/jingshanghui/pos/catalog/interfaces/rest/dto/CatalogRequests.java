@@ -114,4 +114,33 @@ public final class CatalogRequests {
     public record PublishPackage(@NotNull Long storeId, @Min(1) long packageVersion,
                                  @Min(0) long previousVersion) {
     }
+
+    @JsonIgnoreProperties(ignoreUnknown = false)
+    public record CreateWeightedBarcodeTemplate(
+        @NotBlank @Size(max = 64) String templateCode,
+        @Min(1) int versionNo,
+        @NotBlank String scopeType,
+        Long storeId,
+        @NotBlank String barcodeKind,
+        @NotBlank @Size(min = 2, max = 5) String prefixValue,
+        @Min(1) @Max(12) int skuStartPos,
+        @Min(1) @Max(8) int skuLength,
+        @Min(1) @Max(12) int valueStartPos,
+        @Min(1) @Max(8) int valueLength,
+        @Min(0) @Max(6) int valueScale,
+        @Min(0) int priorityNo,
+        @NotNull Instant effectiveFrom,
+        Instant effectiveTo
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = false)
+    public record ChangeWeightedBarcodeState(@Min(0) int expectedVersion) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = false)
+    public record PreviewWeightedBarcode(@NotNull Long storeId,
+                                         @NotBlank @Size(min = 13, max = 13) String rawBarcode,
+                                         Instant occurredAt) {
+    }
 }

@@ -1,6 +1,7 @@
 package com.jingshanghui.pos.sync.application.service;
 
 import com.jingshanghui.pos.order.application.model.PromotedOrderCommands.PromotedLine;
+import com.jingshanghui.pos.order.application.model.PromotedOrderCommands.MeasuredBarcodeSnapshot;
 import com.jingshanghui.pos.order.application.model.PromotedOrderCommands.SubmitPromotedCashOrder;
 import com.jingshanghui.pos.order.application.port.PromotedOrderSubmissionPort;
 import com.jingshanghui.pos.order.application.port.PromotionSnapshotIngestionPort;
@@ -106,7 +107,33 @@ public class PromotedOrderEventDispatcher {
             text(value, "productName"), number(value, "unitId"), text(value, "unitCode"),
             text(value, "quantity"), number(value, "unitPriceMinor"), number(value, "grossAmountMinor"),
             number(value, "discountAmountMinor"), number(value, "surchargeAmountMinor"),
-            number(value, "payableAmountMinor"), text(value, "priceSource"), allocations);
+            number(value, "payableAmountMinor"), text(value, "priceSource"), allocations,
+            measurement(value.get("measuredBarcodeSnapshot")));
+    }
+
+    private MeasuredBarcodeSnapshot measurement(Object source) {
+        if (source == null) {
+            return null;
+        }
+        if (!(source instanceof Map<?, ?> raw)) {
+            throw invalid("measuredBarcodeSnapshot must be an object");
+        }
+        Map<String, Object> value = new LinkedHashMap<>();
+        raw.forEach((key, item) -> value.put(String.valueOf(key), item));
+        Object rounding = value.get("roundingApplied");
+        if (!(rounding instanceof Boolean roundingApplied)) {
+            throw invalid("measuredBarcodeSnapshot.roundingApplied must be boolean");
+        }
+        try {
+            return new MeasuredBarcodeSnapshot(text(value, "rawBarcode"), text(value, "skuCode"),
+                text(value, "encodedValue"), text(value, "quantity"), number(value, "amountMinor"),
+                number(value, "unitPriceMinor"), text(value, "currency"), text(value, "templateId"),
+                Math.toIntExact(number(value, "templateVersion")), text(value, "templateSha256"),
+                text(value, "parseSha256"), roundingApplied,
+                java.time.Instant.parse(text(value, "occurredAt")));
+        } catch (java.time.format.DateTimeParseException | ArithmeticException exception) {
+            throw invalid("measuredBarcodeSnapshot contains an invalid version or timestamp");
+        }
     }
 
     private String hash(Map<String, Object> value, String field) {

@@ -1,12 +1,14 @@
 package com.jingshanghui.pos.order.application.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jingshanghui.pos.catalog.application.port.WeightedBarcodeSnapshotVerificationPort;
 import com.jingshanghui.pos.foundation.application.context.TrustedPrincipal;
 import com.jingshanghui.pos.foundation.application.context.TrustedTenantContext;
 import com.jingshanghui.pos.foundation.application.security.ScopeAuthorizationService;
 import com.jingshanghui.pos.foundation.domain.CanonicalJson;
 import com.jingshanghui.pos.order.application.model.OrderViews.ShiftView;
 import com.jingshanghui.pos.order.application.model.PromotedOrderCommands.PromotedLine;
+import com.jingshanghui.pos.order.application.model.PromotedOrderCommands.MeasuredBarcodeSnapshot;
 import com.jingshanghui.pos.order.application.model.PromotedOrderCommands.SubmitPromotedCashOrder;
 import com.jingshanghui.pos.order.application.port.PromotedOrderRepository;
 import com.jingshanghui.pos.order.application.port.PromotionSnapshotQueryPort;
@@ -30,6 +32,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -50,6 +53,8 @@ class PromotedCashOrderServiceTest {
     private final PromotedOrderRepository repository = mock(PromotedOrderRepository.class);
     private final OrderMapper mapper = mock(OrderMapper.class);
     private final PromotionSnapshotQueryPort promotions = mock(PromotionSnapshotQueryPort.class);
+    private final WeightedBarcodeSnapshotVerificationPort weightedBarcodes =
+        mock(WeightedBarcodeSnapshotVerificationPort.class);
     private final TrustedTenantContext context = mock(TrustedTenantContext.class);
     private final ScopeAuthorizationService authorization = mock(ScopeAuthorizationService.class);
     private final Clock clock = Clock.fixed(NOW, ZoneOffset.UTC);
@@ -58,7 +63,7 @@ class PromotedCashOrderServiceTest {
     private final OrderJournalService journal = new OrderJournalService(mapper, ulids);
     private final OrderFinalityGuardService finalityGuard = new OrderFinalityGuardService(mapper);
     private final PromotedCashOrderService service = new PromotedCashOrderService(repository, mapper, promotions,
-        context, authorization, idempotency, journal, finalityGuard, ulids);
+        weightedBarcodes, context, authorization, idempotency, journal, finalityGuard, ulids);
 
     @BeforeEach
     void configureTrustedSyntheticContext() {
@@ -143,6 +148,41 @@ class PromotedCashOrderServiceTest {
         assertThatThrownBy(() -> service.submit(changed))
             .isInstanceOf(ServiceException.class).hasMessageContaining("PROMOTION_SNAPSHOT_MISMATCH");
         verify(repository, never()).insertOrder(any());
+    }
+
+    @Test
+    void verifiesAndPersistsMeasuredBarcodeSnapshotWithoutRecomputingEncodedAmount() {
+        MeasuredBarcodeSnapshot measurement = new MeasuredBarcodeSnapshot("2200123002507", "00123", "00250",
+            "0.25", 498, 1990, "CNY", "501", 1, HASH_A, HASH_C, true, NOW);
+        PromotedLine line = new PromotedLine(LINE, 1, 101L, "00123", measurement.rawBarcode(),
+            "Synthetic Weighted Apple", 201L, "KG", measurement.quantity(), measurement.unitPriceMinor(),
+            measurement.amountMinor(), 0, 0, measurement.amountMinor(), "TENANT_BASE", Map.of(), measurement);
+        SubmitPromotedCashOrder draft = new SubmitPromotedCashOrder("01K5C000000000000000000002",
+            "gate7c-measured-key-001", ORDER, "SYN-G7C-0001", 1101L,
+            "01K2A000000000000000000011", SHIFT, "101", LocalDate.parse("2026-08-17"),
+            "Asia/Shanghai", 10, 20, "CONVENIENCE_V1", SNAPSHOT, HASH_C, HASH_A, HASH_A,
+            1, HASH_A, List.of(), 498, 0, 0, 498, 500, List.of(line), NOW);
+        String orderHash = PromotedOrderSnapshotCodec.encode(draft, 101L).sha256();
+        SubmitPromotedCashOrder command = new SubmitPromotedCashOrder(draft.commandId(), draft.idempotencyKey(),
+            draft.orderId(), draft.localOrderNo(), draft.storeId(), draft.terminalId(), draft.shiftId(),
+            draft.cashierId(), draft.businessDate(), draft.storeTimezone(), draft.catalogVersion(),
+            draft.priceVersion(), draft.industryTemplateVersion(), draft.promotionSnapshotId(),
+            draft.promotionSnapshotSha256(), draft.quoteFingerprint(), draft.settlementFingerprint(),
+            draft.promotionPackageVersion(), orderHash, draft.manualEventRefs(), draft.grossAmountMinor(),
+            draft.discountAmountMinor(), draft.surchargeAmountMinor(), draft.receivableAmountMinor(),
+            draft.tenderedAmountMinor(), draft.lines(), draft.occurredAt());
+        when(promotions.requireSnapshot("TENANT_A", SNAPSHOT)).thenReturn(new Snapshot(SNAPSHOT, ORDER, QUOTE,
+            1101L, "01K2A000000000000000000011", LocalDate.parse("2026-08-17"), "CNY", HASH_A,
+            HASH_A, 1, HASH_C, 498, 0, 498, List.of(new Line(LINE, 1, 101L, new BigDecimal("0.25"),
+            498, 0, 498, CanonicalJson.from(Map.of()).sha256()))));
+        when(mapper.addShiftCash("TENANT_A", SHIFT, 498)).thenReturn(1);
+
+        service.submit(command);
+
+        verify(weightedBarcodes).verify(eq(1101L), any());
+        verify(repository).insertLine(argThat(value -> value.measurementTemplateId().equals(501L)
+            && value.measurementTemplateVersion().equals(1)
+            && value.measurementSnapshotJson().contains("2200123002507")));
     }
 
     private SubmitPromotedCashOrder command(String orderId, String promotionHash) {

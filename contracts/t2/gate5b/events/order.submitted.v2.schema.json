@@ -57,7 +57,28 @@
         "surchargeAmountMinor": {"type": "integer", "minimum": 0},
         "payableAmountMinor": {"type": "integer", "minimum": 0},
         "priceSource": {"type": "string", "minLength": 1, "maxLength": 32},
-        "sourceAllocations": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}}
+        "sourceAllocations": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}},
+        "measuredBarcodeSnapshot": {"$ref": "#/$defs/measuredBarcodeSnapshot"}
+      },
+      "additionalProperties": false
+    },
+    "measuredBarcodeSnapshot": {
+      "type": "object",
+      "required": ["rawBarcode", "skuCode", "encodedValue", "quantity", "amountMinor", "unitPriceMinor", "currency", "templateId", "templateVersion", "templateSha256", "parseSha256", "roundingApplied", "occurredAt"],
+      "properties": {
+        "rawBarcode": {"type": "string", "pattern": "^[0-9]{13}$"},
+        "skuCode": {"type": "string", "pattern": "^[0-9]+$"},
+        "encodedValue": {"type": "string", "pattern": "^[0-9]+$"},
+        "quantity": {"type": "string", "pattern": "^[1-9][0-9]*(\\.[0-9]{1,6})?$|^0\\.[0-9]*[1-9][0-9]*$"},
+        "amountMinor": {"type": "integer", "minimum": 1, "maximum": 9007199254740991},
+        "unitPriceMinor": {"type": "integer", "minimum": 1, "maximum": 9007199254740991},
+        "currency": {"const": "CNY"},
+        "templateId": {"type": "string", "pattern": "^[1-9][0-9]{0,18}$"},
+        "templateVersion": {"type": "integer", "minimum": 1},
+        "templateSha256": {"$ref": "#/$defs/hash"},
+        "parseSha256": {"$ref": "#/$defs/hash"},
+        "roundingApplied": {"type": "boolean"},
+        "occurredAt": {"type": "string", "format": "date-time"}
       },
       "additionalProperties": false
     }

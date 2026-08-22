@@ -6,6 +6,7 @@ import 'package:cryptography/cryptography.dart';
 
 import '../../../infrastructure/local_database/pos_local_database.dart';
 import '../../checkout/domain/checkout_models.dart';
+import '../domain/weighted_barcode.dart';
 
 /// 从正式下载端点取得的商品价格包；私钥和服务端对象键不会进入客户端。
 final class CatalogPackageEnvelope {
@@ -76,6 +77,7 @@ final class CatalogResolvedPrice {
     required this.priceSource,
     required this.catalogVersion,
     required this.priceVersion,
+    this.measuredSnapshot,
   });
 
   final CatalogProductSnapshot product;
@@ -83,6 +85,7 @@ final class CatalogResolvedPrice {
   final String priceSource;
   final int catalogVersion;
   final int priceVersion;
+  final MeasuredBarcodeSnapshot? measuredSnapshot;
 
   PriceQuote toCheckoutQuote() => PriceQuote.fromVerifiedPackage(
     skuId: product.skuId,
@@ -92,7 +95,8 @@ final class CatalogResolvedPrice {
     unitCode: product.unitCode,
     unitPriceMinor: amountMinor,
     priceSource: priceSource,
-    barcode: product.barcode,
+    barcode: measuredSnapshot?.rawBarcode ?? product.barcode,
+    measuredSnapshot: measuredSnapshot,
   );
 }
 
@@ -145,7 +149,10 @@ final class CatalogPackageInstaller {
       return InstalledCatalogPackage(
         packageVersion: decoded.packageVersion,
         payloadSha256: digest,
-        recordCount: decoded.products.length + decoded.prices.length,
+        recordCount:
+            decoded.products.length +
+            decoded.prices.length +
+            decoded.weightedBarcodeTemplates.length,
         generatedAt: decoded.generatedAt,
         duplicate: true,
       );
@@ -171,7 +178,9 @@ final class CatalogPackageInstaller {
           digest,
           envelope.signingKeyId,
           decoded.generatedAt.toUtc().toIso8601String(),
-          decoded.products.length + decoded.prices.length,
+          decoded.products.length +
+              decoded.prices.length +
+              decoded.weightedBarcodeTemplates.length,
           now,
         ],
       );
@@ -223,6 +232,37 @@ final class CatalogPackageInstaller {
           ],
         );
       }
+      for (final template in decoded.weightedBarcodeTemplates) {
+        database.database.execute(
+          '''INSERT INTO local_weighted_barcode_template(tenant_id,store_id,package_version,template_id,
+             template_code,version_no,scope_type,scope_store_id,barcode_kind,symbology,prefix_value,
+             total_length,sku_start_pos,sku_length,value_start_pos,value_length,value_scale,priority_no,
+             effective_from,effective_to,content_sha256) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
+          [
+            binding.tenantId,
+            binding.storeId,
+            decoded.packageVersion,
+            template.templateId,
+            template.templateCode,
+            template.versionNo,
+            template.scopeType,
+            template.storeId,
+            template.barcodeKind,
+            template.symbology,
+            template.prefixValue,
+            template.totalLength,
+            template.skuStartPos,
+            template.skuLength,
+            template.valueStartPos,
+            template.valueLength,
+            template.valueScale,
+            template.priorityNo,
+            template.effectiveFrom.toUtc().toIso8601String(),
+            template.effectiveTo?.toUtc().toIso8601String(),
+            template.contentSha256,
+          ],
+        );
+      }
       database.database.execute(
         "UPDATE local_catalog_package_slot SET state='SUPERSEDED' WHERE tenant_id=? AND store_id=? AND state='ACTIVE'",
         [binding.tenantId, binding.storeId],
@@ -251,7 +291,10 @@ final class CatalogPackageInstaller {
     return InstalledCatalogPackage(
       packageVersion: decoded.packageVersion,
       payloadSha256: digest,
-      recordCount: decoded.products.length + decoded.prices.length,
+      recordCount:
+          decoded.products.length +
+          decoded.prices.length +
+          decoded.weightedBarcodeTemplates.length,
       generatedAt: decoded.generatedAt,
     );
   }
@@ -260,6 +303,61 @@ final class CatalogPackageInstaller {
   CatalogResolvedPrice resolveBarcode(String barcode, {DateTime? at}) {
     if (barcode.trim().isEmpty || barcode.length > 64) {
       throw StateError('CAT-LOOKUP-001: barcode is invalid');
+    }
+    final when = (at ?? _utcNow()).toUtc();
+    final templates = database.database.select(
+      '''SELECT t.* FROM local_catalog_package_binding b
+         JOIN local_weighted_barcode_template t ON t.tenant_id=b.tenant_id AND t.store_id=b.store_id
+           AND t.package_version=b.active_package_version
+         WHERE b.singleton_id=1 AND b.tenant_id=? AND b.store_id=?
+           AND ? LIKE t.prefix_value || '%' AND t.effective_from<=?
+           AND (t.effective_to IS NULL OR t.effective_to>?)
+         ORDER BY CASE t.scope_type WHEN 'STORE' THEN 0 ELSE 1 END,
+           length(t.prefix_value) DESC,t.priority_no DESC,t.template_id DESC LIMIT 2''',
+      [
+        database.binding.tenantId,
+        database.binding.storeId,
+        barcode,
+        when.toIso8601String(),
+        when.toIso8601String(),
+      ],
+    );
+    if (templates.isNotEmpty) {
+      final winner = templates.first;
+      if (templates.length > 1 &&
+          templates[1]['scope_type'] == winner['scope_type'] &&
+          (templates[1]['prefix_value']! as String).length ==
+              (winner['prefix_value']! as String).length &&
+          templates[1]['priority_no'] == winner['priority_no']) {
+        throw StateError('CAT-WBC-127: ambiguous active barcode template');
+      }
+      final template = _weightedTemplate(winner);
+      if (!RegExp(r'^[0-9]{13}$').hasMatch(barcode) ||
+          WeightedBarcodeParser.checkDigit(barcode.substring(0, 12)) !=
+              int.parse(barcode.substring(12))) {
+        throw StateError('CAT-WBC-110: EAN-13 checksum failed');
+      }
+      final skuCode = barcode.substring(
+        template.skuStartPos - 1,
+        template.skuStartPos - 1 + template.skuLength,
+      );
+      final productRows = database.database.select(
+        '''SELECT p.* FROM local_catalog_package_binding b
+           JOIN local_catalog_product p ON p.tenant_id=b.tenant_id AND p.store_id=b.store_id
+             AND p.package_version=b.active_package_version
+           WHERE b.singleton_id=1 AND b.tenant_id=? AND b.store_id=? AND p.sku_code=?
+             AND p.product_type IN ('WEIGHT','COUNT')''',
+        [database.binding.tenantId, database.binding.storeId, skuCode],
+      );
+      if (productRows.length != 1) {
+        throw StateError('CAT-WBC-125: measured product is unavailable');
+      }
+      return _resolve(
+        productRows.single,
+        when,
+        weightedTemplate: template,
+        rawBarcode: barcode,
+      );
     }
     final rows = database.database.select(
       '''SELECT p.* FROM local_catalog_package_binding b
@@ -271,7 +369,7 @@ final class CatalogPackageInstaller {
     if (rows.length != 1) {
       throw StateError('CAT-LOOKUP-002: product is unavailable');
     }
-    return _resolve(rows.single, at ?? _utcNow());
+    return _resolve(rows.single, when);
   }
 
   /// 按活动包中的稳定 SKU 引用恢复商品；挂单取单后仍重新校验当前包价格。
@@ -328,7 +426,12 @@ final class CatalogPackageInstaller {
     return rows.map((row) => _resolve(row, when)).toList(growable: false);
   }
 
-  CatalogResolvedPrice _resolve(dynamic productRow, DateTime at) {
+  CatalogResolvedPrice _resolve(
+    dynamic productRow,
+    DateTime at, {
+    WeightedBarcodeTemplate? weightedTemplate,
+    String? rawBarcode,
+  }) {
     final rows = database.database.select(
       '''SELECT r.* FROM local_catalog_package_binding b
          JOIN local_catalog_price r ON r.tenant_id=b.tenant_id AND r.store_id=b.store_id
@@ -356,14 +459,25 @@ final class CatalogPackageInstaller {
         rows[1]['version_no'] == winner['version_no']) {
       throw StateError('CAT-PRICE-002: ambiguous active price');
     }
+    final product = _product(productRow);
+    final measured = weightedTemplate == null
+        ? null
+        : WeightedBarcodeParser.parse(
+            template: weightedTemplate,
+            rawBarcode: rawBarcode!,
+            unitPriceMinor: winner['amount_minor']! as int,
+            unitDecimalScale: product.decimalScale,
+            occurredAt: at,
+          );
     return CatalogResolvedPrice(
-      product: _product(productRow),
+      product: product,
       amountMinor: winner['amount_minor']! as int,
       priceSource: winner['scope_type'] == 'STORE'
           ? 'STORE_OVERRIDE'
           : 'TENANT_BASE',
       catalogVersion: productRow['package_version']! as int,
       priceVersion: winner['version_no']! as int,
+      measuredSnapshot: measured,
     );
   }
 
@@ -380,6 +494,30 @@ final class CatalogPackageInstaller {
     decimalScale: row['decimal_scale']! as int,
     barcode: row['barcode_value'] as String?,
   );
+
+  WeightedBarcodeTemplate _weightedTemplate(dynamic row) =>
+      WeightedBarcodeTemplate(
+        templateId: row['template_id']! as String,
+        templateCode: row['template_code']! as String,
+        versionNo: row['version_no']! as int,
+        scopeType: row['scope_type']! as String,
+        storeId: row['scope_store_id'] as String?,
+        barcodeKind: row['barcode_kind']! as String,
+        symbology: row['symbology']! as String,
+        prefixValue: row['prefix_value']! as String,
+        totalLength: row['total_length']! as int,
+        skuStartPos: row['sku_start_pos']! as int,
+        skuLength: row['sku_length']! as int,
+        valueStartPos: row['value_start_pos']! as int,
+        valueLength: row['value_length']! as int,
+        valueScale: row['value_scale']! as int,
+        priorityNo: row['priority_no']! as int,
+        effectiveFrom: DateTime.parse(row['effective_from']! as String).toUtc(),
+        effectiveTo: row['effective_to'] == null
+            ? null
+            : DateTime.parse(row['effective_to']! as String).toUtc(),
+        contentSha256: row['content_sha256']! as String,
+      );
 
   _DecodedCatalogPackage _parse(Uint8List payload) {
     final lines = const LineSplitter().convert(
@@ -404,12 +542,17 @@ final class CatalogPackageInstaller {
     }
     final products = <_CatalogProduct>[];
     final prices = <_CatalogPrice>[];
+    final weightedBarcodeTemplates = <WeightedBarcodeTemplate>[];
     String? previousIdentity;
     for (final line in lines.skip(1)) {
       if (line.isEmpty) continue;
       final fields = _splitEscaped(line);
       if (fields.length != 3 ||
-          !const {'PRODUCT', 'PRICE'}.contains(fields[0])) {
+          !const {
+            'PRODUCT',
+            'PRICE',
+            'WEIGHT_BARCODE_TEMPLATE',
+          }.contains(fields[0])) {
         throw StateError('CAT-DPK-108: malformed package record');
       }
       final identity = '${fields[0]}|${fields[1]}';
@@ -423,8 +566,10 @@ final class CatalogPackageInstaller {
       }
       if (fields[0] == 'PRODUCT') {
         products.add(_decodeProduct(value));
-      } else {
+      } else if (fields[0] == 'PRICE') {
         prices.add(_decodePrice(value));
+      } else {
+        weightedBarcodeTemplates.add(_decodeWeightedBarcodeTemplate(value));
       }
       previousIdentity = identity;
     }
@@ -440,6 +585,7 @@ final class CatalogPackageInstaller {
       generatedAt: generated.toUtc(),
       products: products,
       prices: prices,
+      weightedBarcodeTemplates: weightedBarcodeTemplates,
     );
   }
 
@@ -559,6 +705,87 @@ final class CatalogPackageInstaller {
     );
   }
 
+  WeightedBarcodeTemplate _decodeWeightedBarcodeTemplate(
+    Map<String, Object?> value,
+  ) {
+    const required = {
+      'templateId',
+      'templateCode',
+      'versionNo',
+      'scopeType',
+      'storeId',
+      'barcodeKind',
+      'symbology',
+      'prefixValue',
+      'totalLength',
+      'skuStartPos',
+      'skuLength',
+      'valueStartPos',
+      'valueLength',
+      'valueScale',
+      'priorityNo',
+      'effectiveFrom',
+      'effectiveTo',
+      'contentSha256',
+    };
+    final fields = value.keys.toSet();
+    if (fields.difference(required).isNotEmpty ||
+        required.difference(fields).isNotEmpty) {
+      throw StateError('CAT-WBC-122: template fields are invalid');
+    }
+    final scope = _enum(value['scopeType'], const {
+      'TENANT',
+      'STORE',
+    }, 'scopeType');
+    final storeId = value['storeId'] == null
+        ? null
+        : _platformId(value['storeId'], 'storeId');
+    if (scope == 'TENANT' && storeId != null ||
+        scope == 'STORE' && storeId != database.binding.storeId) {
+      throw StateError('CAT-WBC-123: template scope does not match store');
+    }
+    final from = DateTime.tryParse('${value['effectiveFrom']}');
+    final to = value['effectiveTo'] == null
+        ? null
+        : DateTime.tryParse('${value['effectiveTo']}');
+    if (from == null || to != null && !to.isAfter(from)) {
+      throw StateError('CAT-WBC-124: template window is invalid');
+    }
+    final result = WeightedBarcodeTemplate(
+      templateId: _platformId(value['templateId'], 'templateId'),
+      templateCode: _text(value['templateCode'], 64, 'templateCode'),
+      versionNo: _integer(value['versionNo'], 1, 2147483647, 'versionNo'),
+      scopeType: scope,
+      storeId: storeId,
+      barcodeKind: _enum(value['barcodeKind'], const {
+        'WEIGHT',
+        'AMOUNT',
+      }, 'barcodeKind'),
+      symbology: _enum(value['symbology'], const {'EAN13'}, 'symbology'),
+      prefixValue: _digits(value['prefixValue'], 2, 5, 'prefixValue'),
+      totalLength: _integer(value['totalLength'], 13, 13, 'totalLength'),
+      skuStartPos: _integer(value['skuStartPos'], 1, 12, 'skuStartPos'),
+      skuLength: _integer(value['skuLength'], 1, 8, 'skuLength'),
+      valueStartPos: _integer(value['valueStartPos'], 1, 12, 'valueStartPos'),
+      valueLength: _integer(value['valueLength'], 1, 8, 'valueLength'),
+      valueScale: _integer(value['valueScale'], 0, 6, 'valueScale'),
+      priorityNo: _integer(value['priorityNo'], 0, 2147483647, 'priorityNo'),
+      effectiveFrom: from.toUtc(),
+      effectiveTo: to?.toUtc(),
+      contentSha256: _sha256(value['contentSha256'], 'contentSha256'),
+    );
+    // 通过一个不产生业务结果的校验入口验证所有字段位置与重叠约束。
+    if (result.skuStartPos <= result.prefixValue.length ||
+        result.valueStartPos <= result.prefixValue.length ||
+        result.skuStartPos + result.skuLength - 1 > 12 ||
+        result.valueStartPos + result.valueLength - 1 > 12 ||
+        !(result.skuStartPos + result.skuLength <= result.valueStartPos ||
+            result.valueStartPos + result.valueLength <= result.skuStartPos)) {
+      throw StateError('CAT-WBC-105: template segments overlap');
+    }
+    return result;
+  }
+
   void _validateReferences(_DecodedCatalogPackage value) {
     final products = <String>{};
     final barcodes = <String>{};
@@ -573,6 +800,16 @@ final class CatalogPackageInstaller {
       (price) => !products.contains('${price.skuId}|${price.unitId}'),
     )) {
       throw StateError('CAT-DPK-117: price references missing product');
+    }
+    final templateIds = <String>{};
+    final templateVersions = <String>{};
+    for (final template in value.weightedBarcodeTemplates) {
+      if (!templateIds.add(template.templateId) ||
+          !templateVersions.add(
+            '${template.templateCode}|${template.versionNo}',
+          )) {
+        throw StateError('CAT-WBC-126: duplicate weighted barcode template');
+      }
     }
   }
 
@@ -629,6 +866,23 @@ final class CatalogPackageInstaller {
     return value;
   }
 
+  String _digits(Object? value, int minimum, int maximum, String field) {
+    if (value is! String ||
+        value.length < minimum ||
+        value.length > maximum ||
+        !RegExp(r'^[0-9]+$').hasMatch(value)) {
+      throw StateError('CAT-DPK-119: $field is invalid');
+    }
+    return value;
+  }
+
+  String _sha256(Object? value, String field) {
+    if (value is! String || !RegExp(r'^[a-f0-9]{64}$').hasMatch(value)) {
+      throw StateError('CAT-DPK-119: $field is invalid');
+    }
+    return value;
+  }
+
   int _integer(Object? value, int minimum, int maximum, String field) {
     if (value is! int || value < minimum || value > maximum) {
       throw StateError('CAT-DPK-120: $field is invalid');
@@ -663,6 +917,7 @@ final class _DecodedCatalogPackage {
     required this.generatedAt,
     required this.products,
     required this.prices,
+    required this.weightedBarcodeTemplates,
   });
   final String schemaVersion;
   final String tenantId;
@@ -672,6 +927,7 @@ final class _DecodedCatalogPackage {
   final DateTime generatedAt;
   final List<_CatalogProduct> products;
   final List<_CatalogPrice> prices;
+  final List<WeightedBarcodeTemplate> weightedBarcodeTemplates;
 }
 
 final class _CatalogProduct {

@@ -82,4 +82,18 @@ class OrderMigrationSqlPolicyTest {
             "foreign key (tenant_id,order_id)", "foreign key (tenant_id,shift_id)", "currency='cny'");
         assertThat(sql).doesNotContain("update ord_sales_order", "float", " double", "http://", "https://");
     }
+
+    @Test
+    void gate7cMeasurementSnapshotUsesForwardOnlyExactAndHashedColumns() throws IOException {
+        String sql;
+        try (var stream = getClass().getResourceAsStream(
+            "/db/migration/V202608220060__gate7c_order_measurement_snapshot.sql")) {
+            assertThat(stream).isNotNull();
+            sql = new String(stream.readAllBytes(), StandardCharsets.UTF_8).toLowerCase();
+        }
+        assertThat(sql).contains("alter table ord_order_line", "measurement_snapshot_json",
+            "measurement_template_sha256", "measurement_parse_sha256", "ck_ord_line_measurement_shape",
+            "tenant_id, measurement_template_id, measurement_template_version");
+        assertThat(sql).doesNotContain("drop table", "update ord_order_line", "float", " double");
+    }
 }

@@ -76,18 +76,18 @@ void main() {
     expect(store.purge(now.add(const Duration(seconds: 2))), 1);
   });
 
-  test('schema is v11 and checksum protects every released migration', () {
+  test('schema is v14 and checksum protects every released migration', () {
     final database = PosLocalDatabase.inMemory(binding);
     addTearDown(database.close);
     expect(
       database.database.select('PRAGMA user_version').single.values.first,
-      13,
+      14,
     );
     expect(
       database.database
           .select('SELECT COUNT(*) value FROM local_schema_history')
           .single['value'],
-      13,
+      14,
     );
   });
 }

@@ -2493,7 +2493,7 @@ final class CheckoutLocalService {
     for (final promoted in command.lines) {
       final line = promoted.basketLine;
       _db.execute(
-        'INSERT INTO local_order_line(line_id,tenant_id,order_id,line_no,sku_id,sku_code,barcode_value,product_name_snapshot,unit_id,unit_code,quantity_decimal,unit_price_minor,gross_amount_minor,discount_amount_minor,surcharge_amount_minor,payable_amount_minor,price_source) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+        'INSERT INTO local_order_line(line_id,tenant_id,order_id,line_no,sku_id,sku_code,barcode_value,product_name_snapshot,unit_id,unit_code,quantity_decimal,unit_price_minor,gross_amount_minor,discount_amount_minor,surcharge_amount_minor,payable_amount_minor,price_source,measurement_snapshot_json,measurement_parse_sha256) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
         [
           line.lineId,
           _binding.tenantId,
@@ -2512,6 +2512,8 @@ final class CheckoutLocalService {
           promoted.surchargeAmountMinor,
           promoted.receivableAmountMinor,
           line.quote.priceSource,
+          _measurementJson(line),
+          line.quote.measuredSnapshot?.parseSha256,
         ],
       );
     }
@@ -2697,7 +2699,7 @@ final class CheckoutLocalService {
   void _insertLines(Basket basket) {
     for (final line in basket.lines) {
       _db.execute(
-        'INSERT INTO local_order_line(line_id,tenant_id,order_id,line_no,sku_id,sku_code,barcode_value,product_name_snapshot,unit_id,unit_code,quantity_decimal,unit_price_minor,gross_amount_minor,discount_amount_minor,surcharge_amount_minor,payable_amount_minor,price_source) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,0,0,?,?)',
+        'INSERT INTO local_order_line(line_id,tenant_id,order_id,line_no,sku_id,sku_code,barcode_value,product_name_snapshot,unit_id,unit_code,quantity_decimal,unit_price_minor,gross_amount_minor,discount_amount_minor,surcharge_amount_minor,payable_amount_minor,price_source,measurement_snapshot_json,measurement_parse_sha256) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,0,0,?,?,?,?)',
         [
           line.lineId,
           _binding.tenantId,
@@ -2714,6 +2716,8 @@ final class CheckoutLocalService {
           line.grossAmountMinor,
           line.grossAmountMinor,
           line.quote.priceSource,
+          _measurementJson(line),
+          line.quote.measuredSnapshot?.parseSha256,
         ],
       );
     }
@@ -2721,7 +2725,7 @@ final class CheckoutLocalService {
 
   void _verifyPersistedLines(Basket basket) {
     final persisted = _db.select(
-      'SELECT line_no,sku_id,unit_id,quantity_decimal,unit_price_minor,gross_amount_minor,price_source FROM local_order_line WHERE tenant_id=? AND order_id=? ORDER BY line_no',
+      'SELECT line_no,sku_id,unit_id,quantity_decimal,unit_price_minor,gross_amount_minor,price_source,measurement_snapshot_json,measurement_parse_sha256 FROM local_order_line WHERE tenant_id=? AND order_id=? ORDER BY line_no',
       [_binding.tenantId, basket.orderId],
     );
     final lines = [...basket.lines]
@@ -2741,7 +2745,10 @@ final class CheckoutLocalService {
           row['quantity_decimal'] != line.quantity.canonical ||
           row['unit_price_minor'] != line.quote.unitPriceMinor ||
           row['gross_amount_minor'] != line.grossAmountMinor ||
-          row['price_source'] != line.quote.priceSource) {
+          row['price_source'] != line.quote.priceSource ||
+          row['measurement_snapshot_json'] != _measurementJson(line) ||
+          row['measurement_parse_sha256'] !=
+              line.quote.measuredSnapshot?.parseSha256) {
         throw const PosDomainException(
           'ORDER_AMOUNT_CHANGED',
           'persisted lines differ from resumed basket',
@@ -2749,6 +2756,12 @@ final class CheckoutLocalService {
       }
     }
   }
+
+  /// 以与订单快照相同字段顺序冻结计量事实，标准商品保持 NULL。
+  String? _measurementJson(BasketLine line) =>
+      line.quote.measuredSnapshot == null
+      ? null
+      : jsonEncode(line.quote.measuredSnapshot!.toJson());
 
   void _insertStateHistory(
     CashSaleCommand command, {

@@ -20,12 +20,12 @@ class OrderMigrationMySqlIT {
     private final String password = required("GATE2_MYSQL_PASSWORD");
 
     @Test
-    void migratesAllTenVersionsAndEnforcesTenantCashAndAppendOnlyConstraints() throws Exception {
+    void migratesAllElevenVersionsAndEnforcesTenantCashAndAppendOnlyConstraints() throws Exception {
         createFrameworkMenuFixture();
         Flyway flyway = Flyway.configure().dataSource(url, username, password)
             .locations("classpath:db/migration").table("jshpos_flyway_schema_history")
             .baselineOnMigrate(true).baselineVersion("0").cleanDisabled(true).load();
-        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(10);
+        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(11);
         assertThat(flyway.migrate().migrationsExecuted).isZero();
         flyway.validate();
         assertTablesAndPermissions();
@@ -150,6 +150,11 @@ class OrderMigrationMySqlIT {
             assertThatThrownBy(() -> statement.executeUpdate("UPDATE ord_sales_order SET receivable_amount_minor=1 WHERE tenant_id='TENANT_A' AND order_id='" + orderA + "'"))
                 .isInstanceOf(SQLException.class).hasMessageContaining("immutable");
             statement.executeUpdate("INSERT INTO ord_order_line(line_id,tenant_id,order_id,line_no,sku_id,sku_code,product_name_snapshot,unit_id,unit_code,quantity,unit_price_minor,gross_amount_minor,discount_amount_minor,surcharge_amount_minor,payable_amount_minor,price_source) VALUES('01K2A000000000000000000041','TENANT_A','" + orderA + "',1,701,'A-SKU','A',301,'PCS',1.000000,1299,1299,0,0,1299,'TENANT_BASE')");
+            assertThatThrownBy(() -> statement.executeUpdate("INSERT INTO ord_order_line(line_id,tenant_id,order_id,line_no,sku_id,sku_code,product_name_snapshot,unit_id,unit_code,quantity,unit_price_minor,gross_amount_minor,discount_amount_minor,surcharge_amount_minor,payable_amount_minor,price_source,measurement_template_id) VALUES('01K2A000000000000000000043','TENANT_A','" + orderA + "',3,701,'A-SKU','A',301,'KG',0.250000,1990,498,0,0,498,'TENANT_BASE',12001)"))
+                .isInstanceOf(SQLException.class);
+            statement.executeUpdate("INSERT INTO ord_order_line(line_id,tenant_id,order_id,line_no,sku_id,sku_code,barcode_value,product_name_snapshot,unit_id,unit_code,quantity,unit_price_minor,gross_amount_minor,discount_amount_minor,surcharge_amount_minor,payable_amount_minor,price_source,measurement_template_id,measurement_template_version,measurement_template_sha256,measurement_parse_sha256,measurement_snapshot_json) VALUES('01K2A000000000000000000044','TENANT_A','" + orderA + "',4,701,'A-SKU','2200123002507','A',301,'KG',0.250000,1990,498,0,0,498,'TENANT_BASE',12001,1,REPEAT('a',64),REPEAT('b',64),JSON_OBJECT('rawBarcode','2200123002507'))");
+            assertThatThrownBy(() -> statement.executeUpdate("UPDATE ord_order_line SET measurement_parse_sha256=REPEAT('c',64) WHERE line_id='01K2A000000000000000000044'"))
+                .isInstanceOf(SQLException.class).hasMessageContaining("immutable");
             assertThatThrownBy(() -> statement.executeUpdate("INSERT INTO ord_order_line(line_id,tenant_id,order_id,line_no,sku_id,sku_code,product_name_snapshot,unit_id,unit_code,quantity,unit_price_minor,gross_amount_minor,discount_amount_minor,surcharge_amount_minor,payable_amount_minor,price_source) VALUES('01K2A000000000000000000042','TENANT_A','" + orderA + "',2,801,'B-SKU','B',301,'PCS',1.000000,100,100,0,0,100,'TENANT_BASE')"))
                 .isInstanceOf(SQLException.class);
             assertThatThrownBy(() -> statement.executeUpdate("INSERT INTO ord_cash_payment(cash_payment_id,tenant_id,order_id,shift_id,status,currency,receivable_amount_minor,tendered_amount_minor,change_amount_minor,net_amount_minor,occurred_at) VALUES('" + paymentA + "','TENANT_A','" + orderA + "','" + shiftA + "','SUCCEEDED','CNY',1299,2000,700,1299,UTC_TIMESTAMP(3))"))

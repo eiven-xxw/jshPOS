@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "1.0",
+  "evidenceLevel": "SYNTHETIC_CROSS_RUNTIME",
+  "roundingMode": "HALF_EVEN",
+  "currency": "CNY",
+  "cases": [
+    {
+      "caseId": "WBC-WEIGHT-001",
+      "templateId": 501,
+      "templateCode": "SCALE-WEIGHT",
+      "templateVersion": 1,
+      "kind": "WEIGHT",
+      "prefix": "22",
+      "valueScale": 3,
+      "templateSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "rawBarcode": "2200123002501",
+      "unitPriceMinor": 1990,
+      "unitDecimalScale": 3,
+      "occurredAt": "2026-08-22T01:00:00Z",
+      "expected": {
+        "skuCode": "00123",
+        "quantity": "0.25",
+        "amountMinor": 498,
+        "roundingApplied": true,
+        "parseSha256": "4fdc68ee79fb19cd6afeb208d0cdaf313c3f12795e56e7540c15a5c17e58ea25"
+      }
+    },
+    {
+      "caseId": "WBC-AMOUNT-001",
+      "templateId": 502,
+      "templateCode": "SCALE-AMOUNT",
+      "templateVersion": 1,
+      "kind": "AMOUNT",
+      "prefix": "23",
+      "valueScale": 2,
+      "templateSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "rawBarcode": "2300123012347",
+      "unitPriceMinor": 1990,
+      "unitDecimalScale": 3,
+      "occurredAt": "2026-08-22T01:00:00Z",
+      "expected": {
+        "skuCode": "00123",
+        "quantity": "0.62",
+        "amountMinor": 1234,
+        "roundingApplied": true,
+        "parseSha256": "84fa83f5cefb64f5c206c4c9fe512f247ce118a1c75d3c5eb57d86337188192b"
+      }
+    }
+  ]
+}

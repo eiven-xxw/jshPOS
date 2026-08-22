@@ -131,7 +131,13 @@ public final class OrderRules {
             if (!PRICE_SOURCES.contains(line.priceSource())) {
                 throw invalid("ORD-PRICE-001", "invalid price source");
             }
-            long exactGross = lineGross(line.unitPriceMinor(), quantity);
+            requireMoney(line.unitPriceMinor(), "unitPriceMinor");
+            long exactGross = line.measuredGrossAmountMinor() == null
+                ? lineGross(line.unitPriceMinor(), quantity)
+                : requireMoney(line.measuredGrossAmountMinor(), "measuredGrossAmountMinor");
+            if (exactGross <= 0) {
+                throw invalid("ORDER_AMOUNT_CHANGED", "measured line amount must be positive");
+            }
             requireMoney(line.discountAmountMinor(), "lineDiscountAmountMinor");
             requireMoney(line.surchargeAmountMinor(), "lineSurchargeAmountMinor");
             requireMoney(line.payableAmountMinor(), "linePayableAmountMinor");
@@ -222,7 +228,14 @@ public final class OrderRules {
     public record PromotedLineAmount(String lineId, int lineNo, Long skuId, String quantity,
                                      long unitPriceMinor, long grossAmountMinor, long discountAmountMinor,
                                      long surchargeAmountMinor, long payableAmountMinor, String priceSource,
-                                     Map<String, Long> sourceAllocations) {
+                                     Map<String, Long> sourceAllocations, Long measuredGrossAmountMinor) {
+        public PromotedLineAmount(String lineId, int lineNo, Long skuId, String quantity,
+                                  long unitPriceMinor, long grossAmountMinor, long discountAmountMinor,
+                                  long surchargeAmountMinor, long payableAmountMinor, String priceSource,
+                                  Map<String, Long> sourceAllocations) {
+            this(lineId, lineNo, skuId, quantity, unitPriceMinor, grossAmountMinor, discountAmountMinor,
+                surchargeAmountMinor, payableAmountMinor, priceSource, sourceAllocations, null);
+        }
     }
 
     /** 含促销订单的已验证头部金额，全部使用最小货币单位。 */

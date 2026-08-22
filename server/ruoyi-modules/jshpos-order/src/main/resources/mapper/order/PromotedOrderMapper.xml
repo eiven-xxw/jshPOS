@@ -20,11 +20,14 @@
         INSERT INTO ord_order_line(
           line_id,tenant_id,order_id,line_no,sku_id,sku_code,barcode_value,product_name_snapshot,unit_id,
           unit_code,quantity,unit_price_minor,gross_amount_minor,discount_amount_minor,surcharge_amount_minor,
-          payable_amount_minor,price_source)
+          payable_amount_minor,price_source,measurement_template_id,measurement_template_version,
+          measurement_template_sha256,measurement_parse_sha256,measurement_snapshot_json)
         VALUES(
           #{lineId},#{tenantId},#{orderId},#{lineNo},#{skuId},#{skuCode},#{barcode},#{productName},
           #{unitId},#{unitCode},#{quantity},#{unitPriceMinor},#{grossAmountMinor},#{discountAmountMinor},
-          #{surchargeAmountMinor},#{payableAmountMinor},#{priceSource})
+          #{surchargeAmountMinor},#{payableAmountMinor},#{priceSource},#{measurementTemplateId},
+          #{measurementTemplateVersion},#{measurementTemplateSha256},#{measurementParseSha256},
+          CAST(#{measurementSnapshotJson} AS JSON))
     </insert>
 
     <insert id="insertPromotionBinding">

@@ -88,9 +88,17 @@ final class LocalPosSaleApplicationService
   Future<PosSaleWorkspace> _addResolved(CatalogResolvedPrice resolved) async {
     _requireOpenShift();
     final basket = _basket ??= _newBasket();
-    _products[resolved.product.skuId] = resolved;
+    final measured = resolved.measuredSnapshot;
+    if (measured == null) {
+      _products[resolved.product.skuId] = resolved;
+    }
     final existing = basket.lines
-        .where((line) => line.quote.skuId == resolved.product.skuId)
+        .where(
+          (line) =>
+              measured == null &&
+              line.quote.measuredSnapshot == null &&
+              line.quote.skuId == resolved.product.skuId,
+        )
         .toList();
     if (existing.isEmpty) {
       basket.add(
@@ -98,7 +106,7 @@ final class LocalPosSaleApplicationService
           lineId: ulids.next(),
           lineNo: basket.lines.length + 1,
           quote: resolved.toCheckoutQuote(),
-          quantity: '1',
+          quantity: measured?.quantity ?? '1',
         ),
       );
     } else {
@@ -125,6 +133,12 @@ final class LocalPosSaleApplicationService
         .toList();
     if (current.length != 1) {
       throw const PosSaleFailure('SALE_LINE_NOT_FOUND', '购物篮行不存在。');
+    }
+    if (current.single.quote.measuredSnapshot != null) {
+      throw const PosSaleFailure(
+        'MEASURED_QUANTITY_FROZEN',
+        '秤码商品数量已由成交计量快照冻结，请删除后重新扫码。',
+      );
     }
     final target = requested == '+1'
         ? _addWhole(current.single.quantity.canonical, 1)

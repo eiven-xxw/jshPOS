@@ -6,6 +6,8 @@ import com.jingshanghui.pos.catalog.application.model.CatalogViews.PackageView;
 import com.jingshanghui.pos.catalog.application.model.CatalogViews.PriceBookView;
 import com.jingshanghui.pos.catalog.application.model.CatalogViews.PriceCandidateView;
 import com.jingshanghui.pos.catalog.application.model.CatalogViews.ProductView;
+import com.jingshanghui.pos.catalog.application.model.CatalogViews.WeightedBarcodeTemplateView;
+import com.jingshanghui.pos.catalog.application.model.CatalogViews.WeightedSkuView;
 import com.jingshanghui.pos.catalog.application.port.InventoryCatalogSnapshotPort.SkuUnitSnapshot;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Param;
@@ -317,6 +319,138 @@ public interface CatalogMapper {
         ORDER BY b.scope_type,b.book_code,b.version_no,i.sku_id,i.unit_id,i.effective_from
         """)
     List<String> listPricePackageRows(@Param("tenantId") String tenantId, @Param("storeId") Long storeId);
+
+    @Insert("""
+        INSERT INTO cat_weighted_barcode_template(template_id,tenant_id,template_code,version_no,scope_type,store_id,
+          barcode_kind,symbology,prefix_value,total_length,sku_start_pos,sku_length,value_start_pos,value_length,
+          value_scale,priority_no,state,effective_from,effective_to)
+        VALUES(#{templateId},#{tenantId},#{templateCode},#{versionNo},#{scopeType},#{storeId},#{barcodeKind},
+          'EAN13',#{prefixValue},13,#{skuStartPos},#{skuLength},#{valueStartPos},#{valueLength},#{valueScale},
+          #{priorityNo},'DRAFT',#{effectiveFrom},#{effectiveTo})
+        """)
+    int insertWeightedBarcodeTemplate(@Param("tenantId") String tenantId, @Param("templateId") Long templateId,
+                                       @Param("templateCode") String templateCode, @Param("versionNo") int versionNo,
+                                       @Param("scopeType") String scopeType, @Param("storeId") Long storeId,
+                                       @Param("barcodeKind") String barcodeKind, @Param("prefixValue") String prefixValue,
+                                       @Param("skuStartPos") int skuStartPos, @Param("skuLength") int skuLength,
+                                       @Param("valueStartPos") int valueStartPos, @Param("valueLength") int valueLength,
+                                       @Param("valueScale") int valueScale, @Param("priorityNo") int priorityNo,
+                                       @Param("effectiveFrom") LocalDateTime effectiveFrom,
+                                       @Param("effectiveTo") LocalDateTime effectiveTo);
+
+    @Select("""
+        SELECT template_id templateId,template_code templateCode,version_no versionNo,scope_type scopeType,
+          store_id storeId,barcode_kind barcodeKind,symbology,prefix_value prefixValue,total_length totalLength,
+          sku_start_pos skuStartPos,sku_length,value_start_pos valueStartPos,value_length,value_scale valueScale,
+          priority_no priorityNo,state,effective_from effectiveFrom,effective_to effectiveTo,
+          content_sha256 contentSha256,published_at publishedAt,version
+        FROM cat_weighted_barcode_template
+        WHERE tenant_id=#{tenantId} AND template_id=#{templateId}
+        """)
+    WeightedBarcodeTemplateView findWeightedBarcodeTemplate(@Param("tenantId") String tenantId,
+                                                              @Param("templateId") Long templateId);
+
+    @Select("""
+        SELECT template_id templateId,template_code templateCode,version_no versionNo,scope_type scopeType,
+          store_id storeId,barcode_kind barcodeKind,symbology,prefix_value prefixValue,total_length totalLength,
+          sku_start_pos skuStartPos,sku_length,value_start_pos valueStartPos,value_length,value_scale valueScale,
+          priority_no priorityNo,state,effective_from effectiveFrom,effective_to effectiveTo,
+          content_sha256 contentSha256,published_at publishedAt,version
+        FROM cat_weighted_barcode_template
+        WHERE tenant_id=#{tenantId} AND state='PUBLISHED'
+          AND (scope_type='TENANT' OR (scope_type='STORE' AND store_id=#{storeId}))
+          AND #{at}>=effective_from AND (effective_to IS NULL OR #{at}<effective_to)
+          AND (#{barcode} LIKE CONCAT(prefix_value,'%'))
+        ORDER BY (scope_type='STORE') DESC,LENGTH(prefix_value) DESC,priority_no DESC,template_id DESC
+        """)
+    List<WeightedBarcodeTemplateView> listWeightedBarcodeCandidates(@Param("tenantId") String tenantId,
+                                                                     @Param("storeId") Long storeId,
+                                                                     @Param("barcode") String barcode,
+                                                                     @Param("at") LocalDateTime at);
+
+    @Select("""
+        SELECT COUNT(*) FROM cat_weighted_barcode_template
+        WHERE tenant_id=#{tenantId} AND template_id<>#{templateId} AND state='PUBLISHED'
+          AND scope_type=#{scopeType} AND (store_id <=> #{storeId}) AND prefix_value=#{prefixValue}
+          AND effective_from < COALESCE(#{effectiveTo},'9999-12-31 23:59:59.999999')
+          AND COALESCE(effective_to,'9999-12-31 23:59:59.999999') > #{effectiveFrom}
+        """)
+    int countWeightedBarcodeConflict(@Param("tenantId") String tenantId, @Param("templateId") Long templateId,
+                                     @Param("scopeType") String scopeType, @Param("storeId") Long storeId,
+                                     @Param("prefixValue") String prefixValue,
+                                     @Param("effectiveFrom") LocalDateTime effectiveFrom,
+                                     @Param("effectiveTo") LocalDateTime effectiveTo);
+
+    @Update("""
+        UPDATE cat_weighted_barcode_template
+        SET state='PUBLISHED',content_sha256=#{hash},published_at=#{at},version=version+1
+        WHERE tenant_id=#{tenantId} AND template_id=#{templateId} AND state='DRAFT' AND version=#{version}
+        """)
+    int publishWeightedBarcodeTemplate(@Param("tenantId") String tenantId, @Param("templateId") Long templateId,
+                                       @Param("version") int version, @Param("hash") String hash,
+                                       @Param("at") LocalDateTime at);
+
+    @Update("""
+        UPDATE cat_weighted_barcode_template SET state='RETIRED',version=version+1
+        WHERE tenant_id=#{tenantId} AND template_id=#{templateId} AND state='PUBLISHED' AND version=#{version}
+        """)
+    int retireWeightedBarcodeTemplate(@Param("tenantId") String tenantId, @Param("templateId") Long templateId,
+                                      @Param("version") int version);
+
+    @Insert("""
+        INSERT INTO cat_weighted_barcode_history(history_id,tenant_id,template_id,event_type,template_version,
+          content_sha256,payload_json,occurred_at)
+        VALUES(#{historyId},#{tenantId},#{templateId},#{eventType},#{templateVersion},#{hash},
+          CAST(#{payloadJson} AS JSON),#{occurredAt})
+        """)
+    int insertWeightedBarcodeHistory(@Param("tenantId") String tenantId, @Param("historyId") Long historyId,
+                                     @Param("templateId") Long templateId, @Param("eventType") String eventType,
+                                     @Param("templateVersion") int templateVersion, @Param("hash") String hash,
+                                     @Param("payloadJson") String payloadJson,
+                                     @Param("occurredAt") LocalDateTime occurredAt);
+
+    @Select("""
+        SELECT s.sku_id skuId,s.sku_code skuCode,su.unit_id unitId,u.decimal_scale decimalScale,
+               s.product_type productType,s.status
+        FROM cat_sku s
+        JOIN cat_sku_unit su ON su.tenant_id=s.tenant_id AND su.sku_id=s.sku_id AND su.primary_unit=TRUE
+        JOIN cat_unit u ON u.tenant_id=su.tenant_id AND u.unit_id=su.unit_id
+        WHERE s.tenant_id=#{tenantId} AND s.sku_code=#{skuCode} AND s.status='ACTIVE'
+          AND s.product_type IN ('WEIGHT','COUNT') AND u.status='ACTIVE'
+        """)
+    WeightedSkuView findWeightedSkuByCode(@Param("tenantId") String tenantId, @Param("skuCode") String skuCode);
+
+    /** 历史离线成交验真只核对不可变 SKU/主单位身份，不受成交后停用状态影响。 */
+    @Select("""
+        SELECT s.sku_id skuId,s.sku_code skuCode,su.unit_id unitId,u.decimal_scale decimalScale,
+               s.product_type productType,s.status
+        FROM cat_sku s
+        JOIN cat_sku_unit su ON su.tenant_id=s.tenant_id AND su.sku_id=s.sku_id AND su.primary_unit=TRUE
+        JOIN cat_unit u ON u.tenant_id=su.tenant_id AND u.unit_id=su.unit_id
+        WHERE s.tenant_id=#{tenantId} AND s.sku_code=#{skuCode}
+          AND s.product_type IN ('WEIGHT','COUNT')
+        """)
+    WeightedSkuView findWeightedSkuIdentityByCode(@Param("tenantId") String tenantId,
+                                                   @Param("skuCode") String skuCode);
+
+    @Select("""
+        SELECT CAST(JSON_OBJECT(
+          'templateId',CAST(template_id AS CHAR),'templateCode',template_code,'versionNo',version_no,
+          'scopeType',scope_type,'storeId',IF(store_id IS NULL,NULL,CAST(store_id AS CHAR)),
+          'barcodeKind',barcode_kind,'symbology',symbology,'prefixValue',prefix_value,
+          'totalLength',total_length,'skuStartPos',sku_start_pos,'skuLength',sku_length,
+          'valueStartPos',value_start_pos,'valueLength',value_length,'valueScale',value_scale,
+          'priorityNo',priority_no,'effectiveFrom',DATE_FORMAT(effective_from,'%Y-%m-%dT%H:%i:%s.%fZ'),
+          'effectiveTo',IF(effective_to IS NULL,NULL,DATE_FORMAT(effective_to,'%Y-%m-%dT%H:%i:%s.%fZ')),
+          'contentSha256',content_sha256
+        ) AS CHAR)
+        FROM cat_weighted_barcode_template
+        WHERE tenant_id=#{tenantId} AND state='PUBLISHED'
+          AND (scope_type='TENANT' OR (scope_type='STORE' AND store_id=#{storeId}))
+        ORDER BY scope_type,store_id,prefix_value,priority_no DESC,template_id
+        """)
+    List<String> listWeightedBarcodePackageRows(@Param("tenantId") String tenantId,
+                                                 @Param("storeId") Long storeId);
 
     @Insert("""
         INSERT INTO dpk_catalog_package(package_id,tenant_id,store_id,package_version,previous_version,schema_version,

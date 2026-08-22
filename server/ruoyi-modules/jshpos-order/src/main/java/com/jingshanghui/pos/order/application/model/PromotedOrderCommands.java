@@ -2,6 +2,7 @@ package com.jingshanghui.pos.order.application.model;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -83,9 +84,40 @@ public final class PromotedOrderCommands {
                                String productName, Long unitId, String unitCode, String quantity,
                                long unitPriceMinor, long grossAmountMinor, long discountAmountMinor,
                                long surchargeAmountMinor, long payableAmountMinor, String priceSource,
-                               Map<String, Long> sourceAllocations) {
+                               Map<String, Long> sourceAllocations,
+                               MeasuredBarcodeSnapshot measuredBarcodeSnapshot) {
+        /** 兼容未携带计量快照的既有标准商品调用方。 */
+        public PromotedLine(String lineId, int lineNo, Long skuId, String skuCode, String barcode,
+                            String productName, Long unitId, String unitCode, String quantity,
+                            long unitPriceMinor, long grossAmountMinor, long discountAmountMinor,
+                            long surchargeAmountMinor, long payableAmountMinor, String priceSource,
+                            Map<String, Long> sourceAllocations) {
+            this(lineId, lineNo, skuId, skuCode, barcode, productName, unitId, unitCode, quantity,
+                unitPriceMinor, grossAmountMinor, discountAmountMinor, surchargeAmountMinor,
+                payableAmountMinor, priceSource, sourceAllocations, null);
+        }
+
         public PromotedLine {
             sourceAllocations = Map.copyOf(sourceAllocations);
+        }
+    }
+
+    /** 成交行冻结的秤码/金额码事实，与 Flutter 字段和摘要语义保持一致。 */
+    public record MeasuredBarcodeSnapshot(String rawBarcode, String skuCode, String encodedValue,
+                                          String quantity, long amountMinor, long unitPriceMinor,
+                                          String currency, String templateId, int templateVersion,
+                                          String templateSha256, String parseSha256,
+                                          boolean roundingApplied, Instant occurredAt) {
+        public Map<String, Object> toCanonicalMap() {
+            Map<String, Object> value = new LinkedHashMap<>();
+            value.put("rawBarcode", rawBarcode); value.put("skuCode", skuCode);
+            value.put("encodedValue", encodedValue); value.put("quantity", quantity);
+            value.put("amountMinor", amountMinor); value.put("unitPriceMinor", unitPriceMinor);
+            value.put("currency", currency); value.put("templateId", templateId);
+            value.put("templateVersion", templateVersion); value.put("templateSha256", templateSha256);
+            value.put("parseSha256", parseSha256); value.put("roundingApplied", roundingApplied);
+            value.put("occurredAt", occurredAt == null ? null : occurredAt.toString());
+            return value;
         }
     }
 }

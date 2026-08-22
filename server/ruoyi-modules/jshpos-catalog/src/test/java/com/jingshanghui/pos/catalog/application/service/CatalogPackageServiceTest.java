@@ -54,6 +54,7 @@ class CatalogPackageServiceTest {
         when(objectProvider.getIfAvailable()).thenReturn(objects);
         when(mapper.listProductPackageRows("TENANT_A")).thenReturn(List.of("PRODUCT|SKU-A|A|STANDARD|ACTIVE"));
         when(mapper.listPricePackageRows("TENANT_A", 11L)).thenReturn(List.of("PRICE|TENANT_BASE|0|1|2|199"));
+        when(mapper.listWeightedBarcodePackageRows("TENANT_A", 11L)).thenReturn(List.of());
         when(signer.sign(eq("TENANT_A"), any())).thenReturn(new PackageSigningPort.SigningResult("kms-key-1", "Ed25519", new byte[]{1, 2}));
         when(namespace.objectKey(anyString())).thenReturn("tenant/TENANT_A/object/catalog.jshpkg");
         PackageView stored = new PackageView(99L, 11L, 1L, 0L, "1.0", "a".repeat(64), "Ed25519",

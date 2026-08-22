@@ -20,7 +20,7 @@ class CatalogMigrationMySqlIT {
     private final String password = required("GATE1_MYSQL_PASSWORD");
 
     @Test
-    void migratesAllFourVersionsRepeatablyAndEnforcesCatalogTenantConstraints() throws Exception {
+    void migratesAllFiveVersionsRepeatablyAndEnforcesCatalogTenantConstraints() throws Exception {
         createFrameworkMenuFixture();
         Flyway flyway = Flyway.configure()
             .dataSource(url, username, password)
@@ -30,11 +30,12 @@ class CatalogMigrationMySqlIT {
             .baselineVersion("0")
             .cleanDisabled(true)
             .load();
-        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(4);
+        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(5);
         assertThat(flyway.migrate().migrationsExecuted).isZero();
         flyway.validate();
         assertTablesAndPermissions();
         assertCrossTenantBarcodeUnitAndPriceGuards();
+        assertWeightedBarcodeTenantAndAppendOnlyGuards();
     }
 
     private void createFrameworkMenuFixture() throws SQLException {
@@ -58,7 +59,8 @@ class CatalogMigrationMySqlIT {
     private void assertTablesAndPermissions() throws SQLException {
         Set<String> tables = Set.of("cat_category", "cat_brand", "cat_unit", "cat_spu", "cat_sku",
             "cat_sku_unit", "cat_barcode", "cat_import_batch", "cat_import_record", "cat_import_error",
-            "cat_catalog_binding", "prc_price_book", "prc_price_item", "dpk_catalog_package", "cat_event_outbox");
+            "cat_catalog_binding", "prc_price_book", "prc_price_item", "dpk_catalog_package", "cat_event_outbox",
+            "cat_weighted_barcode_template", "cat_weighted_barcode_history");
         try (Connection connection = DriverManager.getConnection(url, username, password)) {
             for (String table : tables) {
                 try (var rows = connection.getMetaData().getTables(connection.getCatalog(), null, table, new String[]{"TABLE"})) {
@@ -69,6 +71,11 @@ class CatalogMigrationMySqlIT {
                  var rows = statement.executeQuery("SELECT COUNT(DISTINCT perms) FROM sys_menu WHERE menu_id BETWEEN 9200100 AND 9200110")) {
                 assertThat(rows.next()).isTrue();
                 assertThat(rows.getInt(1)).isEqualTo(10);
+            }
+            try (Statement statement = connection.createStatement();
+                 var rows = statement.executeQuery("SELECT COUNT(DISTINCT perms) FROM sys_menu WHERE menu_id BETWEEN 9200111 AND 9200114")) {
+                assertThat(rows.next()).isTrue();
+                assertThat(rows.getInt(1)).isEqualTo(4);
             }
         }
     }
@@ -95,6 +102,51 @@ class CatalogMigrationMySqlIT {
             statement.executeUpdate("INSERT INTO prc_price_book(price_book_id,tenant_id,book_code,book_name,version_no,scope_type,store_id,state,content_sha256) VALUES (11001,'TENANT_A','BASE','Base',1,'TENANT_BASE',NULL,'PUBLISHED',REPEAT('a',64))");
             assertThatThrownBy(() -> statement.executeUpdate("UPDATE prc_price_book SET book_code='MUTATED' WHERE price_book_id=11001"))
                 .isInstanceOf(SQLException.class).hasMessageContaining("immutable");
+        }
+    }
+
+    /** 在真实 MySQL 上证明模板租户外键、发布冻结和历史只追加约束会失败关闭。 */
+    private void assertWeightedBarcodeTenantAndAppendOnlyGuards() throws SQLException {
+        try (Connection connection = DriverManager.getConnection(url, username, password);
+             Statement statement = connection.createStatement()) {
+            assertThatThrownBy(() -> statement.executeUpdate("""
+                INSERT INTO cat_weighted_barcode_template(
+                  template_id,tenant_id,template_code,version_no,scope_type,store_id,barcode_kind,prefix_value,
+                  sku_start_pos,sku_length,value_start_pos,value_length,value_scale,effective_from)
+                VALUES (12000,'TENANT_A','CROSS_STORE',1,'STORE',2101,'WEIGHT','23',3,5,8,5,3,CURRENT_TIMESTAMP)
+                """))
+                .isInstanceOf(SQLException.class);
+            statement.executeUpdate("""
+                INSERT INTO cat_weighted_barcode_template(
+                  template_id,tenant_id,template_code,version_no,scope_type,store_id,barcode_kind,prefix_value,
+                  sku_start_pos,sku_length,value_start_pos,value_length,value_scale,effective_from)
+                VALUES (12001,'TENANT_A','STORE_WEIGHT',1,'STORE',1101,'WEIGHT','23',3,5,8,5,3,CURRENT_TIMESTAMP)
+                """);
+            statement.executeUpdate("""
+                UPDATE cat_weighted_barcode_template
+                SET state='PUBLISHED',content_sha256=REPEAT('a',64),published_at=CURRENT_TIMESTAMP,version=version+1
+                WHERE tenant_id='TENANT_A' AND template_id=12001 AND state='DRAFT' AND version=0
+                """);
+            assertThatThrownBy(() -> statement.executeUpdate("""
+                UPDATE cat_weighted_barcode_template SET prefix_value='24'
+                WHERE tenant_id='TENANT_A' AND template_id=12001
+                """))
+                .isInstanceOf(SQLException.class).hasMessageContaining("immutable");
+            statement.executeUpdate("""
+                INSERT INTO cat_weighted_barcode_history(
+                  history_id,tenant_id,template_id,event_type,template_version,content_sha256,payload_json,occurred_at)
+                VALUES (12002,'TENANT_A',12001,'PUBLISHED',1,REPEAT('a',64),JSON_OBJECT('templateId','12001'),CURRENT_TIMESTAMP)
+                """);
+            assertThatThrownBy(() -> statement.executeUpdate("""
+                UPDATE cat_weighted_barcode_history SET event_type='RETIRED'
+                WHERE tenant_id='TENANT_A' AND history_id=12002
+                """))
+                .isInstanceOf(SQLException.class).hasMessageContaining("append only");
+            assertThatThrownBy(() -> statement.executeUpdate("""
+                DELETE FROM cat_weighted_barcode_history
+                WHERE tenant_id='TENANT_A' AND history_id=12002
+                """))
+                .isInstanceOf(SQLException.class).hasMessageContaining("append only");
         }
     }
 

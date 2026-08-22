@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:crypto/crypto.dart';
 
+import '../../catalog/domain/weighted_barcode.dart';
 import 'exact_quantity.dart';
 import 'ulid_generator.dart';
 
@@ -53,6 +54,7 @@ final class PriceQuote {
     required this.unitPriceMinor,
     required this.priceSource,
     this.barcode,
+    this.measuredSnapshot,
   });
 
   factory PriceQuote.fromVerifiedPackage({
@@ -64,6 +66,7 @@ final class PriceQuote {
     required int unitPriceMinor,
     required String priceSource,
     String? barcode,
+    MeasuredBarcodeSnapshot? measuredSnapshot,
   }) {
     if (!RegExp(r'^[1-9][0-9]{0,18}$').hasMatch(skuId) ||
         !RegExp(r'^[1-9][0-9]{0,18}$').hasMatch(unitId) ||
@@ -71,6 +74,14 @@ final class PriceQuote {
       throw const FormatException('ORD-PRICE-001: invalid verified quote');
     }
     MoneyRules.requireMinor(unitPriceMinor, 'unitPriceMinor');
+    if (measuredSnapshot != null &&
+        (measuredSnapshot.skuCode != skuCode ||
+            measuredSnapshot.unitPriceMinor != unitPriceMinor ||
+            measuredSnapshot.rawBarcode != barcode)) {
+      throw const FormatException(
+        'ORD-PRICE-002: measured barcode snapshot does not match quote',
+      );
+    }
     return PriceQuote._(
       skuId: skuId,
       skuCode: skuCode,
@@ -80,6 +91,7 @@ final class PriceQuote {
       unitPriceMinor: unitPriceMinor,
       priceSource: priceSource,
       barcode: barcode,
+      measuredSnapshot: measuredSnapshot,
     );
   }
 
@@ -91,6 +103,7 @@ final class PriceQuote {
   final int unitPriceMinor;
   final String priceSource;
   final String? barcode;
+  final MeasuredBarcodeSnapshot? measuredSnapshot;
 }
 
 final class BasketLine {
@@ -103,13 +116,21 @@ final class BasketLine {
     if (!UlidGenerator.isCanonical(lineId) || lineNo < 1 || lineNo > 500) {
       throw const FormatException('ORD-LINE-002: invalid line identity');
     }
+    if (quote.measuredSnapshot != null &&
+        this.quantity.canonical != quote.measuredSnapshot!.quantity) {
+      throw const FormatException(
+        'ORD-LINE-003: measured quantity is frozen by barcode snapshot',
+      );
+    }
   }
 
   final String lineId;
   final int lineNo;
   final PriceQuote quote;
   final ExactQuantity quantity;
-  int get grossAmountMinor => quantity.multiplyMinor(quote.unitPriceMinor);
+  int get grossAmountMinor =>
+      quote.measuredSnapshot?.amountMinor ??
+      quantity.multiplyMinor(quote.unitPriceMinor);
 
   Map<String, Object?> toSnapshot() => {
     'lineId': lineId,
@@ -127,6 +148,8 @@ final class BasketLine {
     'surchargeAmountMinor': 0,
     'payableAmountMinor': grossAmountMinor,
     'priceSource': quote.priceSource,
+    if (quote.measuredSnapshot != null)
+      'measuredBarcodeSnapshot': quote.measuredSnapshot!.toJson(),
   };
 }
 
@@ -237,6 +260,8 @@ final class CashSaleCommand {
         line.grossAmountMinor,
         line.grossAmountMinor,
         line.quote.priceSource,
+        if (line.quote.measuredSnapshot != null)
+          jsonEncode(line.quote.measuredSnapshot!.toJson()),
       ]);
     }
     return values.map((value) {
@@ -415,6 +440,8 @@ final class PromotedCashSaleCommand {
                 line.quantity.canonical,
                 line.quote.unitPriceMinor,
                 line.grossAmountMinor,
+                if (line.quote.measuredSnapshot != null)
+                  jsonEncode(line.quote.measuredSnapshot!.toJson()),
               ],
             ),
           ]),

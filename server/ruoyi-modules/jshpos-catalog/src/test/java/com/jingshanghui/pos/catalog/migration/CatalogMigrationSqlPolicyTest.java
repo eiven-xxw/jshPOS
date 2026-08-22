@@ -44,6 +44,16 @@ class CatalogMigrationSqlPolicyTest {
         assertThat(sql).doesNotContain("catalog:order", "catalog:payment", "catalog:inventory");
     }
 
+    @Test
+    void weightedBarcodeMigrationKeepsTemplatesVersionedTenantScopedAndAppendOnly() throws IOException {
+        String sql = resource("/db/migration/V202608220059__gate7c_weighted_barcode.sql").toLowerCase();
+        assertThat(sql).contains("create table cat_weighted_barcode_template",
+            "create table cat_weighted_barcode_history", "tenant_id varchar(20) not null",
+            "prefix_value varchar(5)", "content_sha256 char(64)", "trg_cat_wbt_published_immutable",
+            "trg_cat_wbh_no_update", "trg_cat_wbh_no_delete", "catalog:weighted-barcode:publish");
+        assertThat(sql).doesNotContain("float", "double", "create table jsh_order", "provider_http");
+    }
+
     private String resource(String name) throws IOException {
         try (var input = getClass().getResourceAsStream(name)) {
             assertThat(input).isNotNull();

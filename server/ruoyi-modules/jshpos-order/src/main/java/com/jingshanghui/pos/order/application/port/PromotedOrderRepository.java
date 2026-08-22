@@ -26,7 +26,10 @@ public interface PromotedOrderRepository {
     record LineWrite(String tenantId, String orderId, String lineId, int lineNo, Long skuId, String skuCode,
                      String barcode, String productName, Long unitId, String unitCode, BigDecimal quantity,
                      long unitPriceMinor, long grossAmountMinor, long discountAmountMinor,
-                     long surchargeAmountMinor, long payableAmountMinor, String priceSource) {
+                     long surchargeAmountMinor, long payableAmountMinor, String priceSource,
+                     Long measurementTemplateId, Integer measurementTemplateVersion,
+                     String measurementTemplateSha256, String measurementParseSha256,
+                     String measurementSnapshotJson) {
     }
 
     /** Order Owner 保存的不可变促销快照身份与核验结果。 */

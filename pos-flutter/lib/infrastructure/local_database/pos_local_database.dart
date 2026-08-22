@@ -17,6 +17,7 @@ import 'gate7b_receipt_schema.dart';
 import 'gate7b_order_disposition_schema.dart';
 import 'gate7b_exchange_schema.dart';
 import 'gate7b_tender_schema.dart';
+import 'gate7c_weighted_barcode_schema.dart';
 
 typedef FailureInjector = void Function(String checkpoint);
 
@@ -150,7 +151,11 @@ final class PosLocalDatabase {
       _migrateToTenderV13();
       version = Gate7bTenderSchema.version;
     }
-    if (version != Gate7bTenderSchema.version) {
+    if (version == Gate7bTenderSchema.version) {
+      _migrateToWeightedBarcodeV14();
+      version = Gate7cWeightedBarcodeSchema.version;
+    }
+    if (version != Gate7cWeightedBarcodeSchema.version) {
       throw StateError('LOCAL_SCHEMA_UNSUPPORTED: $version');
     }
     _verifySchemaChecksum();
@@ -197,6 +202,9 @@ final class PosLocalDatabase {
           .toString(),
       Gate7bTenderSchema.version: sha256
           .convert(utf8.encode(Gate7bTenderSchema.v13))
+          .toString(),
+      Gate7cWeightedBarcodeSchema.version: sha256
+          .convert(utf8.encode(Gate7cWeightedBarcodeSchema.v14))
           .toString(),
     };
     for (final entry in expected.entries) {
@@ -307,6 +315,34 @@ final class PosLocalDatabase {
     if (violations.isNotEmpty) {
       throw StateError(
         'LOCAL_DB_INTEGRITY_FAILED: foreign key violations after v13',
+      );
+    }
+  }
+
+  /// 追加 PRD-005 已验签秤码模板投影；迁移失败时整体回滚并保持旧版本。
+  void _migrateToWeightedBarcodeV14() {
+    transaction(() {
+      database.execute(Gate7cWeightedBarcodeSchema.v14);
+      final checksum = sha256
+          .convert(utf8.encode(Gate7cWeightedBarcodeSchema.v14))
+          .toString();
+      database.execute(
+        'INSERT INTO local_schema_history(version,description,checksum_sha256,installed_at) VALUES(14,?,?,?)',
+        [
+          'gate7c-weighted-amount-barcode-template',
+          checksum,
+          DateTime.now().toUtc().toIso8601String(),
+        ],
+      );
+      checkpoint('migration.v14.before-version');
+      database.execute(
+        'PRAGMA user_version=${Gate7cWeightedBarcodeSchema.version}',
+      );
+    });
+    final violations = database.select('PRAGMA foreign_key_check');
+    if (violations.isNotEmpty) {
+      throw StateError(
+        'LOCAL_DB_INTEGRITY_FAILED: foreign key violations after v14',
       );
     }
   }

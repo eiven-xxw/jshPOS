@@ -47,6 +47,10 @@ class PromotedOrderEventDispatcherTest {
         assertThat(command.lines()).singleElement().satisfies(line -> {
             assertThat(line.quantity()).isEqualTo("1.000000");
             assertThat(line.sourceAllocations()).containsEntry("RULE_A", 200L);
+            assertThat(line.measuredBarcodeSnapshot()).isNotNull();
+            assertThat(line.measuredBarcodeSnapshot().rawBarcode()).isEqualTo("2300123012994");
+            assertThat(line.measuredBarcodeSnapshot().templateId()).isEqualTo("501");
+            assertThat(line.measuredBarcodeSnapshot().amountMinor()).isEqualTo(1299L);
         });
     }
 
@@ -86,6 +90,7 @@ class PromotedOrderEventDispatcherTest {
         line.put("payableAmountMinor", 1100);
         line.put("priceSource", "PROMOTION_SNAPSHOT");
         line.put("sourceAllocations", Map.of("RULE_A", 200));
+        line.put("measuredBarcodeSnapshot", measurement());
         Map<String, Object> value = new LinkedHashMap<>();
         value.put("tenantId", "TENANT_A");
         value.put("orderId", "01K2A000000000000000000031");
@@ -114,6 +119,24 @@ class PromotedOrderEventDispatcherTest {
         value.put("receivableAmountMinor", 1100);
         value.put("tenderedAmountMinor", 1200);
         value.put("lines", List.of(line));
+        return value;
+    }
+
+    private Map<String, Object> measurement() {
+        Map<String, Object> value = new LinkedHashMap<>();
+        value.put("rawBarcode", "2300123012994");
+        value.put("skuCode", "00123");
+        value.put("encodedValue", "01299");
+        value.put("quantity", "1.000000");
+        value.put("amountMinor", 1299);
+        value.put("unitPriceMinor", 1299);
+        value.put("currency", "CNY");
+        value.put("templateId", "501");
+        value.put("templateVersion", 1);
+        value.put("templateSha256", "a".repeat(64));
+        value.put("parseSha256", "b".repeat(64));
+        value.put("roundingApplied", false);
+        value.put("occurredAt", "2026-08-16T02:00:00Z");
         return value;
     }
 }

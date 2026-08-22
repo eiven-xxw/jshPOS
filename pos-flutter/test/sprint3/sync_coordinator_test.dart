@@ -26,9 +26,9 @@ void main() {
     addTearDown(fixture.close);
     expect(
       fixture.db.database.select('PRAGMA user_version').single.values.first,
-      13,
+      14,
     );
-    expect(fixture.count('local_schema_history'), 13);
+    expect(fixture.count('local_schema_history'), 14);
     expect(fixture.count('local_inbox'), 0);
     expect(
       fixture.db.database

@@ -24,7 +24,7 @@ void main() {
     addTearDown(database.close);
     expect(
       database.database.select('PRAGMA user_version').single.values.first,
-      13,
+      14,
     );
     expect(
       database.database

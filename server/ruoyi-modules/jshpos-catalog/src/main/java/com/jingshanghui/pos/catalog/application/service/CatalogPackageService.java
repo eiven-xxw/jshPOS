@@ -118,6 +118,10 @@ public class CatalogPackageService {
         for (String row : mapper.listPricePackageRows(tenantId, storeId)) {
             result.add(new CatalogPackageCodec.Record("PRICE", String.format("%09d", index++), row));
         }
+        index = 0;
+        for (String row : mapper.listWeightedBarcodePackageRows(tenantId, storeId)) {
+            result.add(new CatalogPackageCodec.Record("WEIGHT_BARCODE_TEMPLATE", String.format("%09d", index++), row));
+        }
         return result;
     }
 }

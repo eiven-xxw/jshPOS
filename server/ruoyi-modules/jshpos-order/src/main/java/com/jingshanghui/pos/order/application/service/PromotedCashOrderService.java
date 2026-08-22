@@ -1,5 +1,7 @@
 package com.jingshanghui.pos.order.application.service;
 
+import com.jingshanghui.pos.catalog.application.port.WeightedBarcodeSnapshotVerificationPort;
+import com.jingshanghui.pos.catalog.application.port.WeightedBarcodeSnapshotVerificationPort.FrozenMeasurement;
 import com.jingshanghui.pos.foundation.application.context.TrustedPrincipal;
 import com.jingshanghui.pos.foundation.application.context.TrustedTenantContext;
 import com.jingshanghui.pos.foundation.application.security.ScopeAuthorizationService;
@@ -7,6 +9,7 @@ import com.jingshanghui.pos.foundation.domain.CanonicalJson;
 import com.jingshanghui.pos.order.application.model.OrderViews.CashOrderResult;
 import com.jingshanghui.pos.order.application.model.OrderViews.ShiftView;
 import com.jingshanghui.pos.order.application.model.PromotedOrderCommands.PromotedLine;
+import com.jingshanghui.pos.order.application.model.PromotedOrderCommands.MeasuredBarcodeSnapshot;
 import com.jingshanghui.pos.order.application.model.PromotedOrderCommands.SubmitPromotedCashOrder;
 import com.jingshanghui.pos.order.application.port.PromotedOrderRepository;
 import com.jingshanghui.pos.order.application.port.PromotedOrderSubmissionPort;
@@ -50,6 +53,7 @@ public class PromotedCashOrderService implements PromotedOrderSubmissionPort {
     private final PromotedOrderRepository promotedOrders;
     private final OrderMapper orderMapper;
     private final PromotionSnapshotQueryPort promotionSnapshots;
+    private final WeightedBarcodeSnapshotVerificationPort weightedBarcodes;
     private final TrustedTenantContext tenantContext;
     private final ScopeAuthorizationService authorizationService;
     private final IdempotencyService idempotency;
@@ -65,6 +69,7 @@ public class PromotedCashOrderService implements PromotedOrderSubmissionPort {
         requireActor(command.cashierId(), principal);
         authorizationService.requireStoreAccess(command.storeId());
         validateShape(command);
+        verifyMeasuredLines(command);
         PromotedTotals totals = OrderRules.validatePromotedOrder(command.lines().stream()
             .map(this::toAmount).toList(), command.grossAmountMinor(), command.discountAmountMinor(),
             command.surchargeAmountMinor(), command.receivableAmountMinor());
@@ -99,7 +104,11 @@ public class PromotedCashOrderService implements PromotedOrderSubmissionPort {
                 line.lineNo(), line.skuId(), line.skuCode(), line.barcode(), line.productName(), line.unitId(),
                 line.unitCode(), OrderRules.requireQuantity(line.quantity()), line.unitPriceMinor(),
                 line.grossAmountMinor(), line.discountAmountMinor(), line.surchargeAmountMinor(),
-                line.payableAmountMinor(), line.priceSource())));
+                line.payableAmountMinor(), line.priceSource(), measurementTemplateId(line),
+                line.measuredBarcodeSnapshot() == null ? null : line.measuredBarcodeSnapshot().templateVersion(),
+                line.measuredBarcodeSnapshot() == null ? null : line.measuredBarcodeSnapshot().templateSha256(),
+                line.measuredBarcodeSnapshot() == null ? null : line.measuredBarcodeSnapshot().parseSha256(),
+                measurementJson(line))));
         promotedOrders.insertPromotionBinding(new BindingWrite(ulids.next(), principal.tenantId(), command.orderId(),
             command.promotionSnapshotId(), promotion.quoteId(), command.storeId(), command.terminalId(),
             command.businessDate(), command.quoteFingerprint(), command.settlementFingerprint(),
@@ -132,7 +141,49 @@ public class PromotedCashOrderService implements PromotedOrderSubmissionPort {
     private PromotedLineAmount toAmount(PromotedLine line) {
         return new PromotedLineAmount(line.lineId(), line.lineNo(), line.skuId(), line.quantity(),
             line.unitPriceMinor(), line.grossAmountMinor(), line.discountAmountMinor(),
-            line.surchargeAmountMinor(), line.payableAmountMinor(), line.priceSource(), line.sourceAllocations());
+            line.surchargeAmountMinor(), line.payableAmountMinor(), line.priceSource(), line.sourceAllocations(),
+            line.measuredBarcodeSnapshot() == null ? null : line.measuredBarcodeSnapshot().amountMinor());
+    }
+
+    private void verifyMeasuredLines(SubmitPromotedCashOrder command) {
+        for (PromotedLine line : command.lines()) {
+            MeasuredBarcodeSnapshot value = line.measuredBarcodeSnapshot();
+            if (value == null) {
+                continue;
+            }
+            if (!java.util.Objects.equals(value.rawBarcode(), line.barcode())
+                || !java.util.Objects.equals(value.skuCode(), line.skuCode())
+                || !java.util.Objects.equals(value.quantity(), OrderRules.requireQuantity(line.quantity()).toPlainString())
+                || value.amountMinor() != line.grossAmountMinor()
+                || value.unitPriceMinor() != line.unitPriceMinor()) {
+                throw conflict("MEASUREMENT_SNAPSHOT_MISMATCH", "计量快照与订单行冻结字段不一致");
+            }
+            weightedBarcodes.verify(command.storeId(), new FrozenMeasurement(line.skuId(), line.skuCode(),
+                line.unitId(), value.rawBarcode(), value.encodedValue(), OrderRules.requireQuantity(value.quantity()),
+                value.amountMinor(), value.unitPriceMinor(), value.currency(), measurementTemplateId(line),
+                value.templateVersion(), value.templateSha256(), value.parseSha256(), value.roundingApplied(),
+                value.occurredAt()));
+        }
+    }
+
+    private Long measurementTemplateId(PromotedLine line) {
+        if (line.measuredBarcodeSnapshot() == null) {
+            return null;
+        }
+        try {
+            long value = Long.parseLong(line.measuredBarcodeSnapshot().templateId());
+            if (value <= 0) {
+                throw new NumberFormatException("non-positive");
+            }
+            return value;
+        } catch (NumberFormatException exception) {
+            throw conflict("MEASUREMENT_SNAPSHOT_MISMATCH", "计量模板主键无效");
+        }
+    }
+
+    private String measurementJson(PromotedLine line) {
+        return line.measuredBarcodeSnapshot() == null
+            ? null : CanonicalJson.from(line.measuredBarcodeSnapshot().toCanonicalMap()).json();
     }
 
     private void validateShape(SubmitPromotedCashOrder command) {
@@ -266,6 +317,9 @@ public class PromotedCashOrderService implements PromotedOrderSubmissionPort {
             values.add(line.unitPriceMinor()); values.add(line.grossAmountMinor()); values.add(line.discountAmountMinor());
             values.add(line.surchargeAmountMinor()); values.add(line.payableAmountMinor()); values.add(line.priceSource());
             values.add(CanonicalJson.from(new LinkedHashMap<>(line.sourceAllocations())).json());
+            if (line.measuredBarcodeSnapshot() != null) {
+                values.add(measurementJson(line));
+            }
         });
         return CanonicalHash.lengthPrefixed(values);
     }
