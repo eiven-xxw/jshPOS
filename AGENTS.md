@@ -456,7 +456,7 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
 - 原单退款必须按原成功份额、原介质和累计成功/占额上限恢复；现金退现金，电子份额未解阻时继续受控阻断，禁止转成现金或其他介质规避。
 - MySQL 与 SQLite 只允许独立前向迁移；TenderPlan/Allocation 使用具名条件状态迁移，历史、观察、现金份额、审计与事件只追加。Flutter 页面只能调用 Tender 应用端口，不得直接访问 SQLite、MethodChannel 或拼装资金事实。
 - `T2-HWD-001/PRN-001/PAR-001` 继续 `BLOCKED`，`T2-UAT-001/REL-001` 与 Gate 7C—7E 继续 `DRAFT`，`T2-JSH-001/LIC-001` 继续 `DEFERRED`；Provider 网络、真实资金、设备/外设命令、伙伴执行、完整 Alpha、生产部署和商业声明全部为 0。
-- 完成后必须提交 `T2-PAY-004` 独立周门禁报告并等待项目发起人确认；不得自动进入 Gate 7C。
+- 候选提交 `dce3acb3f15d53120c1211c5cf663ce957a4edd3` 的 GitHub Actions Run `32544144916` 已完成九类门禁全绿；`T2-PAY-004` 当前为 `VERIFIED` 并等待项目发起人确认，确认前不得更新为 `ACCEPTED`，不得自动进入 Gate 7C。
 
 ## 5. 工程与测试规则
 

@@ -3,10 +3,10 @@
   "gate": "T2-GATE7B-SPRINT-S20B-PAY004-RUNTIME",
   "baselineCommit": "2cc9f88b8ad2d0530a77a9341d396dd1a2fc1e5f",
   "branch": "t2/gate7b-sprint20b-pay004-runtime",
-  "decision": "PAY004_APPROVED_IN_PROGRESS",
+  "decision": "PAY004_VERIFIED_AWAITING_SPONSOR_ACCEPTANCE",
   "requirement": {
     "id": "T2-PAY-004",
-    "status": "IN_PROGRESS",
+    "status": "VERIFIED",
     "owner": "Payment",
     "implementation": "PROVIDER_NEUTRAL_TENDER_PLAN_WITH_ORDER_SHIFT_CASH_PORT"
   },
