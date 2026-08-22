@@ -468,6 +468,7 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
 - `T2-HWD-001` 继续 `BLOCKED`；仅允许键盘楔入或合成扫码输入，不得访问电子秤/扫码厂商 SDK、串口、蓝牙或真实设备，不得用软件证据替代 `REAL_DEVICE`。
 - `T2-LBL-001/RPL-001/DMT-001/ONB-001/LOT-001` 及 Gate 7D—7E 继续 `DRAFT`；`T2-PAY-002/HWD-001/PRN-001/PAR-001` 继续 `BLOCKED`，`T2-UAT-001/REL-001` 继续 `DRAFT`，`T2-JSH-001/LIC-001` 继续 `DEFERRED`。
 - 完成后必须提交 `T2-PRD-005` 独立周门禁报告并等待项目发起人确认；不得自动准入 `T2-LBL-001`、`T2-RPL-001` 或 Gate 7D。
+- `T2-PRD-005` 候选提交 `131a76184d9be0f6a4785f8fbb055bcff77ee5e7` 已在 GitHub Actions Run `32551158599` 完成十类制品与完整门禁，现仅为 `VERIFIED / AWAITING SPONSOR ACCEPTANCE`；`T2-LBL-001`、`T2-RPL-001` 和后续需求继续 `DRAFT`，真实秤、厂商扫码 SDK 与实机性能仍为 `BLOCKED`。
 
 ## 5. 工程与测试规则
 

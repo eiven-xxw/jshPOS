@@ -5,4 +5,5 @@
 3. `03_T2_PRD005证据索引.md`
 4. `04_T2_LBL001下一步操作指令.md`
 
-当前仅 `T2-PRD-005 = IN_PROGRESS`；其他 Gate 7C 需求继续 `DRAFT`。
+当前仅 `T2-PRD-005 = VERIFIED / AWAITING SPONSOR ACCEPTANCE`；其他 Gate 7C
+需求继续 `DRAFT`，外部支付、硬件、打印和伙伴阻断状态不变。
