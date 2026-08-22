@@ -1,0 +1,78 @@
+openapi: 3.1.0
+info:
+  title: 鲸熵汇批次效期 API
+  version: 1.0.0
+servers:
+  - url: /api/v1
+paths:
+  /catalog/lot-policies:
+    post:
+      operationId: publishLotPolicy
+      security: [{bearerAuth: []}]
+      parameters: [{$ref: '#/components/parameters/IdempotencyKey'}, {$ref: '#/components/parameters/CorrelationId'}]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: '#/components/schemas/PublishPolicy'}}}
+      responses: {'200': {description: 不可变策略版本}, '409': {description: 非社区超市或版本冲突}}
+  /catalog/lot-policies/effective:
+    get:
+      operationId: getEffectiveLotPolicy
+      security: [{bearerAuth: []}]
+      parameters:
+        - {name: storeId, in: query, required: true, schema: {type: integer, minimum: 1}}
+        - {name: skuId, in: query, required: true, schema: {type: integer, minimum: 1}}
+      responses: {'200': {description: 当前可信策略}, '404': {description: 未启用}}
+  /inventory/lots:
+    get:
+      operationId: listLots
+      security: [{bearerAuth: []}]
+      parameters:
+        - {name: warehouseId, in: query, required: true, schema: {type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'}}
+        - {name: skuId, in: query, required: true, schema: {type: integer, minimum: 1}}
+        - {name: status, in: query, required: false, schema: {type: string, enum: [AVAILABLE, NEAR_EXPIRY, EXPIRED, DEPLETED, BLOCKED]}}
+      responses: {'200': {description: FEFO 稳定排序的批次投影}}
+  /inventory/lots/alerts:
+    get:
+      operationId: listExpiryAlerts
+      security: [{bearerAuth: []}]
+      parameters:
+        - {name: storeId, in: query, required: true, schema: {type: integer, minimum: 1}}
+        - {name: businessDate, in: query, required: true, schema: {type: string, format: date}}
+      responses: {'200': {description: 版本化临期与过期投影}}
+  /inventory/lots/rebuild:
+    post:
+      operationId: rebuildLotProjection
+      security: [{bearerAuth: []}]
+      parameters: [{$ref: '#/components/parameters/IdempotencyKey'}, {$ref: '#/components/parameters/CorrelationId'}]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: '#/components/schemas/Rebuild'}}}
+      responses: {'200': {description: 从只追加流水重建}, '409': {description: 并发或摘要冲突}}
+components:
+  securitySchemes:
+    bearerAuth: {type: http, scheme: bearer}
+  parameters:
+    IdempotencyKey: {name: Idempotency-Key, in: header, required: true, schema: {type: string, minLength: 8, maxLength: 64}}
+    CorrelationId: {name: X-Correlation-ID, in: header, required: true, schema: {type: string, minLength: 1, maxLength: 64}}
+  schemas:
+    PublishPolicy:
+      type: object
+      additionalProperties: false
+      required: [policyVersionId, storeId, skuId, enabled, expiryBasis, nearExpiryDays, effectiveFrom]
+      properties:
+        policyVersionId: {type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'}
+        storeId: {type: integer, minimum: 1}
+        skuId: {type: integer, minimum: 1}
+        enabled: {type: boolean}
+        expiryBasis: {type: string, enum: [PRODUCTION_DATE, RECEIVED_DATE, EXPLICIT_EXPIRY_DATE]}
+        shelfLifeDays: {type: [integer, 'null'], minimum: 1, maximum: 36500}
+        nearExpiryDays: {type: integer, minimum: 0, maximum: 3650}
+        effectiveFrom: {type: string, format: date-time}
+    Rebuild:
+      type: object
+      additionalProperties: false
+      required: [warehouseId, skuId]
+      properties:
+        warehouseId: {type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'}
+        skuId: {type: integer, minimum: 1}
+

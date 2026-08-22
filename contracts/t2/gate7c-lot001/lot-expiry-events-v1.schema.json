@@ -1,0 +1,33 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://jingshanghui.example/contracts/lot-expiry-events-v1.schema.json",
+  "title":"批次效期事件 v1",
+  "type":"object",
+  "additionalProperties":false,
+  "required":["eventId","eventType","schemaVersion","aggregateId","occurredAt","correlationId","payload"],
+  "properties":{
+    "eventId":{"type":"string","pattern":"^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "eventType":{"enum":["catalog.lot-policy.published.v1","inventory.lot.received.v1","inventory.lot.allocated.v1","inventory.lot.returned.v1","inventory.lot.expiry-changed.v1","inventory.lot.rebuilt.v1"]},
+    "schemaVersion":{"const":1},
+    "aggregateId":{"type":"string","pattern":"^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "occurredAt":{"type":"string","format":"date-time"},
+    "correlationId":{"type":"string","minLength":1,"maxLength":64},
+    "payload":{
+      "type":"object",
+      "additionalProperties":false,
+      "required":["storeId","warehouseId","skuId","policyVersionId","quantityDecimal","contentSha256"],
+      "properties":{
+        "storeId":{"type":"integer","minimum":1},
+        "warehouseId":{"type":"string","pattern":"^[0-9A-HJKMNP-TV-Z]{26}$"},
+        "skuId":{"type":"integer","minimum":1},
+        "lotId":{"type":["string","null"],"pattern":"^[0-9A-HJKMNP-TV-Z]{26}$"},
+        "policyVersionId":{"type":"string","pattern":"^[0-9A-HJKMNP-TV-Z]{26}$"},
+        "quantityDecimal":{"type":"string","pattern":"^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,6})?$"},
+        "expiryDate":{"type":["string","null"],"format":"date"},
+        "status":{"type":["string","null"],"enum":["AVAILABLE","NEAR_EXPIRY","EXPIRED","DEPLETED","BLOCKED",null]},
+        "contentSha256":{"type":"string","pattern":"^[a-f0-9]{64}$"}
+      }
+    }
+  }
+}
+
