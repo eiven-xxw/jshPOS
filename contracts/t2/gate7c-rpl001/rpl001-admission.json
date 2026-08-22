@@ -3,8 +3,8 @@
   "gate": "T2-GATE7C-SPRINT-S21C-RPL001",
   "baselineCommit": "f0d2f7b989d7dbaf535569e37c4a3c84d6fd61b9",
   "branch": "t2/gate7c-sprint21c-rpl001-replenishment",
-  "decision": "RPL001_APPROVED_IN_PROGRESS",
-  "requirement": {"id": "T2-RPL-001", "status": "IN_PROGRESS", "owner": "Replenishment"},
+  "decision": "RPL001_VERIFIED_AWAITING_SPONSOR_ACCEPTANCE",
+  "requirement": {"id": "T2-RPL-001", "status": "VERIFIED", "owner": "Replenishment"},
   "calculation": {"quantityScale": 6, "multipleRounding": "CEILING", "predictionAllowed": false,
     "automaticOrderingAllowed": false, "automaticApprovalAllowed": false},
   "dataAccess": [

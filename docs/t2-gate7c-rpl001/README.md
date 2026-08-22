@@ -5,5 +5,6 @@
 3. `03_T2_RPL001证据索引.md`（完整 CI 绿灯后封存）
 4. `04_T2_DMT001下一步操作指令.md`（仅作为项目发起人后续确认输入）
 
-当前 `T2-RPL-001 = IN_PROGRESS`。本阶段只允许确定性补货建议和采购草稿；
-`T2-DMT-001/ONB-001/LOT-001` 继续 `DRAFT`，所有外部 P0 状态不变。
+当前 `T2-RPL-001 = VERIFIED / AWAITING SPONSOR ACCEPTANCE`。本阶段只验证了
+确定性补货建议和转采购 `DRAFT`；`T2-DMT-001/ONB-001/LOT-001`
+继续 `DRAFT`，所有外部 P0 状态不变。
