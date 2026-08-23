@@ -218,6 +218,7 @@ jobs:
           redis_container="$(docker ps --filter publish=6379 --format '{{.ID}}' | head -1)"
           test -n "$mysql_container" && test -n "$redis_container"
           docker exec -i "$mysql_container" mysql --default-character-set=utf8mb4 -uroot -psynthetic_gate8b_runtime_root jshpos_gate8b_runtime < server/script/sql/ry_vue_5.X.sql
+          docker exec -i "$mysql_container" mysql --default-character-set=utf8mb4 -uroot -psynthetic_gate8b_runtime_root jshpos_gate8b_runtime < server/script/sql/ry_workflow.sql
           docker exec "$redis_container" redis-cli CONFIG SET requirepass synthetic_gate8b_redis_runtime
           docker exec "$redis_container" redis-cli -a synthetic_gate8b_redis_runtime ping
           server_jar="$(find downloaded/server -name ruoyi-admin.jar -type f -print -quit)"

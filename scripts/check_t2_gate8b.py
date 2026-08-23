@@ -86,6 +86,10 @@ def main() -> None:
     privilege = (ROOT / required[8]).read_text(encoding="utf-8")
     require("DEFAULT_TENANT_ID.equals(tenantId)" in privilege, "平台角色未限定默认租户")
     require("platform_admin" in privilege, "平台职责分离角色缺失")
+    workflow = (ROOT / ".github/workflows/t2-gate8b.yml").read_text(encoding="utf-8")
+    base_schema = workflow.find("server/script/sql/ry_vue_5.X.sql")
+    workflow_schema = workflow.find("server/script/sql/ry_workflow.sql")
+    require(0 <= base_schema < workflow_schema, "正式空环境必须按顺序装配 RuoYi 基础与工作流 Schema")
     vectors = json.loads((ROOT / required[4]).read_text(encoding="utf-8"))["seeds"]
     require(len(vectors) >= 8 and len({v["id"] for v in vectors}) == len(vectors), "失败 seed 不完整")
 

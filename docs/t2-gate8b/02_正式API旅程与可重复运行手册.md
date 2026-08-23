@@ -2,7 +2,10 @@
 
 ## 环境
 
-- MySQL 8.4 空数据库，先导入 RuoYi 基础 Schema，再由应用 Flyway 前向迁移至当前版本。
+- MySQL 8.4 空数据库，按顺序导入 `server/script/sql/ry_vue_5.X.sql` 与
+  `server/script/sql/ry_workflow.sql`，再由应用 Flyway 前向迁移至当前版本。SaaS 技术租户
+  创建会调用 RuoYi 工作流定义同步，因此工作流基础表属于正式运行装配的强制依赖，禁止通过
+  关闭工作流同步或绕过正式租户端口规避。
 - Redis 7.4 独立实例；服务端、数据库和 Redis 均使用合成凭据。
 - 服务端关闭验证码和 API 请求体加密以适配隔离 CI，但不关闭认证、权限、可信租户或应用层授权。
 - 旅程脚本：`scripts/run_t2_gate8b_runtime_api_journey.py`。
