@@ -21,7 +21,15 @@
     "INITIALIZATION_AND_LIFECYCLE": "VERIFIED_LOCAL",
     "PERSISTENCE_AUDIT_OUTBOX": "VERIFIED_LOCAL",
     "WEB_AND_FLUTTER_CONTRACT": "VERIFIED_LOCAL",
-    "FAULT_VECTORS_AND_COMPLETE_CI": "CANDIDATE_AWAITING_GITHUB"
+    "FAULT_VECTORS_AND_COMPLETE_CI": "VERIFIED_GITHUB"
+  },
+  "githubEvidence": {
+    "candidateCommit": "9e15bfd3bac2dd134e5b6901998016c0599eb88a",
+    "runId": 32644734638,
+    "runConclusion": "success",
+    "jobCount": 10,
+    "evidenceArtifactId": 9494730618,
+    "evidenceArtifactDigest": "sha256:8aa1fe6587348c0f8917d9f19f61161c7d125f14f35ffba74cb53e910eee41d0"
   },
   "evidenceLevel": "INTERNAL_SYNTHETIC_SOFTWARE_ONLY",
   "invariants": [
