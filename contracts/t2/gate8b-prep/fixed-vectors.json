@@ -1,0 +1,24 @@
+{
+  "vectors": [
+    {"id":"G8B-001","case":"complete formal API journey","expected":"PASS"},
+    {"id":"G8B-002","case":"client tenant differs from trusted tenant","expected":"FAIL_CLOSED"},
+    {"id":"G8B-003","case":"duplicate application same key and digest","expected":"RETURN_ORIGINAL"},
+    {"id":"G8B-004","case":"same idempotency key different digest","expected":"REJECT"},
+    {"id":"G8B-005","case":"unpublished entitlement version","expected":"DENY_ACTIVATION"},
+    {"id":"G8B-006","case":"quota exceeded concurrently","expected":"ONE_ATOMIC_RESULT"},
+    {"id":"G8B-007","case":"subscription grace period","expected":"VERSIONED_ACCESS_MODE"},
+    {"id":"G8B-008","case":"subscription recovery-only","expected":"ALLOW_RECOVERY_WHITELIST_ONLY"},
+    {"id":"G8B-009","case":"duplicate expiry scanner","expected":"CONVERGE"},
+    {"id":"G8B-010","case":"service project without active entitlement","expected":"DENY"},
+    {"id":"G8B-011","case":"ticket cross-store access","expected":"DENY"},
+    {"id":"G8B-012","case":"attachment object key namespace mismatch","expected":"DENY"},
+    {"id":"G8B-013","case":"expired download authorization","expected":"DENY"},
+    {"id":"G8B-014","case":"ticket close by resolver","expected":"DENY"},
+    {"id":"G8B-015","case":"logical deactivate preserves facts","expected":"HISTORY_RETAINED"},
+    {"id":"G8B-016","case":"controlled restore reuses original tenant","expected":"NO_NEW_TENANT"},
+    {"id":"G8B-017","case":"Provider or real device capability requested","expected":"BLOCKED_UNAVAILABLE"},
+    {"id":"G8B-018","case":"migration V81 through V86 replay","expected":"FORWARD_ONLY_VALID"},
+    {"id":"G8B-019","case":"event duplicate and out of order","expected":"IDEMPOTENT_CONVERGENCE"},
+    {"id":"G8B-020","case":"commercial claim from synthetic result","expected":"REJECT_EVIDENCE_ESCALATION"}
+  ]
+}

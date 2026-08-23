@@ -1,0 +1,14 @@
+{
+  "decision": "CONDITIONAL_PASS_AWAITING_SPONSOR_CONFIRMATION",
+  "internalCommercialOperations": {"decision":"CONDITIONAL_GO","evidence":"INTERNAL_SYNTHETIC_API_JOURNEY"},
+  "externalP0": {
+    "T2-PAY-002":"NO_GO",
+    "T2-HWD-001":"NO_GO",
+    "T2-PRN-001":"NO_GO",
+    "T2-PAR-001":"NO_GO"
+  },
+  "license": {"T2-LIC-001":"NO_GO","closed":0,"required":3},
+  "fullAlpha": {"T2-UAT-001":"NO_GO","runs":0},
+  "release": {"T2-REL-001":"NO_GO","productionDeployments":0},
+  "connector": {"T2-JSH-001":"DEFERRED","networkCalls":0}
+}

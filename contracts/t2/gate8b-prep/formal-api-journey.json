@@ -1,0 +1,23 @@
+{
+  "journey_id": "G8B-E2E-API-001",
+  "evidence_level": "INTERNAL_SYNTHETIC_API_JOURNEY",
+  "transport": "MockMvc against formal REST controllers",
+  "data": "two fictional tenants; no Secret, real PII or merchant data",
+  "steps": [
+    {"order": 1, "owner": "SaaS", "operation": "create and publish versioned plan", "endpoint": "/api/v1/saas/plans"},
+    {"order": 2, "owner": "SaaS", "operation": "create merchant application", "endpoint": "/api/v1/saas/applications"},
+    {"order": 3, "owner": "SaaS", "operation": "preflight and independent approval", "endpoint": "/api/v1/saas/applications/{id}/preflight"},
+    {"order": 4, "owner": "SaaS/Foundation", "operation": "server-side tenant provision and initialization", "endpoint": "/api/v1/saas/applications/{id}/provision"},
+    {"order": 5, "owner": "SaaS", "operation": "activate tenant and entitlement", "endpoint": "/api/v1/saas/applications/{id}/activate"},
+    {"order": 6, "owner": "Subscription", "operation": "create and activate subscription", "endpoint": "/api/v1/subscriptions/tenants/{tenantId}"},
+    {"order": 7, "owner": "Subscription", "operation": "renew subscription", "endpoint": "/api/v1/subscriptions/{id}/renew"},
+    {"order": 8, "owner": "Subscription", "operation": "suspend into recovery-only and restore", "endpoint": "/api/v1/subscriptions/{id}/suspend"},
+    {"order": 9, "owner": "Service", "operation": "publish service catalog", "endpoint": "/api/v1/service/catalogs"},
+    {"order": 10, "owner": "Service", "operation": "create project and complete checklist", "endpoint": "/api/v1/service/projects"},
+    {"order": 11, "owner": "Service", "operation": "create, claim and process ticket", "endpoint": "/api/v1/service/tickets"},
+    {"order": 12, "owner": "Service", "operation": "upload metadata, authorize short download and cleanup", "endpoint": "/api/v1/service/tickets/{ticketId}/attachments"},
+    {"order": 13, "owner": "Service", "operation": "resolve, independent close and retain history", "endpoint": "/api/v1/service/tickets/{ticketId}/commands"},
+    {"order": 14, "owner": "SaaS", "operation": "logical deactivate and controlled restore", "endpoint": "/api/v1/saas/tenants/{tenantId}/{action}"}
+  ],
+  "prohibitions": ["DIRECT_DATABASE_WRITE", "CROSS_OWNER_MAPPER", "TEST_BACKDOOR", "EXTERNAL_SUCCESS", "CLIENT_TRUSTED_TENANT"]
+}

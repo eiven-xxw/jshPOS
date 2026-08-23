@@ -654,6 +654,16 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
 - `T2-PAY-002/HWD-001/PRN-001/PAR-001` 继续 `BLOCKED`；`T2-UAT-001/REL-001` 继续 `DRAFT`；`T2-LIC-001/JSH-001` 继续 `DEFERRED`。外部执行计数保持 0。
 - 完成后必须提交《T2-SVC-001 独立周门禁报告》等待项目发起人确认；不得自动启动完整 Alpha、现场试点或生产发布。
 
+## 4.53 当前 T2 Gate 8B-Prep 条件准入
+
+- 项目发起人已于 2026-08-24 接受 `T2-SVC-001 CONDITIONAL PASS` 并授权更新为 `ACCEPTED`；接受范围只覆盖虚构商户、虚构租户、合成服务资料和内部软件执行，不代表合同 SLA、伙伴现场、完整 Alpha、生产或商业验收。
+- Gate 8B-Prep 只能从 T2-SVC-001 最终封存提交 `16912142cadd7f3038a10e9deee02eb97ff44d3f` 建立 `t2/gate8b-prep-commercial-saas-operations-acceptance`；本阶段不得新增正式业务运行时、数据库迁移、后台业务页面、Flutter 业务页面或后台任务。
+- 允许汇总 `T2-SAA-001/T2-SUB-001/T2-SVC-001` 的 RTM、Owner、API/事件、迁移和证据，并以测试范围代码通过三个正式 REST Controller 验证内部合成旅程；测试不得直接写数据库、调用 Mapper、绕过权限契约或伪造外部成功。
+- Gate 8B-Prep E2E 的证据上限为 `INTERNAL_SYNTHETIC_API_JOURNEY`。Owner 状态机、持久化、租户隔离与失败恢复仍由三项已接受需求的原始测试和 MySQL 证据证明；聚合旅程不得替代完整 Alpha UAT。
+- 套餐权益、订阅访问模式与 Service 授权必须服务端失败关闭，tenant_id 只来自可信上下文；稳定幂等、同键异内容拒绝、只追加历史和受控恢复边界不得因聚合验收放宽。
+- `T2-PAY-002/HWD-001/PRN-001/PAR-001` 继续 `BLOCKED`；`T2-UAT-001/REL-001` 继续 `DRAFT`；`T2-LIC-001/JSH-001` 继续 `DEFERRED`。Provider 网络、真实资金、真实设备/外设、伙伴现场、完整 Alpha、生产和商业声明必须为 0。
+- 完成后只提交《T2 Gate 8B-Prep 启动评审报告》与下一步操作指令并等待确认；不得自动进入运行时开发、完整 Alpha、现场试点或生产发布。
+
 ## 5. 工程与测试规则
 
 - 服务端采用 RuoYi-Vue-Plus 模块化单体，不得把领域逻辑写入 Controller、通用工具类或框架系统模块。

@@ -1,0 +1,45 @@
+{
+  "gate": "T2-GATE8B-PREP",
+  "base_commit": "16912142cadd7f3038a10e9deee02eb97ff44d3f",
+  "branch": "t2/gate8b-prep-commercial-saas-operations-acceptance",
+  "status": "IN_PROGRESS",
+  "requirements": {
+    "T2-SAA-001": "ACCEPTED",
+    "T2-SUB-001": "ACCEPTED",
+    "T2-SVC-001": "ACCEPTED"
+  },
+  "scope": [
+    "RTM_OWNER_API_EVENT_MIGRATION_EVIDENCE_AGGREGATION",
+    "FORMAL_REST_SYNTHETIC_JOURNEY",
+    "FAIL_CLOSED_TENANT_IDEMPOTENCY_HISTORY_AUDIT",
+    "GAP_LICENSE_EXTERNAL_ALPHA_RELEASE_REVIEW"
+  ],
+  "forbidden_changes": [
+    "PRODUCTION_RUNTIME",
+    "DATABASE_MIGRATION",
+    "ADMIN_OR_POS_RUNTIME_UI",
+    "BACKGROUND_JOB",
+    "EXTERNAL_EXECUTION"
+  ],
+  "evidence_ceiling": "INTERNAL_SYNTHETIC_API_JOURNEY",
+  "preserved": {
+    "T2-PAY-002": "BLOCKED",
+    "T2-HWD-001": "BLOCKED",
+    "T2-PRN-001": "BLOCKED",
+    "T2-PAR-001": "BLOCKED",
+    "T2-UAT-001": "DRAFT",
+    "T2-REL-001": "DRAFT",
+    "T2-LIC-001": "DEFERRED",
+    "T2-JSH-001": "DEFERRED"
+  },
+  "external_execution": {
+    "providerNetwork": 0,
+    "realFunds": 0,
+    "realDevice": 0,
+    "realPeripheral": 0,
+    "partnerExecution": 0,
+    "fullAlpha": 0,
+    "production": 0,
+    "commercialClaim": 0
+  }
+}
