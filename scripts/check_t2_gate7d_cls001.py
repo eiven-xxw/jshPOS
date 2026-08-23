@@ -112,6 +112,12 @@ def main() -> None:
         fail("tenant_id=#{tenantid}" in xml and "store_id=#{storeid}" in xml,
              f"Owner 窄读端口缺少租户/门店约束: {item}")
 
+    mysql_test = read("server/ruoyi-modules/jshpos-operations/src/test/java/com/jingshanghui/pos/operations/migration/DailyCloseMySqlIT.java")
+    fail("millionSyntheticFactsUseExactIntegerAggregation" in mysql_test
+         and "fact_count\")).isEqualTo(1_000_000L)" in mysql_test
+         and "SYNTHETIC_NOT_SLA" in mysql_test,
+         "百万级合成事实缺少实际 MySQL 执行、守恒断言或证据边界")
+
     service = read("server/ruoyi-modules/jshpos-operations/src/main/java/com/jingshanghui/pos/operations/application/service/DailyCloseService.java")
     fail("SOURCE_CHANGED_BEFORE_SIGNATURE" in service and "LATE_FACT_REQUIRES_CORRECTION" in service,
          "签署漂移或晚到事实更正路径缺失")

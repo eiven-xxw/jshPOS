@@ -30,6 +30,7 @@ class DailyCloseMySqlIT {
         assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("202608230072");
         assertSchema();
         assertTenantAndAppendOnlyGuards();
+        millionSyntheticFactsUseExactIntegerAggregation();
     }
 
     private void createFrameworkMenuFixture() throws SQLException {
@@ -105,6 +106,39 @@ class DailyCloseMySqlIT {
             assertThatThrownBy(() -> s.executeUpdate("UPDATE ops_daily_close SET state='FAILED',record_version=2 WHERE close_id='01K3M000000000000000000001'"))
                 .isInstanceOf(SQLException.class).hasMessageContaining("closed fact");
         }
+    }
+
+    /**
+     * 在 MySQL 8.4 上执行一百万条纯合成事实的精确整数聚合。
+     * 该耗时只用于观察线性趋势，不是生产容量或商业 SLA。
+     */
+    private void millionSyntheticFactsUseExactIntegerAggregation() throws SQLException {
+        long started=System.nanoTime();
+        try(Connection c=DriverManager.getConnection(url,username,password);Statement s=c.createStatement();
+            var rows=s.executeQuery("""
+              WITH digits(n) AS (
+                SELECT 0 UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4
+                UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9
+              ), facts AS (
+                SELECT 100+MOD(a.n*100000+b.n*10000+c.n*1000+d.n*100+e.n*10+f.n,901) gross_minor,
+                  MOD(a.n*100000+b.n*10000+c.n*1000+d.n*100+e.n*10+f.n,17) discount_minor,
+                  MOD(a.n*100000+b.n*10000+c.n*1000+d.n*100+e.n*10+f.n,5) surcharge_minor
+                FROM digits a CROSS JOIN digits b CROSS JOIN digits c
+                  CROSS JOIN digits d CROSS JOIN digits e CROSS JOIN digits f
+              )
+              SELECT COUNT(*) fact_count,SUM(gross_minor) gross_minor,SUM(discount_minor) discount_minor,
+                SUM(surcharge_minor) surcharge_minor,
+                SUM(gross_minor-discount_minor+surcharge_minor) receivable_minor
+              FROM facts
+              """)) {
+            assertThat(rows.next()).isTrue();
+            assertThat(rows.getLong("fact_count")).isEqualTo(1_000_000L);
+            assertThat(rows.getLong("gross_minor")-rows.getLong("discount_minor")
+                +rows.getLong("surcharge_minor")).isEqualTo(rows.getLong("receivable_minor"));
+        }
+        long elapsedMillis=(System.nanoTime()-started)/1_000_000L;
+        System.out.printf("CLS001_MILLION_FACT_TREND facts=1000000 elapsedMs=%d evidence=SYNTHETIC_NOT_SLA%n",
+            elapsedMillis);
     }
 
     private static String required(String name){String value=System.getenv(name);if(value==null||value.isBlank())throw new IllegalStateException(name+" must be provided by CI");return value;}
