@@ -72,6 +72,8 @@ def main() -> None:
         "server/ruoyi-modules/ruoyi-system/src/main/java/org/dromara/system/service/impl/SysPermissionServiceImpl.java",
         "server/ruoyi-modules/jshpos-saas/src/test/java/com/jingshanghui/pos/saas/security/SuperAdminPermissionPatternContractTest.java",
         "server/ruoyi-modules/jshpos-foundation/src/main/java/com/jingshanghui/pos/foundation/application/audit/AuditSanitizer.java",
+        "server/ruoyi-modules/jshpos-service/src/main/java/com/jingshanghui/pos/service/config/ServiceAutoConfiguration.java",
+        "server/ruoyi-modules/jshpos-service/src/test/java/com/jingshanghui/pos/service/config/ServiceAutoConfigurationTest.java",
     ]
     require(all((ROOT / path).is_file() for path in required), "必要文件缺失")
     require(git("merge-base", "--is-ancestor", BASE, "HEAD") == "", "Gate8B-Prep 封存提交不是祖先")
@@ -118,12 +120,16 @@ def main() -> None:
     audit_sanitizer = (ROOT / required[15]).read_text(encoding="utf-8")
     require("objectMapper.copy()" in audit_sanitizer and "new ObjectMapper()" not in audit_sanitizer,
             "审计摘要器必须复用应用 Java Time 模块且不得修改全局 ObjectMapper")
+    service_configuration = (ROOT / required[16]).read_text(encoding="utf-8")
+    require("@AutoConfiguration" in service_configuration
+            and '@ComponentScan("com.jingshanghui.pos.service")' in service_configuration,
+            "Service Owner 必须注册为正式自动配置并扫描运行时组件")
     vectors = json.loads((ROOT / required[4]).read_text(encoding="utf-8"))["seeds"]
     require(len(vectors) >= 8 and len({v["id"] for v in vectors}) == len(vectors), "失败 seed 不完整")
 
     changed = set(filter(None, git("diff", "--name-only", BASE).splitlines())) | set(
         filter(None, git("ls-files", "--others", "--exclude-standard").splitlines()))
-    allowed_runtime = {required[8], required[10], required[13], required[15]}
+    allowed_runtime = {required[8], required[10], required[13], required[15], required[16]}
     for name in changed:
         normalized = name.replace("\\", "/")
         require("/db/migration/" not in normalized, "本阶段禁止新增或修改迁移: " + normalized)
