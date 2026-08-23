@@ -557,6 +557,8 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
 - 修复只能调用对应 Owner 的具名端口并复用稳定命令；支付/退款 `UNKNOWN` 只允许观察查询、回调或对账收敛，禁止生成新扣款、退款或其他业务命令。未配置的 Owner 修复能力必须 `UNAVAILABLE` 失败关闭。
 - `T2-PAY-002/HWD-001/PRN-001/PAR-001` 继续 `BLOCKED`，`T2-JSH-001/LIC-001` 继续 `DEFERRED`；Provider 网络、真实资金、设备/外设命令、伙伴现场、完整 Alpha、生产和商业声明保持 0。
 - 完成后只允许把 `T2-EXC-001` 更新为 `VERIFIED / AWAITING SPONSOR ACCEPTANCE` 并提交独立周门禁报告；不得自动准入 `T2-MEM-003`、其他 Gate 7D 需求或 Gate 7E。
+- 实现候选提交 `1166ac98cb4041a5a02e2e35fd6f63dd46dc40f1` 的 GitHub Actions Run `32615492242` 已通过九个 Job 并生成九个带 GitHub SHA-256 的证据制品；`T2-EXC-001` 只更新为 `VERIFIED / AWAITING SPONSOR ACCEPTANCE`，项目发起人确认前不得更新为 `ACCEPTED`。
+- 首次候选 Run `32615384874` 因 Linux 执行器不接受递归 glob 表达式而失败；修复提交 `1166ac98cb4041a5a02e2e35fd6f63dd46dc40f1` 改用跨平台 `rglob`，不得删除失败 Run、降低门禁或用自动重跑掩盖。
 
 ## 5. 工程与测试规则
 

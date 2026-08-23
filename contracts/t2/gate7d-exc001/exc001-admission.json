@@ -1,6 +1,6 @@
 {
   "requirementId": "T2-EXC-001",
-  "status": "IN_PROGRESS",
+  "status": "VERIFIED",
   "baselineCommit": "b240e0b697e40a16d4f85cb2447195284f15e21e",
   "branch": "t2/gate7d-sprint22a-exc001-exception-center",
   "owner": "OPERATIONS",
