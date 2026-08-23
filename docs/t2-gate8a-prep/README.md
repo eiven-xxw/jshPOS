@@ -14,5 +14,6 @@
 9. [T2-SAA-001 第一批正式开发操作指令](09_T2_SAA001第一批正式开发操作指令.md)
 10. [Gate 8A-Prep 证据索引](10_Gate8A_Prep证据索引.md)
 
-当前建议：`STATIC_DESIGN_AND_CONTRACT_PREP / CONDITIONAL PASS`。该结论只建议项目发起人
-后续单独准入 `T2-SAA-001`，不自动准入 SAA、SUB 或 SVC 运行时。
+当前建议：`STATIC_DESIGN_AND_CONTRACT_PREP / CONDITIONAL PASS`。候选提交
+`b59669b9c3948103c82d45b46b1042e593bd1ed4` 的 GitHub Run `32641276144` 四项门禁全绿。
+该结论只建议项目发起人后续单独准入 `T2-SAA-001`，不自动准入 SAA、SUB 或 SVC 运行时。

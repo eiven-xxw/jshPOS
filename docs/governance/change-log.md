@@ -238,5 +238,6 @@
 | CR-T2G8A-001 | 2026-08-23 | APPROVED_PREP_ONLY_SAA_RECOMMENDATION | 项目发起人授权从 `b47533eba707d486abe44dbf70ec7b651081b3af` 建立 Gate8A-Prep；完成 SAA 商户开户、套餐权益和商业租户生命周期的独立 CR，建议后续单独 CONDITIONAL GO | T2-SAA-001、ADR-056 | SAA保持DRAFT且运行时/迁移/页面/任务为0；未经再次确认不得READY或IN_PROGRESS |
 | CR-T2G8A-002 | 2026-08-23 | PREPARED_DEPENDENCY_BLOCKED | 完成 SUB 订阅期限、宽限、到期、受控降级、数据保留和恢复的独立 CR 与状态契约 | T2-SUB-001、T2-SAA-001、ADR-056 | SUB保持DRAFT并依赖SAA独立ACCEPTED；不含真实计费、扣款、发票或资金 |
 | CR-T2G8A-003 | 2026-08-23 | PREPARED_DEPENDENCY_BLOCKED | 完成 SVC 实施项目、服务目录、工单、附件权限和内部服务目标的独立 CR 与状态契约 | T2-SVC-001、T2-SAA-001、T2-SUB-001、ADR-056 | SVC保持DRAFT并依赖SAA/SUB独立ACCEPTED；不授予设备、伙伴现场或生产权限，不形成商业SLA |
+| CR-T2G8A-004 | 2026-08-23 | PREP_CANDIDATE_CI_GREEN_AWAITING_CONFIRMATION | 候选提交 `b59669b9c3948103c82d45b46b1042e593bd1ed4` 的 GitHub Actions Run `32641276144` 完成 Ubuntu、Windows、范围边界和证据聚合四个 Job 一次全绿；证据 Artifact `9493663601` 摘要 `0b0120ce74b7cfee0043df5d7ca462038ace6b729d9d04de36bd6d7d468e42c9` | T2-SAA-001、T2-SUB-001、T2-SVC-001、ADR-056 | 三项继续DRAFT；运行时、迁移、页面、任务、依赖和全部外部执行为0；回填提交须闭环复跑并等待发起人确认 |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。

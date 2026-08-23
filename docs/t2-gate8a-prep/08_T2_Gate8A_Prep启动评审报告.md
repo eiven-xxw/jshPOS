@@ -29,7 +29,19 @@ T2-REL-001` 保持 DRAFT，`T2-LIC-001/T2-JSH-001` 保持 DEFERRED。Provider �
 建议 Gate 8A-Prep `CONDITIONAL PASS`，并只建议下一步单独启动 `T2-SAA-001`。项目发起人确认前，
 三项不得更新为 READY/IN_PROGRESS；确认后也只能更新 SAA，SUB/SVC 继续 DRAFT。
 
-## 5. 待封存证据
+## 5. 门禁与制品
 
-候选/封存 commit、GitHub Run、Artifact ID、摘要和双平台结果在 CI 完成后回填至证据索引及
-变更日志；未回填前本报告仍是候选评审材料。
+候选提交 `b59669b9c3948103c82d45b46b1042e593bd1ed4` 的 GitHub Actions Run
+`32641276144` 在 30 秒内完成四个 Job：
+
+- governance-ubuntu：成功；
+- governance-windows：成功；
+- scope-boundary：成功；
+- evidence：成功。
+
+最终证据 Artifact `9493663601`，GitHub Artifact SHA-256 为
+`0b0120ce74b7cfee0043df5d7ca462038ace6b729d9d04de36bd6d7d468e42c9`。其余三份生产者
+Artifact ID 和摘要见证据索引。四项 Node.js 20 弃用提示来自 GitHub Action 运行时，执行器已
+强制使用 Node.js 24；不是用例失败或门禁跳过，后续作为 CI 组件升级事项跟踪。
+
+结论：`CONDITIONAL PASS / AWAITING SPONSOR CONFIRMATION`。回填提交仍须完成同工作流闭环复跑。
