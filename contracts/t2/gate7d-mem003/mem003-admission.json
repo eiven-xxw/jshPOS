@@ -6,11 +6,11 @@
   "baselineCommit": "fd474767c182cbdb5c3df0a9e2e4688371f0587f",
   "branch": "t2/gate7d-sprint22b-mem003-runtime",
   "serialOrder": ["MEMBER", "PRICING", "PROMOTION", "ORDER_REFUND", "PACKAGE_POS_WEB", "CROSS_PLATFORM_E2E"],
-  "activeStage": "PRICING",
+  "activeStage": "PROMOTION",
   "stageStatus": {
     "MEMBER": "VERIFIED_LOCAL",
-    "PRICING": "IN_PROGRESS",
-    "PROMOTION": "DRAFT",
+    "PRICING": "VERIFIED_LOCAL",
+    "PROMOTION": "IN_PROGRESS",
     "ORDER_REFUND": "DRAFT",
     "PACKAGE_POS_WEB": "DRAFT",
     "CROSS_PLATFORM_E2E": "DRAFT"

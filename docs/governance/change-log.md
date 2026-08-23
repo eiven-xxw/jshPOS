@@ -223,5 +223,6 @@
 | CR-T2G7D-006 | 2026-08-23 | MEM003_CR_PREP_COMPLETE_AWAITING_CONFIRMATION | 完成会员权益与会员价的商业价值、默认关闭模板边界、Owner主权、BEST_PRICE与叠加规则、离线隐私、DRAFT API/事件/持久化设计和40个固定向量；候选提交 `0ce1dae88bbab57ff75e320b33bc290a62d1b23f` 的 GitHub Actions Run `32617725005` 四个 Job 全绿 | T2-MEM-003、ADR-053、T2-CI-001 | MEM003继续DRAFT/CR_REQUIRED；仅STATIC_DESIGN_AND_CONTRACT_PREP且运行时/迁移/外部执行为0；等待项目发起人确认，不自动进入编码 |
 | CR-T2G7D-007 | 2026-08-23 | MEM003_CR_ACCEPTED_RUNTIME_IN_PROGRESS | 项目发起人接受 CR-T2G7D-005 CONDITIONAL GO，授权从准备封存提交 `fd474767c182cbdb5c3df0a9e2e4688371f0587f` 建立独立运行时分支，按六段串行实现会员权益、会员价、促销、成交退款快照与端侧闭环 | T2-MEM-003、ADR-053 | ADR-053更新为Accepted；MEM003通过正式准入后更新为IN_PROGRESS；后续商业需求继续DRAFT，外部四项继续BLOCKED，JSH/LIC继续DEFERRED |
 | CR-T2G7D-008 | 2026-08-23 | MEM003_MEMBER_STAGE_VERIFIED_LOCAL | 完成 Member Owner 权益版本、门店/等级范围、职责分离、暂停撤回、无PII权益快照、XML持久化和V75/V76迁移；24模块编译通过，member 44测试及覆盖率门禁通过 | T2-MEM-003、Member Owner | 仅VERIFIED_LOCAL；干净MySQL与全量CI仍待收口；允许串行进入Pricing，其他段继续DRAFT，外部证据为0 |
+| CR-T2G7D-009 | 2026-08-23 | MEM003_PRICING_STAGE_VERIFIED_LOCAL | 完成版本化租户/门店会员价、精确最小货币单位明细、职责分离、冲突窗口、Member权益校验、正式REST/XML持久化和V77迁移；Foundation 74、Member 44、Catalog 62测试及既有覆盖率门禁通过 | T2-MEM-003、Pricing Owner | 仅VERIFIED_LOCAL；干净MySQL与全量CI仍待收口；允许串行进入Promotion，后续各段继续DRAFT，外部证据为0 |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。

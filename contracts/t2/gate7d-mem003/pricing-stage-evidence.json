@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-MEM-003",
+  "stage": "PRICING",
+  "status": "VERIFIED_LOCAL",
+  "verifiedAt": "2026-08-23T13:04:33+08:00",
+  "evidence": {
+    "catalogTests": 62,
+    "memberDependencyTests": 44,
+    "foundationDependencyTests": 74,
+    "failures": 0,
+    "errors": 0,
+    "coverageGate": "MET",
+    "migrationEvidence": "STATIC_POLICY_ONLY_PENDING_CLEAN_MYSQL_CI"
+  },
+  "verifiedBoundaries": [
+    "IMMUTABLE_MINOR_UNIT_MEMBER_PRICE_ITEMS",
+    "TENANT_AND_STORE_SCOPED_PRICE_VERSION",
+    "CREATOR_APPROVER_SEPARATION",
+    "STORE_PRICE_PRECEDES_TENANT_PRICE",
+    "MEMBER_ENTITLEMENT_REQUIRED_FOR_RESOLUTION",
+    "IDEMPOTENCY_AND_SAME_KEY_DIFFERENT_CONTENT_REJECTION",
+    "XML_ONLY_COMPLEX_SQL_AND_TENANT_PREDICATES"
+  ],
+  "notYetEvidence": ["CLEAN_MYSQL_MIGRATION", "FULL_GATE_CI", "PROMOTION_COMBINATION", "POS_OR_WEB"],
+  "externalEvidence": 0
+}

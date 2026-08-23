@@ -10,7 +10,6 @@
     <description>鲸熵汇收银系统 Gate 5C 会员身份、隐私与权益账本</description>
     <dependencies>
         <dependency><groupId>com.jingshanghui.pos</groupId><artifactId>jshpos-foundation</artifactId></dependency>
-        <dependency><groupId>com.jingshanghui.pos</groupId><artifactId>jshpos-returns</artifactId><scope>test</scope></dependency>
         <dependency><groupId>org.dromara</groupId><artifactId>ruoyi-common-core</artifactId></dependency>
         <dependency><groupId>org.dromara</groupId><artifactId>ruoyi-common-mybatis</artifactId></dependency>
         <dependency><groupId>org.dromara</groupId><artifactId>ruoyi-common-satoken</artifactId></dependency>

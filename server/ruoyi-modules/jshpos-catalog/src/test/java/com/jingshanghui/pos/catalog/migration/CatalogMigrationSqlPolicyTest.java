@@ -67,6 +67,21 @@ class CatalogMigrationSqlPolicyTest {
         assertThat(sql).doesNotContain("provider_http", "serialport", "bluetooth", "usb", "print_success");
     }
 
+    @Test
+    void memberPriceMigrationKeepsMinorUnitsTenantScopeAndAppendOnlyFacts() throws IOException {
+        String sql = resource("/db/migration/V202608230077__gate7d_member_price.sql").toLowerCase();
+        for (String table : new String[]{"prc_member_price_version", "prc_member_price_item",
+            "prc_member_price_command", "prc_member_price_outbox"}) {
+            assertThat(sql).contains("create table " + table);
+        }
+        assertThat(sql).contains("tenant_id varchar(20) not null", "amount_minor bigint not null",
+            "content_sha256 char(64) character set ascii collate ascii_bin not null",
+            "trg_prc_member_price_item_no_update",
+            "trg_prc_member_price_item_no_delete", "pricing:member-price:publish");
+        assertThat(sql).doesNotContain("float", "double", "provider_http", "create table mem_",
+            "create table ord_", "create table prm_");
+    }
+
     private String resource(String name) throws IOException {
         try (var input = getClass().getResourceAsStream(name)) {
             assertThat(input).isNotNull();

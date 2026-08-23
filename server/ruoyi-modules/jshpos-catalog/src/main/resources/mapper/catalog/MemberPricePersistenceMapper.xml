@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jingshanghui.pos.catalog.infrastructure.persistence.mapper.MemberPricePersistenceMapper">
+  <insert id="insertVersion">
+    INSERT INTO prc_member_price_version(version_id,tenant_id,book_code,version_no,store_id,state,currency,
+      content_sha256,created_by,created_at)
+    VALUES(#{versionId},#{tenantId},#{bookCode},#{versionNo},#{storeId},'DRAFT','CNY',#{contentSha256},#{createdBy},#{createdAt})
+  </insert>
+  <insert id="insertItems">
+    INSERT INTO prc_member_price_item(item_id,tenant_id,version_id,level_code,sku_id,unit_id,amount_minor,
+      content_sha256,created_at) VALUES
+    <foreach collection="values" item="v" separator=",">
+      (#{v.itemId},#{v.tenantId},#{v.versionId},#{v.levelCode},#{v.skuId},#{v.unitId},#{v.amountMinor},
+       #{v.contentSha256},#{v.createdAt})
+    </foreach>
+  </insert>
+  <sql id="versionColumns">
+    SELECT version_id versionId,book_code bookCode,version_no versionNo,store_id storeId,state,
+      effective_at effectiveAt,expires_at expiresAt,content_sha256 contentSha256,created_by createdBy,
+      approved_by approvedBy,version FROM prc_member_price_version
+  </sql>
+  <select id="findVersion" resultType="com.jingshanghui.pos.catalog.application.model.MemberPriceModels$VersionView">
+    <include refid="versionColumns"/> WHERE tenant_id=#{tenantId} AND version_id=#{versionId}
+  </select>
+  <select id="lockVersion" resultType="com.jingshanghui.pos.catalog.application.model.MemberPriceModels$VersionView">
+    <include refid="versionColumns"/> WHERE tenant_id=#{tenantId} AND version_id=#{versionId} FOR UPDATE
+  </select>
+  <update id="transition">
+    UPDATE prc_member_price_version SET state=#{toState},approved_by=COALESCE(#{approvedBy},approved_by),
+      effective_at=COALESCE(#{effectiveAt},effective_at),expires_at=COALESCE(#{expiresAt},expires_at),
+      version=version+1,updated_at=#{changedAt}
+    WHERE tenant_id=#{tenantId} AND version_id=#{versionId} AND state=#{fromState} AND version=#{expectedVersion}
+  </update>
+  <!-- 同一范围、等级、SKU、单位的活动窗口不得重叠。 -->
+  <select id="countPublishingConflicts" resultType="int">
+    SELECT COUNT(*) FROM prc_member_price_item incoming
+    JOIN prc_member_price_item existing ON existing.tenant_id=incoming.tenant_id
+      AND existing.level_code=incoming.level_code AND existing.sku_id=incoming.sku_id
+      AND existing.unit_id=incoming.unit_id AND existing.version_id&lt;&gt;incoming.version_id
+    JOIN prc_member_price_version v ON v.tenant_id=existing.tenant_id AND v.version_id=existing.version_id
+    WHERE incoming.tenant_id=#{tenantId} AND incoming.version_id=#{versionId}
+      AND (v.store_id &lt;=&gt; #{storeId}) AND v.state IN ('SCHEDULED','ACTIVE')
+      AND v.effective_at&lt;COALESCE(#{to},'9999-12-31 23:59:59.999')
+      AND COALESCE(v.expires_at,'9999-12-31 23:59:59.999')&gt;#{from}
+  </select>
+  <select id="findCandidate" resultType="com.jingshanghui.pos.catalog.application.model.MemberPriceModels$MemberPriceCandidate">
+    SELECT v.version_id versionId,i.item_id itemId,#{entitlementSnapshotId} entitlementSnapshotId,
+      i.level_code levelCode,i.sku_id skuId,i.unit_id unitId,#{storeId} storeId,i.amount_minor amountMinor,
+      v.currency,v.content_sha256 contentSha256,
+      v.effective_at effectiveAt,v.expires_at expiresAt
+    FROM prc_member_price_version v JOIN prc_member_price_item i
+      ON i.tenant_id=v.tenant_id AND i.version_id=v.version_id
+    WHERE v.tenant_id=#{tenantId} AND i.level_code=#{levelCode} AND i.sku_id=#{skuId} AND i.unit_id=#{unitId}
+      AND (v.store_id=#{storeId} OR v.store_id IS NULL) AND v.state IN ('ACTIVE','SCHEDULED')
+      AND v.effective_at&lt;=#{at} AND (v.expires_at IS NULL OR v.expires_at&gt;#{at})
+    ORDER BY CASE WHEN v.store_id=#{storeId} THEN 0 ELSE 1 END,v.version_no DESC
+    LIMIT 1
+  </select>
+  <select id="findCommand" resultType="com.jingshanghui.pos.catalog.application.port.MemberPricePersistencePort$StoredCommand">
+    SELECT request_sha256 requestSha256,aggregate_id aggregateId,result_sha256 resultSha256
+    FROM prc_member_price_command
+    WHERE tenant_id=#{tenantId} AND command_type=#{commandType} AND idempotency_key=#{idempotencyKey}
+  </select>
+  <insert id="insertCommand">
+    INSERT INTO prc_member_price_command(command_id,tenant_id,command_type,idempotency_key,request_sha256,
+      aggregate_id,result_sha256,created_at)
+    VALUES(#{commandId},#{tenantId},#{commandType},#{idempotencyKey},#{requestSha256},#{aggregateId},#{resultSha256},#{createdAt})
+  </insert>
+  <insert id="insertOutbox">
+    INSERT INTO prc_member_price_outbox(event_id,tenant_id,event_type,aggregate_id,aggregate_version,payload_json,
+      payload_sha256,status,occurred_at)
+    VALUES(#{eventId},#{tenantId},#{eventType},#{aggregateId},#{aggregateVersion},#{payloadJson},#{payloadSha256},'PENDING',#{occurredAt})
+  </insert>
+</mapper>
