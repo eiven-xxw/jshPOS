@@ -194,6 +194,7 @@ def validate_scope_and_secrets() -> list[str]:
         "docs/t2-gate7f-prep/07_T2完整AlphaUAT启动评审报告.md",
         "docs/t2-gate7f-prep/08_T2_Gate7F_Prep启动评审报告.md",
         "docs/t2-gate7f-prep/09_逐轨收件与执行准入下一步操作指令.md",
+        "docs/t2-gate7f-prep/10_Gate7F_Prep证据索引.md",
         "docs/adr/ADR-055-gate7f-external-p0-license-alpha-admission-prep.md",
         "docs/governance/CR-T2G7F-001_external-p0-license-alpha-admission-prep.md",
     ]

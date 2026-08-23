@@ -42,3 +42,16 @@ Gate 7F-Prep 已完成范围、四轨收件清单、受控元数据模型、许�
 允许继续通过受控渠道收件和离线验真；不允许任何 Provider 网络、真实资金、设备/外设
 命令、伙伴联系、完整 Alpha、生产部署或商业声明。每轨达到 `VERIFIED_DOCUMENT` 后必须
 单独评审，不能批量或自动解除阻断。
+
+## 6. 候选 CI 与证据
+
+- 候选提交：`302bf3b6b37dd5c84462be596015337d0539d357`
+- GitHub Actions Run：`32631466112`
+- 结果：Ubuntu、Windows、离线范围/Secret/依赖差异、证据聚合四个 Job 一次全绿；
+- 最终证据 Artifact：`9491158914`
+- Artifact SHA-256：`1485275dea0fdb69bf7b6d9585f4089bc7cc5a514726c7fc28e951ba46f293dc`
+- P2：Actions Node.js 20 强制切换 Node.js 24 的平台弃用警告；不影响本阶段事实结论，后续
+  应通过独立依赖治理变更升级 action pin，不在本次扩大范围。
+
+该 CI 只证明准备材料、状态守恒、缺件透明、运行时/依赖未扩张和外部执行为 0；不证明
+任何外部轨已经 `VERIFIED_DOCUMENT` 或可执行。

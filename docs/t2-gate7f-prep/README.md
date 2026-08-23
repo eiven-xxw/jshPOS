@@ -12,6 +12,9 @@
 7. [T2 完整 Alpha UAT 启动评审报告](07_T2完整AlphaUAT启动评审报告.md)
 8. [Gate 7F-Prep 启动评审报告](08_T2_Gate7F_Prep启动评审报告.md)
 9. [逐轨收件与执行准入下一步操作指令](09_逐轨收件与执行准入下一步操作指令.md)
+10. [Gate 7F-Prep 证据索引](10_Gate7F_Prep证据索引.md)
 
-当前结论：`STATIC_GOVERNANCE_AND_OFFLINE_METADATA / CONDITIONAL PASS`；四条外部轨均为
-`NOT_ACHIEVED / BLOCKED / NO-GO`，许可证为 `OPEN 0/3`，完整 Alpha 为 `DRAFT / NO-GO`。
+当前结论：`STATIC_GOVERNANCE_AND_OFFLINE_METADATA / CONDITIONAL PASS`。候选提交
+`302bf3b6b37dd5c84462be596015337d0539d357` 的 GitHub Run `32631466112` 四项门禁全绿；
+四条外部轨仍为 `NOT_ACHIEVED / BLOCKED / NO-GO`，许可证为 `OPEN 0/3`，完整 Alpha 为
+`DRAFT / NO-GO`。
