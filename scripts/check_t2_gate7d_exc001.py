@@ -73,7 +73,8 @@ def main() -> None:
     for item in required:
         fail((ROOT / item).is_file(), f"缺少正式实现或证据文件: {item}")
 
-    adapters = list((ROOT / "server/ruoyi-modules").glob("jshpos-*/src/main/java/**/**ExceptionOwnerAdapter.java"))
+    # rglob 使用完整文件名，避免 pathlib 在 POSIX 上把“**”与文件名拼成非法组件。
+    adapters = list((ROOT / "server/ruoyi-modules").rglob("*ExceptionOwnerAdapter.java"))
     adapter_text = "\n".join(path.read_text(encoding="utf-8") for path in adapters)
     for owner in expected_owners:
         fail(f'return "{owner}"' in adapter_text, f"缺少 {owner} Owner 窄端口")
