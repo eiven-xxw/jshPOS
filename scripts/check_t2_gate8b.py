@@ -49,7 +49,7 @@ def main() -> None:
     require(admission["runtime"]["direct_database_business_writes"] == 0, "业务旅程禁止直接数据库写入")
 
     rtm = rows()
-    require(rtm[REQUIREMENT]["status"] in {"IN_PROGRESS", "VERIFIED"}, "汇总需求状态非法")
+    require(rtm[REQUIREMENT]["status"] == "VERIFIED", "收口提交必须保持汇总需求为 VERIFIED")
     for requirement in ("T2-SAA-001", "T2-SUB-001", "T2-SVC-001"):
         require(rtm[requirement]["status"] == "ACCEPTED", requirement + " 状态漂移")
     for requirement, status in PRESERVED.items():
@@ -74,6 +74,7 @@ def main() -> None:
         "server/ruoyi-modules/jshpos-foundation/src/main/java/com/jingshanghui/pos/foundation/application/audit/AuditSanitizer.java",
         "server/ruoyi-modules/jshpos-service/src/main/java/com/jingshanghui/pos/service/config/ServiceAutoConfiguration.java",
         "server/ruoyi-modules/jshpos-service/src/test/java/com/jingshanghui/pos/service/config/ServiceAutoConfigurationTest.java",
+        "docs/governance/CR-T2G8B-006_gate8b-closure.md",
     ]
     require(all((ROOT / path).is_file() for path in required), "必要文件缺失")
     require(git("merge-base", "--is-ancestor", BASE, "HEAD") == "", "Gate8B-Prep 封存提交不是祖先")
@@ -124,6 +125,13 @@ def main() -> None:
     require("@AutoConfiguration" in service_configuration
             and '@ComponentScan("com.jingshanghui.pos.service")' in service_configuration,
             "Service Owner 必须注册为正式自动配置并扫描运行时组件")
+    defect_ledger = (ROOT / "docs/t2-gate8b/03_P0P1缺陷账.md").read_text(encoding="utf-8")
+    require("FIXED_PENDING_FULL_CI" not in defect_ledger and defect_ledger.count("FIXED_VERIFIED") == 12,
+            "P0/P1 缺陷必须由完整候选 CI 验证关闭")
+    acceptance_report = (ROOT / required[2]).read_text(encoding="utf-8")
+    require("CONDITIONAL PASS / VERIFIED" in acceptance_report
+            and "32670082176" in acceptance_report and "9501237609" in acceptance_report,
+            "验收报告未回填完整候选 Run 与证据 Artifact")
     vectors = json.loads((ROOT / required[4]).read_text(encoding="utf-8"))["seeds"]
     require(len(vectors) >= 8 and len({v["id"] for v in vectors}) == len(vectors), "失败 seed 不完整")
 

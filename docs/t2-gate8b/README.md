@@ -2,6 +2,8 @@
 
 本目录保存商业 SaaS 运营正式运行时内部汇总验收的准入、缺陷、运行手册、证据与报告。证据最高为 `INTERNAL_COMMERCIAL_OPERATIONS_CANDIDATE`。
 
+当前状态：`T2-E2E-005 VERIFIED / CONDITIONAL PASS AWAITING SPONSOR CONFIRMATION`。不得在项目发起人确认前更新为 `ACCEPTED` 或进入后续 Gate。
+
 - [01 范围准入与证据边界](01_范围准入与证据边界.md)
 - [02 正式 API 旅程与运行手册](02_正式API旅程与可重复运行手册.md)
 - [03 P0/P1 缺陷账](03_P0P1缺陷账.md)

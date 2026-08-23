@@ -672,6 +672,7 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
 - 平台职责分离允许在默认平台租户中使用具名 `platform_admin` 角色；该角色不得在商户租户生效，也不得替代 Controller 权限、可信租户和 Owner 应用层授权。
 - 证据上限为 `INTERNAL_COMMERCIAL_OPERATIONS_CANDIDATE`；P0/P1 必须为 0，失败 seed 必须固定保留，性能仅形成内部合成边界，不得形成生产容量或商业 SLA。
 - `T2-PAY-002/HWD-001/PRN-001/PAR-001` 继续 `BLOCKED`；`T2-UAT-001/REL-001` 继续 `DRAFT`；`T2-LIC-001/JSH-001` 继续 `DEFERRED`。Provider 网络、真实资金、设备/外设、伙伴现场、完整 Alpha、生产部署和商业声明必须为 0。
+- 候选提交 `379197394a4c0934dac8a6d4ff1e10e87bdadde3` 的 GitHub Actions Run `32670082176` 已完成 10 个 Job 全绿，`T2-E2E-005` 仅更新为 `VERIFIED`；项目发起人确认前不得更新为 `ACCEPTED`，也不得启动 Gate 8C 或任何外部执行。
 - 完成后必须提交《T2 Gate 8B / Sprint S25 商业 SaaS 运营内部汇总验收报告》等待项目发起人确认；不得自动进入外部执行、完整 Alpha、现场试点、生产发布或后续 Gate。
 
 ## 5. 工程与测试规则
