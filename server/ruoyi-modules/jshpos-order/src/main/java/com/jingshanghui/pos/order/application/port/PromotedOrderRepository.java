@@ -13,6 +13,8 @@ public interface PromotedOrderRepository {
 
     void insertPromotionBinding(BindingWrite value);
 
+    void insertMemberBenefitBinding(MemberBenefitBindingWrite value);
+
     /** 含促销订单头写入参数。 */
     record OrderWrite(String tenantId, String orderId, String localOrderNo, Long storeId, String terminalId,
                       String shiftId, Long cashierUserId, LocalDate businessDate, String storeTimezone,
@@ -40,4 +42,13 @@ public interface PromotedOrderRepository {
                         long discountAmountMinor, long surchargeAmountMinor, long receivableAmountMinor,
                         String correlationId, LocalDateTime createdAt) {
     }
+
+    /** Order Owner 对原会员权益、会员价与促销路径的不可变无 PII 成交绑定。 */
+    record MemberBenefitBindingWrite(String bindingId, String tenantId, String orderId,
+                                     String promotionSnapshotId, String quoteId,
+                                     String entitlementSnapshotId, String benefitVersionId,
+                                     String selectedPath, String memberPriceVersionsJson,
+                                     long capabilityConfigVersion, String capabilitySha256,
+                                     String rightsDigest, String explanationSha256,
+                                     String promotionBindingSha256, LocalDateTime createdAt) { }
 }

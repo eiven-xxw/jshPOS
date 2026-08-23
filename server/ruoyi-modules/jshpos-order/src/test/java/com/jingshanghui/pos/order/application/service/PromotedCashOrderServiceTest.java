@@ -13,6 +13,7 @@ import com.jingshanghui.pos.order.application.model.PromotedOrderCommands.Submit
 import com.jingshanghui.pos.order.application.port.PromotedOrderRepository;
 import com.jingshanghui.pos.order.application.port.PromotionSnapshotQueryPort;
 import com.jingshanghui.pos.order.application.port.PromotionSnapshotQueryPort.Line;
+import com.jingshanghui.pos.order.application.port.PromotionSnapshotQueryPort.MemberBenefit;
 import com.jingshanghui.pos.order.application.port.PromotionSnapshotQueryPort.Snapshot;
 import com.jingshanghui.pos.order.domain.UlidGenerator;
 import com.jingshanghui.pos.order.domain.PromotedOrderSnapshotCodec;
@@ -95,6 +96,27 @@ class PromotedCashOrderServiceTest {
         verify(mapper).insertIdempotency(eq("TENANT_A"), any(), eq("SUBMIT_PROMOTED_CASH_ORDER"),
             eq("01K5C000000000000000000001"), eq("gate5b-order-key-0001"), any(), eq(ORDER),
             eq("CREATED"), any(), any());
+    }
+
+    @Test
+    void freezesOriginalMemberBenefitWithoutRepricingOrPii() {
+        Snapshot original = snapshot(ORDER, HASH_C);
+        MemberBenefit benefit = new MemberBenefit("01K5E000000000000000000001",
+            "01K5E000000000000000000002", "MEMBER_PATH",
+            "[\"01K5E000000000000000000003\"]", 9, "b".repeat(64), "d".repeat(64),
+            "e".repeat(64), "f".repeat(64));
+        when(promotions.requireSnapshot("TENANT_A", SNAPSHOT)).thenReturn(new Snapshot(original.snapshotId(),
+            original.orderId(), original.quoteId(), original.storeId(), original.terminalId(),
+            original.businessDate(), original.currency(), original.quoteFingerprint(),
+            original.settlementFingerprint(), original.packageVersion(), original.snapshotSha256(),
+            original.grossAmountMinor(), original.discountAmountMinor(), original.payableAmountMinor(),
+            original.lines(), benefit));
+
+        service.submit(command(ORDER, HASH_C));
+
+        verify(repository).insertMemberBenefitBinding(argThat(value -> value.selectedPath().equals("MEMBER_PATH")
+            && value.entitlementSnapshotId().equals("01K5E000000000000000000001")
+            && value.promotionBindingSha256().equals("f".repeat(64))));
     }
 
     @Test

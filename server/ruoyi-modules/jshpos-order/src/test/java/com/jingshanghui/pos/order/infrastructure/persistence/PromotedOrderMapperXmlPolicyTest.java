@@ -23,7 +23,8 @@ class PromotedOrderMapperXmlPolicyTest {
             xml = new String(stream.readAllBytes(), StandardCharsets.UTF_8).toLowerCase();
         }
         assertThat(xml).contains("tenant_id", "#{tenantid}", "insert into ord_sales_order",
-            "insert into ord_order_line", "insert into ord_promotion_binding");
+            "insert into ord_order_line", "insert into ord_promotion_binding",
+            "insert into ord_member_benefit_binding");
         assertThat(xml).doesNotContain("select *", "update ", "delete ", "insert into prm_", "update prm_");
     }
 }

@@ -96,4 +96,19 @@ class OrderMigrationSqlPolicyTest {
             "tenant_id, measurement_template_id, measurement_template_version");
         assertThat(sql).doesNotContain("drop table", "update ord_order_line", "float", " double");
     }
+
+    @Test
+    void gate7dMemberBenefitBindingIsNoPiiAndImmutable() throws IOException {
+        String sql;
+        try (var stream = getClass().getResourceAsStream(
+            "/db/migration/V202608230079__gate7d_order_member_benefit_binding.sql")) {
+            assertThat(stream).isNotNull();
+            sql = new String(stream.readAllBytes(), StandardCharsets.UTF_8).toLowerCase();
+        }
+        assertThat(sql).contains("create table ord_member_benefit_binding", "服务端可信租户标识",
+            "promotion_binding_sha256", "trg_ord_member_benefit_no_update",
+            "trg_ord_member_benefit_no_delete", "ord_member_benefit_binding is immutable");
+        assertThat(sql).doesNotContain("member_name", "phone", "mobile", "id_card", "float", " double",
+            "insert into prm_", "update prm_", "delete from prm_");
+    }
 }

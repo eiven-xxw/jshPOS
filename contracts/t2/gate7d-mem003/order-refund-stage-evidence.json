@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-MEM-003",
+  "stage": "ORDER_REFUND",
+  "status": "VERIFIED_LOCAL",
+  "verifiedAt": "2026-08-23T13:29:00+08:00",
+  "evidence": {
+    "orderTests": 64,
+    "promotionTests": 67,
+    "failures": 0,
+    "errors": 0,
+    "coverageGate": "MET",
+    "migrationEvidence": "STATIC_POLICY_ONLY_PENDING_CLEAN_MYSQL_CI"
+  },
+  "verifiedBoundaries": [
+    "ORDER_FREEZES_PROMOTION_MEMBER_BENEFIT_BINDING_WITHOUT_REPRICING",
+    "ORDER_MEMBER_BINDING_IS_APPEND_ONLY_AND_NO_PII",
+    "REFUND_USES_ORIGINAL_PROMOTION_SNAPSHOT_AND_SOURCE_ALLOCATIONS",
+    "NO_CURRENT_LEVEL_PRICE_OR_PROMOTION_RECALCULATION",
+    "OWNER_PORT_ONLY_NO_CROSS_OWNER_MAPPER",
+    "TRUSTED_TENANT_AND_STORE_CONTEXT",
+    "FORWARD_ONLY_V79"
+  ],
+  "notYetEvidence": ["CLEAN_MYSQL_MIGRATION", "FULL_GATE_CI", "POS_SQLITE", "WEB_OR_POS_JOURNEY"],
+  "externalEvidence": 0
+}

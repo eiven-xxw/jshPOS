@@ -15,6 +15,7 @@ import com.jingshanghui.pos.order.application.port.PromotedOrderRepository;
 import com.jingshanghui.pos.order.application.port.PromotedOrderSubmissionPort;
 import com.jingshanghui.pos.order.application.port.PromotedOrderRepository.BindingWrite;
 import com.jingshanghui.pos.order.application.port.PromotedOrderRepository.LineWrite;
+import com.jingshanghui.pos.order.application.port.PromotedOrderRepository.MemberBenefitBindingWrite;
 import com.jingshanghui.pos.order.application.port.PromotedOrderRepository.OrderWrite;
 import com.jingshanghui.pos.order.application.port.PromotionSnapshotQueryPort;
 import com.jingshanghui.pos.order.application.port.PromotionSnapshotQueryPort.Snapshot;
@@ -115,6 +116,14 @@ public class PromotedCashOrderService implements PromotedOrderSubmissionPort {
             command.promotionPackageVersion(), command.promotionSnapshotSha256(), command.orderSnapshotSha256(),
             totals.grossMinor(), totals.discountMinor(), totals.surchargeMinor(), totals.receivableMinor(),
             command.commandId(), at));
+        if (promotion.memberBenefit() != null) {
+            var benefit = promotion.memberBenefit();
+            promotedOrders.insertMemberBenefitBinding(new MemberBenefitBindingWrite(ulids.next(),
+                principal.tenantId(), command.orderId(), command.promotionSnapshotId(), promotion.quoteId(),
+                benefit.entitlementSnapshotId(), benefit.benefitVersionId(), benefit.selectedPath(),
+                benefit.memberPriceVersionsJson(), benefit.capabilityConfigVersion(), benefit.capabilitySha256(),
+                benefit.rightsDigest(), benefit.explanationSha256(), benefit.contentSha256(), at));
+        }
         appendStateHistory(principal, command, at);
         String paymentId = ulids.next();
         orderMapper.insertCashPayment(principal.tenantId(), paymentId, command.orderId(), command.shiftId(),
@@ -220,6 +229,15 @@ public class PromotedCashOrderService implements PromotedOrderSubmissionPort {
             || snapshot.discountAmountMinor() != command.discountAmountMinor()
             || snapshot.payableAmountMinor() + command.surchargeAmountMinor() != command.receivableAmountMinor()) {
             throw conflict("PROMOTION_SNAPSHOT_MISMATCH", "促销快照身份、上下文、摘要或金额不一致");
+        }
+        if (snapshot.memberBenefit() != null) {
+            var benefit = snapshot.memberBenefit();
+            if (!List.of("NORMAL_PATH", "MEMBER_PATH", "STACKED_MEMBER_PATH").contains(benefit.selectedPath())
+                || benefit.memberPriceVersionsJson() == null || benefit.capabilityConfigVersion() < 0
+                || !isHash(benefit.capabilitySha256()) || !isHash(benefit.rightsDigest())
+                || !isHash(benefit.explanationSha256()) || !isHash(benefit.contentSha256())) {
+                throw conflict("MEMBER_BENEFIT_SNAPSHOT_MISMATCH", "原会员权益成交绑定无效或摘要不完整");
+            }
         }
         Map<String, PromotionSnapshotQueryPort.Line> expected = new HashMap<>();
         snapshot.lines().forEach(line -> expected.put(line.lineId(), line));

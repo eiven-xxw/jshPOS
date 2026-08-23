@@ -21,9 +21,20 @@ public interface PromotionSnapshotQueryPort {
                     LocalDate businessDate, String currency, String quoteFingerprint,
                     String settlementFingerprint, long packageVersion, String snapshotSha256,
                     long grossAmountMinor, long discountAmountMinor, long payableAmountMinor,
-                    List<Line> lines) {
+                    List<Line> lines, MemberBenefit memberBenefit) {
         public Snapshot {
             lines = List.copyOf(lines);
+        }
+
+        /** 兼容不含会员权益的既有成交快照。 */
+        public Snapshot(String snapshotId, String orderId, String quoteId, Long storeId, String terminalId,
+                        LocalDate businessDate, String currency, String quoteFingerprint,
+                        String settlementFingerprint, long packageVersion, String snapshotSha256,
+                        long grossAmountMinor, long discountAmountMinor, long payableAmountMinor,
+                        List<Line> lines) {
+            this(snapshotId, orderId, quoteId, storeId, terminalId, businessDate, currency, quoteFingerprint,
+                settlementFingerprint, packageVersion, snapshotSha256, grossAmountMinor, discountAmountMinor,
+                payableAmountMinor, lines, null);
         }
     }
 
@@ -31,4 +42,10 @@ public interface PromotionSnapshotQueryPort {
     record Line(String lineId, int lineNo, Long skuId, BigDecimal quantity, long grossAmountMinor,
                 long discountAmountMinor, long payableAmountMinor, String sourceAllocationsSha256) {
     }
+
+    /** Promotion Owner 提供的无 PII 会员权益路径冻结投影。 */
+    record MemberBenefit(String entitlementSnapshotId, String benefitVersionId, String selectedPath,
+                         String memberPriceVersionsJson, long capabilityConfigVersion,
+                         String capabilitySha256, String rightsDigest, String explanationSha256,
+                         String contentSha256) { }
 }

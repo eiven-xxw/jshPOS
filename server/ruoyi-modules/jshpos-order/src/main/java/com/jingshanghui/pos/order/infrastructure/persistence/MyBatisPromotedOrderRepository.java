@@ -28,6 +28,11 @@ public class MyBatisPromotedOrderRepository implements PromotedOrderRepository {
         requireOne(mapper.insertPromotionBinding(value));
     }
 
+    @Override
+    public void insertMemberBenefitBinding(MemberBenefitBindingWrite value) {
+        requireOne(mapper.insertMemberBenefitBinding(value));
+    }
+
     private void requireOne(int count) {
         if (count != 1) {
             throw new ServiceException("ORD-STORE-003: 含促销订单事实写入失败", 409);

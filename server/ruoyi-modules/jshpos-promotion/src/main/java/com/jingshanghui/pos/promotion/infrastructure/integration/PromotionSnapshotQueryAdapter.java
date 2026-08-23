@@ -4,6 +4,7 @@ import com.jingshanghui.pos.order.application.port.PromotionSnapshotQueryPort;
 import com.jingshanghui.pos.promotion.application.port.PromotionPersistencePort;
 import com.jingshanghui.pos.promotion.application.port.PromotionPersistencePort.StoredQuote;
 import com.jingshanghui.pos.promotion.application.port.PromotionPersistencePort.StoredSnapshot;
+import com.jingshanghui.pos.order.application.port.PromotionSnapshotQueryPort.MemberBenefit;
 import lombok.RequiredArgsConstructor;
 import org.dromara.common.core.exception.ServiceException;
 import org.springframework.stereotype.Component;
@@ -33,9 +34,15 @@ public class PromotionSnapshotQueryAdapter implements PromotionSnapshotQueryPort
                 line.grossAmountMinor(), line.discountAmountMinor(), line.payableAmountMinor(),
                 line.sourceAllocationsSha256()))
             .toList();
+        var benefit = persistence.findMemberBenefitBinding(tenantId, snapshot.quoteId());
+        MemberBenefit memberBenefit = benefit == null ? null : new MemberBenefit(benefit.entitlementSnapshotId(),
+            benefit.benefitVersionId(), benefit.selectedPath(), benefit.memberPriceVersionsJson(),
+            benefit.capabilityConfigVersion(), benefit.capabilitySha256(), benefit.rightsDigest(),
+            benefit.explanationSha256(), benefit.contentSha256());
         return new Snapshot(snapshot.snapshotId(), snapshot.orderId(), snapshot.quoteId(), snapshot.storeId(),
             snapshot.terminalId(), snapshot.businessDate(), snapshot.currency(), quote.resultSha256(),
             snapshot.quoteFingerprint(), quote.packageVersion(), snapshot.snapshotSha256(),
-            snapshot.grossAmountMinor(), snapshot.discountAmountMinor(), snapshot.payableAmountMinor(), lines);
+            snapshot.grossAmountMinor(), snapshot.discountAmountMinor(), snapshot.payableAmountMinor(), lines,
+            memberBenefit);
     }
 }
