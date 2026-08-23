@@ -38,4 +38,12 @@ class SaasRulesTest {
         assertThat(SaasRules.featureAllowed("SUSPENDED",false,"REFUND")).isTrue();
         assertThat(SaasRules.featureAllowed("TERMINATED_LOGICAL",false,"LEGAL_EXPORT")).isTrue();
     }
+    @Test void subscriptionAccessModeIsServerAuthoritativeAndFailsClosed() {
+        assertThat(SaasRules.subscriptionAccessAllowed("NORMAL","SALE")).isTrue();
+        assertThat(SaasRules.subscriptionAccessAllowed("GRACE","SALE")).isTrue();
+        assertThat(SaasRules.subscriptionAccessAllowed("RECOVERY_ONLY","REFUND")).isTrue();
+        assertThat(SaasRules.subscriptionAccessAllowed("RECOVERY_ONLY","SALE")).isFalse();
+        assertThat(SaasRules.subscriptionAccessAllowed("TERMINATED_RECOVERY","LEGAL_EXPORT")).isTrue();
+        assertThat(SaasRules.subscriptionAccessAllowed("UNKNOWN_MODE","REFUND")).isFalse();
+    }
 }

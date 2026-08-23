@@ -1,0 +1,15 @@
+{
+  "requirement_id": "T2-SUB-001",
+  "gate": "T2-GATE8A-SPRINT-S24B-SUB001",
+  "branch": "t2/gate8a-sprint24b-sub001-runtime",
+  "status": "VERIFIED",
+  "evidence_ceiling": "INTERNAL_SYNTHETIC_SOFTWARE",
+  "base_commit": "abcf34ab2e99a75ba476fade6f203b38a2ed3c75",
+  "states": ["DRAFT", "PENDING_ACTIVATION", "ACTIVE", "GRACE_PERIOD", "SUSPENDED", "EXPIRED", "TERMINATION_PENDING", "TERMINATED", "RESTORED"],
+  "access_modes": ["NORMAL", "GRACE", "RECOVERY_ONLY", "TERMINATED_RECOVERY"],
+  "recovery_features": ["REFUND", "PAYMENT_AND_REFUND_QUERY", "RECONCILIATION", "AUDIT", "BACKUP_RESTORE", "LEGAL_EXPORT", "DATA_MIGRATION", "DATA_DELETION_REQUEST"],
+  "forbidden": ["REAL_BILLING", "AUTO_DEBIT", "PROVIDER_NETWORK", "REAL_FUNDS", "INVOICE", "ACCOUNTS_PAYABLE", "GENERAL_LEDGER", "TAX", "REAL_NOTIFICATION_CHANNEL"],
+  "serial_order": ["OWNER_AND_STATE_MACHINE", "SAA_CONTROL_PORT", "TERM_AND_IDEMPOTENCY", "SCHEDULE_AND_REMINDER", "MYSQL_AND_API", "WEB_AND_FLUTTER", "FAULT_VECTORS_AND_COMPLETE_CI"],
+  "external_execution": {"realBilling":0,"providerNetwork":0,"realFunds":0,"realDevice":0,"realPeripheral":0,"partnerExecution":0,"fullAlpha":0,"production":0,"commercialClaim":0},
+  "preserved": {"T2-SVC-001": "DRAFT", "T2-PAY-002": "BLOCKED", "T2-HWD-001": "BLOCKED", "T2-PRN-001": "BLOCKED", "T2-PAR-001": "BLOCKED", "T2-UAT-001": "DRAFT", "T2-REL-001": "DRAFT", "T2-LIC-001": "DEFERRED", "T2-JSH-001": "DEFERRED"}
+}

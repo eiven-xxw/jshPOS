@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jingshanghui.pos.subscription.infrastructure.persistence.mapper.SubscriptionMapper">
+    <resultMap id="subscription" type="com.jingshanghui.pos.subscription.application.model.SubscriptionModels$SubscriptionRecord">
+        <constructor>
+            <arg column="subscription_id" javaType="java.lang.String"/><arg column="tenant_id" javaType="java.lang.String"/>
+            <arg column="plan_id" javaType="java.lang.Long"/><arg column="entitlement_version_id" javaType="java.lang.String"/>
+            <arg column="contract_ref" javaType="java.lang.String"/><arg column="external_order_ref" javaType="java.lang.String"/>
+            <arg column="state" javaType="java.lang.String"/><arg column="state_version" javaType="java.lang.Integer"/>
+            <arg column="current_term_version" javaType="java.lang.Integer"/><arg column="starts_at" javaType="java.time.LocalDateTime"/>
+            <arg column="ends_at" javaType="java.time.LocalDateTime"/><arg column="grace_ends_at" javaType="java.time.LocalDateTime"/>
+            <arg column="business_time_zone" javaType="java.lang.String"/><arg column="degradation_policy_version" javaType="java.lang.String"/>
+            <arg column="content_sha256" javaType="java.lang.String"/><arg column="created_at" javaType="java.time.LocalDateTime"/>
+            <arg column="updated_at" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+    <sql id="columns">subscription_id,tenant_id,plan_id,entitlement_version_id,contract_ref,external_order_ref,
+        state,state_version,current_term_version,starts_at,ends_at,grace_ends_at,business_time_zone,
+        degradation_policy_version,content_sha256,created_at,updated_at</sql>
+    <select id="find" resultMap="subscription">SELECT <include refid="columns"/> FROM sub_subscription WHERE subscription_id=#{subscriptionId}</select>
+    <select id="lock" resultMap="subscription">SELECT <include refid="columns"/> FROM sub_subscription WHERE subscription_id=#{subscriptionId} FOR UPDATE</select>
+    <select id="findByTenant" resultMap="subscription">SELECT <include refid="columns"/> FROM sub_subscription WHERE tenant_id=#{tenantId}</select>
+    <select id="findDue" resultMap="subscription">SELECT <include refid="columns"/> FROM sub_subscription
+        WHERE state IN ('ACTIVE','GRACE_PERIOD') AND ends_at&lt;=#{now} ORDER BY grace_ends_at,subscription_id LIMIT #{limit}</select>
+    <select id="listTerms" resultType="com.jingshanghui.pos.subscription.application.model.SubscriptionModels$TermRecord">
+        SELECT term_id termId,subscription_id subscriptionId,term_version termVersion,starts_at startsAt,ends_at endsAt,
+        grace_ends_at graceEndsAt,business_time_zone businessTimeZone,contract_ref contractRef,
+        external_order_ref externalOrderRef,term_sha256 termSha256,created_at createdAt
+        FROM sub_subscription_term WHERE subscription_id=#{subscriptionId} ORDER BY term_version</select>
+    <insert id="insertSubscription">INSERT INTO sub_subscription(subscription_id,tenant_id,plan_id,entitlement_version_id,
+        contract_ref,external_order_ref,state,state_version,current_term_version,starts_at,ends_at,grace_ends_at,
+        business_time_zone,degradation_policy_version,content_sha256,created_at,updated_at)
+        VALUES(#{subscriptionId},#{tenantId},#{planId},#{entitlementVersionId},#{contractRef},#{externalOrderRef},
+        #{state},#{stateVersion},#{currentTermVersion},#{startsAt},#{endsAt},#{graceEndsAt},#{businessTimeZone},
+        #{degradationPolicyVersion},#{contentSha256},#{at},#{at})</insert>
+    <update id="changeState">UPDATE sub_subscription SET state=#{toState},state_version=state_version+1,
+        content_sha256=#{contentSha256},updated_at=#{at} WHERE subscription_id=#{subscriptionId}
+        AND state=#{fromState} AND state_version=#{expectedVersion}</update>
+    <update id="changeCurrentTerm">UPDATE sub_subscription SET current_term_version=#{newTermVersion},contract_ref=#{contractRef},
+        external_order_ref=#{externalOrderRef},starts_at=#{startsAt},ends_at=#{endsAt},grace_ends_at=#{graceEndsAt},
+        business_time_zone=#{businessTimeZone},content_sha256=#{contentSha256},updated_at=#{at}
+        WHERE subscription_id=#{subscriptionId} AND current_term_version=#{expectedTermVersion}</update>
+    <insert id="appendTerm">INSERT INTO sub_subscription_term(term_id,subscription_id,term_version,starts_at,ends_at,
+        grace_ends_at,business_time_zone,contract_ref,external_order_ref,term_sha256,created_at)
+        VALUES(#{termId},#{subscriptionId},#{termVersion},#{startsAt},#{endsAt},#{graceEndsAt},#{businessTimeZone},
+        #{contractRef},#{externalOrderRef},#{termSha256},#{at})</insert>
+    <insert id="appendState">INSERT INTO sub_subscription_state_event(event_id,tenant_id,subscription_id,from_state,
+        to_state,state_version,term_version,action_code,reason,request_sha256,correlation_id,actor_user_id,occurred_at)
+        VALUES(#{eventId},#{tenantId},#{subscriptionId},#{fromState},#{toState},#{stateVersion},#{termVersion},
+        #{actionCode},#{reason},#{requestSha256},#{correlationId},#{actorUserId},#{at})</insert>
+    <insert id="appendNotification">INSERT INTO sub_notification_intent(intent_id,tenant_id,subscription_id,term_version,
+        notification_type,scheduled_at,payload_sha256,intent_state,created_at)
+        VALUES(#{intentId},#{tenantId},#{subscriptionId},#{termVersion},#{notificationType},#{scheduledAt},
+        #{payloadSha256},'PLANNED',#{at})</insert>
+    <select id="findCommand" resultType="com.jingshanghui.pos.subscription.application.port.SubscriptionPersistencePort$CommandRecord">
+        SELECT command_id commandId,authority_scope authorityScope,operation,idempotency_key idempotencyKey,
+        request_sha256 requestSha256,result_ref resultRef,result_state resultState FROM sub_command_result
+        WHERE authority_scope=#{scope} AND operation=#{operation} AND idempotency_key=#{idempotencyKey}</select>
+    <insert id="insertCommand">INSERT INTO sub_command_result(command_id,authority_scope,operation,idempotency_key,
+        request_sha256,result_ref,result_state,created_at) VALUES(#{commandId},#{authorityScope},#{operation},
+        #{idempotencyKey},#{requestSha256},#{resultRef},#{resultState},#{at})</insert>
+    <insert id="appendAudit">INSERT INTO sub_audit_event(audit_id,tenant_id,subscription_id,action_code,result,
+        request_sha256,correlation_id,actor_user_id,masked_summary,occurred_at)
+        VALUES(#{auditId},#{tenantId},#{subscriptionId},#{actionCode},#{result},#{requestSha256},#{correlationId},
+        #{actorUserId},#{maskedSummary},#{at})</insert>
+    <insert id="appendOutbox">INSERT INTO sub_outbox(outbox_id,tenant_id,subscription_id,event_type,schema_version,
+        payload_json,payload_sha256,correlation_id,delivery_state,attempts,created_at)
+        VALUES(#{outboxId},#{tenantId},#{subscriptionId},#{eventType},'1.0',CAST(#{payloadJson} AS JSON),
+        #{payloadSha256},#{correlationId},'PENDING',0,#{at})</insert>
+    <insert id="ensureCheckpoint">INSERT IGNORE INTO sub_schedule_checkpoint(job_code,last_scanned_at,lease_owner,
+        lease_until,last_result_sha256,record_version,created_at,updated_at) VALUES(#{jobCode},NULL,NULL,NULL,NULL,0,#{at},#{at})</insert>
+    <update id="acquireCheckpoint">UPDATE sub_schedule_checkpoint SET lease_owner=#{runnerId},lease_until=#{leaseUntil},
+        record_version=record_version+1,updated_at=#{now} WHERE job_code=#{jobCode}
+        AND (lease_until IS NULL OR lease_until&lt;#{now} OR lease_owner=#{runnerId})</update>
+    <update id="completeCheckpoint">UPDATE sub_schedule_checkpoint SET last_scanned_at=#{scannedAt},
+        last_result_sha256=#{resultSha256},lease_owner=NULL,lease_until=NULL,record_version=record_version+1,
+        updated_at=#{scannedAt} WHERE job_code=#{jobCode} AND lease_owner=#{runnerId}</update>
+</mapper>

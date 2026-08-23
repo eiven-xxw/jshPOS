@@ -40,4 +40,8 @@ public interface SaasPersistenceMapper {
     void appendOutbox(OutboxWrite write);
     Long quotaUsed(@Param("tenantId") String tenantId, @Param("featureCode") String featureCode);
     int consumeQuota(QuotaWrite write);
+    SubscriptionAccessRecord findSubscriptionAccess(@Param("tenantId") String tenantId);
+    void insertSubscriptionAccess(SubscriptionAccessWrite write);
+    int changeSubscriptionAccess(SubscriptionAccessChange change);
+    void appendSubscriptionAccessEvent(SubscriptionAccessEventWrite write);
 }

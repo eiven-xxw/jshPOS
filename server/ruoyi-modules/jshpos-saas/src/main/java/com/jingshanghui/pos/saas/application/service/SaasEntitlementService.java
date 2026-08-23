@@ -29,9 +29,13 @@ public class SaasEntitlementService {
         if (tenant == null) return new EntitlementDecision(false, "TENANT_NOT_ONBOARDED", null, null, null);
         EntitlementItemRecord item = persistence.listItems(tenant.versionId()).stream().filter(v -> feature.equals(v.featureCode())).findFirst().orElse(null);
         boolean enabled = item != null && Boolean.TRUE.equals(item.enabled());
-        boolean allowed = SaasRules.featureAllowed(tenant.lifecycleState(), enabled, feature);
+        SubscriptionAccessRecord access = persistence.findSubscriptionAccess(tenantId);
+        boolean subscriptionAllowed = access == null || SaasRules.subscriptionAccessAllowed(access.accessMode(), feature);
+        boolean allowed = SaasRules.featureAllowed(tenant.lifecycleState(), enabled, feature) && subscriptionAllowed;
         Long used = item == null || item.quotaLimit() == null ? null : value(persistence.quotaUsed(tenantId, feature));
-        return new EntitlementDecision(allowed, allowed ? "ALLOWED" : "FEATURE_OR_LIFECYCLE_DENIED",
+        String reason = allowed ? (access == null ? "LEGACY_UNMANAGED" : "ALLOWED")
+            : (!subscriptionAllowed ? "SUBSCRIPTION_ACCESS_DENIED" : "FEATURE_OR_LIFECYCLE_DENIED");
+        return new EntitlementDecision(allowed, reason,
             tenant.versionId(), item == null ? null : item.quotaLimit(), used);
     }
 

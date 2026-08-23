@@ -38,6 +38,10 @@ public interface SaasPersistencePort {
     void appendOutbox(OutboxWrite write);
     Long quotaUsed(String tenantId, String featureCode);
     int consumeQuota(QuotaWrite write);
+    SubscriptionAccessRecord findSubscriptionAccess(String tenantId);
+    void insertSubscriptionAccess(SubscriptionAccessWrite write);
+    int changeSubscriptionAccess(SubscriptionAccessChange change);
+    void appendSubscriptionAccessEvent(SubscriptionAccessEventWrite write);
 
     /** 商户申请写入参数。 */
     record ApplicationWrite(String applicationId, String applicationCode, String companyName, String industry,
@@ -83,4 +87,14 @@ public interface SaasPersistencePort {
         String payloadJson, String payloadSha256, String correlationId, LocalDateTime at) { }
     /** 配额原子消费参数。 */
     record QuotaWrite(String tenantId, String featureCode, Long delta, Long quotaLimit, LocalDateTime at) { }
+    /** 首次建立订阅访问投影。 */
+    record SubscriptionAccessWrite(String tenantId, String subscriptionId, String accessMode,
+        Integer sourceVersion, String sourceSha256, LocalDateTime at) { }
+    /** 以来源版本和乐观锁受控切换订阅访问模式。 */
+    record SubscriptionAccessChange(String tenantId, String subscriptionId, String accessMode,
+        Integer sourceVersion, String sourceSha256, Integer expectedRecordVersion, LocalDateTime at) { }
+    /** SaaS Owner 的订阅访问模式只追加事实。 */
+    record SubscriptionAccessEventWrite(String eventId, String tenantId, String subscriptionId,
+        String fromMode, String toMode, Integer sourceVersion, String sourceSha256,
+        String correlationId, LocalDateTime at) { }
 }

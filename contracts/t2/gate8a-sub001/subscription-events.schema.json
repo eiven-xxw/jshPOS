@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jshpos.example/contracts/subscription/state-changed-v1.json",
+  "title": "subscription.state-changed.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["subscriptionId", "state", "sourceSha256"],
+  "properties": {
+    "subscriptionId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "state": {"enum": ["DRAFT", "PENDING_ACTIVATION", "ACTIVE", "GRACE_PERIOD", "SUSPENDED", "EXPIRED", "TERMINATION_PENDING", "TERMINATED", "RESTORED"]},
+    "sourceSha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  }
+}

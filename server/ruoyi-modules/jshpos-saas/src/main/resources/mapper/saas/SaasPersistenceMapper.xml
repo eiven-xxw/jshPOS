@@ -88,4 +88,21 @@
     <update id="consumeQuota">UPDATE saas_quota_usage SET used_count=used_count+#{delta},updated_at=#{at}
         WHERE tenant_id=#{tenantId} AND feature_code=#{featureCode} AND quota_limit=#{quotaLimit}
         AND used_count+#{delta}&gt;=0 AND used_count+#{delta}&lt;=#{quotaLimit}</update>
+    <select id="findSubscriptionAccess" resultType="com.jingshanghui.pos.saas.application.model.SaasModels$SubscriptionAccessRecord">
+        SELECT tenant_id tenantId,subscription_id subscriptionId,access_mode accessMode,source_version sourceVersion,
+        source_sha256 sourceSha256,record_version recordVersion,updated_at updatedAt
+        FROM saas_subscription_access WHERE tenant_id=#{tenantId}
+    </select>
+    <insert id="insertSubscriptionAccess">INSERT INTO saas_subscription_access(tenant_id,subscription_id,access_mode,
+        source_version,source_sha256,record_version,created_at,updated_at)
+        VALUES(#{tenantId},#{subscriptionId},#{accessMode},#{sourceVersion},#{sourceSha256},0,#{at},#{at})</insert>
+    <update id="changeSubscriptionAccess">UPDATE saas_subscription_access SET subscription_id=#{subscriptionId},
+        access_mode=#{accessMode},source_version=#{sourceVersion},source_sha256=#{sourceSha256},
+        record_version=record_version+1,updated_at=#{at}
+        WHERE tenant_id=#{tenantId} AND subscription_id=#{subscriptionId} AND record_version=#{expectedRecordVersion}
+        AND source_version&lt;=#{sourceVersion}</update>
+    <insert id="appendSubscriptionAccessEvent">INSERT INTO saas_subscription_access_event(event_id,tenant_id,
+        subscription_id,from_mode,to_mode,source_version,source_sha256,correlation_id,occurred_at)
+        VALUES(#{eventId},#{tenantId},#{subscriptionId},#{fromMode},#{toMode},#{sourceVersion},#{sourceSha256},
+        #{correlationId},#{at})</insert>
 </mapper>

@@ -1,0 +1,11 @@
+table,owner,access_strategy,sql_mode,mutation_boundary
+sub_subscription,Subscription,CONTROLLED_WRITE,HYBRID,仅具名状态条件更新
+sub_subscription_term,Subscription,APPEND_ONLY,XML,仅追加期限版本
+sub_subscription_state_event,Subscription,APPEND_ONLY,XML,仅追加状态事实
+sub_schedule_checkpoint,Subscription,CONTROLLED_WRITE,XML,租约与单调检查点
+sub_notification_intent,Subscription,APPEND_ONLY,XML,仅追加通知意图且不负责真实发送
+sub_command_result,Subscription,CONTROLLED_WRITE,XML,稳定幂等结果
+sub_audit_event,Subscription,APPEND_ONLY,XML,只追加审计
+sub_outbox,Subscription,CONTROLLED_WRITE,XML,载荷不可变且仅投递状态受控
+saas_subscription_access,SaaS,CONTROLLED_WRITE,XML,SaaS正式端口维护授权投影
+saas_subscription_access_event,SaaS,APPEND_ONLY,XML,SaaS访问模式只追加事实

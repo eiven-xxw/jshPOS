@@ -14,17 +14,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * 在全模块正式运行时类路径上执行 V1—V82，验证既有 Owner 与 Gate 8A SaaS 迁移可共同前向安装。
+ * 在全模块正式运行时类路径上执行 V1—V84，验证既有 Owner、SaaS 与订阅迁移可共同前向安装。
  * 该测试只由带受控 MySQL 8.4 服务的专属 CI Job 显式执行。
  */
 @Tag("local")
 class MemberBenefitMigrationMySqlIT {
-    private final String url = required("GATE8A_SAA_MYSQL_JDBC_URL", "GATE7D_MEM003_MYSQL_JDBC_URL");
-    private final String username = required("GATE8A_SAA_MYSQL_USERNAME", "GATE7D_MEM003_MYSQL_USERNAME");
-    private final String password = required("GATE8A_SAA_MYSQL_PASSWORD", "GATE7D_MEM003_MYSQL_PASSWORD");
+    private final String url = required("GATE8A_SUB_MYSQL_JDBC_URL", "GATE8A_SAA_MYSQL_JDBC_URL");
+    private final String username = required("GATE8A_SUB_MYSQL_USERNAME", "GATE8A_SAA_MYSQL_USERNAME");
+    private final String password = required("GATE8A_SUB_MYSQL_PASSWORD", "GATE8A_SAA_MYSQL_PASSWORD");
 
     @Test
-    void migratesUnifiedRuntimeThroughV82AndEnforcesMemberBenefitFacts() throws Exception {
+    void migratesUnifiedRuntimeThroughV84AndEnforcesMemberBenefitFacts() throws Exception {
         createFrameworkMenuFixture();
         Flyway flyway = Flyway.configure().dataSource(url, username, password)
             .locations("classpath:db/migration").table("jshpos_flyway_schema_history")
@@ -33,11 +33,12 @@ class MemberBenefitMigrationMySqlIT {
         assertThat(flyway.migrate().migrationsExecuted).isZero();
         flyway.validate();
         assertThat(flyway.info().current()).isNotNull();
-        assertThat(flyway.info().current().getVersion().toString()).isEqualTo("202608230082");
+        assertThat(flyway.info().current().getVersion().toString()).isEqualTo("202608230084");
         assertPermissionMenuRangesAreReconciled();
         assertOwnerTablesTenantKeysCommentsAndTriggers();
         assertPackageMetadataIsImmutable();
         assertSaasHistoryAndQuotaAreProtected();
+        assertSubscriptionHistoryAndAccessAreProtected();
     }
 
     private void createFrameworkMenuFixture() throws SQLException {
@@ -85,6 +86,11 @@ class MemberBenefitMigrationMySqlIT {
                 assertThat(rows.next()).isTrue();
                 assertThat(rows.getInt(1)).isEqualTo(13);
             }
+            try (var rows = statement.executeQuery("SELECT COUNT(DISTINCT perms) FROM sys_menu "
+                + "WHERE menu_id BETWEEN 9201720 AND 9201728")) {
+                assertThat(rows.next()).isTrue();
+                assertThat(rows.getInt(1)).isEqualTo(9);
+            }
         }
     }
 
@@ -98,7 +104,10 @@ class MemberBenefitMigrationMySqlIT {
             "ord_member_benefit_binding", "saas_plan", "saas_merchant_application",
             "saas_application_state_event", "saas_entitlement_version", "saas_entitlement_item",
             "saas_tenant_entitlement", "saas_tenant_lifecycle_event", "saas_initialization_checkpoint",
-            "saas_command_result", "saas_quota_usage", "saas_audit_event", "saas_outbox");
+            "saas_command_result", "saas_quota_usage", "saas_audit_event", "saas_outbox",
+            "sub_subscription", "sub_subscription_term", "sub_subscription_state_event",
+            "sub_notification_intent", "sub_schedule_checkpoint", "sub_command_result",
+            "sub_audit_event", "sub_outbox", "saas_subscription_access", "saas_subscription_access_event");
         try (Connection connection = DriverManager.getConnection(url, username, password);
              Statement statement = connection.createStatement()) {
             for (String table : tables) {
@@ -187,6 +196,43 @@ class MemberBenefitMigrationMySqlIT {
                 + "tenant_id='TENANT_A' AND feature_code='STORE_COUNT' AND used_count+1<=quota_limit")).isEqualTo(1);
             assertThat(statement.executeUpdate("UPDATE saas_quota_usage SET used_count=used_count+1 WHERE "
                 + "tenant_id='TENANT_A' AND feature_code='STORE_COUNT' AND used_count+1<=quota_limit")).isZero();
+        }
+    }
+
+    /** 验证期限/状态/访问历史只追加，投影使用显式状态与来源版本。 */
+    private void assertSubscriptionHistoryAndAccessAreProtected() throws SQLException {
+        try (Connection connection = DriverManager.getConnection(url, username, password);
+             Statement statement = connection.createStatement()) {
+            statement.executeUpdate("INSERT INTO sub_subscription(subscription_id,tenant_id,plan_id,entitlement_version_id,"
+                + "contract_ref,external_order_ref,state,state_version,current_term_version,starts_at,ends_at,grace_ends_at,"
+                + "business_time_zone,degradation_policy_version,content_sha256,created_at,updated_at) VALUES("
+                + "'01K80000000000000000000810','TENANT_B',801,'01K80000000000000000000801','CONTRACT-810','ORDER-810',"
+                + "'ACTIVE',2,1,UTC_TIMESTAMP(3)-INTERVAL 1 DAY,UTC_TIMESTAMP(3)+INTERVAL 30 DAY,"
+                + "UTC_TIMESTAMP(3)+INTERVAL 37 DAY,'Asia/Shanghai','RECOVERY-V1',REPEAT('d',64),UTC_TIMESTAMP(3),UTC_TIMESTAMP(3))");
+            statement.executeUpdate("INSERT INTO sub_subscription_term(term_id,subscription_id,term_version,starts_at,ends_at,"
+                + "grace_ends_at,business_time_zone,contract_ref,external_order_ref,term_sha256,created_at) VALUES("
+                + "'01K80000000000000000000811','01K80000000000000000000810',1,UTC_TIMESTAMP(3)-INTERVAL 1 DAY,"
+                + "UTC_TIMESTAMP(3)+INTERVAL 30 DAY,UTC_TIMESTAMP(3)+INTERVAL 37 DAY,'Asia/Shanghai','CONTRACT-810',"
+                + "'ORDER-810',REPEAT('e',64),UTC_TIMESTAMP(3))");
+            statement.executeUpdate("INSERT INTO sub_subscription_state_event(event_id,tenant_id,subscription_id,from_state,"
+                + "to_state,state_version,term_version,action_code,reason,request_sha256,correlation_id,actor_user_id,occurred_at) VALUES("
+                + "'01K80000000000000000000812','TENANT_B','01K80000000000000000000810','PENDING_ACTIVATION','ACTIVE',2,1,"
+                + "'ACTIVATE_SUBSCRIPTION','合成激活',REPEAT('f',64),'trace-sub-810',2,UTC_TIMESTAMP(3))");
+            statement.executeUpdate("INSERT INTO saas_subscription_access(tenant_id,subscription_id,access_mode,source_version,"
+                + "source_sha256,record_version,created_at,updated_at) VALUES('TENANT_B','01K80000000000000000000810','NORMAL',2,"
+                + "REPEAT('f',64),0,UTC_TIMESTAMP(3),UTC_TIMESTAMP(3))");
+            statement.executeUpdate("INSERT INTO saas_subscription_access_event(event_id,tenant_id,subscription_id,from_mode,to_mode,"
+                + "source_version,source_sha256,correlation_id,occurred_at) VALUES('01K80000000000000000000813','TENANT_B',"
+                + "'01K80000000000000000000810',NULL,'NORMAL',2,REPEAT('f',64),'trace-sub-810',UTC_TIMESTAMP(3))");
+            assertThatThrownBy(() -> statement.executeUpdate("UPDATE sub_subscription_term SET contract_ref='CHANGED' "
+                + "WHERE term_id='01K80000000000000000000811'"))
+                .isInstanceOf(SQLException.class).hasMessageContaining("append only");
+            assertThatThrownBy(() -> statement.executeUpdate("DELETE FROM sub_subscription_state_event WHERE "
+                + "event_id='01K80000000000000000000812'"))
+                .isInstanceOf(SQLException.class).hasMessageContaining("cannot be deleted");
+            assertThatThrownBy(() -> statement.executeUpdate("UPDATE saas_subscription_access_event SET to_mode='RECOVERY_ONLY' "
+                + "WHERE event_id='01K80000000000000000000813'"))
+                .isInstanceOf(SQLException.class).hasMessageContaining("append only");
         }
     }
 

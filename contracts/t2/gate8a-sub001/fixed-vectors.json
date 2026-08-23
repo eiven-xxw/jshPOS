@@ -1,0 +1,25 @@
+{
+  "requirement_id": "T2-SUB-001",
+  "vectors": [
+    {"id":"SUB-001","case":"create-and-activate","expect":"ACTIVE_NORMAL"},
+    {"id":"SUB-002","case":"same-key-same-content","expect":"STABLE_REPLAY"},
+    {"id":"SUB-003","case":"same-key-different-content","expect":"REJECT"},
+    {"id":"SUB-004","case":"renew-appends-term","expect":"OLD_TERM_UNCHANGED"},
+    {"id":"SUB-005","case":"end-boundary","expect":"GRACE_PERIOD"},
+    {"id":"SUB-006","case":"grace-boundary","expect":"EXPIRED_RECOVERY_ONLY"},
+    {"id":"SUB-007","case":"manual-suspend","expect":"RECOVERY_ONLY"},
+    {"id":"SUB-008","case":"restore-with-new-term","expect":"ACTIVE_NORMAL"},
+    {"id":"SUB-009","case":"duplicate-scan","expect":"ONE_EFFECT"},
+    {"id":"SUB-010","case":"delayed-scan","expect":"DIRECT_EXPIRED_CONVERGENCE"},
+    {"id":"SUB-011","case":"clock-offset","expect":"SERVER_UTC_WINS"},
+    {"id":"SUB-012","case":"lease-contention","expect":"ONE_OWNER"},
+    {"id":"SUB-013","case":"restart-after-access-switch","expect":"IDEMPOTENT_CONVERGENCE"},
+    {"id":"SUB-014","case":"cross-tenant-read","expect":"REJECT"},
+    {"id":"SUB-015","case":"client-tenant-spoof","expect":"REJECT"},
+    {"id":"SUB-016","case":"invalid-time-zone","expect":"REJECT"},
+    {"id":"SUB-017","case":"invalid-term-window","expect":"REJECT"},
+    {"id":"SUB-018","case":"terminated-recovery-feature","expect":"ALLOW"},
+    {"id":"SUB-019","case":"terminated-business-feature","expect":"DENY"},
+    {"id":"SUB-020","case":"legacy-unmanaged-tenant","expect":"COMPATIBLE_WITH_AUDITABLE_REASON"}
+  ]
+}

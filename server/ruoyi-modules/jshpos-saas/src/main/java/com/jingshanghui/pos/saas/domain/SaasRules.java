@@ -65,6 +65,17 @@ public final class SaasRules {
         return RECOVERY_FEATURES.contains(code);
     }
 
+    /** 订阅访问模式的服务端授权；未知模式失败关闭。 */
+    public static boolean subscriptionAccessAllowed(String accessMode, String featureCode) {
+        String mode = code(accessMode, "accessMode");
+        String feature = code(featureCode, "featureCode");
+        return switch (mode) {
+            case "NORMAL", "GRACE" -> true;
+            case "RECOVERY_ONLY", "TERMINATED_RECOVERY" -> RECOVERY_FEATURES.contains(feature);
+            default -> false;
+        };
+    }
+
     private static ServiceException error(String code, String message) {
         return new ServiceException(code + ": " + message, 409);
     }

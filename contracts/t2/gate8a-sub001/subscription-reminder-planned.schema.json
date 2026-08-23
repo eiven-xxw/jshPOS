@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jshpos.example/contracts/subscription/reminder-planned-v1.json",
+  "title": "subscription.reminder-planned.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["subscriptionId", "termVersion", "type", "scheduledAt", "sourceSha256"],
+  "properties": {
+    "subscriptionId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "termVersion": {"type": "integer", "minimum": 1},
+    "type": {"enum": ["EXPIRES_IN_7_DAYS", "EXPIRES_IN_1_DAY", "EXPIRES_TODAY"]},
+    "scheduledAt": {"type": "string", "format": "date-time"},
+    "sourceSha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  }
+}

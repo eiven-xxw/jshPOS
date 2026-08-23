@@ -163,6 +163,11 @@
               <groupId>com.jingshanghui.pos</groupId>
               <artifactId>jshpos-saas</artifactId>
           </dependency>
+          <!-- Gate 8A 订阅续期、宽限、受控降级和恢复 -->
+          <dependency>
+              <groupId>com.jingshanghui.pos</groupId>
+              <artifactId>jshpos-subscription</artifactId>
+          </dependency>
 
         <!-- Gate 6A 加密备份、空环境恢复与演练证据模块 -->
         <dependency>

@@ -631,6 +631,17 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
 - `T2-PAY-002/HWD-001/PRN-001/PAR-001` 继续 `BLOCKED`；`T2-UAT-001/REL-001` 继续 `DRAFT`；`T2-LIC-001/JSH-001` 继续 `DEFERRED`。
 - 完成后必须提交 `T2-SAA-001` 独立周门禁报告并等待项目发起人确认；不得自动进入 SUB、SVC、完整 Alpha、现场试点或生产发布。
 
+## 4.51 当前 T2 Gate 8A / Sprint S24-B 条件准入
+
+- 项目发起人已于 2026-08-23 接受 `T2-SAA-001 CONDITIONAL PASS`，同意更新为 `ACCEPTED`，并授权从 SAA 最终封存提交 `abcf34ab2e99a75ba476fade6f203b38a2ed3c75` 建立 `t2/gate8a-sprint24b-sub001-runtime`。
+- 本阶段唯一允许正式实现的需求是 `T2-SUB-001`；`T2-SVC-001` 继续 `DRAFT`，不得创建其运行时、迁移、Controller、页面或任务。
+- `jshpos-subscription` 独占订阅头、版本化期限、只追加状态历史、调度检查点、通知意图、审计和 Outbox；它只能通过 SaaS 正式端口校验套餐快照和切换订阅访问模式，不得直接写 SaaS、RuoYi、Foundation 或其他 Owner 私有表。
+- 订阅状态固定为 `DRAFT/PENDING_ACTIVATION/ACTIVE/GRACE_PERIOD/SUSPENDED/EXPIRED/TERMINATION_PENDING/TERMINATED/RESTORED`；续期、宽限、到期、暂停、恢复和终止必须使用稳定幂等键、内容摘要、乐观锁和只追加状态事实。
+- 受控降级由服务端强制执行。`RECOVERY_ONLY` 与 `TERMINATED_RECOVERY` 只保留退款、支付退款查询、对账、审计、备份恢复、法定导出、数据迁移和删除请求；菜单隐藏或客户端时钟不得成为授权依据。
+- 调度使用权威 UTC 时间、IANA 时区、持久化租约与检查点；重复任务、乱序、时钟偏移、服务重启和延迟扫描必须复用原业务身份并最终收敛，不得删除或回写历史期限。
+- 本阶段禁止真实计费、自动扣款、支付 Provider、发票、应付、总账、税务、真实短信/邮件和资金沉淀；外部 `BLOCKED`、UAT/REL `DRAFT`、LIC/JSH `DEFERRED` 状态不变。
+- 完成后必须提交《T2-SUB-001 独立周门禁报告》等待项目发起人确认；不得自动进入 SVC、完整 Alpha、现场试点或生产发布。
+
 ## 5. 工程与测试规则
 
 - 服务端采用 RuoYi-Vue-Plus 模块化单体，不得把领域逻辑写入 Controller、通用工具类或框架系统模块。

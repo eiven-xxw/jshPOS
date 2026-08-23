@@ -26,6 +26,19 @@ public final class SaasModels {
     public record TenantEntitlementRecord(String tenantId, Long planId, String versionId,
         String lifecycleState, Integer lifecycleVersion, LocalDateTime updatedAt) { }
 
+    /**
+     * SaaS Owner 维护的订阅访问投影。
+     * @param tenantId 可信技术租户号
+     * @param subscriptionId Subscription Owner 的稳定订阅标识
+     * @param accessMode NORMAL/GRACE/RECOVERY_ONLY/TERMINATED_RECOVERY
+     * @param sourceVersion Subscription 只追加状态版本
+     * @param sourceSha256 来源状态事实摘要
+     * @param recordVersion SaaS 投影乐观锁版本
+     * @param updatedAt 最近切换时间 UTC
+     */
+    public record SubscriptionAccessRecord(String tenantId, String subscriptionId, String accessMode,
+        Integer sourceVersion, String sourceSha256, Integer recordVersion, LocalDateTime updatedAt) { }
+
     /** @param commandId 命令事实 @param requestSha256 请求摘要 @param resultRef 稳定结果引用 */
     public record CommandRecord(String commandId, String authorityScope, String operation,
         String idempotencyKey, String requestSha256, String resultRef, String resultState) { }

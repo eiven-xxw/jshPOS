@@ -37,4 +37,19 @@ void main() {
       expect(notice.title, entry.value);
     }
   });
+
+  test('订阅访问模式只展示服务端结论且不使用本地时间推导', () {
+    final expired = SaasRestrictionNotice(
+      lifecycleState: 'ACTIVE',
+      reasonCode: 'SUBSCRIPTION_ACCESS_DENIED',
+      subscriptionState: 'EXPIRED',
+      subscriptionAccessMode: 'RECOVERY_ONLY',
+      subscriptionEndsAt: DateTime.utc(2026, 8, 1),
+      subscriptionGraceEndsAt: DateTime.utc(2026, 8, 15),
+      allowedRecoveryCapabilities: const {'REFUND', 'SALE'},
+    );
+    expect(expired.visible, isTrue);
+    expect(expired.title, '订阅已到期或暂停');
+    expect(expired.effectiveRecoveryCapabilities, {'REFUND'});
+  });
 }
