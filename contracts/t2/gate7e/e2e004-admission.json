@@ -2,7 +2,7 @@
   "schemaVersion": "1.0",
   "gate": "T2-GATE7E-SPRINT-S23A-INTERNAL-V1-BUSINESS-COMPLETE",
   "requirementId": "T2-E2E-004",
-  "status": "IN_PROGRESS",
+  "status": "VERIFIED",
   "baselineCommit": "feeecec5e1b438ba46f4225954e950d4e45ceb0c",
   "branch": "t2/gate7e-sprint23a-internal-v1-business-complete",
   "owner": "QA_ARCHITECTURE",

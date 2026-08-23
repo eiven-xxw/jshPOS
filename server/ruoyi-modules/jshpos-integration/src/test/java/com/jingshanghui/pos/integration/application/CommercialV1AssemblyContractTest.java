@@ -12,11 +12,11 @@ class CommercialV1AssemblyContractTest {
     void ownerNamesAndCapabilityTypesAreUnique() {
         var capabilities = CommercialV1AssemblyContract.requiredCapabilities();
 
-        assertThat(capabilities).hasSize(18);
+        assertThat(capabilities).hasSize(32);
         assertThat(new HashSet<>(capabilities.stream().map(
-            CommercialV1AssemblyContract.OwnerCapability::owner).toList())).hasSize(18);
+            CommercialV1AssemblyContract.OwnerCapability::owner).toList())).hasSize(32);
         assertThat(new HashSet<>(capabilities.stream().map(
-            CommercialV1AssemblyContract.OwnerCapability::beanType).toList())).hasSize(18);
+            CommercialV1AssemblyContract.OwnerCapability::beanType).toList())).hasSize(32);
     }
 
     @Test

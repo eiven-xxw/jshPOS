@@ -7,6 +7,7 @@ import csv
 import json
 import pathlib
 import subprocess
+from decimal import Decimal, InvalidOperation
 
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -55,6 +56,15 @@ def load_json(path: str) -> dict:
 def load_rtm() -> dict[str, dict[str, str]]:
     with (ROOT / "docs/governance/rtm.csv").open(encoding="utf-8", newline="") as handle:
         return {row["requirement_id"]: row for row in csv.DictReader(handle)}
+
+
+def exact_decimal(value: object, field: str) -> Decimal:
+    try:
+        number = Decimal(str(value))
+    except InvalidOperation as exception:
+        raise SystemExit(f"T2-GATE7E ERROR: 非法精确数值 {field}") from exception
+    require(number.is_finite() and number.as_tuple().exponent >= -6, f"数值精度越界: {field}")
+    return number
 
 
 def main() -> None:
@@ -106,6 +116,26 @@ def main() -> None:
             and len({item["terminal"] for item in journeys}) == 6, "门店或终端不唯一")
     require(all(item["lotEnabled"] == (item["industry"] == "COMMUNITY_SUPERMARKET")
                 for item in journeys), "批次能力没有按行业模板失败关闭")
+    for journey in journeys:
+        facts = journey["facts"]
+        discount = facts["memberDiscountMinor"] + facts["promotionDiscountMinor"]
+        require(facts["grossMinor"] - discount + facts["surchargeMinor"]
+                == facts["receivableMinor"], f"订单金额不守恒: {journey['id']}")
+        require(facts["cashMinor"] == facts["receivableMinor"], f"现金份额不守恒: {journey['id']}")
+        require(facts["partialRefundMinor"] + facts["finalRefundMinor"]
+                == facts["receivableMinor"], f"原快照退款不守恒: {journey['id']}")
+        opening = exact_decimal(facts["openingQuantity"], f"{journey['id']}.opening")
+        sale = exact_decimal(facts["saleQuantity"], f"{journey['id']}.sale")
+        returned = exact_decimal(facts["returnQuantity"], f"{journey['id']}.return")
+        closing = exact_decimal(facts["closingQuantity"], f"{journey['id']}.closing")
+        require(opening - sale + returned == closing, f"库存数量不守恒: {journey['id']}")
+        unit_cost = exact_decimal(facts["unitCostMinor"], f"{journey['id']}.unitCost")
+        sale_cost = exact_decimal(facts["saleCostMinor"], f"{journey['id']}.saleCost")
+        return_cost = exact_decimal(facts["returnCostMinor"], f"{journey['id']}.returnCost")
+        require(unit_cost * sale == sale_cost == return_cost, f"原成本快照不守恒: {journey['id']}")
+        lot_quantity = exact_decimal(facts["lotAllocationQuantity"], f"{journey['id']}.lot")
+        require(lot_quantity == (sale if journey["lotEnabled"] else Decimal("0")),
+                f"批次数量与行业模板不一致: {journey['id']}")
     require(set(vector["requiredPhases"]) == EXPECTED_PHASES, "正式旅程阶段不完整")
     require(set(vector["requiredInvariants"]) == EXPECTED_INVARIANTS, "守恒清单不完整")
     seeds = vector["failureSeeds"]
@@ -119,7 +149,12 @@ def main() -> None:
     required_files = [
         "docs/adr/ADR-054-gate7e-internal-v1-business-complete.md",
         "docs/t2-gate7e/01_T2_E2E004设计准入与验收冻结.md",
+        "docs/t2-gate7e/02_T2_E2E004可重复运行手册.md",
         "docs/t2-gate7d-mem003/11_T2_MEM003项目发起人接受记录.md",
+        "scripts/run_t2_gate7e_internal_v1_business_complete.py",
+        "scripts/build_t2_gate7e_runtime_stack_smoke.py",
+        "scripts/build_t2_gate7e_evidence.py",
+        ".github/workflows/t2-gate7e.yml",
     ]
     require(all((ROOT / path).is_file() for path in required_files), "治理或接受记录缺失")
 

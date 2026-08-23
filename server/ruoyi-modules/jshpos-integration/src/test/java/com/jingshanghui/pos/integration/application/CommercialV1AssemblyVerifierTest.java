@@ -4,10 +4,21 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.beans.factory.support.RootBeanDefinition;
 
+import java.util.Set;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class CommercialV1AssemblyVerifierTest {
+    private static final Set<String> EXPECTED_OWNERS = Set.of(
+        "foundation", "catalog", "order", "sync", "terminal", "payment", "inventory",
+        "procurement", "costing", "transfer", "promotion", "returns", "member", "migration",
+        "reporting", "operations", "resilience", "release", "shift-operations", "receipt",
+        "order-disposition", "exchange", "mixed-tender", "weighted-barcode", "shelf-label",
+        "replenishment", "store-onboarding", "lot-expiry", "exception-center", "member-benefit",
+        "member-price", "member-benefit-package"
+    );
+
     @Test
     void allOwnerCapabilitiesAreUniqueAndExternalBoundariesRemainUnavailable() {
         DefaultListableBeanFactory factory = completeFactory();
@@ -16,7 +27,7 @@ class CommercialV1AssemblyVerifierTest {
 
         CommercialV1AssemblyVerifier.AssemblySnapshot snapshot = verifier.verifyNow();
 
-        assertThat(snapshot.ownerBeans()).hasSize(18);
+        assertThat(snapshot.ownerBeans().keySet()).containsExactlyInAnyOrderElementsOf(EXPECTED_OWNERS);
         assertThat(snapshot.externalBoundaries()).hasSize(5);
         assertThat(snapshot.externalBoundaries().values())
             .allSatisfy(state -> assertThat(state.runtimeStatus()).isEqualTo("UNAVAILABLE"));
@@ -60,7 +71,7 @@ class CommercialV1AssemblyVerifierTest {
             .hasMessageContaining("CORE-ASSEMBLY-002");
 
         verifier.afterSingletonsInstantiated();
-        assertThat(verifier.snapshot().ownerBeans()).hasSize(18);
+        assertThat(verifier.snapshot().ownerBeans().keySet()).containsExactlyInAnyOrderElementsOf(EXPECTED_OWNERS);
         assertThatThrownBy(() -> verifier.snapshot().ownerBeans().put("rogue", "rogueBean"))
             .isInstanceOf(UnsupportedOperationException.class);
     }
