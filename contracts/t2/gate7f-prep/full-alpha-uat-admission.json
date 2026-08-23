@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-UAT-001",
+  "status": "DRAFT",
+  "decision": "NO_GO_FULL_ALPHA",
+  "fullAlphaAllowed": false,
+  "softwareCandidate": {"classification":"INTERNAL_V1_BUSINESS_COMPLETE_CANDIDATE","commit":"3aaa92e9c90d1db540cfb6b70cdf65058c6a118f","workflowRun":32629436747,"evidenceArtifactSha256":"4d20722a658318cd8659ef01a69ca276e5eb0ba9d07b053196f02c86ae3dda44"},
+  "entryBlockers": ["T2-PAY-002","T2-HWD-001","T2-PRN-001","T2-PAR-001"],
+  "releaseBlockers": ["T2-LIC-001","T2-REL-001"],
+  "environment": {"topology":"FROZEN_NOT_PROVISIONED","productionDataAllowed":false,"productionSecretsAllowed":false,"dataDestructionEvidenceRequired":true},
+  "industries": ["CONVENIENCE","SNACK_DISCOUNT","COMMUNITY_SUPERMARKET"],
+  "raciRoles": ["PROJECT_SPONSOR","PRODUCT_OWNER","QA_OWNER","PAYMENT_OWNER","DEVICE_PERIPHERAL_OWNER","PARTNER_OWNER","SECURITY_PRIVACY_OWNER","SRE_OWNER","RELEASE_OWNER"],
+  "testDomains": ["TENANT_RBAC_AUDIT","CATALOG_PRICE_PACKAGE","POS_CASH_SHIFT","PAYMENT_REFUND_RECONCILIATION","ANDROID_HOST","PRINT_AND_PERIPHERALS","OFFLINE_SYNC","INVENTORY_PROCUREMENT_TRANSFER_COST","PROMOTION_MEMBER_REFUND","REPORTING_DAILY_CLOSE_EXCEPTION","UPGRADE_ROLLBACK","BACKUP_RESTORE","MIGRATION","PERFORMANCE_OBSERVABILITY","SECURITY_PRIVACY","PARTNER_LEGACY_RECONCILIATION"],
+  "defectPolicy": {"entry":"P0_OPEN_EQ_0_AND_P1_OPEN_EQ_0","acceptance":"P0_OPEN_EQ_0_AND_P1_OPEN_EQ_0_AND_ALL_MANDATORY_EVIDENCE_SIGNED","automaticRetryAllowed":false},
+  "externalExecution": {"providerNetworkCalls":0,"realDeviceCommands":0,"realPeripheralCommands":0,"partnerContacts":0,"onsitePilots":0,"fullAlphaRuns":0}
+}

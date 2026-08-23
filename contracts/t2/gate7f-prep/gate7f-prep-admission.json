@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "1.0",
+  "phase": "T2-GATE7F-PREP-EXTERNAL-P0-LICENSE-ALPHA-ADMISSION",
+  "baselineCommit": "3aaa92e9c90d1db540cfb6b70cdf65058c6a118f",
+  "branch": "t2/gate7f-prep-external-p0-alpha-admission",
+  "decision": "CONDITIONAL_GO_PREP_AND_OFFLINE_VERIFICATION_ONLY",
+  "evidenceLevel": "STATIC_GOVERNANCE_AND_OFFLINE_METADATA",
+  "acceptedRequirement": {"T2-E2E-004": "ACCEPTED"},
+  "preservedStates": {
+    "T2-PAY-002": "BLOCKED",
+    "T2-HWD-001": "BLOCKED",
+    "T2-PRN-001": "BLOCKED",
+    "T2-PAR-001": "BLOCKED",
+    "T2-UAT-001": "DRAFT",
+    "T2-REL-001": "DRAFT",
+    "T2-SAA-001": "DRAFT",
+    "T2-SUB-001": "DRAFT",
+    "T2-SVC-001": "DRAFT",
+    "T2-LIC-001": "DEFERRED",
+    "T2-JSH-001": "DEFERRED"
+  },
+  "allowedActions": [
+    "CONTROLLED_METADATA_INTAKE",
+    "OFFLINE_SOURCE_AUTHORIZATION_SCOPE_HASH_CUSTODY_LIFECYCLE_VERIFICATION",
+    "INDEPENDENT_EXECUTION_ADMISSION_REPORT_PREPARATION",
+    "LICENSE_CLOSURE_PLAN",
+    "FULL_ALPHA_UAT_ADMISSION_FREEZE"
+  ],
+  "forbiddenActions": [
+    "PAYMENT_PROVIDER_NETWORK",
+    "REAL_FUNDS",
+    "REAL_DEVICE_INSTALL_RESTART_OR_COMMAND",
+    "REAL_PERIPHERAL_COMMAND",
+    "PARTNER_OR_STORE_CONTACT",
+    "ONSITE_PILOT",
+    "FULL_ALPHA_UAT_EXECUTION",
+    "PRODUCTION_DEPLOYMENT",
+    "COMMERCIAL_AVAILABILITY_CLAIM",
+    "SECRET_REAL_PII_OR_CONTROLLED_ORIGINAL_IN_REPOSITORY"
+  ],
+  "externalExecution": {
+    "providerNetworkCalls": 0,
+    "realFundsTransactions": 0,
+    "realDeviceCommands": 0,
+    "realPeripheralCommands": 0,
+    "partnerContacts": 0,
+    "onsitePilots": 0,
+    "fullAlphaRuns": 0,
+    "productionDeployments": 0,
+    "commercialClaims": 0
+  },
+  "overallDecision": "PREPARED_NO_GO_EXTERNAL_EXECUTION_FULL_ALPHA_AND_RELEASE"
+}

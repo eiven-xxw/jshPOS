@@ -597,6 +597,17 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
 - `T2-SAA-001/SUB-001/SVC-001` 继续 `DRAFT`；`T2-PAY-002/HWD-001/PRN-001/PAR-001` 继续 `BLOCKED`；`T2-JSH-001/LIC-001` 继续 `DEFERRED`。Provider 网络、真实资金、真实设备/外设、伙伴现场、完整 Alpha、生产和商业声明保持 0。
 - 完成后只能把 `T2-E2E-004` 更新为 `VERIFIED / AWAITING SPONSOR ACCEPTANCE` 并提交 Gate 7E 周门禁报告；不得自动启动外部 P0、完整 Alpha、试点或生产发布。
 
+## 4.48 当前 T2 Gate 7F-Prep：外部 P0、许可证与完整 Alpha 执行准入准备
+
+- 项目发起人已于 2026-08-23 接受 Gate 7E `CONDITIONAL PASS`，授权从封存提交 `3aaa92e9c90d1db540cfb6b70cdf65058c6a118f` 建立 `t2/gate7f-prep-external-p0-alpha-admission`。
+- `T2-E2E-004` 可更新为 `ACCEPTED`，但证据上限仍为 `INTERNAL_V1_BUSINESS_COMPLETE_CANDIDATE`，不得更新或替代 `T2-UAT-001`。
+- Gate 7F-Prep 只允许支付、真实 Android 主机、打印与外设、设计伙伴四条独立收件清单、受控材料离线元数据验真、商业许可证关闭计划和完整 Alpha UAT 启动冻结；禁止修改正式运行时、数据库迁移和依赖。
+- 受控资料必须核验来源、授权签署、适用产品/型号与版本、范围、SHA-256、保管人、到期、轮换、删除和吊销；原文、Secret、商户号、终端号、证书、真实 PII 与未脱敏商户数据不得进入 Git、普通日志、CI 或普通制品。
+- `T2-PAY-002/HWD-001/PRN-001/PAR-001` 必须保持 `BLOCKED`。单轨完整材料达到 `VERIFIED_DOCUMENT` 后也只能提交独立执行准入评审，未经项目发起人逐轨确认不得产生 Provider 网络、真实资金、设备/外设命令或伙伴联系。
+- `T2-LIC-001` 保持 `DEFERRED` 且是商业发布强制阻断项；Aviator、simple-http、MySQL Connector/J 必须逐项以替换回归或适用分发模式书面法务批准关闭。
+- `T2-UAT-001/REL-001` 保持 `DRAFT`；四条外部 P0 未逐轨确认前，完整 Alpha、现场试点和生产发布必须 `NO-GO`。`T2-SAA-001/SUB-001/SVC-001` 继续 `DRAFT`，`T2-JSH-001` 继续 `DEFERRED`。
+- 本阶段所有外部执行计数必须为 0。完成后只提交四条独立执行准入报告、许可证关闭计划、完整 Alpha UAT 启动评审和 Gate 7F-Prep 评审报告，等待项目发起人逐项确认。
+
 ## 5. 工程与测试规则
 
 - 服务端采用 RuoYi-Vue-Plus 模块化单体，不得把领域逻辑写入 Controller、通用工具类或框架系统模块。

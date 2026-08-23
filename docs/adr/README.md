@@ -64,3 +64,4 @@ ADR 一经接受不得删除或静默改写。需要改变决策时，新建 ADR
 | ADR-052 | [Gate 7D Operations Owner 统一异常案件与修复编排](ADR-052-gate7d-unified-exception-center.md) | Accepted |
 | ADR-053 | [Gate 7D 会员权益、会员价与成交快照联动边界](ADR-053-gate7d-member-benefit-price-prep.md) | Accepted |
 | ADR-054 | [Gate 7E 商业 V1 内部汇总验收边界](ADR-054-gate7e-internal-v1-business-complete.md) | Accepted |
+| ADR-055 | [Gate 7F 外部 P0、许可证与完整 Alpha 执行准入准备](ADR-055-gate7f-external-p0-license-alpha-admission-prep.md) | Accepted |

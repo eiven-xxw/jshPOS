@@ -82,7 +82,7 @@ def main() -> None:
         require(rows[requirement]["status"] == "ACCEPTED", f"前置需求未 ACCEPTED: {requirement}")
     for requirement, expected in PRESERVED.items():
         require(rows[requirement]["status"] == expected, f"外部或后续状态漂移: {requirement}")
-    require(rows[REQUIREMENT]["status"] in {"IN_PROGRESS", "VERIFIED"}, "E2E004 状态越界")
+    require(rows[REQUIREMENT]["status"] in {"IN_PROGRESS", "VERIFIED", "ACCEPTED"}, "E2E004 状态越界")
 
     admission = load_json("contracts/t2/gate7e/e2e004-admission.json")
     require(admission["requirementId"] == REQUIREMENT, "准入 Requirement 身份漂移")

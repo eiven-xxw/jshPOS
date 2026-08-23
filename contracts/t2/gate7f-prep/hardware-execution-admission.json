@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-HWD-001",
+  "track": "REAL_ANDROID_HOST",
+  "status": "BLOCKED",
+  "candidates": [
+    {"role":"PRIMARY","vendor":"商米","modelFamily":"T3 PRO MAX / L15B1","exactSku":null,"androidVersion":null,"firmwareBuild":null,"cpu":null,"memory":null,"sdkOpaqueReference":null,"sampleAssetId":null,"contactOpaqueReference":null,"state":"MISSING_CONTROLLED_BUNDLE"},
+    {"role":"COMPATIBLE","vendor":"iMin","modelFamily":"D4 Pro","exactSku":null,"androidVersion":null,"firmwareBuild":null,"cpu":null,"memory":null,"sdkOpaqueReference":null,"sampleAssetId":null,"contactOpaqueReference":null,"state":"MISSING_CONTROLLED_BUNDLE"}
+  ],
+  "requiredMetadata": ["SOURCE","AUTHORIZATION_SIGNER","EXACT_SKU","ANDROID_VERSION","FIRMWARE_BUILD","CPU","MEMORY","SDK_VERSION_AND_SHA256","SAMPLE_ASSET","APK_INSTALL_UPGRADE_SCOPE","CUSTODIAN","EXPIRY_DELETION_REVOCATION","TECHNICAL_CONTACT"],
+  "verifiedCandidateCount": 0,
+  "requiredCandidateCount": 2,
+  "verifiedDocumentStatus": "NOT_ACHIEVED",
+  "executionAdmission": "NO_GO",
+  "realDeviceCommandsAllowed": false,
+  "realDeviceCommands": 0
+}

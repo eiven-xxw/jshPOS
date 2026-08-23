@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-PAR-001",
+  "track": "DESIGN_PARTNERS",
+  "status": "BLOCKED",
+  "targetRequired": 5,
+  "verifiedRealTargetCount": 0,
+  "verifiedWrittenIntentRequired": 3,
+  "verifiedWrittenIntentCount": 0,
+  "slots": [
+    {"opaqueId":"PAR-01","industry":"CONVENIENCE","identity":"MISSING","writtenIntent":"MISSING","maskedSampleAuthorization":"MISSING","retentionDeletion":"MISSING","legacyReconciliation":"MISSING","onsiteBoundary":"MISSING"},
+    {"opaqueId":"PAR-02","industry":"CONVENIENCE","identity":"MISSING","writtenIntent":"MISSING","maskedSampleAuthorization":"MISSING","retentionDeletion":"MISSING","legacyReconciliation":"MISSING","onsiteBoundary":"MISSING"},
+    {"opaqueId":"PAR-03","industry":"SNACK_DISCOUNT","identity":"MISSING","writtenIntent":"MISSING","maskedSampleAuthorization":"MISSING","retentionDeletion":"MISSING","legacyReconciliation":"MISSING","onsiteBoundary":"MISSING"},
+    {"opaqueId":"PAR-04","industry":"COMMUNITY_SUPERMARKET","identity":"MISSING","writtenIntent":"MISSING","maskedSampleAuthorization":"MISSING","retentionDeletion":"MISSING","legacyReconciliation":"MISSING","onsiteBoundary":"MISSING"},
+    {"opaqueId":"PAR-05","industry":"COMMUNITY_SUPERMARKET","identity":"MISSING","writtenIntent":"MISSING","maskedSampleAuthorization":"MISSING","retentionDeletion":"MISSING","legacyReconciliation":"MISSING","onsiteBoundary":"MISSING"}
+  ],
+  "controlledMetadataRequired": ["SOURCE","AUTHORIZATION_SIGNER","SCOPE","SHA256","CUSTODIAN","EXPIRY","DELETION","REVOCATION"],
+  "verifiedDocumentStatus": "NOT_ACHIEVED",
+  "executionAdmission": "NO_GO",
+  "contactAllowed": false,
+  "partnerContacts": 0,
+  "onsitePilotAllowed": false,
+  "onsitePilots": 0
+}
