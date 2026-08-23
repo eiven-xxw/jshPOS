@@ -24,6 +24,8 @@ from typing import Any
 CLIENT_ID = "e5cd7e4891bf95d1d19206ce24a7b32e"
 PLATFORM_TENANT = "000000"
 PLATFORM_ROLE_KEY = "platform_admin"
+# 与 RuoYi TenantConstants.TENANT_ADMIN_ROLE_KEY 保持一致；只通过正式角色查询 API 解析角色 ID。
+TENANT_ADMIN_ROLE_KEY = "admin"
 
 # 新租户只得到本旅程需要的系统用户/角色、Foundation 与 Service 权限。
 TENANT_PACKAGE_MENU_IDS = [
@@ -334,10 +336,13 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     store_id = require_value(store.get("storeId"), "foundation-store-create")
 
     tenant_role_rows = client.call(
-        "GET", "/system/role/list?" + urllib.parse.urlencode({"roleKey": "tenant_admin", "pageNum": 1, "pageSize": 20}),
+        "GET", "/system/role/list?" + urllib.parse.urlencode({"roleKey": TENANT_ADMIN_ROLE_KEY, "pageNum": 1, "pageSize": 20}),
         "tenant-admin-role-query",
     ).get("rows", [])
-    tenant_admin_role_id = require_value(find_by(tenant_role_rows, "roleKey", "tenant_admin", "tenant-admin-role-query").get("roleId"), "tenant-admin-role-query")
+    tenant_admin_role_id = require_value(
+        find_by(tenant_role_rows, "roleKey", TENANT_ADMIN_ROLE_KEY, "tenant-admin-role-query").get("roleId"),
+        "tenant-admin-role-query",
+    )
     client.call("POST", "/system/user", "tenant-reviewer-user-create", body={
         "deptId": tenant_profile.get("user", {}).get("deptId"),
         "userName": "gate8b_tenant_reviewer", "nickName": "Gate8B租户复核员",

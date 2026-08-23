@@ -86,6 +86,11 @@ def main() -> None:
     require('%Y-%m-%d %H:%M:%S' in runtime_script, "正式 API LocalDateTime 格式未遵守服务端契约")
     require('"applicationCode": "GATE8B_APP_001"' in runtime_script,
             "商户申请编码未遵守正式大写字母、数字与下划线契约")
+    require('TENANT_ADMIN_ROLE_KEY = "admin"' in runtime_script,
+            "正式旅程未遵守 RuoYi 租户管理员角色键契约")
+    require('"roleKey": TENANT_ADMIN_ROLE_KEY' in runtime_script
+            and 'find_by(tenant_role_rows, "roleKey", TENANT_ADMIN_ROLE_KEY' in runtime_script,
+            "租户复核账号必须经正式角色查询 API 解析租户管理员角色")
     forbidden_runtime = ("pymysql", "mysql.connector", "redis.Redis", "sqlalchemy", "jdbc:", "testbackdoor")
     require(not any(marker in runtime_script for marker in forbidden_runtime), "旅程脚本存在数据库、Redis 或测试后门")
 
