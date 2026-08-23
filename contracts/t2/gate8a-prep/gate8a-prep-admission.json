@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "1.0",
+  "phase": "T2-GATE8A-PREP-COMMERCIAL-SAAS-OPERATIONS",
+  "baselineCommit": "b47533eba707d486abe44dbf70ec7b651081b3af",
+  "branch": "t2/gate8a-prep-commercial-operations",
+  "evidenceLevel": "STATIC_DESIGN_AND_CONTRACT_PREP",
+  "requirements": {
+    "T2-SAA-001": {"status":"DRAFT","decision":"CONDITIONAL_GO_RECOMMENDED_AWAITING_SPONSOR"},
+    "T2-SUB-001": {"status":"DRAFT","decision":"DEPENDENCY_BLOCKED_BY_T2_SAA_001"},
+    "T2-SVC-001": {"status":"DRAFT","decision":"DEPENDENCY_BLOCKED_BY_T2_SAA_001_AND_T2_SUB_001"}
+  },
+  "strictSequence": ["T2-SAA-001","T2-SUB-001","T2-SVC-001"],
+  "runtimeFlags": {
+    "runtimeImplementation": false,
+    "databaseMigrationFile": false,
+    "controller": false,
+    "vueBusinessPage": false,
+    "flutterBusinessPage": false,
+    "backgroundJob": false,
+    "dependencyChange": false
+  },
+  "owners": {
+    "SAAS": ["MERCHANT_APPLICATION","PLAN","ENTITLEMENT_VERSION","TENANT_LIFECYCLE_ORCHESTRATION"],
+    "FOUNDATION": ["TECHNICAL_TENANT_RECORD","TRUSTED_TENANT_CONTEXT","ORGANIZATION_STORE","IAM_RBAC_ADAPTER"],
+    "SUBSCRIPTION": ["SUBSCRIPTION","TERM_VERSION","STATUS_EVENT","SCHEDULE_CHECKPOINT","NOTIFICATION_INTENT"],
+    "SERVICE": ["SERVICE_CATALOG","IMPLEMENTATION_PROJECT","WORK_ORDER","CHECK_ITEM","ATTACHMENT_REFERENCE"]
+  },
+  "modulePlan": {
+    "T2-SAA-001":"jshpos-saas",
+    "T2-SUB-001":"jshpos-subscription",
+    "T2-SVC-001":"jshpos-service"
+  },
+  "preservedStates": {
+    "T2-PAY-002":"BLOCKED","T2-HWD-001":"BLOCKED","T2-PRN-001":"BLOCKED","T2-PAR-001":"BLOCKED",
+    "T2-UAT-001":"DRAFT","T2-REL-001":"DRAFT","T2-LIC-001":"DEFERRED","T2-JSH-001":"DEFERRED"
+  },
+  "nonGoals": [
+    "REAL_SUBSCRIPTION_CHARGE","AUTO_DEBIT","INVOICE","ACCOUNTS_PAYABLE","GENERAL_LEDGER","TAX",
+    "STORED_VALUE","REAL_SMS_OR_EMAIL","CALL_CENTER","REMOTE_CONTROL","AI_AUTO_DISPATCH",
+    "THIRD_PARTY_SERVICE_CONNECTOR","FRANCHISE_SETTLEMENT","SUPPLY_CHAIN_FINANCE","COMMERCIAL_SLA",
+    "JSH_OR_OTHER_CONNECTOR","PRODUCTION_TENANT_ONBOARDING"
+  ],
+  "externalExecution": {
+    "providerNetwork":0,"realFunds":0,"realDevice":0,"realPeripheral":0,"partnerExecution":0,
+    "fullAlpha":0,"production":0,"commercialClaim":0
+  }
+}

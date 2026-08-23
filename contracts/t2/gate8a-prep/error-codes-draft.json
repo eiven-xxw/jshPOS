@@ -1,0 +1,25 @@
+{
+  "schemaVersion":"1.0",
+  "status":"DRAFT_NON_EXECUTABLE",
+  "errors":[
+    {"code":"SAA_APPLICATION_STATE_CONFLICT","http":409,"retryable":false},
+    {"code":"SAA_IDEMPOTENCY_CONTENT_MISMATCH","http":409,"retryable":false},
+    {"code":"SAA_APPROVAL_SEPARATION_REQUIRED","http":403,"retryable":false},
+    {"code":"SAA_TENANT_CONTEXT_UNTRUSTED","http":403,"retryable":false},
+    {"code":"SAA_ENTITLEMENT_VERSION_CONFLICT","http":409,"retryable":false},
+    {"code":"SAA_ENTITLEMENT_QUOTA_EXCEEDED","http":409,"retryable":false},
+    {"code":"SAA_CONTROLLED_RECOVERY_ONLY","http":403,"retryable":false},
+    {"code":"SUB_STATE_CONFLICT","http":409,"retryable":false},
+    {"code":"SUB_TERM_TIME_INVALID","http":422,"retryable":false},
+    {"code":"SUB_SCHEDULE_CHECKPOINT_CONFLICT","http":409,"retryable":true},
+    {"code":"SUB_SAA_COMMAND_PENDING","http":202,"retryable":true},
+    {"code":"SVC_WORK_ORDER_STATE_CONFLICT","http":409,"retryable":false},
+    {"code":"SVC_CLAIM_LEASE_CONFLICT","http":409,"retryable":true},
+    {"code":"SVC_MANDATORY_CHECK_INCOMPLETE","http":409,"retryable":false},
+    {"code":"SVC_ATTACHMENT_SCOPE_DENIED","http":403,"retryable":false},
+    {"code":"SVC_ATTACHMENT_METADATA_INVALID","http":422,"retryable":false},
+    {"code":"COMMON_VERSION_CONFLICT","http":409,"retryable":true},
+    {"code":"COMMON_PERMISSION_DENIED","http":403,"retryable":false},
+    {"code":"COMMON_TENANT_SCOPE_DENIED","http":403,"retryable":false}
+  ]
+}

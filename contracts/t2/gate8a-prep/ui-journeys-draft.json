@@ -1,0 +1,21 @@
+{
+  "schemaVersion":"1.0",
+  "status":"DRAFT_NON_EXECUTABLE",
+  "vueJourneys":[
+    {"id":"VUE-SAA-01","requirement":"T2-SAA-001","journey":"商户申请创建-预检-提交-独立审批-开户检查点-激活","serverAuthoritative":["TENANT_ID","STATE","ENTITLEMENT","QUOTA","AUDIT"]},
+    {"id":"VUE-SAA-02","requirement":"T2-SAA-001","journey":"套餐权益版本创建-差异预览-审批-未来发布-生效-退休","serverAuthoritative":["VERSION","EFFECTIVE_WINDOW","CONTENT_SHA256"]},
+    {"id":"VUE-SAA-03","requirement":"T2-SAA-001","journey":"租户暂停-受控能力预览-二次确认-恢复-审计时间线","serverAuthoritative":["LIFECYCLE","RECOVERY_ALLOWLIST"]},
+    {"id":"VUE-SUB-01","requirement":"T2-SUB-001","journey":"订阅草稿-激活-续期-宽限-到期-受控降级-恢复","serverAuthoritative":["TERM","STATE","DEGRADE_POLICY"]},
+    {"id":"VUE-SUB-02","requirement":"T2-SUB-001","journey":"到期任务检查点-异常-人工修复-原命令观察","serverAuthoritative":["JOB_CHECKPOINT","IDEMPOTENCY_RESULT"]},
+    {"id":"VUE-SVC-01","requirement":"T2-SVC-001","journey":"实施项目-检查清单-阻断-交接-审计","serverAuthoritative":["PROJECT_STATE","MANDATORY_CHECKS"]},
+    {"id":"VUE-SVC-02","requirement":"T2-SVC-001","journey":"工单创建-认领-转派-处理-复核-关闭-重开","serverAuthoritative":["WORK_ORDER_STATE","LEASE","REVIEW"]},
+    {"id":"VUE-SVC-03","requirement":"T2-SVC-001","journey":"附件登记-权限预检-短期下载-到期清理证明","serverAuthoritative":["OBJECT_NAMESPACE","DOWNLOAD_AUTHORIZATION","RETENTION"]}
+  ],
+  "flutterContractOnly":[
+    {"id":"POS-ENT-01","requirement":"T2-SAA-001","state":"ACTIVE","behavior":"正常使用服务端下发的能力快照"},
+    {"id":"POS-ENT-02","requirement":"T2-SAA-001","state":"GRACE_PERIOD","behavior":"明确显示宽限到期时间且禁止客户端自行延长"},
+    {"id":"POS-ENT-03","requirement":"T2-SAA-001","state":"CONTROLLED_RECOVERY_ONLY","behavior":"仅显示允许的查询退款对账导出指引不静默降级"},
+    {"id":"POS-ENT-04","requirement":"T2-SAA-001","state":"UNTRUSTED_OR_EXPIRED_SNAPSHOT","behavior":"失败关闭并提示联网核验不得猜测套餐"}
+  ],
+  "forbiddenFrontendBehaviors":["CALCULATE_ENTITLEMENT","CALCULATE_SUBSCRIPTION_STATE","OVERRIDE_TENANT_LIFECYCLE","TRUST_CLIENT_TENANT_ID","DIRECT_OBJECT_PATH","MENU_ONLY_AUTHORIZATION"]
+}

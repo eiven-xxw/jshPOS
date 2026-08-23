@@ -1,0 +1,313 @@
+openapi: 3.1.0
+info:
+  title: JSH POS Commercial SaaS Operations API Draft
+  version: 0.1.0-draft
+  description: >-
+    Gate 8A-Prep 非执行契约，不得据此生成 Controller 或网络服务。
+    tenant_id 只来自可信认证上下文，不得由请求字段覆盖。
+x-contract-status: DRAFT_NON_EXECUTABLE
+x-requirement-status:
+  T2-SAA-001: DRAFT
+  T2-SUB-001: DRAFT
+  T2-SVC-001: DRAFT
+security:
+  - bearerAuth: []
+paths:
+  /api/v1/saas/merchant-applications:
+    post:
+      operationId: createMerchantApplicationDraft
+      x-owner: SAAS
+      x-permission: saas:merchant:create
+      x-idempotency-required: true
+      parameters: [{$ref: '#/components/parameters/IdempotencyKey'}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CreateMerchantApplication'}
+      responses:
+        '200': {description: 返回稳定申请身份、版本和内容摘要}
+        '409': {$ref: '#/components/responses/Conflict'}
+  /api/v1/saas/merchant-applications/{applicationId}/preflight:
+    post:
+      operationId: preflightMerchantApplication
+      x-owner: SAAS
+      x-permission: saas:merchant:preflight
+      parameters:
+        - {$ref: '#/components/parameters/ApplicationId'}
+        - {$ref: '#/components/parameters/ExpectedVersion'}
+        - {$ref: '#/components/parameters/IdempotencyKey'}
+      responses:
+        '200': {description: 完整预检结果和内容摘要}
+        '409': {$ref: '#/components/responses/Conflict'}
+  /api/v1/saas/merchant-applications/{applicationId}/approve:
+    post:
+      operationId: approveMerchantApplication
+      x-owner: SAAS
+      x-permission: saas:merchant:approve
+      x-separation-of-duty: SUBMITTER_NE_APPROVER
+      parameters:
+        - {$ref: '#/components/parameters/ApplicationId'}
+        - {$ref: '#/components/parameters/ExpectedVersion'}
+        - {$ref: '#/components/parameters/IdempotencyKey'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ReasonCommand'}
+      responses:
+        '200': {description: 返回批准事实和版本}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '409': {$ref: '#/components/responses/Conflict'}
+  /api/v1/saas/merchant-applications/{applicationId}/provision:
+    post:
+      operationId: provisionTenantFromApprovedApplication
+      x-owner: SAAS
+      x-permission: saas:merchant:provision
+      x-server-allocated-tenant-id: true
+      parameters:
+        - {$ref: '#/components/parameters/ApplicationId'}
+        - {$ref: '#/components/parameters/ExpectedVersion'}
+        - {$ref: '#/components/parameters/IdempotencyKey'}
+      responses:
+        '200': {description: 返回服务端分配的租户引用和编排检查点}
+        '409': {$ref: '#/components/responses/Conflict'}
+  /api/v1/saas/plans/{planCode}/versions:
+    post:
+      operationId: createPlanEntitlementVersionDraft
+      x-owner: SAAS
+      x-permission: saas:plan:create
+      parameters:
+        - {$ref: '#/components/parameters/PlanCode'}
+        - {$ref: '#/components/parameters/IdempotencyKey'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CreateEntitlementVersion'}
+      responses:
+        '200': {description: 返回 DRAFT 版本和摘要}
+        '409': {$ref: '#/components/responses/Conflict'}
+  /api/v1/saas/plans/{planCode}/versions/{version}/publish:
+    post:
+      operationId: publishPlanEntitlementVersion
+      x-owner: SAAS
+      x-permission: saas:plan:publish
+      x-separation-of-duty: CREATOR_NE_APPROVER
+      parameters:
+        - {$ref: '#/components/parameters/PlanCode'}
+        - {$ref: '#/components/parameters/Version'}
+        - {$ref: '#/components/parameters/IdempotencyKey'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/PublishVersion'}
+      responses:
+        '200': {description: 返回不可变发布事实}
+        '409': {$ref: '#/components/responses/Conflict'}
+  /api/v1/saas/tenants/{tenantRef}/lifecycle-commands:
+    post:
+      operationId: submitTenantLifecycleCommand
+      x-owner: SAAS
+      x-permission: saas:tenant:lifecycle
+      x-controlled-recovery-preserved: true
+      parameters:
+        - {$ref: '#/components/parameters/TenantRef'}
+        - {$ref: '#/components/parameters/ExpectedVersion'}
+        - {$ref: '#/components/parameters/IdempotencyKey'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/TenantLifecycleCommand'}
+      responses:
+        '200': {description: 返回生命周期事实和有效权益引用}
+        '409': {$ref: '#/components/responses/Conflict'}
+  /api/v1/subscriptions:
+    post:
+      operationId: createSubscriptionDraft
+      x-owner: SUBSCRIPTION
+      x-permission: subscription:create
+      x-no-funds-effect: true
+      parameters: [{$ref: '#/components/parameters/IdempotencyKey'}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CreateSubscription'}
+      responses:
+        '200': {description: 返回 DRAFT 订阅和内容摘要}
+        '409': {$ref: '#/components/responses/Conflict'}
+  /api/v1/subscriptions/{subscriptionId}/commands:
+    post:
+      operationId: submitSubscriptionCommand
+      x-owner: SUBSCRIPTION
+      x-permission: subscription:transition
+      x-no-funds-effect: true
+      parameters:
+        - {$ref: '#/components/parameters/SubscriptionId'}
+        - {$ref: '#/components/parameters/ExpectedVersion'}
+        - {$ref: '#/components/parameters/IdempotencyKey'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SubscriptionCommand'}
+      responses:
+        '200': {description: 返回稳定状态事件和 SaaS 命令观察引用}
+        '409': {$ref: '#/components/responses/Conflict'}
+  /api/v1/service/implementation-projects:
+    post:
+      operationId: createImplementationProject
+      x-owner: SERVICE
+      x-permission: service:project:create
+      parameters: [{$ref: '#/components/parameters/IdempotencyKey'}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CreateImplementationProject'}
+      responses:
+        '200': {description: 返回项目、版本和模板引用}
+        '409': {$ref: '#/components/responses/Conflict'}
+  /api/v1/service/work-orders:
+    post:
+      operationId: createServiceWorkOrder
+      x-owner: SERVICE
+      x-permission: service:work-order:create
+      parameters: [{$ref: '#/components/parameters/IdempotencyKey'}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CreateWorkOrder'}
+      responses:
+        '200': {description: 返回工单、版本和内部目标时间}
+        '409': {$ref: '#/components/responses/Conflict'}
+  /api/v1/service/work-orders/{workOrderId}/commands:
+    post:
+      operationId: submitWorkOrderCommand
+      x-owner: SERVICE
+      x-permission: service:work-order:transition
+      parameters:
+        - {$ref: '#/components/parameters/WorkOrderId'}
+        - {$ref: '#/components/parameters/ExpectedVersion'}
+        - {$ref: '#/components/parameters/IdempotencyKey'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/WorkOrderCommand'}
+      responses:
+        '200': {description: 返回状态事实、认领租约或复核结果}
+        '409': {$ref: '#/components/responses/Conflict'}
+components:
+  securitySchemes:
+    bearerAuth: {type: http, scheme: bearer, bearerFormat: JWT}
+  parameters:
+    IdempotencyKey: {name: Idempotency-Key, in: header, required: true, schema: {type: string, minLength: 8, maxLength: 128}}
+    ExpectedVersion: {name: If-Match-Version, in: header, required: true, schema: {type: integer, minimum: 0}}
+    ApplicationId: {name: applicationId, in: path, required: true, schema: {type: string, maxLength: 26}}
+    PlanCode: {name: planCode, in: path, required: true, schema: {type: string, pattern: '^[A-Z0-9_-]{1,64}$'}}
+    Version: {name: version, in: path, required: true, schema: {type: integer, minimum: 1}}
+    TenantRef: {name: tenantRef, in: path, required: true, schema: {type: string, maxLength: 26}}
+    SubscriptionId: {name: subscriptionId, in: path, required: true, schema: {type: string, maxLength: 26}}
+    WorkOrderId: {name: workOrderId, in: path, required: true, schema: {type: string, maxLength: 26}}
+  responses:
+    Conflict: {description: 状态、版本、内容摘要、幂等或并发冲突}
+    Forbidden: {description: 服务端权限、数据范围或职责分离拒绝}
+  schemas:
+    CreateMerchantApplication:
+      type: object
+      additionalProperties: false
+      required: [applicationCode, industryTemplate, legalDisplayName, planCode]
+      properties:
+        applicationCode: {type: string, maxLength: 64}
+        industryTemplate: {enum: [CONVENIENCE, SNACK_DISCOUNT, COMMUNITY_SUPERMARKET]}
+        legalDisplayName: {type: string, maxLength: 200, description: 准备契约仅使用虚构或授权脱敏值}
+        planCode: {type: string, maxLength: 64}
+    CreateEntitlementVersion:
+      type: object
+      additionalProperties: false
+      required: [featureCodes, storeLimit, terminalLimit, employeeLimit, storageBytes, exportRowsPerDay, apiRequestsPerMinute]
+      properties:
+        featureCodes: {type: array, uniqueItems: true, items: {type: string, maxLength: 64}}
+        storeLimit: {type: integer, minimum: 0}
+        terminalLimit: {type: integer, minimum: 0}
+        employeeLimit: {type: integer, minimum: 0}
+        storageBytes: {type: integer, minimum: 0}
+        exportRowsPerDay: {type: integer, minimum: 0}
+        apiRequestsPerMinute: {type: integer, minimum: 0}
+    PublishVersion:
+      type: object
+      additionalProperties: false
+      required: [effectiveAt, contentSha256]
+      properties:
+        effectiveAt: {type: string, format: date-time}
+        expiresAt: {type: string, format: date-time}
+        contentSha256: {type: string, pattern: '^[0-9a-f]{64}$'}
+    TenantLifecycleCommand:
+      type: object
+      additionalProperties: false
+      required: [command, reasonCode, reason]
+      properties:
+        command: {enum: [ACTIVATE, SUSPEND, DEACTIVATE, RESTORE, REQUEST_TERMINATION]}
+        reasonCode: {type: string, maxLength: 64}
+        reason: {type: string, maxLength: 500}
+    CreateSubscription:
+      type: object
+      additionalProperties: false
+      required: [tenantRef, planVersionRef, externalAgreementRef, startsAt, endsAt, businessTimezone]
+      properties:
+        tenantRef: {type: string, maxLength: 26, description: 服务端解析并交叉校验的租户引用，不是 tenant_id}
+        planVersionRef: {type: string, maxLength: 64}
+        externalAgreementRef: {type: string, maxLength: 128, description: 不透明非资金引用}
+        startsAt: {type: string, format: date-time}
+        endsAt: {type: string, format: date-time}
+        graceEndsAt: {type: string, format: date-time}
+        businessTimezone: {type: string, maxLength: 64}
+    SubscriptionCommand:
+      type: object
+      additionalProperties: false
+      required: [command, effectiveAt, reasonCode]
+      properties:
+        command: {enum: [ACTIVATE, RENEW, ENTER_GRACE, SUSPEND, EXPIRE, REQUEST_TERMINATION, TERMINATE, RESTORE]}
+        effectiveAt: {type: string, format: date-time}
+        newEndsAt: {type: string, format: date-time}
+        reasonCode: {type: string, maxLength: 64}
+    CreateImplementationProject:
+      type: object
+      additionalProperties: false
+      required: [tenantRef, serviceCatalogVersionRef, industryTemplate, targetDate]
+      properties:
+        tenantRef: {type: string, maxLength: 26}
+        serviceCatalogVersionRef: {type: string, maxLength: 64}
+        industryTemplate: {enum: [CONVENIENCE, SNACK_DISCOUNT, COMMUNITY_SUPERMARKET]}
+        targetDate: {type: string, format: date}
+    CreateWorkOrder:
+      type: object
+      additionalProperties: false
+      required: [serviceType, priority, subject, internalTargetMinutes]
+      properties:
+        serviceType: {type: string, maxLength: 64}
+        priority: {enum: [P0, P1, P2, P3]}
+        subject: {type: string, maxLength: 200}
+        internalTargetMinutes: {type: integer, minimum: 1, maximum: 525600, description: 内部目标，不构成商业 SLA}
+    WorkOrderCommand:
+      type: object
+      additionalProperties: false
+      required: [command, reasonCode]
+      properties:
+        command: {enum: [ASSIGN, CLAIM, START, WAIT_FOR_INPUT, RESOLVE, CLOSE, REOPEN, CANCEL]}
+        assigneeRef: {type: string, maxLength: 64}
+        leaseSeconds: {type: integer, minimum: 60, maximum: 86400}
+        reasonCode: {type: string, maxLength: 64}
+        resolutionSummary: {type: string, maxLength: 1000}
+    ReasonCommand:
+      type: object
+      additionalProperties: false
+      required: [reasonCode, reason]
+      properties:
+        reasonCode: {type: string, maxLength: 64}
+        reason: {type: string, maxLength: 500}
