@@ -2,7 +2,9 @@
   "gate": "T2-GATE8B-PREP",
   "base_commit": "16912142cadd7f3038a10e9deee02eb97ff44d3f",
   "branch": "t2/gate8b-prep-commercial-saas-operations-acceptance",
-  "status": "IN_PROGRESS",
+  "status": "CONDITIONAL_PASS_AWAITING_SPONSOR_CONFIRMATION",
+  "candidate_commit": "3f3ea60d22bc46a00e249fab8bd93b43d1bd2339",
+  "github_run": 32659748249,
   "requirements": {
     "T2-SAA-001": "ACCEPTED",
     "T2-SUB-001": "ACCEPTED",
