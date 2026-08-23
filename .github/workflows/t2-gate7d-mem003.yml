@@ -111,7 +111,7 @@ jobs:
         with: { distribution: temurin, java-version: "21", cache: maven }
       - name: Validate unified runtime V1-V80 forward migrations and immutable facts
         working-directory: server
-        run: ./mvnw -pl ruoyi-admin -am test -Dtest=MemberBenefitMigrationMySqlIT -Dsurefire.failIfNoSpecifiedTests=false -DskipTests=false
+        run: ./mvnw -Plocal -pl ruoyi-admin -am test -Dtest=MemberBenefitMigrationMySqlIT -Dsurefire.failIfNoSpecifiedTests=false -DskipTests=false
       - name: Collect unified MySQL evidence
         run: |
           mkdir -p artifacts/t2/gate7d-mem003/mysql-runtime
