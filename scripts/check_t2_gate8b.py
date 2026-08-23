@@ -78,6 +78,8 @@ def main() -> None:
         require(marker in runtime_script, "运行时证据契约缺少 " + marker)
     require('"clientid": CLIENT_ID' in runtime_script, "正式 API 请求未携带 RuoYi 客户端身份 Header")
     require('%Y-%m-%d %H:%M:%S' in runtime_script, "正式 API LocalDateTime 格式未遵守服务端契约")
+    require('"applicationCode": "GATE8B_APP_001"' in runtime_script,
+            "商户申请编码未遵守正式大写字母、数字与下划线契约")
     forbidden_runtime = ("pymysql", "mysql.connector", "redis.Redis", "sqlalchemy", "jdbc:", "testbackdoor")
     require(not any(marker in runtime_script for marker in forbidden_runtime), "旅程脚本存在数据库、Redis 或测试后门")
 

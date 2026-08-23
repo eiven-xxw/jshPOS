@@ -247,7 +247,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                 headers=api_headers("g8b-ent-activate-001", "g8b-ent-trace-005"))
 
     application = data(client.call("POST", "/api/v1/saas/applications", "saas-application-create", body={
-        "applicationCode": "GATE8B-APP-001",
+        "applicationCode": "GATE8B_APP_001",
         "companyName": "Gate8B虚构便利商户",
         "industry": "CONVENIENCE",
         "planId": plan_id,
