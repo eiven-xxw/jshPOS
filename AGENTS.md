@@ -586,6 +586,17 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
 - 六段串行实现均已完成独立 `VERIFIED_LOCAL`；候选提交 `e95def3cec932fcf307f38398b2f94e1246a899a` 的 GitHub Actions Run `32624915228` 九个 Job 全绿，生成九个 GitHub SHA-256 制品。干净 MySQL 8.4 已从 V1 前进至 V80；既有 Gate 4C/Gate 7C 菜单 ID 冲突只通过新增组合根幂等回调前向修复，未修改已发布迁移。
 - `T2-MEM-003` 当前仅可更新为 `VERIFIED / AWAITING SPONSOR ACCEPTANCE`；项目发起人确认前不得写为 `ACCEPTED`，不得自动进入 Gate 7E 或后续需求。失败 Run `32623623290/32624233813/32624504379` 必须原样保留。
 
+## 4.47 当前 T2 Gate 7E / Sprint S23-A：商业 V1 内部汇总验收
+
+- 项目发起人已于 2026-08-23 接受 `T2-MEM-003 CONDITIONAL PASS` 并授权更新为 `ACCEPTED`；证据仍只覆盖三业态默认关闭的会员权益、会员价和原快照退款等内部合成软件执行。
+- 仅授权从 MEM003 封存提交 `feeecec5e1b438ba46f4225954e950d4e45ceb0c` 建立 `t2/gate7e-sprint23a-internal-v1-business-complete`，只准入 `T2-E2E-004`。
+- T2-E2E-004 只拥有验收清单、固定向量、失败 seed、缺陷账和证据引用，不拥有或写入任何 Owner 事实；禁止新增业务表、迁移、Controller、领域算法、跨 Owner Mapper、直接数据库写入或测试后门。
+- 同一 CI Run 必须实际执行 Server、Web、Flutter Linux/Windows、Android/Kotlin、MySQL、SQLite、Java/Dart 向量、迁移恢复、租户权限、安全、SBOM、许可证和内部汇总证据；P0/P1 必须为 0，缺失或跳过任一必需证据即失败关闭。
+- 两个虚构租户、多组织、六门店/终端覆盖便利店、零食折扣店和社区超市；非社区超市批次能力必须关闭。金额、份额、优惠、库存、成本、会员权益和日结必须逐字段守恒。
+- 证据上限固定为 `INTERNAL_V1_BUSINESS_COMPLETE_CANDIDATE`；`T2-UAT-001/T2-REL-001` 继续 `DRAFT`，不得更新或替代。
+- `T2-SAA-001/SUB-001/SVC-001` 继续 `DRAFT`；`T2-PAY-002/HWD-001/PRN-001/PAR-001` 继续 `BLOCKED`；`T2-JSH-001/LIC-001` 继续 `DEFERRED`。Provider 网络、真实资金、真实设备/外设、伙伴现场、完整 Alpha、生产和商业声明保持 0。
+- 完成后只能把 `T2-E2E-004` 更新为 `VERIFIED / AWAITING SPONSOR ACCEPTANCE` 并提交 Gate 7E 周门禁报告；不得自动启动外部 P0、完整 Alpha、试点或生产发布。
+
 ## 5. 工程与测试规则
 
 - 服务端采用 RuoYi-Vue-Plus 模块化单体，不得把领域逻辑写入 Controller、通用工具类或框架系统模块。

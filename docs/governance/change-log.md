@@ -229,5 +229,6 @@
 | CR-T2G7D-012 | 2026-08-23 | MEM003_PACKAGE_POS_WEB_STAGE_VERIFIED_LOCAL | 完成Member/Pricing只读装包端口、无PII签名权益包、V80与SQLite v16、Flutter短期令牌识别和原子成交、Vue权益/会员价/数据包运营旅程；Server 12、Flutter 33、Admin 4项定向验证与静态检查通过 | T2-MEM-003、DataPackage、Flutter POS、Vue Admin | 仅VERIFIED_LOCAL；允许串行进入跨端向量/E2E/完整CI，干净MySQL与全量门禁仍待验证，外部证据为0 |
 | CR-T2G7D-013 | 2026-08-23 | MEM003_CANDIDATE_FAILURES_PRESERVED | Run `32623623290` 暴露 Flutter Gate6D 覆盖率不足与 MySQL 0测试，Run `32624233813` 证明专属profile仍未激活，Run `32624504379` 真正执行V1—V80并发现Gate4C/Gate7C菜单主键冲突；全部失败日志原样保留 | T2-MEM-003、T2-MIG-001、T2-CI-001 | 未重跑掩盖、未降低阈值、未修改已发布V17/V65；增加正式POS旅程、专属`-Plocal`和组合根幂等前向修复 |
 | CR-T2G7D-014 | 2026-08-23 | MEM003_VERIFIED_AWAITING_SPONSOR_ACCEPTANCE | 六段串行实现、40个固定向量、Java/Dart跨端、正式内部E2E、MySQL8.4 V1—V80、Flutter双平台、Android/Kotlin、安全与证据索引完成；候选 `e95def3cec932fcf307f38398b2f94e1246a899a` 的 Run `32624915228` 九个Job全绿 | T2-MEM-003、ADR-053、T2-CI-001 | 更新为VERIFIED但不ACCEPTED；三项后续仍DRAFT，外部四项仍BLOCKED，JSH/LIC仍DEFERRED，等待项目发起人确认 |
+| CR-T2G7E-001 | 2026-08-23 | MEM003_ACCEPTED_E2E004_ADMITTED | 项目发起人接受 T2-MEM-003 内部软件 CONDITIONAL PASS，并授权从封存提交 `feeecec5e1b438ba46f4225954e950d4e45ceb0c` 建立 Gate7E 分支，只准入 Gate7 实际获批能力的商业V1内部汇总验收 | T2-MEM-003、T2-E2E-004、ADR-054 | MEM003更新为ACCEPTED；E2E004完成设计准入后进入IN_PROGRESS；SAA/SUB/SVC继续DRAFT，外部四项BLOCKED、UAT/REL DRAFT、JSH/LIC DEFERRED且外部执行为0 |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。

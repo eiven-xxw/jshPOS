@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "1.0",
+  "gate": "T2-GATE7E-SPRINT-S23A-INTERNAL-V1-BUSINESS-COMPLETE",
+  "requirementId": "T2-E2E-004",
+  "status": "IN_PROGRESS",
+  "baselineCommit": "feeecec5e1b438ba46f4225954e950d4e45ceb0c",
+  "branch": "t2/gate7e-sprint23a-internal-v1-business-complete",
+  "owner": "QA_ARCHITECTURE",
+  "evidenceCeiling": "INTERNAL_V1_BUSINESS_COMPLETE_CANDIDATE",
+  "executionModel": "FORMAL_COMPONENT_EXECUTION_PLUS_CONTRACT_RECONCILIATION",
+  "businessFactOwnership": "READ_ONLY_EVIDENCE_REFERENCES_ONLY",
+  "runtimeAllowed": true,
+  "newDomainAlgorithmAllowed": false,
+  "newBusinessTableOrMigrationAllowed": false,
+  "predecessors": [
+    "T2-POS-010", "T2-POS-011", "T2-ORD-004", "T2-EXG-001", "T2-PAY-004",
+    "T2-PRD-005", "T2-LBL-001", "T2-RPL-001", "T2-DMT-001", "T2-ONB-001",
+    "T2-LOT-001", "T2-CLS-001", "T2-EXC-001", "T2-MEM-003"
+  ],
+  "industries": ["CONVENIENCE", "SNACK_DISCOUNT", "COMMUNITY_SUPERMARKET"],
+  "syntheticTopology": {"tenantCount": 2, "organizationCountMin": 2, "storeCount": 6, "terminalCount": 6},
+  "defectPolicy": {"p0OpenMax": 0, "p1OpenMax": 0, "flakyAllowed": false, "automaticRetryAllowed": false},
+  "preservedStates": {
+    "T2-SAA-001": "DRAFT", "T2-SUB-001": "DRAFT", "T2-SVC-001": "DRAFT",
+    "T2-PAY-002": "BLOCKED", "T2-HWD-001": "BLOCKED", "T2-PRN-001": "BLOCKED",
+    "T2-PAR-001": "BLOCKED", "T2-UAT-001": "DRAFT", "T2-REL-001": "DRAFT",
+    "T2-JSH-001": "DEFERRED", "T2-LIC-001": "DEFERRED"
+  },
+  "externalExecution": {
+    "providerNetwork": 0, "realFunds": 0, "realDevice": 0, "realPeripheral": 0,
+    "partnerExecution": 0, "fullAlpha": 0, "production": 0, "commercialClaim": 0
+  }
+}

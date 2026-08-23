@@ -35,7 +35,8 @@ def main() -> None:
 
     with (ROOT / "docs/governance/rtm.csv").open(encoding="utf-8", newline="") as handle:
         rows = {row["requirement_id"]: row for row in csv.DictReader(handle)}
-    fail(rows["T2-MEM-003"]["status"] in {"IN_PROGRESS", "VERIFIED"}, "MEM003 状态越界")
+    mem003_status = rows["T2-MEM-003"]["status"]
+    fail(mem003_status in {"IN_PROGRESS", "VERIFIED", "ACCEPTED"}, "MEM003 状态越界")
     for requirement in ("T2-SAA-001", "T2-SUB-001", "T2-SVC-001"):
         fail(rows[requirement]["status"] == "DRAFT", f"{requirement} 被提前准入")
     for requirement in ("T2-PAY-002", "T2-HWD-001", "T2-PRN-001", "T2-PAR-001"):
@@ -47,6 +48,13 @@ def main() -> None:
     fail(re.search(r"(?im)^-?\s*状态[：:]\s*Accepted\s*$", adr) is not None, "ADR-053 未 Accepted")
     admission = json.loads(read("contracts/t2/gate7d-mem003/mem003-admission.json"))
     fail(admission["status"] == rows["T2-MEM-003"]["status"], "RTM 与准入状态不一致")
+    if mem003_status == "ACCEPTED":
+        fail(admission.get("activeStage") == "SPONSOR_ACCEPTED", "项目发起人接受阶段未封存")
+        fail(admission.get("sealCommit") == "feeecec5e1b438ba46f4225954e950d4e45ceb0c",
+             "MEM003 最终封存提交漂移")
+        fail(admission.get("sealCiRun") == 32625486453, "MEM003 封存 CI 漂移")
+        fail((ROOT / "docs/t2-gate7d-mem003/11_T2_MEM003项目发起人接受记录.md").is_file(),
+             "缺少项目发起人接受记录")
     expected_order = ["MEMBER", "PRICING", "PROMOTION", "ORDER_REFUND", "PACKAGE_POS_WEB", "CROSS_PLATFORM_E2E"]
     fail(admission["serialOrder"] == expected_order, "串行 Owner 顺序漂移")
     fail(admission["defaultEnabled"] is False, "三业态默认关闭边界漂移")

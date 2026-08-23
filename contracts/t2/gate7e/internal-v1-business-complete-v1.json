@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-E2E-004",
+  "evidenceLevel": "INTERNAL_V1_BUSINESS_COMPLETE_CANDIDATE",
+  "syntheticTenants": ["TENANT_A", "TENANT_B"],
+  "journeys": [
+    {"id":"G7E-J01","industry":"CONVENIENCE","tenant":"TENANT_A","store":"STORE_C01","terminal":"TERM_C01","lotEnabled":false},
+    {"id":"G7E-J02","industry":"CONVENIENCE","tenant":"TENANT_A","store":"STORE_C02","terminal":"TERM_C02","lotEnabled":false},
+    {"id":"G7E-J03","industry":"SNACK_DISCOUNT","tenant":"TENANT_A","store":"STORE_S01","terminal":"TERM_S01","lotEnabled":false},
+    {"id":"G7E-J04","industry":"SNACK_DISCOUNT","tenant":"TENANT_B","store":"STORE_S02","terminal":"TERM_S02","lotEnabled":false},
+    {"id":"G7E-J05","industry":"COMMUNITY_SUPERMARKET","tenant":"TENANT_B","store":"STORE_M01","terminal":"TERM_M01","lotEnabled":true},
+    {"id":"G7E-J06","industry":"COMMUNITY_SUPERMARKET","tenant":"TENANT_B","store":"STORE_M02","terminal":"TERM_M02","lotEnabled":true}
+  ],
+  "requiredPhases": [
+    "BACKOFFICE_INITIALIZE_AND_MIGRATE", "STORE_ONBOARDING_PREFLIGHT", "CATALOG_PRICE_BENEFIT_PACKAGE_PUBLISH",
+    "TERMINAL_LOGIN_AND_SHIFT_OPEN", "STANDARD_OR_WEIGHTED_SCAN", "PROMOTION_MEMBER_PRICE_AND_MANUAL_ADJUSTMENT",
+    "SUSPEND_AND_RESUME", "CASH_OR_PARTIAL_CASH_SETTLEMENT", "OUTBOX_SYNC_AND_ORDER_CONSUMPTION",
+    "INVENTORY_COSTING_AND_REPORTING", "PARTIAL_AND_FINAL_RETURN", "EXCHANGE_ORCHESTRATION",
+    "PROCUREMENT_STOCKTAKE_TRANSFER_REPLENISHMENT", "DAILY_CLOSE_AND_EXCEPTION_RESOLUTION",
+    "SHIFT_CLOSE", "SYNTHETIC_BACKUP_RESTORE_AND_UPGRADE_FORWARD_REPAIR"
+  ],
+  "requiredInvariants": [
+    "ORDER_AMOUNT_CONSERVATION", "TENDER_SHARE_CONSERVATION", "REFUND_ORIGINAL_SNAPSHOT_LIMIT",
+    "PROMOTION_MEMBER_ALLOCATION_CONSERVATION", "INVENTORY_LEDGER_REBUILD", "LOT_FEFO_AND_RETURN_LINEAGE",
+    "COST_LEDGER_REBUILD", "REPORT_OWNER_DAILY_RECONCILIATION", "DAILY_CLOSE_APPEND_ONLY_CORRECTION",
+    "TRUSTED_TENANT_STORE_TERMINAL_CONTEXT", "NO_EXTERNAL_SUCCESS_FABRICATION"
+  ],
+  "failureSeeds": [
+    {"seed":"G7E-0001","case":"DUPLICATE_COMMAND","expected":"RETURN_ORIGINAL"},
+    {"seed":"G7E-0002","case":"OUT_OF_ORDER_EVENT","expected":"CONVERGE_BY_SEQUENCE"},
+    {"seed":"G7E-0003","case":"ACK_LOST","expected":"REUSE_ORIGINAL_IDENTITY"},
+    {"seed":"G7E-0004","case":"PAYMENT_OR_REFUND_UNKNOWN","expected":"OBSERVE_ORIGINAL_ONLY"},
+    {"seed":"G7E-0005","case":"SQLITE_DISK_WRITE_FAILURE","expected":"ROLLBACK_ALL"},
+    {"seed":"G7E-0006","case":"PROCESS_KILL_AFTER_OWNER_ACCEPT","expected":"RESUME_ORIGINAL_COMMAND"},
+    {"seed":"G7E-0007","case":"BUSINESS_DAY_SWITCH","expected":"FREEZE_ORIGINAL_BUSINESS_DAY"},
+    {"seed":"G7E-0008","case":"CROSS_TENANT_OR_STORE","expected":"REJECT"},
+    {"seed":"G7E-0009","case":"SAME_KEY_DIFFERENT_CONTENT","expected":"REJECT"},
+    {"seed":"G7E-0010","case":"OLD_OR_CORRUPTED_PACKAGE","expected":"FAIL_CLOSED"},
+    {"seed":"G7E-0011","case":"SNAPSHOT_OR_DIGEST_TAMPER","expected":"REJECT"},
+    {"seed":"G7E-0012","case":"PARTIAL_OWNER_FAILURE","expected":"RECOVER_WITH_ORIGINAL_IDENTITY"},
+    {"seed":"G7E-0013","case":"REPORT_PROJECTION_REBUILD","expected":"RECONCILE_FROM_OWNER_FACTS"},
+    {"seed":"G7E-0014","case":"MIGRATION_INTERRUPTED","expected":"SAFE_FORWARD_REPAIR"},
+    {"seed":"G7E-0015","case":"FORWARD_REPAIR_TARGET_COLLISION","expected":"FAIL_CLOSED"},
+    {"seed":"G7E-0016","case":"EXTERNAL_BOUNDARY_CLAIMS_SUCCESS","expected":"BLOCKED_UNAVAILABLE"}
+  ],
+  "performanceReference": "contracts/t2/gate6h/performance-baseline-v1.json",
+  "defectLedger": {"p0": [], "p1": []},
+  "externalExecution": {
+    "providerNetworkCalls": 0, "realFunds": 0, "realDeviceCommands": 0, "realPeripheralCommands": 0,
+    "partnerContacts": 0, "onsitePilots": 0, "fullAlphaRuns": 0, "productionDeployments": 0
+  },
+  "commercialClaimAllowed": false
+}
