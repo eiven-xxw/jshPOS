@@ -75,6 +75,13 @@ class ScopeAuthorizationServiceTest {
         assertThatThrownBy(() -> service.requireOrgAccess(999L)).hasMessageContaining("FND-RBAC-002");
         assertThatThrownBy(() -> service.requireStoreAccess(999L)).hasMessageContaining("FND-RBAC-003");
         assertThatThrownBy(service::requireTenantAdministrator).hasMessageContaining("FND-RBAC-001");
+        assertThatThrownBy(service::requirePlatformAdministrator).hasMessageContaining("FND-RBAC-004");
+    }
+
+    @Test
+    void platformAdministratorIsCheckedIndependentlyFromTenantAdministrator() {
+        when(privileges.isPlatformAdministrator()).thenReturn(true);
+        service.requirePlatformAdministrator();
     }
 
     @Test

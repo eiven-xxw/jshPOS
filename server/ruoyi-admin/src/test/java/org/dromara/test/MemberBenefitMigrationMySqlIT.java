@@ -14,17 +14,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * T2-MEM-003 在全模块正式运行时类路径上执行 V1—V80，验证 Owner 表、租户键和只追加约束。
+ * 在全模块正式运行时类路径上执行 V1—V82，验证既有 Owner 与 Gate 8A SaaS 迁移可共同前向安装。
  * 该测试只由带受控 MySQL 8.4 服务的专属 CI Job 显式执行。
  */
 @Tag("local")
 class MemberBenefitMigrationMySqlIT {
-    private final String url = required("GATE7D_MEM003_MYSQL_JDBC_URL");
-    private final String username = required("GATE7D_MEM003_MYSQL_USERNAME");
-    private final String password = required("GATE7D_MEM003_MYSQL_PASSWORD");
+    private final String url = required("GATE8A_SAA_MYSQL_JDBC_URL", "GATE7D_MEM003_MYSQL_JDBC_URL");
+    private final String username = required("GATE8A_SAA_MYSQL_USERNAME", "GATE7D_MEM003_MYSQL_USERNAME");
+    private final String password = required("GATE8A_SAA_MYSQL_PASSWORD", "GATE7D_MEM003_MYSQL_PASSWORD");
 
     @Test
-    void migratesUnifiedRuntimeThroughV80AndEnforcesMemberBenefitFacts() throws Exception {
+    void migratesUnifiedRuntimeThroughV82AndEnforcesMemberBenefitFacts() throws Exception {
         createFrameworkMenuFixture();
         Flyway flyway = Flyway.configure().dataSource(url, username, password)
             .locations("classpath:db/migration").table("jshpos_flyway_schema_history")
@@ -33,10 +33,11 @@ class MemberBenefitMigrationMySqlIT {
         assertThat(flyway.migrate().migrationsExecuted).isZero();
         flyway.validate();
         assertThat(flyway.info().current()).isNotNull();
-        assertThat(flyway.info().current().getVersion().toString()).isEqualTo("202608230080");
+        assertThat(flyway.info().current().getVersion().toString()).isEqualTo("202608230082");
         assertPermissionMenuRangesAreReconciled();
         assertOwnerTablesTenantKeysCommentsAndTriggers();
         assertPackageMetadataIsImmutable();
+        assertSaasHistoryAndQuotaAreProtected();
     }
 
     private void createFrameworkMenuFixture() throws SQLException {
@@ -79,6 +80,11 @@ class MemberBenefitMigrationMySqlIT {
                 assertThat(rows.next()).isTrue();
                 assertThat(rows.getInt(1)).isEqualTo(5);
             }
+            try (var rows = statement.executeQuery("SELECT COUNT(DISTINCT perms) FROM sys_menu "
+                + "WHERE menu_id BETWEEN 9201700 AND 9201712")) {
+                assertThat(rows.next()).isTrue();
+                assertThat(rows.getInt(1)).isEqualTo(13);
+            }
         }
     }
 
@@ -89,7 +95,10 @@ class MemberBenefitMigrationMySqlIT {
             "mbr_benefit_command", "mbr_benefit_audit_event", "mbr_benefit_outbox",
             "prc_member_price_version", "prc_member_price_item", "prc_member_price_command",
             "prc_member_price_outbox", "prm_quote_member_benefit", "prm_member_benefit_package",
-            "ord_member_benefit_binding");
+            "ord_member_benefit_binding", "saas_plan", "saas_merchant_application",
+            "saas_application_state_event", "saas_entitlement_version", "saas_entitlement_item",
+            "saas_tenant_entitlement", "saas_tenant_lifecycle_event", "saas_initialization_checkpoint",
+            "saas_command_result", "saas_quota_usage", "saas_audit_event", "saas_outbox");
         try (Connection connection = DriverManager.getConnection(url, username, password);
              Statement statement = connection.createStatement()) {
             for (String table : tables) {
@@ -146,9 +155,47 @@ class MemberBenefitMigrationMySqlIT {
         }
     }
 
-    private static String required(String name) {
-        String value = System.getenv(name);
-        if (value == null || value.isBlank()) throw new IllegalStateException(name + " must be provided by CI");
+    /** 验证开户历史不可覆盖、不可删除，并由数据库条件更新兜住并发配额上限。 */
+    private void assertSaasHistoryAndQuotaAreProtected() throws SQLException {
+        try (Connection connection = DriverManager.getConnection(url, username, password);
+             Statement statement = connection.createStatement()) {
+            statement.executeUpdate("INSERT INTO saas_plan(plan_id,plan_code,plan_name,platform_package_id,"
+                + "account_limit,status,created_at,updated_at) VALUES(801,'SYNTHETIC_V1','虚构套餐',1,50,"
+                + "'ACTIVE',UTC_TIMESTAMP(3),UTC_TIMESTAMP(3))");
+            statement.executeUpdate("INSERT INTO saas_entitlement_version(version_id,plan_id,version_no,state,"
+                + "effective_at,content_sha256,creator_user_id,record_version,created_at,updated_at) VALUES("
+                + "'01K80000000000000000000801',801,1,'EFFECTIVE',UTC_TIMESTAMP(3)-INTERVAL 1 DAY,"
+                + "REPEAT('a',64),1,0,UTC_TIMESTAMP(3),UTC_TIMESTAMP(3))");
+            statement.executeUpdate("INSERT INTO saas_merchant_application(application_id,application_code,"
+                + "tenant_id,technical_tenant_id,company_name,industry,plan_id,state,submitter_user_id,"
+                + "approver_user_id,record_version,content_sha256,created_at,updated_at) VALUES("
+                + "'01K80000000000000000000802','SYNTHETIC-APP-801','TENANT_A',9,'虚构商户','CONVENIENCE',"
+                + "801,'ACTIVE',1,2,4,REPEAT('b',64),UTC_TIMESTAMP(3),UTC_TIMESTAMP(3))");
+            statement.executeUpdate("INSERT INTO saas_application_state_event(event_id,application_id,tenant_id,"
+                + "from_state,to_state,request_sha256,correlation_id,actor_user_id,occurred_at) VALUES("
+                + "'01K80000000000000000000803','01K80000000000000000000802','TENANT_A','INITIALIZING',"
+                + "'ACTIVE',REPEAT('c',64),'trace-saa-801',2,UTC_TIMESTAMP(3))");
+            assertThatThrownBy(() -> statement.executeUpdate("UPDATE saas_application_state_event SET "
+                + "to_state='FAILED' WHERE event_id='01K80000000000000000000803'"))
+                .isInstanceOf(SQLException.class).hasMessageContaining("append only");
+            assertThatThrownBy(() -> statement.executeUpdate("DELETE FROM saas_application_state_event WHERE "
+                + "event_id='01K80000000000000000000803'"))
+                .isInstanceOf(SQLException.class).hasMessageContaining("cannot be deleted");
+            statement.executeUpdate("INSERT INTO saas_quota_usage(tenant_id,feature_code,used_count,quota_limit,"
+                + "updated_at) VALUES('TENANT_A','STORE_COUNT',1,2,UTC_TIMESTAMP(3))");
+            assertThat(statement.executeUpdate("UPDATE saas_quota_usage SET used_count=used_count+1 WHERE "
+                + "tenant_id='TENANT_A' AND feature_code='STORE_COUNT' AND used_count+1<=quota_limit")).isEqualTo(1);
+            assertThat(statement.executeUpdate("UPDATE saas_quota_usage SET used_count=used_count+1 WHERE "
+                + "tenant_id='TENANT_A' AND feature_code='STORE_COUNT' AND used_count+1<=quota_limit")).isZero();
+        }
+    }
+
+    private static String required(String primary, String compatibility) {
+        String value = System.getenv(primary);
+        if (value == null || value.isBlank()) value = System.getenv(compatibility);
+        if (value == null || value.isBlank()) {
+            throw new IllegalStateException(primary + " or " + compatibility + " must be provided by CI");
+        }
         return value;
     }
 }

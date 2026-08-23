@@ -10,4 +10,9 @@ public class RuoYiPlatformPrivilegeSource implements PlatformPrivilegeSource {
     public boolean isTenantAdministrator() {
         return LoginHelper.isTenantAdmin() || LoginHelper.isSuperAdmin();
     }
+
+    @Override
+    public boolean isPlatformAdministrator() {
+        return LoginHelper.isSuperAdmin();
+    }
 }

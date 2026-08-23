@@ -239,5 +239,7 @@
 | CR-T2G8A-002 | 2026-08-23 | PREPARED_DEPENDENCY_BLOCKED | 完成 SUB 订阅期限、宽限、到期、受控降级、数据保留和恢复的独立 CR 与状态契约 | T2-SUB-001、T2-SAA-001、ADR-056 | SUB保持DRAFT并依赖SAA独立ACCEPTED；不含真实计费、扣款、发票或资金 |
 | CR-T2G8A-003 | 2026-08-23 | PREPARED_DEPENDENCY_BLOCKED | 完成 SVC 实施项目、服务目录、工单、附件权限和内部服务目标的独立 CR 与状态契约 | T2-SVC-001、T2-SAA-001、T2-SUB-001、ADR-056 | SVC保持DRAFT并依赖SAA/SUB独立ACCEPTED；不授予设备、伙伴现场或生产权限，不形成商业SLA |
 | CR-T2G8A-004 | 2026-08-23 | PREP_CANDIDATE_CI_GREEN_AWAITING_CONFIRMATION | 候选提交 `b59669b9c3948103c82d45b46b1042e593bd1ed4` 的 GitHub Actions Run `32641276144` 完成 Ubuntu、Windows、范围边界和证据聚合四个 Job 一次全绿；证据 Artifact `9493663601` 摘要 `0b0120ce74b7cfee0043df5d7ca462038ace6b729d9d04de36bd6d7d468e42c9` | T2-SAA-001、T2-SUB-001、T2-SVC-001、ADR-056 | 三项继续DRAFT；运行时、迁移、页面、任务、依赖和全部外部执行为0；回填提交须闭环复跑并等待发起人确认 |
+| CR-T2G8A-005 | 2026-08-23 | SAA_RUNTIME_CONDITIONAL_GO | 项目发起人接受Gate8A-Prep并从 `bcfcaa4621ea55c61bd1cd22fc355b5f74d8dae4` 单独准入T2-SAA-001运行时 | T2-SAA-001、ADR-057 | SAA更新为IN_PROGRESS；SUB/SVC继续DRAFT；全部外部阻断和证据边界不变 |
+| CR-T2G8A-006 | 2026-08-23 | SAA001_VERIFIED_CANDIDATE_AWAITING_COMPLETE_CI | 完成独立SaaS模块、Foundation技术租户端口、开户审批、版本化权益与原子配额、初始化与商业生命周期、V81/V82、Vue/Flutter契约、30项固定向量和正式运行时装配门禁；本地治理、Server 790项、Web 67项、Flutter 188项、SBOM与许可证通过 | T2-SAA-001、T2-CI-001、ADR-057 | SAA仅更新为内部合成软件VERIFIED候选；同提交GitHub完整CI全绿是成立条件，项目发起人确认前不得ACCEPTED；SUB/SVC与全部外部状态不变 |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。

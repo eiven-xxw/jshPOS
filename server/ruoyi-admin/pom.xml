@@ -154,10 +154,15 @@
         </dependency>
 
         <!-- Gate 7D 门店业务日日结、差异、审批与签署模块 -->
-        <dependency>
-            <groupId>com.jingshanghui.pos</groupId>
-            <artifactId>jshpos-operations</artifactId>
-        </dependency>
+          <dependency>
+              <groupId>com.jingshanghui.pos</groupId>
+              <artifactId>jshpos-operations</artifactId>
+          </dependency>
+          <!-- Gate 8A 商户开户、套餐权益与租户商业生命周期 -->
+          <dependency>
+              <groupId>com.jingshanghui.pos</groupId>
+              <artifactId>jshpos-saas</artifactId>
+          </dependency>
 
         <!-- Gate 6A 加密备份、空环境恢复与演练证据模块 -->
         <dependency>

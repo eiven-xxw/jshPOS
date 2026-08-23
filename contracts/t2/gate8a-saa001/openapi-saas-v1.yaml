@@ -1,0 +1,221 @@
+openapi: 3.1.0
+info:
+  title: 鲸熵汇商业 SaaS 开户与权益 API
+  version: 1.0.0-gate8a-saa001
+  description: >-
+    T2-SAA-001 内部正式契约。申请阶段仅允许平台管理员；tenant_id 由 Foundation
+    服务端分配，不在申请请求体或 Header 中接受租户覆盖。真实计费和 Provider 调用不在本契约内。
+servers:
+  - url: /api/v1/saas
+paths:
+  /applications:
+    post:
+      operationId: createSaasApplication
+      x-requirement-id: T2-SAA-001
+      x-platform-admin-required: true
+      parameters:
+        - {$ref: '#/components/parameters/IdempotencyKey'}
+        - {$ref: '#/components/parameters/CorrelationId'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ApplicationCreate'}
+      responses: {'200': {$ref: '#/components/responses/ApplicationSuccess'}, '409': {$ref: '#/components/responses/Conflict'}}
+  /applications/{applicationId}:
+    get:
+      operationId: getSaasApplication
+      x-requirement-id: T2-SAA-001
+      x-platform-admin-required: true
+      parameters:
+        - {$ref: '#/components/parameters/ApplicationId'}
+      responses: {'200': {$ref: '#/components/responses/ApplicationSuccess'}, '404': {$ref: '#/components/responses/NotFound'}}
+  /applications/{applicationId}/preflight:
+    post:
+      operationId: preflightSaasApplication
+      x-idempotency-required: true
+      parameters:
+        - {$ref: '#/components/parameters/ApplicationId'}
+        - {$ref: '#/components/parameters/IdempotencyKey'}
+        - {$ref: '#/components/parameters/CorrelationId'}
+      responses: {'200': {$ref: '#/components/responses/ApplicationSuccess'}, '409': {$ref: '#/components/responses/Conflict'}}
+  /applications/{applicationId}/approve:
+    post:
+      operationId: approveSaasApplication
+      x-idempotency-required: true
+      parameters:
+        - {$ref: '#/components/parameters/ApplicationId'}
+        - {$ref: '#/components/parameters/IdempotencyKey'}
+        - {$ref: '#/components/parameters/CorrelationId'}
+      requestBody: {$ref: '#/components/requestBodies/Reason'}
+      responses: {'200': {$ref: '#/components/responses/ApplicationSuccess'}, '409': {$ref: '#/components/responses/Conflict'}}
+  /applications/{applicationId}/provision:
+    post:
+      operationId: provisionTechnicalTenant
+      x-idempotency-required: true
+      x-request-response-logging: disabled
+      x-server-allocated-tenant-id: true
+      parameters:
+        - {$ref: '#/components/parameters/ApplicationId'}
+        - {$ref: '#/components/parameters/IdempotencyKey'}
+        - {$ref: '#/components/parameters/CorrelationId'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ProvisionRequest'}
+      responses: {'200': {$ref: '#/components/responses/ApplicationSuccess'}, '409': {$ref: '#/components/responses/Conflict'}}
+  /applications/{applicationId}/initialize:
+    post:
+      operationId: initializeSaasTenant
+      x-idempotency-required: true
+      parameters:
+        - {$ref: '#/components/parameters/ApplicationId'}
+        - {$ref: '#/components/parameters/IdempotencyKey'}
+        - {$ref: '#/components/parameters/CorrelationId'}
+      responses: {'200': {$ref: '#/components/responses/ApplicationSuccess'}, '409': {$ref: '#/components/responses/Conflict'}}
+  /applications/{applicationId}/activate:
+    post:
+      operationId: activateSaasTenant
+      x-idempotency-required: true
+      parameters:
+        - {$ref: '#/components/parameters/ApplicationId'}
+        - {$ref: '#/components/parameters/IdempotencyKey'}
+        - {$ref: '#/components/parameters/CorrelationId'}
+      responses: {'200': {$ref: '#/components/responses/ApplicationSuccess'}, '409': {$ref: '#/components/responses/Conflict'}}
+  /plans:
+    post:
+      operationId: createSaasPlan
+      x-platform-admin-required: true
+      parameters:
+        - {$ref: '#/components/parameters/IdempotencyKey'}
+        - {$ref: '#/components/parameters/CorrelationId'}
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: '#/components/schemas/PlanCreate'}}}
+      responses: {'200': {description: 套餐创建成功}, '409': {$ref: '#/components/responses/Conflict'}}
+  /plans/{planId}/versions:
+    post:
+      operationId: createEntitlementVersion
+      x-idempotency-required: true
+      parameters:
+        - {name: planId, in: path, required: true, schema: {type: integer, format: int64, minimum: 1}}
+        - {$ref: '#/components/parameters/IdempotencyKey'}
+        - {$ref: '#/components/parameters/CorrelationId'}
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: '#/components/schemas/VersionCreate'}}}
+      responses: {'200': {description: 权益草稿创建成功}, '409': {$ref: '#/components/responses/Conflict'}}
+  /entitlements/{versionId}/{action}:
+    post:
+      operationId: advanceEntitlementVersion
+      x-idempotency-required: true
+      parameters:
+        - {name: versionId, in: path, required: true, schema: {$ref: '#/components/schemas/Ulid'}}
+        - {name: action, in: path, required: true, schema: {enum: [validate, approve, publish, activate]}}
+        - {$ref: '#/components/parameters/IdempotencyKey'}
+        - {$ref: '#/components/parameters/CorrelationId'}
+      responses: {'200': {description: 返回服务端权威权益版本}, '409': {$ref: '#/components/responses/Conflict'}}
+  /tenants/{tenantId}/{action}:
+    post:
+      operationId: changeCommercialTenantLifecycle
+      description: tenantId 是平台管理员选定的操作目标，不是当前会话的授权声明；服务端仍执行平台权限与记录交叉校验。
+      x-idempotency-required: true
+      x-platform-admin-required: true
+      parameters:
+        - {name: tenantId, in: path, required: true, schema: {type: string, pattern: '^[A-Za-z0-9][A-Za-z0-9_-]{0,19}$'}}
+        - {name: action, in: path, required: true, schema: {enum: [suspend, deactivate, restore, request-termination, terminate-logical]}}
+        - {$ref: '#/components/parameters/IdempotencyKey'}
+        - {$ref: '#/components/parameters/CorrelationId'}
+      requestBody: {$ref: '#/components/requestBodies/Reason'}
+      responses: {'200': {description: 返回服务端权威生命周期}, '409': {$ref: '#/components/responses/Conflict'}}
+  /entitlement-decisions/{featureCode}:
+    get:
+      operationId: decideCurrentTenantEntitlement
+      x-trusted-tenant-context: required
+      parameters:
+        - {name: featureCode, in: path, required: true, schema: {type: string, pattern: '^[A-Za-z][A-Za-z0-9_]{1,63}$'}}
+      responses: {'200': {description: 服务端可解释授权结论}, '403': {description: 权限不足}}
+  /entitlement-decisions/{featureCode}/consume:
+    post:
+      operationId: consumeCurrentTenantQuota
+      x-trusted-tenant-context: required
+      x-atomic-quota-check: true
+      parameters:
+        - {name: featureCode, in: path, required: true, schema: {type: string, pattern: '^[A-Za-z][A-Za-z0-9_]{1,63}$'}}
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: '#/components/schemas/QuotaConsume'}}}
+      responses: {'200': {description: 原子消费后的授权结论}, '409': {$ref: '#/components/responses/Conflict'}}
+components:
+  parameters:
+    ApplicationId: {name: applicationId, in: path, required: true, schema: {$ref: '#/components/schemas/Ulid'}}
+    IdempotencyKey: {name: Idempotency-Key, in: header, required: true, schema: {type: string, minLength: 8, maxLength: 64, pattern: '^[A-Za-z0-9._:-]+$'}}
+    CorrelationId: {name: X-Correlation-ID, in: header, required: true, schema: {type: string, minLength: 1, maxLength: 64, pattern: '^[A-Za-z0-9._:-]+$'}}
+  requestBodies:
+    Reason:
+      required: true
+      content: {application/json: {schema: {$ref: '#/components/schemas/Reason'}}}
+  schemas:
+    Ulid: {type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'}
+    ApplicationCreate:
+      type: object
+      additionalProperties: false
+      required: [applicationCode, companyName, industry, planId]
+      properties:
+        applicationCode: {type: string, minLength: 1, maxLength: 64}
+        companyName: {type: string, minLength: 1, maxLength: 128}
+        industry: {enum: [CONVENIENCE, SNACK_DISCOUNT, COMMUNITY_SUPERMARKET]}
+        planId: {type: integer, format: int64, minimum: 1}
+    ProvisionRequest:
+      type: object
+      additionalProperties: false
+      required: [contactName, contactPhone, bootstrapUsername, bootstrapPassword]
+      properties:
+        contactName: {type: string, minLength: 1, maxLength: 64}
+        contactPhone: {type: string, minLength: 1, maxLength: 32}
+        bootstrapUsername: {type: string, minLength: 1, maxLength: 64}
+        bootstrapPassword: {type: string, format: password, minLength: 12, maxLength: 128, writeOnly: true}
+    PlanCreate:
+      type: object
+      additionalProperties: false
+      required: [planCode, planName, platformPackageId, accountLimit]
+      properties:
+        planCode: {type: string, minLength: 1, maxLength: 64}
+        planName: {type: string, minLength: 1, maxLength: 64}
+        platformPackageId: {type: integer, format: int64, minimum: 1}
+        accountLimit: {type: integer, format: int64, minimum: 1}
+    VersionCreate:
+      type: object
+      additionalProperties: false
+      required: [versionNo, effectiveAt, items]
+      properties:
+        versionNo: {type: integer, minimum: 1}
+        effectiveAt: {type: string, format: date-time}
+        expiresAt: {type: string, format: date-time}
+        items:
+          type: array
+          minItems: 1
+          maxItems: 128
+          items:
+            type: object
+            additionalProperties: false
+            required: [featureCode, enabled]
+            properties:
+              featureCode: {type: string, minLength: 2, maxLength: 64}
+              enabled: {type: boolean}
+              quotaLimit: {type: integer, format: int64, minimum: 0}
+    QuotaConsume:
+      type: object
+      additionalProperties: false
+      required: [delta]
+      properties: {delta: {type: integer, format: int64, minimum: -1000000, maximum: 1000000, not: {const: 0}}}
+    Reason:
+      type: object
+      additionalProperties: false
+      required: [reason]
+      properties: {reason: {type: string, minLength: 1, maxLength: 256}}
+  responses:
+    ApplicationSuccess: {description: 返回服务端权威申请、检查点和生命周期投影}
+    Conflict: {description: 幂等、状态、并发、不变量或配额冲突}
+    NotFound: {description: 聚合不存在}

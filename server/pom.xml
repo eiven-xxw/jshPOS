@@ -487,11 +487,16 @@
                 <artifactId>jshpos-reporting</artifactId>
                 <version>${revision}</version>
             </dependency>
-            <dependency>
-                <groupId>com.jingshanghui.pos</groupId>
-                <artifactId>jshpos-operations</artifactId>
-                <version>${revision}</version>
-            </dependency>
+              <dependency>
+                  <groupId>com.jingshanghui.pos</groupId>
+                  <artifactId>jshpos-operations</artifactId>
+                  <version>${revision}</version>
+              </dependency>
+              <dependency>
+                  <groupId>com.jingshanghui.pos</groupId>
+                  <artifactId>jshpos-saas</artifactId>
+                  <version>${revision}</version>
+              </dependency>
             <dependency>
                 <groupId>com.jingshanghui.pos</groupId>
                 <artifactId>jshpos-resilience</artifactId>

@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jingshanghui.pos.saas.infrastructure.persistence.mapper.SaasPersistenceMapper">
+    <resultMap id="application" type="com.jingshanghui.pos.saas.application.model.SaasModels$ApplicationRecord">
+        <constructor>
+            <arg column="application_id" javaType="java.lang.String"/><arg column="application_code" javaType="java.lang.String"/>
+            <arg column="tenant_id" javaType="java.lang.String"/><arg column="technical_tenant_id" javaType="java.lang.Long"/>
+            <arg column="company_name" javaType="java.lang.String"/><arg column="industry" javaType="java.lang.String"/>
+            <arg column="plan_id" javaType="java.lang.Long"/><arg column="state" javaType="java.lang.String"/>
+            <arg column="submitter_user_id" javaType="java.lang.Long"/><arg column="approver_user_id" javaType="java.lang.Long"/>
+            <arg column="record_version" javaType="java.lang.Integer"/><arg column="content_sha256" javaType="java.lang.String"/>
+            <arg column="created_at" javaType="java.time.LocalDateTime"/><arg column="updated_at" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+    <sql id="applicationColumns">application_id,application_code,tenant_id,technical_tenant_id,company_name,
+        industry,plan_id,state,submitter_user_id,approver_user_id,record_version,content_sha256,created_at,updated_at</sql>
+    <select id="findApplication" resultMap="application">SELECT <include refid="applicationColumns"/> FROM saas_merchant_application WHERE application_id=#{applicationId}</select>
+    <select id="findApplicationByCode" resultMap="application">SELECT <include refid="applicationColumns"/> FROM saas_merchant_application WHERE application_code=#{applicationCode}</select>
+    <select id="lockApplication" resultMap="application">SELECT <include refid="applicationColumns"/> FROM saas_merchant_application WHERE application_id=#{applicationId} FOR UPDATE</select>
+    <insert id="insertApplication">INSERT INTO saas_merchant_application(application_id,application_code,company_name,
+        industry,plan_id,state,submitter_user_id,record_version,content_sha256,created_at,updated_at)
+        VALUES(#{applicationId},#{applicationCode},#{companyName},#{industry},#{planId},#{state},#{submitterUserId},0,#{contentSha256},#{at},#{at})</insert>
+    <update id="changeApplication">UPDATE saas_merchant_application SET state=#{toState},tenant_id=COALESCE(#{tenantId},tenant_id),
+        technical_tenant_id=COALESCE(#{technicalTenantId},technical_tenant_id),approver_user_id=COALESCE(#{approverUserId},approver_user_id),
+        record_version=record_version+1,updated_at=#{at} WHERE application_id=#{applicationId} AND state=#{fromState} AND record_version=#{expectedVersion}</update>
+    <insert id="appendApplicationState">INSERT INTO saas_application_state_event(event_id,application_id,tenant_id,from_state,to_state,
+        request_sha256,correlation_id,actor_user_id,occurred_at) VALUES(#{eventId},#{applicationId},#{tenantId},#{fromState},#{toState},
+        #{requestSha256},#{correlationId},#{actorUserId},#{at})</insert>
+
+    <resultMap id="version" type="com.jingshanghui.pos.saas.application.model.SaasModels$EntitlementVersionRecord">
+        <constructor><arg column="version_id" javaType="java.lang.String"/><arg column="plan_id" javaType="java.lang.Long"/>
+            <arg column="version_no" javaType="java.lang.Integer"/><arg column="state" javaType="java.lang.String"/>
+            <arg column="effective_at" javaType="java.time.LocalDateTime"/><arg column="expires_at" javaType="java.time.LocalDateTime"/>
+            <arg column="content_sha256" javaType="java.lang.String"/><arg column="creator_user_id" javaType="java.lang.Long"/>
+            <arg column="approver_user_id" javaType="java.lang.Long"/><arg column="record_version" javaType="java.lang.Integer"/>
+            <arg column="created_at" javaType="java.time.LocalDateTime"/><arg column="updated_at" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+    <sql id="versionColumns">version_id,plan_id,version_no,state,effective_at,expires_at,content_sha256,creator_user_id,
+        approver_user_id,record_version,created_at,updated_at</sql>
+    <select id="findVersion" resultMap="version">SELECT <include refid="versionColumns"/> FROM saas_entitlement_version WHERE version_id=#{versionId}</select>
+    <select id="lockVersion" resultMap="version">SELECT <include refid="versionColumns"/> FROM saas_entitlement_version WHERE version_id=#{versionId} FOR UPDATE</select>
+    <select id="findVersionByPlanNo" resultMap="version">SELECT <include refid="versionColumns"/> FROM saas_entitlement_version WHERE plan_id=#{planId} AND version_no=#{versionNo}</select>
+    <select id="findEffectiveVersion" resultMap="version">SELECT <include refid="versionColumns"/> FROM saas_entitlement_version WHERE plan_id=#{planId}
+        AND state='EFFECTIVE' AND effective_at&lt;=#{at} AND (expires_at IS NULL OR expires_at&gt;#{at}) ORDER BY version_no DESC LIMIT 1</select>
+    <select id="countOverlappingVersions" resultType="int">SELECT COUNT(1) FROM saas_entitlement_version WHERE plan_id=#{planId}
+        AND version_id&lt;&gt;#{versionId} AND state IN ('PUBLISHED','EFFECTIVE') AND effective_at&lt;COALESCE(#{expiresAt},'9999-12-31 23:59:59')
+        AND COALESCE(expires_at,'9999-12-31 23:59:59')&gt;#{effectiveAt}</select>
+    <insert id="insertVersion">INSERT INTO saas_entitlement_version(version_id,plan_id,version_no,state,effective_at,expires_at,
+        content_sha256,creator_user_id,record_version,created_at,updated_at) VALUES(#{versionId},#{planId},#{versionNo},#{state},
+        #{effectiveAt},#{expiresAt},#{contentSha256},#{creatorUserId},0,#{at},#{at})</insert>
+    <insert id="insertItem">INSERT INTO saas_entitlement_item(item_id,version_id,feature_code,enabled_flag,quota_limit,item_sha256)
+        VALUES(#{itemId},#{versionId},#{featureCode},#{enabled},#{quotaLimit},#{itemSha256})</insert>
+    <select id="listItems" resultType="com.jingshanghui.pos.saas.application.model.SaasModels$EntitlementItemRecord">
+        SELECT item_id itemId,version_id versionId,feature_code featureCode,enabled_flag enabled,quota_limit quotaLimit,item_sha256 itemSha256
+        FROM saas_entitlement_item WHERE version_id=#{versionId} ORDER BY feature_code</select>
+    <update id="changeVersion">UPDATE saas_entitlement_version SET state=#{toState},approver_user_id=COALESCE(#{approverUserId},approver_user_id),
+        record_version=record_version+1,updated_at=#{at} WHERE version_id=#{versionId} AND state=#{fromState} AND record_version=#{expectedVersion}</update>
+
+    <select id="findTenantEntitlement" resultType="com.jingshanghui.pos.saas.application.model.SaasModels$TenantEntitlementRecord">
+        SELECT tenant_id tenantId,plan_id planId,version_id versionId,lifecycle_state lifecycleState,lifecycle_version lifecycleVersion,updated_at updatedAt
+        FROM saas_tenant_entitlement WHERE tenant_id=#{tenantId}</select>
+    <insert id="bindTenant">INSERT INTO saas_tenant_entitlement(tenant_id,plan_id,version_id,lifecycle_state,lifecycle_version,binding_sha256,created_at,updated_at)
+        VALUES(#{tenantId},#{planId},#{versionId},#{lifecycleState},0,#{bindingSha256},#{at},#{at})</insert>
+    <insert id="seedQuota">INSERT INTO saas_quota_usage(tenant_id,feature_code,used_count,quota_limit,updated_at)
+        VALUES(#{tenantId},#{featureCode},0,#{quotaLimit},#{at})</insert>
+    <update id="changeLifecycle">UPDATE saas_tenant_entitlement SET lifecycle_state=#{toState},lifecycle_version=lifecycle_version+1,updated_at=#{at}
+        WHERE tenant_id=#{tenantId} AND lifecycle_state=#{fromState} AND lifecycle_version=#{expectedVersion}</update>
+    <insert id="appendLifecycle">INSERT INTO saas_tenant_lifecycle_event(event_id,tenant_id,from_state,to_state,reason,request_sha256,
+        correlation_id,actor_user_id,occurred_at) VALUES(#{eventId},#{tenantId},#{fromState},#{toState},#{reason},#{requestSha256},
+        #{correlationId},#{actorUserId},#{at})</insert>
+    <insert id="insertCheckpoint">INSERT INTO saas_initialization_checkpoint(checkpoint_id,application_id,tenant_id,step_code,result_sha256,completed_at)
+        VALUES(#{checkpointId},#{applicationId},#{tenantId},#{stepCode},#{resultSha256},#{at})</insert>
+    <select id="listCheckpoints" resultType="string">SELECT step_code FROM saas_initialization_checkpoint WHERE application_id=#{applicationId} ORDER BY step_code</select>
+
+    <select id="findCommand" resultType="com.jingshanghui.pos.saas.application.model.SaasModels$CommandRecord">
+        SELECT command_id commandId,authority_scope authorityScope,operation,idempotency_key idempotencyKey,request_sha256 requestSha256,
+        result_ref resultRef,result_state resultState FROM saas_command_result WHERE authority_scope=#{scope} AND operation=#{operation} AND idempotency_key=#{idempotencyKey}</select>
+    <insert id="insertCommand">INSERT INTO saas_command_result(command_id,authority_scope,operation,idempotency_key,request_sha256,result_ref,result_state,created_at)
+        VALUES(#{commandId},#{authorityScope},#{operation},#{idempotencyKey},#{requestSha256},#{resultRef},#{resultState},#{at})</insert>
+    <insert id="appendAudit">INSERT INTO saas_audit_event(audit_id,tenant_id,aggregate_type,aggregate_id,action_code,result,request_sha256,
+        correlation_id,actor_user_id,masked_summary,occurred_at) VALUES(#{auditId},#{tenantId},#{aggregateType},#{aggregateId},#{actionCode},
+        #{result},#{requestSha256},#{correlationId},#{actorUserId},#{maskedSummary},#{at})</insert>
+    <insert id="appendOutbox">INSERT INTO saas_outbox(outbox_id,tenant_id,aggregate_type,aggregate_id,event_type,schema_version,payload_json,
+        payload_sha256,correlation_id,delivery_state,attempts,created_at) VALUES(#{outboxId},#{tenantId},#{aggregateType},#{aggregateId},#{eventType},
+        '1.0',CAST(#{payloadJson} AS JSON),#{payloadSha256},#{correlationId},'PENDING',0,#{at})</insert>
+    <select id="quotaUsed" resultType="long">SELECT used_count FROM saas_quota_usage WHERE tenant_id=#{tenantId} AND feature_code=#{featureCode}</select>
+    <update id="consumeQuota">UPDATE saas_quota_usage SET used_count=used_count+#{delta},updated_at=#{at}
+        WHERE tenant_id=#{tenantId} AND feature_code=#{featureCode} AND quota_limit=#{quotaLimit}
+        AND used_count+#{delta}&gt;=0 AND used_count+#{delta}&lt;=#{quotaLimit}</update>
+</mapper>

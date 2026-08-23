@@ -35,6 +35,13 @@ public class ScopeAuthorizationService {
         }
     }
 
+    /** 租户创建前的商业开户必须由平台管理员执行。 */
+    public void requirePlatformAdministrator() {
+        if (!platformPrivilegeSource.isPlatformAdministrator()) {
+            throw new ServiceException("FND-RBAC-004: 需要平台管理员权限", 403);
+        }
+    }
+
     public boolean canAccessOrg(Long orgUnitId) {
         TrustedPrincipal principal = tenantContext.requirePrincipal();
         if (platformPrivilegeSource.isTenantAdministrator()) {

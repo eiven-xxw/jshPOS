@@ -29,6 +29,7 @@
         <module>jshpos-resilience</module>
         <module>jshpos-release</module>
         <module>jshpos-integration</module>
+        <module>jshpos-saas</module>
         <module>ruoyi-demo</module>
         <module>ruoyi-generator</module>
         <module>ruoyi-job</module>

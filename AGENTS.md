@@ -619,6 +619,18 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
 - `T2-PAY-002/HWD-001/PRN-001/PAR-001` 继续 `BLOCKED`；`T2-UAT-001/REL-001` 继续 `DRAFT`；`T2-LIC-001/JSH-001` 继续 `DEFERRED`。Provider 网络、真实资金、设备/外设、伙伴现场、完整 Alpha、生产部署和商业声明保持 0。
 - 完成后只提交三项独立 CR/依赖影响、领域边界、契约草案、测试矩阵、Gate 8A-Prep 评审报告和 SAA 下一步指令，等待项目发起人确认；不得自动启动任何运行时。
 
+## 4.50 当前 T2 Gate 8A / Sprint S24-A 条件准入
+
+- 项目发起人已接受 Gate 8A-Prep `CONDITIONAL PASS`，并授权从最终封存提交 `bcfcaa4621ea55c61bd1cd22fc355b5f74d8dae4` 建立 `t2/gate8a-sprint24a-saa001-runtime`。
+- 本阶段唯一允许正式实现的需求是 `T2-SAA-001`；`T2-SUB-001`、`T2-SVC-001` 继续 `DRAFT`，不得创建其表、Controller、页面或任务。
+- `jshpos-saas` 独占商户申请、版本化套餐权益、商业租户生命周期、配额、审计和 Outbox；Foundation/RuoYi 继续独占技术租户、可信上下文和 IAM/RBAC。
+- SaaS 禁止直接写 RuoYi System 或其他 Owner 私有表；技术租户只能通过 Foundation `TenantProvisioningPort` 创建和停启，`tenant_id` 必须由服务端分配。
+- 租户创建前的开户操作必须使用平台管理员权限；租户管理员、客户端 tenant_id、菜单可见性或本地时间均不得成为授权依据。
+- 暂停、停用和逻辑注销不得物理删除历史，必须保留退款、查询、对账、审计、备份恢复、法定导出、迁移和删除请求的受控能力。
+- 一次性开户密码、Secret、真实 PII、商户号、终端号和证书不得写入 SaaS 表、Git、日志、CI 或普通制品。
+- `T2-PAY-002/HWD-001/PRN-001/PAR-001` 继续 `BLOCKED`；`T2-UAT-001/REL-001` 继续 `DRAFT`；`T2-LIC-001/JSH-001` 继续 `DEFERRED`。
+- 完成后必须提交 `T2-SAA-001` 独立周门禁报告并等待项目发起人确认；不得自动进入 SUB、SVC、完整 Alpha、现场试点或生产发布。
+
 ## 5. 工程与测试规则
 
 - 服务端采用 RuoYi-Vue-Plus 模块化单体，不得把领域逻辑写入 Controller、通用工具类或框架系统模块。

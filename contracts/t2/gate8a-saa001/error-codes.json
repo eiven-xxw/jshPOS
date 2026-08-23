@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-SAA-001",
+  "codes": [
+    {"code":"SAA-APP-001","http":409,"meaning":"申请号已存在"},
+    {"code":"SAA-APP-404","http":404,"meaning":"商户申请不存在"},
+    {"code":"SAA-APPROVAL-001","http":409,"meaning":"创建人与审批人未分离"},
+    {"code":"SAA-IDEMP-001","http":409,"meaning":"幂等键格式非法"},
+    {"code":"SAA-IDEMP-002","http":409,"meaning":"同幂等键异内容"},
+    {"code":"SAA-STATE-001","http":409,"meaning":"申请状态迁移非法"},
+    {"code":"SAA-STATE-002","http":409,"meaning":"权益状态迁移非法"},
+    {"code":"SAA-STATE-003","http":409,"meaning":"生命周期状态迁移非法"},
+    {"code":"SAA-CONC-001","http":409,"meaning":"申请并发版本冲突"},
+    {"code":"SAA-CONC-002","http":409,"meaning":"权益版本并发冲突"},
+    {"code":"SAA-CONC-003","http":409,"meaning":"生命周期并发冲突"},
+    {"code":"SAA-ENT-008","http":409,"meaning":"权益有效窗口重叠"},
+    {"code":"SAA-ENT-009","http":409,"meaning":"权益尚未进入生效窗口"},
+    {"code":"SAA-QUOTA-001","http":409,"meaning":"配额增量为零"},
+    {"code":"SAA-QUOTA-002","http":403,"meaning":"权益或配额不可用"},
+    {"code":"SAA-QUOTA-003","http":409,"meaning":"配额不足或并发冲突"},
+    {"code":"SAA-FND-001","http":409,"meaning":"技术租户创建失败"},
+    {"code":"SAA-FND-004","http":409,"meaning":"技术租户状态变更失败"},
+    {"code":"FND-RBAC-004","http":403,"meaning":"缺少平台管理员权限"},
+    {"code":"SAA-SECRET-001","http":409,"meaning":"一次性密码长度非法"}
+  ]
+}

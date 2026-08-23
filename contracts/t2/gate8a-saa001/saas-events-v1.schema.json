@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jshpos.example/contracts/t2/gate8a-saa001/saas-events-v1.schema.json",
+  "title": "T2-SAA-001 SaaS Owner versioned event envelope",
+  "xContractStatus": "ACTIVE_INTERNAL",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["eventId", "eventType", "schemaVersion", "authorityContext", "aggregate", "occurredAt", "payloadSha256", "correlationId", "payload"],
+  "properties": {
+    "eventId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "eventType": {
+      "enum": [
+        "saas.application.state-changed.v1",
+        "saas.entitlement.state-changed.v1",
+        "saas.tenant.lifecycle-changed.v1"
+      ]
+    },
+    "schemaVersion": {"const": "1.0"},
+    "authorityContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contextKind"],
+      "properties": {
+        "contextKind": {"enum": ["PLATFORM", "TRUSTED_TENANT"]},
+        "tenantId": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,19}$"}
+      }
+    },
+    "aggregate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["aggregateType", "aggregateId"],
+      "properties": {
+        "aggregateType": {"enum": ["APPLICATION", "ENTITLEMENT", "TENANT_LIFECYCLE"]},
+        "aggregateId": {"type": "string", "minLength": 1, "maxLength": 64}
+      }
+    },
+    "occurredAt": {"type": "string", "format": "date-time"},
+    "payloadSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "correlationId": {"type": "string", "pattern": "^[A-Za-z0-9._:-]{1,64}$"},
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from", "to"],
+      "properties": {
+        "from": {"type": ["string", "null"], "maxLength": 32},
+        "to": {"type": "string", "minLength": 1, "maxLength": 32}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"authorityContext": {"properties": {"contextKind": {"const": "TRUSTED_TENANT"}}}}},
+      "then": {"properties": {"authorityContext": {"required": ["contextKind", "tenantId"]}}}
+    }
+  ]
+}
