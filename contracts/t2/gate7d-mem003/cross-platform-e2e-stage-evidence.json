@@ -2,7 +2,7 @@
   "schemaVersion": "1.0",
   "requirementId": "T2-MEM-003",
   "stage": "CROSS_PLATFORM_E2E",
-  "status": "IN_PROGRESS",
+  "status": "VERIFIED",
   "evidenceLevel": "INTERNAL_SYNTHETIC_SOFTWARE",
   "sharedVectorContract": {
     "path": "contracts/t2/gate7d-mem003/member-benefit-price-vectors.json",
@@ -35,6 +35,16 @@
     "journey": "signed package -> member cache -> BEST_PRICE quote -> cash settlement -> immutable order member snapshot -> Outbox",
     "runner": "member_benefit_runtime_test.dart",
     "status": "VERIFIED_LOCAL"
+  },
+  "candidate": {
+    "commit": "e95def3cec932fcf307f38398b2f94e1246a899a",
+    "ciRun": 32624915228,
+    "ciConclusion": "success",
+    "jobCount": 9,
+    "artifactCount": 9,
+    "mysqlRuntime": "V1_TO_V202608230080_CLEAN_MYSQL_8_4_PASS",
+    "flutterGate2Coverage": 0.9187,
+    "flutterGate6dCoverage": 0.9093
   },
   "externalExecution": {
     "providerNetwork": 0,

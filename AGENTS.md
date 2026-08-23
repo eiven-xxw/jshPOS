@@ -583,7 +583,8 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
 - 退款必须读取原订单、原权益、原会员价、原促销、原人工优惠与抹零快照；当前等级、价格或规则不得参与历史退款计算。真实 PII 不得进入 Pricing/Promotion/Order/包/日志/CI/普通制品。
 - MySQL/SQLite 只允许 `V74` 之后的新前向迁移，已发布迁移不得修改；核心类、实体、状态机、应用服务和复杂 SQL 必须保留有效中文注释。
 - `T2-SAA-001/SUB-001/SVC-001` 与 Gate 7E 继续 `DRAFT`；`T2-PAY-002/HWD-001/PRN-001/PAR-001` 继续 `BLOCKED`；`T2-JSH-001/LIC-001` 继续 `DEFERRED`。外部网络、真实资金、设备、伙伴、完整 Alpha、生产和商业声明保持 0。
-- 完成后只能更新为 `VERIFIED / AWAITING SPONSOR ACCEPTANCE` 并提交独立周门禁报告；不得自动进入 Gate 7E 或后续需求。
+- 六段串行实现均已完成独立 `VERIFIED_LOCAL`；候选提交 `e95def3cec932fcf307f38398b2f94e1246a899a` 的 GitHub Actions Run `32624915228` 九个 Job 全绿，生成九个 GitHub SHA-256 制品。干净 MySQL 8.4 已从 V1 前进至 V80；既有 Gate 4C/Gate 7C 菜单 ID 冲突只通过新增组合根幂等回调前向修复，未修改已发布迁移。
+- `T2-MEM-003` 当前仅可更新为 `VERIFIED / AWAITING SPONSOR ACCEPTANCE`；项目发起人确认前不得写为 `ACCEPTED`，不得自动进入 Gate 7E 或后续需求。失败 Run `32623623290/32624233813/32624504379` 必须原样保留。
 
 ## 5. 工程与测试规则
 

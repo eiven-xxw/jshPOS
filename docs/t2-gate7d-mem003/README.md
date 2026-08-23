@@ -6,11 +6,13 @@
 - [04_Promotion_Owner独立验证记录.md](04_Promotion_Owner独立验证记录.md)
 - [05_Order_Refund独立验证记录.md](05_Order_Refund独立验证记录.md)
 - [06_Package_SQLite_Flutter_Vue独立验证记录.md](06_Package_SQLite_Flutter_Vue独立验证记录.md)
-- `02_T2_MEM003独立周门禁报告.md`：完成实现和 CI 后生成。
-- `03_T2_MEM003证据索引.md`：完成实现和 CI 后生成。
-- `04_下一步操作指令.md`：完成封板后生成。
+- [07_跨端向量故障注入与内部E2E独立验证记录.md](07_跨端向量故障注入与内部E2E独立验证记录.md)
+- [08_T2_MEM003独立周门禁报告.md](08_T2_MEM003独立周门禁报告.md)
+- [09_T2_MEM003证据索引.md](09_T2_MEM003证据索引.md)
+- [10_Gate7E下一步操作指令.md](10_Gate7E下一步操作指令.md)
 
-当前状态：`T2-MEM-003 = IN_PROGRESS`，已严格串行完成 Member、Pricing、Promotion、
-Order/Refund 与 DataPackage/SQLite/Flutter/Vue，当前仅跨端向量、故障注入、内部 E2E 和完整 CI
-阶段进入实现。仅授权内部软件实现和合成证据，不改变外部
-`BLOCKED/DEFERRED`，不代表完整 Alpha、生产或商业验收。
+当前状态：`T2-MEM-003 = VERIFIED / AWAITING SPONSOR ACCEPTANCE`。六段串行实现与
+独立验证均已完成，候选提交 `e95def3cec932fcf307f38398b2f94e1246a899a` 的 GitHub
+Actions Run `32624915228` 九个 Job 全绿。该结论仅覆盖内部合成软件，不改变外部
+`BLOCKED/DEFERRED`，不代表完整 Alpha、生产或商业验收；项目发起人确认前不得更新为
+`ACCEPTED`，不得自动进入 Gate 7E。
