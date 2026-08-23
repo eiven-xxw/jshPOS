@@ -155,7 +155,9 @@ def find_by(rows: list[dict[str, Any]], key: str, value: Any, stage: str) -> dic
 
 
 def timestamp(value: datetime) -> str:
-    return value.astimezone(timezone.utc).replace(tzinfo=None, microsecond=0).isoformat()
+    # RuoYi 全局 LocalDateTime 契约使用 yyyy-MM-dd HH:mm:ss；这里显式按
+    # 正式 OpenAPI/序列化约定发送 UTC 无时区值，不能依赖 Python ISO 的 T 分隔符。
+    return value.astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
 
 
 def run(args: argparse.Namespace) -> dict[str, Any]:
