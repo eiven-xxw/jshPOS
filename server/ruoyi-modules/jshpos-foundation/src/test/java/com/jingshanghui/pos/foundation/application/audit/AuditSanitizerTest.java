@@ -1,7 +1,9 @@
 package com.jingshanghui.pos.foundation.application.audit;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
+import java.time.LocalTime;
 import java.util.Map;
 import java.util.List;
 
@@ -10,7 +12,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class AuditSanitizerTest {
 
-    private final AuditSanitizer sanitizer = new AuditSanitizer();
+    private final AuditSanitizer sanitizer = new AuditSanitizer(new ObjectMapper().findAndRegisterModules());
 
     @Test
     void recursivelyRedactsSecretsAndIsDeterministic() {
@@ -51,6 +53,17 @@ class AuditSanitizerTest {
             .hasMessageContaining("not valid JSON");
     }
 
+    @Test
+    void normalizesJavaTimeUsingTheApplicationJacksonModules() {
+        AuditSanitizer.SanitizedPayload payload = sanitizer.sanitize(
+            new StoreAuditPayload("synthetic-store", LocalTime.of(6, 0)));
+
+        assertThat(payload.json()).contains("businessDayStart", "06:00:00", "synthetic-store");
+    }
+
     private record SyntheticPayload(String name, String privateKey) {
+    }
+
+    private record StoreAuditPayload(String name, LocalTime businessDayStart) {
     }
 }

@@ -71,6 +71,7 @@ def main() -> None:
         "server/script/sql/ry_workflow.sql",
         "server/ruoyi-modules/ruoyi-system/src/main/java/org/dromara/system/service/impl/SysPermissionServiceImpl.java",
         "server/ruoyi-modules/jshpos-saas/src/test/java/com/jingshanghui/pos/saas/security/SuperAdminPermissionPatternContractTest.java",
+        "server/ruoyi-modules/jshpos-foundation/src/main/java/com/jingshanghui/pos/foundation/application/audit/AuditSanitizer.java",
     ]
     require(all((ROOT / path).is_file() for path in required), "必要文件缺失")
     require(git("merge-base", "--is-ancestor", BASE, "HEAD") == "", "Gate8B-Prep 封存提交不是祖先")
@@ -109,12 +110,15 @@ def main() -> None:
     require("SystemConstants.ALL_PERMISSION" in permission_source
             and "SystemConstants.DOMAIN_ALL_PERMISSION" in permission_source,
             "平台超管必须同时覆盖 RuoYi 三段权限与 Owner 两段权限")
+    audit_sanitizer = (ROOT / required[15]).read_text(encoding="utf-8")
+    require("objectMapper.copy()" in audit_sanitizer and "new ObjectMapper()" not in audit_sanitizer,
+            "审计摘要器必须复用应用 Java Time 模块且不得修改全局 ObjectMapper")
     vectors = json.loads((ROOT / required[4]).read_text(encoding="utf-8"))["seeds"]
     require(len(vectors) >= 8 and len({v["id"] for v in vectors}) == len(vectors), "失败 seed 不完整")
 
     changed = set(filter(None, git("diff", "--name-only", BASE).splitlines())) | set(
         filter(None, git("ls-files", "--others", "--exclude-standard").splitlines()))
-    allowed_runtime = {required[8], required[10], required[13]}
+    allowed_runtime = {required[8], required[10], required[13], required[15]}
     for name in changed:
         normalized = name.replace("\\", "/")
         require("/db/migration/" not in normalized, "本阶段禁止新增或修改迁移: " + normalized)

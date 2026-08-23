@@ -24,12 +24,19 @@ import java.util.TreeMap;
 public class AuditSanitizer {
 
     private static final int MAX_SUMMARY_BYTES = 8 * 1024;
-    private static final ObjectMapper JSON = new ObjectMapper()
-        .configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true)
-        .configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
     private static final String[] SENSITIVE = {
         "password", "token", "secret", "privatekey", "publickey", "card", "phone", "idno"
     };
+    private final ObjectMapper json;
+
+    public AuditSanitizer(ObjectMapper objectMapper) {
+        // 复用应用统一注册的 Java Time 等模块，并复制后收紧审计摘要的确定性排序，
+        // 避免修改全局 ObjectMapper 或因 LocalDate/LocalTime 导致业务事务回滚。
+        this.json = objectMapper.copy()
+            .configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true)
+            .configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true)
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+    }
 
     public SanitizedPayload sanitize(Object value) {
         Object normalized = normalize(value);
@@ -48,7 +55,7 @@ public class AuditSanitizer {
         }
         Object source = value;
         if (!(value instanceof Map<?, ?>) && !(value instanceof Collection<?>)) {
-            source = JSON.convertValue(value, Object.class);
+            source = json.convertValue(value, Object.class);
         }
         if (source instanceof Map<?, ?> map) {
             Map<String, Object> result = new TreeMap<>();
@@ -87,7 +94,7 @@ public class AuditSanitizer {
 
     public Map<String, Object> parseMap(String json) {
         try {
-            return JSON.readValue(json, new TypeReference<>() {
+            return this.json.readValue(json, new TypeReference<>() {
             });
         } catch (JsonProcessingException exception) {
             throw new IllegalStateException("stored audit summary is not valid JSON", exception);
@@ -96,7 +103,7 @@ public class AuditSanitizer {
 
     private String write(Object value) {
         try {
-            return JSON.writeValueAsString(value);
+            return json.writeValueAsString(value);
         } catch (JsonProcessingException exception) {
             throw new IllegalArgumentException("audit payload is not JSON serializable", exception);
         }

@@ -1,5 +1,6 @@
 package com.jingshanghui.pos.foundation.application.audit;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jingshanghui.pos.foundation.application.context.TrustedPrincipal;
 import com.jingshanghui.pos.foundation.application.context.TrustedTenantContext;
 import com.jingshanghui.pos.foundation.infrastructure.persistence.entity.AuditEventEntity;
@@ -24,7 +25,8 @@ class DomainAuditServiceTest {
 
     private final AuditEventMapper mapper = mock(AuditEventMapper.class);
     private final TrustedTenantContext context = mock(TrustedTenantContext.class);
-    private final DomainAuditService service = new DomainAuditService(mapper, context, new AuditSanitizer());
+    private final DomainAuditService service = new DomainAuditService(
+        mapper, context, new AuditSanitizer(new ObjectMapper().findAndRegisterModules()));
 
     @AfterEach
     void clearMdc() {
