@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-MEM-003",
+  "stage": "CROSS_PLATFORM_E2E",
+  "status": "IN_PROGRESS",
+  "evidenceLevel": "INTERNAL_SYNTHETIC_SOFTWARE",
+  "sharedVectorContract": {
+    "path": "contracts/t2/gate7d-mem003/member-benefit-price-vectors.json",
+    "total": 40,
+    "calculation": 10,
+    "javaRunner": "MemberBenefitCrossPlatformVectorTest",
+    "dartRunner": "member_benefit_cross_platform_vector_test.dart"
+  },
+  "faultSuites": [
+    {"boundary":"Member状态与幂等","runner":"MemberBenefitServiceTest,BenefitRulesTest,BenefitStatesTest"},
+    {"boundary":"Pricing版本与门店范围","runner":"MemberPriceServiceTest,MemberPriceRulesTest"},
+    {"boundary":"Promotion计算与解释链","runner":"MemberBenefitPromotionServiceTest,MemberBenefitCombinationEngineTest"},
+    {"boundary":"Order/Refund原快照","runner":"PromotedCashOrderServiceTest,OriginalSnapshotReturnServiceTest"},
+    {"boundary":"签名包与SQLite原子切换","runner":"member_benefit_runtime_test.dart"},
+    {"boundary":"现金成交同事务冻结","runner":"promoted_cash_settlement_test.dart"},
+    {"boundary":"Vue权限与无前端重算","runner":"member-benefit-view.spec.ts,contract.spec.ts"}
+  ],
+  "fixedFailureCases": [
+    "same-key-different-content",
+    "out-of-order-version-event",
+    "ack-lost-process-restart",
+    "cross-tenant-entitlement",
+    "offline-package-damaged",
+    "offline-package-cross-store",
+    "content-digest-tamper",
+    "migration-interrupted",
+    "refund-after-benefit-revocation"
+  ],
+  "internalE2E": {
+    "journey": "signed package -> member cache -> BEST_PRICE quote -> cash settlement -> immutable order member snapshot -> Outbox",
+    "runner": "member_benefit_runtime_test.dart",
+    "status": "VERIFIED_LOCAL"
+  },
+  "externalExecution": {
+    "providerNetwork": 0,
+    "realFunds": 0,
+    "realDevice": 0,
+    "realPeripheral": 0,
+    "partnerExecution": 0,
+    "fullAlpha": 0,
+    "production": 0
+  }
+}

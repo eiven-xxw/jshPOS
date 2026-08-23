@@ -30,19 +30,22 @@ public final class MemberBenefitPackageCodec {
             || generatedAt == null || expiresAt == null || !expiresAt.isAfter(generatedAt)) {
             throw new ServiceException("PRM-MBP-PKG-001: 数据包身份或版本无效", 400);
         }
-        List<BenefitRecord> sortedBenefits = List.copyOf(benefits == null ? List.of() : benefits).stream()
+        List<BenefitRecord> inputBenefits = benefits == null ? List.of() : benefits;
+        List<MemberPriceRecord> inputPrices = prices == null ? List.of() : prices;
+        // 先做容量和逐条校验，再排序，避免畸形大包或空记录在比较器中以未受控异常失败。
+        if (inputBenefits.size() > 2_000 || inputPrices.size() > 500_000) {
+            throw new ServiceException("PRM-MBP-PKG-002: 数据包记录数超过上限", 400);
+        }
+        inputBenefits.forEach(MemberBenefitPackageCodec::validateBenefit);
+        inputPrices.forEach(MemberBenefitPackageCodec::validatePrice);
+        List<BenefitRecord> sortedBenefits = List.copyOf(inputBenefits).stream()
             .sorted(Comparator.comparing(BenefitRecord::levelCode).thenComparing(BenefitRecord::versionId)).toList();
-        List<MemberPriceRecord> sortedPrices = List.copyOf(prices == null ? List.of() : prices).stream()
+        List<MemberPriceRecord> sortedPrices = List.copyOf(inputPrices).stream()
             .sorted(Comparator.comparing(MemberPriceRecord::levelCode)
                 .thenComparing(MemberPriceRecord::skuId).thenComparing(MemberPriceRecord::unitId)
                 .thenComparing(value -> value.scopeStoreId() == null ? 1 : 0)
                 .thenComparing(MemberPriceRecord::versionNo, Comparator.reverseOrder())
                 .thenComparing(MemberPriceRecord::versionId)).toList();
-        if (sortedBenefits.size() > 2_000 || sortedPrices.size() > 500_000) {
-            throw new ServiceException("PRM-MBP-PKG-002: 数据包记录数超过上限", 400);
-        }
-        sortedBenefits.forEach(MemberBenefitPackageCodec::validateBenefit);
-        sortedPrices.forEach(MemberBenefitPackageCodec::validatePrice);
         StringBuilder value = new StringBuilder("JSHMBP|").append(SCHEMA_VERSION).append('|')
             .append(ENGINE_VERSION).append('|').append(tenantId).append('|').append(storeId).append('|')
             .append(packageVersion).append('|').append(previousVersion).append('|').append(generatedAt)

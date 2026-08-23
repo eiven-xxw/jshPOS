@@ -36,7 +36,7 @@ final class PosLocalDatabase {
       result._initialize();
       return result;
     } catch (_) {
-      database.close();
+      _closeDatabase(database);
       rethrow;
     }
   }
@@ -52,7 +52,7 @@ final class PosLocalDatabase {
       result._initialize();
       return result;
     } catch (_) {
-      database.close();
+      _closeDatabase(database);
       rethrow;
     }
   }
@@ -658,5 +658,16 @@ final class PosLocalDatabase {
 
   void checkpoint(String name) => _failureInjector?.call(name);
 
-  void close() => database.close();
+  /// 关闭前显式刷出并截断 WAL，确保 Windows 故障恢复后不遗留文件句柄。
+  void close() => _closeDatabase(database);
+
+  static void _closeDatabase(Database database) {
+    try {
+      database.execute('PRAGMA wal_checkpoint(TRUNCATE)');
+    } catch (_) {
+      // 初始化尚未完成时 checkpoint 可能不可用；仍必须可靠释放原始句柄。
+    } finally {
+      database.close();
+    }
+  }
 }

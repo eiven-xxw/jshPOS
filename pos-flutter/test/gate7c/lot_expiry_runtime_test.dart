@@ -63,7 +63,7 @@ void main() {
     addTearDown(fixture.close);
     expect(fixture.count('local_lot_policy'), 1);
     expect(fixture.count('local_lot_balance'), 2);
-    expect(fixture.scalar('PRAGMA user_version'), 15);
+    expect(fixture.scalar('PRAGMA user_version'), 16);
     expect(
       () => fixture.database.database.execute(
         "UPDATE local_lot_balance SET expiry_date='2099-12-31' WHERE lot_id='01K2A000000000000000000072'",

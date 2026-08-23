@@ -170,65 +170,73 @@ const expiry = () => new Date(Date.now() + 30 * 86400_000).toISOString();
 
 const createPolicy = async () => {
   const command = identity();
-  policyResult.value = await createBenefitPolicy({
-    commandId: command,
-    policyId: policy.policyId,
-    versionId: policy.versionId,
-    policyCode: policy.policyCode,
-    displayName: policy.displayName,
-    levelRules: [{ levelCode: policy.levelCode, memberPriceEligible: policy.memberPriceEligible, stackingAllowed: policy.stackingAllowed }],
-    storeIds: [Number(policy.storeId)],
-    correlationId: command
-  });
+  policyResult.value = (
+    await createBenefitPolicy({
+      commandId: command,
+      policyId: policy.policyId,
+      versionId: policy.versionId,
+      policyCode: policy.policyCode,
+      displayName: policy.displayName,
+      levelRules: [{ levelCode: policy.levelCode, memberPriceEligible: policy.memberPriceEligible, stackingAllowed: policy.stackingAllowed }],
+      storeIds: [Number(policy.storeId)],
+      correlationId: command
+    })
+  ).data;
 };
 
 const policyAction = async (action: 'validate' | 'approve' | 'publish' | 'pause' | 'resume' | 'revoke') => {
   if (!policyResult.value) return;
   await ElMessageBox.confirm(`确认执行权益版本 ${action}？该操作由服务端状态机和审计约束。`, '权益版本操作', { type: 'warning' });
   const command = identity();
-  policyResult.value = await transitionBenefitPolicy(policy.policyId, policy.versionId, action, {
-    commandId: command,
-    contentSha256: policyResult.value.contentSha256,
-    effectiveAt: action === 'publish' ? new Date().toISOString() : undefined,
-    expiresAt: action === 'publish' ? expiry() : undefined,
-    reasonCode: action === 'revoke' ? 'OPERATOR_REVOKED' : undefined,
-    reason: `运营工作台执行 ${action}`,
-    correlationId: command
-  });
+  policyResult.value = (
+    await transitionBenefitPolicy(policy.policyId, policy.versionId, action, {
+      commandId: command,
+      contentSha256: policyResult.value.contentSha256,
+      effectiveAt: action === 'publish' ? new Date().toISOString() : undefined,
+      expiresAt: action === 'publish' ? expiry() : undefined,
+      reasonCode: action === 'revoke' ? 'OPERATOR_REVOKED' : undefined,
+      reason: `运营工作台执行 ${action}`,
+      correlationId: command
+    })
+  ).data;
 };
 
 const createPrice = async () => {
   const command = identity();
-  priceResult.value = await createMemberPriceVersion({
-    commandId: command,
-    versionId: price.versionId,
-    bookCode: price.bookCode,
-    versionNo: price.versionNo,
-    storeId: Number(price.storeId),
-    items: [
-      { itemId: identity(), levelCode: price.levelCode, skuId: Number(price.skuId), unitId: Number(price.unitId), amountMinor: price.amountMinor }
-    ],
-    correlationId: command
-  });
+  priceResult.value = (
+    await createMemberPriceVersion({
+      commandId: command,
+      versionId: price.versionId,
+      bookCode: price.bookCode,
+      versionNo: price.versionNo,
+      storeId: Number(price.storeId),
+      items: [
+        { itemId: identity(), levelCode: price.levelCode, skuId: Number(price.skuId), unitId: Number(price.unitId), amountMinor: price.amountMinor }
+      ],
+      correlationId: command
+    })
+  ).data;
 };
 
 const priceAction = async (action: 'validate' | 'approve' | 'publish') => {
   if (!priceResult.value) return;
   await ElMessageBox.confirm(`确认执行会员价版本 ${action}？页面不会计算成交价。`, '会员价版本操作', { type: 'warning' });
   const command = identity();
-  priceResult.value = await transitionMemberPrice(price.versionId, action, {
-    commandId: command,
-    contentSha256: priceResult.value.contentSha256,
-    effectiveAt: action === 'publish' ? new Date().toISOString() : undefined,
-    expiresAt: action === 'publish' ? expiry() : undefined,
-    correlationId: command
-  });
+  priceResult.value = (
+    await transitionMemberPrice(price.versionId, action, {
+      commandId: command,
+      contentSha256: priceResult.value.contentSha256,
+      effectiveAt: action === 'publish' ? new Date().toISOString() : undefined,
+      expiresAt: action === 'publish' ? expiry() : undefined,
+      correlationId: command
+    })
+  ).data;
 };
 
 const publishPackage = async () => {
   await ElMessageBox.confirm('确认由服务端读取已发布权益与会员价并生成无 PII 签名包？', '发布离线权益包', { type: 'warning' });
   const command = identity();
-  packageResult.value = await publishMemberBenefitPackage({ ...packageForm, correlationId: command });
+  packageResult.value = (await publishMemberBenefitPackage({ ...packageForm, correlationId: command })).data;
 };
 </script>
 

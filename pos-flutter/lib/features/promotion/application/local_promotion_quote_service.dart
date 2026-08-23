@@ -521,10 +521,15 @@ final class LocalPromotionQuoteService {
       .convert(utf8.encode(PromotedOrderSnapshotCodec.canonicalJson(value)))
       .toString();
 
+  /// 与订单 Owner 共用规范化数量文本，避免等值小数因尾零产生跨 Owner 摘要漂移。
   String _decimal(ExactDecimal value) {
     final digits = value.unscaled.toString().padLeft(value.scale + 1, '0');
     if (value.scale == 0) return digits;
-    return '${digits.substring(0, digits.length - value.scale)}.${digits.substring(digits.length - value.scale)}';
+    final integer = digits.substring(0, digits.length - value.scale);
+    final fraction = digits
+        .substring(digits.length - value.scale)
+        .replaceFirst(RegExp(r'0+$'), '');
+    return fraction.isEmpty ? integer : '$integer.$fraction';
   }
 }
 

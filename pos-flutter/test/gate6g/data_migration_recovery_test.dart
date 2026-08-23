@@ -15,7 +15,7 @@ const binding = TrustedDeviceBinding(
 );
 
 void main() {
-  test('SQLite迁移中断整体回滚且原文件可安全重试到v14', () async {
+  test('SQLite迁移中断整体回滚且原文件可安全前向恢复到当前版本', () async {
     final directory = Directory.systemTemp.createTempSync(
       'jshpos-gate6g-migration-',
     );
@@ -37,13 +37,13 @@ void main() {
       final recovered = PosLocalDatabase.openPath(path, binding);
       expect(
         recovered.database.select('PRAGMA user_version').single.values.first,
-        15,
+        16,
       );
       expect(
         recovered.database
             .select('SELECT COUNT(*) AS value FROM local_schema_history')
             .single['value'],
-        15,
+        16,
       );
       expect(
         recovered.database.select('PRAGMA quick_check').single.values.first,

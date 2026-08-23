@@ -283,7 +283,7 @@ void main() {
       final recovered = PosLocalDatabase.openPath(path, binding);
       expect(
         recovered.database.select('PRAGMA user_version').single.values.first,
-        15,
+        16,
       );
       recovered.close();
     } finally {

@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:crypto/crypto.dart';
 import 'package:cryptography/cryptography.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:jshpos_pos/features/checkout/application/checkout_local_service.dart';
 import 'package:jshpos_pos/features/checkout/domain/checkout_models.dart';
 import 'package:jshpos_pos/features/checkout/domain/ulid_generator.dart';
 import 'package:jshpos_pos/features/promotion/application/local_promotion_quote_service.dart';
@@ -12,6 +13,7 @@ import 'package:jshpos_pos/features/promotion/domain/member_benefit_engine.dart'
 import 'package:jshpos_pos/features/promotion/domain/promotion_engine.dart';
 import 'package:jshpos_pos/features/promotion/infrastructure/member_benefit_package_installer.dart';
 import 'package:jshpos_pos/features/promotion/infrastructure/promotion_package_installer.dart';
+import 'package:jshpos_pos/features/shift/domain/shift_models.dart';
 import 'package:jshpos_pos/infrastructure/local_database/member_cache_store.dart';
 import 'package:jshpos_pos/infrastructure/local_database/pos_local_database.dart';
 
@@ -129,11 +131,12 @@ void main() {
       ),
     );
     final member = cache.resolve('opaque-token', now)!;
+    final quoteUlids = UlidGenerator(random: Random(73), now: () => now);
     final service = LocalPromotionQuoteService(
       database: db,
       packageInstaller: promotionInstaller,
       engine: PromotionEngine(),
-      ulids: UlidGenerator(random: Random(73), now: () => now),
+      ulids: quoteUlids,
       memberBenefitPackageInstaller: memberInstaller,
       memberBenefitEngine: MemberBenefitEngine(),
     );
@@ -161,6 +164,75 @@ void main() {
     expect(result.memberBenefitSnapshot!.selectedPath, 'MEMBER_PATH');
     expect(
       db.database.select('SELECT * FROM local_promotion_quote_member_benefit'),
+      hasLength(1),
+    );
+    final checkout = CheckoutLocalService(
+      localDatabase: db,
+      ulids: UlidGenerator(random: Random(74), now: () => now),
+      shiftPolicy: const ShiftPolicy(cashDifferenceApprovalMinor: 100),
+    );
+    final shift = checkout.openShift(
+      commandId: '01K7S000000000000000000001',
+      idempotencyKey: 'mem003-e2e-open-shift-0001',
+      businessDate: '2026-08-23',
+      openingCashMinor: 0,
+      configVersion: 31,
+      occurredAt: now,
+    );
+    final checkoutLine = BasketLine(
+      lineId: line.lineId,
+      lineNo: line.lineNo,
+      quote: PriceQuote.fromVerifiedPackage(
+        skuId: line.skuId,
+        skuCode: 'SYN-MEMBER-SKU-101',
+        productName: '合成会员价商品',
+        unitId: '201',
+        unitCode: 'PCS',
+        unitPriceMinor: line.unitPriceMinor,
+        priceSource: 'TENANT_BASE',
+      ),
+      quantity: '1.000000',
+    );
+    final sale = checkout.completePromotedCashSale(
+      PromotedCashSaleCommand(
+        commandId: '01K7S000000000000000000002',
+        idempotencyKey: 'mem003-e2e-cash-sale-0001',
+        basket: Basket(
+          orderId: '01K7S000000000000000000003',
+          localOrderNo: 'SYN-MEM003-E2E-0001',
+          lines: [checkoutLine],
+        ),
+        shiftId: shift.shiftId,
+        businessDate: '2026-08-23',
+        catalogVersion: 1,
+        priceVersion: 1,
+        industryTemplateVersion: 'CONVENIENCE_V1',
+        quoteId: result.quoteId,
+        quoteFingerprint: result.quoteFingerprint,
+        settlementFingerprint: result.quoteFingerprint,
+        packageVersion: result.packageVersion,
+        promotionSnapshotId: '01K7S000000000000000000004',
+        lines: [
+          PromotedSettlementLine(
+            basketLine: checkoutLine,
+            discountAmountMinor: result.quote.lineDiscounts[line.lineId]!,
+            sourceAllocations: result.sourceAllocationsByLine[line.lineId]!,
+          ),
+        ],
+        tenderedAmountMinor: 1000,
+        occurredAt: now,
+        memberBenefitSnapshot: result.memberBenefitSnapshot,
+      ),
+    );
+    expect(sale.receivableAmountMinor, 800);
+    expect(
+      db.database.select('SELECT * FROM local_order_member_benefit_snapshot'),
+      hasLength(1),
+    );
+    expect(
+      db.database.select(
+        "SELECT * FROM local_outbox WHERE event_type='order.completed.v2' AND payload_json LIKE '%memberBenefitSnapshot%'",
+      ),
       hasLength(1),
     );
     db.database.execute(
