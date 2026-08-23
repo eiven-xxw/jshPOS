@@ -1,6 +1,7 @@
 package org.dromara.test;
 
 import org.flywaydb.core.Flyway;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.sql.Connection;
@@ -16,6 +17,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * T2-MEM-003 在全模块正式运行时类路径上执行 V1—V80，验证 Owner 表、租户键和只追加约束。
  * 该测试只由带受控 MySQL 8.4 服务的专属 CI Job 显式执行。
  */
+@Tag("local")
 class MemberBenefitMigrationMySqlIT {
     private final String url = required("GATE7D_MEM003_MYSQL_JDBC_URL");
     private final String username = required("GATE7D_MEM003_MYSQL_USERNAME");

@@ -12,12 +12,15 @@ import 'package:jshpos_pos/features/checkout/domain/ulid_generator.dart';
 import 'package:jshpos_pos/features/promotion/application/local_manual_adjustment_service.dart';
 import 'package:jshpos_pos/features/promotion/application/local_promotion_quote_service.dart';
 import 'package:jshpos_pos/features/promotion/domain/manual_adjustment_engine.dart';
+import 'package:jshpos_pos/features/promotion/domain/member_benefit_engine.dart';
 import 'package:jshpos_pos/features/promotion/domain/promotion_engine.dart';
+import 'package:jshpos_pos/features/promotion/infrastructure/member_benefit_package_installer.dart';
 import 'package:jshpos_pos/features/promotion/infrastructure/promotion_package_installer.dart';
 import 'package:jshpos_pos/features/sale/infrastructure/local_pos_sale_application_service.dart';
 import 'package:jshpos_pos/features/sale/domain/pos_sale_models.dart';
 import 'package:jshpos_pos/features/session/domain/pos_session_models.dart';
 import 'package:jshpos_pos/features/shift/domain/shift_models.dart';
+import 'package:jshpos_pos/infrastructure/local_database/member_cache_store.dart';
 import 'package:jshpos_pos/infrastructure/local_database/pos_local_database.dart';
 
 const binding = TrustedDeviceBinding(
@@ -147,6 +150,38 @@ void main() {
     );
   });
 
+  test('formal POS member identification requotes and clear restores the normal path', () async {
+    final fixture = await _Fixture.create(memberBenefitEnabled: true);
+    addTearDown(fixture.close);
+
+    await fixture.service.loadWorkspace();
+    final normal = await fixture.service.scanBarcode('6900000000001');
+    expect(normal.totals.discountAmountMinor, 100);
+    expect(normal.memberBenefit, isNull);
+    await expectLater(
+      fixture.service.identifyMember('invalid-token'),
+      throwsA(
+        isA<PosSaleFailure>().having(
+          (error) => error.code,
+          'code',
+          'MEMBER_TOKEN_INVALID',
+        ),
+      ),
+    );
+
+    final identified = await fixture.service.identifyMember(
+      'synthetic-member-token',
+    );
+    expect(identified.memberBenefit?.maskedLabel, '会员***01');
+    expect(identified.memberBenefit?.selectedPath, 'MEMBER_PATH');
+    expect(identified.memberBenefit?.memberPriceDiscountMinor, 150);
+    expect(identified.totals.discountAmountMinor, 150);
+
+    final cleared = await fixture.service.clearMember();
+    expect(cleared.memberBenefit, isNull);
+    expect(cleared.totals.discountAmountMinor, 100);
+  });
+
   test(
     'Gate 6H synthetic POS scan baseline executes 1000 formal scans',
     () async {
@@ -201,7 +236,7 @@ final class _Fixture {
   final PosLocalDatabase database;
   final LocalPosSaleApplicationService service;
 
-  static Future<_Fixture> create() async {
+  static Future<_Fixture> create({bool memberBenefitEnabled = false}) async {
     final database = PosLocalDatabase.inMemory(binding);
     final ulids = UlidGenerator(random: Random(19), now: () => fixedNow);
     final checkout = CheckoutLocalService(
@@ -231,11 +266,41 @@ final class _Fixture {
       utcNow: () => fixedNow,
     );
     await promotionInstaller.install(await _promotionEnvelope(keyPair));
+    MemberBenefitPackageInstaller? memberBenefitInstaller;
+    MemberCacheStore? memberCache;
+    if (memberBenefitEnabled) {
+      memberBenefitInstaller = MemberBenefitPackageInstaller(
+        database,
+        trustedSigningKeys: {'SYNTHETIC_KEY': publicKey},
+        utcNow: () => fixedNow,
+      );
+      await memberBenefitInstaller.install(
+        await _memberBenefitEnvelope(keyPair),
+      );
+      memberCache = MemberCacheStore(database);
+      memberCache.upsert(
+        MemberCacheEntry(
+          tenantId: binding.tenantId,
+          storeId: binding.storeId,
+          memberRef: '01K7R000000000000000000001',
+          memberToken: 'synthetic-member-token',
+          maskedLabel: '会员***01',
+          levelCode: 'GOLD',
+          rightsDigest: _hash('d'),
+          snapshotVersion: 1,
+          expiresAt: fixedNow.add(const Duration(hours: 6)),
+          receivedAt: fixedNow,
+          entitlementSnapshotId: '01K7E000000000000000000001',
+        ),
+      );
+    }
     final quotes = LocalPromotionQuoteService(
       database: database,
       packageInstaller: promotionInstaller,
       engine: PromotionEngine(),
       ulids: ulids,
+      memberBenefitPackageInstaller: memberBenefitInstaller,
+      memberBenefitEngine: memberBenefitEnabled ? MemberBenefitEngine() : null,
     );
     final manuals = LocalManualAdjustmentService(
       database: database,
@@ -255,6 +320,10 @@ final class _Fixture {
         checkout: checkout,
         ulids: ulids,
         industryTemplateVersion: 'CONVENIENCE_V1',
+        memberCache: memberCache,
+        memberBenefitEnabled: memberBenefitEnabled,
+        memberBenefitCapabilityVersion: 31,
+        memberBenefitCapabilitySha256: _hash('c'),
         permissions: const {
           PosPermission.printPreview,
           PosPermission.printReprint,
@@ -348,6 +417,28 @@ Future<PromotionPackageEnvelope> _promotionEnvelope(KeyPair keyPair) async {
     signingKeyId: 'SYNTHETIC_KEY',
   );
 }
+
+Future<MemberBenefitPackageEnvelope> _memberBenefitEnvelope(
+  KeyPair keyPair,
+) async {
+  final expires = fixedNow.add(const Duration(days: 1));
+  final payload = Uint8List.fromList(
+    utf8.encode(
+      'JSHMBP|1.0|member-benefit-engine-1.0.0|TENANT_A|1101|1|0|${fixedNow.toIso8601String()}|${expires.toIso8601String()}\n'
+      'B|01K7B000000000000000000001|GOLD|1|0|BEST_PRICE|0|0|${fixedNow.toIso8601String()}|${expires.toIso8601String()}|${_hash('d')}\n'
+      'P|01K7P000000000000000000001|1|GOLD|101|301|1101|149|${fixedNow.toIso8601String()}|${expires.toIso8601String()}|${_hash('a')}\n',
+    ),
+  );
+  final signature = await Ed25519().sign(payload, keyPair: keyPair);
+  return MemberBenefitPackageEnvelope(
+    payload: payload,
+    payloadSha256: sha256.convert(payload).toString(),
+    signature: Uint8List.fromList(signature.bytes),
+    signingKeyId: 'SYNTHETIC_KEY',
+  );
+}
+
+String _hash(String value) => List.filled(64, value).join();
 
 String _escape(String value) => value
     .replaceAll(r'\', r'\\')
