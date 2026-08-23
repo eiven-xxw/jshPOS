@@ -76,6 +76,7 @@ def main() -> None:
         require(path in runtime_script, "正式 API 旅程缺少 " + path)
     for marker in ("urllib.request", "FORMAL_RUNTIME", "direct_database_business_writes", "provider_network_calls"):
         require(marker in runtime_script, "运行时证据契约缺少 " + marker)
+    require('"clientid": CLIENT_ID' in runtime_script, "正式 API 请求未携带 RuoYi 客户端身份 Header")
     forbidden_runtime = ("pymysql", "mysql.connector", "redis.Redis", "sqlalchemy", "jdbc:", "testbackdoor")
     require(not any(marker in runtime_script for marker in forbidden_runtime), "旅程脚本存在数据库、Redis 或测试后门")
 

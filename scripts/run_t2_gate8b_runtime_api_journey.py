@@ -85,7 +85,10 @@ class ApiClient:
         authenticated: bool = True,
         expect_success: bool = True,
     ) -> dict[str, Any]:
-        request_headers = {"Accept": "application/json"}
+        # RuoYi 会把 clientid 与登录令牌内的客户端身份交叉校验；正式 Web
+        # 客户端也会在每个请求中携带该 Header。旅程必须遵守同一协议，不能只在
+        # 登录正文里提交 clientId，否则会把合法令牌误判为客户端身份不匹配。
+        request_headers = {"Accept": "application/json", "clientid": CLIENT_ID}
         if body is not None:
             request_headers["Content-Type"] = "application/json; charset=utf-8"
         if authenticated:
