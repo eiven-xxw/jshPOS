@@ -521,7 +521,7 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
 - `T2-PAY-002/HWD-001/PRN-001/PAR-001` 继续 `BLOCKED`，`T2-JSH-001/LIC-001` 继续 `DEFERRED`；Provider 网络、真实资金、真实设备/外设、未经授权真实 PII、伙伴现场、完整 Alpha、生产和商业声明保持 0。
 - 完成后必须提交 `T2-ONB-001` 独立周门禁报告等待确认；不得自动准入 `T2-LOT-001` 或 Gate 7D。
 
-## 4.42 当前 T2 Gate 7C / Sprint S21-F：T2-LOT-001 独立正式开发
+## 4.42 当前 T2 Gate 7C / Sprint S21-F：T2-LOT-001 独立正式开发（VERIFIED 待确认）
 
 - 项目发起人已于 2026-08-23 接受 `T2-ONB-001 CONDITIONAL PASS` 并授权其更新为 `ACCEPTED`；接受范围仍仅为内部软件执行，不代表生产开店、支付沙箱、真实设备/打印、完整 Alpha、现场试点、生产或商业验收。
 - 仅授权从 ONB 封存提交 `39f553500bcb67f685c211b178ce36797f1e2aa3` 建立 `t2/gate7c-sprint21f-lot001-lot-expiry`，独立实现 `T2-LOT-001`；Gate 7D 后续需求继续 `DRAFT`。
@@ -531,7 +531,8 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
 - 数量使用 `DECIMAL(19,6)/BigDecimal`，日期按可信门店业务时区与冻结策略计算；客户端不得自行声明 tenant_id、业态、过期状态、可用数量或成本。批次成本不得引入，Costing 继续使用已接受的仓级移动加权成本。
 - POS 批次包必须绑定可信租户、门店、版本、摘要和适用模板；SQLite 只前进迁移必须把成交批次快照、订单事实和 Outbox 放在同一事务，未知/过期/余额不足/旧包/损坏包/跨租户包必须失败关闭。
 - `T2-PAY-002/HWD-001/PRN-001/PAR-001` 继续 `BLOCKED`，`T2-JSH-001/LIC-001` 继续 `DEFERRED`；Provider 网络、真实资金、真实设备/外设、未经授权真实 PII、伙伴现场、完整 Alpha、生产和商业声明保持 0。
-- 完成后必须提交 `T2-LOT-001` 独立周门禁报告等待确认；不得自动进入 Gate 7D。
+- 实现候选提交 `48b7bbd804d867e366eeef625bcc924d0e64f5a5` 的 GitHub Actions Run `32608223073` 已通过治理双平台、Server、Web、Flutter 双平台、MySQL、SQLite、Android/Kotlin、安全、SBOM、许可证和证据索引门禁；`T2-LOT-001` 仅更新为 `VERIFIED`，项目发起人确认前不得更新为 `ACCEPTED`。
+- 必须提交 `T2-LOT-001` 独立周门禁报告等待确认；`T2-CLS-001/T2-EXC-001` 继续 `DRAFT`，不得自动进入 Gate 7D。
 
 ## 5. 工程与测试规则
 
