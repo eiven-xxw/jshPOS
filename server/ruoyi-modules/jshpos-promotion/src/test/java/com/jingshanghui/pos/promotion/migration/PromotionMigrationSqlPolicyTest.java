@@ -91,6 +91,22 @@ class PromotionMigrationSqlPolicyTest {
             .doesNotContain("update ord_").doesNotContain("update inv_").doesNotContain("update pay_");
     }
 
+    @Test
+    void memberBenefitPackageMigrationIsTenantScopedContinuousAndImmutable() throws Exception {
+        String sql = resource("/db/migration/V202608230080__gate7d_member_benefit_package.sql");
+        assertThat(count(sql, "create table prm_")).isEqualTo(1);
+        assertThat(sql).contains("create table prm_member_benefit_package")
+            .contains("tenant_id varchar(20) not null")
+            .contains("unique key uk_prm_mbp_tenant_store_version")
+            .contains("package_version = previous_version + 1")
+            .contains("payload_sha256 char(64)")
+            .contains("trg_prm_mbp_no_update")
+            .contains("trg_prm_mbp_no_delete")
+            .doesNotContain("member_name").doesNotContain("mobile").doesNotContain("identity_ciphertext")
+            .doesNotContain("float").doesNotContain("double")
+            .doesNotContain("update mbr_").doesNotContain("update prc_").doesNotContain("update ord_");
+    }
+
     private String resource(String name) throws Exception {
         try (var stream = getClass().getResourceAsStream(name)) {
             assertThat(stream).isNotNull();

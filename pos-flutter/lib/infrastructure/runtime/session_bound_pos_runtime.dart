@@ -12,7 +12,9 @@ import '../../features/promotion/application/local_manual_adjustment_service.dar
 import '../../features/promotion/application/local_promotion_quote_service.dart';
 import '../../features/promotion/domain/manual_adjustment_engine.dart';
 import '../../features/promotion/domain/promotion_engine.dart';
+import '../../features/promotion/domain/member_benefit_engine.dart';
 import '../../features/promotion/infrastructure/promotion_package_installer.dart';
+import '../../features/promotion/infrastructure/member_benefit_package_installer.dart';
 import '../../features/return_refund/application/pos_return_application_service.dart';
 import '../../features/return_refund/domain/pos_return_models.dart';
 import '../../features/return_refund/infrastructure/http_pos_return_application_service.dart';
@@ -27,6 +29,7 @@ import '../../features/shift/infrastructure/local_pos_shift_application_service.
 import '../../features/synchronization/application/sync_coordinator.dart';
 import '../../features/synchronization/infrastructure/pos_sync_http_transport.dart';
 import '../local_database/pos_local_database.dart';
+import '../local_database/member_cache_store.dart';
 import 'http_signed_package_source.dart';
 
 /// 登录成功后创建的会话级正式业务运行时；每个 Owner 仍通过既有应用端口协作。
@@ -68,6 +71,11 @@ final class FilePosBusinessRuntimeAssembler
     required this.returnWarehouseId,
     required this.configVersion,
     required this.cashDifferenceApprovalMinor,
+    this.memberBenefitEnabled = false,
+    this.memberBenefitPackageVersion = 0,
+    this.memberBenefitSigningKeys = const {},
+    this.memberBenefitCapabilityVersion = 1,
+    this.memberBenefitCapabilitySha256,
     HttpSignedPackageSource? packageSource,
   }) : _packageSource =
            packageSource ??
@@ -88,6 +96,11 @@ final class FilePosBusinessRuntimeAssembler
   final String returnWarehouseId;
   final int configVersion;
   final int cashDifferenceApprovalMinor;
+  final bool memberBenefitEnabled;
+  final int memberBenefitPackageVersion;
+  final Map<String, SimplePublicKey> memberBenefitSigningKeys;
+  final int memberBenefitCapabilityVersion;
+  final String? memberBenefitCapabilitySha256;
   final HttpSignedPackageSource _packageSource;
 
   @override
@@ -100,6 +113,13 @@ final class FilePosBusinessRuntimeAssembler
         configVersion <= 0 ||
         catalogSigningKeys.isEmpty ||
         promotionSigningKeys.isEmpty ||
+        (memberBenefitEnabled &&
+            (memberBenefitPackageVersion <= 0 ||
+                memberBenefitSigningKeys.isEmpty ||
+                memberBenefitCapabilityVersion <= 0 ||
+                memberBenefitCapabilitySha256 == null ||
+                !RegExp(r'^[a-f0-9]{64}$')
+                    .hasMatch(memberBenefitCapabilitySha256!))) ||
         !UlidGenerator.isCanonical(returnWarehouseId)) {
       throw const PosSessionFailure(
         'RUNTIME_CONFIGURATION_INVALID',
@@ -131,6 +151,14 @@ final class FilePosBusinessRuntimeAssembler
         trustedSigningKeys: promotionSigningKeys,
       );
       await _ensurePromotion(promotionPackages, binding);
+      MemberBenefitPackageInstaller? memberBenefitPackages;
+      if (memberBenefitEnabled) {
+        memberBenefitPackages = MemberBenefitPackageInstaller(
+          database,
+          trustedSigningKeys: memberBenefitSigningKeys,
+        );
+        await _ensureMemberBenefit(memberBenefitPackages, binding);
+      }
       final checkout = CheckoutLocalService(
         localDatabase: database,
         ulids: ulids,
@@ -157,6 +185,10 @@ final class FilePosBusinessRuntimeAssembler
           packageInstaller: promotionPackages,
           engine: PromotionEngine(),
           ulids: ulids,
+          memberBenefitPackageInstaller: memberBenefitPackages,
+          memberBenefitEngine: memberBenefitEnabled
+              ? MemberBenefitEngine()
+              : null,
         ),
         manualAdjustments: LocalManualAdjustmentService(
           database: database,
@@ -169,6 +201,10 @@ final class FilePosBusinessRuntimeAssembler
         syncCoordinator: sync,
         ulids: ulids,
         industryTemplateVersion: industryTemplateVersion,
+        memberCache: memberBenefitEnabled ? MemberCacheStore(database) : null,
+        memberBenefitEnabled: memberBenefitEnabled,
+        memberBenefitCapabilityVersion: memberBenefitCapabilityVersion,
+        memberBenefitCapabilitySha256: memberBenefitCapabilitySha256,
         permissions: employee.permissions,
         authorizationRef: employee.sessionRef,
       );
@@ -250,6 +286,31 @@ final class FilePosBusinessRuntimeAssembler
       await _packageSource.promotion(
         storeId: binding.storeId,
         packageVersion: promotionPackageVersion,
+      ),
+    );
+  }
+
+  Future<void> _ensureMemberBenefit(
+    MemberBenefitPackageInstaller installer,
+    TrustedDeviceBinding binding,
+  ) async {
+    final current = installer.database.database.select(
+      'SELECT active_package_version FROM local_member_benefit_package_binding WHERE singleton_id=1 AND tenant_id=? AND store_id=?',
+      [binding.tenantId, binding.storeId],
+    );
+    if (current.isNotEmpty) {
+      final version = current.single['active_package_version']! as int;
+      if (version == memberBenefitPackageVersion) return;
+      if (version >= memberBenefitPackageVersion) {
+        throw StateError(
+          'MBP-PKG-104: configured member benefit version is stale',
+        );
+      }
+    }
+    await installer.install(
+      await _packageSource.memberBenefit(
+        storeId: binding.storeId,
+        packageVersion: memberBenefitPackageVersion,
       ),
     );
   }
@@ -348,6 +409,11 @@ final class SessionBoundPosRuntime
   @override
   Future<PosSaleWorkspace> refreshPromotionQuote() =>
       _ready.sale.refreshPromotionQuote();
+  @override
+  Future<PosSaleWorkspace> identifyMember(String memberToken) =>
+      _ready.sale.identifyMember(memberToken);
+  @override
+  Future<PosSaleWorkspace> clearMember() => _ready.sale.clearMember();
   @override
   Future<PosSaleWorkspace> applyManualAdjustment({
     required String actionCode,

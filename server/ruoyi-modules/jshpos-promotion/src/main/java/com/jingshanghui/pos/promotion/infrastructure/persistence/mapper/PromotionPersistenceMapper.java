@@ -2,6 +2,7 @@ package com.jingshanghui.pos.promotion.infrastructure.persistence.mapper;
 
 import com.jingshanghui.pos.promotion.application.model.PromotionViews.RuleVersionView;
 import com.jingshanghui.pos.promotion.application.model.PromotionViews.PackageView;
+import com.jingshanghui.pos.promotion.application.model.PromotionViews.MemberBenefitPackageView;
 import com.jingshanghui.pos.promotion.application.port.PromotionPersistencePort.*;
 import org.apache.ibatis.annotations.Param;
 
@@ -70,4 +71,10 @@ public interface PromotionPersistenceMapper {
     int insertMemberBenefitBinding(MemberBenefitBindingWrite value);
     StoredMemberBenefitBinding findMemberBenefitBinding(@Param("tenantId") String tenantId,
                                                          @Param("quoteId") String quoteId);
+    MemberBenefitPackageView findLatestMemberBenefitPackage(@Param("tenantId") String tenantId,
+                                                             @Param("storeId") Long storeId);
+    MemberBenefitPackageView findMemberBenefitPackage(@Param("tenantId") String tenantId,
+                                                       @Param("storeId") Long storeId,
+                                                       @Param("packageVersion") long packageVersion);
+    int insertMemberBenefitPackage(MemberBenefitPackageWrite value);
 }

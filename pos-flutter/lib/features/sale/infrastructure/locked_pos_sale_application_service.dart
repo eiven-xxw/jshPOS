@@ -69,6 +69,13 @@ final class LockedPosSaleApplicationService
   Future<PosSaleWorkspace> refreshPromotionQuote() async => _unavailable();
 
   @override
+  Future<PosSaleWorkspace> identifyMember(String memberToken) async =>
+      _unavailable();
+
+  @override
+  Future<PosSaleWorkspace> clearMember() async => _unavailable();
+
+  @override
   Future<PosSaleWorkspace> refreshSyncStatus() async => _unavailable();
 
   @override

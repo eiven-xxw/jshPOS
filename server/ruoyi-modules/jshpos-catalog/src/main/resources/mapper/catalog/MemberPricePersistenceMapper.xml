@@ -71,4 +71,18 @@
       payload_sha256,status,occurred_at)
     VALUES(#{eventId},#{tenantId},#{eventType},#{aggregateId},#{aggregateVersion},#{payloadJson},#{payloadSha256},'PENDING',#{occurredAt})
   </insert>
+  <!-- 冻结门店优先、租户回退的全部有效会员价；POS 按相同优先级确定性选择。 -->
+  <select id="listForPackage" resultType="com.jingshanghui.pos.catalog.application.port.MemberPricePackageSourcePort$MemberPricePackageRow">
+    SELECT v.version_id versionId,v.version_no versionNo,i.level_code levelCode,i.sku_id skuId,
+      i.unit_id unitId,v.store_id scopeStoreId,i.amount_minor amountMinor,
+      v.effective_at effectiveAt,v.expires_at expiresAt,
+      SHA2(CONCAT(v.content_sha256,':',i.content_sha256),256) contentSha256
+    FROM prc_member_price_version v
+    JOIN prc_member_price_item i ON i.tenant_id=v.tenant_id AND i.version_id=v.version_id
+    WHERE v.tenant_id=#{tenantId} AND (v.store_id=#{storeId} OR v.store_id IS NULL)
+      AND v.state IN ('SCHEDULED','ACTIVE') AND v.effective_at&lt;#{windowEnd}
+      AND (v.expires_at IS NULL OR v.expires_at&gt;#{windowStart})
+    ORDER BY i.level_code,i.sku_id,i.unit_id,
+      CASE WHEN v.store_id=#{storeId} THEN 0 ELSE 1 END,v.version_no DESC,v.version_id
+  </select>
 </mapper>

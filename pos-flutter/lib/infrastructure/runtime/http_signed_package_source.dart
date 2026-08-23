@@ -5,6 +5,7 @@ import 'dart:typed_data';
 
 import '../../features/catalog/infrastructure/catalog_package_installer.dart';
 import '../../features/promotion/infrastructure/promotion_package_installer.dart';
+import '../../features/promotion/infrastructure/member_benefit_package_installer.dart';
 import '../../features/session/domain/pos_session_models.dart';
 
 /// 只从自有服务端下载带摘要和签名的正式离线包，不接受客户端租户覆盖值。
@@ -49,6 +50,22 @@ final class HttpSignedPackageSource {
       storeId,
     );
     return PromotionPackageEnvelope(
+      payload: artifact.payload,
+      payloadSha256: artifact.sha256,
+      signature: artifact.signature,
+      signingKeyId: artifact.keyId,
+    );
+  }
+
+  Future<MemberBenefitPackageEnvelope> memberBenefit({
+    required String storeId,
+    required int packageVersion,
+  }) async {
+    final artifact = await _download(
+      'api/v1/promotions/member-benefit-packages/$packageVersion/content',
+      storeId,
+    );
+    return MemberBenefitPackageEnvelope(
       payload: artifact.payload,
       payloadSha256: artifact.sha256,
       signature: artifact.signature,

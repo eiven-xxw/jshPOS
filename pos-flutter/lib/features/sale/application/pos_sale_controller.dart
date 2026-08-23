@@ -106,6 +106,16 @@ final class PosSaleController {
     operation: saleService.refreshPromotionQuote,
   );
 
+  Future<PosSalePageState> identifyMember(String memberToken) => _run(
+    permission: PosPermission.saleOperate,
+    operation: () => saleService.identifyMember(memberToken),
+  );
+
+  Future<PosSalePageState> clearMember() => _run(
+    permission: PosPermission.saleOperate,
+    operation: saleService.clearMember,
+  );
+
   Future<PosSalePageState> applyManualAdjustment({
     required String actionCode,
     required String value,

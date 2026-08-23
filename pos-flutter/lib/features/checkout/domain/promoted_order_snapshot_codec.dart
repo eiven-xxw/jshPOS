@@ -34,6 +34,8 @@ abstract final class PromotedOrderSnapshotCodec {
     'settlementFingerprint': command.settlementFingerprint,
     'promotionPackageVersion': command.packageVersion,
     'manualEventRefs': command.manualEventRefs,
+    if (command.memberBenefitSnapshot != null)
+      'memberBenefitSnapshot': command.memberBenefitSnapshot!.toJson(),
     'lines': command.lines.map((line) => line.toSnapshot()).toList(),
   };
 

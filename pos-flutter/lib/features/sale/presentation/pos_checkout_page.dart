@@ -88,6 +88,18 @@ class _PosCheckoutPageState extends State<PosCheckoutPage> {
     );
   }
 
+  Future<void> _openMemberIdentification() async {
+    final token = await showDialog<String>(
+      context: context,
+      builder: (_) => const _MemberTokenDialog(),
+    );
+    if (token == null) return;
+    await _execute(
+      () => widget.controller.identifyMember(token),
+      restoreScannerFocus: true,
+    );
+  }
+
   Future<void> _openCashSettlement() async {
     final workspace = _state.workspace;
     if (workspace == null || !workspace.canSettle) return;
@@ -530,6 +542,20 @@ class _PosCheckoutPageState extends State<PosCheckoutPage> {
         ),
       ],
       const Divider(height: 28),
+      if (workspace.memberBenefit == null)
+        OutlinedButton.icon(
+          key: const Key('identifyMember'),
+          onPressed: _state.busy ? null : _openMemberIdentification,
+          icon: const Icon(Icons.person_search_outlined),
+          label: const Text('识别会员权益'),
+        )
+      else
+        _MemberBenefitPanel(
+          value: workspace.memberBenefit!,
+          busy: _state.busy,
+          onClear: () => _execute(widget.controller.clearMember),
+        ),
+      const Divider(height: 28),
       _AmountRow(
         label: '商品原价',
         value: _money(workspace.totals.grossAmountMinor),
@@ -652,6 +678,104 @@ class _PosCheckoutPageState extends State<PosCheckoutPage> {
       const SizedBox(height: 12),
       const Text('仅现金内部验证；真实支付、真实打印及真实设备命令未开放。', textAlign: TextAlign.center),
     ],
+  );
+}
+
+/// 会员令牌只在输入瞬间交给应用服务，页面不保存也不展示其明文。
+final class _MemberTokenDialog extends StatefulWidget {
+  const _MemberTokenDialog();
+
+  @override
+  State<_MemberTokenDialog> createState() => _MemberTokenDialogState();
+}
+
+final class _MemberTokenDialogState extends State<_MemberTokenDialog> {
+  final _token = TextEditingController();
+
+  @override
+  void dispose() {
+    _token.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+    title: const Text('识别会员权益'),
+    content: TextField(
+      key: const Key('memberTokenInput'),
+      controller: _token,
+      obscureText: true,
+      autofocus: true,
+      enableSuggestions: false,
+      autocorrect: false,
+      decoration: const InputDecoration(
+        labelText: '短期会员令牌',
+        helperText: '令牌不会显示在收银页面或成交小票中',
+        border: OutlineInputBorder(),
+      ),
+      onChanged: (_) => setState(() {}),
+    ),
+    actions: [
+      TextButton(
+        onPressed: () => Navigator.pop(context),
+        child: const Text('取消'),
+      ),
+      FilledButton(
+        key: const Key('memberTokenSubmit'),
+        onPressed: _token.text.trim().isEmpty
+            ? null
+            : () => Navigator.pop(context, _token.text.trim()),
+        child: const Text('确认识别'),
+      ),
+    ],
+  );
+}
+
+/// 仅展示应用层给出的脱敏权益投影，禁止在 Widget 内计算会员价或促销。
+final class _MemberBenefitPanel extends StatelessWidget {
+  const _MemberBenefitPanel({
+    required this.value,
+    required this.busy,
+    required this.onClear,
+  });
+
+  final PosMemberBenefitView value;
+  final bool busy;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) => Card(
+    key: const Key('memberBenefitPanel'),
+    color: Theme.of(context).colorScheme.secondaryContainer,
+    child: Padding(
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.workspace_premium_outlined),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '${value.maskedLabel} · ${value.levelCode ?? '普通会员'}',
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+              ),
+              TextButton(
+                key: const Key('clearMember'),
+                onPressed: busy ? null : onClear,
+                child: const Text('清除'),
+              ),
+            ],
+          ),
+          Text('权益路径：${value.selectedPath} · 离线包 v${value.packageVersion}'),
+          if (value.memberPriceDiscountMinor > 0)
+            Text('会员价优惠 ${_money(value.memberPriceDiscountMinor)}'),
+          const Text('成交后冻结原权益与会员价快照；退款不按当前等级重算。'),
+        ],
+      ),
+    ),
   );
 }
 

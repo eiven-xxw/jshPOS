@@ -365,4 +365,28 @@
           #{cumulativeGrossAmountMinor},#{cumulativeDiscountAmountMinor},#{cumulativePayableAmountMinor},
           #{actorUserId},#{correlationId},#{occurredAt})
     </insert>
+    <select id="findLatestMemberBenefitPackage" resultType="com.jingshanghui.pos.promotion.application.model.PromotionViews$MemberBenefitPackageView">
+        SELECT package_id packageId,store_id storeId,package_version packageVersion,previous_version previousVersion,
+          payload_sha256 payloadSha256,signing_key_id signingKeyId,object_key objectKey,
+          benefit_count benefitCount,member_price_count memberPriceCount,
+          generated_at generatedAt,expires_at expiresAt
+        FROM prm_member_benefit_package WHERE tenant_id=#{tenantId} AND store_id=#{storeId}
+        ORDER BY package_version DESC LIMIT 1
+    </select>
+    <select id="findMemberBenefitPackage" resultType="com.jingshanghui.pos.promotion.application.model.PromotionViews$MemberBenefitPackageView">
+        SELECT package_id packageId,store_id storeId,package_version packageVersion,previous_version previousVersion,
+          payload_sha256 payloadSha256,signing_key_id signingKeyId,object_key objectKey,
+          benefit_count benefitCount,member_price_count memberPriceCount,
+          generated_at generatedAt,expires_at expiresAt
+        FROM prm_member_benefit_package
+        WHERE tenant_id=#{tenantId} AND store_id=#{storeId} AND package_version=#{packageVersion}
+    </select>
+    <insert id="insertMemberBenefitPackage">
+        INSERT INTO prm_member_benefit_package(package_id,tenant_id,store_id,package_version,previous_version,
+          schema_version,engine_version,payload_sha256,signature_algorithm,signing_key_id,object_key,
+          benefit_count,member_price_count,generated_at,expires_at,state)
+        VALUES(#{packageId},#{tenantId},#{storeId},#{packageVersion},#{previousVersion},'1.0',
+          'member-benefit-engine-1.0.0',#{payloadSha256},'Ed25519',#{signingKeyId},#{objectKey},
+          #{benefitCount},#{memberPriceCount},#{generatedAt},#{expiresAt},'AVAILABLE')
+    </insert>
 </mapper>

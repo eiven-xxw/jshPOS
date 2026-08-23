@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:crypto/crypto.dart';
 
 import '../../../infrastructure/local_database/pos_local_database.dart';
+import '../../../infrastructure/local_database/member_cache_store.dart';
 import '../../catalog/infrastructure/catalog_package_installer.dart';
 import '../../checkout/application/checkout_local_service.dart';
 import '../../checkout/domain/checkout_models.dart';
@@ -28,6 +29,10 @@ final class LocalPosSaleApplicationService
     required this.checkout,
     required this.ulids,
     required this.industryTemplateVersion,
+    this.memberCache,
+    this.memberBenefitEnabled = false,
+    this.memberBenefitCapabilityVersion = 1,
+    this.memberBenefitCapabilitySha256,
     this.permissions = const {},
     this.authorizationRef = 'BLOCKED_NO_SESSION',
     this.syncCoordinator,
@@ -42,6 +47,10 @@ final class LocalPosSaleApplicationService
   final PosSyncCoordinator? syncCoordinator;
   final UlidGenerator ulids;
   final String industryTemplateVersion;
+  final MemberCacheStore? memberCache;
+  final bool memberBenefitEnabled;
+  final int memberBenefitCapabilityVersion;
+  final String? memberBenefitCapabilitySha256;
   final Set<PosPermission> permissions;
   final String authorizationRef;
   final DateTime Function() _now;
@@ -54,6 +63,7 @@ final class LocalPosSaleApplicationService
   final List<String> _manualEvents = [];
   final Map<String, CatalogResolvedPrice> _products = {};
   String? _manualAuthorizationRef;
+  MemberCacheView? _activeMember;
 
   @override
   Future<PosSaleWorkspace> loadWorkspace() async {
@@ -174,6 +184,27 @@ final class LocalPosSaleApplicationService
     return _workspace();
   }
 
+  @override
+  Future<PosSaleWorkspace> identifyMember(String memberToken) async {
+    if (!memberBenefitEnabled || memberCache == null) {
+      throw const PosSaleFailure('MEMBER_BENEFIT_UNAVAILABLE', '当前门店未启用会员权益。');
+    }
+    final resolved = memberCache!.resolve(memberToken.trim(), _now().toUtc());
+    if (resolved == null || resolved.entitlementSnapshotId == null) {
+      throw const PosSaleFailure('MEMBER_TOKEN_INVALID', '会员令牌无效、已撤销或已过期。');
+    }
+    _activeMember = resolved;
+    if ((_basket?.lines.isNotEmpty ?? false)) await _requote();
+    return _workspace();
+  }
+
+  @override
+  Future<PosSaleWorkspace> clearMember() async {
+    _activeMember = null;
+    if ((_basket?.lines.isNotEmpty ?? false)) await _requote();
+    return _workspace();
+  }
+
   Future<void> _requote() async {
     final basket = _requireBasket();
     if (basket.lines.isEmpty) {
@@ -185,6 +216,13 @@ final class LocalPosSaleApplicationService
       businessTime: _now().toUtc(),
       channel: 'POS',
       lines: _promotionLines(basket),
+      memberBenefitEnabled: memberBenefitEnabled && _activeMember != null,
+      member: _activeMember,
+      capabilityConfigVersion: memberBenefitCapabilityVersion,
+      capabilitySha256: memberBenefitCapabilitySha256,
+      unitIdsByLine: {
+        for (final line in basket.lines) line.lineId: line.quote.unitId,
+      },
     );
     _baseQuote = quote;
     _currentQuote = quote.quote;
@@ -260,6 +298,7 @@ final class LocalPosSaleApplicationService
     );
     _basket = _newBasket();
     _clearQuote();
+    _activeMember = null;
     return _workspace();
   }
 
@@ -305,6 +344,7 @@ final class LocalPosSaleApplicationService
       );
       _basket = _newBasket();
       _clearQuote();
+      _activeMember = null;
       return _workspace();
     } on PosDomainException catch (error) {
       throw PosSaleFailure(error.code, error.message);
@@ -391,11 +431,13 @@ final class LocalPosSaleApplicationService
         manualEventRefs: _manualEvents,
         tenderedAmountMinor: _parseYuan(tenderedAmount),
         occurredAt: occurredAt,
+        memberBenefitSnapshot: base.memberBenefitSnapshot,
       );
       final result = checkout.completePromotedCashSale(command);
       final localOrderNo = basket.localOrderNo;
       _basket = null;
       _clearQuote();
+      _activeMember = null;
       return PosCashSettlementView(
         commandRef: command.commandId,
         orderRef: result.orderId,
@@ -600,6 +642,22 @@ final class LocalPosSaleApplicationService
           )
           .toList(growable: false),
       syncStatus: sync,
+      memberBenefit: _activeMember == null
+          ? null
+          : PosMemberBenefitView(
+              memberRef: _activeMember!.memberRef,
+              maskedLabel: _activeMember!.maskedLabel,
+              levelCode: _activeMember!.levelCode,
+              selectedPath:
+                  _baseQuote?.memberBenefitSnapshot?.selectedPath ??
+                  'PENDING_QUOTE',
+              packageVersion:
+                  _baseQuote?.memberBenefitSnapshot?.packageVersion ?? 0,
+              memberPriceDiscountMinor: _sources.values.fold(
+                0,
+                (total, sources) => total + (sources['RULE:MEMBER_PRICE'] ?? 0),
+              ),
+            ),
       manualAuthorizationRef: _manualAuthorizationRef,
     );
   }

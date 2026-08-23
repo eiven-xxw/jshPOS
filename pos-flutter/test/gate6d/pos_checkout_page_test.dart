@@ -116,6 +116,35 @@ void main() {
     expect(find.textContaining('仅预览'), findsOneWidget);
   });
 
+  testWidgets('短期令牌识别会员并只展示脱敏权益结果', (tester) async {
+    final fixture = await SaleFixture.ready();
+    await tester.pumpWidget(
+      MaterialApp(home: PosCheckoutPage(controller: fixture.controller)),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('identifyMember')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('memberTokenInput')),
+      'synthetic-short-lived-token',
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('memberTokenSubmit')));
+    await tester.pumpAndSettle();
+
+    expect(fixture.sale.identifiedMemberToken, 'synthetic-short-lived-token');
+    expect(find.byKey(const Key('memberBenefitPanel')), findsOneWidget);
+    expect(find.textContaining('虚构会员****01'), findsOneWidget);
+    expect(find.textContaining('MEMBER_PATH'), findsOneWidget);
+    expect(find.text('synthetic-short-lived-token'), findsNothing);
+
+    await tester.tap(find.byKey(const Key('clearMember')));
+    await tester.pumpAndSettle();
+    expect(fixture.sale.memberCleared, isTrue);
+    expect(find.byKey(const Key('memberBenefitPanel')), findsNothing);
+  });
+
   testWidgets('未完成交易取消必须填写原因', (tester) async {
     final fixture = await SaleFixture.ready();
     await tester.pumpWidget(

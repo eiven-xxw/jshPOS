@@ -226,5 +226,6 @@
 | CR-T2G7D-009 | 2026-08-23 | MEM003_PRICING_STAGE_VERIFIED_LOCAL | 完成版本化租户/门店会员价、精确最小货币单位明细、职责分离、冲突窗口、Member权益校验、正式REST/XML持久化和V77迁移；Foundation 74、Member 44、Catalog 62测试及既有覆盖率门禁通过 | T2-MEM-003、Pricing Owner | 仅VERIFIED_LOCAL；干净MySQL与全量CI仍待收口；允许串行进入Promotion，后续各段继续DRAFT，外部证据为0 |
 | CR-T2G7D-010 | 2026-08-23 | MEM003_PROMOTION_STAGE_VERIFIED_LOCAL | 完成默认BEST_PRICE、双向显式叠加、普通路径平价胜出、解释链、金额守恒分摊、无PII权益绑定、正式REST/XML持久化和V78迁移；Promotion 66项测试通过，并在不降低85%阈值下补齐覆盖率边界 | T2-MEM-003、Promotion Owner | 仅VERIFIED_LOCAL；干净MySQL与全量CI仍待收口；允许串行进入Order/Refund，后续端侧与E2E继续DRAFT，外部证据为0 |
 | CR-T2G7D-011 | 2026-08-23 | MEM003_ORDER_REFUND_STAGE_VERIFIED_LOCAL | Order通过Promotion只读端口冻结原权益快照、会员价版本、选择路径和摘要，V79建立不可变无PII成交绑定；退款继续只读原促销快照及原分摊，不按当前等级价格规则重算 | T2-MEM-003、Order Owner、Refund Owner | 仅VERIFIED_LOCAL；定向14项通过且全量模块/干净MySQL待最终CI；允许串行进入Package/POS/Web，跨端E2E继续DRAFT，外部证据为0 |
+| CR-T2G7D-012 | 2026-08-23 | MEM003_PACKAGE_POS_WEB_STAGE_VERIFIED_LOCAL | 完成Member/Pricing只读装包端口、无PII签名权益包、V80与SQLite v16、Flutter短期令牌识别和原子成交、Vue权益/会员价/数据包运营旅程；Server 12、Flutter 33、Admin 4项定向验证与静态检查通过 | T2-MEM-003、DataPackage、Flutter POS、Vue Admin | 仅VERIFIED_LOCAL；允许串行进入跨端向量/E2E/完整CI，干净MySQL与全量门禁仍待验证，外部证据为0 |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。

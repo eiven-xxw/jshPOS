@@ -1113,6 +1113,7 @@ final class CheckoutLocalService {
       if (duplicate != null) return duplicate;
       _requireOpenShift(command.shiftId, businessDate: command.businessDate);
       _verifyPromotionSettlement(command);
+      _verifyMemberBenefitSettlement(command);
       localDatabase.checkpoint('promotion.inputs.verified');
 
       final promotionDocument = _promotionSnapshot(command);
@@ -1224,6 +1225,8 @@ final class CheckoutLocalService {
 
       _insertPromotionSnapshot(command, promotionHash, at);
       localDatabase.checkpoint('promotion.snapshot');
+      _insertOrderMemberBenefitSnapshot(command, at);
+      localDatabase.checkpoint('member.benefit.snapshot');
       _db.execute(
         'INSERT INTO local_checkout_settlement(settlement_id,tenant_id,order_id,promotion_snapshot_id,quote_id,store_id,terminal_id,shift_id,business_date,package_version,quote_fingerprint,settlement_fingerprint,manual_event_refs_json,basket_input_sha256,request_sha256,order_snapshot_sha256,promotion_snapshot_sha256,gross_amount_minor,discount_amount_minor,surcharge_amount_minor,receivable_amount_minor,status,occurred_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,\'COMMITTED\',?)',
         [
@@ -1345,6 +1348,8 @@ final class CheckoutLocalService {
           'settlementFingerprint': command.settlementFingerprint,
           'packageVersion': command.packageVersion,
           'manualEventRefs': command.manualEventRefs,
+          if (command.memberBenefitSnapshot != null)
+            'memberBenefitSnapshot': command.memberBenefitSnapshot!.toJson(),
           'orderSnapshotHash': 'sha256:$orderSnapshotHash',
           if (lotSnapshot != null)
             'lotSnapshotHash': 'sha256:${lotSnapshot.payloadSha256}',
@@ -1391,6 +1396,8 @@ final class CheckoutLocalService {
           'quoteFingerprint': command.quoteFingerprint,
           'settlementFingerprint': command.settlementFingerprint,
           'packageVersion': command.packageVersion,
+          if (command.memberBenefitSnapshot != null)
+            'memberBenefitSnapshot': command.memberBenefitSnapshot!.toJson(),
           'aggregateVersion': completedVersion,
           'orderSnapshotHash': 'sha256:$orderSnapshotHash',
         },
@@ -2506,6 +2513,98 @@ final class CheckoutLocalService {
         'manual chain fingerprint or final amount differs',
       );
     }
+  }
+
+  /// 校验本地报价绑定、权益包和命令快照完全一致；缺失或摘要漂移时失败关闭。
+  void _verifyMemberBenefitSettlement(PromotedCashSaleCommand command) {
+    final rows = _db.select(
+      'SELECT * FROM local_promotion_quote_member_benefit WHERE tenant_id=? AND quote_id=?',
+      [_binding.tenantId, command.quoteId],
+    );
+    final snapshot = command.memberBenefitSnapshot;
+    if (snapshot == null) {
+      if (rows.isNotEmpty) {
+        throw const PosDomainException(
+          'MEMBER_BENEFIT_SNAPSHOT_REQUIRED',
+          'member benefit quote requires its original snapshot',
+        );
+      }
+      return;
+    }
+    if (rows.length != 1) {
+      throw const PosDomainException(
+        'MEMBER_BENEFIT_QUOTE_MISMATCH',
+        'member benefit quote binding is missing',
+      );
+    }
+    final row = rows.single;
+    final versionsJson = jsonEncode(snapshot.memberPriceVersions);
+    if (row['entitlement_snapshot_id'] != snapshot.entitlementSnapshotId ||
+        row['benefit_version_id'] != snapshot.benefitVersionId ||
+        row['selected_path'] != snapshot.selectedPath ||
+        row['member_price_versions_json'] != versionsJson ||
+        row['capability_config_version'] != snapshot.capabilityConfigVersion ||
+        row['capability_sha256'] != snapshot.capabilitySha256 ||
+        row['rights_digest'] != snapshot.rightsDigest ||
+        row['explanation_sha256'] != snapshot.explanationSha256 ||
+        row['package_version'] != snapshot.packageVersion ||
+        row['package_sha256'] != snapshot.packageSha256 ||
+        row['content_sha256'] != snapshot.contentSha256) {
+      throw const PosDomainException(
+        'MEMBER_BENEFIT_QUOTE_MISMATCH',
+        'member benefit snapshot differs from frozen quote',
+      );
+    }
+    final packages = _db.select(
+      '''SELECT 1 FROM local_member_benefit_package_slot
+        WHERE tenant_id=? AND store_id=? AND package_version=? AND payload_sha256=?
+          AND state IN ('ACTIVE','RETIRED')''',
+      [
+        _binding.tenantId,
+        _binding.storeId,
+        snapshot.packageVersion,
+        snapshot.packageSha256,
+      ],
+    );
+    if (packages.length != 1) {
+      throw const PosDomainException(
+        'MEMBER_BENEFIT_PACKAGE_UNAVAILABLE',
+        'quoted member benefit package is not retained',
+      );
+    }
+  }
+
+  /// 与订单、现金和 Outbox 同一 SQLite 事务冻结无 PII 原成交权益事实。
+  void _insertOrderMemberBenefitSnapshot(
+    PromotedCashSaleCommand command,
+    String at,
+  ) {
+    final snapshot = command.memberBenefitSnapshot;
+    if (snapshot == null) return;
+    _db.execute(
+      '''INSERT INTO local_order_member_benefit_snapshot(tenant_id,order_id,quote_id,
+        entitlement_snapshot_id,benefit_version_id,selected_path,member_price_versions_json,
+        capability_config_version,capability_sha256,rights_digest,explanation_sha256,
+        package_version,package_sha256,content_sha256,occurred_at)
+        VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
+      [
+        _binding.tenantId,
+        command.basket.orderId,
+        command.quoteId,
+        snapshot.entitlementSnapshotId,
+        snapshot.benefitVersionId,
+        snapshot.selectedPath,
+        jsonEncode(snapshot.memberPriceVersions),
+        snapshot.capabilityConfigVersion,
+        snapshot.capabilitySha256,
+        snapshot.rightsDigest,
+        snapshot.explanationSha256,
+        snapshot.packageVersion,
+        snapshot.packageSha256,
+        snapshot.contentSha256,
+        at,
+      ],
+    );
   }
 
   void _insertPromotedCompletedOrder(

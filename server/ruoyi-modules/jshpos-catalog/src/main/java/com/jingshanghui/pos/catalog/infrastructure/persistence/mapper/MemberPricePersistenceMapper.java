@@ -3,6 +3,7 @@ package com.jingshanghui.pos.catalog.infrastructure.persistence.mapper;
 import com.jingshanghui.pos.catalog.application.model.MemberPriceModels.MemberPriceCandidate;
 import com.jingshanghui.pos.catalog.application.model.MemberPriceModels.VersionView;
 import com.jingshanghui.pos.catalog.application.port.MemberPricePersistencePort.*;
+import com.jingshanghui.pos.catalog.application.port.MemberPricePackageSourcePort.MemberPricePackageRow;
 import org.apache.ibatis.annotations.Param;
 
 import java.time.LocalDateTime;
@@ -23,4 +24,8 @@ public interface MemberPricePersistenceMapper {
                               @Param("idempotencyKey") String idempotencyKey);
     int insertCommand(CommandWrite value);
     int insertOutbox(OutboxWrite value);
+    List<MemberPricePackageRow> listForPackage(@Param("tenantId") String tenantId,
+                                               @Param("storeId") Long storeId,
+                                               @Param("windowStart") LocalDateTime windowStart,
+                                               @Param("windowEnd") LocalDateTime windowEnd);
 }

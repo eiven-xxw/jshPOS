@@ -133,6 +133,7 @@ final class PosSaleWorkspace {
     required this.businessDate,
     required Iterable<PosHeldSaleView> heldSales,
     required this.syncStatus,
+    this.memberBenefit,
     this.manualAuthorizationRef,
   }) : lines = List.unmodifiable(lines),
        heldSales = List.unmodifiable(heldSales);
@@ -146,9 +147,29 @@ final class PosSaleWorkspace {
   final String businessDate;
   final List<PosHeldSaleView> heldSales;
   final PosSyncStatusView syncStatus;
+  final PosMemberBenefitView? memberBenefit;
   final String? manualAuthorizationRef;
 
   bool get canSettle => lines.isNotEmpty && totals.receivableAmountMinor > 0;
+}
+
+/// 收银页面可见的最小会员权益投影；不包含手机号、证件、令牌或其他身份明文。
+final class PosMemberBenefitView {
+  const PosMemberBenefitView({
+    required this.memberRef,
+    required this.maskedLabel,
+    required this.levelCode,
+    required this.selectedPath,
+    required this.packageVersion,
+    required this.memberPriceDiscountMinor,
+  });
+
+  final String memberRef;
+  final String maskedLabel;
+  final String? levelCode;
+  final String selectedPath;
+  final int packageVersion;
+  final int memberPriceDiscountMinor;
 }
 
 /// 现金成交结果只展示已持久化的订单、找零、快照和 Outbox 标识。

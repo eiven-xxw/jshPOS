@@ -5,6 +5,7 @@ import com.jingshanghui.pos.promotion.application.model.PromotionCommands.*;
 import com.jingshanghui.pos.promotion.application.model.PromotionViews.*;
 import com.jingshanghui.pos.promotion.application.service.PromotionService;
 import com.jingshanghui.pos.promotion.application.service.PromotionPackageService;
+import com.jingshanghui.pos.promotion.application.service.MemberBenefitPackageService;
 import com.jingshanghui.pos.promotion.application.service.ManualPromotionService;
 import com.jingshanghui.pos.promotion.application.service.PromotionTransactionService;
 import com.jingshanghui.pos.promotion.domain.ManualAdjustmentEngine.ActionType;
@@ -39,6 +40,7 @@ import java.util.Base64;
 public class PromotionController {
     private final PromotionService service;
     private final PromotionPackageService packages;
+    private final MemberBenefitPackageService memberBenefitPackages;
     private final ManualPromotionService manualPromotions;
     private final PromotionTransactionService transactions;
 
@@ -146,6 +148,40 @@ public class PromotionController {
     public ResponseEntity<byte[]> packageContent(@PathVariable @Positive long packageVersion,
                                                   @RequestParam @Pattern(regexp="^[1-9][0-9]{0,18}$") String storeId) {
         PackageArtifact artifact = packages.download(positive(storeId), packageVersion);
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore())
+            .header("X-JSH-Payload-Sha256", artifact.payloadSha256())
+            .header("X-JSH-Signing-Key-Id", artifact.signingKeyId())
+            .header("X-JSH-Signature", Base64.getEncoder().encodeToString(artifact.signature()))
+            .body(artifact.payload());
+    }
+
+    /** 由正式 Member/Pricing 只读端口发布无 PII 会员权益与会员价签名包。 */
+    @PostMapping("/member-benefit-packages")
+    @SaCheckPermission("promotion:rule:publish")
+    @Log(title="发布会员权益数据包", businessType=BusinessType.INSERT)
+    public R<MemberBenefitPackageView> publishMemberBenefitPackage(
+        @Valid @RequestBody PromotionRequests.PublishPackage request) {
+        return R.ok(memberBenefitPackages.publish(positive(request.storeId()), request.packageVersion(),
+            request.previousVersion(), request.expiresAt(), request.correlationId()));
+    }
+
+    /** 查询会员权益/会员价签名包元数据。 */
+    @GetMapping("/member-benefit-packages/{packageVersion}")
+    @SaCheckPermission("promotion:package:read")
+    public R<MemberBenefitPackageView> memberBenefitPackageDetail(
+        @PathVariable @Positive long packageVersion,
+        @RequestParam @Pattern(regexp="^[1-9][0-9]{0,18}$") String storeId) {
+        return R.ok(memberBenefitPackages.require(positive(storeId), packageVersion));
+    }
+
+    /** 下载 canonical 会员权益包；POS 必须再次校验摘要、签名和门店绑定。 */
+    @GetMapping(value="/member-benefit-packages/{packageVersion}/content",
+        produces=MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @SaCheckPermission("promotion:package:read")
+    public ResponseEntity<byte[]> memberBenefitPackageContent(
+        @PathVariable @Positive long packageVersion,
+        @RequestParam @Pattern(regexp="^[1-9][0-9]{0,18}$") String storeId) {
+        PackageArtifact artifact = memberBenefitPackages.download(positive(storeId), packageVersion);
         return ResponseEntity.ok().cacheControl(CacheControl.noStore())
             .header("X-JSH-Payload-Sha256", artifact.payloadSha256())
             .header("X-JSH-Signing-Key-Id", artifact.signingKeyId())

@@ -128,6 +128,17 @@ public class MyBatisPromotionPersistenceAdapter implements PromotionPersistenceP
     @Override public StoredMemberBenefitBinding findMemberBenefitBinding(String tenantId, String quoteId) {
         return mapper.findMemberBenefitBinding(tenantId, quoteId);
     }
+    @Override public com.jingshanghui.pos.promotion.application.model.PromotionViews.MemberBenefitPackageView
+        findLatestMemberBenefitPackage(String tenantId, Long storeId) {
+        return mapper.findLatestMemberBenefitPackage(tenantId, storeId);
+    }
+    @Override public com.jingshanghui.pos.promotion.application.model.PromotionViews.MemberBenefitPackageView
+        findMemberBenefitPackage(String tenantId, Long storeId, long packageVersion) {
+        return mapper.findMemberBenefitPackage(tenantId, storeId, packageVersion);
+    }
+    @Override public void insertMemberBenefitPackage(MemberBenefitPackageWrite value) {
+        requireOne(mapper.insertMemberBenefitPackage(value));
+    }
     private void requireOne(int count) {
         if (count != 1) throw new ServiceException("PRM-STORE-002: 促销事实写入失败", 409);
     }

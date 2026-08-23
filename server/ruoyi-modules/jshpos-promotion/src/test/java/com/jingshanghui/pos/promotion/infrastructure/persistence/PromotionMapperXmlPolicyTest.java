@@ -20,6 +20,8 @@ class PromotionMapperXmlPolicyTest {
                 .contains("insert into prm_transaction_snapshot").contains("insert into prm_transaction_allocation")
                 .contains("insert into prm_refund_allocation_ledger").contains("insert into prm_quote_member_benefit")
                 .contains("from prm_quote_member_benefit where tenant_id=#{tenantid}")
+                .contains("insert into prm_member_benefit_package")
+                .contains("from prm_member_benefit_package where tenant_id=#{tenantid} and store_id=#{storeid}")
                 .contains("from prm_manual_price_audit").contains("order by event_sequence")
                 .contains("<select id=\"lockquote\"").contains("for update")
                 .contains("<select id=\"locksnapshot\"")

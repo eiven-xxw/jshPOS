@@ -15,8 +15,8 @@ final class MemberCacheStore {
     _local.database.execute(
       '''INSERT INTO local_member_cache(
         tenant_id,store_id,member_ref,member_token_hash,masked_label,level_code,
-        rights_digest,snapshot_version,expires_at,revoked_at,received_at)
-      VALUES(?,?,?,?,?,?,?,?,?,?,?)
+        rights_digest,snapshot_version,expires_at,revoked_at,received_at,entitlement_snapshot_id)
+      VALUES(?,?,?,?,?,?,?,?,?,?,?,?)
       ON CONFLICT(tenant_id,store_id,member_ref) DO UPDATE SET
         member_token_hash=excluded.member_token_hash,
         masked_label=excluded.masked_label,
@@ -26,6 +26,7 @@ final class MemberCacheStore {
         expires_at=excluded.expires_at,
         revoked_at=excluded.revoked_at,
         received_at=excluded.received_at
+        ,entitlement_snapshot_id=excluded.entitlement_snapshot_id
       WHERE excluded.snapshot_version>local_member_cache.snapshot_version''',
       [
         entry.tenantId,
@@ -39,6 +40,7 @@ final class MemberCacheStore {
         entry.expiresAt.toUtc().toIso8601String(),
         entry.revokedAt?.toUtc().toIso8601String(),
         entry.receivedAt.toUtc().toIso8601String(),
+        entry.entitlementSnapshotId,
       ],
     );
   }
@@ -48,7 +50,7 @@ final class MemberCacheStore {
       throw ArgumentError.value(memberToken.length, 'memberToken');
     }
     final rows = _local.database.select(
-      '''SELECT member_ref,masked_label,level_code,rights_digest,snapshot_version,expires_at
+      '''SELECT member_ref,masked_label,level_code,rights_digest,snapshot_version,expires_at,entitlement_snapshot_id
       FROM local_member_cache
       WHERE tenant_id=? AND store_id=? AND member_token_hash=? AND revoked_at IS NULL AND expires_at>?''',
       [
@@ -67,6 +69,7 @@ final class MemberCacheStore {
       rightsDigest: row['rights_digest']! as String,
       snapshotVersion: row['snapshot_version']! as int,
       expiresAt: DateTime.parse(row['expires_at']! as String).toUtc(),
+      entitlementSnapshotId: row['entitlement_snapshot_id'] as String?,
     );
   }
 
@@ -115,6 +118,7 @@ final class MemberCacheEntry {
     required this.expiresAt,
     this.revokedAt,
     required this.receivedAt,
+    this.entitlementSnapshotId,
   });
 
   final String tenantId;
@@ -128,6 +132,7 @@ final class MemberCacheEntry {
   final DateTime expiresAt;
   final DateTime? revokedAt;
   final DateTime receivedAt;
+  final String? entitlementSnapshotId;
 
   void validate(String trustedTenantId, String trustedStoreId) {
     if (tenantId != trustedTenantId || storeId != trustedStoreId) {
@@ -138,6 +143,9 @@ final class MemberCacheEntry {
         memberToken.length > 256 ||
         maskedLabel.length > 32 ||
         !RegExp(r'^[a-f0-9]{64}$').hasMatch(rightsDigest) ||
+        (entitlementSnapshotId != null &&
+            !RegExp(r'^[0-9A-HJKMNP-TV-Z]{26}$')
+                .hasMatch(entitlementSnapshotId!)) ||
         snapshotVersion <= 0 ||
         !expiresAt.isAfter(receivedAt)) {
       throw ArgumentError('MEMBER_CACHE_INVALID');
@@ -154,6 +162,7 @@ final class MemberCacheView {
     required this.rightsDigest,
     required this.snapshotVersion,
     required this.expiresAt,
+    this.entitlementSnapshotId,
   });
   final String memberRef;
   final String maskedLabel;
@@ -161,4 +170,5 @@ final class MemberCacheView {
   final String rightsDigest;
   final int snapshotVersion;
   final DateTime expiresAt;
+  final String? entitlementSnapshotId;
 }

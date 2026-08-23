@@ -204,6 +204,34 @@ void main() {
         throwsA(isA<Exception>()),
       );
     });
+
+    test('member benefit snapshot is frozen in the same local transaction', () {
+      final fixture = _Fixture(withMemberBenefit: true);
+      addTearDown(fixture.close);
+      final result = fixture.service.completePromotedCashSale(
+        fixture.command(withMemberBenefit: true),
+      );
+      expect(result.receivableAmountMinor, 900);
+      expect(fixture.count('local_order_member_benefit_snapshot'), 1);
+      expect(
+        fixture.scalar(
+          'SELECT selected_path FROM local_order_member_benefit_snapshot',
+        ),
+        'MEMBER_PATH',
+      );
+      expect(
+        fixture.scalar(
+          "SELECT payload_json LIKE '%memberBenefitSnapshot%' FROM local_outbox WHERE event_type='order.completed.v2'",
+        ),
+        1,
+      );
+      expect(
+        () => fixture.db.database.execute(
+          'UPDATE local_order_member_benefit_snapshot SET selected_path=\'NORMAL_PATH\'',
+        ),
+        throwsA(isA<Exception>()),
+      );
+    });
   });
 }
 
@@ -212,6 +240,7 @@ final class _Fixture {
     FailureInjector? failureInjector,
     bool activeNewerPackage = false,
     bool withManualDiscount = false,
+    bool withMemberBenefit = false,
   }) : db = PosLocalDatabase.inMemory(
          _binding,
          failureInjector: failureInjector,
@@ -239,6 +268,7 @@ final class _Fixture {
       activeNewerPackage: activeNewerPackage,
       withManualDiscount: withManualDiscount,
     );
+    if (withMemberBenefit) _seedMemberBenefit();
   }
 
   final PosLocalDatabase db;
@@ -250,6 +280,7 @@ final class _Fixture {
     int tenderedAmountMinor = 2000,
     String? quoteFingerprint,
     bool withManualDiscount = false,
+    bool withMemberBenefit = false,
   }) {
     final basketLine = BasketLine(
       lineId: '01K5R000000000000000000001',
@@ -298,6 +329,63 @@ final class _Fixture {
       manualEventRefs: withManualDiscount ? [manualEventId] : const [],
       tenderedAmountMinor: tenderedAmountMinor,
       occurredAt: DateTime.utc(2026, 8, 17, 6),
+      memberBenefitSnapshot: withMemberBenefit
+          ? MemberBenefitSettlementSnapshot(
+              entitlementSnapshotId: '01K5E000000000000000000001',
+              benefitVersionId: '01K5B000000000000000000001',
+              selectedPath: 'MEMBER_PATH',
+              memberPriceVersions: const ['01K5P000000000000000000001'],
+              capabilityConfigVersion: 31,
+              capabilitySha256: _hash('c'),
+              rightsDigest: _hash('d'),
+              explanationSha256: _hash('e'),
+              packageVersion: 1,
+              packageSha256: _hash('f'),
+              contentSha256: _hash('9'),
+            )
+          : null,
+    );
+  }
+
+  void _seedMemberBenefit() {
+    db.database.execute(
+      '''INSERT INTO local_member_benefit_package_slot(slot_code,tenant_id,store_id,package_version,
+        previous_version,schema_version,engine_version,payload_blob,payload_sha256,signature_blob,
+        signing_key_id,generated_at,expires_at,installed_at,state)
+        VALUES('A',?,?,1,0,'1.0','member-benefit-engine-1.0.0',?,?,?,?,?,?,?,'ACTIVE')''',
+      [
+        _binding.tenantId,
+        _binding.storeId,
+        [1],
+        _hash('f'),
+        [2],
+        'synthetic-member-key',
+        '2026-08-17T05:00:00Z',
+        '2026-09-17T05:00:00Z',
+        '2026-08-17T05:00:00Z',
+      ],
+    );
+    db.database.execute(
+      '''INSERT INTO local_promotion_quote_member_benefit(tenant_id,quote_id,entitlement_snapshot_id,
+        benefit_version_id,selected_path,member_price_versions_json,capability_config_version,
+        capability_sha256,rights_digest,explanation_sha256,package_version,package_sha256,
+        content_sha256,occurred_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
+      [
+        _binding.tenantId,
+        '01K5Q000000000000000000001',
+        '01K5E000000000000000000001',
+        '01K5B000000000000000000001',
+        'MEMBER_PATH',
+        '["01K5P000000000000000000001"]',
+        31,
+        _hash('c'),
+        _hash('d'),
+        _hash('e'),
+        1,
+        _hash('f'),
+        _hash('9'),
+        '2026-08-17T05:59:00Z',
+      ],
     );
   }
 

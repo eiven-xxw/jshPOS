@@ -109,6 +109,9 @@
           <el-descriptions-item label="关联标识">{{ memberWriteResult.correlationId || '-' }}</el-descriptions-item>
         </el-descriptions>
       </el-tab-pane>
+      <el-tab-pane label="会员等级权益与会员价">
+        <MemberBenefitPolicyPanel />
+      </el-tab-pane>
     </el-tabs>
   </div>
 </template>
@@ -128,6 +131,7 @@ import {
 import type { OwnerOperationView, PointsAccountView, ResolvedMemberView, RuleVersionView } from '@/api/operations/types';
 import { exactDecimal } from '../model';
 import { useControlledOperation } from '../useControlledOperation';
+import MemberBenefitPolicyPanel from './MemberBenefitPolicyPanel.vue';
 
 const { runRead, runControlled } = useControlledOperation();
 const promotion = reactive({

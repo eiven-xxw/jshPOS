@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-MEM-003",
+  "stage": "PACKAGE_POS_WEB",
+  "status": "VERIFIED_LOCAL",
+  "verifiedAt": "2026-08-23T14:12:00+08:00",
+  "evidence": {
+    "serverTargetedTests": 12,
+    "flutterTargetedTests": 33,
+    "adminTargetedTests": 4,
+    "flutterAnalyze": "PASS",
+    "adminLint": "PASS",
+    "serverCompile": "PASS",
+    "migrationEvidence": "STATIC_POLICY_ONLY_PENDING_CLEAN_MYSQL_CI"
+  },
+  "verifiedBoundaries": [
+    "OWNER_READ_PORTS_BUILD_NO_PII_SIGNED_PACKAGE",
+    "PACKAGE_METADATA_AUDIT_AND_OUTBOX_SAME_TRANSACTION",
+    "SQLITE_V16_ATOMIC_AB_SWITCH_AND_IMMUTABLE_SETTLEMENT",
+    "TRUSTED_SHORT_LIVED_MEMBER_TOKEN_AND_MASKED_POS_PROJECTION",
+    "FLUTTER_UI_USES_APPLICATION_SERVICE_NOT_SQLITE_OR_METHOD_CHANNEL",
+    "VUE_USES_FORMAL_OWNER_APIS_WITHOUT_FRONTEND_RECALCULATION",
+    "TAMPER_CROSS_TENANT_STALE_AND_ATOMIC_SWITCH_FAILURE_CLOSE"
+  ],
+  "notYetEvidence": [
+    "CLEAN_MYSQL_MIGRATION",
+    "JAVA_DART_SHARED_VECTOR_RUN",
+    "FULL_INTERNAL_E2E",
+    "FULL_GATE_CI"
+  ],
+  "externalEvidence": 0
+}

@@ -20,6 +20,12 @@ abstract interface class PosSaleApplicationService {
   /// 使用冻结规则包重新报价，返回新版本及 fingerprint。
   Future<PosSaleWorkspace> refreshPromotionQuote();
 
+  /// 仅用服务端签发的短期令牌识别脱敏会员缓存，并由正式报价端口重新报价。
+  Future<PosSaleWorkspace> identifyMember(String memberToken);
+
+  /// 清除当前交易会员绑定并重新报价，避免身份跨顾客残留。
+  Future<PosSaleWorkspace> clearMember();
+
   /// 预检并应用受权人工优惠；授权和限额由 Promotion Owner 决定。
   Future<PosSaleWorkspace> applyManualAdjustment({
     required String actionCode,

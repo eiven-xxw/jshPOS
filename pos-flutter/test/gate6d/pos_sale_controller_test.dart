@@ -199,6 +199,8 @@ void main() {
         () => service.addProduct('product:cola'),
         () => service.changeQuantity('line:cola', '+1'),
         service.refreshPromotionQuote,
+        () => service.identifyMember('synthetic-member-token'),
+        service.clearMember,
         () => service.applyManualAdjustment(
           actionCode: 'ORDER_AMOUNT_OFF',
           value: '1.00',
@@ -251,6 +253,7 @@ PosSaleWorkspace saleWorkspace({
   List<PosBasketLineView>? lines,
   List<PosHeldSaleView>? heldSales,
   PosSyncStatusView? syncStatus,
+  PosMemberBenefitView? memberBenefit,
 }) => PosSaleWorkspace(
   saleRef: 'sale:001',
   localSaleNo: 'POS-20260820-0001',
@@ -302,6 +305,7 @@ PosSaleWorkspace saleWorkspace({
         lastSuccessfulAt: null,
         safeMessage: '网络不可用，交易将安全保存在本机。',
       ),
+  memberBenefit: memberBenefit,
 );
 
 final product = const PosProductView(
@@ -406,6 +410,8 @@ final class FakePosSaleApplicationService implements PosSaleApplicationService {
   String? cancelReasonCode;
   String? cancelReasonText;
   String? routedOrderRef;
+  String? identifiedMemberToken;
+  bool memberCleared = false;
 
   void _fail() {
     if (failure != null) throw failure!;
@@ -452,6 +458,30 @@ final class FakePosSaleApplicationService implements PosSaleApplicationService {
   @override
   Future<PosSaleWorkspace> refreshPromotionQuote() async {
     refreshQuoteCount++;
+    _fail();
+    return saleWorkspace();
+  }
+
+  @override
+  Future<PosSaleWorkspace> identifyMember(String memberToken) async {
+    identifiedMemberToken = memberToken;
+    memberCleared = false;
+    _fail();
+    return saleWorkspace(
+      memberBenefit: const PosMemberBenefitView(
+        memberRef: '01K2A000000000000000000071',
+        maskedLabel: '虚构会员****01',
+        levelCode: 'GOLD',
+        selectedPath: 'MEMBER_PATH',
+        packageVersion: 3,
+        memberPriceDiscountMinor: 120,
+      ),
+    );
+  }
+
+  @override
+  Future<PosSaleWorkspace> clearMember() async {
+    memberCleared = true;
     _fail();
     return saleWorkspace();
   }

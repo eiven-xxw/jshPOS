@@ -74,6 +74,13 @@ public final class PromotionViews {
         @Override public byte[] signature() { return signature.clone(); }
     }
 
+    /** 门店绑定的会员权益/会员价离线包元数据，不包含会员身份或其他 PII。 */
+    public record MemberBenefitPackageView(String packageId, Long storeId, long packageVersion,
+                                           long previousVersion, String payloadSha256,
+                                           String signingKeyId, @JsonIgnore String objectKey,
+                                           int benefitCount, int memberPriceCount,
+                                           LocalDateTime generatedAt, LocalDateTime expiresAt) { }
+
     /**
      * 人工优惠授权结果。
      *

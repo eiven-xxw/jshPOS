@@ -2,6 +2,7 @@ package com.jingshanghui.pos.promotion.application.port;
 
 import com.jingshanghui.pos.promotion.application.model.PromotionViews.RuleVersionView;
 import com.jingshanghui.pos.promotion.application.model.PromotionViews.PackageView;
+import com.jingshanghui.pos.promotion.application.model.PromotionViews.MemberBenefitPackageView;
 import com.jingshanghui.pos.promotion.domain.PromotionModels.RuleVersion;
 
 import java.time.LocalDateTime;
@@ -54,6 +55,9 @@ public interface PromotionPersistencePort {
     void insertRefundAllocation(RefundAllocationWrite value);
     void insertMemberBenefitBinding(MemberBenefitBindingWrite value);
     StoredMemberBenefitBinding findMemberBenefitBinding(String tenantId, String quoteId);
+    MemberBenefitPackageView findLatestMemberBenefitPackage(String tenantId, Long storeId);
+    MemberBenefitPackageView findMemberBenefitPackage(String tenantId, Long storeId, long packageVersion);
+    void insertMemberBenefitPackage(MemberBenefitPackageWrite value);
 
     /**
      * 写入不可变规则版本。
@@ -294,4 +298,10 @@ public interface PromotionPersistencePort {
     record PackageItemWrite(String tenantId, String packageItemId, String packageId, Long storeId,
                             long packageVersion, int ordinalNo, String ruleVersionId,
                             String ruleContentSha256) { }
+    /** 会员权益与会员价离线包只追加元数据。 */
+    record MemberBenefitPackageWrite(String tenantId, String packageId, Long storeId,
+                                     long packageVersion, long previousVersion, String payloadSha256,
+                                     String signingKeyId, String objectKey, int benefitCount,
+                                     int memberPriceCount, LocalDateTime generatedAt,
+                                     LocalDateTime expiresAt) { }
 }

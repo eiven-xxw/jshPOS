@@ -321,6 +321,72 @@ final class PromotedSettlementLine {
   };
 }
 
+/// MEM-003 随原报价冻结的最小权益事实；只含不可逆引用和摘要，不含会员 PII。
+final class MemberBenefitSettlementSnapshot {
+  MemberBenefitSettlementSnapshot({
+    required this.entitlementSnapshotId,
+    required this.benefitVersionId,
+    required this.selectedPath,
+    required Iterable<String> memberPriceVersions,
+    required this.capabilityConfigVersion,
+    required this.capabilitySha256,
+    required this.rightsDigest,
+    required this.explanationSha256,
+    required this.packageVersion,
+    required this.packageSha256,
+    required this.contentSha256,
+  }) : memberPriceVersions = List.unmodifiable(
+         [...memberPriceVersions]..sort(),
+       ) {
+    final ulid = RegExp(r'^[0-9A-HJKMNP-TV-Z]{26}$');
+    final hash = RegExp(r'^[a-f0-9]{64}$');
+    if (!ulid.hasMatch(entitlementSnapshotId) ||
+        !ulid.hasMatch(benefitVersionId) ||
+        !const {
+          'NORMAL_PATH',
+          'MEMBER_PATH',
+          'STACKED_MEMBER_PATH',
+        }.contains(selectedPath) ||
+        this.memberPriceVersions.any((value) => !ulid.hasMatch(value)) ||
+        capabilityConfigVersion <= 0 ||
+        packageVersion <= 0 ||
+        !hash.hasMatch(capabilitySha256) ||
+        !hash.hasMatch(rightsDigest) ||
+        !hash.hasMatch(explanationSha256) ||
+        !hash.hasMatch(packageSha256) ||
+        !hash.hasMatch(contentSha256)) {
+      throw const FormatException(
+        'POS-MEMBER-BENEFIT-001: invalid frozen snapshot',
+      );
+    }
+  }
+  final String entitlementSnapshotId;
+  final String benefitVersionId;
+  final String selectedPath;
+  final List<String> memberPriceVersions;
+  final int capabilityConfigVersion;
+  final String capabilitySha256;
+  final String rightsDigest;
+  final String explanationSha256;
+  final int packageVersion;
+  final String packageSha256;
+  final String contentSha256;
+
+  Map<String, Object?> toJson() => {
+    'entitlementSnapshotId': entitlementSnapshotId,
+    'benefitVersionId': benefitVersionId,
+    'selectedPath': selectedPath,
+    'memberPriceVersions': memberPriceVersions,
+    'capabilityConfigVersion': capabilityConfigVersion,
+    'capabilitySha256': capabilitySha256,
+    'rightsDigest': rightsDigest,
+    'explanationSha256': explanationSha256,
+    'packageVersion': packageVersion,
+    'packageSha256': packageSha256,
+    'contentSha256': contentSha256,
+  };
+}
+
 /// POS-006 促销现金成交命令；可信租户/门店/终端仍由设备绑定注入。
 final class PromotedCashSaleCommand {
   PromotedCashSaleCommand({
@@ -341,6 +407,7 @@ final class PromotedCashSaleCommand {
     Iterable<String> manualEventRefs = const [],
     required this.tenderedAmountMinor,
     required this.occurredAt,
+    this.memberBenefitSnapshot,
   }) : lines = List.unmodifiable(
          [...lines]..sort(
            (left, right) =>
@@ -392,6 +459,7 @@ final class PromotedCashSaleCommand {
   final List<String> manualEventRefs;
   final int tenderedAmountMinor;
   final DateTime occurredAt;
+  final MemberBenefitSettlementSnapshot? memberBenefitSnapshot;
 
   int get grossAmountMinor => lines.fold(
     0,
@@ -459,6 +527,8 @@ final class PromotedCashSaleCommand {
             settlementFingerprint,
             packageVersion,
             promotionSnapshotId,
+            if (memberBenefitSnapshot != null)
+              jsonEncode(memberBenefitSnapshot!.toJson()),
             ...manualEventRefs,
             grossAmountMinor,
             discountAmountMinor,

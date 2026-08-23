@@ -19,6 +19,7 @@ import 'gate7b_exchange_schema.dart';
 import 'gate7b_tender_schema.dart';
 import 'gate7c_weighted_barcode_schema.dart';
 import 'gate7c_lot_expiry_schema.dart';
+import 'gate7d_member_benefit_schema.dart';
 
 typedef FailureInjector = void Function(String checkpoint);
 
@@ -160,7 +161,11 @@ final class PosLocalDatabase {
       _migrateToLotExpiryV15();
       version = Gate7cLotExpirySchema.version;
     }
-    if (version != Gate7cLotExpirySchema.version) {
+    if (version == Gate7cLotExpirySchema.version) {
+      _migrateToMemberBenefitV16();
+      version = Gate7dMemberBenefitSchema.version;
+    }
+    if (version != Gate7dMemberBenefitSchema.version) {
       throw StateError('LOCAL_SCHEMA_UNSUPPORTED: $version');
     }
     _verifySchemaChecksum();
@@ -213,6 +218,9 @@ final class PosLocalDatabase {
           .toString(),
       Gate7cLotExpirySchema.version: sha256
           .convert(utf8.encode(Gate7cLotExpirySchema.v15))
+          .toString(),
+      Gate7dMemberBenefitSchema.version: sha256
+          .convert(utf8.encode(Gate7dMemberBenefitSchema.v16))
           .toString(),
     };
     for (final entry in expected.entries) {
@@ -377,6 +385,34 @@ final class PosLocalDatabase {
     if (violations.isNotEmpty) {
       throw StateError(
         'LOCAL_DB_INTEGRITY_FAILED: foreign key violations after v15',
+      );
+    }
+  }
+
+  /// 追加 MEM-003 签名包和不可变成交权益快照；中断时整体回滚。
+  void _migrateToMemberBenefitV16() {
+    transaction(() {
+      database.execute(Gate7dMemberBenefitSchema.v16);
+      final checksum = sha256
+          .convert(utf8.encode(Gate7dMemberBenefitSchema.v16))
+          .toString();
+      database.execute(
+        'INSERT INTO local_schema_history(version,description,checksum_sha256,installed_at) VALUES(16,?,?,?)',
+        [
+          'gate7d-member-benefit-price-snapshot',
+          checksum,
+          DateTime.now().toUtc().toIso8601String(),
+        ],
+      );
+      checkpoint('migration.v16.before-version');
+      database.execute(
+        'PRAGMA user_version=${Gate7dMemberBenefitSchema.version}',
+      );
+    });
+    final violations = database.select('PRAGMA foreign_key_check');
+    if (violations.isNotEmpty) {
+      throw StateError(
+        'LOCAL_DB_INTEGRITY_FAILED: foreign key violations after v16',
       );
     }
   }

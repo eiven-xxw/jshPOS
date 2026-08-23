@@ -113,4 +113,18 @@
     VALUES(#{eventId},#{tenantId},#{eventType},#{aggregateId},#{aggregateVersion},#{payloadJson},
       #{payloadSha256},'PENDING',#{occurredAt})
   </insert>
+  <!-- 数据包只输出无 PII 的已批准权益定义；精确门店范围在 SQL 内约束。 -->
+  <select id="listForPackage" resultType="com.jingshanghui.pos.member.application.port.MemberBenefitPackageSourcePort$BenefitPackageRow">
+    SELECT v.version_id versionId,m.level_code levelCode,m.member_price_eligible memberPriceEligible,
+      m.stacking_allowed stackingAllowed,v.default_combination_policy defaultCombinationPolicy,
+      v.allow_stacking policyAllowStacking,v.revocation_epoch revocationEpoch,
+      v.effective_at effectiveAt,v.expires_at expiresAt,
+      SHA2(CONCAT(v.content_sha256,':',m.content_sha256,':',s.content_sha256),256) contentSha256
+    FROM mbr_benefit_version v
+    JOIN mbr_benefit_scope s ON s.tenant_id=v.tenant_id AND s.version_id=v.version_id AND s.store_id=#{storeId}
+    JOIN mbr_benefit_level_mapping m ON m.tenant_id=v.tenant_id AND m.version_id=v.version_id
+    WHERE v.tenant_id=#{tenantId} AND v.state IN ('SCHEDULED','ACTIVE')
+      AND v.effective_at&lt;#{windowEnd} AND (v.expires_at IS NULL OR v.expires_at&gt;#{windowStart})
+    ORDER BY m.level_code,v.version_no,v.version_id
+  </select>
 </mapper>

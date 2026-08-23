@@ -3,9 +3,11 @@ package com.jingshanghui.pos.member.infrastructure.persistence.mapper;
 import com.jingshanghui.pos.member.application.model.BenefitViews.EntitlementSnapshotView;
 import com.jingshanghui.pos.member.application.model.BenefitViews.PolicyVersionView;
 import com.jingshanghui.pos.member.application.port.BenefitPersistencePort.*;
+import com.jingshanghui.pos.member.application.port.MemberBenefitPackageSourcePort.BenefitPackageRow;
 import com.jingshanghui.pos.member.infrastructure.persistence.BenefitPersistenceParams.ActiveLookup;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /** T2-MEM-003 权益持久化 Mapper；复杂 SQL 只能存放于配套 XML。 */
@@ -29,4 +31,8 @@ public interface BenefitPersistenceMapper {
     int insertCommand(CommandWrite value);
     int insertAudit(AuditWrite value);
     int insertOutbox(OutboxWrite value);
+    List<BenefitPackageRow> listForPackage(@Param("tenantId") String tenantId,
+                                           @Param("storeId") Long storeId,
+                                           @Param("windowStart") LocalDateTime windowStart,
+                                           @Param("windowEnd") LocalDateTime windowEnd);
 }
