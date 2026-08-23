@@ -168,6 +168,11 @@
               <groupId>com.jingshanghui.pos</groupId>
               <artifactId>jshpos-subscription</artifactId>
           </dependency>
+          <!-- Gate 8A 服务目录、实施项目、工单与附件治理 -->
+          <dependency>
+              <groupId>com.jingshanghui.pos</groupId>
+              <artifactId>jshpos-service</artifactId>
+          </dependency>
 
         <!-- Gate 6A 加密备份、空环境恢复与演练证据模块 -->
         <dependency>

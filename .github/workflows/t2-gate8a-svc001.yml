@@ -1,0 +1,319 @@
+name: T2 Gate 8A S24-C SVC-001 Runtime
+
+on:
+  push:
+    branches: ["t2/gate8a-sprint24c-svc001-runtime"]
+  pull_request:
+    paths:
+      - "AGENTS.md"
+      - ".github/workflows/t2-gate8a-svc001.yml"
+      - "admin-web/**"
+      - "contracts/t2/gate8a-svc001/**"
+      - "docs/**"
+      - "pos-flutter/**"
+      - "scripts/**"
+      - "server/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: t2-gate8a-svc001-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  governance-ubuntu:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with: { python-version: "3.12" }
+      - name: Validate admission Owner tenant attachment Secret and external boundaries
+        run: |
+          mkdir -p artifacts/t2/gate8a-svc001/governance-ubuntu
+          python scripts/check_t0_structure.py
+          python scripts/check_rtm.py
+          python scripts/check_contracts.py
+          python -m py_compile scripts/check_t2_gate8a_svc001.py scripts/build_t2_gate8a_svc001_evidence.py
+          python scripts/check_t2_gate8a_svc001.py --output artifacts/t2/gate8a-svc001/governance-ubuntu/svc001-gate.json
+          python scripts/review_dependency_diff.py ae0c145b82306dd08f9a0999ba3f030d54e8e3e9 "$(git rev-parse HEAD)" > artifacts/t2/gate8a-svc001/governance-ubuntu/dependency-diff.json
+          git diff --check
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          { name: t2-gate8a-svc001-governance-ubuntu, path: artifacts/t2/gate8a-svc001/governance-ubuntu, if-no-files-found: error, retention-days: 30 }
+
+  governance-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with: { python-version: "3.12" }
+      - name: Validate UTF-8 governance and SVC001 boundary
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force artifacts/t2/gate8a-svc001/governance-windows | Out-Null
+          python scripts/check_t0_structure.py
+          python scripts/check_rtm.py
+          python scripts/check_contracts.py
+          python -m py_compile scripts/check_t2_gate8a_svc001.py scripts/build_t2_gate8a_svc001_evidence.py
+          python scripts/check_t2_gate8a_svc001.py --output artifacts/t2/gate8a-svc001/governance-windows/svc001-gate.json
+          git diff --check
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          { name: t2-gate8a-svc001-governance-windows, path: artifacts/t2/gate8a-svc001/governance-windows, if-no-files-found: error, retention-days: 30 }
+
+  server:
+    needs: governance-ubuntu
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with: { distribution: temurin, java-version: "21", cache: maven }
+      - name: Execute complete modular-monolith regression and coverage
+        working-directory: server
+        run: ./mvnw -pl ruoyi-admin -am clean verify -DskipTests=false
+      - name: Build aggregate SBOM
+        working-directory: server
+        run: ./mvnw org.cyclonedx:cyclonedx-maven-plugin:2.9.1:makeAggregateBom
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with: { python-version: "3.12" }
+      - name: Collect tests coverage SBOM and license evidence
+        run: |
+          mkdir -p artifacts/t2/gate8a-svc001/server
+          python scripts/check_sbom_licenses.py server/target/bom.json docs/compliance/reviewed-license-allowlist.json | tee artifacts/t2/gate8a-svc001/server/license-policy.txt
+          cp server/target/bom.json server/target/bom.xml artifacts/t2/gate8a-svc001/server/
+          cp server/ruoyi-admin/target/ruoyi-admin.jar artifacts/t2/gate8a-svc001/server/
+          find server/ruoyi-modules -path '*/target/surefire-reports/TEST-*.xml' -exec cp --parents {} artifacts/t2/gate8a-svc001/server/ \;
+          find server/ruoyi-modules -path '*/target/site/jacoco/jacoco.xml' -exec cp --parents {} artifacts/t2/gate8a-svc001/server/ \;
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          { name: t2-gate8a-svc001-server, path: artifacts/t2/gate8a-svc001/server, if-no-files-found: error, retention-days: 30 }
+
+  mysql-runtime:
+    needs: governance-ubuntu
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4.11@sha256:b3b90af2a6552ae30c266fdb7d5dd55f3afb72404bb78d37fe8a23eb857fd3fb
+        env: { MYSQL_ROOT_PASSWORD: synthetic_svc001_root, MYSQL_DATABASE: jshpos_svc001 }
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -psynthetic_svc001_root"
+          --health-interval=10s --health-timeout=5s --health-retries=12
+    env:
+      GATE8A_SVC_MYSQL_JDBC_URL: jdbc:mysql://127.0.0.1:3306/jshpos_svc001?useUnicode=true&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      GATE8A_SVC_MYSQL_USERNAME: root
+      GATE8A_SVC_MYSQL_PASSWORD: synthetic_svc001_root
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with: { distribution: temurin, java-version: "21", cache: maven }
+      - name: Validate unified V1-V86 forward migrations comments attachment and append-only rules
+        working-directory: server
+        run: ./mvnw -Plocal -pl ruoyi-admin -am test -Dtest=MemberBenefitMigrationMySqlIT -Dsurefire.failIfNoSpecifiedTests=false -DskipTests=false
+      - name: Collect unified MySQL evidence
+        run: |
+          mkdir -p artifacts/t2/gate8a-svc001/mysql-runtime
+          cp server/ruoyi-admin/target/surefire-reports/TEST-*MemberBenefitMigrationMySqlIT.xml artifacts/t2/gate8a-svc001/mysql-runtime/
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          { name: t2-gate8a-svc001-mysql-runtime, path: artifacts/t2/gate8a-svc001/mysql-runtime, if-no-files-found: error, retention-days: 30 }
+
+  web:
+    needs: governance-ubuntu
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+        with: { version: 10.33.0 }
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with: { node-version: "24", cache: pnpm, cache-dependency-path: admin-web/pnpm-lock.yaml }
+      - name: Build lint typecheck full unit test audit and licenses
+        run: |
+          mkdir -p artifacts/t2/gate8a-svc001/web
+          cd admin-web
+          pnpm install --frozen-lockfile
+          pnpm audit --registry https://registry.npmjs.org --audit-level high
+          pnpm build:prod
+          pnpm lint:eslint
+          pnpm typecheck
+          pnpm test:unit:ci
+          cp gate0-vitest-junit.xml ../artifacts/t2/gate8a-svc001/web/
+          cp -R dist ../artifacts/t2/gate8a-svc001/web/
+          pnpm licenses list --json > ../artifacts/t2/gate8a-svc001/web/licenses.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          { name: t2-gate8a-svc001-web, path: artifacts/t2/gate8a-svc001/web, if-no-files-found: error, retention-days: 30 }
+
+  flutter:
+    needs: governance-ubuntu
+    strategy:
+      fail-fast: false
+      matrix: { os: [ubuntu-latest, windows-latest] }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with: { flutter-version: "3.47.0", channel: stable, cache: true }
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with: { python-version: "3.12" }
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        if: matrix.os == 'ubuntu-latest'
+        with: { distribution: temurin, java-version: "21" }
+      - name: Analyze full test coverage SQLite and supply chain
+        working-directory: pos-flutter
+        run: |
+          flutter pub get --enforce-lockfile
+          dart format --output=none --set-exit-if-changed lib test
+          flutter analyze --fatal-infos
+          flutter test --machine --coverage > ../flutter-tests.jsonl
+          python ../scripts/check_flutter_gate2_coverage.py --input coverage/lcov.info --minimum 0.90 --output ../flutter-gate2-coverage.json
+          python ../scripts/check_flutter_gate6d_coverage.py --input coverage/lcov.info --minimum 0.90 --output ../flutter-gate6d-coverage.json
+          flutter pub deps --json > ../flutter-dependencies.json
+          python ../scripts/build_flutter_supply_chain.py --deps ../flutter-dependencies.json --package-config .dart_tool/package_config.json --output-dir ../flutter-supply-chain
+      - name: Compile Kotlin adapter and Android APK
+        if: matrix.os == 'ubuntu-latest'
+        working-directory: pos-flutter
+        run: |
+          cd android && ./gradlew :app:compileDebugKotlin --no-daemon && cd ..
+          flutter build apk --debug
+          cp build/app/outputs/flutter-apk/app-debug.apk ../app-debug.apk
+      - name: Collect Flutter evidence
+        shell: bash
+        run: |
+          mkdir -p artifacts/t2/gate8a-svc001/flutter
+          cp flutter-tests.jsonl flutter-gate2-coverage.json flutter-gate6d-coverage.json flutter-dependencies.json artifacts/t2/gate8a-svc001/flutter/
+          cp -R flutter-supply-chain artifacts/t2/gate8a-svc001/flutter/
+          if [ -f app-debug.apk ]; then cp app-debug.apk artifacts/t2/gate8a-svc001/flutter/; fi
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          { name: "t2-gate8a-svc001-flutter-${{ matrix.os }}", path: artifacts/t2/gate8a-svc001/flutter, if-no-files-found: error, retention-days: 30 }
+
+  runtime-stack:
+    needs: [server, web]
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4.11@sha256:b3b90af2a6552ae30c266fdb7d5dd55f3afb72404bb78d37fe8a23eb857fd3fb
+        env: { MYSQL_ROOT_PASSWORD: synthetic_svc001_runtime_root, MYSQL_DATABASE: jshpos_svc001_runtime }
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -psynthetic_svc001_runtime_root"
+          --health-interval=10s --health-timeout=5s --health-retries=12
+      redis:
+        image: redis:7.4.10-alpine@sha256:e7723ff73d963f5cc6d9c4643ea3d989527a402a319239054e9472a7fb9219a2
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s --health-timeout=5s --health-retries=12
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with: { distribution: temurin, java-version: "21" }
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with: { python-version: "3.12" }
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with: { name: t2-gate8a-svc001-server, path: downloaded/server }
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with: { name: t2-gate8a-svc001-web, path: downloaded/web }
+      - name: Start formal server and Web stack with V1-V86
+        run: |
+          mkdir -p artifacts/t2/gate8a-svc001/runtime-stack
+          mysql_container="$(docker ps --filter publish=3306 --format '{{.ID}}' | head -1)"
+          redis_container="$(docker ps --filter publish=6379 --format '{{.ID}}' | head -1)"
+          test -n "$mysql_container" && test -n "$redis_container"
+          docker exec -i "$mysql_container" mysql --default-character-set=utf8mb4 -uroot -psynthetic_svc001_runtime_root jshpos_svc001_runtime < server/script/sql/ry_vue_5.X.sql
+          docker exec "$redis_container" redis-cli CONFIG SET requirepass synthetic_svc001_redis_runtime
+          server_jar="$(find downloaded/server -name ruoyi-admin.jar -type f -print -quit)"
+          web_dist="$(find downloaded/web -type d -name dist -print -quit)"
+          test -s "$server_jar" && test -n "$web_dist"
+          java -jar "$server_jar" --server.port=18080 --spring.datasource.dynamic.p6spy=false \
+            '--spring.datasource.dynamic.datasource.master.url=jdbc:mysql://127.0.0.1:3306/jshpos_svc001_runtime?useUnicode=true&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&nullCatalogMeansCurrent=true' \
+            --spring.datasource.dynamic.datasource.master.username=root --spring.datasource.dynamic.datasource.master.password=synthetic_svc001_runtime_root \
+            --spring.data.redis.host=127.0.0.1 --spring.data.redis.port=6379 --spring.data.redis.password=synthetic_svc001_redis_runtime \
+            --spring.boot.admin.client.enabled=false --snail-job.enabled=false --captcha.enable=false \
+            > artifacts/t2/gate8a-svc001/runtime-stack/server.log 2>&1 &
+          server_pid=$!
+          python -m http.server 14173 --bind 127.0.0.1 --directory "$web_dist" > artifacts/t2/gate8a-svc001/runtime-stack/web.log 2>&1 &
+          web_pid=$!
+          trap 'kill "$server_pid" "$web_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 90); do
+            if curl -fsS http://127.0.0.1:18080/ >/dev/null && curl -fsS http://127.0.0.1:14173/ >/dev/null; then break; fi
+            if ! kill -0 "$server_pid"; then tail -200 artifacts/t2/gate8a-svc001/runtime-stack/server.log; exit 1; fi
+            sleep 2
+          done
+          curl -fsS http://127.0.0.1:18080/ > artifacts/t2/gate8a-svc001/runtime-stack/server-root.txt
+          curl -fsS http://127.0.0.1:14173/ > artifacts/t2/gate8a-svc001/runtime-stack/web-index.html
+          docker exec "$mysql_container" mysql -N -B -uroot -psynthetic_svc001_runtime_root jshpos_svc001_runtime -e \
+            "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name LIKE 'svc_%'; SELECT MAX(version) FROM jshpos_flyway_schema_history WHERE success=1;" \
+            > artifacts/t2/gate8a-svc001/runtime-stack/mysql-runtime.txt
+          sed -n '1p' artifacts/t2/gate8a-svc001/runtime-stack/mysql-runtime.txt | grep -qx '10'
+          tail -1 artifacts/t2/gate8a-svc001/runtime-stack/mysql-runtime.txt | grep -qx '202608240086'
+          kill -0 "$server_pid" && kill -0 "$web_pid"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          { name: t2-gate8a-svc001-runtime-stack, path: artifacts/t2/gate8a-svc001/runtime-stack, if-no-files-found: error, retention-days: 90 }
+
+  security:
+    needs: [server, web, flutter, runtime-stack]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with: { python-version: "3.12" }
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with: { name: t2-gate8a-svc001-server, path: downloaded/server }
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with: { name: t2-gate8a-svc001-flutter-ubuntu-latest, path: downloaded/flutter }
+      - name: Enforce vulnerability license Secret PII and workflow security gates
+        run: |
+          mkdir -p artifacts/t2/gate8a-svc001/security
+          curl -fsSL -o /tmp/trivy.tar.gz https://github.com/aquasecurity/trivy/releases/download/v0.72.0/trivy_0.72.0_Linux-64bit.tar.gz
+          echo "bbb64b9695866ce4a7a8f5c9592002c5961cab378577fa3f8a040df362b9b2ea  /tmp/trivy.tar.gz" | sha256sum --check
+          tar -xzf /tmp/trivy.tar.gz -C /tmp trivy
+          server_sbom="$(find downloaded/server -name bom.json -type f -print -quit)"
+          flutter_sbom="$(find downloaded/flutter -name flutter-cyclonedx.json -type f -print -quit)"
+          test -s "$server_sbom" && test -s "$flutter_sbom"
+          /tmp/trivy sbom --skip-version-check --db-repository ghcr.io/aquasecurity/trivy-db:2 --java-db-repository ghcr.io/aquasecurity/trivy-java-db:1 --scanners vuln --severity HIGH,CRITICAL --exit-code 1 --format json --output artifacts/t2/gate8a-svc001/security/trivy-server-vuln.json "$server_sbom"
+          /tmp/trivy sbom --skip-version-check --db-repository ghcr.io/aquasecurity/trivy-db:2 --scanners vuln --severity HIGH,CRITICAL --exit-code 1 --format json --output artifacts/t2/gate8a-svc001/security/trivy-flutter-vuln.json "$flutter_sbom"
+          python scripts/check_sbom_licenses.py "$server_sbom" docs/compliance/reviewed-license-allowlist.json | tee artifacts/t2/gate8a-svc001/security/server-license-policy.txt
+          /tmp/trivy fs --skip-version-check --offline-scan --scanners secret --severity HIGH,CRITICAL --exit-code 1 --skip-dirs .git --format json --output artifacts/t2/gate8a-svc001/security/trivy-secret.json .
+          /tmp/trivy config --skip-version-check --checks-bundle-repository ghcr.io/aquasecurity/trivy-checks:2 --severity HIGH,CRITICAL --exit-code 1 --format json --output artifacts/t2/gate8a-svc001/security/trivy-config.json .github/workflows/t2-gate8a-svc001.yml
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          { name: t2-gate8a-svc001-security, path: artifacts/t2/gate8a-svc001/security, if-no-files-found: error, retention-days: 30 }
+
+  evidence:
+    needs: [governance-ubuntu, governance-windows, server, mysql-runtime, web, flutter, runtime-stack, security]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with: { python-version: "3.12" }
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with: { pattern: t2-gate8a-svc001-*, path: artifacts/t2/gate8a-svc001/downloaded, merge-multiple: false }
+      - name: Normalize evidence producers and build immutable index
+        run: |
+          mkdir -p artifacts/t2/gate8a-svc001/bundle
+          for pair in \
+            "governance-ubuntu:t2-gate8a-svc001-governance-ubuntu" \
+            "governance-windows:t2-gate8a-svc001-governance-windows" \
+            "server:t2-gate8a-svc001-server" \
+            "mysql-runtime:t2-gate8a-svc001-mysql-runtime" \
+            "web:t2-gate8a-svc001-web" \
+            "flutter-ubuntu:t2-gate8a-svc001-flutter-ubuntu-latest" \
+            "flutter-windows:t2-gate8a-svc001-flutter-windows-latest" \
+            "runtime-stack:t2-gate8a-svc001-runtime-stack" \
+            "security:t2-gate8a-svc001-security"; do
+            producer="${pair%%:*}"; artifact="${pair#*:}"
+            mkdir -p "artifacts/t2/gate8a-svc001/bundle/$producer"
+            cp -R "artifacts/t2/gate8a-svc001/downloaded/$artifact/." "artifacts/t2/gate8a-svc001/bundle/$producer/"
+          done
+          python scripts/build_t2_gate8a_svc001_evidence.py --bundle-dir artifacts/t2/gate8a-svc001/bundle --output artifacts/t2/gate8a-svc001/evidence-index.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          { name: t2-gate8a-svc001-evidence-index, path: artifacts/t2/gate8a-svc001/evidence-index.json, if-no-files-found: error, retention-days: 90 }

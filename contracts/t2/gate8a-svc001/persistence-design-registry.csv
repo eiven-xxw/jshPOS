@@ -1,0 +1,11 @@
+table_name,data_owner,access_strategy,sql_mode,mutation_boundary,tenant_key,append_only
+svc_catalog_version,SERVICE,CONTROLLED_WRITE,XML,具名发布和乐观锁,tenant_id,false
+svc_catalog_item,SERVICE,APPEND_ONLY,XML,随目录草稿一次写入发布后不可变,tenant_id,true
+svc_implementation_project,SERVICE,CONTROLLED_WRITE,XML,具名状态迁移和乐观锁,tenant_id,false
+svc_project_check_item,SERVICE,CONTROLLED_WRITE,XML,具名完成并锁版本,tenant_id,false
+svc_work_order,SERVICE,CONTROLLED_WRITE,HYBRID,具名状态租约责任更新和乐观锁,tenant_id,false
+svc_work_order_history,SERVICE,APPEND_ONLY,XML,责任状态处理记录只追加,tenant_id,true
+svc_attachment,SERVICE,CONTROLLED_WRITE,XML,元数据登记和具名清理状态,tenant_id,false
+svc_command_result,SERVICE,APPEND_ONLY,XML,稳定幂等结果只追加,tenant_id,true
+svc_audit_event,SERVICE,APPEND_ONLY,XML,领域审计只追加,tenant_id,true
+svc_outbox,SERVICE,APPEND_ONLY,XML,事件负载只追加,tenant_id,true

@@ -68,3 +68,4 @@ ADR 一经接受不得删除或静默改写。需要改变决策时，新建 ADR
 | ADR-056 | [Gate 8A 商业 SaaS 运营 Owner 与串行准入边界](ADR-056-gate8a-commercial-saas-operations-prep.md) | Accepted |
 | ADR-057 | [Gate 8A SaaS 开户与权益运行时边界](ADR-057-gate8a-saa-runtime.md) | Accepted |
 | ADR-058 | [Gate 8A 订阅生命周期、受控降级与时间收敛](ADR-058-gate8a-subscription-runtime.md) | Accepted |
+| ADR-059 | [Gate 8A 服务目录、实施项目、工单与附件安全边界](ADR-059-gate8a-service-operations-runtime.md) | Accepted |

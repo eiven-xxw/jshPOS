@@ -1,0 +1,16 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://jingshanghui.example/contracts/t2/gate8a-svc001/service-events.schema.json",
+  "title":"T2-SVC-001 服务运营事件",
+  "type":"object","additionalProperties":false,
+  "required":["schemaVersion","eventId","eventType","tenantId","aggregateType","aggregateId","aggregateVersion","payloadSha256","correlationId","occurredAt"],
+  "properties":{
+    "schemaVersion":{"const":"1.0"},"eventId":{"type":"string","pattern":"^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "eventType":{"enum":["service.catalog-created.v1","service.catalog-published.v1","service.project-created.v1","service.project-state-changed.v1","service.project-check-completed.v1","service.ticket-created.v1","service.ticket-state-changed.v1","service.ticket-assignment-changed.v1","service.attachment-stored.v1","service.attachment-cleaned.v1"]},
+    "tenantId":{"type":"string","pattern":"^[A-Za-z0-9][A-Za-z0-9_-]{0,19}$"},
+    "aggregateType":{"enum":["CATALOG","PROJECT","TICKET","ATTACHMENT"]},"aggregateId":{"type":"string","pattern":"^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "aggregateVersion":{"type":"integer","minimum":1},"storeId":{"type":["integer","null"],"minimum":1},
+    "payloadSha256":{"type":"string","pattern":"^[0-9a-f]{64}$"},"correlationId":{"type":"string","minLength":1,"maxLength":64},
+    "occurredAt":{"type":"string","format":"date-time"}
+  }
+}

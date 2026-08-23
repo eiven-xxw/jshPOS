@@ -14,17 +14,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * 在全模块正式运行时类路径上执行 V1—V84，验证既有 Owner、SaaS 与订阅迁移可共同前向安装。
+ * 在全模块正式运行时类路径上执行 V1—V86，验证既有 Owner、SaaS、订阅与服务运营迁移可共同前向安装。
  * 该测试只由带受控 MySQL 8.4 服务的专属 CI Job 显式执行。
  */
 @Tag("local")
 class MemberBenefitMigrationMySqlIT {
-    private final String url = required("GATE8A_SUB_MYSQL_JDBC_URL", "GATE8A_SAA_MYSQL_JDBC_URL");
-    private final String username = required("GATE8A_SUB_MYSQL_USERNAME", "GATE8A_SAA_MYSQL_USERNAME");
-    private final String password = required("GATE8A_SUB_MYSQL_PASSWORD", "GATE8A_SAA_MYSQL_PASSWORD");
+    private final String url = required("GATE8A_SVC_MYSQL_JDBC_URL", "GATE8A_SUB_MYSQL_JDBC_URL", "GATE8A_SAA_MYSQL_JDBC_URL");
+    private final String username = required("GATE8A_SVC_MYSQL_USERNAME", "GATE8A_SUB_MYSQL_USERNAME", "GATE8A_SAA_MYSQL_USERNAME");
+    private final String password = required("GATE8A_SVC_MYSQL_PASSWORD", "GATE8A_SUB_MYSQL_PASSWORD", "GATE8A_SAA_MYSQL_PASSWORD");
 
     @Test
-    void migratesUnifiedRuntimeThroughV84AndEnforcesMemberBenefitFacts() throws Exception {
+    void migratesUnifiedRuntimeThroughV86AndEnforcesOwnerFacts() throws Exception {
         createFrameworkMenuFixture();
         Flyway flyway = Flyway.configure().dataSource(url, username, password)
             .locations("classpath:db/migration").table("jshpos_flyway_schema_history")
@@ -33,12 +33,13 @@ class MemberBenefitMigrationMySqlIT {
         assertThat(flyway.migrate().migrationsExecuted).isZero();
         flyway.validate();
         assertThat(flyway.info().current()).isNotNull();
-        assertThat(flyway.info().current().getVersion().toString()).isEqualTo("202608230084");
+        assertThat(flyway.info().current().getVersion().toString()).isEqualTo("202608240086");
         assertPermissionMenuRangesAreReconciled();
         assertOwnerTablesTenantKeysCommentsAndTriggers();
         assertPackageMetadataIsImmutable();
         assertSaasHistoryAndQuotaAreProtected();
         assertSubscriptionHistoryAndAccessAreProtected();
+        assertServiceHistoryAndAttachmentBoundaryAreProtected();
     }
 
     private void createFrameworkMenuFixture() throws SQLException {
@@ -91,6 +92,11 @@ class MemberBenefitMigrationMySqlIT {
                 assertThat(rows.next()).isTrue();
                 assertThat(rows.getInt(1)).isEqualTo(9);
             }
+            try (var rows = statement.executeQuery("SELECT COUNT(DISTINCT perms) FROM sys_menu "
+                + "WHERE menu_id BETWEEN 9201780 AND 9201790")) {
+                assertThat(rows.next()).isTrue();
+                assertThat(rows.getInt(1)).isEqualTo(11);
+            }
         }
     }
 
@@ -107,7 +113,10 @@ class MemberBenefitMigrationMySqlIT {
             "saas_command_result", "saas_quota_usage", "saas_audit_event", "saas_outbox",
             "sub_subscription", "sub_subscription_term", "sub_subscription_state_event",
             "sub_notification_intent", "sub_schedule_checkpoint", "sub_command_result",
-            "sub_audit_event", "sub_outbox", "saas_subscription_access", "saas_subscription_access_event");
+            "sub_audit_event", "sub_outbox", "saas_subscription_access", "saas_subscription_access_event",
+            "svc_catalog_version", "svc_catalog_item", "svc_implementation_project", "svc_project_check_item",
+            "svc_work_order", "svc_work_order_history", "svc_attachment", "svc_command_result",
+            "svc_audit_event", "svc_outbox");
         try (Connection connection = DriverManager.getConnection(url, username, password);
              Statement statement = connection.createStatement()) {
             for (String table : tables) {
@@ -236,11 +245,42 @@ class MemberBenefitMigrationMySqlIT {
         }
     }
 
-    private static String required(String primary, String compatibility) {
+    /** 验证服务目录项、处理历史和审计均不可改写，附件表不保存正文或永久地址。 */
+    private void assertServiceHistoryAndAttachmentBoundaryAreProtected() throws SQLException {
+        try (Connection connection = DriverManager.getConnection(url, username, password);
+             Statement statement = connection.createStatement()) {
+            statement.executeUpdate("INSERT INTO svc_catalog_version(catalog_id,tenant_id,catalog_code,version_no,"
+                + "industry_template,catalog_name,state,content_sha256,creator_user_id,record_version,created_at,updated_at) VALUES("
+                + "'01K80000000000000000000820','TENANT_A','SYNTHETIC_SERVICE',1,'CONVENIENCE','虚构服务目录','DRAFT',"
+                + "REPEAT('a',64),1,0,UTC_TIMESTAMP(3),UTC_TIMESTAMP(3))");
+            statement.executeUpdate("INSERT INTO svc_catalog_item(item_id,tenant_id,catalog_id,item_code,item_name,"
+                + "mandatory,sequence_no,created_at) VALUES('01K80000000000000000000821','TENANT_A',"
+                + "'01K80000000000000000000820','STORE_CONFIG','门店配置核验',1,1,UTC_TIMESTAMP(3))");
+            statement.executeUpdate("INSERT INTO svc_work_order_history(history_id,tenant_id,store_id,aggregate_type,"
+                + "aggregate_id,action_code,from_state,to_state,note,request_sha256,correlation_id,actor_user_id,occurred_at) VALUES("
+                + "'01K80000000000000000000822','TENANT_A',1101,'CATALOG','01K80000000000000000000820',"
+                + "'CREATE_CATALOG',NULL,'DRAFT','合成目录事实',REPEAT('b',64),'trace-svc-820',1,UTC_TIMESTAMP(3))");
+            assertThatThrownBy(() -> statement.executeUpdate("UPDATE svc_catalog_item SET item_name='覆盖历史' "
+                + "WHERE item_id='01K80000000000000000000821'"))
+                .isInstanceOf(SQLException.class).hasMessageContaining("append only");
+            assertThatThrownBy(() -> statement.executeUpdate("DELETE FROM svc_work_order_history WHERE "
+                + "history_id='01K80000000000000000000822'"))
+                .isInstanceOf(SQLException.class).hasMessageContaining("cannot be deleted");
+            try (var rows = statement.executeQuery("SELECT COUNT(*) FROM information_schema.columns "
+                + "WHERE table_schema=DATABASE() AND table_name='svc_attachment' AND "
+                + "column_name IN ('body','content','blob','public_url','download_url')")) {
+                assertThat(rows.next()).isTrue();
+                assertThat(rows.getInt(1)).isZero();
+            }
+        }
+    }
+
+    private static String required(String primary, String compatibility, String legacy) {
         String value = System.getenv(primary);
         if (value == null || value.isBlank()) value = System.getenv(compatibility);
+        if (value == null || value.isBlank()) value = System.getenv(legacy);
         if (value == null || value.isBlank()) {
-            throw new IllegalStateException(primary + " or " + compatibility + " must be provided by CI");
+            throw new IllegalStateException(primary + ", " + compatibility + " or " + legacy + " must be provided by CI");
         }
         return value;
     }

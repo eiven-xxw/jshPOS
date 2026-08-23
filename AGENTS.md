@@ -642,6 +642,18 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
 - 本阶段禁止真实计费、自动扣款、支付 Provider、发票、应付、总账、税务、真实短信/邮件和资金沉淀；外部 `BLOCKED`、UAT/REL `DRAFT`、LIC/JSH `DEFERRED` 状态不变。
 - 完成后必须提交《T2-SUB-001 独立周门禁报告》等待项目发起人确认；不得自动进入 SVC、完整 Alpha、现场试点或生产发布。
 
+## 4.52 当前 T2 Gate 8A / Sprint S24-C 条件准入
+
+- 项目发起人已于 2026-08-24 接受 `T2-SUB-001 CONDITIONAL PASS`，同意更新为 `ACCEPTED`，并授权从 SUB 最终封存提交 `ae0c145b82306dd08f9a0999ba3f030d54e8e3e9` 建立 `t2/gate8a-sprint24c-svc001-runtime`。
+- 本阶段唯一允许正式实现的需求是 `T2-SVC-001`；完整 Alpha、现场试点、生产发布和其他新业务需求继续禁止。
+- `jshpos-service` 独占版本化服务目录、实施项目与检查项、服务工单、认领租约、责任流转、处理记录、附件元数据、内部时间目标、审计和 Outbox；它只能读取 SaaS/Subscription 正式快照，不得修改租户、套餐、订阅、支付、设备或其他 Owner 私有事实。
+- 实施项目状态固定为 `DRAFT/PREFLIGHTING/PREFLIGHT_FAILED/READY/IN_PROGRESS/BLOCKED/READY_TO_HANDOVER/HANDED_OVER/CANCELLED`；工单状态固定为 `OPEN/ASSIGNED/IN_PROGRESS/WAITING_INPUT/RESOLVED/CLOSED/REOPENED/CANCELLED`。必选检查未完成不得移交，关闭必须有解决摘要和独立复核，重开只追加历史。
+- 附件正文只能进入服务端生成租户命名空间的受控对象存储键；数据库、日志、Git 和普通制品只能保存不透明引用、SHA-256、媒体类型、大小、保留/清理状态。上传、下载、清理每次都必须重新校验可信租户、门店范围和独立权限，短期链接不得超过 5 分钟。
+- 认领和转派必须使用持久化租约、乐观锁、稳定幂等键和只追加责任历史；同键异内容拒绝，租约过期、并发认领、重启和重复任务必须收敛或失败关闭。
+- 内部响应目标只用于运营告警，不形成合同 SLA、赔付或自动升级承诺；真实短信/邮件、呼叫中心、在线聊天、远程控制、AI 自动派单和第三方工单连接器不在本阶段。
+- `T2-PAY-002/HWD-001/PRN-001/PAR-001` 继续 `BLOCKED`；`T2-UAT-001/REL-001` 继续 `DRAFT`；`T2-LIC-001/JSH-001` 继续 `DEFERRED`。外部执行计数保持 0。
+- 完成后必须提交《T2-SVC-001 独立周门禁报告》等待项目发起人确认；不得自动启动完整 Alpha、现场试点或生产发布。
+
 ## 5. 工程与测试规则
 
 - 服务端采用 RuoYi-Vue-Plus 模块化单体，不得把领域逻辑写入 Controller、通用工具类或框架系统模块。

@@ -1,0 +1,33 @@
+{
+  "schemaVersion":"1.0","requirementId":"T2-SVC-001","evidenceLevel":"INTERNAL_SYNTHETIC_SOFTWARE_ONLY",
+  "vectors":[
+    {"id":"SVC-001","scenario":"发布版本化服务目录","expected":"发布后内容不可变"},
+    {"id":"SVC-002","scenario":"重复目录发布同键同内容","expected":"返回原结果"},
+    {"id":"SVC-003","scenario":"同键异内容","expected":"SVC-IDEM-001"},
+    {"id":"SVC-004","scenario":"建立实施项目","expected":"绑定可信租户门店和目录版本"},
+    {"id":"SVC-005","scenario":"必选检查未完成移交","expected":"SVC-CHECK-001"},
+    {"id":"SVC-006","scenario":"完成全部必选检查","expected":"READY_TO_HANDOVER可达"},
+    {"id":"SVC-007","scenario":"项目重复状态命令","expected":"稳定重放"},
+    {"id":"SVC-008","scenario":"新建工单","expected":"OPEN和内部目标快照"},
+    {"id":"SVC-009","scenario":"并发认领","expected":"单一租约成功"},
+    {"id":"SVC-010","scenario":"租约过期后处理","expected":"SVC-LEASE-001"},
+    {"id":"SVC-011","scenario":"转派竞态","expected":"旧版本失败关闭"},
+    {"id":"SVC-012","scenario":"等待输入后恢复","expected":"只追加状态历史"},
+    {"id":"SVC-013","scenario":"无解决摘要关闭","expected":"SVC-STATE-001"},
+    {"id":"SVC-014","scenario":"解决人与复核人相同","expected":"SVC-SOD-001"},
+    {"id":"SVC-015","scenario":"关闭后重开","expected":"REOPENED且原关闭事实不变"},
+    {"id":"SVC-016","scenario":"跨租户工单查询","expected":"失败关闭"},
+    {"id":"SVC-017","scenario":"跨门店工单访问","expected":"SVC-SCOPE-001"},
+    {"id":"SVC-018","scenario":"恶意附件文件名","expected":"SVC-ATT-001"},
+    {"id":"SVC-019","scenario":"超限附件","expected":"SVC-ATT-001"},
+    {"id":"SVC-020","scenario":"对象键由客户端提交","expected":"忽略并由服务端生成"},
+    {"id":"SVC-021","scenario":"跨租户附件下载","expected":"SVC-ATT-002"},
+    {"id":"SVC-022","scenario":"签名链接超过5分钟","expected":"拒绝"},
+    {"id":"SVC-023","scenario":"重复清理任务","expected":"幂等并保留摘要审计"},
+    {"id":"SVC-024","scenario":"对象存储不可用","expected":"SVC-ATT-003且不落本地"},
+    {"id":"SVC-025","scenario":"订阅受限","expected":"SVC-ACCESS-001"},
+    {"id":"SVC-026","scenario":"内部目标超时","expected":"只形成内部告警"},
+    {"id":"SVC-027","scenario":"请求远程控制设备","expected":"非目标失败关闭"},
+    {"id":"SVC-028","scenario":"迁移中断","expected":"旧版本可用并安全前向修复"}
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "requirement_id": "T2-SVC-001",
+  "gate": "T2-GATE8A-SPRINT-S24C-SVC001",
+  "base_commit": "ae0c145b82306dd08f9a0999ba3f030d54e8e3e9",
+  "branch": "t2/gate8a-sprint24c-svc001-runtime",
+  "status": "VERIFIED",
+  "owner": "SERVICE",
+  "dependencies": {"T2-SAA-001": "ACCEPTED", "T2-SUB-001": "ACCEPTED"},
+  "migration": ["V202608240085", "V202608240086"],
+  "external_execution": {"realNotification":0,"providerNetwork":0,"realFunds":0,"realDevice":0,"realPeripheral":0,"partnerExecution":0,"fullAlpha":0,"production":0,"commercialClaim":0},
+  "preserved": {"T2-PAY-002":"BLOCKED","T2-HWD-001":"BLOCKED","T2-PRN-001":"BLOCKED","T2-PAR-001":"BLOCKED","T2-UAT-001":"DRAFT","T2-REL-001":"DRAFT","T2-LIC-001":"DEFERRED","T2-JSH-001":"DEFERRED"},
+  "non_goals": ["CONTRACT_SLA", "COMMERCIAL_COMPENSATION", "REAL_NOTIFICATION", "REMOTE_CONTROL", "AI_DISPATCH", "THIRD_PARTY_TICKETING", "PRODUCTION_CHANGE_APPROVAL"]
+}

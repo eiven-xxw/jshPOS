@@ -1,0 +1,20 @@
+{
+  "schemaVersion":"1.0",
+  "requirementId":"T2-SVC-001",
+  "errors":[
+    {"code":"SVC-404","http":404,"meaning":"服务事实不存在"},
+    {"code":"SVC-ACCESS-001","http":403,"meaning":"SaaS或Subscription未授权服务运营"},
+    {"code":"SVC-TENANT-001","http":403,"meaning":"可信租户不匹配"},
+    {"code":"SVC-SCOPE-001","http":403,"meaning":"组织或门店范围拒绝"},
+    {"code":"SVC-STATE-001","http":409,"meaning":"状态迁移非法"},
+    {"code":"SVC-CONC-001","http":409,"meaning":"状态版本或租约并发冲突"},
+    {"code":"SVC-IDEM-001","http":409,"meaning":"同幂等键异内容"},
+    {"code":"SVC-CHECK-001","http":409,"meaning":"必选检查项未完成"},
+    {"code":"SVC-SOD-001","http":409,"meaning":"解决人与关闭复核人相同"},
+    {"code":"SVC-LEASE-001","http":409,"meaning":"认领租约缺失或过期"},
+    {"code":"SVC-ATT-001","http":400,"meaning":"附件名称媒体类型大小或摘要非法"},
+    {"code":"SVC-ATT-002","http":403,"meaning":"附件租户门店或工单范围不匹配"},
+    {"code":"SVC-ATT-003","http":503,"meaning":"受控对象存储不可用"},
+    {"code":"SVC-SLA-001","http":400,"meaning":"内部目标不能表达商业SLA或赔付"}
+  ]
+}
