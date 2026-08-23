@@ -73,6 +73,16 @@ public interface SystemConstants {
     Long SUPER_ADMIN_ID = 1L;
 
     /**
+     * RuoYi 三段式菜单权限的超级管理员通配符
+     */
+    String ALL_PERMISSION = "*:*:*";
+
+    /**
+     * 鲸熵汇 Owner 两段式权限的超级管理员通配符
+     */
+    String DOMAIN_ALL_PERMISSION = "*:*";
+
+    /**
      * 根部门祖级列表
      */
     String ROOT_DEPT_ANCESTORS = "0";

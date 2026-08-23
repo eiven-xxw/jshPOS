@@ -1,6 +1,7 @@
 package org.dromara.system.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.dromara.common.core.constant.SystemConstants;
 import org.dromara.common.core.constant.TenantConstants;
 import org.dromara.common.core.service.PermissionService;
 import org.dromara.common.satoken.utils.LoginHelper;
@@ -53,7 +54,10 @@ public class SysPermissionServiceImpl implements ISysPermissionService, Permissi
         Set<String> perms = new HashSet<>();
         // 管理员拥有所有权限
         if (LoginHelper.isSuperAdmin(userId)) {
-            perms.add("*:*:*");
+            // RuoYi 使用三段权限，鲸熵汇 Owner 同时存在两段权限；Sa-Token 的
+            // 三段通配符不会匹配两段权限，因此两种形态必须分别显式授权。
+            perms.add(SystemConstants.ALL_PERMISSION);
+            perms.add(SystemConstants.DOMAIN_ALL_PERMISSION);
         } else {
             perms.addAll(menuService.selectMenuPermsByUserId(userId));
         }
