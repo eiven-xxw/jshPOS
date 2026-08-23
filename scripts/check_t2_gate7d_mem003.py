@@ -83,6 +83,8 @@ def main() -> None:
         "server/ruoyi-modules/jshpos-promotion/src/main/java/com/jingshanghui/pos/promotion/application/service/MemberBenefitPackageService.java",
         "server/ruoyi-modules/jshpos-order/src/main/resources/db/migration/V202608230079__gate7d_order_member_benefit_binding.sql",
         "server/ruoyi-admin/src/test/java/org/dromara/test/MemberBenefitMigrationMySqlIT.java",
+        "server/ruoyi-modules/jshpos-integration/src/main/resources/db/migration/beforeEachMigrate__repair_gate4c_gate7c_menu_ids.sql",
+        "server/ruoyi-modules/jshpos-integration/src/test/java/com/jingshanghui/pos/integration/infrastructure/migration/MenuIdCollisionForwardRepairPolicyTest.java",
         "pos-flutter/lib/infrastructure/local_database/gate7d_member_benefit_schema.dart",
         "pos-flutter/lib/features/promotion/infrastructure/member_benefit_package_installer.dart",
         "pos-flutter/lib/features/promotion/domain/member_benefit_engine.dart",
@@ -112,6 +114,14 @@ def main() -> None:
     fail("float" not in migration_text and " double " not in migration_text, "迁移出现浮点数")
     fail(migration_text.count("tenant_id varchar(20)") >= 16, "可信租户列覆盖不足")
     fail(migration_text.count("immutable") >= 8, "只追加/不可变触发器覆盖不足")
+
+    forward_repair = read(
+        "server/ruoyi-modules/jshpos-integration/src/main/resources/db/migration/"
+        "beforeEachMigrate__repair_gate4c_gate7c_menu_ids.sql"
+    ).lower()
+    for token in ("9200540", "9200543", "9201540", "9201543",
+                  "insert ignore into sys_role_menu", "signal sqlstate '45000'"):
+        fail(token in forward_repair, f"组合根菜单冲突前向修复不完整: {token}")
 
     registry = list(csv.DictReader(read("contracts/t2/gate7d-mem003/persistence-registry.csv").splitlines()))
     fail(len(registry) >= 22, "持久化登记少于 22 个正式对象")

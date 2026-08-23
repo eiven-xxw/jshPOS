@@ -34,6 +34,7 @@ class MemberBenefitMigrationMySqlIT {
         flyway.validate();
         assertThat(flyway.info().current()).isNotNull();
         assertThat(flyway.info().current().getVersion().toString()).isEqualTo("202608230080");
+        assertPermissionMenuRangesAreReconciled();
         assertOwnerTablesTenantKeysCommentsAndTriggers();
         assertPackageMetadataIsImmutable();
     }
@@ -50,6 +51,34 @@ class MemberBenefitMigrationMySqlIT {
                   create_dept BIGINT,create_by BIGINT,create_time DATETIME,update_by BIGINT,update_time DATETIME,
                   remark VARCHAR(500) DEFAULT '') ENGINE=InnoDB
                 """);
+            statement.executeUpdate("""
+                CREATE TABLE IF NOT EXISTS sys_role_menu (
+                  role_id BIGINT NOT NULL,menu_id BIGINT NOT NULL,PRIMARY KEY(role_id,menu_id)
+                ) ENGINE=InnoDB
+                """);
+        }
+    }
+
+    private void assertPermissionMenuRangesAreReconciled() throws SQLException {
+        try (Connection connection = DriverManager.getConnection(url, username, password);
+             Statement statement = connection.createStatement()) {
+            try (var rows = statement.executeQuery("SELECT COUNT(*) FROM sys_menu WHERE "
+                + "(menu_id=9201540 AND perms='inventory:cost-balance:read') OR "
+                + "(menu_id=9201541 AND perms='inventory:cost-ledger:read') OR "
+                + "(menu_id=9201542 AND perms='inventory:cost-policy:publish') OR "
+                + "(menu_id=9201543 AND perms='inventory:cost-rebuild')")) {
+                assertThat(rows.next()).isTrue();
+                assertThat(rows.getInt(1)).isEqualTo(4);
+            }
+            try (var rows = statement.executeQuery("SELECT COUNT(*) FROM sys_menu WHERE "
+                + "(menu_id=9200540 AND perms='migration:read') OR "
+                + "(menu_id=9200541 AND perms='migration:upload') OR "
+                + "(menu_id=9200542 AND perms='migration:approve') OR "
+                + "(menu_id=9200543 AND perms='migration:execute') OR "
+                + "(menu_id=9200544 AND perms='migration:activate')")) {
+                assertThat(rows.next()).isTrue();
+                assertThat(rows.getInt(1)).isEqualTo(5);
+            }
         }
     }
 
