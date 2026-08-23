@@ -6,7 +6,7 @@
     <groupId>com.jingshanghui.pos</groupId>
     <artifactId>jshpos-operations</artifactId>
     <name>jshpos-operations</name>
-    <description>鲸熵汇收银系统 Gate 7D 门店业务日日结、差异、审批和签署</description>
+    <description>鲸熵汇收银系统 Gate 7D 门店日结与统一异常处置中心</description>
     <dependencies>
         <dependency><groupId>com.jingshanghui.pos</groupId><artifactId>jshpos-foundation</artifactId></dependency>
         <dependency><groupId>com.jingshanghui.pos</groupId><artifactId>jshpos-order</artifactId></dependency>

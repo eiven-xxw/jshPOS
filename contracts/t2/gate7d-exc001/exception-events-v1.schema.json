@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jingshanghui.example/contracts/operations/exception-event.v1.schema.json",
+  "title": "OperationsExceptionEventV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["eventId", "eventType", "schemaVersion", "caseId", "sourceOwner", "sourceFactId", "sourceSha256", "state", "correlationId", "occurredAt"],
+  "properties": {
+    "eventId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "eventType": {"enum": ["operations.exception.opened.v1", "operations.exception.observed.v1", "operations.exception.repair-requested.v1", "operations.exception.state-changed.v1", "operations.exception.closed.v1"]},
+    "schemaVersion": {"const": "1.0"},
+    "caseId": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "sourceOwner": {"enum": ["SYNC", "DATA_PACKAGE", "PAYMENT_REFUND", "INVENTORY", "COSTING", "REPORTING", "DAILY_CLOSE"]},
+    "sourceFactId": {"type": "string", "minLength": 1, "maxLength": 128},
+    "sourceSha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "state": {"enum": ["OPEN", "CLAIMED", "IN_PROGRESS", "WAITING_OWNER", "RESOLVED", "CLOSED", "REOPENED", "FAILED"]},
+    "correlationId": {"type": "string", "minLength": 1, "maxLength": 64},
+    "occurredAt": {"type": "string", "format": "date-time"}
+  }
+}

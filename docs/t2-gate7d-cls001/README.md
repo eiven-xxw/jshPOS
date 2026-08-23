@@ -4,6 +4,7 @@
 - `02_T2_CLS001独立周门禁报告.md`：正式实现、缺陷、质量门禁和证据边界。
 - `03_T2_CLS001证据索引.md`：Requirement 到实现、测试与制品的证据映射。
 - `04_T2_EXC001下一步操作指令.md`：仅供项目发起人接受 CLS-001 后启动异常中心。
+- `05_T2_CLS001项目发起人接受记录.md`：接受结论与不可提升的证据边界。
 
-当前状态：`T2-CLS-001 = VERIFIED / AWAITING SPONSOR CONFIRMATION`，
-`T2-EXC-001` 与 Gate 7D 后续需求继续 `DRAFT`。
+当前状态：`T2-CLS-001 = ACCEPTED`，`T2-EXC-001 = IN_PROGRESS`；其余 Gate 7D
+需求继续 `DRAFT`，所有外部证据状态不变。

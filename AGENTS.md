@@ -547,6 +547,17 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
 - `T2-CLS-001` 仅更新为 `VERIFIED / AWAITING SPONSOR ACCEPTANCE`；项目发起人确认前不得更新为 `ACCEPTED`，`T2-EXC-001` 继续 `DRAFT`。
 - 完成后必须提交《T2-CLS-001 独立周门禁报告》等待确认；项目发起人确认前只能更新为 `VERIFIED`，不得自动准入 `T2-EXC-001` 或 Gate 7E。
 
+## 4.44 当前 T2 Gate 7D / Sprint S22-A 第二批：T2-EXC-001 统一异常中心
+
+- 项目发起人已于 2026-08-23 接受 `T2-CLS-001 CONDITIONAL PASS`，只允许把它更新为 `ACCEPTED`；证据仍限虚构租户、虚构门店与合成权威事实，不等于外部或商业验收。
+- 仅授权从 CLS 最终封存提交 `b240e0b697e40a16d4f85cb2447195284f15e21e` 建立 `t2/gate7d-sprint22a-exc001-exception-center`，独立实现 `T2-EXC-001`；`T2-MEM-003` 与 Gate 7D 后续需求继续 `DRAFT`。
+- `jshpos-operations` 独占异常案件、来源观察、认领租约、转派、处置计划、修复命令引用、复核、状态历史、审计和 Outbox；来源 Owner 继续独占其事实，异常中心不得跨 Owner Mapper、直接改写余额/流水/资金/投影/日结或复制领域状态机。
+- 来源只能经版本化事件或显式 Owner 端口形成；必须绑定可信租户与门店范围、稳定来源身份、序号、内容摘要、去重键和关联标识。同来源同摘要幂等，同来源异摘要追加观察并显式冲突，禁止覆盖历史。
+- 状态至少覆盖 `OPEN/CLAIMED/IN_PROGRESS/WAITING_OWNER/RESOLVED/CLOSED/REOPENED/FAILED`；认领使用有期限租约和乐观锁，关闭必须具备 Owner 可验证结果和独立复核，重新出现只能重开或关联新案件。
+- 修复只能调用对应 Owner 的具名端口并复用稳定命令；支付/退款 `UNKNOWN` 只允许观察查询、回调或对账收敛，禁止生成新扣款、退款或其他业务命令。未配置的 Owner 修复能力必须 `UNAVAILABLE` 失败关闭。
+- `T2-PAY-002/HWD-001/PRN-001/PAR-001` 继续 `BLOCKED`，`T2-JSH-001/LIC-001` 继续 `DEFERRED`；Provider 网络、真实资金、设备/外设命令、伙伴现场、完整 Alpha、生产和商业声明保持 0。
+- 完成后只允许把 `T2-EXC-001` 更新为 `VERIFIED / AWAITING SPONSOR ACCEPTANCE` 并提交独立周门禁报告；不得自动准入 `T2-MEM-003`、其他 Gate 7D 需求或 Gate 7E。
+
 ## 5. 工程与测试规则
 
 - 服务端采用 RuoYi-Vue-Plus 模块化单体，不得把领域逻辑写入 Controller、通用工具类或框架系统模块。

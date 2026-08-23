@@ -1,0 +1,50 @@
+openapi: 3.0.3
+info:
+  title: 鲸熵汇统一异常中心 API
+  version: 1.0.0
+paths:
+  /api/v1/operations/exceptions:
+    get:
+      operationId: listExceptionCases
+      parameters:
+        - {name: storeId, in: query, required: true, schema: {type: integer, format: int64}}
+        - {name: state, in: query, required: false, schema: {$ref: '#/components/schemas/CaseState'}}
+        - {name: severity, in: query, required: false, schema: {type: string}}
+        - {name: limit, in: query, required: false, schema: {type: integer, minimum: 1, maximum: 100}}
+      responses: {'200': {description: 可信租户与门店范围内的案件}}
+  /api/v1/operations/exceptions/scan:
+    post:
+      operationId: scanOwnerExceptions
+      description: 由服务端 Owner 端口产生权威观察；请求不得提供租户、来源摘要或严重级别。
+      parameters:
+        - {$ref: '#/components/parameters/IdempotencyKey'}
+        - {$ref: '#/components/parameters/CorrelationId'}
+      requestBody:
+        required: true
+        content: {application/json: {schema: {type: object, required: [storeId, businessDate], properties: {storeId: {type: integer, format: int64}, businessDate: {type: string, format: date}}}}}
+      responses: {'200': {description: 扫描后案件列表}}
+  /api/v1/operations/exceptions/{caseId}:
+    get:
+      operationId: getExceptionCase
+      parameters: [{$ref: '#/components/parameters/CaseId'}]
+      responses: {'200': {description: 案件详情}}
+  /api/v1/operations/exceptions/{caseId}/{action}:
+    post:
+      operationId: operateExceptionCase
+      parameters:
+        - {$ref: '#/components/parameters/CaseId'}
+        - {name: action, in: path, required: true, schema: {type: string, enum: [claim, start, transfer, plan, repair, review, close, reopen]}}
+        - {$ref: '#/components/parameters/IdempotencyKey'}
+        - {$ref: '#/components/parameters/CorrelationId'}
+      requestBody: {required: false, content: {application/json: {schema: {type: object}}}}
+      responses:
+        '200': {description: 服务端权威案件状态}
+        '409': {description: 状态、租约、摘要或幂等冲突}
+        '503': {description: Owner 修复端口或外部能力不可用}
+components:
+  parameters:
+    CaseId: {name: caseId, in: path, required: true, schema: {type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'}}
+    IdempotencyKey: {name: Idempotency-Key, in: header, required: true, schema: {type: string, minLength: 8, maxLength: 64}}
+    CorrelationId: {name: X-Correlation-ID, in: header, required: true, schema: {type: string, minLength: 1, maxLength: 64}}
+  schemas:
+    CaseState: {type: string, enum: [OPEN, CLAIMED, IN_PROGRESS, WAITING_OWNER, RESOLVED, CLOSED, REOPENED, FAILED]}

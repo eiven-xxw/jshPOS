@@ -27,7 +27,7 @@ class DailyCloseMySqlIT {
         assertThat(flyway.migrate().migrationsExecuted).isPositive();
         assertThat(flyway.migrate().migrationsExecuted).isZero();
         flyway.validate();
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("202608230072");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("202608230074");
         assertSchema();
         assertTenantAndAppendOnlyGuards();
         millionSyntheticFactsUseExactIntegerAggregation();

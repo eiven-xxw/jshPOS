@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jingshanghui.pos.operations.infrastructure.persistence.mapper.ExceptionCenterMapper">
+  <sql id="caseColumns">case_id caseId,tenant_id tenantId,store_id storeId,source_owner sourceOwner,source_type sourceType,
+    source_fact_id sourceFactId,dedup_key dedupKey,severity,state,latest_source_event_id latestSourceEventId,
+    latest_source_sequence latestSourceSequence,latest_source_sha256 latestSourceSha256,assignee_user_id assigneeUserId,
+    lease_expires_at leaseExpiresAt,resolver_user_id resolverUserId,reviewer_user_id reviewerUserId,
+    record_version recordVersion,first_observed_at firstObservedAt,last_observed_at lastObservedAt,
+    created_at createdAt,updated_at updatedAt</sql>
+  <select id="find" resultType="com.jingshanghui.pos.operations.application.model.ExceptionModels$CaseRecord">
+    SELECT <include refid="caseColumns"/> FROM ops_exception_case WHERE tenant_id=#{tenantId} AND case_id=#{caseId}
+  </select>
+  <select id="lock" resultType="com.jingshanghui.pos.operations.application.model.ExceptionModels$CaseRecord">
+    SELECT <include refid="caseColumns"/> FROM ops_exception_case WHERE tenant_id=#{tenantId} AND case_id=#{caseId} FOR UPDATE
+  </select>
+  <select id="findByDedup" resultType="com.jingshanghui.pos.operations.application.model.ExceptionModels$CaseRecord">
+    SELECT <include refid="caseColumns"/> FROM ops_exception_case WHERE tenant_id=#{tenantId} AND store_id=#{storeId} AND dedup_key=#{dedupKey}
+  </select>
+  <select id="findObservation" resultType="com.jingshanghui.pos.operations.application.model.ExceptionModels$ObservationRecord">
+    SELECT observation_id observationId,case_id caseId,source_event_id sourceEventId,source_sequence sourceSequence,
+      source_sha256 sourceSha256,correlation_id correlationId,masked_summary maskedSummary,conflict_flag conflictFlag,
+      observed_at observedAt FROM ops_exception_observation
+    WHERE tenant_id=#{tenantId} AND owner_code=#{ownerCode} AND source_event_id=#{sourceEventId}
+  </select>
+  <select id="list" resultType="com.jingshanghui.pos.operations.application.model.ExceptionModels$CaseRecord">
+    SELECT <include refid="caseColumns"/> FROM ops_exception_case
+    WHERE tenant_id=#{tenantId} AND store_id=#{storeId}
+    <if test="state != null">AND state=#{state}</if><if test="severity != null">AND severity=#{severity}</if>
+    ORDER BY FIELD(severity,'P0','P1','P2','P3'),last_observed_at DESC,case_id LIMIT #{limit}
+  </select>
+  <insert id="insertCase">INSERT INTO ops_exception_case(case_id,tenant_id,store_id,source_owner,source_type,
+    source_fact_id,dedup_key,severity,state,latest_source_event_id,latest_source_sequence,latest_source_sha256,
+    first_observed_at,last_observed_at,created_at,updated_at)
+    VALUES(#{caseId},#{tenantId},#{storeId},#{sourceOwner},#{sourceType},#{sourceFactId},#{dedupKey},#{severity},#{state},
+    #{latestSourceEventId},#{latestSourceSequence},#{latestSourceSha256},#{firstObservedAt},#{lastObservedAt},#{createdAt},#{createdAt})</insert>
+  <update id="updateObservationHead">UPDATE ops_exception_case SET latest_source_event_id=#{sourceEventId},
+    latest_source_sequence=GREATEST(latest_source_sequence,#{sourceSequence}),latest_source_sha256=#{sourceSha256},
+    severity=#{severity},state=#{targetState},last_observed_at=GREATEST(last_observed_at,#{observedAt}),
+    assignee_user_id=CASE WHEN #{targetState}='REOPENED' THEN NULL ELSE assignee_user_id END,
+    lease_expires_at=CASE WHEN #{targetState}='REOPENED' THEN NULL ELSE lease_expires_at END,
+    resolver_user_id=CASE WHEN #{targetState}='REOPENED' THEN NULL ELSE resolver_user_id END,
+    reviewer_user_id=CASE WHEN #{targetState}='REOPENED' THEN NULL ELSE reviewer_user_id END,
+    record_version=record_version+1,updated_at=#{observedAt}
+    WHERE tenant_id=#{tenantId} AND case_id=#{caseId} AND latest_source_sha256=#{expectedSha256} AND record_version=#{expectedVersion}</update>
+  <update id="changeState">UPDATE ops_exception_case SET state=#{toState},assignee_user_id=#{assigneeUserId},
+    lease_expires_at=#{leaseExpiresAt},resolver_user_id=#{resolverUserId},reviewer_user_id=#{reviewerUserId},
+    record_version=record_version+1,updated_at=#{changedAt}
+    WHERE tenant_id=#{tenantId} AND case_id=#{caseId} AND state=#{fromState} AND record_version=#{expectedVersion}</update>
+  <insert id="insertObservation">INSERT INTO ops_exception_observation(observation_id,tenant_id,case_id,owner_code,
+    source_event_id,source_sequence,source_sha256,correlation_id,masked_summary,conflict_flag,observed_at)
+    VALUES(#{observationId},#{tenantId},#{caseId},#{ownerCode},#{sourceEventId},#{sourceSequence},#{sourceSha256},
+    #{correlationId},#{maskedSummary},#{conflictFlag},#{observedAt})</insert>
+  <insert id="insertLeaseEvent">INSERT INTO ops_exception_lease_event(lease_event_id,tenant_id,case_id,event_type,
+    from_user_id,to_user_id,expires_at,reason_sha256,actor_user_id,occurred_at)
+    VALUES(#{leaseEventId},#{tenantId},#{caseId},#{eventType},#{fromUserId},#{toUserId},#{expiresAt},#{reasonSha256},#{actorUserId},#{occurredAt})</insert>
+  <insert id="insertPlan">INSERT INTO ops_exception_action_plan(plan_id,tenant_id,case_id,action_code,summary_sha256,
+    planner_user_id,state,created_at) VALUES(#{planId},#{tenantId},#{caseId},#{actionCode},#{summarySha256},#{plannerUserId},#{state},#{createdAt})</insert>
+  <select id="latestPlan" resultType="com.jingshanghui.pos.operations.application.model.ExceptionModels$PlanRecord">
+    SELECT plan_id planId,case_id caseId,action_code actionCode,summary_sha256 summarySha256,planner_user_id plannerUserId,
+      state,created_at createdAt FROM ops_exception_action_plan WHERE tenant_id=#{tenantId} AND case_id=#{caseId}
+    ORDER BY created_at DESC,plan_id DESC LIMIT 1
+  </select>
+  <insert id="insertRepair">INSERT INTO ops_exception_repair_command(repair_command_id,tenant_id,case_id,owner_code,
+    action_code,request_sha256,idempotency_key,correlation_id,state,requested_at)
+    VALUES(#{repairCommandId},#{tenantId},#{caseId},#{ownerCode},#{actionCode},#{requestSha256},#{idempotencyKey},#{correlationId},#{state},#{requestedAt})</insert>
+  <update id="updateRepairResult">UPDATE ops_exception_repair_command SET state=#{toState},owner_result_reference=#{ownerResultReference},
+    owner_result_sha256=#{ownerResultSha256},observed_at=#{observedAt}
+    WHERE tenant_id=#{tenantId} AND repair_command_id=#{repairCommandId} AND state=#{fromState}</update>
+  <insert id="insertReview">INSERT INTO ops_exception_review(review_id,tenant_id,case_id,reviewer_user_id,decision,reason_sha256,reviewed_at)
+    VALUES(#{reviewId},#{tenantId},#{caseId},#{reviewerUserId},#{decision},#{reasonSha256},#{reviewedAt})</insert>
+  <select id="latestApprovedReview" resultType="com.jingshanghui.pos.operations.application.model.ExceptionModels$ReviewRecord">
+    SELECT review_id reviewId,case_id caseId,reviewer_user_id reviewerUserId,decision,reason_sha256 reasonSha256,
+      reviewed_at reviewedAt FROM ops_exception_review WHERE tenant_id=#{tenantId} AND case_id=#{caseId} AND decision='APPROVED'
+    ORDER BY reviewed_at DESC,review_id DESC LIMIT 1
+  </select>
+  <insert id="appendState">INSERT INTO ops_exception_state_event(state_event_id,tenant_id,case_id,from_state,to_state,
+    reason_sha256,actor_user_id,occurred_at) VALUES(#{stateEventId},#{tenantId},#{caseId},#{fromState},#{toState},#{reasonSha256},#{actorUserId},#{occurredAt})</insert>
+  <insert id="appendAudit">INSERT INTO ops_exception_audit_event(audit_id,tenant_id,case_id,action_code,result_code,
+    request_sha256,correlation_id,actor_user_id,occurred_at) VALUES(#{auditId},#{tenantId},#{caseId},#{actionCode},#{resultCode},#{requestSha256},#{correlationId},#{actorUserId},#{occurredAt})</insert>
+  <insert id="appendOutbox">INSERT INTO ops_exception_outbox(event_id,tenant_id,case_id,event_type,payload_json,
+    payload_sha256,occurred_at) VALUES(#{eventId},#{tenantId},#{caseId},#{eventType},#{payloadJson},#{payloadSha256},#{occurredAt})</insert>
+  <select id="findCommand" resultType="com.jingshanghui.pos.operations.application.model.ExceptionModels$CommandRecord">
+    SELECT command_id commandId,case_id caseId,operation,idempotency_key idempotencyKey,request_sha256 requestSha256,
+      result_state resultState,created_at createdAt FROM ops_exception_command
+    WHERE tenant_id=#{tenantId} AND operation=#{operation} AND idempotency_key=#{idempotencyKey}
+  </select>
+  <insert id="insertCommand">INSERT INTO ops_exception_command(command_id,tenant_id,case_id,operation,idempotency_key,
+    request_sha256,result_state,created_at) VALUES(#{commandId},#{tenantId},#{caseId},#{operation},#{idempotencyKey},#{requestSha256},#{resultState},#{createdAt})</insert>
+  <select id="listObservations" resultType="com.jingshanghui.pos.operations.application.model.ExceptionModels$ObservationRecord">
+    SELECT observation_id observationId,case_id caseId,source_event_id sourceEventId,source_sequence sourceSequence,
+      source_sha256 sourceSha256,correlation_id correlationId,masked_summary maskedSummary,conflict_flag conflictFlag,
+      observed_at observedAt FROM ops_exception_observation WHERE tenant_id=#{tenantId} AND case_id=#{caseId} ORDER BY observed_at,observation_id
+  </select>
+  <select id="listPlans" resultType="com.jingshanghui.pos.operations.application.model.ExceptionModels$PlanRecord">
+    SELECT plan_id planId,case_id caseId,action_code actionCode,summary_sha256 summarySha256,planner_user_id plannerUserId,
+      state,created_at createdAt FROM ops_exception_action_plan WHERE tenant_id=#{tenantId} AND case_id=#{caseId} ORDER BY created_at,plan_id
+  </select>
+  <select id="listRepairs" resultType="com.jingshanghui.pos.operations.application.model.ExceptionModels$RepairRecord">
+    SELECT repair_command_id repairCommandId,case_id caseId,owner_code ownerCode,action_code actionCode,
+      request_sha256 requestSha256,idempotency_key idempotencyKey,correlation_id correlationId,state,
+      owner_result_reference ownerResultReference,owner_result_sha256 ownerResultSha256,requested_at requestedAt,
+      observed_at observedAt FROM ops_exception_repair_command WHERE tenant_id=#{tenantId} AND case_id=#{caseId} ORDER BY requested_at,repair_command_id
+  </select>
+  <select id="listReviews" resultType="com.jingshanghui.pos.operations.application.model.ExceptionModels$ReviewRecord">
+    SELECT review_id reviewId,case_id caseId,reviewer_user_id reviewerUserId,decision,reason_sha256 reasonSha256,
+      reviewed_at reviewedAt FROM ops_exception_review WHERE tenant_id=#{tenantId} AND case_id=#{caseId} ORDER BY reviewed_at,review_id
+  </select>
+  <select id="listStates" resultType="com.jingshanghui.pos.operations.application.model.ExceptionModels$StateEventRecord">
+    SELECT state_event_id stateEventId,case_id caseId,from_state fromState,to_state toState,reason_sha256 reasonSha256,
+      actor_user_id actorUserId,occurred_at occurredAt FROM ops_exception_state_event WHERE tenant_id=#{tenantId} AND case_id=#{caseId} ORDER BY occurred_at,state_event_id
+  </select>
+  <select id="listAudits" resultType="com.jingshanghui.pos.operations.application.model.ExceptionModels$AuditRecord">
+    SELECT audit_id auditId,case_id caseId,action_code actionCode,result_code resultCode,request_sha256 requestSha256,
+      correlation_id correlationId,actor_user_id actorUserId,occurred_at occurredAt FROM ops_exception_audit_event
+    WHERE tenant_id=#{tenantId} AND case_id=#{caseId} ORDER BY occurred_at,audit_id
+  </select>
+</mapper>

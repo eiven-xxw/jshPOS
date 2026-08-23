@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jingshanghui.pos.costing.infrastructure.persistence.mapper.CostingExceptionMapper">
+  <sql id="base">SELECT b.cost_dimension_key dimensionKey,b.warehouse_id warehouseId,b.sku_id skuId,
+    b.last_cost_ledger_sequence balanceSequence,COALESCE(MAX(l.cost_ledger_sequence),0) ledgerSequence,
+    b.record_version recordVersion,b.updated_at observedAt FROM inv_cost_balance b
+    LEFT JOIN inv_cost_ledger l ON l.tenant_id=b.tenant_id AND l.cost_dimension_key=b.cost_dimension_key</sql>
+  <select id="listGaps" resultType="com.jingshanghui.pos.costing.infrastructure.persistence.mapper.CostingExceptionMapper$CostingExceptionRow">
+    <include refid="base"/> WHERE b.tenant_id=#{tenantId} AND b.store_id=#{storeId}
+    GROUP BY b.cost_dimension_key,b.warehouse_id,b.sku_id,b.last_cost_ledger_sequence,b.record_version,b.updated_at
+    HAVING b.last_cost_ledger_sequence&lt;&gt;COALESCE(MAX(l.cost_ledger_sequence),0)
+    ORDER BY b.updated_at,b.cost_dimension_key LIMIT #{limit}
+  </select>
+  <select id="find" resultType="com.jingshanghui.pos.costing.infrastructure.persistence.mapper.CostingExceptionMapper$CostingExceptionRow">
+    <include refid="base"/> WHERE b.tenant_id=#{tenantId} AND b.store_id=#{storeId} AND b.cost_dimension_key=#{dimensionKey}
+    GROUP BY b.cost_dimension_key,b.warehouse_id,b.sku_id,b.last_cost_ledger_sequence,b.record_version,b.updated_at
+  </select>
+</mapper>

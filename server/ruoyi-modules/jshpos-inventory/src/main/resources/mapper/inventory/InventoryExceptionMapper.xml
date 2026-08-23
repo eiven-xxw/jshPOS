@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jingshanghui.pos.inventory.infrastructure.persistence.mapper.InventoryExceptionMapper">
+  <sql id="columns">anomaly_id anomalyId,warehouse_id warehouseId,sku_id skuId,anomaly_type anomalyType,
+    CAST(observed_quantity AS CHAR) observedQuantity,source_event_id sourceEventId,occurred_at occurredAt</sql>
+  <select id="listOpen" resultType="com.jingshanghui.pos.inventory.infrastructure.persistence.mapper.InventoryExceptionMapper$InventoryExceptionRow">
+    SELECT <include refid="columns"/> FROM inv_stock_anomaly
+    WHERE tenant_id=#{tenantId} AND store_id=#{storeId} AND status='OPEN' ORDER BY occurred_at,anomaly_id LIMIT #{limit}
+  </select>
+  <select id="find" resultType="com.jingshanghui.pos.inventory.infrastructure.persistence.mapper.InventoryExceptionMapper$InventoryExceptionRow">
+    SELECT <include refid="columns"/> FROM inv_stock_anomaly
+    WHERE tenant_id=#{tenantId} AND store_id=#{storeId} AND anomaly_id=#{anomalyId}
+  </select>
+</mapper>
