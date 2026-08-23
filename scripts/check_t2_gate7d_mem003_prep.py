@@ -100,6 +100,14 @@ def main() -> None:
     fail(admission["capability"]["explicitDoubleOptInForStacking"] is True, "叠加双向许可缺失")
     fail(all(value == 0 for value in admission["externalEvidence"].values()), "外部执行不为零")
     fail(admission["preservedStates"] == PRESERVED, "契约保留状态漂移")
+    candidate = admission.get("candidateEvidence", {})
+    fail(re.fullmatch(r"[0-9a-f]{40}", candidate.get("commit", "")) is not None,
+         "候选提交证据缺失")
+    fail(candidate.get("workflowConclusion") == "success" and candidate.get("jobCount") == 4,
+         "候选 CI 未全绿")
+    fail(candidate.get("artifactCount") == 4 and
+         re.fullmatch(r"[0-9a-f]{64}", candidate.get("evidenceArtifactSha256", "")) is not None,
+         "候选证据制品不完整")
 
     calculation = load_json("calculation-order-v1.json")
     fail(calculation["status"] == "DRAFT_NON_EXECUTABLE", "计算契约被误标执行态")
@@ -125,7 +133,7 @@ def main() -> None:
             "README.md", "01_CR与商业价值范围影响分析.md", "02_数据主权状态机计算顺序与不变量.md",
             "03_隐私离线多门店兼容与回退.md", "04_API事件迁移与跨端契约准备.md",
             "05_测试矩阵CI与量化验收.md", "06_T2_MEM003独立CR与正式开发启动评审报告.md",
-            "07_T2_MEM003正式开发下一步操作指令.md",
+            "07_T2_MEM003正式开发下一步操作指令.md", "08_T2_MEM003准备证据索引.md",
         )],
         *[f"contracts/t2/gate7d-mem003-prep/{name}" for name in (
             "mem003-prep-admission.json", "calculation-order-v1.json",

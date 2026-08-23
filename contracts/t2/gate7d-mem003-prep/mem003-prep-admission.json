@@ -13,6 +13,15 @@
   "flutterBusinessPage": false,
   "vueBusinessPage": false,
   "backgroundJob": false,
+  "candidateEvidence": {
+    "commit": "0ce1dae88bbab57ff75e320b33bc290a62d1b23f",
+    "workflowRun": 32617725005,
+    "workflowConclusion": "success",
+    "jobCount": 4,
+    "artifactCount": 4,
+    "evidenceArtifactId": 9487452021,
+    "evidenceArtifactSha256": "4a88110f7f640e3b2674c89e6e012659bc10eabb231609a1181f5843d15d839f"
+  },
   "capability": {
     "industries": ["CONVENIENCE", "SNACK_DISCOUNT", "COMMUNITY_SUPERMARKET"],
     "defaultEnabled": false,
