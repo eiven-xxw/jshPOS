@@ -1,0 +1,117 @@
+openapi: 3.0.3
+info:
+  title: 鲸熵汇门店业务日日结 API
+  version: 1.0.0
+paths:
+  /api/v1/operations/daily-closes:
+    get:
+      operationId: listDailyCloses
+      description: 必须指定门店并由可信服务端数据范围校验，禁止退化为租户内全门店查询
+      parameters:
+        - $ref: "#/components/parameters/StoreId"
+        - {
+            name: businessDate,
+            in: query,
+            required: false,
+            schema: { type: string, format: date },
+          }
+        - {
+            name: limit,
+            in: query,
+            required: false,
+            schema: { type: integer, minimum: 1, maximum: 100, default: 50 },
+          }
+      responses:
+        "200": { description: 当前用户有权访问门店的日结列表 }
+    post:
+      operationId: createDailyClose
+      description: tenant、金额和状态均由可信服务端事实确定
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/CorrelationId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDailyClose"
+      responses:
+        "200": { description: 稳定日结结果 }
+  /api/v1/operations/daily-closes/{closeId}/preflight:
+    post:
+      operationId: preflightDailyClose
+      parameters:
+        - $ref: "#/components/parameters/CloseId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/CorrelationId"
+      responses: { "200": { description: READY 或 PREFLIGHT_FAILED } }
+  /api/v1/operations/daily-closes/{closeId}/approve:
+    post:
+      operationId: approveDailyClose
+      parameters:
+        - $ref: "#/components/parameters/CloseId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/CorrelationId"
+      responses: { "200": { description: 独立审批结果 } }
+  /api/v1/operations/daily-closes/{closeId}/close:
+    post:
+      operationId: signAndCloseDailyClose
+      parameters:
+        - $ref: "#/components/parameters/CloseId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/CorrelationId"
+      responses: { "200": { description: 只追加签署结果 } }
+  /api/v1/operations/daily-closes/{closeId}/late-facts:
+    post:
+      operationId: detectLateFacts
+      parameters:
+        - $ref: "#/components/parameters/CloseId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/CorrelationId"
+      responses: { "200": { description: 显式晚到差异；不改写原关闭事实 } }
+  /api/v1/operations/daily-closes/{closeId}:
+    get:
+      operationId: getDailyClose
+      parameters: [{ $ref: "#/components/parameters/CloseId" }]
+      responses: { "200": { description: 日结详情 } }
+components:
+  parameters:
+    CloseId:
+      {
+        name: closeId,
+        in: path,
+        required: true,
+        schema: { type: string, pattern: "^[0-9A-HJKMNP-TV-Z]{26}$" },
+      }
+    StoreId:
+      {
+        name: storeId,
+        in: query,
+        required: true,
+        schema: { type: integer, minimum: 1 },
+      }
+    IdempotencyKey:
+      {
+        name: Idempotency-Key,
+        in: header,
+        required: true,
+        schema: { type: string, minLength: 8, maxLength: 64 },
+      }
+    CorrelationId:
+      {
+        name: X-Correlation-ID,
+        in: header,
+        required: true,
+        schema: { type: string, minLength: 1, maxLength: 64 },
+      }
+  schemas:
+    CreateDailyClose:
+      type: object
+      additionalProperties: false
+      required: [storeId, businessDate]
+      properties:
+        storeId: { type: integer, minimum: 1 }
+        businessDate: { type: string, format: date }
+        correctionOfCloseId:
+          { type: string, pattern: "^[0-9A-HJKMNP-TV-Z]{26}$" }
+        correctionReason: { type: string, minLength: 8, maxLength: 256 }

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jingshanghui.pos.sync.infrastructure.persistence.mapper.SyncDailyCloseMapper">
+  <select id="aggregate" resultType="com.jingshanghui.pos.sync.application.port.DailyCloseSyncReadPort$DailySyncFacts">
+    SELECT
+      COALESCE(SUM(CASE WHEN i.processing_status='RECEIVED' THEN 1 ELSE 0 END),0) pendingCount,
+      COALESCE(SUM(CASE WHEN i.processing_status='RETRY' THEN 1 ELSE 0 END),0) retryCount,
+      COALESCE(SUM(CASE WHEN i.processing_status='CONFLICT' THEN 1 ELSE 0 END),0) conflictCount,
+      (SELECT COUNT(*) FROM pos_sync_dead_letter d JOIN pos_sync_inbox di
+        ON di.tenant_id=d.tenant_id AND di.event_id=d.event_id JOIN pos_sync_device dd
+        ON dd.tenant_id=di.tenant_id AND dd.device_id=di.device_id
+        WHERE d.tenant_id=#{tenantId} AND dd.store_id=#{storeId} AND d.status IN ('OPEN','RETRYING')) deadLetterCount,
+      COALESCE(MAX(i.device_sequence),0) maximumDeviceSequence,
+      COALESCE(SUM(CASE WHEN i.processing_status='APPLIED' THEN 1 ELSE 0 END),0) appliedCount
+    FROM pos_sync_device d LEFT JOIN pos_sync_inbox i
+      ON i.tenant_id=d.tenant_id AND i.device_id=d.device_id
+    WHERE d.tenant_id=#{tenantId} AND d.store_id=#{storeId}
+  </select>
+</mapper>

@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jingshanghui.pos.operations.infrastructure.persistence.mapper.DailyCloseMapper">
+  <sql id="closeColumns">close_id closeId,tenant_id tenantId,store_id storeId,business_date businessDate,
+    zone_id zoneId,business_day_start businessDayStart,close_version closeVersion,
+    correction_of_close_id correctionOfCloseId,correction_reason_sha256 correctionReasonSha256,state,
+    snapshot_sha256 snapshotSha256,manifest_sha256 manifestSha256,idempotency_key idempotencyKey,
+    request_sha256 requestSha256,creator_user_id creatorUserId,preflight_run preflightRun,
+    record_version recordVersion,created_at createdAt,updated_at updatedAt</sql>
+  <select id="find" resultType="com.jingshanghui.pos.operations.application.model.DailyCloseModels$CloseRecord">
+    SELECT <include refid="closeColumns"/> FROM ops_daily_close WHERE tenant_id=#{tenantId} AND close_id=#{closeId}
+  </select>
+  <select id="lock" resultType="com.jingshanghui.pos.operations.application.model.DailyCloseModels$CloseRecord">
+    SELECT <include refid="closeColumns"/> FROM ops_daily_close WHERE tenant_id=#{tenantId} AND close_id=#{closeId} FOR UPDATE
+  </select>
+  <select id="findByCreateKey" resultType="com.jingshanghui.pos.operations.application.model.DailyCloseModels$CloseRecord">
+    SELECT <include refid="closeColumns"/> FROM ops_daily_close WHERE tenant_id=#{tenantId} AND idempotency_key=#{idempotencyKey}
+  </select>
+  <select id="list" resultType="com.jingshanghui.pos.operations.application.model.DailyCloseModels$CloseRecord">
+    SELECT <include refid="closeColumns"/> FROM ops_daily_close WHERE tenant_id=#{tenantId}
+      <if test="storeId != null">AND store_id=#{storeId}</if>
+      <if test="businessDate != null">AND business_date=#{businessDate}</if>
+    ORDER BY business_date DESC,store_id,close_version DESC LIMIT #{limit}
+  </select>
+  <select id="nextVersion" resultType="int">
+    SELECT COALESCE(MAX(close_version),0)+1 FROM ops_daily_close
+    WHERE tenant_id=#{tenantId} AND store_id=#{storeId} AND business_date=#{businessDate}
+  </select>
+  <insert id="insertClose">
+    INSERT INTO ops_daily_close(close_id,tenant_id,store_id,business_date,zone_id,business_day_start,
+      close_version,correction_of_close_id,correction_reason_sha256,state,snapshot_sha256,manifest_sha256,
+      idempotency_key,request_sha256,creator_user_id,preflight_run,record_version,created_at,updated_at)
+    VALUES(#{closeId},#{tenantId},#{storeId},#{businessDate},#{zoneId},#{businessDayStart},#{closeVersion},
+      #{correctionOfCloseId},#{correctionReasonSha256},#{state},#{snapshotSha256},#{manifestSha256},
+      #{idempotencyKey},#{requestSha256},#{creatorUserId},0,0,#{at},#{at})
+  </insert>
+  <update id="changeState">
+    UPDATE ops_daily_close SET state=#{toState},preflight_run=COALESCE(#{preflightRun},preflight_run),
+      snapshot_sha256=COALESCE(#{snapshotSha256},snapshot_sha256),manifest_sha256=COALESCE(#{manifestSha256},manifest_sha256),
+      record_version=record_version+1,updated_at=#{at}
+    WHERE tenant_id=#{tenantId} AND close_id=#{closeId} AND state=#{fromState} AND record_version=#{expectedVersion}
+  </update>
+  <select id="nextPreflightRun" resultType="int">
+    SELECT COALESCE(MAX(run_no),0)+1 FROM ops_daily_close_preflight WHERE tenant_id=#{tenantId} AND close_id=#{closeId}
+  </select>
+  <insert id="insertSnapshot">
+    INSERT INTO ops_daily_close_snapshot(snapshot_id,tenant_id,close_id,run_no,currency,order_count,
+      cancelled_order_count,return_count,gross_minor,discount_minor,surcharge_minor,receivable_minor,
+      refund_minor,cash_received_minor,cash_refunded_minor,electronic_received_minor,electronic_refunded_minor,
+      unknown_payment_count,unknown_refund_count,shift_difference_minor,content_sha256,created_at)
+    VALUES(#{snapshotId},#{tenantId},#{closeId},#{runNo},#{currency},#{orderCount},#{cancelledOrderCount},
+      #{returnCount},#{grossMinor},#{discountMinor},#{surchargeMinor},#{receivableMinor},#{refundMinor},
+      #{cashReceivedMinor},#{cashRefundedMinor},#{electronicReceivedMinor},#{electronicRefundedMinor},
+      #{unknownPaymentCount},#{unknownRefundCount},#{shiftDifferenceMinor},#{contentSha256},#{at})
+  </insert>
+  <insert id="insertCheckpoint">
+    INSERT INTO ops_daily_close_checkpoint(checkpoint_id,tenant_id,close_id,run_no,owner_code,source_version,
+      source_sequence,source_status,content_sha256,created_at)
+    VALUES(#{checkpointId},#{tenantId},#{closeId},#{runNo},#{ownerCode},#{sourceVersion},#{sourceSequence},
+      #{sourceStatus},#{contentSha256},#{at})
+  </insert>
+  <insert id="insertPreflight">
+    INSERT INTO ops_daily_close_preflight(preflight_id,tenant_id,close_id,run_no,check_code,owner_code,
+      required_flag,external_flag,status,evidence_sha256,masked_message,checked_at)
+    VALUES(#{preflightId},#{tenantId},#{closeId},#{runNo},#{checkCode},#{ownerCode},#{required},#{external},
+      #{status},#{evidenceSha256},#{maskedMessage},#{at})
+  </insert>
+  <insert id="insertDifference">
+    INSERT INTO ops_daily_close_difference(difference_id,tenant_id,close_id,difference_type,state,
+      expected_sha256,actual_sha256,detail_sha256,detected_at)
+    VALUES(#{differenceId},#{tenantId},#{closeId},#{type},#{state},#{expectedSha256},#{actualSha256},#{detailSha256},#{at})
+  </insert>
+  <insert id="insertApproval">
+    INSERT INTO ops_daily_close_approval(approval_id,tenant_id,close_id,approver_user_id,reason_sha256,
+      idempotency_key,request_sha256,approved_at)
+    VALUES(#{approvalId},#{tenantId},#{closeId},#{approverUserId},#{reasonSha256},#{idempotencyKey},#{requestSha256},#{at})
+  </insert>
+  <insert id="insertSignature">
+    INSERT INTO ops_daily_close_signature(signature_id,tenant_id,close_id,signatory_user_id,snapshot_sha256,
+      manifest_sha256,signature_sha256,idempotency_key,request_sha256,signed_at)
+    VALUES(#{signatureId},#{tenantId},#{closeId},#{signatoryUserId},#{snapshotSha256},#{manifestSha256},
+      #{signatureSha256},#{idempotencyKey},#{requestSha256},#{at})
+  </insert>
+  <select id="findCommand" resultType="com.jingshanghui.pos.operations.application.model.DailyCloseModels$CommandRecord">
+    SELECT command_id commandId,close_id closeId,operation,idempotency_key idempotencyKey,
+      request_sha256 requestSha256,result_state resultState,result_sha256 resultSha256,created_at createdAt
+    FROM ops_daily_close_command_result WHERE tenant_id=#{tenantId} AND operation=#{operation} AND idempotency_key=#{idempotencyKey}
+  </select>
+  <insert id="insertCommand">
+    INSERT INTO ops_daily_close_command_result(command_id,tenant_id,close_id,operation,idempotency_key,
+      request_sha256,result_state,result_sha256,created_at)
+    VALUES(#{commandId},#{tenantId},#{closeId},#{operation},#{idempotencyKey},#{requestSha256},#{resultState},#{resultSha256},#{at})
+  </insert>
+  <insert id="appendState">
+    INSERT INTO ops_daily_close_state_event(event_id,tenant_id,close_id,from_state,to_state,request_sha256,
+      correlation_id,actor_user_id,occurred_at)
+    VALUES(#{eventId},#{tenantId},#{closeId},#{fromState},#{toState},#{requestSha256},#{correlationId},#{actorUserId},#{at})
+  </insert>
+  <insert id="appendAudit">
+    INSERT INTO ops_daily_close_audit(audit_id,tenant_id,close_id,action_code,result,request_sha256,
+      correlation_id,actor_user_id,masked_summary,occurred_at)
+    VALUES(#{auditId},#{tenantId},#{closeId},#{actionCode},#{result},#{requestSha256},#{correlationId},#{actorUserId},#{maskedSummary},#{at})
+  </insert>
+  <insert id="appendOutbox">
+    INSERT INTO ops_daily_close_outbox(outbox_id,tenant_id,close_id,event_type,schema_version,payload_json,
+      payload_sha256,correlation_id,delivery_state,attempts,created_at)
+    VALUES(#{outboxId},#{tenantId},#{closeId},#{eventType},#{schemaVersion},#{payloadJson},#{payloadSha256},
+      #{correlationId},'PENDING',0,#{at})
+  </insert>
+
+  <select id="listSnapshots" resultType="com.jingshanghui.pos.operations.application.model.DailyCloseModels$SnapshotRecord">
+    SELECT snapshot_id snapshotId,close_id closeId,run_no runNo,currency,order_count orderCount,
+      cancelled_order_count cancelledOrderCount,return_count returnCount,gross_minor grossMinor,
+      discount_minor discountMinor,surcharge_minor surchargeMinor,receivable_minor receivableMinor,
+      refund_minor refundMinor,cash_received_minor cashReceivedMinor,cash_refunded_minor cashRefundedMinor,
+      electronic_received_minor electronicReceivedMinor,electronic_refunded_minor electronicRefundedMinor,
+      unknown_payment_count unknownPaymentCount,unknown_refund_count unknownRefundCount,
+      shift_difference_minor shiftDifferenceMinor,content_sha256 contentSha256,created_at createdAt
+    FROM ops_daily_close_snapshot WHERE tenant_id=#{tenantId} AND close_id=#{closeId} ORDER BY run_no
+  </select>
+  <select id="listCheckpoints" resultType="com.jingshanghui.pos.operations.application.model.DailyCloseModels$CheckpointRecord">
+    SELECT checkpoint_id checkpointId,close_id closeId,run_no runNo,owner_code ownerCode,source_version sourceVersion,
+      source_sequence sourceSequence,source_status sourceStatus,content_sha256 contentSha256,created_at createdAt
+    FROM ops_daily_close_checkpoint WHERE tenant_id=#{tenantId} AND close_id=#{closeId} ORDER BY run_no,owner_code
+  </select>
+  <select id="listPreflights" resultType="com.jingshanghui.pos.operations.application.model.DailyCloseModels$PreflightRecord">
+    SELECT preflight_id preflightId,close_id closeId,run_no runNo,check_code checkCode,owner_code ownerCode,
+      required_flag required,external_flag external,status,evidence_sha256 evidenceSha256,
+      masked_message maskedMessage,checked_at checkedAt
+    FROM ops_daily_close_preflight WHERE tenant_id=#{tenantId} AND close_id=#{closeId} ORDER BY run_no,check_code
+  </select>
+  <select id="listDifferences" resultType="com.jingshanghui.pos.operations.application.model.DailyCloseModels$DifferenceRecord">
+    SELECT difference_id differenceId,close_id closeId,difference_type type,state,expected_sha256 expectedSha256,
+      actual_sha256 actualSha256,detail_sha256 detailSha256,detected_at detectedAt
+    FROM ops_daily_close_difference WHERE tenant_id=#{tenantId} AND close_id=#{closeId} ORDER BY detected_at,difference_id
+  </select>
+  <select id="listApprovals" resultType="com.jingshanghui.pos.operations.application.model.DailyCloseModels$ApprovalRecord">
+    SELECT approval_id approvalId,close_id closeId,approver_user_id approverUserId,reason_sha256 reasonSha256,approved_at approvedAt
+    FROM ops_daily_close_approval WHERE tenant_id=#{tenantId} AND close_id=#{closeId} ORDER BY approved_at
+  </select>
+  <select id="listSignatures" resultType="com.jingshanghui.pos.operations.application.model.DailyCloseModels$SignatureRecord">
+    SELECT signature_id signatureId,close_id closeId,signatory_user_id signatoryUserId,snapshot_sha256 snapshotSha256,
+      manifest_sha256 manifestSha256,signature_sha256 signatureSha256,signed_at signedAt
+    FROM ops_daily_close_signature WHERE tenant_id=#{tenantId} AND close_id=#{closeId} ORDER BY signed_at
+  </select>
+</mapper>

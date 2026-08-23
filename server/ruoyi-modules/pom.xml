@@ -25,6 +25,7 @@
         <module>jshpos-migration</module>
         <module>jshpos-onboarding</module>
         <module>jshpos-reporting</module>
+        <module>jshpos-operations</module>
         <module>jshpos-resilience</module>
         <module>jshpos-release</module>
         <module>jshpos-integration</module>

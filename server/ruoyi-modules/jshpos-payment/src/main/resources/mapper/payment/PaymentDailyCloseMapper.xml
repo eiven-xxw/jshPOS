@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jingshanghui.pos.payment.infrastructure.persistence.mapper.PaymentDailyCloseMapper">
+  <select id="aggregate" resultType="com.jingshanghui.pos.payment.application.port.DailyClosePaymentReadPort$DailyPaymentFacts">
+    SELECT
+      (SELECT COUNT(*) FROM pay_payment_intent p WHERE p.tenant_id=#{tenantId} AND p.store_id=#{storeId}
+        AND p.occurred_at&gt;=#{fromUtc} AND p.occurred_at&lt;#{toUtc} AND p.status IN ('SUCCEEDED','PARTIALLY_REFUNDED','REFUNDED')) succeededPaymentCount,
+      COALESCE((SELECT SUM(p.amount_minor) FROM pay_payment_intent p WHERE p.tenant_id=#{tenantId} AND p.store_id=#{storeId}
+        AND p.occurred_at&gt;=#{fromUtc} AND p.occurred_at&lt;#{toUtc} AND p.status IN ('SUCCEEDED','PARTIALLY_REFUNDED','REFUNDED')),0) succeededPaymentMinor,
+      (SELECT COUNT(*) FROM pay_refund r WHERE r.tenant_id=#{tenantId} AND r.store_id=#{storeId}
+        AND r.occurred_at&gt;=#{fromUtc} AND r.occurred_at&lt;#{toUtc} AND r.status='SUCCEEDED') succeededRefundCount,
+      COALESCE((SELECT SUM(r.amount_minor) FROM pay_refund r WHERE r.tenant_id=#{tenantId} AND r.store_id=#{storeId}
+        AND r.occurred_at&gt;=#{fromUtc} AND r.occurred_at&lt;#{toUtc} AND r.status='SUCCEEDED'),0) succeededRefundMinor,
+      (SELECT COUNT(*) FROM pay_payment_intent p WHERE p.tenant_id=#{tenantId} AND p.store_id=#{storeId}
+        AND p.occurred_at&gt;=#{fromUtc} AND p.occurred_at&lt;#{toUtc} AND p.status='UNKNOWN') unknownPaymentCount,
+      (SELECT COUNT(*) FROM pay_refund r WHERE r.tenant_id=#{tenantId} AND r.store_id=#{storeId}
+        AND r.occurred_at&gt;=#{fromUtc} AND r.occurred_at&lt;#{toUtc} AND r.status='UNKNOWN') unknownRefundCount,
+      GREATEST(
+        COALESCE((SELECT MAX(p.record_version) FROM pay_payment_intent p WHERE p.tenant_id=#{tenantId} AND p.store_id=#{storeId} AND p.occurred_at&gt;=#{fromUtc} AND p.occurred_at&lt;#{toUtc}),0),
+        COALESCE((SELECT MAX(r.record_version) FROM pay_refund r WHERE r.tenant_id=#{tenantId} AND r.store_id=#{storeId} AND r.occurred_at&gt;=#{fromUtc} AND r.occurred_at&lt;#{toUtc}),0)
+      ) sourceVersion,
+      'CNY' currency
+  </select>
+</mapper>

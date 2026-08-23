@@ -7,6 +7,7 @@ import com.jingshanghui.pos.inventory.application.service.InventoryLedgerService
 import com.jingshanghui.pos.member.application.service.MemberProfileService;
 import com.jingshanghui.pos.migration.application.service.BusinessMigrationService;
 import com.jingshanghui.pos.order.application.service.PromotedCashOrderService;
+import com.jingshanghui.pos.operations.application.service.DailyCloseService;
 import com.jingshanghui.pos.payment.application.service.PaymentCoreService;
 import com.jingshanghui.pos.procurement.application.service.ProcurementService;
 import com.jingshanghui.pos.promotion.application.service.PromotionTransactionService;
@@ -47,6 +48,7 @@ public final class CommercialV1AssemblyContract {
             capability("member", "会员身份与隐私", MemberProfileService.class),
             capability("migration", "开业资料预检、迁移与对账", BusinessMigrationService.class),
             capability("reporting", "经营投影与对账", ReportingProjectionService.class),
+            capability("operations", "门店业务日日结与只追加签署", DailyCloseService.class),
             capability("resilience", "备份恢复", BackupRecoveryService.class),
             capability("release", "版本发布治理", ReleaseGovernanceService.class)
         );

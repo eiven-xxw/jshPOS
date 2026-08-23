@@ -1,0 +1,21 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://jshpos.local/contracts/operations/daily-close-events-v1.schema.json",
+  "title":"Operations Daily Close Event v1",
+  "type":"object",
+  "additionalProperties":false,
+  "required":["eventId","eventType","schemaVersion","closeId","closeVersion","storeId","businessDate","snapshotSha256","manifestSha256","correlationId","occurredAt"],
+  "properties":{
+    "eventId":{"type":"string","pattern":"^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "eventType":{"enum":["operations.daily-close.preflighted.v1","operations.daily-close.approved.v1","operations.daily-close.closed.v1","operations.daily-close.difference-detected.v1","operations.daily-close.correction-required.v1"]},
+    "schemaVersion":{"const":1},
+    "closeId":{"type":"string","pattern":"^[0-9A-HJKMNP-TV-Z]{26}$"},
+    "closeVersion":{"type":"integer","minimum":1},
+    "storeId":{"type":"integer","minimum":1},
+    "businessDate":{"type":"string","format":"date"},
+    "snapshotSha256":{"type":"string","pattern":"^[0-9a-f]{64}$"},
+    "manifestSha256":{"type":"string","pattern":"^[0-9a-f]{64}$"},
+    "correlationId":{"type":"string","minLength":1,"maxLength":64},
+    "occurredAt":{"type":"string","format":"date-time"}
+  }
+}

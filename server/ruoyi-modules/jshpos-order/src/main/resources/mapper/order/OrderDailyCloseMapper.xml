@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jingshanghui.pos.order.infrastructure.persistence.mapper.OrderDailyCloseMapper">
+  <select id="aggregate" resultType="com.jingshanghui.pos.order.application.port.DailyCloseOrderReadPort$DailyOrderFacts">
+    SELECT
+      (SELECT COUNT(*) FROM ord_sales_order o WHERE o.tenant_id=#{tenantId} AND o.store_id=#{storeId}
+        AND o.business_date=#{businessDate} AND o.status IN ('COMPLETED','CLOSED')) orderCount,
+      (SELECT COUNT(*) FROM ord_order_disposition d WHERE d.tenant_id=#{tenantId} AND d.store_id=#{storeId}
+        AND d.business_date=#{businessDate} AND d.disposition_type='CANCEL_BEFORE_COMPLETION') cancelledOrderCount,
+      (SELECT COUNT(*) FROM ord_cash_refund r WHERE r.tenant_id=#{tenantId} AND r.store_id=#{storeId}
+        AND r.business_date=#{businessDate} AND r.status='SUCCEEDED') refundCount,
+      COALESCE((SELECT SUM(o.gross_amount_minor) FROM ord_sales_order o WHERE o.tenant_id=#{tenantId}
+        AND o.store_id=#{storeId} AND o.business_date=#{businessDate} AND o.status IN ('COMPLETED','CLOSED')),0) grossMinor,
+      COALESCE((SELECT SUM(o.discount_amount_minor) FROM ord_sales_order o WHERE o.tenant_id=#{tenantId}
+        AND o.store_id=#{storeId} AND o.business_date=#{businessDate} AND o.status IN ('COMPLETED','CLOSED')),0) discountMinor,
+      COALESCE((SELECT SUM(o.surcharge_amount_minor) FROM ord_sales_order o WHERE o.tenant_id=#{tenantId}
+        AND o.store_id=#{storeId} AND o.business_date=#{businessDate} AND o.status IN ('COMPLETED','CLOSED')),0) surchargeMinor,
+      COALESCE((SELECT SUM(o.receivable_amount_minor) FROM ord_sales_order o WHERE o.tenant_id=#{tenantId}
+        AND o.store_id=#{storeId} AND o.business_date=#{businessDate} AND o.status IN ('COMPLETED','CLOSED')),0) receivableMinor,
+      COALESCE((SELECT SUM(r.amount_minor) FROM ord_cash_refund r WHERE r.tenant_id=#{tenantId}
+        AND r.store_id=#{storeId} AND r.business_date=#{businessDate} AND r.status='SUCCEEDED'),0) refundMinor,
+      COALESCE((SELECT SUM(l.signed_amount_minor) FROM shf_cash_ledger l JOIN shf_shift s
+        ON s.tenant_id=l.tenant_id AND s.shift_id=l.shift_id WHERE l.tenant_id=#{tenantId}
+        AND s.store_id=#{storeId} AND l.business_date=#{businessDate} AND l.movement_type='SALE_RECEIPT'),0) cashReceivedMinor,
+      -COALESCE((SELECT SUM(l.signed_amount_minor) FROM shf_cash_ledger l JOIN shf_shift s
+        ON s.tenant_id=l.tenant_id AND s.shift_id=l.shift_id WHERE l.tenant_id=#{tenantId}
+        AND s.store_id=#{storeId} AND l.business_date=#{businessDate} AND l.movement_type='CASH_REFUND'),0) cashRefundedMinor,
+      COALESCE((SELECT SUM(s.difference_minor) FROM shf_shift s WHERE s.tenant_id=#{tenantId}
+        AND s.store_id=#{storeId} AND s.business_date=#{businessDate} AND s.status='CLOSED'),0) shiftDifferenceMinor,
+      (SELECT COUNT(*) FROM shf_shift s WHERE s.tenant_id=#{tenantId} AND s.store_id=#{storeId}
+        AND s.business_date=#{businessDate} AND s.status IN ('OPEN','CLOSING')) openShiftCount,
+      (SELECT COUNT(*) FROM shf_shift s WHERE s.tenant_id=#{tenantId} AND s.store_id=#{storeId}
+        AND s.business_date=#{businessDate} AND s.status='CLOSED' AND s.difference_minor&lt;&gt;0 AND s.approval_id IS NULL) unapprovedCashDifferenceCount,
+      GREATEST(
+        COALESCE((SELECT MAX(o.record_version) FROM ord_sales_order o WHERE o.tenant_id=#{tenantId} AND o.store_id=#{storeId} AND o.business_date=#{businessDate}),0),
+        COALESCE((SELECT MAX(s.record_version) FROM shf_shift s WHERE s.tenant_id=#{tenantId} AND s.store_id=#{storeId} AND s.business_date=#{businessDate}),0)
+      ) sourceVersion,
+      'CNY' currency
+  </select>
+</mapper>

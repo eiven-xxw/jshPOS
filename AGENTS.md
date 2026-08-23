@@ -534,6 +534,17 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
 - 实现候选提交 `48b7bbd804d867e366eeef625bcc924d0e64f5a5` 的 GitHub Actions Run `32608223073` 已通过治理双平台、Server、Web、Flutter 双平台、MySQL、SQLite、Android/Kotlin、安全、SBOM、许可证和证据索引门禁；`T2-LOT-001` 仅更新为 `VERIFIED`，项目发起人确认前不得更新为 `ACCEPTED`。
 - 必须提交 `T2-LOT-001` 独立周门禁报告等待确认；`T2-CLS-001/T2-EXC-001` 继续 `DRAFT`，不得自动进入 Gate 7D。
 
+## 4.43 当前 T2 Gate 7D / Sprint S22-A：T2-CLS-001 门店业务日日结条件准入
+
+- 项目发起人已于 2026-08-23 接受 `T2-LOT-001 CONDITIONAL PASS`，只允许把它更新为 `ACCEPTED`；该结论仅覆盖社区超市条件模板下的内部软件执行，不等于真实设备、完整 Alpha、生产或商业验收。
+- 仅授权从 LOT 最终封存提交 `75377eb74d0339bfc513f72d0547b8649f8e5f37` 建立 `t2/gate7d-sprint22a-cls001-daily-close`，独立实现 `T2-CLS-001`；`T2-EXC-001` 与 Gate 7D 后续需求继续 `DRAFT`。
+- `jshpos-operations` 是日结头、来源检查点、冻结快照、预检差异、审批/签署、状态历史、审计和 Outbox 的唯一写入 Owner；只能通过 Owner 显式只读端口或版本化事件读取权威事实，禁止跨 Owner Mapper、任意 SQL 或以报表覆盖业务事实。
+- 日结身份必须绑定可信租户、门店、业务日、IANA 时区、业务日起点、关闭版本、来源检查点和 SHA-256；客户端提交的 tenant、金额、差异或状态不得成为权威事实。
+- 状态必须覆盖 `DRAFT/PREFLIGHTING/PREFLIGHT_FAILED/READY/APPROVED/CLOSING/CLOSED/FAILED/CORRECTION_REQUIRED/COMPENSATION_REQUIRED`；创建人与审批/签署人分离，关闭事实与签名只追加，晚到事实只能形成显式差异和新更正版本。
+- 预检必须失败关闭未关班、未确认现金差异、`UNKNOWN` 支付/退款、不可解释同步缺口/死信、投影缺口、摘要漂移、权限或审计缺失；外部 Provider 未解阻只能显示 `BLOCKED/UNAVAILABLE`，不得伪造渠道对账通过。
+- `T2-PAY-002`、`T2-HWD-001`、`T2-PRN-001`、`T2-PAR-001` 继续 `BLOCKED`；`T2-JSH-001`、`T2-LIC-001` 继续 `DEFERRED`。Provider 网络、真实资金、真实设备/外设、伙伴现场、完整 Alpha、生产部署和商业声明继续为 0。
+- 完成后必须提交《T2-CLS-001 独立周门禁报告》等待确认；项目发起人确认前只能更新为 `VERIFIED`，不得自动准入 `T2-EXC-001` 或 Gate 7E。
+
 ## 5. 工程与测试规则
 
 - 服务端采用 RuoYi-Vue-Plus 模块化单体，不得把领域逻辑写入 Controller、通用工具类或框架系统模块。
