@@ -19,6 +19,8 @@ Gate 8B-Prep 的范围、非目标、Owner 边界、正式 API 合成旅程、�
 - Gate 8B-Prep 同提交的完整 GitHub CI 和不可变证据索引。
 - CI 回填后的最终 `CONDITIONAL PASS` 或 `NO-GO` 结论。
 
+首次候选提交 `572bcb07023151b2240f40d8fb99039d6f068838` 的 Run `32659058361` 已通过功能与双平台门禁，Security 因该 Job 使用浅克隆而无法解析封存基线，Evidence 依赖失败按规则跳过。失败证据原样保留；修复只增加完整 Git 历史获取，不改变扫描内容、阈值或需求状态，并要求从新提交完整复跑。
+
 ## 4. 保留阻断
 
 PAY/HWD/PRN/PAR 继续 BLOCKED；UAT/REL 继续 DRAFT；LIC/JSH 继续 DEFERRED。Provider 网络、真实资金、设备/外设、伙伴现场、完整 Alpha、生产部署和商业声明均为 0。
