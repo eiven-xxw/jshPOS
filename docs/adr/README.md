@@ -70,3 +70,4 @@ ADR 一经接受不得删除或静默改写。需要改变决策时，新建 ADR
 | ADR-058 | [Gate 8A 订阅生命周期、受控降级与时间收敛](ADR-058-gate8a-subscription-runtime.md) | Accepted |
 | ADR-059 | [Gate 8A 服务目录、实施项目、工单与附件安全边界](ADR-059-gate8a-service-operations-runtime.md) | Accepted |
 | ADR-060 | [Gate 8B 商业 SaaS 运营内部汇总验收与证据边界](ADR-060-gate8b-commercial-operations-aggregate-prep.md) | Accepted |
+| ADR-061 | [Gate 8B 正式运行时 API 汇总验收与平台职责分离](ADR-061-gate8b-runtime-api-acceptance.md) | Accepted |

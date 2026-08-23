@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0",
+  "gate": "T2-GATE8B-SPRINT-S25",
+  "base_commit": "72ff758f1b61e5638664c758cf5ca479b512ddf5",
+  "branch": "t2/gate8b-sprint25-commercial-saas-operations-acceptance",
+  "requirement": "T2-E2E-005",
+  "preconditions": {
+    "T2-SAA-001": "ACCEPTED",
+    "T2-SUB-001": "ACCEPTED",
+    "T2-SVC-001": "ACCEPTED"
+  },
+  "evidence_ceiling": "INTERNAL_COMMERCIAL_OPERATIONS_CANDIDATE",
+  "runtime": {
+    "server": "FORMAL_APPLICATION",
+    "mysql": "8.4",
+    "redis": "7.4",
+    "transport": "HTTP_REST",
+    "direct_database_business_writes": 0,
+    "test_backdoors": 0
+  },
+  "allowed_defects": ["ASSEMBLY", "AUTHORIZATION", "IDEMPOTENCY", "HISTORY_RETENTION", "OBSERVABILITY"],
+  "external_execution": {
+    "provider_network": 0,
+    "real_funds": 0,
+    "real_device": 0,
+    "real_peripheral": 0,
+    "partner_execution": 0,
+    "full_alpha": 0,
+    "production": 0,
+    "commercial_claim": 0
+  }
+}

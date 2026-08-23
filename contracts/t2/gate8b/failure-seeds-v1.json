@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0",
+  "requirement_id": "T2-E2E-005",
+  "seeds": [
+    {"id": "G8B-AUTH-001", "case": "merchant tenant uses platform_admin role", "expected": "DENY"},
+    {"id": "G8B-SAA-IDEM-001", "case": "plan same key different content", "expected": "REJECT"},
+    {"id": "G8B-SUB-IDEM-001", "case": "subscription same key different content", "expected": "REJECT"},
+    {"id": "G8B-SVC-IDEM-001", "case": "ticket same key different content", "expected": "REJECT"},
+    {"id": "G8B-SAA-SOD-001", "case": "application submitter approves own request", "expected": "REJECT"},
+    {"id": "G8B-SVC-SOD-001", "case": "ticket resolver closes own ticket", "expected": "REJECT"},
+    {"id": "G8B-HIST-001", "case": "tenant deactivate then restore", "expected": "APPEND_ONLY_AND_ACTIVE"},
+    {"id": "G8B-EXT-001", "case": "external boundary requested", "expected": "BLOCKED_UNAVAILABLE"}
+  ]
+}

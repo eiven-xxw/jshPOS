@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0",
+  "requirement_id": "T2-E2E-005",
+  "journey": "SAA_TO_SUB_TO_SVC",
+  "steps": [
+    "PLATFORM_LOGIN",
+    "PLATFORM_REVIEWER_AND_TENANT_PACKAGE_CREATE",
+    "PLAN_AND_ENTITLEMENT_PUBLISH",
+    "MERCHANT_APPLICATION_PREFLIGHT_INDEPENDENT_APPROVAL",
+    "TENANT_PROVISION_INITIALIZE_ACTIVATE",
+    "SUBSCRIPTION_ACTIVATE_RENEW_SUSPEND_RESTORE",
+    "TENANT_LOGIN_ORG_AND_STORE_CREATE",
+    "SERVICE_CATALOG_AND_PROJECT",
+    "SERVICE_TICKET_INDEPENDENT_CLOSE",
+    "TENANT_DEACTIVATE_AND_CONTROLLED_RESTORE"
+  ],
+  "invariants": [
+    "tenant_id comes from authenticated server context",
+    "platform_admin is effective only in tenant 000000",
+    "same idempotency key with different content is rejected",
+    "deactivation and restoration do not delete business history",
+    "business journey performs zero direct database writes"
+  ],
+  "evidence_level": "INTERNAL_COMMERCIAL_OPERATIONS_CANDIDATE"
+}

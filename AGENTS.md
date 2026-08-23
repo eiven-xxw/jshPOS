@@ -664,6 +664,16 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
 - `T2-PAY-002/HWD-001/PRN-001/PAR-001` 继续 `BLOCKED`；`T2-UAT-001/REL-001` 继续 `DRAFT`；`T2-LIC-001/JSH-001` 继续 `DEFERRED`。Provider 网络、真实资金、真实设备/外设、伙伴现场、完整 Alpha、生产和商业声明必须为 0。
 - 完成后只提交《T2 Gate 8B-Prep 启动评审报告》与下一步操作指令并等待确认；不得自动进入运行时开发、完整 Alpha、现场试点或生产发布。
 
+## 4.54 当前 T2 Gate 8B / Sprint S25 条件准入
+
+- 项目发起人已于 2026-08-24 接受 Gate 8B-Prep `CONDITIONAL PASS`，并授权从最终封存提交 `72ff758f1b61e5638664c758cf5ca479b512ddf5` 建立 `t2/gate8b-sprint25-commercial-saas-operations-acceptance`。
+- 本阶段唯一新增汇总需求为 `T2-E2E-005`；只允许修复正式 API 旅程发现的装配、授权、幂等、历史保留和可观测性 P0/P1 缺陷，不得以汇总验收名义新增业务状态机、Owner、表、页面或后台任务。
+- `T2-SAA-001 → T2-SUB-001 → T2-SVC-001` 必须在正式 MySQL 8.4、Redis 7.4 和完整服务端运行时中经公开 HTTP API 执行；除空库基础 Schema 初始化外，旅程脚本不得连接数据库、访问 Mapper、写 Redis、调用测试后门或伪造 Owner 结果。
+- 平台职责分离允许在默认平台租户中使用具名 `platform_admin` 角色；该角色不得在商户租户生效，也不得替代 Controller 权限、可信租户和 Owner 应用层授权。
+- 证据上限为 `INTERNAL_COMMERCIAL_OPERATIONS_CANDIDATE`；P0/P1 必须为 0，失败 seed 必须固定保留，性能仅形成内部合成边界，不得形成生产容量或商业 SLA。
+- `T2-PAY-002/HWD-001/PRN-001/PAR-001` 继续 `BLOCKED`；`T2-UAT-001/REL-001` 继续 `DRAFT`；`T2-LIC-001/JSH-001` 继续 `DEFERRED`。Provider 网络、真实资金、设备/外设、伙伴现场、完整 Alpha、生产部署和商业声明必须为 0。
+- 完成后必须提交《T2 Gate 8B / Sprint S25 商业 SaaS 运营内部汇总验收报告》等待项目发起人确认；不得自动进入外部执行、完整 Alpha、现场试点、生产发布或后续 Gate。
+
 ## 5. 工程与测试规则
 
 - 服务端采用 RuoYi-Vue-Plus 模块化单体，不得把领域逻辑写入 Controller、通用工具类或框架系统模块。
