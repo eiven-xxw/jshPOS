@@ -12,7 +12,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/** Gate 4B 在干净 MySQL 8.4 上执行 V1—V13 并验证两虚构租户库存与盘点约束。 */
+/** Gate 7C 在干净 MySQL 8.4 上执行完整前向迁移并验证库存、批次与效期不变量。 */
 class InventoryMigrationMySqlIT {
 
     private final String url = required("GATE4A_MYSQL_JDBC_URL");
@@ -20,12 +20,12 @@ class InventoryMigrationMySqlIT {
     private final String password = required("GATE4A_MYSQL_PASSWORD");
 
     @Test
-    void migratesSixteenVersionsAndEnforcesTenantLedgerLotAndPolicyInvariants() throws Exception {
+    void migratesAllThirtyFiveVersionsAndEnforcesTenantLedgerLotAndPolicyInvariants() throws Exception {
         createFrameworkMenuFixture();
         Flyway flyway = Flyway.configure().dataSource(url, username, password)
             .locations("classpath:db/migration").table("jshpos_flyway_schema_history")
             .baselineOnMigrate(true).baselineVersion("0").cleanDisabled(true).load();
-        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(16);
+        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(35);
         assertThat(flyway.migrate().migrationsExecuted).isZero();
         flyway.validate();
         assertTablesAndPermissions();
