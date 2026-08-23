@@ -1,0 +1,141 @@
+openapi: 3.1.0
+info:
+  title: JSH POS Member Benefit and Price API Draft
+  version: 0.1.0-draft
+  description: >-
+    T2-MEM-003 准备阶段非执行契约。不得据此生成 Controller 或网络服务；
+    tenant_id 只来自可信认证上下文，请求和响应禁止 PII。
+x-contract-status: DRAFT_NON_EXECUTABLE
+x-requirement-status: DRAFT
+paths:
+  /api/v1/member-benefit-policies:
+    post:
+      operationId: createMemberBenefitPolicyDraft
+      x-owner: MEMBER
+      x-permission: member:benefit:create
+      x-idempotency-required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CreatePolicy'}
+      responses:
+        '200': {description: 返回稳定 DRAFT 身份与内容摘要}
+        '409': {description: 同键异内容或范围冲突}
+  /api/v1/member-benefit-policies/{policyId}/versions/{version}/validate:
+    post:
+      operationId: validateMemberBenefitVersion
+      x-owner: MEMBER
+      x-permission: member:benefit:validate
+      parameters:
+        - {$ref: '#/components/parameters/PolicyId'}
+        - {$ref: '#/components/parameters/Version'}
+      responses:
+        '200': {description: 完整预检与 SHA-256}
+  /api/v1/member-benefit-policies/{policyId}/versions/{version}/approve:
+    post:
+      operationId: approveMemberBenefitVersion
+      x-owner: MEMBER
+      x-permission: member:benefit:approve
+      x-separation-of-duty: CREATOR_NE_APPROVER
+      parameters:
+        - {$ref: '#/components/parameters/PolicyId'}
+        - {$ref: '#/components/parameters/Version'}
+      responses:
+        '200': {description: 批准不可变版本}
+        '409': {description: 职责分离、版本或摘要冲突}
+  /api/v1/member-benefit-policies/{policyId}/versions/{version}/publish:
+    post:
+      operationId: publishMemberBenefitVersion
+      x-owner: MEMBER
+      x-permission: member:benefit:publish
+      parameters:
+        - {$ref: '#/components/parameters/PolicyId'}
+        - {$ref: '#/components/parameters/Version'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/PublishCommand'}
+      responses:
+        '200': {description: 发布或调度版本}
+        '409': {description: 生效窗口、门店范围或摘要冲突}
+  /api/v1/member-benefit-policies/{policyId}/versions/{version}/revoke:
+    post:
+      operationId: revokeMemberBenefitVersion
+      x-owner: MEMBER
+      x-permission: member:benefit:revoke
+      parameters:
+        - {$ref: '#/components/parameters/PolicyId'}
+        - {$ref: '#/components/parameters/Version'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ReasonCommand'}
+      responses:
+        '200': {description: 只追加撤回事实并递增撤回纪元}
+  /api/v1/member-benefit-quotes:
+    post:
+      operationId: quoteMemberBenefitPrice
+      x-owner: PROMOTION
+      x-permission: pos:member-benefit:quote
+      x-idempotency-required: true
+      x-no-pii: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/QuoteCommand'}
+      responses:
+        '200': {description: 可解释 BEST_PRICE 报价和 fingerprint}
+        '409': {description: 权益无效、报价过期或同键异内容}
+components:
+  parameters:
+    PolicyId: {name: policyId, in: path, required: true, schema: {type: string}}
+    Version: {name: version, in: path, required: true, schema: {type: integer, minimum: 1}}
+  schemas:
+    CreatePolicy:
+      type: object
+      additionalProperties: false
+      required: [policyCode, displayName, defaultCombinationPolicy]
+      properties:
+        policyCode: {type: string, pattern: '^[A-Z0-9_-]{1,64}$'}
+        displayName: {type: string, maxLength: 100}
+        defaultCombinationPolicy: {const: BEST_PRICE}
+    PublishCommand:
+      type: object
+      additionalProperties: false
+      required: [effectiveAt, storeScopeVersion, contentSha256]
+      properties:
+        effectiveAt: {type: string, format: date-time}
+        expiresAt: {type: string, format: date-time}
+        storeScopeVersion: {type: integer, minimum: 1}
+        contentSha256: {type: string, pattern: '^[0-9a-f]{64}$'}
+    ReasonCommand:
+      type: object
+      additionalProperties: false
+      required: [reasonCode, reason]
+      properties:
+        reasonCode: {type: string, maxLength: 64}
+        reason: {type: string, maxLength: 500}
+    QuoteCommand:
+      type: object
+      additionalProperties: false
+      required: [idempotencyKey, basketFingerprint, entitlementSnapshotRef, lines]
+      properties:
+        idempotencyKey: {type: string, maxLength: 128}
+        basketFingerprint: {type: string, pattern: '^[0-9a-f]{64}$'}
+        entitlementSnapshotRef: {type: string, maxLength: 64}
+        lines:
+          type: array
+          minItems: 1
+          maxItems: 500
+          items:
+            type: object
+            additionalProperties: false
+            required: [lineId, skuId, quantity]
+            properties:
+              lineId: {type: string}
+              skuId: {type: string}
+              quantity: {type: string, pattern: '^[0-9]+(\\.[0-9]{1,6})?$'}

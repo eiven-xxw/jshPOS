@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jshpos.example/contracts/t2/gate7d-mem003-prep/member-benefit-events-draft.schema.json",
+  "title": "T2-MEM-003 draft non-executable event envelope",
+  "xContractStatus": "DRAFT_NON_EXECUTABLE",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["eventId", "eventType", "tenantContext", "schemaVersion", "occurredAt", "payloadSha256", "correlationId", "payload"],
+  "properties": {
+    "eventId": {"type": "string", "minLength": 16, "maxLength": 64},
+    "eventType": {
+      "enum": [
+        "member.benefit.version.changed.v1",
+        "member.entitlement.snapshot.changed.v1",
+        "pricing.member-price.version.changed.v1",
+        "promotion.member-benefit.quoted.v1",
+        "order.member-benefit.frozen.v1"
+      ]
+    },
+    "tenantContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tenantId", "storeId"],
+      "properties": {
+        "tenantId": {"type": "string", "pattern": "^[0-9]{1,20}$"},
+        "storeId": {"type": "string", "minLength": 1, "maxLength": 26}
+      }
+    },
+    "schemaVersion": {"const": "1.0-draft"},
+    "occurredAt": {"type": "string", "format": "date-time"},
+    "payloadSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "correlationId": {"type": "string", "minLength": 8, "maxLength": 64},
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["owner", "factId", "factVersion", "contentSha256"],
+      "properties": {
+        "owner": {"enum": ["MEMBER", "PRICING", "PROMOTION", "ORDER"]},
+        "factId": {"type": "string", "minLength": 1, "maxLength": 64},
+        "factVersion": {"type": "integer", "minimum": 1},
+        "memberRefHash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "levelHistoryId": {"type": "string", "maxLength": 64},
+        "benefitVersionRef": {"type": "string", "maxLength": 64},
+        "memberPriceVersionRef": {"type": "string", "maxLength": 64},
+        "effectiveAt": {"type": "string", "format": "date-time"},
+        "expiresAt": {"type": "string", "format": "date-time"},
+        "revocationEpoch": {"type": "integer", "minimum": 0},
+        "contentSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    }
+  }
+}

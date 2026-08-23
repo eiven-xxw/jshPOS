@@ -1,0 +1,62 @@
+{
+  "schemaVersion": "1.0",
+  "phase": "T2-GATE7D-SPRINT-S22A-MEM003-PREP",
+  "baselineCommit": "39a72c65a08899f305ee0c04a5e337e1ee9ffbc9",
+  "branch": "t2/gate7d-sprint22a-mem003-prep",
+  "requirement": "T2-MEM-003",
+  "status": "DRAFT",
+  "decision": "CONDITIONAL_GO_RECOMMENDED_AWAITING_SPONSOR",
+  "evidenceLevel": "STATIC_DESIGN_AND_CONTRACT_PREP",
+  "runtimeImplementation": false,
+  "databaseMigration": false,
+  "controller": false,
+  "flutterBusinessPage": false,
+  "vueBusinessPage": false,
+  "backgroundJob": false,
+  "capability": {
+    "industries": ["CONVENIENCE", "SNACK_DISCOUNT", "COMMUNITY_SUPERMARKET"],
+    "defaultEnabled": false,
+    "activationScope": "TENANT_STORE_EXPLICIT",
+    "defaultCombinationPolicy": "BEST_PRICE",
+    "explicitDoubleOptInForStacking": true
+  },
+  "owners": {
+    "member": ["BENEFIT_POLICY", "BENEFIT_VERSION", "LEVEL_MAPPING", "ENTITLEMENT_SNAPSHOT"],
+    "pricing": ["MEMBER_PRICE_CANDIDATE", "MEMBER_PRICE_VERSION"],
+    "promotion": ["MEMBER_BENEFIT_ADJUSTMENT", "STACKING_DECISION", "EXPLANATION", "ALLOCATION"],
+    "order": ["FROZEN_MEMBER_BENEFIT_BINDING"],
+    "refund": ["ORIGINAL_SNAPSHOT_RECOVERY"],
+    "dataPackage": ["SIGNED_MINIMAL_BUNDLE_MANIFEST"],
+    "operations": ["LATE_REVOCATION_EXCEPTION"]
+  },
+  "reuseRequirements": [
+    "T2-MEM-001", "T2-MEM-002", "T2-PRC-001", "T2-PRC-002",
+    "T2-PRM-001", "T2-PRM-002", "T2-PRM-003", "T2-ORD-003",
+    "T2-REF-002", "T2-DPK-001", "T2-EXC-001"
+  ],
+  "nonGoals": [
+    "STORED_VALUE", "PREPAID_CARD", "COMPLEX_COUPON", "MARKETING_BUDGET_RESERVATION",
+    "FRANCHISE_SETTLEMENT", "BENEFIT_COST_CLEARING", "REAL_PII", "SMS_OUTREACH",
+    "NEW_POINTS_ALGORITHM", "AI_DYNAMIC_PRICING"
+  ],
+  "externalEvidence": {
+    "providerNetwork": 0,
+    "realFunds": 0,
+    "realDevice": 0,
+    "realPeripheral": 0,
+    "partnerExecution": 0,
+    "fullAlpha": 0,
+    "production": 0
+  },
+  "preservedStates": {
+    "T2-PAY-002": "BLOCKED",
+    "T2-HWD-001": "BLOCKED",
+    "T2-PRN-001": "BLOCKED",
+    "T2-PAR-001": "BLOCKED",
+    "T2-JSH-001": "DEFERRED",
+    "T2-LIC-001": "DEFERRED",
+    "T2-SAA-001": "DRAFT",
+    "T2-SUB-001": "DRAFT",
+    "T2-SVC-001": "DRAFT"
+  }
+}

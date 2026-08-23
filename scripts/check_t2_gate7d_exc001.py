@@ -29,7 +29,7 @@ def main() -> None:
     with (ROOT / "docs/governance/rtm.csv").open(encoding="utf-8", newline="") as handle:
         rows = {row["requirement_id"]: row for row in csv.DictReader(handle)}
     fail(rows["T2-CLS-001"]["status"] == "ACCEPTED", "CLS001 未按项目发起人确认接受")
-    fail(rows["T2-EXC-001"]["status"] in {"IN_PROGRESS", "VERIFIED"}, "EXC001 状态越界")
+    fail(rows["T2-EXC-001"]["status"] in {"IN_PROGRESS", "VERIFIED", "ACCEPTED"}, "EXC001 状态越界")
     for requirement in ("T2-MEM-003", "T2-SAA-001", "T2-SUB-001", "T2-SVC-001"):
         fail(rows[requirement]["status"] == "DRAFT", f"{requirement} 被提前准入")
     for requirement in ("T2-PAY-002", "T2-HWD-001", "T2-PRN-001", "T2-PAR-001"):

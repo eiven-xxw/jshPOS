@@ -59,3 +59,7 @@ ADR 一经接受不得删除或静默改写。需要改变决策时，新建 ADR
 | ADR-047 | [Gate 7C 确定性补货建议与采购草稿边界](ADR-047-gate7c-deterministic-replenishment.md) | Accepted |
 | ADR-048 | [Gate 7C 可恢复开业资料迁移与 Owner 写入边界](ADR-048-gate7c-recoverable-business-migration.md) | Accepted |
 | ADR-049 | [Gate 7C 门店开通编排、模板白名单与外部失败关闭](ADR-049-gate7c-store-onboarding.md) | Accepted |
+| ADR-050 | [Gate 7C 社区超市基础批次、效期与 FEFO](ADR-050-gate7c-community-lot-expiry.md) | Accepted |
+| ADR-051 | [Gate 7D 门店业务日日结、差异和只追加签署](ADR-051-gate7d-store-business-day-close.md) | Accepted |
+| ADR-052 | [Gate 7D Operations Owner 统一异常案件与修复编排](ADR-052-gate7d-unified-exception-center.md) | Accepted |
+| ADR-053 | [Gate 7D 会员权益、会员价与成交快照联动边界](ADR-053-gate7d-member-benefit-price-prep.md) | Proposed |
