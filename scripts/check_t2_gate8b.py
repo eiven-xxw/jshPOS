@@ -66,6 +66,9 @@ def main() -> None:
         ".github/workflows/t2-gate8b.yml",
         "server/ruoyi-modules/jshpos-foundation/src/main/java/com/jingshanghui/pos/foundation/infrastructure/security/RuoYiPlatformPrivilegeSource.java",
         "server/ruoyi-modules/jshpos-foundation/src/test/java/com/jingshanghui/pos/foundation/infrastructure/security/RuoYiPlatformPrivilegeSourceTest.java",
+        "server/ruoyi-common/ruoyi-common-core/src/main/java/org/dromara/common/core/constant/SystemConstants.java",
+        "server/ruoyi-modules/jshpos-saas/src/test/java/com/jingshanghui/pos/saas/security/SensitiveRequestLoggingContractTest.java",
+        "server/script/sql/ry_workflow.sql",
     ]
     require(all((ROOT / path).is_file() for path in required), "必要文件缺失")
     require(git("merge-base", "--is-ancestor", BASE, "HEAD") == "", "Gate8B-Prep 封存提交不是祖先")
@@ -90,12 +93,22 @@ def main() -> None:
     base_schema = workflow.find("server/script/sql/ry_vue_5.X.sql")
     workflow_schema = workflow.find("server/script/sql/ry_workflow.sql")
     require(0 <= base_schema < workflow_schema, "正式空环境必须按顺序装配 RuoYi 基础与工作流 Schema")
+    require("Gate 8B runtime log contains a controlled credential" in workflow,
+            "正式运行日志未执行受控凭据泄漏门禁")
+    require("schema-bootstrap.log" in workflow, "Schema 初始化失败未保留可审计证据")
+    sensitive_constants = (ROOT / required[10]).read_text(encoding="utf-8")
+    require('"bootstrapPassword"' in sensitive_constants, "SaaS 开户凭据未加入请求日志排除契约")
+    workflow_schema_sql = (ROOT / required[12]).read_text(encoding="utf-8").lower()
+    require("insert into sys_menu values" not in workflow_schema_sql,
+            "工作流菜单种子禁止依赖 sys_menu 的隐式列顺序")
+    require("insert into sys_menu (menu_id, menu_name" in workflow_schema_sql,
+            "工作流菜单种子必须使用显式列清单")
     vectors = json.loads((ROOT / required[4]).read_text(encoding="utf-8"))["seeds"]
     require(len(vectors) >= 8 and len({v["id"] for v in vectors}) == len(vectors), "失败 seed 不完整")
 
     changed = set(filter(None, git("diff", "--name-only", BASE).splitlines())) | set(
         filter(None, git("ls-files", "--others", "--exclude-standard").splitlines()))
-    allowed_runtime = {required[8]}
+    allowed_runtime = {required[8], required[10]}
     for name in changed:
         normalized = name.replace("\\", "/")
         require("/db/migration/" not in normalized, "本阶段禁止新增或修改迁移: " + normalized)
