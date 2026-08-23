@@ -77,6 +77,20 @@ class PromotionMigrationSqlPolicyTest {
             .doesNotContain("update ord_").doesNotContain("update inv_").doesNotContain("update pay_");
     }
 
+    @Test
+    void memberBenefitMigrationAddsOneNoPiiImmutableQuoteBinding() throws Exception {
+        String sql = resource("/db/migration/V202608230078__gate7d_member_benefit_promotion.sql");
+        assertThat(count(sql, "create table prm_")).isEqualTo(1);
+        assertThat(sql).contains("create table prm_quote_member_benefit")
+            .contains("tenant_id varchar(20) not null")
+            .contains("rights_digest char(64)")
+            .contains("trg_prm_quote_member_benefit_no_update")
+            .contains("trg_prm_quote_member_benefit_no_delete")
+            .doesNotContain("member_name").doesNotContain("mobile").doesNotContain("identity_ciphertext")
+            .doesNotContain("float").doesNotContain("double")
+            .doesNotContain("update ord_").doesNotContain("update inv_").doesNotContain("update pay_");
+    }
+
     private String resource(String name) throws Exception {
         try (var stream = getClass().getResourceAsStream(name)) {
             assertThat(stream).isNotNull();

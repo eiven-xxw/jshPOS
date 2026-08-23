@@ -67,4 +67,7 @@ public interface PromotionPersistenceMapper {
     int insertSnapshot(SnapshotWrite value);
     int insertSnapshotLine(SnapshotLineWrite value);
     int insertRefundAllocation(RefundAllocationWrite value);
+    int insertMemberBenefitBinding(MemberBenefitBindingWrite value);
+    StoredMemberBenefitBinding findMemberBenefitBinding(@Param("tenantId") String tenantId,
+                                                         @Param("quoteId") String quoteId);
 }

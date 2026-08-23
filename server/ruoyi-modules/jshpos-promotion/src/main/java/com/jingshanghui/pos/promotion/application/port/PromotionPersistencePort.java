@@ -52,6 +52,8 @@ public interface PromotionPersistencePort {
     void insertSnapshot(SnapshotWrite value);
     void insertSnapshotLine(SnapshotLineWrite value);
     void insertRefundAllocation(RefundAllocationWrite value);
+    void insertMemberBenefitBinding(MemberBenefitBindingWrite value);
+    StoredMemberBenefitBinding findMemberBenefitBinding(String tenantId, String quoteId);
 
     /**
      * 写入不可变规则版本。
@@ -223,6 +225,19 @@ public interface PromotionPersistencePort {
                                  long cumulativeGrossAmountMinor, long cumulativeDiscountAmountMinor,
                                  long cumulativePayableAmountMinor, Long actorUserId, String correlationId,
                                  LocalDateTime occurredAt) { }
+    /** 促销 Owner 对本次会员权益路径选择保存的不可变无 PII 事实。 */
+    record MemberBenefitBindingWrite(String tenantId, String bindingId, String quoteId,
+                                     String entitlementSnapshotId, String benefitVersionId,
+                                     String selectedPath, String memberPriceVersionsJson,
+                                     long capabilityConfigVersion, String capabilitySha256,
+                                     String rightsDigest, String explanationSha256,
+                                     String contentSha256, LocalDateTime occurredAt) { }
+    /** 已保存会员权益路径，供幂等重放和后续成交冻结使用。 */
+    record StoredMemberBenefitBinding(String quoteId, String entitlementSnapshotId,
+                                      String benefitVersionId, String selectedPath,
+                                      String memberPriceVersionsJson, long capabilityConfigVersion,
+                                      String capabilitySha256, String rightsDigest,
+                                      String explanationSha256, String contentSha256) { }
     /**
      * 已存命令的精确重放事实。
      * @param requestSha256 命令规范化摘要 @param aggregateId 聚合标识

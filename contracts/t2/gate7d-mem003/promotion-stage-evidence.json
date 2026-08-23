@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-MEM-003",
+  "stage": "PROMOTION",
+  "status": "VERIFIED_LOCAL",
+  "verifiedAt": "2026-08-23T13:21:00+08:00",
+  "evidence": {
+    "promotionTests": 66,
+    "failures": 0,
+    "errors": 0,
+    "coverageGate": "MET_AFTER_BOUNDARY_TESTS",
+    "migrationEvidence": "STATIC_POLICY_ONLY_PENDING_CLEAN_MYSQL_CI"
+  },
+  "verifiedBoundaries": [
+    "DEFAULT_BEST_PRICE_AND_NORMAL_TIE_BREAK",
+    "STACKING_REQUIRES_ENTITLEMENT_AND_PROMOTION_DOUBLE_OPT_IN",
+    "MINOR_UNIT_AND_LINE_HEADER_ALLOCATION_CONSERVATION",
+    "TRUSTED_CAPABILITY_AND_STORE_CONTEXT",
+    "NO_PII_IMMUTABLE_MEMBER_BENEFIT_BINDING",
+    "IDEMPOTENCY_AND_SAME_KEY_DIFFERENT_CONTENT_REJECTION",
+    "XML_TENANT_GUARD_AND_APPEND_ONLY_V78"
+  ],
+  "notYetEvidence": [
+    "CLEAN_MYSQL_MIGRATION",
+    "FULL_GATE_CI",
+    "ORDER_REFUND_ORIGINAL_SNAPSHOT",
+    "POS_OR_WEB"
+  ],
+  "externalEvidence": 0
+}

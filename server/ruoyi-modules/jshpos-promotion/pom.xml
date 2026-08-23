@@ -10,7 +10,8 @@
     <description>鲸熵汇收银系统 Gate 5A 确定性促销、优惠分摊与原快照退款恢复</description>
     <dependencies>
         <dependency><groupId>com.jingshanghui.pos</groupId><artifactId>jshpos-foundation</artifactId></dependency>
-        <dependency><groupId>com.jingshanghui.pos</groupId><artifactId>jshpos-catalog</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>com.jingshanghui.pos</groupId><artifactId>jshpos-member</artifactId></dependency>
+        <dependency><groupId>com.jingshanghui.pos</groupId><artifactId>jshpos-catalog</artifactId></dependency>
         <dependency><groupId>com.jingshanghui.pos</groupId><artifactId>jshpos-order</artifactId></dependency>
         <dependency><groupId>com.jingshanghui.pos</groupId><artifactId>jshpos-sync</artifactId><scope>test</scope></dependency>
         <dependency><groupId>com.jingshanghui.pos</groupId><artifactId>jshpos-payment</artifactId><scope>test</scope></dependency>

@@ -122,6 +122,12 @@ public class MyBatisPromotionPersistenceAdapter implements PromotionPersistenceP
     @Override public void insertRefundAllocation(RefundAllocationWrite value) {
         requireOne(mapper.insertRefundAllocation(value));
     }
+    @Override public void insertMemberBenefitBinding(MemberBenefitBindingWrite value) {
+        requireOne(mapper.insertMemberBenefitBinding(value));
+    }
+    @Override public StoredMemberBenefitBinding findMemberBenefitBinding(String tenantId, String quoteId) {
+        return mapper.findMemberBenefitBinding(tenantId, quoteId);
+    }
     private void requireOne(int count) {
         if (count != 1) throw new ServiceException("PRM-STORE-002: 促销事实写入失败", 409);
     }

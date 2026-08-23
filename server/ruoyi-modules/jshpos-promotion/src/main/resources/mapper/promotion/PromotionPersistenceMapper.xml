@@ -80,6 +80,21 @@
         VALUES(#{adjustmentId},#{tenantId},#{quoteId},#{sourceLineId},#{sourceType},#{sourceId},
           #{calculationStage},#{amountMinor},#{explanationCode},#{appliedFlag},#{ordinalNo})
     </insert>
+    <insert id="insertMemberBenefitBinding">
+        INSERT INTO prm_quote_member_benefit(binding_id,tenant_id,quote_id,entitlement_snapshot_id,
+          benefit_version_id,selected_path,member_price_versions_json,capability_config_version,
+          capability_sha256,rights_digest,explanation_sha256,content_sha256,occurred_at)
+        VALUES(#{bindingId},#{tenantId},#{quoteId},#{entitlementSnapshotId},#{benefitVersionId},#{selectedPath},
+          CAST(#{memberPriceVersionsJson} AS JSON),#{capabilityConfigVersion},#{capabilitySha256},#{rightsDigest},
+          #{explanationSha256},#{contentSha256},#{occurredAt})
+    </insert>
+    <select id="findMemberBenefitBinding" resultType="com.jingshanghui.pos.promotion.application.port.PromotionPersistencePort$StoredMemberBenefitBinding">
+        SELECT quote_id quoteId,entitlement_snapshot_id entitlementSnapshotId,benefit_version_id benefitVersionId,
+          selected_path selectedPath,CAST(member_price_versions_json AS CHAR) memberPriceVersionsJson,
+          capability_config_version capabilityConfigVersion,capability_sha256 capabilitySha256,
+          rights_digest rightsDigest,explanation_sha256 explanationSha256,content_sha256 contentSha256
+        FROM prm_quote_member_benefit WHERE tenant_id=#{tenantId} AND quote_id=#{quoteId}
+    </select>
     <select id="findCommand" resultType="com.jingshanghui.pos.promotion.application.port.PromotionPersistencePort$StoredCommand">
         SELECT request_sha256 requestSha256,aggregate_id aggregateId,result_sha256 resultSha256,
                CAST(result_json AS CHAR) resultJson
