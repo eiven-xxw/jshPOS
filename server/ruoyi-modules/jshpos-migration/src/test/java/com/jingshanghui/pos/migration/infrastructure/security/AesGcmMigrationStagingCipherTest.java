@@ -3,16 +3,47 @@ package com.jingshanghui.pos.migration.infrastructure.security;
 import com.jingshanghui.pos.migration.application.port.MigrationStagingCipher.SealedValue;
 import org.dromara.common.core.exception.ServiceException;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.core.env.MapPropertySource;
 
+import java.lang.reflect.Constructor;
 import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.HexFormat;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class AesGcmMigrationStagingCipherTest {
+    @Test
+    void productionConstructorIsExplicitlySelectedForSpringInjection() {
+        Constructor<?>[] constructors = AesGcmMigrationStagingCipher.class.getDeclaredConstructors();
+        assertThat(constructors).hasSize(2);
+        assertThat(Arrays.stream(constructors)
+            .filter(constructor -> constructor.isAnnotationPresent(Autowired.class)))
+            .singleElement()
+            .satisfies(constructor -> {
+                assertThat(constructor.getParameterTypes()).containsExactly(String.class, String.class);
+                assertThat(constructor.canAccess(null)).isTrue();
+            });
+
+        byte[] key = new byte[32];
+        Arrays.fill(key, (byte) 13);
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext()) {
+            context.getEnvironment().getPropertySources().addFirst(new MapPropertySource("migration-test", Map.of(
+                "jshpos.migration.staging-key-base64", Base64.getEncoder().encodeToString(key),
+                "jshpos.migration.staging-key-version", "context-v1")));
+            context.register(AesGcmMigrationStagingCipher.class);
+            context.refresh();
+            AesGcmMigrationStagingCipher cipher = context.getBean(AesGcmMigrationStagingCipher.class);
+            SealedValue sealed = cipher.seal("TENANT_A:BATCH:ROW", "payload");
+            assertThat(cipher.open("TENANT_A:BATCH:ROW", sealed)).isEqualTo("payload");
+        }
+    }
+
     @Test
     void sealsWithAadAndDetectsTamperingOrCrossTenantReplacement() {
         byte[] key=new byte[32];Arrays.fill(key,(byte)7);

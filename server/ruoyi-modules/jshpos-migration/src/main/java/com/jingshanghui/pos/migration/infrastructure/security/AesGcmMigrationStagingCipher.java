@@ -2,6 +2,7 @@ package com.jingshanghui.pos.migration.infrastructure.security;
 
 import com.jingshanghui.pos.migration.application.port.MigrationStagingCipher;
 import org.dromara.common.core.exception.ServiceException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -27,6 +28,7 @@ public class AesGcmMigrationStagingCipher implements MigrationStagingCipher {
     private final String keyVersion;
     private final SecureRandom random;
 
+    @Autowired
     public AesGcmMigrationStagingCipher(
         @Value("${jshpos.migration.staging-key-base64:}") String keyBase64,
         @Value("${jshpos.migration.staging-key-version:}") String keyVersion) {
