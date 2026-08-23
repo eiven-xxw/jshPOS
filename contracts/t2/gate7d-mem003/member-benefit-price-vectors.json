@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "1.0",
+  "status": "ACTIVE_SYNTHETIC_REGRESSION",
+  "requirementId": "T2-MEM-003",
+  "currency": "CNY",
+  "source": "contracts/t2/gate7d-mem003-prep/member-benefit-price-vectors.json",
+  "vectorCount": 40,
+  "requiredIds": ["MBP-001","MBP-002","MBP-003","MBP-004","MBP-005","MBP-006","MBP-007","MBP-008","MBP-009","MBP-010","MBP-011","MBP-012","MBP-013","MBP-014","MBP-015","MBP-016","MBP-017","MBP-018","MBP-019","MBP-020","MBP-021","MBP-022","MBP-023","MBP-024","MBP-025","MBP-026","MBP-027","MBP-028","MBP-029","MBP-030","MBP-031","MBP-032","MBP-033","MBP-034","MBP-035","MBP-036","MBP-037","MBP-038","MBP-039","MBP-040"],
+  "evidenceBoundary": "INTERNAL_SYNTHETIC_ONLY"
+}

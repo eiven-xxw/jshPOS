@@ -1,0 +1,183 @@
+openapi: 3.1.0
+info:
+  title: JSH POS Member Benefit and Price API
+  version: 1.0.0
+  description: >-
+    T2-MEM-003 内部正式契约。tenant_id 仅来自可信认证上下文；
+    请求与响应禁止包含会员身份明文。
+x-contract-status: ACTIVE_INTERNAL
+x-requirement-status: IN_PROGRESS
+paths:
+  /api/v1/member-benefit-policies:
+    post:
+      operationId: createMemberBenefitPolicyDraft
+      x-owner: MEMBER
+      x-permission: member:benefit:create
+      x-idempotency-required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CreatePolicy'}
+      responses:
+        '200': {description: 返回稳定 DRAFT 身份与内容摘要}
+        '409': {description: 同键异内容或范围冲突}
+  /api/v1/member-benefit-policies/{policyId}/versions/{versionId}/validate:
+    post:
+      operationId: validateMemberBenefitVersion
+      x-owner: MEMBER
+      x-permission: member:benefit:validate
+      parameters: [{$ref: '#/components/parameters/PolicyId'}, {$ref: '#/components/parameters/VersionId'}]
+      responses:
+        '200': {description: 完整预检与 SHA-256}
+  /api/v1/member-benefit-policies/{policyId}/versions/{versionId}/approve:
+    post:
+      operationId: approveMemberBenefitVersion
+      x-owner: MEMBER
+      x-permission: member:benefit:approve
+      x-separation-of-duty: CREATOR_NE_APPROVER
+      parameters: [{$ref: '#/components/parameters/PolicyId'}, {$ref: '#/components/parameters/VersionId'}]
+      responses:
+        '200': {description: 批准不可变版本}
+        '409': {description: 职责分离、版本或摘要冲突}
+  /api/v1/member-benefit-policies/{policyId}/versions/{versionId}/publish:
+    post:
+      operationId: publishMemberBenefitVersion
+      x-owner: MEMBER
+      x-permission: member:benefit:publish
+      parameters: [{$ref: '#/components/parameters/PolicyId'}, {$ref: '#/components/parameters/VersionId'}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/PublishCommand'}
+      responses:
+        '200': {description: 发布或调度版本}
+        '409': {description: 生效窗口、门店范围或摘要冲突}
+  /api/v1/member-benefit-policies/{policyId}/versions/{versionId}/{action}:
+    post:
+      operationId: transitionMemberBenefitVersion
+      x-owner: MEMBER
+      x-permission: member:benefit:operate
+      parameters:
+        - {$ref: '#/components/parameters/PolicyId'}
+        - {$ref: '#/components/parameters/VersionId'}
+        - name: action
+          in: path
+          required: true
+          schema: {enum: [pause, resume, revoke]}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ReasonCommand'}
+      responses:
+        '200': {description: 只追加状态事实}
+  /api/v1/member-entitlements/issue:
+    post:
+      operationId: issueEntitlementSnapshot
+      x-owner: MEMBER
+      x-permission: pos:member-benefit:quote
+      x-no-pii: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/IssueEntitlement'}
+      responses:
+        '200': {description: 最小化权益快照}
+        '409': {description: 等级、权益版本或门店范围无效}
+  /api/v1/member-benefit-quotes:
+    post:
+      operationId: quoteMemberBenefitPrice
+      x-owner: PROMOTION
+      x-permission: pos:member-benefit:quote
+      x-idempotency-required: true
+      x-no-pii: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/QuoteCommand'}
+      responses:
+        '200': {description: 可解释 BEST_PRICE 报价和 fingerprint}
+        '409': {description: 权益无效、报价过期或同键异内容}
+components:
+  parameters:
+    PolicyId: {name: policyId, in: path, required: true, schema: {type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'}}
+    VersionId: {name: versionId, in: path, required: true, schema: {type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'}}
+  schemas:
+    CreatePolicy:
+      type: object
+      additionalProperties: false
+      required: [commandId, policyId, versionId, policyCode, displayName, levelRules, storeIds, correlationId]
+      properties:
+        commandId: {$ref: '#/components/schemas/Ulid'}
+        policyId: {$ref: '#/components/schemas/Ulid'}
+        versionId: {$ref: '#/components/schemas/Ulid'}
+        policyCode: {type: string, pattern: '^[A-Z0-9_-]{1,64}$'}
+        displayName: {type: string, maxLength: 100}
+        levelRules:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            additionalProperties: false
+            required: [levelCode, memberPriceEligible, stackingAllowed]
+            properties:
+              levelCode: {type: string, pattern: '^[A-Z0-9_-]{1,32}$'}
+              memberPriceEligible: {type: boolean}
+              stackingAllowed: {type: boolean}
+        storeIds: {type: array, minItems: 1, uniqueItems: true, items: {type: integer, minimum: 1}}
+        correlationId: {$ref: '#/components/schemas/Ulid'}
+    PublishCommand:
+      type: object
+      additionalProperties: false
+      required: [commandId, effectiveAt, contentSha256, correlationId]
+      properties:
+        commandId: {$ref: '#/components/schemas/Ulid'}
+        effectiveAt: {type: string, format: date-time}
+        expiresAt: {type: string, format: date-time}
+        contentSha256: {type: string, pattern: '^[0-9a-f]{64}$'}
+        correlationId: {$ref: '#/components/schemas/Ulid'}
+    ReasonCommand:
+      type: object
+      additionalProperties: false
+      required: [commandId, reasonCode, reason, correlationId]
+      properties:
+        commandId: {$ref: '#/components/schemas/Ulid'}
+        reasonCode: {type: string, pattern: '^[A-Z0-9_]{1,64}$'}
+        reason: {type: string, maxLength: 500}
+        correlationId: {$ref: '#/components/schemas/Ulid'}
+    IssueEntitlement:
+      type: object
+      additionalProperties: false
+      required: [commandId, snapshotId, memberId, storeId, quoteAt, correlationId]
+      properties:
+        commandId: {$ref: '#/components/schemas/Ulid'}
+        snapshotId: {$ref: '#/components/schemas/Ulid'}
+        memberId: {$ref: '#/components/schemas/Ulid'}
+        storeId: {type: integer, minimum: 1}
+        quoteAt: {type: string, format: date-time}
+        correlationId: {$ref: '#/components/schemas/Ulid'}
+    QuoteCommand:
+      type: object
+      additionalProperties: false
+      required: [idempotencyKey, basketFingerprint, entitlementSnapshotRef, lines]
+      properties:
+        idempotencyKey: {$ref: '#/components/schemas/Ulid'}
+        basketFingerprint: {type: string, pattern: '^[0-9a-f]{64}$'}
+        entitlementSnapshotRef: {$ref: '#/components/schemas/Ulid'}
+        lines:
+          type: array
+          minItems: 1
+          maxItems: 500
+          items:
+            type: object
+            additionalProperties: false
+            required: [lineId, skuId, quantity]
+            properties:
+              lineId: {$ref: '#/components/schemas/Ulid'}
+              skuId: {$ref: '#/components/schemas/Ulid'}
+              quantity: {type: string, pattern: '^[0-9]+(\\.[0-9]{1,6})?$'}
+    Ulid: {type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'}

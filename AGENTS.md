@@ -573,6 +573,18 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
 - 完成后必须提交《T2-MEM-003 独立 CR 与正式开发启动评审报告》等待确认；准备证据不得作为运行时 VERIFIED、外部证据或商业验收。
 - 准备候选提交 `0ce1dae88bbab57ff75e320b33bc290a62d1b23f` 的 GitHub Actions Run `32617725005` 已通过 Ubuntu/Windows 治理、范围零越界和证据索引四个 Job，生成四个 SHA-256 制品；该结果只证明准备材料可复现，`T2-MEM-003` 仍为 `DRAFT / CR_REQUIRED`。
 
+## 4.46 当前 T2 Gate 7D / Sprint S22-B：T2-MEM-003 独立正式开发
+
+- 项目发起人已于 2026-08-23 接受 CR-T2G7D-005，授权从准备封存提交 `fd474767c182cbdb5c3df0a9e2e4688371f0587f` 建立 `t2/gate7d-sprint22b-mem003-runtime`；ADR-053 更新为 `Accepted`。
+- 只允许实现 `T2-MEM-003`，并严格按 Member 权益 → Pricing 会员价 → Promotion BEST_PRICE → Order/Refund 原快照 → DataPackage/SQLite/Flutter/Vue → 跨端 E2E 顺序推进；前项未独立验证，后项不得铺开。
+- 三业态必须复用同一能力和算法且默认关闭；启用必须绑定可信租户、显式门店范围、版本和审批。Member 独占权益版本与最小快照，Pricing 独占会员价候选，Promotion 独占权益调整与解释，Order/Refund 只冻结和读取原快照。
+- 默认 `BEST_PRICE`，平价稳定选择普通价格/促销路径；会员权益和普通促销必须双方版本显式允许才可叠加。金额使用最小货币单位整数，数量/换算使用精确十进制，禁止浮点数和前端重算。
+- 离线包必须签名并绑定可信租户、门店、版本、摘要、有效期与撤回纪元；过期、撤回、旧包、坏包、跨租户/门店或摘要漂移必须失败关闭。显式非会员重报必须产生新 fingerprint，禁止静默降级。
+- 退款必须读取原订单、原权益、原会员价、原促销、原人工优惠与抹零快照；当前等级、价格或规则不得参与历史退款计算。真实 PII 不得进入 Pricing/Promotion/Order/包/日志/CI/普通制品。
+- MySQL/SQLite 只允许 `V74` 之后的新前向迁移，已发布迁移不得修改；核心类、实体、状态机、应用服务和复杂 SQL 必须保留有效中文注释。
+- `T2-SAA-001/SUB-001/SVC-001` 与 Gate 7E 继续 `DRAFT`；`T2-PAY-002/HWD-001/PRN-001/PAR-001` 继续 `BLOCKED`；`T2-JSH-001/LIC-001` 继续 `DEFERRED`。外部网络、真实资金、设备、伙伴、完整 Alpha、生产和商业声明保持 0。
+- 完成后只能更新为 `VERIFIED / AWAITING SPONSOR ACCEPTANCE` 并提交独立周门禁报告；不得自动进入 Gate 7E 或后续需求。
+
 ## 5. 工程与测试规则
 
 - 服务端采用 RuoYi-Vue-Plus 模块化单体，不得把领域逻辑写入 Controller、通用工具类或框架系统模块。

@@ -1,6 +1,6 @@
 # ADR-053：会员权益、会员价与成交快照联动边界
 
-- 状态：Proposed
+- 状态：Accepted
 - 日期：2026-08-23
 - 决策范围：T2-MEM-003 准备阶段
 - 准备基线：`39a72c65a08899f305ee0c04a5e337e1ee9ffbc9`
@@ -29,6 +29,7 @@ Promotion 已拥有确定性促销、人工优惠、成交分摊；Order 与 Ref
 
 ## 状态与后果
 
-本 ADR 仍为 `Proposed`，只冻结候选设计，不授权运行时。项目发起人接受 CR 后才可转为
-`Accepted`，并另行启动 `T2-MEM-003` 独立实现。此前 RTM 必须保持 `DRAFT`，生产路径、表、
-迁移、Controller、页面和任务的新增数量均为 0。
+项目发起人已于 2026-08-23 接受 CR-T2G7D-005，并授权从准备封存提交
+`fd474767c182cbdb5c3df0a9e2e4688371f0587f` 独立实现 `T2-MEM-003`。本 ADR 转为
+`Accepted`；实现必须按 Member → Pricing → Promotion → Order/Refund → DataPackage/POS/Vue →
+跨端 E2E 串行推进，任何前项未独立验证不得铺开后项。

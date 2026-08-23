@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0",
+  "gate": "T2-GATE7D-SPRINT-S22B-MEM003",
+  "requirementId": "T2-MEM-003",
+  "status": "IN_PROGRESS",
+  "baselineCommit": "fd474767c182cbdb5c3df0a9e2e4688371f0587f",
+  "branch": "t2/gate7d-sprint22b-mem003-runtime",
+  "serialOrder": ["MEMBER", "PRICING", "PROMOTION", "ORDER_REFUND", "PACKAGE_POS_WEB", "CROSS_PLATFORM_E2E"],
+  "activeStage": "PRICING",
+  "stageStatus": {
+    "MEMBER": "VERIFIED_LOCAL",
+    "PRICING": "IN_PROGRESS",
+    "PROMOTION": "DRAFT",
+    "ORDER_REFUND": "DRAFT",
+    "PACKAGE_POS_WEB": "DRAFT",
+    "CROSS_PLATFORM_E2E": "DRAFT"
+  },
+  "defaultEnabled": false,
+  "defaultCombinationPolicy": "BEST_PRICE",
+  "stackingRequiresDoubleOptIn": true,
+  "runtimeEvidence": "INTERNAL_SYNTHETIC_SOFTWARE_ONLY",
+  "externalExecution": {
+    "providerNetwork": 0,
+    "realFunds": 0,
+    "realDevice": 0,
+    "realPeripheral": 0,
+    "partnerExecution": 0,
+    "fullAlpha": 0,
+    "production": 0
+  }
+}

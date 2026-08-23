@@ -41,6 +41,29 @@ class MemberMigrationSqlPolicyTest {
             .contains("member:points:rebuild").contains("member:level:manage").doesNotContain("provider");
     }
 
+    @Test void benefitMigrationUsesTrustedTenantAppendOnlySnapshotsAndNoCrossOwnerWrites() throws Exception {
+        String sql=resource("/db/migration/V202608230075__gate7d_member_benefit.sql");
+        assertThat(sql).contains("create table mbr_benefit_policy")
+            .contains("create table mbr_benefit_version")
+            .contains("create table mbr_benefit_scope")
+            .contains("create table mbr_benefit_level_mapping")
+            .contains("create table mbr_entitlement_snapshot")
+            .contains("create table mbr_benefit_state_event")
+            .contains("create table mbr_benefit_command")
+            .contains("create table mbr_benefit_audit_event")
+            .contains("create table mbr_benefit_outbox")
+            .contains("primary key (tenant_id,snapshot_id)")
+            .contains("trg_mbr_entitlement_no_update").contains("trg_mbr_entitlement_no_delete")
+            .contains("default_combination_policy='best_price'")
+            .doesNotContain(" float").doesNotContain(" double")
+            .doesNotContain("update prc_").doesNotContain("update prm_").doesNotContain("update ord_");
+        String permissions=resource("/db/migration/V202608230076__gate7d_member_benefit_permissions.sql");
+        assertThat(permissions).contains("between 9201140 and 9201148")
+            .contains("member:benefit:create").contains("member:benefit:approve")
+            .contains("member:benefit:publish").contains("pos:member-benefit:quote")
+            .doesNotContain("provider");
+    }
+
     private String resource(String name) throws Exception {
         try (var stream=getClass().getResourceAsStream(name)) {
             assertThat(stream).isNotNull();

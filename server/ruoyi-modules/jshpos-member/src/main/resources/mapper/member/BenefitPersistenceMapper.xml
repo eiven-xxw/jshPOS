@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jingshanghui.pos.member.infrastructure.persistence.mapper.BenefitPersistenceMapper">
+  <!-- T2-MEM-003 权益写入全部经可信 tenant_id 和具名应用服务。 -->
+  <insert id="insertPolicy">
+    INSERT INTO mbr_benefit_policy(policy_id,tenant_id,policy_code,display_name,created_by)
+    VALUES(#{policyId},#{tenantId},#{policyCode},#{displayName},#{createdBy})
+  </insert>
+  <insert id="insertVersion">
+    INSERT INTO mbr_benefit_version(version_id,tenant_id,policy_id,version_no,state,
+      default_combination_policy,allow_stacking,content_sha256,created_by,created_at)
+    VALUES(#{versionId},#{tenantId},#{policyId},#{versionNo},'DRAFT',#{defaultCombinationPolicy},
+      #{allowStacking},#{contentSha256},#{createdBy},#{createdAt})
+  </insert>
+  <insert id="insertScopes">
+    INSERT INTO mbr_benefit_scope(scope_id,tenant_id,version_id,store_id,content_sha256,created_at) VALUES
+    <foreach collection="values" item="v" separator=",">
+      (#{v.scopeId},#{v.tenantId},#{v.versionId},#{v.storeId},#{v.contentSha256},#{v.createdAt})
+    </foreach>
+  </insert>
+  <insert id="insertMappings">
+    INSERT INTO mbr_benefit_level_mapping(mapping_id,tenant_id,version_id,level_code,
+      member_price_eligible,stacking_allowed,content_sha256,created_at) VALUES
+    <foreach collection="values" item="v" separator=",">
+      (#{v.mappingId},#{v.tenantId},#{v.versionId},#{v.levelCode},#{v.memberPriceEligible},
+       #{v.stackingAllowed},#{v.contentSha256},#{v.createdAt})
+    </foreach>
+  </insert>
+
+  <sql id="versionColumns">
+    SELECT p.policy_id policyId,v.version_id versionId,p.policy_code policyCode,p.display_name displayName,
+      v.version_no versionNo,v.state,v.default_combination_policy defaultCombinationPolicy,
+      v.allow_stacking allowStacking,FALSE memberPriceEligible,v.effective_at effectiveAt,
+      v.expires_at expiresAt,v.revocation_epoch revocationEpoch,v.content_sha256 contentSha256,
+      v.created_by createdBy,v.approved_by approvedBy,v.version
+    FROM mbr_benefit_version v
+    JOIN mbr_benefit_policy p ON p.tenant_id=v.tenant_id AND p.policy_id=v.policy_id
+  </sql>
+  <select id="findVersion" resultType="com.jingshanghui.pos.member.application.model.BenefitViews$PolicyVersionView">
+    <include refid="versionColumns"/>
+    WHERE v.tenant_id=#{tenantId} AND v.policy_id=#{policyId} AND v.version_id=#{versionId}
+  </select>
+  <select id="lockVersion" resultType="com.jingshanghui.pos.member.application.model.BenefitViews$PolicyVersionView">
+    <include refid="versionColumns"/>
+    WHERE v.tenant_id=#{tenantId} AND v.policy_id=#{policyId} AND v.version_id=#{versionId} FOR UPDATE
+  </select>
+  <update id="transitionVersion">
+    UPDATE mbr_benefit_version SET state=#{toState},approved_by=COALESCE(#{approvedBy},approved_by),
+      effective_at=COALESCE(#{effectiveAt},effective_at),expires_at=COALESCE(#{expiresAt},expires_at),
+      revocation_epoch=#{revocationEpoch},version=version+1,updated_at=#{changedAt}
+    WHERE tenant_id=#{tenantId} AND version_id=#{versionId} AND state=#{fromState} AND version=#{expectedVersion}
+  </update>
+  <insert id="insertStateEvent">
+    INSERT INTO mbr_benefit_state_event(event_id,tenant_id,version_id,from_state,to_state,reason_code,
+      reason_sha256,actor_user_id,correlation_id,occurred_at,content_sha256)
+    VALUES(#{eventId},#{tenantId},#{versionId},#{fromState},#{toState},#{reasonCode},#{reasonSha256},
+      #{actorUserId},#{correlationId},#{occurredAt},#{contentSha256})
+  </insert>
+
+  <!-- 不使用 LIMIT；如配置错误造成重叠活动版本，MyBatis 必须以多结果失败关闭。 -->
+  <select id="findActiveVersion" resultType="com.jingshanghui.pos.member.application.model.BenefitViews$PolicyVersionView">
+    SELECT p.policy_id policyId,v.version_id versionId,p.policy_code policyCode,p.display_name displayName,
+      v.version_no versionNo,v.state,v.default_combination_policy defaultCombinationPolicy,
+      m.stacking_allowed allowStacking,m.member_price_eligible memberPriceEligible,
+      v.effective_at effectiveAt,v.expires_at expiresAt,v.revocation_epoch revocationEpoch,
+      v.content_sha256 contentSha256,v.created_by createdBy,v.approved_by approvedBy,v.version
+    FROM mbr_benefit_version v
+    JOIN mbr_benefit_policy p ON p.tenant_id=v.tenant_id AND p.policy_id=v.policy_id
+    JOIN mbr_benefit_scope s ON s.tenant_id=v.tenant_id AND s.version_id=v.version_id AND s.store_id=#{storeId}
+    JOIN mbr_benefit_level_mapping m ON m.tenant_id=v.tenant_id AND m.version_id=v.version_id
+      AND m.level_code=#{levelCode}
+    WHERE v.tenant_id=#{tenantId} AND v.state IN ('ACTIVE','SCHEDULED')
+      AND v.effective_at&lt;=#{at} AND (v.expires_at IS NULL OR v.expires_at&gt;#{at})
+  </select>
+
+  <insert id="insertSnapshot">
+    INSERT INTO mbr_entitlement_snapshot(snapshot_id,tenant_id,member_id,member_ref_hash,level_history_id,
+      level_code,benefit_version_id,store_id,member_price_eligible,stacking_allowed,effective_at,expires_at,
+      revocation_epoch,rights_digest,content_sha256,issued_at)
+    VALUES(#{snapshotId},#{tenantId},#{memberId},#{memberRefHash},#{levelHistoryId},#{levelCode},
+      #{benefitVersionId},#{storeId},#{memberPriceEligible},#{stackingAllowed},#{effectiveAt},#{expiresAt},
+      #{revocationEpoch},#{rightsDigest},#{contentSha256},#{issuedAt})
+  </insert>
+  <select id="findSnapshot" resultType="com.jingshanghui.pos.member.application.model.BenefitViews$EntitlementSnapshotView">
+    SELECT snapshot_id snapshotId,member_ref_hash memberRefHash,level_history_id levelHistoryId,
+      level_code levelCode,benefit_version_id benefitVersionId,store_id storeId,
+      member_price_eligible memberPriceEligible,stacking_allowed stackingAllowed,
+      effective_at effectiveAt,expires_at expiresAt,revocation_epoch revocationEpoch,
+      rights_digest rightsDigest,content_sha256 contentSha256
+    FROM mbr_entitlement_snapshot WHERE tenant_id=#{tenantId} AND snapshot_id=#{snapshotId}
+  </select>
+
+  <select id="findCommand" resultType="com.jingshanghui.pos.member.application.port.BenefitPersistencePort$StoredCommand">
+    SELECT request_sha256 requestSha256,aggregate_id aggregateId,result_sha256 resultSha256,result_json resultJson
+    FROM mbr_benefit_command
+    WHERE tenant_id=#{tenantId} AND command_type=#{commandType} AND idempotency_key=#{idempotencyKey}
+  </select>
+  <insert id="insertCommand">
+    INSERT INTO mbr_benefit_command(command_id,tenant_id,command_type,idempotency_key,request_sha256,
+      aggregate_id,result_sha256,result_json,created_at)
+    VALUES(#{commandId},#{tenantId},#{commandType},#{idempotencyKey},#{requestSha256},#{aggregateId},
+      #{resultSha256},#{resultJson},#{createdAt})
+  </insert>
+  <insert id="insertAudit">
+    INSERT INTO mbr_benefit_audit_event(audit_id,tenant_id,action,target_id,actor_user_id,reason_code,
+      summary_sha256,correlation_id,occurred_at)
+    VALUES(#{auditId},#{tenantId},#{action},#{targetId},#{actorUserId},#{reasonCode},#{summarySha256},
+      #{correlationId},#{occurredAt})
+  </insert>
+  <insert id="insertOutbox">
+    INSERT INTO mbr_benefit_outbox(event_id,tenant_id,event_type,aggregate_id,aggregate_version,
+      payload_json,payload_sha256,status,occurred_at)
+    VALUES(#{eventId},#{tenantId},#{eventType},#{aggregateId},#{aggregateVersion},#{payloadJson},
+      #{payloadSha256},'PENDING',#{occurredAt})
+  </insert>
+</mapper>

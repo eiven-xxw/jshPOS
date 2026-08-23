@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "1.0",
+  "status": "ACTIVE_INTERNAL",
+  "requirementId": "T2-MEM-003",
+  "defaultPolicy": "BEST_PRICE",
+  "money": {"representation": "MINOR_UNIT_INTEGER", "currencyRequired": true},
+  "quantity": {"representation": "EXACT_DECIMAL_STRING", "floatingPointForbidden": true},
+  "steps": [
+    {"order": 1, "name": "TRUSTED_CONTEXT", "owner": "FOUNDATION"},
+    {"order": 2, "name": "ENTITLEMENT_VALIDATION", "owner": "MEMBER"},
+    {"order": 3, "name": "NORMAL_PRICE_RESOLUTION", "owner": "PRICING"},
+    {"order": 4, "name": "MEMBER_PRICE_RESOLUTION", "owner": "PRICING"},
+    {"order": 5, "name": "NORMAL_PROMOTION_PATH", "owner": "PROMOTION"},
+    {"order": 6, "name": "MEMBER_BENEFIT_PATH", "owner": "PROMOTION"},
+    {"order": 7, "name": "EXPLICIT_STACKING_DECISION", "owner": "PROMOTION"},
+    {"order": 8, "name": "BEST_PRICE_SELECTION", "owner": "PROMOTION", "tieBreaker": "NORMAL_PRICE_PROMOTION"},
+    {"order": 9, "name": "AUTHORIZED_MANUAL_ADJUSTMENT", "owner": "PROMOTION"},
+    {"order": 10, "name": "ROUNDING", "owner": "PROMOTION"},
+    {"order": 11, "name": "IMMUTABLE_TRANSACTION_SNAPSHOT", "owner": "ORDER"}
+  ],
+  "stacking": {
+    "default": "DENY",
+    "allowOnlyWhen": ["BENEFIT_VERSION_EXPLICIT_ALLOW", "PROMOTION_VERSION_EXPLICIT_ALLOW"],
+    "singleSidedOptIn": "DENY"
+  },
+  "invariants": [
+    "GROSS_MINUS_DISCOUNT_PLUS_SURCHARGE_EQUALS_RECEIVABLE",
+    "ORDER_HEADER_EQUALS_LINE_SUM",
+    "NO_DUPLICATE_ADJUSTMENT",
+    "FROZEN_ORDER_NEVER_REPRICED",
+    "REFUND_USES_ORIGINAL_SNAPSHOT",
+    "EXPIRED_OFFLINE_BENEFIT_REQUIRES_EXPLICIT_NON_MEMBER_REQUOTE"
+  ]
+}

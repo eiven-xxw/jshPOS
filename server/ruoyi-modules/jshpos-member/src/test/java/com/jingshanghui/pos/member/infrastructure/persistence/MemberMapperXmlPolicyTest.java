@@ -47,4 +47,20 @@ class MemberMapperXmlPolicyTest {
         assertThat(source).doesNotContain("@Select").doesNotContain("@Insert")
             .doesNotContain("@Update").doesNotContain("@Delete");
     }
+
+    @Test void benefitMapperUsesTrustedTenantXmlAndNeverCrossWritesOtherOwners() throws Exception {
+        try(var stream=getClass().getResourceAsStream("/mapper/member/BenefitPersistenceMapper.xml")) {
+            assertThat(stream).isNotNull();
+            String xml=new String(stream.readAllBytes(),StandardCharsets.UTF_8).toLowerCase();
+            assertThat(xml).doesNotContain("select *").contains("tenant_id=#{tenantid}")
+                .contains("for update").contains("insert into mbr_entitlement_snapshot")
+                .contains("insert into mbr_benefit_state_event").contains("insert into mbr_benefit_outbox")
+                .doesNotContain("delete from mbr_").doesNotContain("update mbr_entitlement_snapshot")
+                .doesNotContain("update prc_").doesNotContain("update prm_").doesNotContain("update ord_");
+        }
+        String source=Files.readString(Path.of(System.getProperty("user.dir"),
+            "src/main/java/com/jingshanghui/pos/member/infrastructure/persistence/mapper/BenefitPersistenceMapper.java"));
+        assertThat(source).doesNotContain("@Select").doesNotContain("@Insert")
+            .doesNotContain("@Update").doesNotContain("@Delete");
+    }
 }

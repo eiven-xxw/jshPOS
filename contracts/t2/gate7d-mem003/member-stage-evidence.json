@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-MEM-003",
+  "stage": "MEMBER",
+  "status": "VERIFIED_LOCAL",
+  "verifiedAt": "2026-08-23T12:51:04+08:00",
+  "evidence": {
+    "reactorCompile": "BUILD_SUCCESS_24_MODULES",
+    "memberTests": 44,
+    "failures": 0,
+    "errors": 0,
+    "coverageGate": "MET",
+    "migrationEvidence": "STATIC_POLICY_ONLY_PENDING_CLEAN_MYSQL_CI"
+  },
+  "verifiedBoundaries": [
+    "VERSIONED_POLICY_AND_LEVEL_MAPPING",
+    "TRUSTED_STORE_SCOPE",
+    "CREATOR_APPROVER_SEPARATION",
+    "PUBLISH_PAUSE_RESUME_REVOKE_STATE_MACHINE",
+    "NO_PII_ENTITLEMENT_SNAPSHOT",
+    "IDEMPOTENCY_AND_SAME_KEY_DIFFERENT_CONTENT_REJECTION",
+    "XML_TENANT_GUARD_AND_APPEND_ONLY_MIGRATION_POLICY"
+  ],
+  "notYetEvidence": ["CLEAN_MYSQL_MIGRATION", "FULL_GATE_CI", "CROSS_OWNER_RUNTIME", "POS_OR_WEB"],
+  "externalEvidence": 0
+}
