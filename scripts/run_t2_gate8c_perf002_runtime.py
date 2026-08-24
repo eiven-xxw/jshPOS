@@ -25,7 +25,12 @@ import urllib.request
 from dataclasses import asdict, dataclass
 from typing import Any
 
-from run_t2_gate8b_runtime_api_journey import ApiClient, CLIENT_ID, PLATFORM_TENANT
+from run_t2_gate8b_runtime_api_journey import (
+    ApiClient,
+    CLIENT_ID,
+    PLATFORM_TENANT,
+    TENANT_PACKAGE_MENU_IDS,
+)
 
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -308,6 +313,8 @@ def self_test() -> None:
     parsed = _memory_mib("123.5MiB / 7.7GiB")
     if parsed != 123.5:
         raise PerformanceFailure("资源解析错误")
+    if 9201728 not in TENANT_PACKAGE_MENU_IDS:
+        raise PerformanceFailure("性能正式旅程合成租户缺少订阅自查权限")
     print("T2-PERF-002 runtime harness self-test passed")
 
 
