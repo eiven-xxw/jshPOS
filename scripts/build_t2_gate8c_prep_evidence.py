@@ -32,7 +32,9 @@ def main() -> None:
             report = json.loads(path.read_text(encoding="utf-8"))
         except json.JSONDecodeError:
             continue
-        if report.get("gate") == GATE:
+        # 同一证据包内还有 findings-register.json 等领域资料；只有带门禁状态与
+        # 决策字段的生产者报告才参与绿灯判定，不能把普通契约误判为失败报告。
+        if report.get("gate") == GATE and "status" in report and "decision" in report:
             reports.append(report)
     if len(reports) < 3 or any(report.get("status") != "PASS" for report in reports):
         raise SystemExit("Gate 8C-Prep reports missing or non-green")
