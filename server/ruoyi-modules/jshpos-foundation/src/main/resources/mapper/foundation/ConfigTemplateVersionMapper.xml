@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jingshanghui.pos.foundation.infrastructure.persistence.mapper.ConfigTemplateVersionMapper">
+
+    <!-- 配置模板版本完整映射；锁定读取禁止星号投影与隐式列顺序。 -->
+    <resultMap id="configTemplateVersionEntityMap"
+               type="com.jingshanghui.pos.foundation.infrastructure.persistence.entity.ConfigTemplateVersionEntity">
+        <id column="config_version_id" property="configVersionId"/>
+        <result column="tenant_id" property="tenantId"/>
+        <result column="template_id" property="templateId"/>
+        <result column="version_no" property="versionNo"/>
+        <result column="schema_version" property="schemaVersion"/>
+        <result column="state" property="state"/>
+        <result column="content_json" property="contentJson"/>
+        <result column="content_sha256" property="contentSha256"/>
+        <result column="published_by" property="publishedBy"/>
+        <result column="published_at" property="publishedAt"/>
+        <result column="create_dept" property="createDept"/>
+        <result column="create_by" property="createBy"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_by" property="updateBy"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <!-- 可信租户条件与确定性排序共同串行化同一模板的版本号分配。 -->
+    <select id="selectLatestForUpdate" resultMap="configTemplateVersionEntityMap">
+        SELECT config_version_id,
+               tenant_id,
+               template_id,
+               version_no,
+               schema_version,
+               state,
+               content_json,
+               content_sha256,
+               published_by,
+               published_at,
+               create_dept,
+               create_by,
+               create_time,
+               update_by,
+               update_time
+        FROM jsh_config_template_version
+        WHERE tenant_id = #{trustedTenantId}
+          AND template_id = #{templateId}
+        ORDER BY version_no DESC, config_version_id DESC
+        LIMIT 1
+        FOR UPDATE
+    </select>
+</mapper>
