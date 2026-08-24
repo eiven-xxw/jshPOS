@@ -7,6 +7,7 @@
       title="异常中心只编排 Owner 修复，不重算或覆盖资金、库存、成本、报表与日结事实"
       description="支付 Provider、真实设备和打印仍为 BLOCKED/UNAVAILABLE；UNKNOWN 只能观察原命令，页面不会生成新的扣款或退款。"
     />
+    <OwnerPageFeedback surface-id="VUE-13" :state="phase" :failure="pageFailure" @retry="load" />
     <el-card class="mt-3" shadow="never">
       <template #header><span>1. 可信门店异常队列</span></template>
       <el-form :inline="true">
@@ -20,7 +21,7 @@
             ><el-option v-for="s in ['P0', 'P1', 'P2', 'P3']" :key="s" :label="s" :value="s" /></el-select
         ></el-form-item>
         <el-form-item
-          ><el-button v-hasPermi="['operations:exception:read']" :loading="loading" @click="load">查询</el-button>
+          ><el-button v-hasPermi="['operations:exception:read']" data-testid="exception-read" :loading="loading" @click="load">查询</el-button>
           <el-button v-hasPermi="['operations:exception:scan']" type="primary" :loading="loading" @click="scan">扫描 Owner</el-button></el-form-item
         >
       </el-form>
@@ -108,6 +109,10 @@ import {
 } from '@/api/exception-center';
 import type { ExceptionCaseDetail, ExceptionCaseRecord, ExceptionCaseState } from '@/api/exception-center/types';
 import { newOperationCommandId } from '@/api/operations';
+import { useRecoverablePage } from '@/composables/useRecoverablePage';
+import OwnerPageFeedback from '../components/OwnerPageFeedback.vue';
+
+const { phase, failure: pageFailure, runRead, runWrite } = useRecoverablePage('EXCEPTION_PAGE_FAILED');
 const states: ExceptionCaseState[] = ['OPEN', 'CLAIMED', 'IN_PROGRESS', 'WAITING_OWNER', 'RESOLVED', 'CLOSED', 'REOPENED', 'FAILED'];
 const form = reactive<{
   storeId?: number;
@@ -126,38 +131,47 @@ const form = reactive<{
 });
 const rows = ref<ExceptionCaseRecord[]>([]);
 const detail = ref<ExceptionCaseDetail>();
-const loading = ref(false);
-const identity = () => {
-  const id = newOperationCommandId();
+const loading = computed(() => phase.value === 'LOADING' || phase.value === 'SUBMITTING');
+const identities = new Map<string, string>();
+const identity = (action: string) => {
+  const objectId = detail.value?.exceptionCase.caseId ?? `${form.storeId ?? 'none'}:${form.businessDate}`;
+  const mapKey = `${objectId}:${action}`;
+  if (!identities.has(mapKey)) identities.set(mapKey, newOperationCommandId());
+  const id = identities.get(mapKey)!;
   return { idempotencyKey: id, correlationId: id };
 };
-const execute = async <T,>(work: () => Promise<T>) => {
-  loading.value = true;
-  try {
-    return await work();
-  } finally {
-    loading.value = false;
-  }
+const read = async <T,>(work: () => Promise<{ data: T }>, empty: (value: T) => boolean = () => false): Promise<T | undefined> => {
+  const response = await runRead(work, (value) => empty(value.data));
+  return response?.data;
+};
+const write = async <T,>(operationIdentity: string, work: () => Promise<{ data: T }>): Promise<T | undefined> => {
+  const response = await runWrite(operationIdentity, work);
+  return response?.data;
 };
 const load = async () => {
   if (!form.storeId) return ElMessage.warning('请选择有权访问的门店');
-  rows.value = (await execute(() =>
-    listExceptionCases({ storeId: form.storeId!, state: form.state, severity: form.severity, limit: 100 })
-  )) as unknown as ExceptionCaseRecord[];
+  const result = await read(
+    () => listExceptionCases({ storeId: form.storeId!, state: form.state, severity: form.severity, limit: 100 }),
+    (value) => value.length === 0
+  );
+  if (result) rows.value = result;
 };
 const scan = async () => {
   if (!form.storeId) return ElMessage.warning('请选择门店');
-  rows.value = (await execute(() =>
-    scanExceptionOwners({ storeId: form.storeId!, businessDate: form.businessDate }, identity())
-  )) as unknown as ExceptionCaseRecord[];
+  const requestIdentity = identity('scan');
+  const result = await write(requestIdentity.idempotencyKey, () =>
+    scanExceptionOwners({ storeId: form.storeId!, businessDate: form.businessDate }, requestIdentity)
+  );
+  if (result) rows.value = result;
 };
 const select = async (row: ExceptionCaseRecord) => {
-  detail.value = (await execute(() => getExceptionCase(row.caseId))) as unknown as ExceptionCaseDetail;
+  const result = await read(() => getExceptionCase(row.caseId));
+  if (result) detail.value = result;
 };
 const run = async (name: 'claim' | 'transfer' | 'start' | 'plan' | 'repair' | 'review' | 'close' | 'reopen') => {
   if (!detail.value) return;
   const id = detail.value.exceptionCase.caseId;
-  const i = identity();
+  const i = identity(name);
   const calls = {
     claim: () => claimExceptionCase(id, form.leaseMinutes, i),
     transfer: () => {
@@ -171,9 +185,15 @@ const run = async (name: 'claim' | 'transfer' | 'start' | 'plan' | 'repair' | 'r
     close: () => closeExceptionCase(id, form.reason, i),
     reopen: () => reopenExceptionCase(id, form.reason, i)
   };
-  if (['repair', 'close', 'reopen'].includes(name))
-    await ElMessageBox.confirm('该操作只编排Owner并写只追加审计，不会覆盖来源事实。确认继续？', '受控异常操作', { type: 'warning' });
-  detail.value = (await execute(calls[name])) as unknown as ExceptionCaseDetail;
+  if (['transfer', 'plan', 'repair', 'review', 'close', 'reopen'].includes(name))
+    await ElMessageBox.confirm(
+      `案件：${id}；动作：${name}；只保存修复命令引用和结果摘要，不覆盖来源事实。确认继续？`,
+      '受控异常操作',
+      { type: 'warning' }
+    );
+  const result = await write(i.idempotencyKey, calls[name]);
+  if (!result) return;
+  detail.value = result;
   await load();
 };
 const tag = (s: ExceptionCaseState) =>
