@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "1.0",
+  "gate": "T2-GATE9B-G9A-R3B",
+  "stage": "AUTHORIZED_OWNER_PAGE_RUNTIME_REPAIR",
+  "findingId": "G9A-UI-P1-001",
+  "baselineCommit": "4e8a9f2b1dd52ce6b198bd3a25328e2a80330a71",
+  "branch": "t2/gate9b-sprint27d-g9a-r3b-runtime",
+  "surfaces": ["VUE-05", "VUE-06", "VUE-07", "VUE-08", "VUE-09", "VUE-10", "VUE-11", "VUE-12", "VUE-13", "VUE-14", "VUE-15"],
+  "expectedAcceptedT2Requirements": 88,
+  "newRequirementIds": 0,
+  "serverRuntimeChanges": 0,
+  "apiChanges": 0,
+  "dependencyChanges": 0,
+  "migrationChanges": 0,
+  "externalExecution": {
+    "providerNetwork": 0,
+    "realFunds": 0,
+    "realDeviceCommands": 0,
+    "realPeripheralCommands": 0,
+    "partnerFieldExecution": 0,
+    "fullAlpha": 0,
+    "productionDeployment": 0
+  },
+  "nextBatchAutomaticallyAuthorized": false
+}

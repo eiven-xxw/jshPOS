@@ -1,0 +1,94 @@
+{
+  "schemaVersion": "1.0",
+  "findingId": "G9A-UI-P1-001",
+  "batchId": "G9A-R3B",
+  "dimensions": [
+    "route",
+    "buttons",
+    "permission",
+    "dataScope",
+    "loading",
+    "empty",
+    "error",
+    "singleFlight",
+    "offline",
+    "businessDate",
+    "recovery",
+    "directTest"
+  ],
+  "surfaces": [
+    {
+      "surfaceId": "VUE-05",
+      "title": "开业资料迁移",
+      "statuses": ["PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "NOT_APPLICABLE", "NOT_APPLICABLE", "PASS", "PASS"],
+      "evidence": ["admin-web/src/views/operations/business-migration/index.vue", "admin-web/src/views/operations/__tests__/business-migration-runtime.spec.ts"]
+    },
+    {
+      "surfaceId": "VUE-06",
+      "title": "促销、会员隐私与积分",
+      "statuses": ["PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "NOT_APPLICABLE", "NOT_APPLICABLE", "PASS", "PASS"],
+      "evidence": ["admin-web/src/views/operations/components/CustomerPromotionPanel.vue", "admin-web/src/views/operations/__tests__/customer-promotion-runtime.spec.ts"]
+    },
+    {
+      "surfaceId": "VUE-07",
+      "title": "库存、成本与盘点",
+      "statuses": ["PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "NOT_APPLICABLE", "NOT_APPLICABLE", "PASS", "PASS"],
+      "evidence": ["admin-web/src/views/operations/components/InventoryCostPanel.vue", "admin-web/src/views/operations/__tests__/inventory-cost-runtime.spec.ts"]
+    },
+    {
+      "surfaceId": "VUE-08",
+      "title": "会员等级权益与会员价",
+      "statuses": ["PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "NOT_APPLICABLE", "NOT_APPLICABLE", "PASS", "PASS"],
+      "evidence": ["admin-web/src/views/operations/components/MemberBenefitPolicyPanel.vue", "admin-web/src/views/operations/__tests__/member-benefit-runtime.spec.ts"]
+    },
+    {
+      "surfaceId": "VUE-09",
+      "title": "发布与灰度治理",
+      "statuses": ["PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "NOT_APPLICABLE", "NOT_APPLICABLE", "PASS", "PASS"],
+      "evidence": ["admin-web/src/views/operations/components/ReleasePanel.vue", "admin-web/src/views/operations/__tests__/release-runtime.spec.ts"]
+    },
+    {
+      "surfaceId": "VUE-10",
+      "title": "缺货预警与补货建议",
+      "statuses": ["PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "NOT_APPLICABLE", "NOT_APPLICABLE", "PASS", "PASS"],
+      "evidence": ["admin-web/src/views/operations/components/ReplenishmentPanel.vue", "admin-web/src/views/operations/__tests__/supply-replenishment-runtime.spec.ts"]
+    },
+    {
+      "surfaceId": "VUE-11",
+      "title": "供应商、采购与调拨",
+      "statuses": ["PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "NOT_APPLICABLE", "NOT_APPLICABLE", "PASS", "PASS"],
+      "evidence": ["admin-web/src/views/operations/components/SupplyPanel.vue", "admin-web/src/views/operations/__tests__/supply-replenishment-runtime.spec.ts"]
+    },
+    {
+      "surfaceId": "VUE-12",
+      "title": "门店业务日日结",
+      "statuses": ["PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "NOT_APPLICABLE", "PASS", "PASS", "PASS"],
+      "evidence": ["admin-web/src/views/operations/daily-close/index.vue", "admin-web/src/views/operations/__tests__/daily-close-runtime.spec.ts"]
+    },
+    {
+      "surfaceId": "VUE-13",
+      "title": "统一异常中心",
+      "statuses": ["PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "NOT_APPLICABLE", "NOT_APPLICABLE", "PASS", "PASS"],
+      "evidence": ["admin-web/src/views/operations/exception-center/index.vue", "admin-web/src/views/operations/__tests__/exception-center-runtime.spec.ts"]
+    },
+    {
+      "surfaceId": "VUE-14",
+      "title": "社区超市批次与效期",
+      "statuses": ["PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "NOT_APPLICABLE", "PASS", "PASS", "PASS"],
+      "evidence": ["admin-web/src/views/operations/lot-expiry/index.vue", "admin-web/src/views/operations/__tests__/lot-expiry-runtime.spec.ts"]
+    },
+    {
+      "surfaceId": "VUE-15",
+      "title": "门店复制与开店检查",
+      "statuses": ["PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "NOT_APPLICABLE", "NOT_APPLICABLE", "PASS", "PASS"],
+      "evidence": ["admin-web/src/views/operations/store-onboarding/index.vue", "admin-web/src/views/operations/__tests__/store-onboarding-runtime.spec.ts"]
+    }
+  ],
+  "notApplicableRules": {
+    "onlineVueOffline": "本批 Vue 管理页面不承载离线业务事实；网络故障以安全错误和原操作恢复处理",
+    "nonTransactionalBusinessDate": "仅日结与批次效期直接消费业务日；其他运营页不生成交易业务日事实"
+  },
+  "batchResult": "VERIFIED_CANDIDATE",
+  "overallFindingState": "OPEN",
+  "overallFindingReason": "G9A-R3C 和 26 页联合验收尚未执行"
+}

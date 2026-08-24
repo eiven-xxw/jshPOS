@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "1.0",
+  "batchId": "G9A-R3B",
+  "findingId": "G9A-UI-P1-001",
+  "closures": [
+    {"seedId":"R3B-P1-TEST-001","state":"CLOSED_IN_BATCH","evidence":["admin-web/src/views/operations/__tests__/business-migration-runtime.spec.ts","admin-web/src/views/operations/__tests__/customer-promotion-runtime.spec.ts","admin-web/src/views/operations/__tests__/inventory-cost-runtime.spec.ts","admin-web/src/views/operations/__tests__/member-benefit-runtime.spec.ts","admin-web/src/views/operations/__tests__/release-runtime.spec.ts","admin-web/src/views/operations/__tests__/supply-replenishment-runtime.spec.ts","admin-web/src/views/operations/__tests__/daily-close-runtime.spec.ts","admin-web/src/views/operations/__tests__/store-onboarding-runtime.spec.ts"]},
+    {"seedId":"R3B-P1-TEST-002","state":"CLOSED_IN_BATCH","evidence":["admin-web/src/views/operations/__tests__/exception-center-runtime.spec.ts","admin-web/src/views/operations/__tests__/lot-expiry-runtime.spec.ts"]},
+    {"seedId":"R3B-P1-PERM-001","state":"CLOSED_IN_BATCH","evidence":["admin-web/src/views/operations/__tests__/member-benefit-runtime.spec.ts","admin-web/src/views/operations/components/MemberBenefitPolicyPanel.vue"]},
+    {"seedId":"R3B-P1-STATE-001","state":"CLOSED_IN_BATCH","evidence":["admin-web/src/views/operations/components/OwnerPageFeedback.vue","admin-web/src/views/operations/__tests__/owner-page-feedback.spec.ts"]},
+    {"seedId":"R3B-P1-RECOVERY-001","state":"CLOSED_IN_BATCH","evidence":["admin-web/src/views/operations/__tests__/owner-operation-runtime.spec.ts","admin-web/src/views/operations/__tests__/member-benefit-runtime.spec.ts","admin-web/src/views/operations/__tests__/exception-center-runtime.spec.ts","admin-web/src/views/operations/__tests__/lot-expiry-runtime.spec.ts"]},
+    {"seedId":"R3B-P1-FEEDBACK-001","state":"CLOSED_IN_BATCH","evidence":["admin-web/src/views/operations/components/OwnerPageFeedback.vue","admin-web/src/views/operations/__tests__/owner-page-feedback.spec.ts"]},
+    {"seedId":"R3B-P1-CONFIRM-001","state":"CLOSED_IN_BATCH","evidence":["admin-web/src/views/operations/__tests__/owner-operation-runtime.spec.ts","admin-web/src/views/operations/__tests__/supply-replenishment-runtime.spec.ts","admin-web/src/views/operations/__tests__/daily-close-runtime.spec.ts","admin-web/src/views/operations/__tests__/exception-center-runtime.spec.ts","admin-web/src/views/operations/__tests__/store-onboarding-runtime.spec.ts"]}
+  ],
+  "redPhase": {
+    "observed": "共享受控操作初始回归出现3项可复现失败：重复确认、5xx未知结果可再次提交、空结果未进入EMPTY",
+    "test": "admin-web/src/views/operations/__tests__/owner-operation-runtime.spec.ts",
+    "fixCommit": "2f1cdea"
+  },
+  "executionFindings": [
+    {
+      "findingId": "R3B-R11-LEGACY-ASSERT-001",
+      "observed": "全量Web回归中旧源码断言仍要求已移除的全局createSingleFlight符号",
+      "resolution": "保留每对象/动作pending单航班实现，并将断言升级为pending、unresolved与UNKNOWN语义"
+    },
+    {
+      "findingId": "R3B-R11-LEGACY-COPY-001",
+      "observed": "既有会员价边界测试要求精确文案“页面不会计算成交价”",
+      "resolution": "在不改变Owner计算边界的前提下恢复明确文案"
+    },
+    {
+      "findingId": "R3B-R11-SELECTOR-001",
+      "observed": "VUE-14新增挂载测试错误地在el-input透传的原生input下再次查找input",
+      "resolution": "仅修正测试选择器并复跑VUE-13/14原幂等键故障向量"
+    }
+  ],
+  "openP0": 0,
+  "openP1InBatch": 0,
+  "autoRetryUsed": false,
+  "testsSkippedToPass": false
+}

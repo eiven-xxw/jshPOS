@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "1.0",
+  "batchId": "G9A-R3B",
+  "serial": true,
+  "steps": [
+    {"order":0,"stepId":"R3B-R0","scope":["shared-runtime","failure-tests"],"commit":"2f1cdea"},
+    {"order":1,"stepId":"R3B-R1","scope":["VUE-08"],"commit":"ebf60d3"},
+    {"order":2,"stepId":"R3B-R2","scope":["VUE-07"],"commit":"5827f1b"},
+    {"order":3,"stepId":"R3B-R3","scope":["VUE-11","VUE-10"],"commit":"32f4ca1"},
+    {"order":4,"stepId":"R3B-R4","scope":["VUE-09"],"commit":"a53e222"},
+    {"order":5,"stepId":"R3B-R5","scope":["VUE-06"],"commit":"a013f93"},
+    {"order":6,"stepId":"R3B-R6","scope":["VUE-05"],"commit":"64f97f0"},
+    {"order":7,"stepId":"R3B-R7","scope":["VUE-12"],"commit":"45c3619"},
+    {"order":8,"stepId":"R3B-R8","scope":["VUE-13"],"commit":"0452e2a"},
+    {"order":9,"stepId":"R3B-R9","scope":["VUE-14"],"commit":"52a74b8"},
+    {"order":10,"stepId":"R3B-R10","scope":["VUE-15"],"commit":"bf0fb35"},
+    {"order":11,"stepId":"R3B-R11","scope":["ALL_11","FULL_WEB_GATE"],"commit":"37acb89"}
+  ],
+  "batchState": "VERIFIED_CANDIDATE",
+  "overallFindingState": "OPEN",
+  "nextBatchAutomaticallyAuthorized": false
+}
