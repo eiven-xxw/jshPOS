@@ -2,7 +2,7 @@
 
 ## 1. 决策
 
-- 状态：`APPROVED / IN_PROGRESS`；
+- 状态：`VERIFIED_CANDIDATE / AWAITING_SPONSOR_CONFIRMATION`；
 - 批次：`G9A-R3B`；
 - 授权基线：`4e8a9f2b1dd52ce6b198bd3a25328e2a80330a71`；
 - 分支：`t2/gate9b-sprint27d-g9a-r3b-runtime`；
