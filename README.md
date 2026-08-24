@@ -2,7 +2,7 @@
 
 连接器型、多租户、离线可营业的商业收银经营平台。
 
-当前阶段：**T2 Gate 7D / Sprint S22-B：T2-MEM-003 会员等级权益、会员价与成交快照联动独立正式开发**。项目发起人已接受 `CR-T2G7D-005 CONDITIONAL GO`，并授权从封存提交 `fd474767c182cbdb5c3df0a9e2e4688371f0587f` 建立独立运行时分支。必须按 Member→Pricing→Promotion→Order/Refund→DataPackage/POS/Web→跨端与全量 CI 严格串行；当前需求为 `IN_PROGRESS`，完成独立验证前不得自动进入 Gate 7E。支付沙箱、真实硬件、真实打印和设计伙伴继续 `BLOCKED`，完整 Alpha 与发布继续 `DRAFT`，不得宣称可试点、可生产或可商用。
+当前阶段：**T2 Gate 8C-Prep：商业 V1 与 SaaS 运营现有代码的 P0/P1 质量和发布差距复核**。`T2-E2E-005` 已被项目发起人接受，但证据上限仍为 `INTERNAL_COMMERCIAL_OPERATIONS_CANDIDATE`。本阶段只允许静态审计、治理、契约、测试和准入准备，不修改运行时；`T2-SEC-002/T2-MTN-001/T2-PERF-002/T2-RDY-001` 均为 `DRAFT`。支付沙箱、真实硬件、真实外设和设计伙伴继续 `BLOCKED`，完整 Alpha 与发布继续 `DRAFT`，不得宣称可试点、可生产或可商用。
 
 ## 工程
 

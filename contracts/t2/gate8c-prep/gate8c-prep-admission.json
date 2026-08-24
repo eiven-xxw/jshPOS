@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "1.0",
+  "gate": "T2-GATE8C-PREP",
+  "baseCommit": "68d94211b93156d0d87139e4ab5bef421802ad95",
+  "branch": "t2/gate8c-prep-v1-quality-release-audit",
+  "classification": "STATIC_QUALITY_PERFORMANCE_MAINTAINABILITY_RELEASE_AUDIT",
+  "evidenceCeiling": "STATIC_GOVERNANCE_AND_REPOSITORY_AUDIT",
+  "priorAccepted": {
+    "requirementId": "T2-E2E-005",
+    "evidenceCeiling": "INTERNAL_COMMERCIAL_OPERATIONS_CANDIDATE",
+    "sealedRun": 32670901692,
+    "sealedArtifact": 9501459414,
+    "sealedIndexSha256": "3eb5cbfc7e9bc6b7ee7dc52e96598a23da5984f63753f9608b90d9908187396"
+  },
+  "candidateRequirements": [
+    {"requirementId": "T2-SEC-002", "priority": "P0", "status": "DRAFT", "sequence": 1},
+    {"requirementId": "T2-MTN-001", "priority": "P1", "status": "DRAFT", "sequence": 2},
+    {"requirementId": "T2-PERF-002", "priority": "P1", "status": "DRAFT", "sequence": 3},
+    {"requirementId": "T2-RDY-001", "priority": "P0", "status": "DRAFT", "sequence": 4}
+  ],
+  "preservedStates": {
+    "T2-PAY-002": "BLOCKED",
+    "T2-HWD-001": "BLOCKED",
+    "T2-PRN-001": "BLOCKED",
+    "T2-PAR-001": "BLOCKED",
+    "T2-UAT-001": "DRAFT",
+    "T2-REL-001": "DRAFT",
+    "T2-LIC-001": "DEFERRED",
+    "T2-JSH-001": "DEFERRED"
+  },
+  "externalExecution": {
+    "providerNetworkCalls": 0,
+    "realFunds": 0,
+    "realDeviceCommands": 0,
+    "realPeripheralCommands": 0,
+    "partnerContacts": 0,
+    "onsitePilots": 0,
+    "fullAlphaRuns": 0,
+    "productionDeployments": 0,
+    "commercialClaims": 0
+  },
+  "runtimeChangesAllowed": false,
+  "databaseMigrationChangesAllowed": false,
+  "dependencyChangesAllowed": false,
+  "decisions": {
+    "gate8cPrep": "CONDITIONAL_PASS_IF_AUDIT_AND_EVIDENCE_GREEN",
+    "gate8cRuntime": "AWAITING_SPONSOR_CONFIRMATION",
+    "fullAlpha": "NO_GO",
+    "production": "NO_GO",
+    "commercial": "NO_GO"
+  }
+}

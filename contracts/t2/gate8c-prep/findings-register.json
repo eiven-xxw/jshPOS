@@ -1,0 +1,168 @@
+{
+  "schemaVersion": "1.0",
+  "gate": "T2-GATE8C-PREP",
+  "generatedFromCommit": "68d94211b93156d0d87139e4ab5bef421802ad95",
+  "summary": {
+    "openP0": 3,
+    "openP1": 11,
+    "internalCodeP0": 1,
+    "releaseOrExternalP0": 2,
+    "runtimeFixesApplied": 0
+  },
+  "findings": [
+    {
+      "findingId": "G8C-SEC-P0-001",
+      "category": "SECURITY",
+      "severity": "P0",
+      "blockingScope": "INTERNAL_CODE_AND_FULL_ALPHA",
+      "requirementId": "T2-SEC-002",
+      "title": "生产配置仍含静态默认凭据或令牌及默认启用集成",
+      "evidence": ["server/ruoyi-admin/src/main/resources/application-prod.yml"],
+      "state": "OPEN",
+      "closure": "敏感值全部由受控Secret引用提供；可选集成默认关闭；生产缺少必要Secret时启动失败；回归禁止默认凭据"
+    },
+    {
+      "findingId": "G8C-SEC-P1-002",
+      "category": "SECURITY",
+      "severity": "P1",
+      "blockingScope": "INTERNAL_RELEASE_CANDIDATE",
+      "requirementId": "T2-SEC-002",
+      "title": "管理端点全量暴露且健康详情固定ALWAYS",
+      "evidence": ["server/ruoyi-admin/src/main/resources/application.yml", "server/ruoyi-common/ruoyi-common-security/src/main/java/org/dromara/common/security/config/SecurityConfig.java"],
+      "state": "OPEN",
+      "closure": "生产仅暴露白名单端点；健康详情按授权显示；保留独立认证与测试"
+    },
+    {
+      "findingId": "G8C-SEC-P1-003",
+      "category": "SECURITY_PERFORMANCE",
+      "severity": "P1",
+      "blockingScope": "INTERNAL_RELEASE_CANDIDATE",
+      "requirementId": "T2-SEC-002",
+      "title": "服务附件在业务上限校验前整包读入内存",
+      "evidence": ["server/ruoyi-modules/jshpos-service/src/main/java/com/jingshanghui/pos/service/interfaces/rest/ServiceOperationsController.java", "server/ruoyi-admin/src/main/resources/application.yml"],
+      "state": "OPEN",
+      "closure": "读取内容前校验请求大小并改为受限流式处理；覆盖超限、并发和临时文件清理"
+    },
+    {
+      "findingId": "G8C-MTN-P1-001",
+      "category": "MAINTAINABILITY",
+      "severity": "P1",
+      "blockingScope": "INTERNAL_RELEASE_CANDIDATE",
+      "requirementId": "T2-MTN-001",
+      "title": "Service Owner 直接依赖 SaaS 应用服务",
+      "evidence": ["server/ruoyi-modules/jshpos-service/src/main/java/com/jingshanghui/pos/service/application/service/ServiceApplicationService.java"],
+      "state": "OPEN",
+      "closure": "由Service内层只读端口和SaaS适配器替代跨Owner应用服务导入且行为回归一致"
+    },
+    {
+      "findingId": "G8C-MTN-P1-002",
+      "category": "MAINTAINABILITY",
+      "severity": "P1",
+      "blockingScope": "INTERNAL_RELEASE_CANDIDATE",
+      "requirementId": "T2-MTN-001",
+      "title": "准备期与运行时 OpenAPI 存在重复操作定义",
+      "evidence": ["contracts/t2/gate7b-s20b/openapi-pos-second-batch-v1.yaml", "contracts/t2/gate7b-exg/openapi-exchange-v1.yaml", "contracts/t2/gate7b-pay004/openapi-tender-runtime-v1.yaml"],
+      "state": "OPEN",
+      "closure": "确定唯一当前契约并显式标记历史草案；全库Operation方法路径和operationId无冲突"
+    },
+    {
+      "findingId": "G8C-MTN-P1-003",
+      "category": "MAINTAINABILITY",
+      "severity": "P1",
+      "blockingScope": "QUALITY_GATE_RELIABILITY",
+      "requirementId": "T2-MTN-001",
+      "title": "既有数据审计器不能识别合法 Flyway 回调",
+      "evidence": ["scripts/audit_t2_gate6g_data.py", "server/ruoyi-modules/jshpos-integration/src/main/resources/db/migration/beforeEachMigrate__repair_gate4c_gate7c_menu_ids.sql"],
+      "state": "OPEN",
+      "closure": "审计器区分版本迁移与合法回调并继续阻断非法命名和历史迁移修改"
+    },
+    {
+      "findingId": "G8C-MTN-P1-004",
+      "category": "MAINTAINABILITY",
+      "severity": "P1",
+      "blockingScope": "INTERNAL_RELEASE_CANDIDATE",
+      "requirementId": "T2-MTN-001",
+      "title": "Foundation 锁定查询使用注解 SELECT * 而非显式 XML",
+      "evidence": ["server/ruoyi-modules/jshpos-foundation/src/main/java/com/jingshanghui/pos/foundation/infrastructure/persistence/mapper/ConfigTemplateVersionMapper.java"],
+      "state": "OPEN",
+      "closure": "复杂锁定查询迁入XML并显式列、resultMap、可信租户条件和SQL策略测试"
+    },
+    {
+      "findingId": "G8C-MTN-P1-005",
+      "category": "MAINTAINABILITY",
+      "severity": "P1",
+      "blockingScope": "INTERNAL_RELEASE_CANDIDATE",
+      "requirementId": "T2-MTN-001",
+      "title": "POS 结算应用服务和主页面超过可维护规模",
+      "evidence": ["pos-flutter/lib/features/checkout/application/checkout_local_service.dart", "pos-flutter/lib/features/sale/presentation/pos_checkout_page.dart"],
+      "state": "OPEN",
+      "closure": "按事务编排、持久化写入、恢复、展示状态拆分且金标向量和故障seed逐字段不变"
+    },
+    {
+      "findingId": "G8C-PERF-P1-001",
+      "category": "PERFORMANCE",
+      "severity": "P1",
+      "blockingScope": "INTERNAL_RELEASE_CANDIDATE",
+      "requirementId": "T2-PERF-002",
+      "title": "性能基线早于 Gate 7 与 Gate 8 新增能力",
+      "evidence": ["contracts/t2/gate6h/performance-baseline-v1.json"],
+      "state": "OPEN",
+      "closure": "补齐现有全部已接受能力的容量并发冷启动资源与尾延迟基线并固定执行器配置"
+    },
+    {
+      "findingId": "G8C-PERF-P1-002",
+      "category": "PERFORMANCE",
+      "severity": "P1",
+      "blockingScope": "INTERNAL_RELEASE_CANDIDATE",
+      "requirementId": "T2-PERF-002",
+      "title": "Gate 8B 的 55 次顺序 API 观察不能替代并发和耐久性能证据",
+      "evidence": ["docs/t2-gate8b/04_覆盖失败seed与性能边界.md"],
+      "state": "OPEN",
+      "closure": "正式MySQL/Redis/JAR栈补齐并发、持续运行、积压、资源上限和退化阈值且不形成商业SLA"
+    },
+    {
+      "findingId": "G8C-REL-P0-001",
+      "category": "RELEASE",
+      "severity": "P0",
+      "blockingScope": "COMMERCIAL_RELEASE",
+      "requirementId": "T2-RDY-001",
+      "title": "商业许可证未关闭且设备适配包许可证仍为占位",
+      "evidence": ["docs/compliance/dependency-baseline.md", "packages/pos_device_adapter/LICENSE", "packages/pos_device_adapter/CHANGELOG.md"],
+      "state": "DEFERRED_BLOCKER",
+      "closure": "T2-LIC-001逐项法务或替换关闭；自有包许可证和通知经负责人批准；不得以内部候选替代"
+    },
+    {
+      "findingId": "G8C-REL-P0-002",
+      "category": "RELEASE",
+      "severity": "P0",
+      "blockingScope": "FULL_ALPHA_AND_COMMERCIAL_RELEASE",
+      "requirementId": "T2-RDY-001",
+      "title": "支付、硬件、外设和设计伙伴四条外部 P0 仍阻断",
+      "evidence": ["docs/governance/rtm.csv"],
+      "state": "BLOCKED_EXTERNAL",
+      "closure": "四轨分别达到VERIFIED_DOCUMENT并经独立执行准入、真实执行和项目发起人确认"
+    },
+    {
+      "findingId": "G8C-REL-P1-003",
+      "category": "RELEASE",
+      "severity": "P1",
+      "blockingScope": "PRODUCTION_RELEASE",
+      "requirementId": "T2-RDY-001",
+      "title": "生产签名、KMS、对象存储、真实PITR和跨区域灾备证据未形成",
+      "evidence": ["pos-flutter/android/app/build.gradle.kts", "docs/t2-gate6a/09_T2_UPG001设计准备与实机阻断报告.md", "docs/t2-gate6f-prep/06_T2发布准备差距报告.md"],
+      "state": "ASSUMPTION_BLOCKED",
+      "closure": "经授权环境完成受控签名、密钥边界、恢复和灾备演练并保留证据"
+    },
+    {
+      "findingId": "G8C-REL-P1-004",
+      "category": "RELEASE",
+      "severity": "P1",
+      "blockingScope": "FULL_ALPHA_AND_PRODUCTION_RELEASE",
+      "requirementId": "T2-RDY-001",
+      "title": "完整 Alpha UAT 与正式发布需求继续处于 DRAFT",
+      "evidence": ["docs/governance/rtm.csv"],
+      "state": "DRAFT_BLOCKER",
+      "closure": "外部P0逐项解阻后完成T2-UAT-001 ACCEPTED并单独准入T2-REL-001"
+    }
+  ]
+}

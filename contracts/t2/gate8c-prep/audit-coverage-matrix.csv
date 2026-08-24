@@ -1,0 +1,8 @@
+dimension,repository_surface,method,evidence,exit_rule
+security,生产配置与管理端点,静态配置模式与认证边界复核,findings-register.json#G8C-SEC-P0-001..003,内部P0为0且所有P1有自动回归
+security,47个jshpos正式Controller,权限注解与Mapper直连扫描,Gate8C仓库审计JSON,无缺失权限且无Controller直连Mapper
+maintainability,Owner跨模块依赖,Java导入与端口类型扫描,findings-register.json#G8C-MTN-P1-001,跨Owner仅允许正式端口事件或组合根
+maintainability,OpenAPI与Flyway审计器,全库操作冲突和迁移回调识别,findings-register.json#G8C-MTN-P1-002..003,唯一当前契约且审计器不误报合法回调
+maintainability,Mapper SQL与核心文件,SELECT星号注解和文件规模复核,findings-register.json#G8C-MTN-P1-004..005,SQL边界合规且拆分后行为金标不变
+performance,Gate6H与Gate8B性能证据,时序范围和负载维度差距分析,findings-register.json#G8C-PERF-P1-001..002,最新正式运行栈基线可重复且无商业SLA声明
+release,许可证签名灾备与外部P0,RTM合规清单和发布证据复核,findings-register.json#G8C-REL-P0-001..P1-004,内部项关闭且外部阻断不被低等级证据替代

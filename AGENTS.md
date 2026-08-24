@@ -675,6 +675,16 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
 - 候选提交 `379197394a4c0934dac8a6d4ff1e10e87bdadde3` 的 GitHub Actions Run `32670082176` 已完成 10 个 Job 全绿，`T2-E2E-005` 仅更新为 `VERIFIED`；项目发起人确认前不得更新为 `ACCEPTED`，也不得启动 Gate 8C 或任何外部执行。
 - 完成后必须提交《T2 Gate 8B / Sprint S25 商业 SaaS 运营内部汇总验收报告》等待项目发起人确认；不得自动进入外部执行、完整 Alpha、现场试点、生产发布或后续 Gate。
 
+## 4.55 当前 T2 Gate 8C-Prep 条件准入
+
+- 项目发起人已于 2026-08-24 接受 Gate 8B `CONDITIONAL PASS`，授权 `T2-E2E-005` 更新为 `ACCEPTED`，并授权从 Gate 8B 封存提交 `68d94211b93156d0d87139e4ab5bef421802ad95` 建立 `t2/gate8c-prep-v1-quality-release-audit`。
+- Gate 8C-Prep 只允许对现有商业 V1 与 SaaS 运营代码做 P0/P1 安全、性能、可维护性和发布差距静态复核；不得修改正式运行时、数据库迁移、Controller、Vue/Flutter 页面、任务、依赖或业务行为。
+- 质量整改候选使用 `T2-SEC-002 → T2-MTN-001 → T2-PERF-002 → T2-RDY-001` 串行依赖，全部保持 `DRAFT`；未经项目发起人再次确认不得进入 `READY/IN_PROGRESS` 或编码。
+- 复核必须区分内部代码缺陷、内部证据缺口、外部执行阻断和商业发布阻断。开放 P0/P1 不阻断完成审计本身，但任何内部 P0 未关闭时不得形成内部发布候选，任何外部 P0、许可证、完整 Alpha 或发布阻断未关闭时不得宣称可生产或可商用。
+- `T2-PAY-002/HWD-001/PRN-001/PAR-001` 继续 `BLOCKED`；`T2-UAT-001/REL-001` 继续 `DRAFT`；`T2-LIC-001/JSH-001` 继续 `DEFERRED`。不得以本轮静态复核、文档或内部证据改变这些状态。
+- Provider 网络、真实资金、设备/外设命令、伙伴现场、完整 Alpha、生产部署和商业声明必须为 0。Secret、真实 PII、商户号、终端号和证书不得进入仓库、日志、CI 或普通制品。
+- 完成后只提交《T2 Gate 8C-Prep 启动评审报告》和下一步操作指令等待确认；不得自动启动 Gate 8C 正式整改、完整 Alpha、现场试点或生产发布。
+
 ## 5. 工程与测试规则
 
 - 服务端采用 RuoYi-Vue-Plus 模块化单体，不得把领域逻辑写入 Controller、通用工具类或框架系统模块。

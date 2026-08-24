@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "1.0",
+  "gate": "T2-GATE8C",
+  "automaticStartAllowed": false,
+  "workstreams": [
+    {
+      "sequence": 1,
+      "requirementId": "T2-SEC-002",
+      "name": "生产安全配置与资源边界加固",
+      "entry": "项目发起人确认 Gate 8C-Prep",
+      "exit": "内部安全P0为0且P1逐项有回归证据"
+    },
+    {
+      "sequence": 2,
+      "requirementId": "T2-MTN-001",
+      "name": "Owner契约持久化与核心文件可维护性收口",
+      "entry": "T2-SEC-002 VERIFIED且再次确认",
+      "exit": "跨Owner违规与重复契约为0且行为金标不变"
+    },
+    {
+      "sequence": 3,
+      "requirementId": "T2-PERF-002",
+      "name": "最新商业V1正式运行栈内部性能重基线",
+      "entry": "T2-MTN-001 VERIFIED且再次确认",
+      "exit": "固定配置下容量并发尾延迟资源与退化阈值可重复"
+    },
+    {
+      "sequence": 4,
+      "requirementId": "T2-RDY-001",
+      "name": "内部发布准备与商业阻断证据收口",
+      "entry": "T2-PERF-002 VERIFIED且再次确认",
+      "exit": "内部发布差距关闭；外部与许可证阻断仍按原状态独立管理"
+    }
+  ]
+}

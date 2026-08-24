@@ -2,7 +2,7 @@
 
 本目录保存商业 SaaS 运营正式运行时内部汇总验收的准入、缺陷、运行手册、证据与报告。证据最高为 `INTERNAL_COMMERCIAL_OPERATIONS_CANDIDATE`。
 
-当前状态：`T2-E2E-005 VERIFIED / CONDITIONAL PASS AWAITING SPONSOR CONFIRMATION`。不得在项目发起人确认前更新为 `ACCEPTED` 或进入后续 Gate。
+当前状态：项目发起人已于 2026-08-24 接受 `T2-E2E-005 CONDITIONAL PASS` 并更新为 `ACCEPTED`。证据上限仍为 `INTERNAL_COMMERCIAL_OPERATIONS_CANDIDATE`，不得替代完整 Alpha、生产或商业验收。
 
 - [01 范围准入与证据边界](01_范围准入与证据边界.md)
 - [02 正式 API 旅程与运行手册](02_正式API旅程与可重复运行手册.md)
@@ -11,3 +11,4 @@
 - [05 证据索引](05_证据索引.md)
 - [06 Sprint S25 汇总验收报告](06_T2_Gate8B_SprintS25商业SaaS运营内部汇总验收报告.md)
 - [07 下一步操作指令](07_下一步操作指令.md)
+- [08 T2-E2E-005 项目发起人接受记录](08_T2_E2E005项目发起人接受记录.md)
