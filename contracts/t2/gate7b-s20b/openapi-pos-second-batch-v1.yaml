@@ -6,6 +6,8 @@ info:
     仅用于 T2-EXG-001 与 T2-PAY-004 正式开发准入评审；当前没有对应运行时，
     T2-PAY-002 解阻前任何电子份额必须失败关闭为 BLOCKED_EXTERNAL。
 x-runtime-admission: DRAFT_DESIGN_ONLY
+x-contract-authority: HISTORICAL_DRAFT_NON_RUNTIME
+x-superseded-by: contracts/t2/gate7b-exg/openapi-exchange-v1.yaml;contracts/t2/gate7b-pay004/openapi-tender-runtime-v1.yaml
 x-tenant-boundary: tenant_id 只来自服务端可信上下文，禁止从请求体或普通 Header 授权
 servers:
   - url: /api/v1

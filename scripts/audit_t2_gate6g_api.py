@@ -12,6 +12,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 HTTP_METHODS = {"get", "post", "put", "delete", "patch"}
 OPENAPI_EXCLUDES = ("draft", "design")
+HISTORICAL_CONTRACT_AUTHORITY = "HISTORICAL_DRAFT_NON_RUNTIME"
 PERMISSION_EXCEPTIONS = {
     ("POST", "/api/pos/v1/terminals/activate"): "一次性激活凭据协议在业务权限建立前完成认证",
     ("POST", "/api/pos/v1/terminals/authenticate"): "设备凭据认证在员工权限会话建立前完成，服务端仅返回登记范围内可信上下文",
@@ -81,9 +82,38 @@ def controller_operations() -> tuple[dict[tuple[str, str], dict], list[dict]]:
     return operations, permission_exceptions
 
 
+def contract_authority(source: Path) -> str | None:
+    """读取机器可识别的契约权威级别，避免仅凭文件名猜测运行时身份。"""
+    text = source.read_text(encoding="utf-8")
+    match = re.search(r"^x-contract-authority:\s*([^\s#]+)", text, re.MULTILINE)
+    return match.group(1) if match else None
+
+
 def selected_openapi_files() -> list[Path]:
     candidates = sorted((ROOT / "contracts" / "t2").glob("**/openapi-*.yaml"))
-    return [item for item in candidates if not any(flag in item.name.lower() for flag in OPENAPI_EXCLUDES)]
+    return [
+        item for item in candidates
+        if not any(flag in item.name.lower() for flag in OPENAPI_EXCLUDES)
+        and contract_authority(item) != HISTORICAL_CONTRACT_AUTHORITY
+    ]
+
+
+def historical_openapi_files() -> tuple[list[dict], list[str]]:
+    """校验历史草案具有明确替代契约，防止用标记静默隐藏当前冲突。"""
+    rows: list[dict] = []
+    failures: list[str] = []
+    for source in sorted((ROOT / "contracts" / "t2").glob("**/openapi-*.yaml")):
+        if contract_authority(source) != HISTORICAL_CONTRACT_AUTHORITY:
+            continue
+        text = source.read_text(encoding="utf-8")
+        relative = source.relative_to(ROOT).as_posix()
+        match = re.search(r"^x-superseded-by:\s*(.+?)\s*$", text, re.MULTILINE)
+        replacements = [] if not match else [item.strip() for item in match.group(1).split(";") if item.strip()]
+        missing = [item for item in replacements if not (ROOT / item).is_file()]
+        if not replacements or missing:
+            failures.append(f"{relative}: 历史草案缺少有效替代契约")
+        rows.append({"source": relative, "supersededBy": replacements})
+    return rows, failures
 
 
 def openapi_operations() -> tuple[dict[tuple[str, str], dict], list[dict], list[str]]:
@@ -214,6 +244,7 @@ def main() -> int:
 
     controllers, permission_exceptions = controller_operations()
     contracts, duplicate_ids, contract_files = openapi_operations()
+    historical_contracts, historical_failures = historical_openapi_files()
     errors, invalid_errors = error_catalog()
     events = event_contract_summary()
     frontend = frontend_contract_summary()
@@ -228,6 +259,7 @@ def main() -> int:
         "openApiWithoutController": orphan_contract,
         "missingOperationId": missing_operation_id,
         "duplicateOperationId": duplicate_ids,
+        "historicalContractMetadata": historical_failures,
         "missingPermission": missing_permission,
         "requestDtoTenantOverride": tenant_overrides,
         "invalidErrorCode": invalid_errors,
@@ -242,6 +274,7 @@ def main() -> int:
         "controllerOperationCount": len(controllers),
         "openApiOperationCount": len(contracts),
         "openApiFiles": contract_files,
+        "historicalOpenApiFiles": historical_contracts,
         "permissionExceptionCount": len(permission_exceptions),
         "permissionExceptions": permission_exceptions,
         "errorCodeCount": len(errors),
