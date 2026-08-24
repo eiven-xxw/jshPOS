@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-MTN-001",
+  "vectors": [
+    {"id": "MTN001-OWN-01", "input": "Service允许权益", "expected": "原服务流程继续执行"},
+    {"id": "MTN001-OWN-02", "input": "SaaS或订阅拒绝权益", "expected": "SVC-ACCESS-001失败关闭"},
+    {"id": "MTN001-API-01", "input": "当前OpenAPI集合", "expected": "method/path与operationId冲突均为0"},
+    {"id": "MTN001-API-02", "input": "历史Gate7B准备契约", "expected": "非运行时且替代引用有效"},
+    {"id": "MTN001-MIG-01", "input": "V版本迁移", "expected": "VERSIONED"},
+    {"id": "MTN001-MIG-02", "input": "R可重复迁移", "expected": "REPEATABLE"},
+    {"id": "MTN001-MIG-03", "input": "beforeEachMigrate回调", "expected": "CALLBACK"},
+    {"id": "MTN001-MIG-04", "input": "未知SQL命名", "expected": "REJECTED"},
+    {"id": "MTN001-SQL-01", "input": "配置版本锁定读取", "expected": "XML显式列与可信租户FOR_UPDATE"},
+    {"id": "MTN001-POS-01", "input": "现金成交故障seed", "expected": "SQLite整体回滚且原错误码不变"},
+    {"id": "MTN001-POS-02", "input": "促销会员现金成交", "expected": "逐字段向量与摘要不变"},
+    {"id": "MTN001-POS-03", "input": "POS扫码到现金成交Widget旅程", "expected": "页面行为与防重复提交不变"}
+  ]
+}

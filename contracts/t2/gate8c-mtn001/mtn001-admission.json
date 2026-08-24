@@ -16,5 +16,14 @@
   "runtimeBehaviorChangeAllowed": false,
   "publishedMigrationChangeAllowed": false,
   "externalExecutionAllowed": false,
+  "externalExecution": {
+    "providerNetworkCalls": 0,
+    "realFunds": 0,
+    "realDeviceCommands": 0,
+    "realPeripheralCommands": 0,
+    "partnerOnsite": 0,
+    "fullAlpha": 0,
+    "productionDeployments": 0
+  },
   "evidenceCeiling": "INTERNAL_MAINTAINABILITY_HARDENING_CANDIDATE"
 }

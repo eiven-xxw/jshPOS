@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "1.0",
+  "gate": "T2-GATE8C-SPRINT-S26B",
+  "requirementId": "T2-MTN-001",
+  "evidenceCeiling": "INTERNAL_MAINTAINABILITY_HARDENING_CANDIDATE",
+  "findings": {
+    "G8C-MTN-P1-001": {
+      "state": "CLOSED_INTERNAL_VERIFIED",
+      "closure": "Service应用层改为只依赖自有权益只读端口，SaaS类型只停留在防腐适配器",
+      "evidence": [
+        "server/ruoyi-modules/jshpos-service/src/main/java/com/jingshanghui/pos/service/application/port/ServiceEntitlementReadPort.java",
+        "server/ruoyi-modules/jshpos-service/src/main/java/com/jingshanghui/pos/service/infrastructure/saas/SaasServiceEntitlementReadAdapter.java",
+        "server/ruoyi-modules/jshpos-service/src/test/java/com/jingshanghui/pos/service/infrastructure/saas/SaasServiceEntitlementReadAdapterTest.java"
+      ]
+    },
+    "G8C-MTN-P1-002": {
+      "state": "CLOSED_INTERNAL_VERIFIED",
+      "closure": "Gate7B准备契约显式标记为历史非运行时并指向换货和组合支付当前权威契约",
+      "evidence": [
+        "contracts/t2/gate7b-s20b/openapi-pos-second-batch-v1.yaml",
+        "scripts/audit_t2_gate6g_api.py"
+      ]
+    },
+    "G8C-MTN-P1-003": {
+      "state": "CLOSED_INTERNAL_VERIFIED",
+      "closure": "数据审计器区分版本迁移、可重复迁移和合法Flyway回调，非法命名继续失败关闭",
+      "evidence": [
+        "scripts/audit_t2_gate6g_data.py",
+        "server/ruoyi-modules/jshpos-integration/src/main/resources/db/migration/beforeEachMigrate__repair_gate4c_gate7c_menu_ids.sql"
+      ]
+    },
+    "G8C-MTN-P1-004": {
+      "state": "CLOSED_INTERNAL_VERIFIED",
+      "closure": "Foundation锁定查询迁入Mapper XML并使用显式列、完整resultMap和可信租户条件",
+      "evidence": [
+        "server/ruoyi-modules/jshpos-foundation/src/main/resources/mapper/foundation/ConfigTemplateVersionMapper.xml",
+        "server/ruoyi-modules/jshpos-foundation/src/test/java/com/jingshanghui/pos/foundation/infrastructure/persistence/mapper/ConfigTemplateVersionMapperSqlPolicyTest.java"
+      ]
+    },
+    "G8C-MTN-P1-005": {
+      "state": "CLOSED_INTERNAL_VERIFIED",
+      "closure": "Flutter结算服务和主页面拆为事务持久化、结算、班次、收据、展示组件与对话框职责并保持行为回归",
+      "evidence": [
+        "pos-flutter/lib/features/checkout/application/checkout_local_service.dart",
+        "pos-flutter/lib/features/checkout/application/checkout_local_persistence.dart",
+        "pos-flutter/lib/features/checkout/application/checkout_local_settlement_operations.dart",
+        "pos-flutter/lib/features/checkout/application/checkout_local_shift_operations.dart",
+        "pos-flutter/lib/features/checkout/application/checkout_local_receipt_operations.dart",
+        "pos-flutter/lib/features/sale/presentation/pos_checkout_page.dart",
+        "pos-flutter/lib/features/sale/presentation/pos_checkout_page_components.dart",
+        "pos-flutter/lib/features/sale/presentation/pos_checkout_page_dialogs.dart"
+      ]
+    }
+  }
+}
