@@ -96,10 +96,12 @@ jobs:
           mkdir -p artifacts/t2/g9a-r3-prep/web-baseline
           cd admin-web
           pnpm install --frozen-lockfile
+          # 干净执行器先由 Vite 生成 auto-imports.d.ts 与 ESLint 全局声明，
+          # 再执行 lint/typecheck；生产构建仍只执行一次且不得跳过。
+          pnpm build:prod
           pnpm lint:eslint
           pnpm typecheck
           pnpm test:unit:ci
-          pnpm build:prod
           pnpm licenses list --json > ../artifacts/t2/g9a-r3-prep/web-baseline/licenses.json
           cp gate0-vitest-junit.xml ../artifacts/t2/g9a-r3-prep/web-baseline/
           find dist -type f -print0 | sort -z | xargs -0 sha256sum > ../artifacts/t2/g9a-r3-prep/web-baseline/dist.sha256
