@@ -14,6 +14,7 @@ import '../features/return_refund/application/pos_return_application_service.dar
 import '../features/return_refund/infrastructure/locked_pos_return_application_service.dart';
 import '../features/exchange/application/pos_exchange_application_service.dart';
 import '../features/exchange/infrastructure/locked_pos_exchange_application_service.dart';
+import '../features/tender/application/pos_tender_controller.dart';
 
 class JshposApp extends StatelessWidget {
   const JshposApp({
@@ -25,6 +26,7 @@ class JshposApp extends StatelessWidget {
     this.returnService,
     this.exchangeService,
     this.shiftService,
+    this.tenderController,
   });
 
   final PosDeviceGateway? deviceGateway;
@@ -34,6 +36,9 @@ class JshposApp extends StatelessWidget {
   final PosReturnApplicationService? returnService;
   final PosExchangeApplicationService? exchangeService;
   final PosShiftApplicationService? shiftService;
+
+  /// 仅在 Order Owner 已冻结订单与可信班次上下文后注入；空值必须显示不可用。
+  final PosTenderController? tenderController;
 
   @override
   Widget build(BuildContext context) {
@@ -61,6 +66,7 @@ class JshposApp extends StatelessWidget {
         exchangeService:
             exchangeService ?? const LockedPosExchangeApplicationService(),
         shiftService: shiftService ?? const LockedPosShiftApplicationService(),
+        tenderController: tenderController,
       ),
     );
   }

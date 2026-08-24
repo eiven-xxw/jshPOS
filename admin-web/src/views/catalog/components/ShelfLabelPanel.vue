@@ -8,6 +8,32 @@
       title="真实打印尚未解阻"
       description="本页只提供价签任务、纯文本预览、人工换签确认和失败关闭打印入口；任何软件状态均不代表打印机成功。"
     />
+    <el-alert
+      v-if="pageFailure"
+      data-testid="shelf-label-error"
+      class="mb-3"
+      type="error"
+      :closable="false"
+      show-icon
+      :title="`${pageFailure.message}（${pageFailure.code}）`"
+      :description="`关联标识：${pageFailure.correlationId}${pageFailure.operationIdentity ? `；原操作：${pageFailure.operationIdentity}` : ''}`"
+    >
+      <template #default>
+        <span
+          >关联标识：{{ pageFailure.correlationId
+          }}<template v-if="pageFailure.operationIdentity">；原操作：{{ pageFailure.operationIdentity }}</template></span
+        >
+        <el-button data-testid="shelf-label-retry" type="primary" link @click="refresh">刷新原任务状态</el-button>
+      </template>
+    </el-alert>
+    <el-alert
+      v-else-if="pagePhase === 'EMPTY'"
+      data-testid="shelf-label-empty"
+      class="mb-3"
+      type="info"
+      :closable="false"
+      title="当前筛选范围内暂无价签任务或模板"
+    />
 
     <el-tabs v-model="activeTab" @tab-change="refresh">
       <el-tab-pane label="换签任务" name="tasks">
@@ -18,7 +44,9 @@
           <el-select v-model="query.state" clearable placeholder="全部状态" style="width: 190px">
             <el-option v-for="state in taskStates" :key="state" :label="taskStateLabel(state)" :value="state" />
           </el-select>
-          <el-button icon="Refresh" :loading="loading" @click="loadTasks">刷新</el-button>
+          <el-button v-hasPermi="['catalog:label:task:read']" icon="Refresh" :loading="loading" :disabled="submitting" @click="loadTasks"
+            >刷新</el-button
+          >
         </el-space>
         <el-table :data="tasks" border row-key="taskId" @row-click="openTask">
           <el-table-column prop="taskId" label="任务 ID" min-width="170" />
@@ -35,7 +63,11 @@
           </el-table-column>
           <el-table-column prop="exceptionCount" label="异常" width="80" />
           <el-table-column label="操作" width="90"
-            ><template #default="scope"><el-button link @click.stop="openTask(scope.row)">详情</el-button></template></el-table-column
+            ><template #default="scope"
+              ><el-button v-hasPermi="['catalog:label:task:read']" link :disabled="submitting" @click.stop="openTask(scope.row)"
+                >详情</el-button
+              ></template
+            ></el-table-column
           >
         </el-table>
       </el-tab-pane>
@@ -43,7 +75,9 @@
       <el-tab-pane label="模板版本" name="templates">
         <el-space class="mb-3" wrap>
           <el-button v-hasPermi="['catalog:label:template:manage']" type="primary" @click="templateDialog = true">新建模板草稿</el-button>
-          <el-button icon="Refresh" :loading="loading" @click="loadTemplates">刷新</el-button>
+          <el-button v-hasPermi="['catalog:label:task:read']" icon="Refresh" :loading="loading" :disabled="submitting" @click="loadTemplates"
+            >刷新</el-button
+          >
         </el-space>
         <el-table :data="templates" border row-key="templateId">
           <el-table-column prop="templateCode" label="编码" min-width="150" />
@@ -106,7 +140,15 @@
         >批准字段示例：productName、skuCode、barcode、unitName、oldPrice、newPrice、storeName、priceVersion、effectiveAt、taskStatus、exceptionReason。</el-alert
       >
       <template #footer
-        ><el-button @click="templateDialog = false">取消</el-button><el-button type="primary" @click="saveTemplate">保存草稿</el-button></template
+        ><el-button @click="templateDialog = false">取消</el-button
+        ><el-button
+          v-hasPermi="['catalog:label:template:manage']"
+          data-testid="shelf-label-save-template"
+          type="primary"
+          :loading="submitting"
+          @click="saveTemplate"
+          >保存草稿</el-button
+        ></template
       >
     </el-dialog>
 
@@ -130,7 +172,9 @@
         <el-table-column prop="exceptionReason" label="异常" min-width="180" show-overflow-tooltip />
         <el-table-column label="操作" width="240" fixed="right">
           <template #default="scope">
-            <el-button link type="primary" @click="previewItem(scope.row)">预览</el-button>
+            <el-button v-hasPermi="['catalog:label:task:read']" link type="primary" :disabled="submitting" @click="previewItem(scope.row)"
+              >预览</el-button
+            >
             <el-button
               v-if="['PENDING', 'PREVIEW_READY', 'EXCEPTION'].includes(scope.row.state)"
               v-hasPermi="['catalog:label:task:confirm']"
@@ -152,7 +196,12 @@
       </el-table>
       <template #footer>
         <el-button @click="taskDialog = false">关闭</el-button>
-        <el-button v-hasPermi="['catalog:label:task:dispatch']" type="danger" :disabled="!lastPreview" @click="dispatchBlocked"
+        <el-button
+          v-hasPermi="['catalog:label:task:dispatch']"
+          type="danger"
+          :loading="submitting"
+          :disabled="!lastPreview || submitting"
+          @click="dispatchBlocked"
           >验证打印失败关闭</el-button
         >
       </template>
@@ -192,11 +241,13 @@ import type {
   ShelfLabelTemplateVO
 } from '@/api/catalog/types';
 import type { StoreVO } from '@/api/foundation/types';
+import { useRecoverablePage } from '@/composables/useRecoverablePage';
 
 const props = defineProps<{ modelValue: boolean; stores: StoreVO[] }>();
 const emit = defineEmits<{ 'update:modelValue': [value: boolean] }>();
 const activeTab = ref('tasks');
 const loading = ref(false);
+const { phase: pagePhase, failure: pageFailure, submitting, runRead, runWrite } = useRecoverablePage('SHELF_LABEL_OPERATION_FAILED');
 const tasks = ref<ShelfLabelTaskVO[]>([]);
 const templates = ref<ShelfLabelTemplateVO[]>([]);
 const taskDetail = ref<ShelfLabelTaskDetailVO>();
@@ -227,7 +278,11 @@ const done = (key: string) => commandIdentities.delete(key);
 const loadTasks = async () => {
   loading.value = true;
   try {
-    tasks.value = (await listShelfLabelTasks(query.storeId, query.state)).data;
+    const response = await runRead(
+      () => listShelfLabelTasks(query.storeId, query.state),
+      (value) => value.data.length === 0
+    );
+    if (response) tasks.value = response.data;
   } finally {
     loading.value = false;
   }
@@ -235,7 +290,11 @@ const loadTasks = async () => {
 const loadTemplates = async () => {
   loading.value = true;
   try {
-    templates.value = (await listShelfLabelTemplates()).data;
+    const response = await runRead(
+      () => listShelfLabelTemplates(),
+      (value) => value.data.length === 0
+    );
+    if (response) templates.value = response.data;
   } finally {
     loading.value = false;
   }
@@ -243,11 +302,14 @@ const loadTemplates = async () => {
 const refresh = () => (activeTab.value === 'tasks' ? loadTasks() : loadTemplates());
 const saveTemplate = async () => {
   const key = `template-create:${templateForm.templateCode}:${templateForm.versionNo}`;
-  await createShelfLabelTemplate({
-    ...templateForm,
-    storeId: templateForm.scopeType === 'STORE' ? templateForm.storeId : undefined,
-    ...identityFor(key)
-  });
+  const response = await runWrite(key, () =>
+    createShelfLabelTemplate({
+      ...templateForm,
+      storeId: templateForm.scopeType === 'STORE' ? templateForm.storeId : undefined,
+      ...identityFor(key)
+    })
+  );
+  if (!response) return;
   done(key);
   templateDialog.value = false;
   ElMessage.success('价签模板草稿已创建');
@@ -256,30 +318,38 @@ const saveTemplate = async () => {
 const publishTemplate = async (template: ShelfLabelTemplateVO) => {
   await ElMessageBox.confirm(`发布后模板 V${template.versionNo} 内容不可修改，是否继续？`, '发布价签模板', { type: 'warning' });
   const key = `template-publish:${template.templateId}:${template.version}`;
-  await publishShelfLabelTemplate(template.templateId, template.version, identityFor(key));
+  const response = await runWrite(key, () => publishShelfLabelTemplate(template.templateId, template.version, identityFor(key)));
+  if (!response) return;
   done(key);
   await loadTemplates();
 };
 const retireTemplate = async (template: ShelfLabelTemplateVO) => {
   await ElMessageBox.confirm('停用仅影响后续默认选取，不会改写历史任务预览。', '停用价签模板', { type: 'warning' });
   const key = `template-retire:${template.templateId}:${template.version}`;
-  await retireShelfLabelTemplate(template.templateId, template.version, identityFor(key));
+  const response = await runWrite(key, () => retireShelfLabelTemplate(template.templateId, template.version, identityFor(key)));
+  if (!response) return;
   done(key);
   await loadTemplates();
 };
 const openTask = async (task: ShelfLabelTaskVO) => {
-  taskDetail.value = (await getShelfLabelTask(task.taskId)).data;
+  const response = await runRead(() => getShelfLabelTask(task.taskId));
+  if (!response) return;
+  taskDetail.value = response.data;
   lastPreview.value = undefined;
   taskDialog.value = true;
 };
 const reloadTask = async () => {
   if (!taskDetail.value) return;
-  taskDetail.value = (await getShelfLabelTask(taskDetail.value.task.taskId)).data;
+  const response = await runRead(() => getShelfLabelTask(taskDetail.value!.task.taskId));
+  if (!response) return;
+  taskDetail.value = response.data;
   await loadTasks();
 };
 const previewItem = async (item: ShelfLabelTaskItemVO) => {
   const key = `preview:${item.itemId}:${item.version}`;
-  lastPreview.value = (await previewShelfLabelItem(item.itemId, undefined, identityFor(key))).data;
+  const response = await runWrite(key, () => previewShelfLabelItem(item.itemId, undefined, identityFor(key)));
+  if (!response) return;
+  lastPreview.value = response.data;
   done(key);
   previewDialog.value = true;
   await reloadTask();
@@ -290,14 +360,16 @@ const confirmItem = async (item: ShelfLabelTaskItemVO) => {
     inputErrorMessage: '原因不能为空'
   });
   const key = `confirm:${item.itemId}:${item.version}`;
-  await confirmShelfLabelReplacement(item.itemId, item.version, value, identityFor(key));
+  const response = await runWrite(key, () => confirmShelfLabelReplacement(item.itemId, item.version, value, identityFor(key)));
+  if (!response) return;
   done(key);
   await reloadTask();
 };
 const exceptionItem = async (item: ShelfLabelTaskItemVO) => {
   const { value } = await ElMessageBox.prompt('请填写价签异常原因', '记录异常', { inputPattern: /\S+/, inputErrorMessage: '原因不能为空' });
   const key = `exception:${item.itemId}:${item.version}`;
-  await recordShelfLabelException(item.itemId, item.version, value, identityFor(key));
+  const response = await runWrite(key, () => recordShelfLabelException(item.itemId, item.version, value, identityFor(key)));
+  if (!response) return;
   done(key);
   await reloadTask();
 };
@@ -306,7 +378,8 @@ const dispatchBlocked = async () => {
   await ElMessageBox.confirm('该操作只验证未解阻打印端口会失败关闭，并记录 BLOCKED_EXTERNAL。', '打印边界验证', { type: 'warning' });
   const task = taskDetail.value.task;
   const key = `dispatch:${task.taskId}:${task.version}:${lastPreview.value.previewSha256}`;
-  await dispatchShelfLabelTask(task.taskId, task.version, lastPreview.value.previewSha256, identityFor(key));
+  const response = await runWrite(key, () => dispatchShelfLabelTask(task.taskId, task.version, lastPreview.value!.previewSha256, identityFor(key)));
+  if (!response) return;
   done(key);
   ElMessage.warning('打印端口已按预期失败关闭，未形成真实打印成功证据');
   await reloadTask();
@@ -328,7 +401,8 @@ const taskTagType = (state: ShelfLabelTaskState) =>
 
 watch(
   () => props.modelValue,
-  (opened) => opened && refresh()
+  (opened) => opened && refresh(),
+  { immediate: true }
 );
 </script>
 

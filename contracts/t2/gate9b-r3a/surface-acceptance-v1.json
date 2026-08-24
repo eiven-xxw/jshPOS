@@ -1,0 +1,71 @@
+{
+  "schemaVersion": "1.0",
+  "findingId": "G9A-UI-P1-001",
+  "batchId": "G9A-R3A",
+  "dimensions": [
+    "route",
+    "buttons",
+    "permission",
+    "dataScope",
+    "loading",
+    "empty",
+    "error",
+    "singleFlight",
+    "offline",
+    "businessDate",
+    "recovery",
+    "directTest"
+  ],
+  "surfaces": [
+    {
+      "surfaceId": "VUE-01",
+      "title": "商品中心",
+      "statuses": ["PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "NOT_APPLICABLE", "NOT_APPLICABLE", "PASS", "PASS"],
+      "evidence": ["admin-web/src/views/catalog/index.vue", "admin-web/src/views/g9a-r3a/__tests__/main-path-pages.spec.ts"]
+    },
+    {
+      "surfaceId": "VUE-02",
+      "title": "货架价签面板",
+      "statuses": ["PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "NOT_APPLICABLE", "NOT_APPLICABLE", "PASS", "PASS"],
+      "evidence": ["admin-web/src/views/catalog/components/ShelfLabelPanel.vue", "admin-web/src/views/g9a-r3a/__tests__/main-path-pages.spec.ts"]
+    },
+    {
+      "surfaceId": "VUE-03",
+      "title": "平台基础与组织门店",
+      "statuses": ["PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "NOT_APPLICABLE", "NOT_APPLICABLE", "PASS", "PASS"],
+      "evidence": ["admin-web/src/views/foundation/index.vue", "admin-web/src/views/g9a-r3a/__tests__/main-path-pages.spec.ts"]
+    },
+    {
+      "surfaceId": "VUE-04",
+      "title": "高级运营导航",
+      "statuses": ["PASS", "PASS", "PASS", "PASS", "NOT_APPLICABLE", "NOT_APPLICABLE", "NOT_APPLICABLE", "NOT_APPLICABLE", "NOT_APPLICABLE", "NOT_APPLICABLE", "NOT_APPLICABLE", "PASS"],
+      "evidence": ["admin-web/src/views/operations/advanced/index.vue", "admin-web/src/views/g9a-r3a/__tests__/main-path-pages.spec.ts"]
+    },
+    {
+      "surfaceId": "FLT-03",
+      "title": "POS 收银结算",
+      "statuses": ["PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS"],
+      "evidence": ["pos-flutter/lib/features/sale/presentation/pos_checkout_page.dart", "pos-flutter/test/gate6d/pos_checkout_page_test.dart"]
+    },
+    {
+      "surfaceId": "FLT-04",
+      "title": "POS 可信会话壳",
+      "statuses": ["PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS"],
+      "evidence": ["pos-flutter/lib/features/session/presentation/pos_session_shell.dart", "pos-flutter/test/widget_test.dart"]
+    },
+    {
+      "surfaceId": "FLT-06",
+      "title": "Provider 无关组合支付",
+      "statuses": ["PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS"],
+      "evidence": ["pos-flutter/lib/features/tender/presentation/pos_tender_page.dart", "pos-flutter/test/gate7b/tender_plan_test.dart", "pos-flutter/test/widget_test.dart"]
+    }
+  ],
+  "notApplicableRules": {
+    "onlineVueOffline": "本批 Vue 管理页面不承载离线命令；网络失败按安全错误和原操作恢复处理",
+    "onlineVueBusinessDate": "商品、价签、组织门店和纯导航页面不生成交易业务日事实",
+    "navigationState": "VUE-04 是无数据读取与写命令的纯导航面，加载、空态、错误和单航班不适用"
+  },
+  "batchResult": "VERIFIED_CANDIDATE",
+  "overallFindingState": "OPEN",
+  "overallFindingReason": "G9A-R3B、G9A-R3C 和 26 页汇总验收尚未执行"
+}

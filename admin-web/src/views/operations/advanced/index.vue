@@ -34,14 +34,18 @@
             <el-card shadow="never">
               <template #header><span>基础经营与对账报表</span></template>
               <p>复用 Reporting Owner 的权限脱敏、差异处理、安全导出和投影重建正式界面。</p>
-              <el-button v-hasPermi="['report:operation:read']" type="primary" @click="openReporting">进入报表中心</el-button>
+              <el-button v-hasPermi="['report:operation:read']" data-testid="advanced-reporting-link" type="primary" @click="openReporting"
+                >进入报表中心</el-button
+              >
             </el-card>
           </el-col>
           <el-col :span="12">
             <el-card shadow="never">
               <template #header><span>可信终端登记</span></template>
               <p>复用 Terminal Registry 正式界面；本 Sprint 仍只允许虚构终端和软件生成密钥。</p>
-              <el-button v-hasPermi="['terminal:registry:read']" type="primary" @click="openTerminal">进入终端中心</el-button>
+              <el-button v-hasPermi="['terminal:registry:read']" data-testid="advanced-terminal-link" type="primary" @click="openTerminal"
+                >进入终端中心</el-button
+              >
             </el-card>
           </el-col>
         </el-row>

@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "1.0",
+  "batchId": "G9A-R3A",
+  "seeds": [
+    {
+      "seedId": "R3A-VUE-MOUNT-01",
+      "stage": "RED",
+      "finding": "四个 Vue 页面缺少可挂载的空态、错误恢复和正式路由标识",
+      "observed": "4 tests failed",
+      "fixedBy": "统一可恢复页面状态、最小权限和挂载交互测试",
+      "final": "5 tests passed"
+    },
+    {
+      "seedId": "R3A-FLT-ROUTE-01",
+      "stage": "RED",
+      "finding": "JshposApp 不接受冻结组合支付控制器，正式会话无法到达 FLT-06",
+      "observed": "widget test compile failed: tenderController missing",
+      "fixedBy": "可信会话装配与上下文一致性校验",
+      "final": "7 widget tests passed"
+    },
+    {
+      "seedId": "R3A-DEPS-HIGH-01",
+      "stage": "DEPENDENCY_REVIEW",
+      "finding": "首轮 Vue 测试依赖组合命中 3 个 High",
+      "observed": "pnpm audit exit 1",
+      "fixedBy": "升级直接依赖并锁定安全传递覆盖",
+      "final": "0 High/Critical"
+    },
+    {
+      "seedId": "R3A-DEPS-HIGH-02",
+      "stage": "DEPENDENCY_REVIEW",
+      "finding": "升级后 glob 10.4.5 仍命中 1 个 High",
+      "observed": "pnpm audit exit 1",
+      "fixedBy": "精确覆盖 glob 10.5.0",
+      "final": "0 High/Critical"
+    },
+    {
+      "seedId": "R3A-VUE-WORKER-01",
+      "stage": "FULL_REGRESSION",
+      "finding": "Vitest 多 worker 挂载组件时并发改写自动导入声明，Windows 出现文件锁冲突",
+      "observed": "UNKNOWN open .eslintrc-auto-import.json",
+      "fixedBy": "测试环境消费已提交声明并关闭声明生成；开发与生产构建继续生成",
+      "final": "全量 Web 测试在默认并发度通过"
+    },
+    {
+      "seedId": "R3A-FLT-LAYOUT-01",
+      "stage": "FULL_REGRESSION",
+      "finding": "新增可信上下文后既有用例未滚动到组合支付份额按钮，点击未实际发生",
+      "observed": "tenderSafeError not found",
+      "fixedBy": "按真实用户路径 ensureVisible 后点击，保留全部资金失败关闭断言",
+      "final": "191 tests passed; 1 dedicated performance test skipped by existing policy"
+    }
+  ],
+  "openP0": 0,
+  "openP1InBatch": 0,
+  "autoRetryUsed": false,
+  "testsSkippedToPass": false
+}

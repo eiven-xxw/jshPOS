@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "1.0",
+  "gate": "T2-GATE9B-G9A-R3A",
+  "findingId": "G9A-UI-P1-001",
+  "batchId": "G9A-R3A",
+  "baselineCommit": "5302e2f8a020b5a058807d53312741e433c3ddde",
+  "branch": "t2/gate9b-sprint27c-g9a-r3a-runtime",
+  "stage": "AUTHORIZED_RUNTIME_UI_REPAIR",
+  "projectSponsorDecision": "CONDITIONAL_GO",
+  "reusedRequirements": [
+    "T2-UX-001",
+    "T2-ADM-001",
+    "T2-ADM-002",
+    "T2-POS-007",
+    "T2-POS-008",
+    "T2-PAY-004"
+  ],
+  "surfaces": ["VUE-01", "VUE-02", "VUE-03", "VUE-04", "FLT-03", "FLT-04", "FLT-06"],
+  "expectedAcceptedT2Requirements": 88,
+  "allowedChanges": [
+    "accepted-adr-and-governance",
+    "vue-test-only-dependencies",
+    "shared-ui-page-state",
+    "seven-frozen-surfaces",
+    "flutter-trusted-tender-navigation",
+    "failure-regression-tests",
+    "gate-ci-and-evidence"
+  ],
+  "forbiddenChanges": [
+    "new-requirement",
+    "new-business-capability",
+    "server-controller-or-owner-runtime",
+    "published-migration",
+    "provider-sdk-or-http",
+    "external-execution",
+    "full-alpha",
+    "production-release"
+  ],
+  "preservedStates": {
+    "T2-PAY-002": "BLOCKED",
+    "T2-HWD-001": "BLOCKED",
+    "T2-PRN-001": "BLOCKED",
+    "T2-PAR-001": "BLOCKED",
+    "T2-UAT-001": "DRAFT",
+    "T2-REL-001": "DRAFT",
+    "T2-LIC-001": "DEFERRED",
+    "T2-JSH-001": "DEFERRED"
+  },
+  "externalExecution": {
+    "providerNetwork": 0,
+    "realFunds": 0,
+    "realDeviceCommands": 0,
+    "realPeripheralCommands": 0,
+    "partnerFieldExecution": 0,
+    "fullAlpha": 0,
+    "productionDeployment": 0
+  },
+  "completionRule": "SEVEN_SURFACES_PASS_BATCH_ACCEPTANCE_AND_FULL_CI; OVERALL_G9A_UI_REMAINS_OPEN"
+}

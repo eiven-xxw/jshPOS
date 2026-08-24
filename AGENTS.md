@@ -832,6 +832,28 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
   继续 `DRAFT`；`T2-LIC-001/JSH-001` 继续 `DEFERRED`。Provider 网络、真实资金、
   设备/外设命令、伙伴现场、完整 Alpha、生产部署和商业声明必须为 0。
 
+## 4.66 当前 G9A-R3A 主路径页面正式整改条件准入
+
+- 项目发起人已于 2026-08-24 接受 G9A-R3 准备阶段 `CONDITIONAL PASS` 和 ADR-071，
+  授权从准备阶段最终封存提交 `5302e2f8a020b5a058807d53312741e433c3ddde` 建立
+  `t2/gate9b-sprint27c-g9a-r3a-runtime`；ADR-071 更新为 `Accepted`。
+- 本批只允许整改 `VUE-01/02/03/04` 与 `FLT-03/04/06` 对应的既有
+  `G9A-UI-P1-001` 缺口，复用 `T2-UX-001/T2-ADM-001/002/T2-POS-007/008/T2-PAY-004`；
+  不得新增 Requirement ID、业务能力、Controller、API、表、任务或迁移。
+- 必须先增加失败回归，再按路由、按钮最小权限、加载/空态/安全错误、关联标识、单航班、
+  离线、可信业务日和原幂等键恢复串行整改。Vue 新增挂载测试依赖前必须记录精确版本、用途、
+  许可证、替代方案和安全结论，并纳入锁文件、SBOM、漏洞和许可证门禁。
+- Vue 展示权限必须与正式 Controller 最小权限一致，服务端可信 tenant 与门店范围继续最终授权；
+  页面不得复制 Owner 算法或用菜单/按钮隐藏替代服务端授权。
+- `PosTenderPage` 只能通过可信会话以及冻结订单、班次、门店和业务日上下文进入；页面不得自行
+  声明 tenant_id、应收或支付成功。电子支付份额必须以 `BLOCKED/UNAVAILABLE` 失败关闭，
+  UNKNOWN 只能查询原计划，禁止生成替代命令。
+- 不得新增 Provider SDK/HTTP、真实网络调用，不得直接访问 Mapper/SQLite/MethodChannel，
+  不得修改已发布迁移。七页必须有 Vue 挂载组件或 Flutter Widget 交互证据并逐项通过十二维验收。
+- `T2-PAY-002/HWD-001/PRN-001/PAR-001` 继续 `BLOCKED`；`T2-UAT-001/REL-001` 继续
+  `DRAFT`；`T2-LIC-001/JSH-001` 继续 `DEFERRED`。完成后只提交 G9A-R3A 周门禁报告等待确认；
+  不得自动进入 G9A-R3B、G9A-R4、完整 Alpha、现场试点或生产发布。
+
 ## 5. 工程与测试规则
 
 - 服务端采用 RuoYi-Vue-Plus 模块化单体，不得把领域逻辑写入 Controller、通用工具类或框架系统模块。

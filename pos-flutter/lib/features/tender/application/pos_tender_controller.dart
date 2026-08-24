@@ -9,11 +9,15 @@ final class PosTenderPageState {
     this.plan,
     this.errorCode,
     this.safeMessage,
+    this.recoveryRef,
   });
   final PosTenderPagePhase phase;
   final PosTenderPlanView? plan;
   final String? errorCode;
   final String? safeMessage;
+
+  /// 原计划或冻结订单引用；失败恢复只能继续观察该引用。
+  final String? recoveryRef;
   bool get busy => phase == PosTenderPagePhase.submitting;
 }
 
@@ -69,6 +73,7 @@ final class PosTenderController {
         plan: previous,
         errorCode: error.code,
         safeMessage: error.safeMessage,
+        recoveryRef: error.planRef ?? previous?.planRef ?? source.orderRef,
       );
     }
   }

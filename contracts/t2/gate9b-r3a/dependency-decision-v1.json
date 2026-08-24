@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "1.0",
+  "decisionId": "G9A-R3A-VUE-MOUNT-DEPENDENCIES",
+  "scope": "DEV_TEST_ONLY",
+  "dependencies": [
+    {
+      "name": "@vue/test-utils",
+      "version": "2.4.11",
+      "license": "MIT",
+      "purpose": "Vue 3 mounted component interaction tests",
+      "runtimeBundled": false,
+      "alternative": "source assertions rejected because they do not prove mounted behavior"
+    },
+    {
+      "name": "happy-dom",
+      "version": "20.11.6",
+      "license": "MIT",
+      "purpose": "Node 24 compatible DOM environment for Vitest",
+      "runtimeBundled": false,
+      "alternative": "jsdom rejected for a larger dependency surface; browser E2E is disproportionate for component seeds"
+    },
+    {
+      "name": "glob",
+      "version": "10.5.0",
+      "license": "ISC",
+      "purpose": "security override for the @vue/test-utils js-beautify transitive dependency",
+      "runtimeBundled": false,
+      "alternative": "unpatched 10.4.5 rejected after a HIGH advisory was reproduced"
+    }
+  ],
+  "failClosedConditions": [
+    "HIGH_OR_CRITICAL_AUDIT_FINDING",
+    "NON_MIT_LICENSE_DRIFT",
+    "PRODUCTION_BUNDLE_INCLUSION",
+    "NODE_24_INCOMPATIBILITY"
+  ],
+  "rejectedCandidates": [
+    {
+      "dependencies": "@vue/test-utils@2.4.6 + happy-dom@20.8.3",
+      "reason": "pnpm audit reproduced 3 HIGH findings"
+    },
+    {
+      "dependencies": "@vue/test-utils@2.4.11 + happy-dom@20.11.6 without glob override",
+      "reason": "pnpm audit reproduced glob@10.4.5 HIGH finding"
+    }
+  ]
+}

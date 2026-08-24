@@ -5,6 +5,9 @@ import 'package:jshpos_pos/features/session/application/pos_session_repository.d
 import 'package:jshpos_pos/features/session/domain/pos_session_models.dart';
 import 'package:jshpos_pos/features/shift/application/pos_shift_application_service.dart';
 import 'package:jshpos_pos/features/shift/domain/shift_models.dart';
+import 'package:jshpos_pos/features/tender/application/pos_tender_application_service.dart';
+import 'package:jshpos_pos/features/tender/application/pos_tender_controller.dart';
+import 'package:jshpos_pos/features/tender/domain/pos_tender_models.dart';
 import 'package:pos_device_adapter/pos_device_adapter.dart';
 
 void main() {
@@ -147,6 +150,95 @@ void main() {
     expect(find.textContaining('SHIFT_OPEN_BLOCKED'), findsOneWidget);
     expect(find.text('未开班'), findsOneWidget);
   });
+
+  testWidgets('可信会话只使用冻结订单班次业务日进入组合支付且电子份额失败关闭', (tester) async {
+    final tenderService = _BlockedTenderApplicationService();
+    final tenderController = PosTenderController(
+      service: tenderService,
+      source: const PosTenderSource(
+        orderRef: '01K2A000000000000000000031',
+        orderSnapshotSha256:
+            'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+        storeRef: '1101',
+        terminalRef: '01K2A000000000000000000011',
+        shiftRef: '01K2A000000000000000000021',
+        businessDate: '2026-08-20',
+        receivableAmountMinor: 1200,
+      ),
+    );
+    await tester.pumpWidget(
+      JshposApp(
+        deviceGateway: const _FakeDeviceGateway(),
+        sessionRepository: _FakeSessionRepository(),
+        tenderController: tenderController,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('employeeLogin')), 'cashier01');
+    await tester.enterText(
+      find.byKey(const Key('employeeSecret')),
+      'synthetic-pin',
+    );
+    await tester.tap(find.byKey(const Key('employeeLoginSubmit')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('openTenderPlan')), findsOneWidget);
+    await tester.ensureVisible(find.byKey(const Key('openTenderPlan')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('openTenderPlan')));
+    await tester.pumpAndSettle();
+    expect(find.text('组合支付'), findsOneWidget);
+    expect(find.textContaining('业务日 2026-08-20'), findsOneWidget);
+    expect(find.textContaining('离线计划仅冻结本地事实'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('freezeTenderPlan')));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('collectTender-1')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('collectTender-1')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('PAYMENT_EXTERNAL_BLOCKED'), findsOneWidget);
+    expect(tenderService.collectCount, 1);
+  });
+
+  testWidgets('组合支付冻结来源与可信会话不一致时失败关闭且不得进入支付页', (tester) async {
+    final tenderController = PosTenderController(
+      service: _BlockedTenderApplicationService(),
+      source: const PosTenderSource(
+        orderRef: '01K2A000000000000000000032',
+        orderSnapshotSha256:
+            'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+        storeRef: '9999',
+        terminalRef: '01K2A000000000000000000011',
+        shiftRef: '01K2A000000000000000000021',
+        businessDate: '2026-08-20',
+        receivableAmountMinor: 1200,
+      ),
+    );
+    await tester.pumpWidget(
+      JshposApp(
+        deviceGateway: const _FakeDeviceGateway(),
+        sessionRepository: _FakeSessionRepository(),
+        tenderController: tenderController,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('employeeLogin')), 'cashier01');
+    await tester.enterText(
+      find.byKey(const Key('employeeSecret')),
+      'synthetic-pin',
+    );
+    await tester.tap(find.byKey(const Key('employeeLoginSubmit')));
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.byKey(const Key('openTenderPlan')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('openTenderPlan')));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('TENDER_CONTEXT_MISMATCH'), findsOneWidget);
+    expect(find.byKey(const Key('tenderTrustedContext')), findsNothing);
+  });
 }
 
 class _FakeDeviceGateway implements PosDeviceGateway {
@@ -254,6 +346,60 @@ final class _FakeShiftApplicationService implements PosShiftApplicationService {
     required String reasonText,
     required String idempotencyKey,
   }) async => throw UnimplementedError();
+}
+
+final class _BlockedTenderApplicationService
+    implements PosTenderApplicationService {
+  int collectCount = 0;
+  PosTenderPlanView? _plan;
+
+  @override
+  Future<PosTenderPlanView> freeze({
+    required PosTenderSource source,
+    required List<PosTenderAllocationDraft> allocations,
+  }) async {
+    _plan ??= PosTenderPlanView(
+      planRef: '01K2A000000000000000000032',
+      orderRef: source.orderRef,
+      status: PosTenderPlanStatus.frozen,
+      receivableAmountMinor: source.receivableAmountMinor,
+      succeededAmountMinor: 0,
+      occupiedAmountMinor: 0,
+      currency: source.currency,
+      allocations: const [
+        PosTenderAllocationView(
+          allocationRef: '01K2A000000000000000000033',
+          sequenceNo: 1,
+          tenderType: PosTenderType.electronic,
+          status: PosTenderAllocationStatus.planned,
+          amountMinor: 600,
+        ),
+        PosTenderAllocationView(
+          allocationRef: '01K2A000000000000000000034',
+          sequenceNo: 2,
+          tenderType: PosTenderType.cash,
+          status: PosTenderAllocationStatus.planned,
+          amountMinor: 600,
+        ),
+      ],
+      updatedAt: DateTime.utc(2026, 8, 20, 8),
+      duplicate: false,
+    );
+    return _plan!;
+  }
+
+  @override
+  Future<PosTenderPlanView> find(String planRef) async => _plan!;
+
+  @override
+  Future<PosTenderPlanView> collect({
+    required String planRef,
+    required String allocationRef,
+    int? tenderedMinor,
+  }) async {
+    collectCount++;
+    throw const PosTenderFailure('PAYMENT_EXTERNAL_BLOCKED', '电子支付资料尚未解阻。');
+  }
 }
 
 final _terminal = TrustedTerminalContext(

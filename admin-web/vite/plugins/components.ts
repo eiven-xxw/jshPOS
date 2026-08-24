@@ -3,6 +3,8 @@ import { ElementPlusResolver } from 'unplugin-vue-components/resolvers';
 import IconsResolver from 'unplugin-icons/resolver';
 
 export default (path: any) => {
+  // Vitest 多 worker 只消费已提交声明，避免并发写入 components.d.ts 造成文件锁竞态。
+  const generateDeclarations = process.env.VITEST !== 'true';
   return Components({
     resolvers: [
       // 自动导入 Element Plus 组件
@@ -14,6 +16,6 @@ export default (path: any) => {
         enabledCollections: ['ep']
       })
     ],
-    dts: path.resolve(path.resolve(__dirname, '../../src'), 'types', 'components.d.ts')
+    dts: generateDeclarations ? path.resolve(path.resolve(__dirname, '../../src'), 'types', 'components.d.ts') : false
   });
 };

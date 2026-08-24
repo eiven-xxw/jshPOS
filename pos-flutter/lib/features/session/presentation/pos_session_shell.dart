@@ -14,6 +14,8 @@ import '../../return_refund/domain/pos_return_models.dart';
 import '../../return_refund/presentation/pos_return_page.dart';
 import '../../shift/application/pos_shift_application_service.dart';
 import '../../shift/presentation/pos_cash_management_page.dart';
+import '../../tender/application/pos_tender_controller.dart';
+import '../../tender/presentation/pos_tender_page.dart';
 import '../application/pos_session_service.dart';
 import '../domain/pos_session_models.dart';
 
@@ -26,6 +28,7 @@ final class PosSessionShell extends StatefulWidget {
     required this.returnService,
     required this.exchangeService,
     required this.shiftService,
+    this.tenderController,
     super.key,
   });
 
@@ -35,6 +38,9 @@ final class PosSessionShell extends StatefulWidget {
   final PosReturnApplicationService returnService;
   final PosExchangeApplicationService exchangeService;
   final PosShiftApplicationService shiftService;
+
+  /// 组合根只可注入已绑定冻结订单的控制器；页面不得自行拼装来源事实。
+  final PosTenderController? tenderController;
 
   @override
   State<PosSessionShell> createState() => _PosSessionShellState();
@@ -469,6 +475,19 @@ class _PosSessionShellState extends State<PosSessionShell> {
                     ),
             ),
             _PermissionTile(
+              key: const Key('openTenderPlan'),
+              label: widget.tenderController == null ? '组合支付（暂无冻结订单）' : '组合支付',
+              icon: Icons.account_balance_wallet,
+              enabled:
+                  shift != null &&
+                  _state.hasPermission(PosPermission.saleOperate) &&
+                  _state.hasPermission(PosPermission.cashSettle) &&
+                  widget.tenderController != null,
+              onTap: shift == null || widget.tenderController == null
+                  ? null
+                  : () => _openTender(context),
+            ),
+            _PermissionTile(
               label: '同步状态',
               icon: Icons.sync,
               enabled: _state.hasPermission(PosPermission.syncView),
@@ -502,6 +521,42 @@ class _PosSessionShellState extends State<PosSessionShell> {
           ),
         ),
       );
+
+  Future<void> _openTender(BuildContext context) async {
+    final controller = widget.tenderController;
+    final terminal = _state.terminal;
+    final shift = _state.shift;
+    if (controller == null || terminal == null || shift == null) {
+      _showFailure(
+        const PosSessionFailure(
+          'TENDER_CONTEXT_UNAVAILABLE',
+          '组合支付所需冻结订单或可信班次不可用。',
+        ),
+      );
+      return;
+    }
+    final source = controller.source;
+    final trusted =
+        source.storeRef == terminal.storeId &&
+        source.terminalRef == terminal.terminalId &&
+        source.shiftRef == shift.shiftId &&
+        source.businessDate == shift.businessDate &&
+        source.businessDate == terminal.businessDate;
+    if (!trusted) {
+      _showFailure(
+        const PosSessionFailure(
+          'TENDER_CONTEXT_MISMATCH',
+          '组合支付冻结订单与当前可信会话不一致。',
+        ),
+      );
+      return;
+    }
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => PosTenderPage(controller: controller),
+      ),
+    );
+  }
 
   Future<void> _openExchangeCheckout(
     BuildContext context,
@@ -629,6 +684,7 @@ class _ContextCard extends StatelessWidget {
 
 class _PermissionTile extends StatelessWidget {
   const _PermissionTile({
+    super.key,
     required this.label,
     required this.icon,
     required this.enabled,

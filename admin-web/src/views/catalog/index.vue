@@ -8,11 +8,39 @@
       :closable="false"
       show-icon
     />
+    <el-alert
+      v-if="pageFailure"
+      data-testid="catalog-error"
+      class="mb-3"
+      type="error"
+      :closable="false"
+      show-icon
+      :title="`${pageFailure.message}（${pageFailure.code}）`"
+      :description="`关联标识：${pageFailure.correlationId}${pageFailure.operationIdentity ? `；原操作：${pageFailure.operationIdentity}` : ''}`"
+    >
+      <template #default>
+        <span
+          >关联标识：{{ pageFailure.correlationId
+          }}<template v-if="pageFailure.operationIdentity">；原操作：{{ pageFailure.operationIdentity }}</template></span
+        >
+        <el-button data-testid="catalog-retry" type="primary" link @click="loadProducts">刷新权威状态</el-button>
+      </template>
+    </el-alert>
+    <el-alert
+      v-else-if="pagePhase === 'LOADING'"
+      data-testid="catalog-loading"
+      class="mb-3"
+      type="info"
+      :closable="false"
+      title="正在加载商品与门店范围…"
+    />
 
     <el-card shadow="hover">
       <template #header>
         <el-space wrap>
-          <el-button icon="Refresh" @click="loadProducts">刷新商品</el-button>
+          <el-button v-hasPermi="['catalog:product:query']" data-testid="catalog-refresh" icon="Refresh" :disabled="submitting" @click="loadProducts"
+            >刷新商品</el-button
+          >
           <el-button v-hasPermi="['catalog:definition:manage']" @click="definitionDialog = true">分类 / 品牌 / 单位</el-button>
           <el-button v-hasPermi="['catalog:product:manage']" type="primary" @click="openProductDialog">新增商品</el-button>
           <el-button v-hasPermi="['catalog:import:preflight']" type="warning" @click="importDialog = true">导入预检</el-button>
@@ -42,6 +70,7 @@
           </template>
         </el-table-column>
       </el-table>
+      <el-empty v-if="pagePhase === 'EMPTY'" data-testid="catalog-empty" description="当前数据范围内暂无商品" />
     </el-card>
 
     <el-dialog v-model="definitionDialog" title="分类 / 品牌 / 单位" width="620px">
@@ -51,14 +80,21 @@
             <el-form-item label="编码"><el-input v-model="categoryForm.code" /></el-form-item>
             <el-form-item label="名称"><el-input v-model="categoryForm.name" /></el-form-item>
           </el-form>
-          <el-button type="primary" @click="submitCategory">保存分类</el-button>
+          <el-button
+            v-hasPermi="['catalog:definition:manage']"
+            data-testid="catalog-save-category"
+            type="primary"
+            :loading="submitting"
+            @click="submitCategory"
+            >保存分类</el-button
+          >
         </el-tab-pane>
         <el-tab-pane label="品牌">
           <el-form :model="brandForm" label-width="100px">
             <el-form-item label="编码"><el-input v-model="brandForm.code" maxlength="32" /></el-form-item>
             <el-form-item label="名称"><el-input v-model="brandForm.name" maxlength="100" /></el-form-item>
           </el-form>
-          <el-button type="primary" @click="submitBrand">保存品牌</el-button>
+          <el-button v-hasPermi="['catalog:definition:manage']" type="primary" :loading="submitting" @click="submitBrand">保存品牌</el-button>
         </el-tab-pane>
         <el-tab-pane label="单位">
           <el-form :model="unitForm" label-width="100px">
@@ -66,7 +102,7 @@
             <el-form-item label="名称"><el-input v-model="unitForm.name" /></el-form-item>
             <el-form-item label="小数精度"><el-input-number v-model="unitForm.decimalScale" :min="0" :max="6" /></el-form-item>
           </el-form>
-          <el-button type="primary" @click="submitUnit">保存单位</el-button>
+          <el-button v-hasPermi="['catalog:definition:manage']" type="primary" :loading="submitting" @click="submitUnit">保存单位</el-button>
         </el-tab-pane>
       </el-tabs>
     </el-dialog>
@@ -116,7 +152,8 @@
         </el-form-item>
       </el-form>
       <template #footer
-        ><el-button @click="productDialog = false">取消</el-button><el-button type="primary" @click="submitProduct">保存</el-button></template
+        ><el-button @click="productDialog = false">取消</el-button
+        ><el-button v-hasPermi="['catalog:product:manage']" type="primary" :loading="submitting" @click="submitProduct">保存</el-button></template
       >
     </el-dialog>
 
@@ -133,9 +170,23 @@
       </el-table>
       <template #footer>
         <el-button @click="importDialog = false">关闭</el-button>
-        <el-button type="primary" @click="runPreflight">执行预检</el-button>
-        <el-button v-if="importResult?.batch.state === 'PRECHECKED'" type="success" @click="commitImport">原子发布</el-button>
-        <el-button v-if="importResult?.batch.state === 'PUBLISHED'" type="warning" @click="rollbackPublishedImport">安全回退</el-button>
+        <el-button v-hasPermi="['catalog:import:preflight']" type="primary" :loading="submitting" @click="runPreflight">执行预检</el-button>
+        <el-button
+          v-if="importResult?.batch.state === 'PRECHECKED'"
+          v-hasPermi="['catalog:import:publish']"
+          type="success"
+          :loading="submitting"
+          @click="commitImport"
+          >原子发布</el-button
+        >
+        <el-button
+          v-if="importResult?.batch.state === 'PUBLISHED'"
+          v-hasPermi="['catalog:import:publish']"
+          type="warning"
+          :loading="submitting"
+          @click="rollbackPublishedImport"
+          >安全回退</el-button
+        >
       </template>
     </el-dialog>
 
@@ -167,9 +218,13 @@
       </el-form>
       <template #footer>
         <el-button @click="priceDialog = false">关闭</el-button>
-        <el-button type="primary" @click="submitPriceBook">创建草稿</el-button>
-        <el-button v-if="currentBook" type="warning" @click="submitPriceItem">添加价格项</el-button>
-        <el-button v-if="currentBook" type="success" @click="publishBook">发布版本</el-button>
+        <el-button v-hasPermi="['catalog:price:manage']" type="primary" :loading="submitting" @click="submitPriceBook">创建草稿</el-button>
+        <el-button v-if="currentBook" v-hasPermi="['catalog:price:manage']" type="warning" :loading="submitting" @click="submitPriceItem"
+          >添加价格项</el-button
+        >
+        <el-button v-if="currentBook" v-hasPermi="['catalog:price:publish']" type="success" :loading="submitting" @click="publishBook"
+          >发布版本</el-button
+        >
       </template>
     </el-dialog>
     <ShelfLabelPanel v-model="shelfLabelDrawer" :stores="stores" />
@@ -194,11 +249,13 @@ import {
 import type { CreatePriceBookForm, CreateProductForm, ImportPreflightVO, ImportRow, PriceBookVO, ProductState, ProductVO } from '@/api/catalog/types';
 import { listStores } from '@/api/foundation';
 import type { StoreVO } from '@/api/foundation/types';
+import { useRecoverablePage } from '@/composables/useRecoverablePage';
 import { normalizeProductUnits } from '@/views/operations/model';
 import type { ProductUnitDraft } from '@/views/operations/model';
 import ShelfLabelPanel from './components/ShelfLabelPanel.vue';
 
 const loading = ref(false);
+const { phase: pagePhase, failure: pageFailure, submitting, runRead, runWrite } = useRecoverablePage('CATALOG_OPERATION_FAILED');
 const products = ref<ProductVO[]>([]);
 const definitionDialog = ref(false);
 const productDialog = ref(false);
@@ -232,23 +289,32 @@ const priceItemForm = reactive({ skuId: '', unitId: '', amountMinor: 0, effectiv
 const loadProducts = async () => {
   loading.value = true;
   try {
-    const [productResponse, storeResponse] = await Promise.all([listProducts(), listStores()]);
-    products.value = productResponse.data;
-    stores.value = storeResponse.data;
+    await runRead(
+      async () => {
+        const [productResponse, storeResponse] = await Promise.all([listProducts(), listStores()]);
+        products.value = productResponse.data;
+        stores.value = storeResponse.data;
+        return products.value;
+      },
+      (value) => value.length === 0
+    );
   } finally {
     loading.value = false;
   }
 };
 const submitCategory = async () => {
-  await createCategory({ ...categoryForm });
+  const response = await runWrite(`catalog:category:${categoryForm.code}`, () => createCategory({ ...categoryForm }));
+  if (!response) return;
   ElMessage.success('分类已创建');
 };
 const submitBrand = async () => {
-  await createBrand({ ...brandForm });
+  const response = await runWrite(`catalog:brand:${brandForm.code}`, () => createBrand({ ...brandForm }));
+  if (!response) return;
   ElMessage.success('品牌已创建');
 };
 const submitUnit = async () => {
-  await createUnit({ ...unitForm });
+  const response = await runWrite(`catalog:unit:${unitForm.code}`, () => createUnit({ ...unitForm }));
+  if (!response) return;
   ElMessage.success('单位已创建');
 };
 const newUnitRow = (primary = false): ProductUnitDraft => {
@@ -292,48 +358,70 @@ const submitProduct = async () => {
     ...productForm,
     units: normalizeProductUnits(productUnits.value)
   };
-  await createProduct(payload);
+  const response = await runWrite(`catalog:product:${payload.skuCode}`, () => createProduct(payload));
+  if (!response) return;
   productDialog.value = false;
   ElMessage.success('商品已创建');
   await loadProducts();
 };
 const setState = async (product: ProductVO, state: ProductState) => {
-  await changeProductState(product.skuId, state, product.version);
+  const response = await runWrite(`catalog:product-state:${product.skuId}:${product.version}:${state}`, () =>
+    changeProductState(product.skuId, state, product.version)
+  );
+  if (!response) return;
   await loadProducts();
 };
 const runPreflight = async () => {
-  const rows = JSON.parse(importJson.value) as ImportRow[];
-  if (!Array.isArray(rows)) throw new Error('导入内容必须是 JSON 数组');
-  importResult.value = (await preflightImport(importKey.value, rows)).data;
+  const response = await runWrite(`catalog:import-preflight:${importKey.value}`, async () => {
+    const rows = JSON.parse(importJson.value) as ImportRow[];
+    if (!Array.isArray(rows)) throw new Error('导入内容必须是 JSON 数组');
+    return preflightImport(importKey.value, rows);
+  });
+  if (response) importResult.value = response.data;
 };
 const commitImport = async () => {
   if (!importResult.value) return;
-  importResult.value.batch = (await publishImport(importResult.value.batch.importBatchId)).data;
+  const batchId = importResult.value.batch.importBatchId;
+  const response = await runWrite(`catalog:import-publish:${batchId}`, () => publishImport(batchId));
+  if (!response) return;
+  importResult.value.batch = response.data;
   ElMessage.success('导入版本已原子发布');
 };
 const rollbackPublishedImport = async () => {
   if (!importResult.value) return;
-  importResult.value.batch = (await rollbackImport(importResult.value.batch.importBatchId)).data;
+  const batchId = importResult.value.batch.importBatchId;
+  const response = await runWrite(`catalog:import-rollback:${batchId}`, () => rollbackImport(batchId));
+  if (!response) return;
+  importResult.value.batch = response.data;
   ElMessage.success('已按批次状态安全回退；后续修改不会被覆盖');
   await loadProducts();
 };
 const submitPriceBook = async () => {
-  currentBook.value = (
-    await createPriceBook({
+  const response = await runWrite(`catalog:price-book:${priceBookForm.code}:${priceBookForm.versionNo}`, () =>
+    createPriceBook({
       ...priceBookForm,
       storeId: priceBookForm.scopeType === 'STORE' ? priceBookStoreId.value : undefined
     })
-  ).data;
+  );
+  if (!response) return;
+  currentBook.value = response.data;
   ElMessage.success('价格草稿已创建');
 };
 const publishBook = async () => {
   if (!currentBook.value) return;
-  currentBook.value = (await publishPriceBook(currentBook.value.priceBookId)).data;
+  const bookId = currentBook.value.priceBookId;
+  const response = await runWrite(`catalog:price-publish:${bookId}`, () => publishPriceBook(bookId));
+  if (!response) return;
+  currentBook.value = response.data;
   ElMessage.success('价格版本已发布');
 };
 const submitPriceItem = async () => {
   if (!currentBook.value) return;
-  await addPriceItem(currentBook.value.priceBookId, { ...priceItemForm });
+  const bookId = currentBook.value.priceBookId;
+  const response = await runWrite(`catalog:price-item:${bookId}:${priceItemForm.skuId}:${priceItemForm.effectiveFrom}`, () =>
+    addPriceItem(bookId, { ...priceItemForm })
+  );
+  if (!response) return;
   ElMessage.success('价格项已加入草稿');
 };
 

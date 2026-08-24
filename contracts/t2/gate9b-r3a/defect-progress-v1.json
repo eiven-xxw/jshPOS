@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "1.0",
+  "findingId": "G9A-UI-P1-001",
+  "overallState": "OPEN",
+  "batchId": "G9A-R3A",
+  "batchState": "VERIFIED_CANDIDATE",
+  "batchOpenP0": 0,
+  "batchOpenP1": 0,
+  "surfaceCount": 7,
+  "gapProgress": {
+    "G9A-R3-P1-ROUTE-001": "PARTIAL_FLT06_CLOSED_VUE10_PENDING_R3B",
+    "G9A-R3-P1-TEST-001": "PARTIAL_R3A_SURFACES_CLOSED_REMAINING_SURFACES_PENDING",
+    "G9A-R3-P1-PERM-001": "PARTIAL_VUE01_02_03_CLOSED_VUE08_20_PENDING",
+    "G9A-R3-P1-STATE-001": "PARTIAL_VUE01_03_CLOSED_REMAINING_SURFACES_PENDING",
+    "G9A-R3-P1-OFFLINE-001": "PARTIAL_FLT06_CLOSED_FLT01_05_PENDING"
+  },
+  "projectSponsorConfirmationRequired": true,
+  "nextBatchAutomaticallyAuthorized": false
+}

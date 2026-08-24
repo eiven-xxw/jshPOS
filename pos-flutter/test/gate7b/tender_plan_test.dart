@@ -264,6 +264,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(service.lastFreezeAllocationCount, 3);
     expect(find.byKey(const Key('tenderPlanStatus')), findsOneWidget);
+    // 可信上下文与离线边界增加后，份额按钮需要按真实用户路径滚动到可见区域。
+    await tester.ensureVisible(find.byKey(const Key('collectTender-1')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('collectTender-1')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('tenderSafeError')), findsOneWidget);

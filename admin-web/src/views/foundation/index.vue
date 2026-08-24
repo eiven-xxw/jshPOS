@@ -8,6 +8,32 @@
       :closable="false"
       show-icon
     />
+    <el-alert
+      v-if="pageFailure"
+      data-testid="foundation-error"
+      class="mb-3"
+      type="error"
+      :closable="false"
+      show-icon
+      :title="`${pageFailure.message}（${pageFailure.code}）`"
+      :description="`关联标识：${pageFailure.correlationId}${pageFailure.operationIdentity ? `；原操作：${pageFailure.operationIdentity}` : ''}`"
+    >
+      <template #default>
+        <span
+          >关联标识：{{ pageFailure.correlationId
+          }}<template v-if="pageFailure.operationIdentity">；原操作：{{ pageFailure.operationIdentity }}</template></span
+        >
+        <el-button data-testid="foundation-retry" type="primary" link @click="loadAll">刷新权威状态</el-button>
+      </template>
+    </el-alert>
+    <el-alert
+      v-else-if="pagePhase === 'EMPTY'"
+      data-testid="foundation-empty"
+      class="mb-3"
+      type="info"
+      :closable="false"
+      title="当前数据范围内暂无组织、门店、模板或审计记录"
+    />
 
     <el-row :gutter="12" class="mb-3">
       <el-col :xs="12" :sm="6"
@@ -27,7 +53,9 @@
     <el-card shadow="hover">
       <template #header>
         <el-space>
-          <el-button icon="Refresh" @click="loadAll">刷新</el-button>
+          <el-button v-hasPermi="['foundation:org:query']" data-testid="foundation-refresh" icon="Refresh" :disabled="submitting" @click="loadAll"
+            >刷新</el-button
+          >
           <el-button v-hasPermi="['foundation:org:manage']" type="primary" icon="Plus" @click="openOrgDialog">新增组织</el-button>
           <el-button v-hasPermi="['foundation:store:manage']" type="success" icon="Plus" @click="openStoreDialog">新增门店</el-button>
           <el-button v-hasPermi="['foundation:config:manage']" type="warning" icon="Plus" @click="openTemplateDialog">新增模板</el-button>
@@ -61,7 +89,9 @@
             <el-table-column prop="status" label="状态" width="110" />
             <el-table-column label="当前业务日" min-width="160">
               <template #default="scope">
-                <el-button link type="primary" @click="showBusinessDate(scope.row)">查询</el-button>
+                <el-button v-hasPermi="['foundation:store:query']" link type="primary" :disabled="submitting" @click="showBusinessDate(scope.row)"
+                  >查询</el-button
+                >
               </template>
             </el-table-column>
           </el-table>
@@ -108,7 +138,16 @@
               </template>
             </el-table-column>
             <el-table-column label="操作" width="90">
-              <template #default="scope"><el-button link type="danger" @click="staffScopes.splice(scope.$index, 1)">移除</el-button></template>
+              <template #default="scope"
+                ><el-button
+                  v-hasPermi="['foundation:scope:grant']"
+                  link
+                  type="danger"
+                  :disabled="submitting"
+                  @click="staffScopes.splice(scope.$index, 1)"
+                  >移除</el-button
+                ></template
+              >
             </el-table-column>
           </el-table>
         </el-tab-pane>
@@ -148,7 +187,10 @@
           ><el-select v-model="orgForm.type" class="w-full"><el-option v-for="item in orgTypes" :key="item" :label="item" :value="item" /></el-select
         ></el-form-item>
       </el-form>
-      <template #footer><el-button @click="orgDialog = false">取消</el-button><el-button type="primary" @click="submitOrg">保存</el-button></template>
+      <template #footer
+        ><el-button @click="orgDialog = false">取消</el-button
+        ><el-button v-hasPermi="['foundation:org:manage']" type="primary" :loading="submitting" @click="submitOrg">保存</el-button></template
+      >
     </el-dialog>
 
     <el-dialog v-model="storeDialog" title="新增门店" width="560px" destroy-on-close>
@@ -163,7 +205,8 @@
         <el-form-item label="营业日起点"><el-time-picker v-model="storeStart" format="HH:mm" value-format="HH:mm:ss" class="w-full" /></el-form-item>
       </el-form>
       <template #footer
-        ><el-button @click="storeDialog = false">取消</el-button><el-button type="primary" @click="submitStore">保存</el-button></template
+        ><el-button @click="storeDialog = false">取消</el-button
+        ><el-button v-hasPermi="['foundation:store:manage']" type="primary" :loading="submitting" @click="submitStore">保存</el-button></template
       >
     </el-dialog>
 
@@ -177,7 +220,8 @@
         ></el-form-item>
       </el-form>
       <template #footer
-        ><el-button @click="templateDialog = false">取消</el-button><el-button type="primary" @click="submitTemplate">保存</el-button></template
+        ><el-button @click="templateDialog = false">取消</el-button
+        ><el-button v-hasPermi="['foundation:config:manage']" type="primary" :loading="submitting" @click="submitTemplate">保存</el-button></template
       >
     </el-dialog>
   </div>
@@ -209,8 +253,10 @@ import type {
   StaffScopeInput,
   StoreVO
 } from '@/api/foundation/types';
+import { useRecoverablePage } from '@/composables/useRecoverablePage';
 
 const loading = ref(false);
+const { phase: pagePhase, failure: pageFailure, submitting, runRead, runWrite } = useRecoverablePage('FOUNDATION_OPERATION_FAILED');
 const activeTab = ref('org');
 const orgUnits = ref<OrgUnitVO[]>([]);
 const stores = ref<StoreVO[]>([]);
@@ -233,16 +279,22 @@ const templateForm = reactive<CreateConfigTemplateForm>({ code: '', name: '', in
 const loadAll = async () => {
   loading.value = true;
   try {
-    const [orgResponse, storeResponse, templateResponse, auditResponse] = await Promise.allSettled([
-      listOrgUnits(),
-      listStores(),
-      listConfigTemplates(),
-      listAuditEvents(undefined, 100)
-    ]);
-    orgUnits.value = orgResponse.status === 'fulfilled' ? orgResponse.value.data : [];
-    stores.value = storeResponse.status === 'fulfilled' ? storeResponse.value.data : [];
-    templates.value = templateResponse.status === 'fulfilled' ? templateResponse.value.data : [];
-    auditEvents.value = auditResponse.status === 'fulfilled' ? auditResponse.value.data : [];
+    await runRead(
+      async () => {
+        const [orgResponse, storeResponse, templateResponse, auditResponse] = await Promise.all([
+          listOrgUnits(),
+          listStores(),
+          listConfigTemplates(),
+          listAuditEvents(undefined, 100)
+        ]);
+        orgUnits.value = orgResponse.data;
+        stores.value = storeResponse.data;
+        templates.value = templateResponse.data;
+        auditEvents.value = auditResponse.data;
+        return orgUnits.value.length + stores.value.length + templates.value.length + auditEvents.value.length;
+      },
+      (count) => count === 0
+    );
   } finally {
     loading.value = false;
   }
@@ -269,26 +321,30 @@ const openTemplateDialog = () => {
 };
 
 const submitOrg = async () => {
-  await createOrgUnit({ ...orgForm });
+  const response = await runWrite(`foundation:org:${orgForm.code}`, () => createOrgUnit({ ...orgForm }));
+  if (!response) return;
   orgDialog.value = false;
   ElMessage.success('组织已创建');
   await loadAll();
 };
 const submitStore = async () => {
   storeForm.businessDayStart = storeStart.value;
-  await createStore({ ...storeForm });
+  const response = await runWrite(`foundation:store:${storeForm.code}`, () => createStore({ ...storeForm }));
+  if (!response) return;
   storeDialog.value = false;
   ElMessage.success('门店已创建');
   await loadAll();
 };
 const submitTemplate = async () => {
-  await createConfigTemplate({ ...templateForm });
+  const response = await runWrite(`foundation:template:${templateForm.code}`, () => createConfigTemplate({ ...templateForm }));
+  if (!response) return;
   templateDialog.value = false;
   ElMessage.success('模板已创建');
   await loadAll();
 };
 const showBusinessDate = async (store: StoreVO) => {
-  const response = await getBusinessDate(store.storeId);
+  const response = await runRead(() => getBusinessDate(store.storeId));
+  if (!response) return;
   ElMessage.success(`${store.name} 当前业务日：${response.data.businessDate}`);
 };
 
@@ -297,7 +353,8 @@ const addScopeRow = () => {
   staffScopes.value.push({ rowKey: `scope-${scopeSequence}`, scopeType: 'STORE', storeId: stores.value[0]?.storeId });
 };
 const loadStaffScopes = async () => {
-  const response = await listStaffScopes(staffUserId.value);
+  const response = await runRead(() => listStaffScopes(staffUserId.value));
+  if (!response) return;
   staffScopes.value = response.data
     .filter((item) => item.status === 'ACTIVE')
     .map((item) => ({
@@ -318,7 +375,8 @@ const saveStaffScopes = async () => {
       storeId: scopeType === 'STORE' ? item.storeId : undefined
     };
   });
-  await replaceStaffScopes(staffUserId.value, scopes);
+  const response = await runWrite(`foundation:scope:${staffUserId.value}`, () => replaceStaffScopes(staffUserId.value, scopes));
+  if (!response) return;
   ElMessage.success('员工数据范围已替换并记录审计');
   await loadStaffScopes();
 };

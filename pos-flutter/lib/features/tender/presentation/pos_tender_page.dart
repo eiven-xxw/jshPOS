@@ -81,12 +81,21 @@ final class _PosTenderPageState extends State<PosTenderPage> {
           children: [
             Text('订单：${widget.controller.source.orderRef}'),
             Text(
+              '门店 ${widget.controller.source.storeRef} · 终端 ${widget.controller.source.terminalRef} · '
+              '班次 ${widget.controller.source.shiftRef} · 业务日 ${widget.controller.source.businessDate}',
+              key: const Key('tenderTrustedContext'),
+            ),
+            Text(
               '应收：${_money(widget.controller.source.receivableAmountMinor)}',
             ),
             const SizedBox(height: 12),
             const Text(
               '份额严格串行；结果未知只能刷新原计划。电子支付尚未解阻时会失败关闭。',
               key: Key('tenderSafetyBoundary'),
+            ),
+            const Text(
+              '离线计划仅冻结本地事实；电子资金结果必须由已解阻的服务端观察确认。',
+              key: Key('tenderOfflineBoundary'),
             ),
             const SizedBox(height: 16),
             if (plan == null) ...[
@@ -159,7 +168,7 @@ final class _PosTenderPageState extends State<PosTenderPage> {
             if (state.safeMessage != null) ...[
               const SizedBox(height: 12),
               Text(
-                '${state.safeMessage}\n错误码：${state.errorCode}',
+                '${state.safeMessage}\n错误码：${state.errorCode}\n原计划/订单：${state.recoveryRef ?? widget.controller.source.orderRef}',
                 key: const Key('tenderSafeError'),
                 style: TextStyle(color: Theme.of(context).colorScheme.error),
               ),
