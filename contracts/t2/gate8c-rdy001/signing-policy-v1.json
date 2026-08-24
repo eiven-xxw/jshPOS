@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-RDY-001",
+  "manifestAlgorithm": "Ed25519",
+  "keyClass": "SYNTHETIC_EPHEMERAL_CI_ONLY",
+  "privateKeyArtifactAllowed": false,
+  "publicKeyArtifactRequired": true,
+  "verificationEvidenceRequired": true,
+  "productionApkSigning": "BLOCKED_REAL_KMS_AND_DEVICE_CHAIN",
+  "manifestCanonicalization": "UTF8_SORTED_KEYS_COMPACT_JSON",
+  "digestAlgorithm": "SHA-256",
+  "productionEligible": false
+}

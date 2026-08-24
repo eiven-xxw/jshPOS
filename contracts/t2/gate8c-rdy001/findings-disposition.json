@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-RDY-001",
+  "findings": {
+    "G8C-REL-P0-001": {"state":"DEFERRED_BLOCKER","internalAction":"INTERNAL_PACKAGE_NOTICE_VERIFIED","externalClosure":"T2-LIC-001_CLOSED_3_OF_3","closed":false},
+    "G8C-REL-P0-002": {"state":"BLOCKED_EXTERNAL","internalAction":"MACHINE_READABLE_NO_GO_VERIFIED","externalClosure":"PAY_HWD_PRN_PAR_EXECUTION_ACCEPTED","closed":false},
+    "G8C-REL-P1-003": {"state":"ASSUMPTION_BLOCKED","internalAction":"SYNTHETIC_MANIFEST_SIGNING_AND_RECOVERY_VERIFIED","externalClosure":"REAL_SIGNING_KMS_PITR_DR_ACCEPTED","closed":false},
+    "G8C-REL-P1-004": {"state":"DRAFT_BLOCKER","internalAction":"UAT_REL_NO_GO_VERIFIED","externalClosure":"T2_UAT_001_AND_T2_REL_001_ACCEPTED","closed":false}
+  },
+  "openCommercialP0": 2,
+  "openProductionP1": 2,
+  "internalReadinessP0": 0,
+  "internalReadinessP1": 0,
+  "commercialReleaseDecision": "NO_GO"
+}

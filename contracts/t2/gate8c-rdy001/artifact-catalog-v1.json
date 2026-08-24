@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-RDY-001",
+  "classification": "INTERNAL_RELEASE_READINESS_CANDIDATE",
+  "requiredArtifacts": [
+    {"artifactId":"SERVER_JAR","sourcePattern":"server/ruoyi-admin.jar","mediaType":"application/java-archive","productionEligible":false},
+    {"artifactId":"ADMIN_WEB_BUNDLE","sourcePattern":"web/admin-web.tar.gz","mediaType":"application/gzip","productionEligible":false},
+    {"artifactId":"POS_DEBUG_APK","sourcePattern":"pos/jshpos-internal-debug.apk","mediaType":"application/vnd.android.package-archive","productionEligible":false},
+    {"artifactId":"DEPLOYMENT_BUNDLE","sourcePattern":"deployment/internal-deployment.tar.gz","mediaType":"application/gzip","productionEligible":false},
+    {"artifactId":"SERVER_SBOM","sourcePattern":"supply-chain/server-bom.json","mediaType":"application/vnd.cyclonedx+json","productionEligible":false},
+    {"artifactId":"FLUTTER_SBOM","sourcePattern":"supply-chain/flutter-cyclonedx.json","mediaType":"application/vnd.cyclonedx+json","productionEligible":false},
+    {"artifactId":"WEB_LICENSES","sourcePattern":"supply-chain/web-licenses.json","mediaType":"application/json","productionEligible":false},
+    {"artifactId":"MIGRATION_EVIDENCE","sourcePattern":"evidence/mysql-migration.json","mediaType":"application/json","productionEligible":false},
+    {"artifactId":"OPERATIONS_EVIDENCE","sourcePattern":"evidence/operations-evidence.json","mediaType":"application/json","productionEligible":false},
+    {"artifactId":"RELEASE_NOTES","sourcePattern":"release-notes.md","mediaType":"text/markdown","productionEligible":false}
+  ],
+  "requiredMetadata": ["releaseId","commitSha","githubRunId","artifactId","path","size","sha256","mediaType","productionEligible"],
+  "duplicateArtifactIdAllowed": false,
+  "missingArtifactFailsClosed": true
+}

@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-RDY-001",
+  "classification": "INTERNAL_PREFLIGHT_ONLY",
+  "requiredSecretReferences": [
+    "JSH_POS_MYSQL_JDBC_URL", "JSH_POS_MYSQL_USERNAME", "JSH_POS_MYSQL_PASSWORD",
+    "JSH_POS_REDIS_HOST", "JSH_POS_REDIS_PORT", "JSH_POS_REDIS_PASSWORD", "JSH_POS_LOG_FILE"
+  ],
+  "requiredChecks": [
+    "PINNED_CONTAINER_DIGESTS", "NO_DEFAULT_SECRET", "ACTUATOR_ALLOWLIST",
+    "FLYWAY_FORWARD_ONLY", "HEALTH_CHECK", "SYNTHETIC_RESTORE",
+    "SYNTHETIC_UPGRADE_ROLLBACK", "RUNBOOK_PRESENT", "DATA_CLEANUP"
+  ],
+  "unauthorizedCloudWrites": 0,
+  "realKms": "BLOCKED",
+  "realObjectStorage": "BLOCKED",
+  "realPitr": "BLOCKED",
+  "crossRegionDisasterRecovery": "BLOCKED",
+  "productionDeployAllowed": false
+}

@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-RDY-001",
+  "internalGoConditions": [
+    "ALL_REQUIRED_ARTIFACTS_UNIQUE", "ALL_SHA256_VALID", "SYNTHETIC_SIGNATURE_VERIFIED",
+    "PRIVATE_KEY_ABSENT", "SBOM_LICENSE_PRESENT", "DEPLOYMENT_PREFLIGHT_PASS",
+    "MIGRATION_AND_OPERATIONS_PASS", "INTERNAL_P0_P1_ZERO", "EXTERNAL_EXECUTION_ZERO"
+  ],
+  "decisions": {
+    "internalReleaseReadiness": "GO_IF_ALL_INTERNAL_GATES_PASS",
+    "fullAlpha": "NO_GO_BLOCKED_EXTERNAL_P0",
+    "production": "NO_GO_UAT_REL_AND_REAL_RELEASE_CHAIN",
+    "commercial": "NO_GO_LICENSE_AND_EXTERNAL_P0"
+  },
+  "licenseClosure": {"closed":0,"required":3,"requirementId":"T2-LIC-001"},
+  "externalBlockers": ["T2-PAY-002","T2-HWD-001","T2-PRN-001","T2-PAR-001"],
+  "draftBlockers": ["T2-UAT-001","T2-REL-001"]
+}

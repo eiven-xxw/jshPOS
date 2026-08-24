@@ -719,6 +719,17 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
 - `T2-RDY-001` 继续 `DRAFT`；`T2-PAY-002/HWD-001/PRN-001/PAR-001` 继续 `BLOCKED`；`T2-UAT-001/REL-001` 继续 `DRAFT`；`T2-LIC-001/JSH-001` 继续 `DEFERRED`。Provider 网络、真实资金、设备/外设命令、伙伴现场、完整 Alpha、生产部署和商业声明必须为 0。
 - 必须执行治理、Server、Web、Flutter 双平台、Android/Kotlin、MySQL、SQLite、正式运行栈性能、故障退化、租户权限、安全、依赖、SBOM、许可证、覆盖率和既有 Gate 全量回归。完成后只可将 `T2-PERF-002` 更新为 `VERIFIED` 并提交独立周门禁报告等待确认；不得自动进入 `T2-RDY-001`、完整 Alpha、现场试点或生产发布。
 
+## 4.59 当前 T2 Gate 8C / Sprint S26-D 条件准入
+
+- 项目发起人已于 2026-08-24 接受 `T2-PERF-002 CONDITIONAL PASS`，授权其更新为 `ACCEPTED`，并授权从 PERF-002 最终封存提交 `721130ab57a2fe2b2f024150d85e237491e5b34c` 建立 `t2/gate8c-sprint26d-rdy001-runtime`。
+- 本批唯一允许准入和验证的需求为 `T2-RDY-001`；只允许完成内部发布物清单、摘要与合成签名、SBOM/许可证清单、部署预检、运维证据、发布 Go/No-Go 和既定 `G8C-REL-*` 发现的内部处置。禁止新增业务能力、表、迁移、依赖、Controller、页面旅程或外部适配。
+- 内部候选必须绑定完整 commit、CI Run、构建工具链、制品 SHA-256、组件 SBOM/许可证、前向迁移证据、配置 Schema、运行手册和证据索引；缺件、重复件、摘要漂移、签名失败、私钥泄漏、生产默认 Secret 或来源不明必须失败关闭。
+- 仅允许用单次 CI 内生成且不上传私钥的临时 Ed25519 密钥签署内部清单；该签名不等于 APK 生产签名、KMS、代码签名或商业发布授权。Debug/未生产签名 APK 必须标记 `productionEligible=false`，禁止改名或包装为生产制品。
+- 自有 `pos_device_adapter` 的许可证和变更日志占位必须被真实内部所有权通知与版本记录替换，但不得据此关闭 Aviator、simple-http、MySQL Connector/J。`T2-LIC-001` 继续 `DEFERRED / NO-GO COMMERCIAL`，三项关闭证据仍为 0/3。
+- `G8C-REL-P0-001/P0-002/P1-003/P1-004` 均不得被内部合成证据伪造为商业关闭；分别保留 `DEFERRED_BLOCKER/BLOCKED_EXTERNAL/ASSUMPTION_BLOCKED/DRAFT_BLOCKER`，同时验证内部候选可以生成明确、机器可读且失败关闭的 `NO_GO` 决策。
+- `T2-PAY-002/HWD-001/PRN-001/PAR-001` 继续 `BLOCKED`；`T2-UAT-001/REL-001` 继续 `DRAFT`；`T2-LIC-001/JSH-001` 继续 `DEFERRED`。Provider 网络、真实资金、真实设备/外设命令、伙伴现场、完整 Alpha、生产部署、商业 tag、商业声明和 SLA 必须为 0。
+- 必须执行治理双平台、Server、Web、Flutter 双平台、Android/Kotlin、MySQL、SQLite、部署预检、恢复/升级回退、安全、依赖、SBOM、许可证、覆盖率、发布制品装配、签名验真和既有 Gate 全量回归。完成后只可将 `T2-RDY-001` 更新为 `VERIFIED` 并提交独立周门禁报告等待确认；不得自动启动外部执行、完整 Alpha、现场试点或生产发布。
+
 ## 5. 工程与测试规则
 
 - 服务端采用 RuoYi-Vue-Plus 模块化单体，不得把领域逻辑写入 Controller、通用工具类或框架系统模块。

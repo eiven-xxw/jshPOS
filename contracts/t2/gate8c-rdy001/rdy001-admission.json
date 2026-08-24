@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-RDY-001",
+  "baseCommit": "721130ab57a2fe2b2f024150d85e237491e5b34c",
+  "branch": "t2/gate8c-sprint26d-rdy001-runtime",
+  "status": "IN_PROGRESS",
+  "prerequisite": {"requirementId": "T2-PERF-002", "requiredStatus": "ACCEPTED"},
+  "orderedFindings": ["G8C-REL-P0-001", "G8C-REL-P0-002", "G8C-REL-P1-003", "G8C-REL-P1-004"],
+  "allowedInternalWork": [
+    "ARTIFACT_CATALOG", "DIGEST_AND_SYNTHETIC_SIGNATURE", "SBOM_AND_LICENSE_INVENTORY",
+    "DEPLOYMENT_PREFLIGHT", "OPERATIONS_EVIDENCE", "GO_NO_GO", "INTERNAL_PACKAGE_NOTICE"
+  ],
+  "newBusinessCapabilities": 0,
+  "databaseMigrationsChanged": 0,
+  "dependenciesChanged": 0,
+  "evidenceCeiling": "INTERNAL_RELEASE_READINESS_CANDIDATE",
+  "commercialReleaseAllowed": false,
+  "automaticRetryAllowed": false,
+  "externalExecution": {
+    "providerNetworkCalls": 0, "realFunds": 0, "realDeviceCommands": 0,
+    "realPeripheralCommands": 0, "partnerOnsite": 0, "fullAlpha": 0,
+    "productionDeployments": 0, "commercialTags": 0
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-RDY-001",
+  "vectors": [
+    {"id":"RDY-F001","case":"MISSING_ARTIFACT","expected":"FAIL_CLOSED"},
+    {"id":"RDY-F002","case":"DUPLICATE_ARTIFACT_ID","expected":"FAIL_CLOSED"},
+    {"id":"RDY-F003","case":"DIGEST_MISMATCH","expected":"FAIL_CLOSED"},
+    {"id":"RDY-F004","case":"SIGNATURE_INVALID","expected":"FAIL_CLOSED"},
+    {"id":"RDY-F005","case":"PRIVATE_KEY_IN_ARTIFACT","expected":"FAIL_CLOSED"},
+    {"id":"RDY-F006","case":"COMMIT_OR_RUN_MISMATCH","expected":"FAIL_CLOSED"},
+    {"id":"RDY-F007","case":"SBOM_OR_LICENSE_MISSING","expected":"FAIL_CLOSED"},
+    {"id":"RDY-F008","case":"PACKAGE_LICENSE_PLACEHOLDER","expected":"FAIL_CLOSED"},
+    {"id":"RDY-F009","case":"DEFAULT_SECRET_OR_UNPINNED_IMAGE","expected":"FAIL_CLOSED"},
+    {"id":"RDY-F010","case":"DEBUG_APK_MARKED_PRODUCTION","expected":"FAIL_CLOSED"},
+    {"id":"RDY-F011","case":"EXTERNAL_BLOCKER_MARKED_CLOSED","expected":"FAIL_CLOSED"},
+    {"id":"RDY-F012","case":"UAT_OR_REL_MARKED_ACCEPTED","expected":"FAIL_CLOSED"},
+    {"id":"RDY-F013","case":"RESTORE_OR_ROLLBACK_EVIDENCE_MISSING","expected":"FAIL_CLOSED"},
+    {"id":"RDY-F014","case":"EXTERNAL_EXECUTION_NON_ZERO","expected":"FAIL_CLOSED"}
+  ],
+  "automaticRetryAllowed": false,
+  "commercialClaimAllowed": false
+}
