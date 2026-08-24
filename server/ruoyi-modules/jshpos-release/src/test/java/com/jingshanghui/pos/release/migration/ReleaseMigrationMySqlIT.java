@@ -41,7 +41,7 @@ class ReleaseMigrationMySqlIT {
             "bak_restore_check", "bak_audit");
         Set<String> tables = new LinkedHashSet<>();
         try (Connection c = DriverManager.getConnection(url, username, password);
-             PreparedStatement query = c.prepareStatement("SELECT table_name,table_comment FROM information_schema.tables WHERE table_schema=DATABASE() AND table_type='BASE TABLE' AND table_name NOT IN ('sys_menu','jshpos_flyway_schema_history') ORDER BY table_name");
+             PreparedStatement query = c.prepareStatement("SELECT table_name,table_comment FROM information_schema.tables WHERE table_schema=DATABASE() AND table_type='BASE TABLE' AND table_name NOT IN ('sys_menu','sys_role_menu','jshpos_flyway_schema_history') ORDER BY table_name");
              ResultSet rows = query.executeQuery()) {
             while (rows.next()) {
                 String table = rows.getString(1);
@@ -56,7 +56,7 @@ class ReleaseMigrationMySqlIT {
         }
         assertThat(tables).hasSize(287);
         try (Connection c = DriverManager.getConnection(url, username, password);
-             PreparedStatement query = c.prepareStatement("SELECT t.table_name FROM information_schema.tables t LEFT JOIN information_schema.columns c ON c.table_schema=t.table_schema AND c.table_name=t.table_name AND c.column_name='tenant_id' WHERE t.table_schema=DATABASE() AND t.table_type='BASE TABLE' AND t.table_name NOT IN ('sys_menu','jshpos_flyway_schema_history') AND c.column_name IS NULL ORDER BY t.table_name");
+             PreparedStatement query = c.prepareStatement("SELECT t.table_name FROM information_schema.tables t LEFT JOIN information_schema.columns c ON c.table_schema=t.table_schema AND c.table_name=t.table_name AND c.column_name='tenant_id' WHERE t.table_schema=DATABASE() AND t.table_type='BASE TABLE' AND t.table_name NOT IN ('sys_menu','sys_role_menu','jshpos_flyway_schema_history') AND c.column_name IS NULL ORDER BY t.table_name");
              ResultSet rows = query.executeQuery()) {
             Set<String> withoutTenant = new LinkedHashSet<>();
             while (rows.next()) withoutTenant.add(rows.getString(1));
@@ -92,6 +92,12 @@ class ReleaseMigrationMySqlIT {
                   visible CHAR(1) DEFAULT '0',status CHAR(1) DEFAULT '0',perms VARCHAR(100),icon VARCHAR(100) DEFAULT '#',
                   create_dept BIGINT,create_by BIGINT,create_time DATETIME,update_by BIGINT,update_time DATETIME,
                   remark VARCHAR(500) DEFAULT '') ENGINE=InnoDB
+                """);
+            s.executeUpdate("""
+                CREATE TABLE IF NOT EXISTS sys_role_menu (
+                  role_id BIGINT NOT NULL,menu_id BIGINT NOT NULL,
+                  PRIMARY KEY (role_id,menu_id)
+                ) ENGINE=InnoDB
                 """);
         }
     }
