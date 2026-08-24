@@ -12,9 +12,9 @@
     <el-card class="mt-3" shadow="never">
       <template #header><span>1. 发布不可变批次策略版本</span></template>
       <el-form :model="policy" :inline="true" label-width="110px">
-        <el-form-item label="门店"><el-input-number v-model="policy.storeId" :min="1" :controls="false" /></el-form-item>
-        <el-form-item label="SKU"><el-input-number v-model="policy.skuId" :min="1" :controls="false" /></el-form-item>
-        <el-form-item label="策略版本 ULID"><el-input v-model="policy.policyVersionId" class="ulid-input" /></el-form-item>
+        <el-form-item label="门店"><el-input-number v-model="policy.storeId" data-testid="lot-store" :min="1" :controls="false" /></el-form-item>
+        <el-form-item label="SKU"><el-input-number v-model="policy.skuId" data-testid="lot-sku" :min="1" :controls="false" /></el-form-item>
+        <el-form-item label="策略版本 ULID"><el-input v-model="policy.policyVersionId" data-testid="lot-version" class="ulid-input" /></el-form-item>
         <el-form-item label="启用"><el-switch v-model="policy.enabled" /></el-form-item>
         <el-form-item label="日期基准">
           <el-select v-model="policy.expiryBasis" class="basis-select">
@@ -29,7 +29,15 @@
         <el-form-item label="临期天数"><el-input-number v-model="policy.nearExpiryDays" :min="0" :max="3650" /></el-form-item>
         <el-form-item label="生效时间"><el-date-picker v-model="effectiveAt" type="datetime" /></el-form-item>
         <el-form-item>
-          <el-button v-hasPermi="['catalog:lot-policy:publish']" type="primary" :loading="loading" @click="publishPolicy"> 发布策略 </el-button>
+          <el-button
+            v-hasPermi="['catalog:lot-policy:publish']"
+            data-testid="lot-policy-publish"
+            type="primary"
+            :loading="loading"
+            @click="publishPolicy"
+          >
+            发布策略
+          </el-button>
           <el-button v-hasPermi="['catalog:lot-policy:read']" data-testid="lot-policy-read" :loading="loading" @click="loadPolicy"
             >读取当前策略</el-button
           >

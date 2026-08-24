@@ -11,7 +11,9 @@
     <el-card class="mt-3" shadow="never">
       <template #header><span>1. 可信门店异常队列</span></template>
       <el-form :inline="true">
-        <el-form-item label="门店 ID"><el-input-number v-model="form.storeId" :min="1" :controls="false" /></el-form-item>
+        <el-form-item label="门店 ID"
+          ><el-input-number v-model="form.storeId" data-testid="exception-store" :min="1" :controls="false"
+        /></el-form-item>
         <el-form-item label="业务日"><el-date-picker v-model="form.businessDate" type="date" value-format="YYYY-MM-DD" /></el-form-item>
         <el-form-item label="状态"
           ><el-select v-model="form.state" clearable class="filter"><el-option v-for="s in states" :key="s" :label="s" :value="s" /></el-select
@@ -22,7 +24,9 @@
         ></el-form-item>
         <el-form-item
           ><el-button v-hasPermi="['operations:exception:read']" data-testid="exception-read" :loading="loading" @click="load">查询</el-button>
-          <el-button v-hasPermi="['operations:exception:scan']" type="primary" :loading="loading" @click="scan">扫描 Owner</el-button></el-form-item
+          <el-button v-hasPermi="['operations:exception:scan']" data-testid="exception-scan" type="primary" :loading="loading" @click="scan"
+            >扫描 Owner</el-button
+          ></el-form-item
         >
       </el-form>
       <el-table :data="rows" border row-key="caseId" @row-click="select">

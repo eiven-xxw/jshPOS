@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import ElementPlus from 'element-plus';
+import ElementPlus, { ElMessageBox } from 'element-plus';
 import { flushPromises, mount } from '@vue/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -16,7 +16,10 @@ const hasPermi = {
 };
 
 describe('G9A-R3B R9 VUE-14 批次效期页面', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.spyOn(ElMessageBox, 'confirm').mockResolvedValue('confirm');
+  });
 
   it('批次策略读取失败展示安全错误且保持社区超市模板边界', async () => {
     api.getEffectiveLotPolicy.mockRejectedValue({
@@ -38,5 +41,32 @@ describe('G9A-R3B R9 VUE-14 批次效期页面', () => {
     expect(wrapper.find('[data-testid="vue-14-error"]').text()).toContain('LOT_POLICY_SCOPE_DENIED');
     expect(wrapper.find('[data-testid="vue-14-error"]').text()).toContain('corr-vue14-denied');
     expect(wrapper.text()).toContain('仅适用于社区超市模板');
+  });
+
+  it('策略发布结果未知时保留原幂等键且禁止第二次提交', async () => {
+    api.publishLotPolicy.mockRejectedValue(
+      Object.assign(new Error('unsafe-body'), {
+        isAxiosError: true,
+        response: {
+          status: 503,
+          data: { code: 'LOT_POLICY_UNKNOWN', msg: '策略发布结果未知' },
+          headers: { 'x-correlation-id': 'corr-vue14-unknown' }
+        }
+      })
+    );
+    const wrapper = mount(LotExpiryPage, {
+      global: { plugins: [ElementPlus], directives: { hasPermi }, stubs: { transition: false, Teleport: true } }
+    });
+    await wrapper.find('[data-testid="lot-store"] input').setValue('1101');
+    await wrapper.find('[data-testid="lot-sku"] input').setValue('101');
+    await wrapper.find('[data-testid="lot-version"]').setValue('01J00000000000000000000999');
+    await wrapper.find('[data-testid="lot-policy-publish"]').trigger('click');
+    await flushPromises();
+    await wrapper.find('[data-testid="lot-policy-publish"]').trigger('click');
+    await flushPromises();
+
+    expect(api.publishLotPolicy).toHaveBeenCalledTimes(1);
+    expect(wrapper.find('[data-testid="vue-14-error"]').text()).toContain('LOT_POLICY_UNKNOWN');
+    expect(wrapper.find('[data-testid="vue-14-error"]').text()).toContain('corr-vue14-unknown');
   });
 });

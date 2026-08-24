@@ -48,4 +48,29 @@ describe('G9A-R3B R8 VUE-13 异常中心页面', () => {
     expect(wrapper.find('[data-testid="vue-13-error"]').text()).toContain('EXCEPTION_SCOPE_DENIED');
     expect(wrapper.find('[data-testid="vue-13-error"]').text()).toContain('corr-vue13-denied');
   });
+
+  it('Owner扫描结果未知时复用原操作身份并禁止生成第二个命令', async () => {
+    api.scanExceptionOwners.mockRejectedValue(
+      Object.assign(new Error('unsafe-body'), {
+        isAxiosError: true,
+        response: {
+          status: 503,
+          data: { code: 'EXCEPTION_SCAN_UNKNOWN', msg: '扫描结果未知' },
+          headers: { 'x-correlation-id': 'corr-vue13-unknown' }
+        }
+      })
+    );
+    const wrapper = mount(ExceptionCenterPage, {
+      global: { plugins: [ElementPlus], directives: { hasPermi }, stubs: { transition: false, Teleport: true } }
+    });
+    await wrapper.find('[data-testid="exception-store"] input').setValue('1101');
+    await wrapper.find('[data-testid="exception-scan"]').trigger('click');
+    await flushPromises();
+    await wrapper.find('[data-testid="exception-scan"]').trigger('click');
+    await flushPromises();
+
+    expect(api.scanExceptionOwners).toHaveBeenCalledTimes(1);
+    expect(wrapper.find('[data-testid="vue-13-error"]').text()).toContain('EXCEPTION_SCAN_UNKNOWN');
+    expect(wrapper.find('[data-testid="vue-13-error"]').text()).toContain('corr-vue13-unknown');
+  });
 });
