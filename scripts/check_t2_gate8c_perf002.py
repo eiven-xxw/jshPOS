@@ -67,11 +67,14 @@ def validate_scope() -> list[str]:
         "docs/governance/rtm.csv", "docs/adr/ADR-065-gate8c-formal-runtime-performance-rebaseline.md",
         "docs/governance/CR-T2G8C-011_mtn001-accept-perf002-runtime-admission.md",
         "docs/governance/CR-T2G8C-012_perf002-verified-candidate.md",
-        "docs/governance/CR-T2G8C-013_perf002-ci-conditional-pass.md",
+        "docs/governance/CR-T2G8C-013_perf002-first-ci-migration-compatibility-failure.md",
+        "docs/governance/CR-T2G8C-014_perf002-ci-conditional-pass.md",
         ".github/workflows/t2-gate8c-perf002.yml",
         "scripts/check_t2_gate8c_perf002.py", "scripts/run_t2_gate8c_perf002_runtime.py",
         "scripts/run_t2_gate8c_perf002_dependency_faults.py",
         "scripts/build_t2_gate8c_perf002_evidence.py", "scripts/build_t2_gate8c_perf002_evidence_index.py",
+        "server/ruoyi-modules/jshpos-operations/src/test/java/com/jingshanghui/pos/operations/migration/DailyCloseMySqlIT.java",
+        "server/ruoyi-modules/jshpos-operations/src/test/java/com/jingshanghui/pos/operations/migration/ExceptionCenterMySqlIT.java",
     }
     allowed_prefixes = (
         "docs/t2-gate8c-perf002/", "contracts/t2/gate8c-perf002/",

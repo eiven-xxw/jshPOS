@@ -12,7 +12,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/** 在干净 MySQL 8.4 验证 V71-V72、租户复合外键、只追加事实和关闭后不可变。 */
+/** 在干净 MySQL 8.4 验证 V71-V72 及其后续前向迁移、租户复合外键、只追加事实和关闭后不可变。 */
 class DailyCloseMySqlIT {
     private final String url=required("GATE7D_CLS_MYSQL_JDBC_URL");
     private final String username=required("GATE7D_CLS_MYSQL_USERNAME");
@@ -27,7 +27,9 @@ class DailyCloseMySqlIT {
         assertThat(flyway.migrate().migrationsExecuted).isPositive();
         assertThat(flyway.migrate().migrationsExecuted).isZero();
         flyway.validate();
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("202608230074");
+        // 该测试可与后续已发布迁移共同运行，但当前版本绝不能早于异常中心基线。
+        assertThat(Long.parseLong(flyway.info().current().getVersion().getVersion()))
+            .isGreaterThanOrEqualTo(202608230074L);
         assertSchema();
         assertTenantAndAppendOnlyGuards();
         millionSyntheticFactsUseExactIntegerAggregation();

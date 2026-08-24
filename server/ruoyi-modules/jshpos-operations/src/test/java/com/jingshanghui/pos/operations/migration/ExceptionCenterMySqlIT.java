@@ -9,7 +9,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/** 干净 MySQL 8.4 验证 V73-V74、租户门店复合外键、受控写和只追加事实。 */
+/** 干净 MySQL 8.4 验证 V73-V74 及其后续前向迁移、租户门店复合外键、受控写和只追加事实。 */
 class ExceptionCenterMySqlIT {
     private final String url=required("GATE7D_CLS_MYSQL_JDBC_URL");
     private final String username=required("GATE7D_CLS_MYSQL_USERNAME");
@@ -18,7 +18,10 @@ class ExceptionCenterMySqlIT {
     @Test void migratesAndEnforcesExceptionOwnerBoundaries() throws Exception {
         createMenuFixture();Flyway flyway=Flyway.configure().dataSource(url,username,password).locations("classpath:db/migration")
             .table("jshpos_flyway_schema_history").baselineOnMigrate(true).baselineVersion("0").cleanDisabled(true).load();
-        flyway.migrate();flyway.validate();assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("202608230074");
+        flyway.migrate();flyway.validate();
+        // 允许与后续已发布迁移共同验证，但禁止低于本 Owner 的正式迁移基线。
+        assertThat(Long.parseLong(flyway.info().current().getVersion().getVersion()))
+            .isGreaterThanOrEqualTo(202608230074L);
         assertSchema();assertTenantAndAppendOnly();millionOpenCaseIndexTrend();
     }
     private void createMenuFixture() throws SQLException {try(Connection c=DriverManager.getConnection(url,username,password);Statement s=c.createStatement()){
