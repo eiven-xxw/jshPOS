@@ -5,12 +5,14 @@ import com.jingshanghui.pos.service.domain.ServiceRules;
 import org.dromara.common.core.exception.ServiceException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.HexFormat;
 import java.util.List;
@@ -23,6 +25,14 @@ import static org.junit.jupiter.api.Assertions.*;
 class RuoYiServiceAttachmentStorageAdapterTest {
 
     @TempDir Path temporaryDirectory;
+
+    @Test
+    void shouldDeclareExactlyOneSpringInjectionConstructor() {
+        long injectableConstructors = Arrays.stream(RuoYiServiceAttachmentStorageAdapter.class.getDeclaredConstructors())
+            .filter(constructor -> constructor.isAnnotationPresent(Autowired.class))
+            .count();
+        assertEquals(1, injectableConstructors);
+    }
 
     @Test
     void shouldStageExactTenMiBWithSha256AndDeleteOnClose() throws Exception {

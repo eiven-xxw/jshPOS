@@ -68,13 +68,16 @@ def validate_scope() -> list[str]:
         "docs/governance/CR-T2G8C-011_mtn001-accept-perf002-runtime-admission.md",
         "docs/governance/CR-T2G8C-012_perf002-verified-candidate.md",
         "docs/governance/CR-T2G8C-013_perf002-first-ci-migration-compatibility-failure.md",
-        "docs/governance/CR-T2G8C-014_perf002-ci-conditional-pass.md",
+        "docs/governance/CR-T2G8C-014_perf002-formal-runtime-constructor-failure.md",
+        "docs/governance/CR-T2G8C-015_perf002-ci-conditional-pass.md",
         ".github/workflows/t2-gate8c-perf002.yml",
         "scripts/check_t2_gate8c_perf002.py", "scripts/run_t2_gate8c_perf002_runtime.py",
         "scripts/run_t2_gate8c_perf002_dependency_faults.py",
         "scripts/build_t2_gate8c_perf002_evidence.py", "scripts/build_t2_gate8c_perf002_evidence_index.py",
         "server/ruoyi-modules/jshpos-operations/src/test/java/com/jingshanghui/pos/operations/migration/DailyCloseMySqlIT.java",
         "server/ruoyi-modules/jshpos-operations/src/test/java/com/jingshanghui/pos/operations/migration/ExceptionCenterMySqlIT.java",
+        "server/ruoyi-modules/jshpos-service/src/main/java/com/jingshanghui/pos/service/infrastructure/storage/RuoYiServiceAttachmentStorageAdapter.java",
+        "server/ruoyi-modules/jshpos-service/src/test/java/com/jingshanghui/pos/service/infrastructure/storage/RuoYiServiceAttachmentStorageAdapterTest.java",
     }
     allowed_prefixes = (
         "docs/t2-gate8c-perf002/", "contracts/t2/gate8c-perf002/",
@@ -82,7 +85,11 @@ def validate_scope() -> list[str]:
     )
     illegal = [path for path in changed if path not in allowed_exact and not path.startswith(allowed_prefixes)]
     require(not illegal, "存在越界变更: " + ", ".join(illegal))
-    require(not [path for path in changed if "/src/main/" in path], "不得修改正式业务运行时")
+    allowed_runtime_repair = {
+        "server/ruoyi-modules/jshpos-service/src/main/java/com/jingshanghui/pos/service/infrastructure/storage/RuoYiServiceAttachmentStorageAdapter.java",
+    }
+    require(not [path for path in changed if "/src/main/" in path and path not in allowed_runtime_repair],
+            "不得修改正式业务运行时")
     return changed
 
 

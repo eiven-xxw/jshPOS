@@ -3,6 +3,7 @@ package com.jingshanghui.pos.service.infrastructure.storage;
 import com.jingshanghui.pos.service.application.port.ServiceAttachmentStoragePort;
 import org.dromara.common.core.exception.ServiceException;
 import org.dromara.common.oss.factory.OssFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -27,6 +28,7 @@ public class RuoYiServiceAttachmentStorageAdapter implements ServiceAttachmentSt
     static final int BUFFER_BYTES = 64 * 1024;
     private final Path stagingDirectory;
 
+    @Autowired
     public RuoYiServiceAttachmentStorageAdapter(
         @Value("${jshpos.service.attachment-staging-directory:${java.io.tmpdir}/jshpos-service-attachments}")
         String stagingDirectory) {
