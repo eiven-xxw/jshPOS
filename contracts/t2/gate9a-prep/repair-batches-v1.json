@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-CMP-001",
+  "serial": true,
+  "batches": [
+    {
+      "batchId": "G9A-R1",
+      "title": "正式API与OpenAPI一致性修复",
+      "findings": ["G9A-API-P1-001"],
+      "requirements": ["T2-API-001"],
+      "runtimeAllowedAfterSponsorConfirmation": true,
+      "entry": "Gate9A审计已VERIFIED且项目发起人单独确认",
+      "exit": "Controller/OpenAPI/客户端契约双向差异为0且完整CI全绿"
+    },
+    {
+      "batchId": "G9A-R2",
+      "title": "生产装配与演示面收敛",
+      "findings": ["G9A-ASM-P1-001"],
+      "requirements": ["T2-CORE-001", "T2-SEC-002", "T2-RDY-001"],
+      "runtimeAllowedAfterSponsorConfirmation": true,
+      "entry": "G9A-R1独立VERIFIED并经项目发起人确认",
+      "exit": "商业构建无演示模块/页面/菜单且启动、SBOM、依赖和路由回归全绿"
+    },
+    {
+      "batchId": "G9A-R3",
+      "title": "Vue与Flutter页面状态、权限和失败恢复收口",
+      "findings": ["G9A-UI-P1-001"],
+      "requirements": ["T2-UX-001", "T2-ADM-001", "T2-ADM-002", "T2-POS-007", "T2-POS-008", "T2-POS-009"],
+      "runtimeAllowedAfterSponsorConfirmation": true,
+      "entry": "G9A-R2独立VERIFIED并经项目发起人确认",
+      "exit": "26个页面逐项验收且页面级组件/Widget、权限和故障恢复测试全绿"
+    },
+    {
+      "batchId": "G9A-R4",
+      "title": "22 Owner三业态当前正式栈汇总回归",
+      "findings": ["G9A-E2E-P1-001"],
+      "requirements": ["T2-E2E-004", "T2-E2E-005", "T2-INT-001"],
+      "runtimeAllowedAfterSponsorConfirmation": true,
+      "entry": "G9A-R1至R3全部独立VERIFIED并经项目发起人确认",
+      "exit": "当前正式栈三业态联合旅程P0/P1为0且全量CI可重复"
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-CMP-001",
+  "vueSurfaces": [
+    {"path":"admin-web/src/views/catalog/index.vue","apiRoot":"catalog","requirements":["T2-ADM-001"]},
+    {"path":"admin-web/src/views/catalog/components/ShelfLabelPanel.vue","apiRoot":"catalog","requirements":["T2-LBL-001"]},
+    {"path":"admin-web/src/views/foundation/index.vue","apiRoot":"foundation","requirements":["T2-ADM-001"]},
+    {"path":"admin-web/src/views/operations/advanced/index.vue","apiRoot":"operations","requirements":["T2-ADM-002"]},
+    {"path":"admin-web/src/views/operations/business-migration/index.vue","apiRoot":"migration","requirements":["T2-DMT-001"]},
+    {"path":"admin-web/src/views/operations/components/CustomerPromotionPanel.vue","apiRoot":"operations","requirements":["T2-ADM-002","T2-PRM-001","T2-PRM-002"]},
+    {"path":"admin-web/src/views/operations/components/InventoryCostPanel.vue","apiRoot":"operations","requirements":["T2-ADM-002","T2-INV-001","T2-CST-001"]},
+    {"path":"admin-web/src/views/operations/components/MemberBenefitPolicyPanel.vue","apiRoot":"member-benefit","requirements":["T2-MEM-003"]},
+    {"path":"admin-web/src/views/operations/components/ReleasePanel.vue","apiRoot":"operations","requirements":["T2-ADM-002","T2-UPG-001"]},
+    {"path":"admin-web/src/views/operations/components/ReplenishmentPanel.vue","apiRoot":"operations","requirements":["T2-RPL-001"]},
+    {"path":"admin-web/src/views/operations/components/SupplyPanel.vue","apiRoot":"operations","requirements":["T2-ADM-002","T2-PUR-001","T2-TRF-001"]},
+    {"path":"admin-web/src/views/operations/daily-close/index.vue","apiRoot":"daily-close","requirements":["T2-CLS-001"]},
+    {"path":"admin-web/src/views/operations/exception-center/index.vue","apiRoot":"exception-center","requirements":["T2-EXC-001"]},
+    {"path":"admin-web/src/views/operations/lot-expiry/index.vue","apiRoot":"lot-expiry","requirements":["T2-LOT-001"]},
+    {"path":"admin-web/src/views/operations/store-onboarding/index.vue","apiRoot":"onboarding","requirements":["T2-ONB-001"]},
+    {"path":"admin-web/src/views/reporting/operation/index.vue","apiRoot":"reporting","requirements":["T2-RPT-001","T2-RPT-002"]},
+    {"path":"admin-web/src/views/saas/operations/index.vue","apiRoot":"saas","requirements":["T2-SAA-001"]},
+    {"path":"admin-web/src/views/service/operations/index.vue","apiRoot":"service","requirements":["T2-SVC-001"]},
+    {"path":"admin-web/src/views/subscription/operations/index.vue","apiRoot":"subscription","requirements":["T2-SUB-001"]},
+    {"path":"admin-web/src/views/terminal/registry/index.vue","apiRoot":"terminal","requirements":["T2-TRM-001","T2-UPG-001"]}
+  ],
+  "flutterSurfaces": [
+    {"path":"pos-flutter/lib/features/exchange/presentation/pos_exchange_page.dart","requirements":["T2-EXG-001"]},
+    {"path":"pos-flutter/lib/features/return_refund/presentation/pos_return_page.dart","requirements":["T2-POS-009","T2-REF-002"]},
+    {"path":"pos-flutter/lib/features/sale/presentation/pos_checkout_page.dart","requirements":["T2-POS-008","T2-POS-006","T2-PRD-005","T2-MEM-003"]},
+    {"path":"pos-flutter/lib/features/session/presentation/pos_session_shell.dart","requirements":["T2-POS-007","T2-POS-008"]},
+    {"path":"pos-flutter/lib/features/shift/presentation/pos_cash_management_page.dart","requirements":["T2-POS-010"]},
+    {"path":"pos-flutter/lib/features/tender/presentation/pos_tender_page.dart","requirements":["T2-PAY-004"]}
+  ],
+  "explicitlyExcluded": [
+    {"path":"pos-flutter/lib/features/technical_baseline/technical_baseline_page.dart","reason":"T0/T1内部技术诊断页，不属于商业V1业务旅程；后续发布修复批次决定是否从生产导航移除"}
+  ]
+}

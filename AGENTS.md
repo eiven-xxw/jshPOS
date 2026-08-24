@@ -741,6 +741,17 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
 - Secret、商户号、终端号、证书、真实 PII、未脱敏商户数据和受控原文不得进入 Git、普通日志、CI 或普通制品；仓库只能保存经批准的不透明引用和不含敏感内容的验证元数据。
 - 完成后只能提交五条独立准入/关闭报告和《T2 Gate 8D-Prep 启动评审报告》等待项目发起人确认；不得自动进入 Provider 网络、真实资金、设备/外设命令、伙伴现场、完整 Alpha、生产发布或商业可用声明。
 
+## 4.61 当前 T2 Gate 9A-Prep 商业 V1 内部产品完整性审计条件准入
+
+- 项目发起人已于 2026-08-24 明确暂不处理商业许可证、真实支付、真实硬件、真实外设和设计伙伴，授权从 Gate 8D-Prep 最终封存提交 `4ba20f8bb9bfdc36f4fee1b831ca35c7b54b9533` 建立 `t2/gate9a-prep-internal-product-completeness-audit`，只做现有内部业务代码完整性审计与缺陷修复准备。
+- 本阶段唯一准入需求为 `T2-CMP-001`。必须覆盖当前 87 项 `ACCEPTED` 需求和全部 22 个正式 Owner 模块，建立 Requirement 到页面、API、应用、领域、持久化、MySQL/SQLite、事件/Outbox、权限审计、测试和 CI 的机器可追踪链路。
+- 历史 Gate 6G 审计器和证据必须保持不可变；其 15 Owner 快照不得继续作为当前完整性结论。新审计器必须显式覆盖 Catalog、Costing、Foundation、Integration、Inventory、Member、Migration、Onboarding、Operations、Order、Payment、Procurement、Promotion、Release、Reporting、Resilience、Returns、SaaS、Service、Subscription、Sync、Transfer 共 22 个 Owner。
+- 审计必须区分：测试夹具、明确失败关闭边界、平台兼容分支、未批准演示/临时生产路径和真实缺陷。不得把 `Locked`、`InMemory`、`FAKE_TEST` 或 `UnsupportedOperationException` 的文本命中直接等同于业务缺陷，也不得用宽泛白名单隐藏未分类实现。
+- 允许修复审计工具、覆盖矩阵、治理契约和证据生成器；本准备阶段不得修改业务运行时、已发布迁移、依赖、Controller、Vue/Flutter 业务页面或后台任务。审计发现的既有需求 P0/P1 必须进入缺陷账并按批次等待项目发起人确认后修复。
+- 新业务能力必须先分配唯一 Requirement ID、提交 CR、完成影响分析和项目发起人确认；不得借“缺陷修复”扩大商业 V1 范围。
+- `T2-PAY-002/HWD-001/PRN-001/PAR-001` 继续 `BLOCKED`，`T2-UAT-001/REL-001` 继续 `DRAFT`，`T2-LIC-001/JSH-001` 继续 `DEFERRED`；Provider 网络、真实资金、设备/外设命令、伙伴现场、完整 Alpha 和生产部署继续为 0。
+- 完成后只允许提交完整性审计报告、缺陷账、页面/API 覆盖矩阵、分批修复计划和第一批正式修复启动指令，等待项目发起人确认；不得自动进入运行时缺陷修复、完整 Alpha、现场试点或生产发布。
+
 ## 5. 工程与测试规则
 
 - 服务端采用 RuoYi-Vue-Plus 模块化单体，不得把领域逻辑写入 Controller、通用工具类或框架系统模块。

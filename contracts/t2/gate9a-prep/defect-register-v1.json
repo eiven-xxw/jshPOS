@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-CMP-001",
+  "evidenceLevel": "STATIC_GOVERNANCE_AND_REPOSITORY_AUDIT",
+  "summary": {
+    "openP0": 0,
+    "openP1": 4,
+    "closedToolingP1": 1,
+    "runtimeFixesApplied": 0
+  },
+  "findings": [
+    {
+      "findingId": "G9A-AUD-P1-001",
+      "severity": "P1",
+      "category": "AUDIT_COVERAGE",
+      "state": "CLOSED_IN_GATE9A_TOOLING",
+      "requirements": ["T2-CORE-001", "T2-CMP-001"],
+      "title": "历史完整性审计只覆盖15个Owner且存在兼容分支误报",
+      "closure": "新增Gate9A当前态审计固定覆盖22 Owner；逐条分类失败关闭、测试边界和平台兼容分支；历史脚本不改。"
+    },
+    {
+      "findingId": "G9A-API-P1-001",
+      "severity": "P1",
+      "category": "FORMAL_API_CONTRACT",
+      "state": "OPEN",
+      "requirements": ["T2-API-001"],
+      "title": "当前Controller与正式OpenAPI存在双向漂移",
+      "observed": {"controllerWithoutOpenApi": 64, "openApiWithoutController": 21, "clientApiRoots": 14, "clientEndpointRootsWithoutFormalServer": 0},
+      "closure": "300项Controller操作与当前OpenAPI逐方法逐路径一致；历史草案显式标记替代；OperationId唯一；客户端契约测试通过。",
+      "repairBatch": "G9A-R1"
+    },
+    {
+      "findingId": "G9A-ASM-P1-001",
+      "severity": "P1",
+      "category": "PRODUCTION_ASSEMBLY",
+      "state": "OPEN",
+      "requirements": ["T2-CORE-001", "T2-SEC-002", "T2-RDY-001"],
+      "title": "RuoYi演示模块、演示页面和初始化菜单仍进入正式装配或发行源",
+      "observed": {"serverDemoDependency": true, "demoVuePages": 2, "demoMenuSeed": true},
+      "closure": "商业构建和初始化数据不再装配ruoyi-demo及演示页面/菜单；需要保留的平台工具明确默认关闭并通过依赖、路由、菜单、SBOM和启动回归。",
+      "repairBatch": "G9A-R2"
+    },
+    {
+      "findingId": "G9A-UI-P1-001",
+      "severity": "P1",
+      "category": "UI_ACCEPTANCE_EVIDENCE",
+      "state": "OPEN",
+      "requirements": ["T2-UX-001", "T2-ADM-001", "T2-ADM-002", "T2-POS-007", "T2-POS-008", "T2-POS-009"],
+      "title": "部分正式页面缺少可定位的页面级错误恢复、单飞或直接组件测试证据",
+      "observed": {"businessSurfaces": 26, "reviewRequired": 18},
+      "closure": "26个正式业务页面逐页完成按钮权限、空/错/加载状态、重复点击、防越权、失败恢复和直接组件/Widget测试；误报必须用可执行证据关闭。",
+      "repairBatch": "G9A-R3"
+    },
+    {
+      "findingId": "G9A-E2E-P1-001",
+      "severity": "P1",
+      "category": "CURRENT_FULL_STACK_E2E",
+      "state": "OPEN",
+      "requirements": ["T2-E2E-004", "T2-E2E-005", "T2-INT-001"],
+      "title": "三业态业务闭环与SAA/SUB/SVC正式API旅程尚未在同一22 Owner当前栈联合验证",
+      "closure": "正式MySQL/Redis/JAR/HTTP、Flutter/SQLite和三业态虚构数据在同一当前提交经正式API串联22 Owner；禁止数据库后门；P0/P1为0。",
+      "repairBatch": "G9A-R4"
+    }
+  ]
+}
