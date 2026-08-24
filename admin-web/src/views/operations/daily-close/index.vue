@@ -7,13 +7,18 @@
       title="门店日结只冻结并签署各 Owner 的权威事实，不会修改订单、支付、退款、库存、成本或报表"
       description="支付机构、真实硬件和打印仍为 BLOCKED/UNAVAILABLE；本工作台不会伪造渠道对账通过，也不会把报表值覆盖到业务事实。"
     />
+    <OwnerPageFeedback surface-id="VUE-12" :state="phase" :failure="pageFailure" @retry="loadList" />
 
     <el-card class="mt-3" shadow="never">
       <template #header><span>1. 门店与业务日</span></template>
       <el-form :inline="true" label-width="100px">
         <el-form-item label="门店 ID"><el-input-number v-model="form.storeId" :min="1" :controls="false" /></el-form-item>
         <el-form-item label="业务日"><el-date-picker v-model="form.businessDate" type="date" value-format="YYYY-MM-DD" /></el-form-item>
-        <el-form-item><el-button v-hasPermi="['operations:daily-close:read']" :loading="loading" @click="loadList">查询</el-button></el-form-item>
+        <el-form-item
+          ><el-button v-hasPermi="['operations:daily-close:read']" data-testid="daily-close-read" :loading="loading" @click="loadList"
+            >查询</el-button
+          ></el-form-item
+        >
         <el-form-item>
           <el-button v-hasPermi="['operations:daily-close:create']" type="primary" :loading="loading" @click="createClose">创建日结草稿</el-button>
         </el-form-item>
@@ -148,12 +153,16 @@ import {
 } from '@/api/daily-close';
 import type { DailyCloseCheckStatus, DailyCloseDetail, DailyCloseRecord, DailyCloseState } from '@/api/daily-close/types';
 import { newOperationCommandId } from '@/api/operations';
+import { useRecoverablePage } from '@/composables/useRecoverablePage';
+import OwnerPageFeedback from '../components/OwnerPageFeedback.vue';
+
+const { phase, failure: pageFailure, runRead, runWrite } = useRecoverablePage('DAILY_CLOSE_PAGE_FAILED');
 
 const form = reactive<{ storeId?: number; businessDate: string }>({ businessDate: new Date().toISOString().slice(0, 10) });
 const rows = ref<DailyCloseRecord[]>([]);
 const detail = ref<DailyCloseDetail>();
 const reason = ref('已复核权威事实、差异、权限和外部阻断边界');
-const loading = ref(false);
+const loading = computed(() => phase.value === 'LOADING' || phase.value === 'SUBMITTING');
 const identities = new Map<string, string>();
 
 const latestSnapshot = computed(() => detail.value?.snapshots.at(-1));
@@ -165,44 +174,56 @@ const identity = (action: string) => {
   return { idempotencyKey: value, correlationId: value };
 };
 
-const execute = async <T,>(work: () => Promise<T>) => {
-  loading.value = true;
-  try {
-    return await work();
-  } finally {
-    loading.value = false;
-  }
+const read = async <T,>(work: () => Promise<{ data: T }>, empty: (value: T) => boolean = () => false): Promise<T | undefined> => {
+  const response = await runRead(work, (value) => empty(value.data));
+  return response?.data;
+};
+const write = async <T,>(operationIdentity: string, work: () => Promise<{ data: T }>): Promise<T | undefined> => {
+  const response = await runWrite(operationIdentity, work);
+  return response?.data;
 };
 
 const loadList = async () => {
   if (!form.storeId) return ElMessage.warning('请先选择有权访问的门店');
-  rows.value = (await execute(() =>
-    listDailyCloses({ storeId: form.storeId!, businessDate: form.businessDate, limit: 100 })
-  )) as unknown as DailyCloseRecord[];
+  const result = await read(() => listDailyCloses({ storeId: form.storeId!, businessDate: form.businessDate, limit: 100 }), (value) => value.length === 0);
+  if (result) rows.value = result;
 };
 
 const createClose = async () => {
   if (!form.storeId || !form.businessDate) return ElMessage.warning('门店与业务日不能为空');
-  const commandId = newOperationCommandId();
-  detail.value = (await execute(() =>
-    createDailyClose({ storeId: form.storeId!, businessDate: form.businessDate }, { idempotencyKey: commandId, correlationId: commandId })
-  )) as unknown as DailyCloseDetail;
+  const requestIdentity = identity('create');
+  const result = await write(requestIdentity.idempotencyKey, () =>
+    createDailyClose({ storeId: form.storeId!, businessDate: form.businessDate }, requestIdentity)
+  );
+  if (!result) return;
+  detail.value = result;
   await loadList();
 };
 
 const selectRow = async (row: DailyCloseRecord) => {
-  detail.value = (await execute(() => getDailyClose(row.closeId))) as unknown as DailyCloseDetail;
+  const result = await read(() => getDailyClose(row.closeId));
+  if (result) detail.value = result;
 };
 
 const runAction = async (action: 'preflight' | 'approve' | 'late-facts') => {
   if (!detail.value) return;
   const id = detail.value.close.closeId;
+  if (action === 'approve' || action === 'late-facts') {
+    await ElMessageBox.confirm(
+      action === 'approve' ? '审批人必须独立于创建人，且不会改写来源事实。确认继续？' : '扫描只会追加晚到差异和更正要求，不会覆盖已签署日结。确认继续？',
+      action === 'approve' ? '确认独立审批' : '确认扫描晚到事实',
+      { type: 'warning' }
+    );
+  }
+  const requestIdentity = identity(action);
   const calls = {
-    preflight: () => preflightDailyClose(id, identity(action)),
-    approve: () => approveDailyClose(id, reason.value, identity(action)),
-    'late-facts': () => detectDailyCloseLateFacts(id, identity(action))
+    preflight: () => preflightDailyClose(id, requestIdentity),
+    approve: () => approveDailyClose(id, reason.value, requestIdentity),
+    'late-facts': () => detectDailyCloseLateFacts(id, requestIdentity)
   };
-  detail.value = (await execute(calls[action])) as unknown as DailyCloseDetail;
+  const result = await write(requestIdentity.idempotencyKey, calls[action]);
+  if (!result) return;
+  detail.value = result;
   await loadList();
 };
 
@@ -213,7 +234,10 @@ const confirmSign = async () => {
     confirmButtonText: '确认签署',
     cancelButtonText: '取消'
   });
-  detail.value = (await execute(() => signDailyClose(detail.value!.close.closeId, identity('sign')))) as unknown as DailyCloseDetail;
+  const requestIdentity = identity('sign');
+  const result = await write(requestIdentity.idempotencyKey, () => signDailyClose(detail.value!.close.closeId, requestIdentity));
+  if (!result) return;
+  detail.value = result;
   await loadList();
 };
 
