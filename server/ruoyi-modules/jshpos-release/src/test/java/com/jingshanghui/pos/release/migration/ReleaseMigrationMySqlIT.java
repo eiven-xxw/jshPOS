@@ -35,10 +35,12 @@ class ReleaseMigrationMySqlIT {
         assertHundredThousandAppendOnlyEventsRemainQueryable();
     }
 
-    /** 验证所有正式表的主键、中文表说明和租户隔离列；备份控制面五表使用冻结租户集合。 */
+    /** 验证正式表主键、中文说明和租户隔离列；平台全局表与经外键派生租户的子表使用冻结白名单。 */
     private void assertGate6GDataMetadata() throws SQLException {
-        Set<String> controlPlane = Set.of("bak_backup_set", "bak_backup_object", "bak_restore_drill",
-            "bak_restore_check", "bak_audit");
+        Set<String> nonTenantScoped = Set.of(
+            "bak_backup_set", "bak_backup_object", "bak_restore_drill", "bak_restore_check", "bak_audit",
+            "saas_plan", "saas_entitlement_version", "saas_entitlement_item", "saas_command_result",
+            "sub_subscription_term", "sub_schedule_checkpoint", "sub_command_result");
         Set<String> tables = new LinkedHashSet<>();
         try (Connection c = DriverManager.getConnection(url, username, password);
              PreparedStatement query = c.prepareStatement("SELECT table_name,table_comment FROM information_schema.tables WHERE table_schema=DATABASE() AND table_type='BASE TABLE' AND table_name NOT IN ('sys_menu','sys_role_menu','jshpos_flyway_schema_history') ORDER BY table_name");
@@ -60,7 +62,38 @@ class ReleaseMigrationMySqlIT {
              ResultSet rows = query.executeQuery()) {
             Set<String> withoutTenant = new LinkedHashSet<>();
             while (rows.next()) withoutTenant.add(rows.getString(1));
-            assertThat(withoutTenant).containsExactlyInAnyOrderElementsOf(controlPlane);
+            assertThat(withoutTenant).containsExactlyInAnyOrderElementsOf(nonTenantScoped);
+        }
+        assertNonTenantScopeGuards();
+    }
+
+    /** 验证无 tenant_id 表仍通过平台授权域或租户父聚合获得可信范围，禁止成为旁路事实源。 */
+    private void assertNonTenantScopeGuards() throws SQLException {
+        try (Connection c = DriverManager.getConnection(url, username, password);
+             Statement statement = c.createStatement()) {
+            assertThat(singleLong(statement, """
+                SELECT COUNT(*) FROM information_schema.key_column_usage
+                 WHERE table_schema=DATABASE() AND table_name='sub_subscription_term'
+                   AND column_name='subscription_id' AND referenced_table_name='sub_subscription'
+                """)).isEqualTo(1);
+            assertThat(singleLong(statement, """
+                SELECT COUNT(*) FROM information_schema.key_column_usage
+                 WHERE table_schema=DATABASE() AND
+                   ((table_name='saas_entitlement_version' AND column_name='plan_id' AND referenced_table_name='saas_plan') OR
+                    (table_name='saas_entitlement_item' AND column_name='version_id' AND referenced_table_name='saas_entitlement_version'))
+                """)).isEqualTo(2);
+            assertThat(singleLong(statement, """
+                SELECT COUNT(*) FROM information_schema.columns
+                 WHERE table_schema=DATABASE() AND column_name='authority_scope'
+                   AND table_name IN ('saas_command_result','sub_command_result')
+                """)).isEqualTo(2);
+        }
+    }
+
+    private static long singleLong(Statement statement, String sql) throws SQLException {
+        try (ResultSet rows = statement.executeQuery(sql)) {
+            assertThat(rows.next()).isTrue();
+            return rows.getLong(1);
         }
     }
 
