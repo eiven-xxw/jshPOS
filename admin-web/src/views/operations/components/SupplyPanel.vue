@@ -7,6 +7,7 @@
       title="采购与调拨不直接修改余额"
       description="采购确认、采购退货、调拨发出与收货只向各 Owner 提交命令；数量和成本效果由 Inventory/Costing 追加正式流水。"
     />
+    <OwnerPageFeedback surface-id="VUE-11" :state="pageState" :failure="pageFailure" @retry="reloadCurrent" />
 
     <el-tabs class="mt-3" type="border-card">
       <el-tab-pane label="供应商与采购">
@@ -167,12 +168,14 @@ import {
 import type { OwnerOperationView, ProcurementOrderDetail, ProcurementReceiptDetail, TransferDetail } from '@/api/operations/types';
 import { exactDecimal } from '../model';
 import { useControlledOperation } from '../useControlledOperation';
+import OwnerPageFeedback from './OwnerPageFeedback.vue';
 
-const { runRead, runControlled } = useControlledOperation();
+const { pageState, pageFailure, submitting, runRead, runControlled } = useControlledOperation();
 const supplier = reactive({ supplierId: newOperationCommandId(), code: 'SYN-SUP-001', name: '虚构供应商一号' });
 const supplierResult = ref<OwnerOperationView>();
 const order = reactive({
   orderId: newOperationCommandId(),
+  orderLineId: newOperationCommandId(),
   storeId: '1101',
   warehouseId: '01J00000000000000000000011',
   skuId: '101',
@@ -182,14 +185,17 @@ const order = reactive({
   expectedDate: new Date().toISOString().slice(0, 10)
 });
 const orderDetail = ref<ProcurementOrderDetail>();
-const receipt = reactive({ receiptId: newOperationCommandId(), quantity: '1.000000' });
+const receipt = reactive({ receiptId: newOperationCommandId(), receiptLineId: newOperationCommandId(), quantity: '1.000000' });
 const receiptDetail = ref<ProcurementReceiptDetail>();
-const purchaseReturn = reactive<{ purchaseReturnId: string; quantity: string; result?: OwnerOperationView }>({
+const purchaseReturn = reactive<{ purchaseReturnId: string; returnLineId: string; quantity: string; result?: OwnerOperationView }>({
   purchaseReturnId: newOperationCommandId(),
+  returnLineId: newOperationCommandId(),
   quantity: '1.000000'
 });
 const transfer = reactive({
   transferId: newOperationCommandId(),
+  transferLineId: newOperationCommandId(),
+  receiptLineId: newOperationCommandId(),
   sourceStoreId: '1101',
   sourceWarehouseId: '01J00000000000000000000011',
   destinationStoreId: '1102',
@@ -201,6 +207,7 @@ const transfer = reactive({
   finalReceipt: true
 });
 const transferDetail = ref<TransferDetail>();
+const lastReadMode = ref<'order' | 'receipt' | 'transfer'>('order');
 
 const submitSupplier = async () => {
   const changed = await runControlled({
@@ -232,10 +239,11 @@ const supplierState = async (state: 'ACTIVE' | 'SUSPENDED' | 'BLOCKED') => {
 };
 
 const loadOrder = async () => {
-  orderDetail.value = await runRead(() => getProcurementOrder(order.orderId));
+  lastReadMode.value = 'order';
+  const result = await runRead(() => getProcurementOrder(order.orderId));
+  if (result) orderDetail.value = result;
 };
 const createOrder = async () => {
-  const lineId = newOperationCommandId();
   const changed = await runControlled({
     owner: 'Procurement.Order',
     objectId: order.orderId,
@@ -254,7 +262,7 @@ const createOrder = async () => {
         overReceiptToleranceBps: 0,
         lines: [
           {
-            orderLineId: lineId,
+            orderLineId: order.orderLineId,
             skuId: order.skuId,
             unitId: order.unitId,
             orderedQuantity: exactDecimal(order.quantity),
@@ -284,7 +292,9 @@ const orderAction = async (action: 'submit' | 'approve' | 'close') => {
 };
 
 const loadReceipt = async () => {
-  receiptDetail.value = await runRead(() => getProcurementReceipt(receipt.receiptId));
+  lastReadMode.value = 'receipt';
+  const result = await runRead(() => getProcurementReceipt(receipt.receiptId));
+  if (result) receiptDetail.value = result;
 };
 const createReceipt = async () => {
   if (!orderDetail.value?.lines[0]) return ElMessage.warning('采购单至少需要一行');
@@ -301,7 +311,7 @@ const createReceipt = async () => {
         receiptId: receipt.receiptId,
         lines: [
           {
-            receiptLineId: newOperationCommandId(),
+            receiptLineId: receipt.receiptLineId,
             orderLineId: orderDetail.value!.lines[0].orderLineId,
             receivedQuantity: exactDecimal(receipt.quantity)
           }
@@ -341,7 +351,7 @@ const createReturn = async () => {
         purchaseReturnId: purchaseReturn.purchaseReturnId,
         lines: [
           {
-            returnLineId: newOperationCommandId(),
+            returnLineId: purchaseReturn.returnLineId,
             receiptLineId: receiptDetail.value!.lines[0].receiptLineId,
             returnQuantity: exactDecimal(purchaseReturn.quantity)
           }
@@ -369,7 +379,14 @@ const returnAction = async (action: 'submit' | 'approve') => {
 };
 
 const loadTransfer = async () => {
-  transferDetail.value = await runRead(() => getTransfer(transfer.transferId));
+  lastReadMode.value = 'transfer';
+  const result = await runRead(() => getTransfer(transfer.transferId));
+  if (result) transferDetail.value = result;
+};
+const reloadCurrent = () => {
+  if (lastReadMode.value === 'receipt') return loadReceipt();
+  if (lastReadMode.value === 'transfer') return loadTransfer();
+  return loadOrder();
 };
 const createNewTransfer = async () => {
   const changed = await runControlled({
@@ -389,7 +406,7 @@ const createNewTransfer = async () => {
         destinationWarehouseId: transfer.destinationWarehouseId,
         lines: [
           {
-            transferLineId: newOperationCommandId(),
+            transferLineId: transfer.transferLineId,
             skuId: transfer.skuId,
             unitId: transfer.unitId,
             requestedQuantity: exactDecimal(transfer.quantity)
@@ -459,7 +476,7 @@ const receive = async () => {
         finalReceipt: transfer.finalReceipt,
         lines: [
           {
-            receiptLineId: newOperationCommandId(),
+            receiptLineId: transfer.receiptLineId,
             transferLineId: transferDetail.value!.lines[0].transferLineId,
             receivedQuantity: exactDecimal(transfer.operationQuantity)
           }

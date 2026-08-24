@@ -7,6 +7,7 @@
       title="确定性补货不会自动下单"
       description="建议数量、原因、库存检查点和单位换算均由服务端冻结；审批后也只创建采购 DRAFT，不产生库存或成本效果。"
     />
+    <OwnerPageFeedback surface-id="VUE-10" :state="pageState" :failure="pageFailure" @retry="reloadCurrent" />
     <el-card shadow="never" class="mt-3">
       <template #header><span>补货规则</span></template>
       <el-form :inline="true">
@@ -27,7 +28,13 @@
         <el-form-item>
           <el-button v-hasPermi="['procurement:replenishment:policy']" type="primary" @click="createPolicy">创建规则</el-button>
           <el-button v-hasPermi="['procurement:replenishment:policy']" type="warning" @click="publishPolicy">发布</el-button>
-          <el-button v-hasPermi="['procurement:replenishment:read']" @click="loadPolicies">刷新</el-button>
+          <el-button
+            v-hasPermi="['procurement:replenishment:read']"
+            data-testid="replenishment-policy-read"
+            :disabled="submitting"
+            @click="loadPolicies"
+            >刷新</el-button
+          >
         </el-form-item>
       </el-form>
       <el-table :data="policies" border max-height="220">
@@ -102,10 +109,13 @@ import {
 import type { ReplenishmentPolicy, ReplenishmentSuggestion } from '@/api/operations/types';
 import { exactDecimal } from '../model';
 import { useControlledOperation } from '../useControlledOperation';
+import OwnerPageFeedback from './OwnerPageFeedback.vue';
 
-const { runRead, runControlled } = useControlledOperation();
+const { pageState, pageFailure, submitting, runRead, runControlled } = useControlledOperation();
 const form = reactive({
   policyVersionId: newOperationCommandId(),
+  policyItemId: newOperationCommandId(),
+  generationRunId: newOperationCommandId(),
   storeId: '1101',
   warehouseId: '01J00000000000000000000011',
   skuId: '101',
@@ -119,13 +129,19 @@ const form = reactive({
 });
 const policies = ref<ReplenishmentPolicy[]>([]);
 const suggestions = ref<ReplenishmentSuggestion[]>([]);
+const lastReadMode = ref<'policies' | 'suggestions'>('policies');
 
 const loadPolicies = async () => {
-  policies.value = await runRead(() => listReplenishmentPolicies(form.storeId));
+  lastReadMode.value = 'policies';
+  const result = await runRead(() => listReplenishmentPolicies(form.storeId), (value) => value.length === 0);
+  if (result) policies.value = result;
 };
 const loadSuggestions = async () => {
-  suggestions.value = await runRead(() => listReplenishmentSuggestions(form.storeId));
+  lastReadMode.value = 'suggestions';
+  const result = await runRead(() => listReplenishmentSuggestions(form.storeId), (value) => value.length === 0);
+  if (result) suggestions.value = result;
 };
+const reloadCurrent = () => (lastReadMode.value === 'suggestions' ? loadSuggestions() : loadPolicies());
 const createPolicy = async () => {
   const changed = await runControlled({
     owner: 'Replenishment.Policy',
@@ -146,7 +162,7 @@ const createPolicy = async () => {
         correlationId: key,
         items: [
           {
-            policyItemId: newOperationCommandId(),
+            policyItemId: form.policyItemId,
             skuId: form.skuId,
             purchaseUnitId: form.purchaseUnitId,
             supplierId: form.supplierId,
@@ -195,7 +211,7 @@ const generate = async () => {
     reason: '执行本次人工补货检查',
     execute: (key) =>
       generateReplenishmentSuggestions({
-        generationRunId: newOperationCommandId(),
+        generationRunId: form.generationRunId,
         policyVersionId: form.policyVersionId,
         calculationAt: new Date().toISOString(),
         idempotencyKey: key,
@@ -235,7 +251,7 @@ const toDraft = async (item: ReplenishmentSuggestion) => {
     execute: (key) =>
       createReplenishmentPurchaseDraft(item.suggestionId, {
         expectedVersion: item.version,
-        purchaseOrderId: newOperationCommandId(),
+        purchaseOrderId: key,
         expectedDate: new Date().toISOString().slice(0, 10),
         idempotencyKey: key,
         correlationId: key
