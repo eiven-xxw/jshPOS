@@ -101,6 +101,16 @@
                 <monitor.password>123456</monitor.password>
             </properties>
         </profile>
+        <!--
+          非商业平台工具只允许在独立研发环境显式构建。该 profile 不是商业发布入口，
+          商业 CI、JAR、SBOM 和部署清单均不得启用（ADR-070）。
+        -->
+        <profile>
+            <id>non-commercial-platform-tools</id>
+            <modules>
+                <module>ruoyi-extend</module>
+            </modules>
+        </profile>
     </profiles>
 
     <!-- 依赖声明 -->
@@ -388,24 +398,6 @@
             </dependency>
 
             <dependency>
-                <groupId>org.dromara</groupId>
-                <artifactId>ruoyi-job</artifactId>
-                <version>${revision}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.dromara</groupId>
-                <artifactId>ruoyi-generator</artifactId>
-                <version>${revision}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.dromara</groupId>
-                <artifactId>ruoyi-demo</artifactId>
-                <version>${revision}</version>
-            </dependency>
-
-            <dependency>
                 <groupId>com.jingshanghui.pos</groupId>
                 <artifactId>jshpos-foundation</artifactId>
                 <version>${revision}</version>
@@ -523,20 +515,12 @@
                 <version>${revision}</version>
             </dependency>
 
-            <!--  工作流模块  -->
-            <dependency>
-                <groupId>org.dromara</groupId>
-                <artifactId>ruoyi-workflow</artifactId>
-                <version>${revision}</version>
-            </dependency>
-
         </dependencies>
     </dependencyManagement>
 
     <modules>
         <module>ruoyi-admin</module>
         <module>ruoyi-common</module>
-        <module>ruoyi-extend</module>
         <module>ruoyi-modules</module>
     </modules>
     <packaging>pom</packaging>

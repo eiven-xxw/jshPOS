@@ -34,14 +34,6 @@
       "commercial_release_status": "LEGAL_REVIEW_REQUIRED"
     },
     {
-      "coordinate": "com.googlecode.aviator:aviator",
-      "version": "5.4.4",
-      "approved_restricted_licenses": ["GNU LESSER GENERAL PUBLIC LICENSE"],
-      "selected_license": "LGPL-2.1-or-later",
-      "basis": "required by SnailJob job-task; fixed to security release 5.4.4",
-      "commercial_release_status": "REPLACE_OR_LEGAL_APPROVAL_REQUIRED"
-    },
-    {
       "coordinate": "com.xkcoding.http:simple-http",
       "version": "1.0.5",
       "approved_restricted_licenses": ["LGPL-3.0-only"],
@@ -102,14 +94,6 @@
       "version": "2.0.5",
       "approved_restricted_licenses": ["GPL-2.0-with-classpath-exception"],
       "selected_license": "BSD-3-Clause",
-      "basis": "multi-license permissive alternative selected",
-      "commercial_release_status": "LEGAL_REVIEW_REQUIRED"
-    },
-    {
-      "coordinate": "org.javassist:javassist",
-      "version": "3.24.1-GA",
-      "approved_restricted_licenses": ["LGPL-2.1-only"],
-      "selected_license": "Apache-2.0",
       "basis": "multi-license permissive alternative selected",
       "commercial_release_status": "LEGAL_REVIEW_REQUIRED"
     },

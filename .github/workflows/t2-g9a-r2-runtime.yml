@@ -1,0 +1,375 @@
+name: T2 Gate 9B S27B G9A R2 Production Assembly Convergence
+
+on:
+  push:
+    branches: ["t2/gate9b-sprint27b-g9a-r2-runtime"]
+  pull_request:
+    paths:
+      - "AGENTS.md"
+      - ".github/workflows/t2-g9a-r2-runtime.yml"
+      - "contracts/t2/**"
+      - "docs/**"
+      - "scripts/**"
+      - "server/**"
+      - "admin-web/**"
+      - "pos-flutter/**"
+      - "packages/pos_device_adapter/**"
+      - "infra/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: t2-g9a-r2-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  governance-ubuntu:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with: { python-version: "3.12" }
+      - name: Validate governance API assembly and signed cleanup scope
+        run: |
+          mkdir -p artifacts/t2/g9a-r2/governance-ubuntu
+          python scripts/check_t0_structure.py
+          python scripts/check_rtm.py
+          python scripts/check_contracts.py
+          python -m py_compile scripts/check_t2_g9a_r2_runtime.py scripts/audit_t2_g9a_r2_convergence.py scripts/build_t2_g9a_r2_forward_cleanup.py scripts/test_t2_g9a_r2_forward_cleanup.py scripts/build_t2_g9a_r2_evidence.py
+          python scripts/audit_t2_gate6g_api.py --output artifacts/t2/g9a-r2/governance-ubuntu/api-audit.json
+          python scripts/check_t2_g9a_r2_runtime.py | tee artifacts/t2/g9a-r2/governance-ubuntu/scope.txt
+          python scripts/audit_t2_g9a_r2_convergence.py --output artifacts/t2/g9a-r2/governance-ubuntu/convergence-static.json
+          python -m unittest scripts/test_t2_g9a_r2_forward_cleanup.py -v 2>&1 | tee artifacts/t2/g9a-r2/governance-ubuntu/forward-cleanup-tests.txt
+          python scripts/review_dependency_diff.py b9333b85f1b46ac444b83346a6a3d44204e7d723 "$(git rev-parse HEAD)" > artifacts/t2/g9a-r2/governance-ubuntu/dependency-diff.json
+          git diff --check
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          {
+            name: t2-g9a-r2-governance-ubuntu,
+            path: artifacts/t2/g9a-r2/governance-ubuntu,
+            if-no-files-found: error,
+            retention-days: 30,
+          }
+
+  governance-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with: { python-version: "3.12" }
+      - name: Validate UTF-8 and cross-platform convergence semantics
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force artifacts/t2/g9a-r2/governance-windows | Out-Null
+          python scripts/check_t0_structure.py
+          python scripts/check_rtm.py
+          python scripts/check_contracts.py
+          python -m py_compile scripts/check_t2_g9a_r2_runtime.py scripts/audit_t2_g9a_r2_convergence.py scripts/build_t2_g9a_r2_forward_cleanup.py scripts/test_t2_g9a_r2_forward_cleanup.py scripts/build_t2_g9a_r2_evidence.py
+          python scripts/audit_t2_gate6g_api.py --output artifacts/t2/g9a-r2/governance-windows/api-audit.json
+          python scripts/check_t2_g9a_r2_runtime.py | Tee-Object artifacts/t2/g9a-r2/governance-windows/scope.txt
+          python scripts/audit_t2_g9a_r2_convergence.py --output artifacts/t2/g9a-r2/governance-windows/convergence-static.json
+          python -m unittest scripts/test_t2_g9a_r2_forward_cleanup.py -v 2>&1 | Tee-Object artifacts/t2/g9a-r2/governance-windows/forward-cleanup-tests.txt
+          git diff --check
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          {
+            name: t2-g9a-r2-governance-windows,
+            path: artifacts/t2/g9a-r2/governance-windows,
+            if-no-files-found: error,
+            retention-days: 30,
+          }
+
+  server:
+    needs: governance-ubuntu
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with: { distribution: temurin, java-version: "21", cache: maven }
+      - name: Execute full modular monolith tests coverage and SBOM
+        working-directory: server
+        run: |
+          ./mvnw -pl ruoyi-admin -am clean verify -DskipTests=false
+          ./mvnw org.cyclonedx:cyclonedx-maven-plugin:2.9.1:makeAggregateBom
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with: { python-version: "3.12" }
+      - name: Collect compact server evidence
+        run: |
+          mkdir -p artifacts/t2/g9a-r2/server
+          python scripts/check_sbom_licenses.py server/target/bom.json docs/compliance/reviewed-license-allowlist.json | tee artifacts/t2/g9a-r2/server/license-policy.txt
+          python scripts/audit_t2_g9a_r2_convergence.py --output artifacts/t2/g9a-r2/server/convergence-static.json
+          cp server/target/bom.json artifacts/t2/g9a-r2/server/server-cyclonedx.json
+          cp server/ruoyi-admin/target/ruoyi-admin.jar artifacts/t2/g9a-r2/server/ruoyi-admin.jar
+          find server/ruoyi-modules -path '*/target/surefire-reports/TEST-*.xml' -exec cp --parents {} artifacts/t2/g9a-r2/server/ \;
+          find server/ruoyi-modules -path '*/target/site/jacoco/jacoco.xml' -exec cp --parents {} artifacts/t2/g9a-r2/server/ \;
+          sha256sum server/ruoyi-admin/target/ruoyi-admin.jar > artifacts/t2/g9a-r2/server/server-jar.sha256
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          {
+            name: t2-g9a-r2-server,
+            path: artifacts/t2/g9a-r2/server,
+            if-no-files-found: error,
+            retention-days: 30,
+          }
+
+  web:
+    needs: governance-ubuntu
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+        with: { version: 10.33.0 }
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          {
+            node-version: "24",
+            cache: pnpm,
+            cache-dependency-path: admin-web/pnpm-lock.yaml,
+          }
+      - name: Execute audit build lint typecheck and component contracts
+        run: |
+          mkdir -p artifacts/t2/g9a-r2/web
+          cd admin-web
+          pnpm install --frozen-lockfile
+          pnpm audit --registry https://registry.npmjs.org --audit-level high
+          pnpm build:prod
+          pnpm lint:eslint
+          pnpm typecheck
+          pnpm test:unit:ci
+          pnpm licenses list --json > ../artifacts/t2/g9a-r2/web/licenses.json
+          cp gate0-vitest-junit.xml ../artifacts/t2/g9a-r2/web/
+          cp -R dist ../artifacts/t2/g9a-r2/web/dist
+          find dist -type f -print0 | sort -z | xargs -0 sha256sum > ../artifacts/t2/g9a-r2/web/dist.sha256
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          {
+            name: t2-g9a-r2-web,
+            path: artifacts/t2/g9a-r2/web,
+            if-no-files-found: error,
+            retention-days: 30,
+          }
+
+  flutter:
+    needs: governance-ubuntu
+    strategy:
+      fail-fast: false
+      matrix: { os: [ubuntu-latest, windows-latest] }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with: { flutter-version: "3.47.0", channel: stable, cache: true }
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with: { python-version: "3.12" }
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        if: matrix.os == 'ubuntu-latest'
+        with: { distribution: temurin, java-version: "21" }
+      - name: Execute Flutter contracts coverage SQLite and supply chain
+        working-directory: pos-flutter
+        run: |
+          flutter pub get --enforce-lockfile
+          dart format --output=none --set-exit-if-changed lib test
+          flutter analyze --fatal-infos
+          flutter test --machine --coverage > ../flutter-tests.jsonl
+          python ../scripts/check_flutter_gate2_coverage.py --input coverage/lcov.info --minimum 0.90 --output ../flutter-gate2-coverage.json
+          python ../scripts/check_flutter_gate6d_coverage.py --input coverage/lcov.info --minimum 0.90 --output ../flutter-gate6d-coverage.json
+          python ../scripts/check_flutter_gate6e_coverage.py --input coverage/lcov.info --minimum 0.90 --output ../flutter-gate6e-coverage.json
+          flutter pub deps --json > ../flutter-dependencies.json
+          python ../scripts/build_flutter_supply_chain.py --deps ../flutter-dependencies.json --package-config .dart_tool/package_config.json --output-dir ../flutter-supply-chain
+      - name: Compile Kotlin adapter and Android debug APK
+        if: matrix.os == 'ubuntu-latest'
+        working-directory: pos-flutter
+        run: |
+          cd android && ./gradlew :app:compileDebugKotlin --no-daemon && cd ..
+          flutter build apk --debug
+          sha256sum build/app/outputs/flutter-apk/app-debug.apk > ../app-debug.apk.sha256
+      - name: Collect compact Flutter evidence
+        shell: bash
+        run: |
+          mkdir -p artifacts/t2/g9a-r2/flutter
+          cp flutter-tests.jsonl flutter-gate2-coverage.json flutter-gate6d-coverage.json flutter-gate6e-coverage.json flutter-dependencies.json artifacts/t2/g9a-r2/flutter/
+          cp -R flutter-supply-chain/. artifacts/t2/g9a-r2/flutter/
+          if [ -f app-debug.apk.sha256 ]; then cp app-debug.apk.sha256 artifacts/t2/g9a-r2/flutter/; fi
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          {
+            name: "t2-g9a-r2-flutter-${{ matrix.os }}",
+            path: artifacts/t2/g9a-r2/flutter,
+            if-no-files-found: error,
+            retention-days: 30,
+          }
+
+  mysql-sqlite:
+    needs: [governance-ubuntu, server]
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4.11@sha256:b3b90af2a6552ae30c266fdb7d5dd55f3afb72404bb78d37fe8a23eb857fd3fb
+        env:
+          {
+            MYSQL_ROOT_PASSWORD: synthetic_gate9b_root,
+            MYSQL_DATABASE: jshpos_gate9b,
+          }
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -psynthetic_gate9b_root"
+          --health-interval=10s --health-timeout=5s --health-retries=12
+      redis:
+        image: redis:7.4.10-alpine@sha256:e7723ff73d963f5cc6d9c4643ea3d989527a402a319239054e9472a7fb9219a2
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s --health-timeout=5s --health-retries=12
+    env:
+      GATE6B_MYSQL_JDBC_URL: jdbc:mysql://127.0.0.1:3306/jshpos_gate9b?useUnicode=true&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      GATE6B_MYSQL_USERNAME: root
+      GATE6B_MYSQL_PASSWORD: synthetic_gate9b_root
+      GATE8C_MIGRATION_ROOT: ${{ github.workspace }}/server/ruoyi-modules
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with: { distribution: temurin, java-version: "21", cache: maven }
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with: { flutter-version: "3.47.0", channel: stable, cache: true }
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with: { name: t2-g9a-r2-server, path: downloaded/server }
+      - name: Validate MySQL SQLite clean initialization and commercial startup
+        run: |
+          mkdir -p artifacts/t2/g9a-r2/mysql-sqlite
+          cd server
+          ./mvnw -pl ruoyi-modules/jshpos-release -am test -Dtest=ReleaseMigrationMySqlIT -Dsurefire.failIfNoSpecifiedTests=false -DskipTests=false
+          cd ../pos-flutter
+          flutter pub get --enforce-lockfile
+          flutter test test/gate6g/data_migration_recovery_test.dart --machine > ../artifacts/t2/g9a-r2/mysql-sqlite/sqlite-migration-tests.jsonl
+          cd ..
+          cp server/ruoyi-modules/jshpos-release/target/surefire-reports/TEST-*ReleaseMigrationMySqlIT.xml artifacts/t2/g9a-r2/mysql-sqlite/
+          changed_migrations="$(git diff --name-only b9333b85f1b46ac444b83346a6a3d44204e7d723 HEAD -- server/ruoyi-modules pos-flutter/lib/infrastructure/local_database | grep -E '(/db/migration/|^pos-flutter/lib/infrastructure/local_database/)' || true)"
+          test -z "$changed_migrations"
+          mysql_container="$(docker ps --filter publish=3306 --format '{{.ID}}' | head -1)"
+          redis_container="$(docker ps --filter publish=6379 --format '{{.ID}}' | head -1)"
+          test -n "$mysql_container" && test -n "$redis_container"
+          docker exec "$mysql_container" mysql -uroot -psynthetic_gate9b_root -e 'CREATE DATABASE jshpos_g9a_runtime CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci'
+          docker exec -i "$mysql_container" mysql --default-character-set=utf8mb4 -uroot -psynthetic_gate9b_root jshpos_g9a_runtime < server/script/sql/ry_vue_5.X.sql 2> artifacts/t2/g9a-r2/mysql-sqlite/schema-bootstrap.log
+          docker exec "$redis_container" redis-cli CONFIG SET requirepass synthetic_g9a_r2_redis
+          server_jar="$(find downloaded/server -name ruoyi-admin.jar -type f -print -quit)"
+          test -s "$server_jar"
+          java -jar "$server_jar" --server.port=18080 --api-decrypt.enabled=false --captcha.enable=false \
+            --spring.boot.admin.client.enabled=false --spring.datasource.dynamic.p6spy=false \
+            '--spring.datasource.dynamic.datasource.master.url=jdbc:mysql://127.0.0.1:3306/jshpos_g9a_runtime?useUnicode=true&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&nullCatalogMeansCurrent=true' \
+            --spring.datasource.dynamic.datasource.master.username=root \
+            --spring.datasource.dynamic.datasource.master.password=synthetic_gate9b_root \
+            --spring.data.redis.host=127.0.0.1 --spring.data.redis.port=6379 \
+            --spring.data.redis.password=synthetic_g9a_r2_redis \
+            > artifacts/t2/g9a-r2/mysql-sqlite/server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          ready=0
+          for attempt in $(seq 1 90); do
+            if curl -fsS http://127.0.0.1:18080/ >/dev/null; then ready=1; break; fi
+            if ! kill -0 "$server_pid"; then tail -200 artifacts/t2/g9a-r2/mysql-sqlite/server.log; exit 1; fi
+            sleep 2
+          done
+          test "$ready" -eq 1
+          if grep -Eiq 'SnailJob|WarmFlow|TestDemo|TestTree|GenController|Wf[A-Z][A-Za-z]+Controller' artifacts/t2/g9a-r2/mysql-sqlite/server.log; then
+            echo 'non-V1 runtime signal found in commercial startup' >&2; exit 1
+          fi
+          kill -0 "$server_pid"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          {
+            name: t2-g9a-r2-mysql-sqlite,
+            path: artifacts/t2/g9a-r2/mysql-sqlite,
+            if-no-files-found: error,
+            retention-days: 30,
+          }
+
+  security:
+    needs: [server, web, flutter, mysql-sqlite]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with: { python-version: "3.12" }
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with: { name: t2-g9a-r2-server, path: downloaded/server }
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          { name: t2-g9a-r2-flutter-ubuntu-latest, path: downloaded/flutter }
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with: { name: t2-g9a-r2-web, path: downloaded/web }
+      - name: Enforce vulnerability license Secret PII and workflow security
+        run: |
+          mkdir -p artifacts/t2/g9a-r2/security
+          server_jar="$(find downloaded/server -name ruoyi-admin.jar -type f -print -quit)"
+          server_sbom="$(find downloaded/server -name server-cyclonedx.json -type f -print -quit)"
+          web_dist="$(find downloaded/web -type d -name dist -print -quit)"
+          test -s "$server_jar" && test -s "$server_sbom" && test -d "$web_dist"
+          python scripts/audit_t2_g9a_r2_convergence.py --server-jar "$server_jar" --server-sbom "$server_sbom" --web-dist "$web_dist" --output artifacts/t2/g9a-r2/security/convergence-artifacts.json
+          python scripts/audit_t2_gate6g_api.py --output artifacts/t2/g9a-r2/security/api-security-boundary.json
+          python scripts/review_dependency_diff.py b9333b85f1b46ac444b83346a6a3d44204e7d723 "$(git rev-parse HEAD)" > artifacts/t2/g9a-r2/security/dependency-diff.json
+          curl -fsSL -o /tmp/trivy.tar.gz https://github.com/aquasecurity/trivy/releases/download/v0.72.0/trivy_0.72.0_Linux-64bit.tar.gz
+          echo "bbb64b9695866ce4a7a8f5c9592002c5961cab378577fa3f8a040df362b9b2ea  /tmp/trivy.tar.gz" | sha256sum --check
+          tar -xzf /tmp/trivy.tar.gz -C /tmp trivy
+          flutter_sbom="$(find downloaded/flutter -name flutter-cyclonedx.json -type f -print -quit)"
+          test -s "$server_sbom" && test -s "$flutter_sbom"
+          /tmp/trivy sbom --skip-version-check --db-repository ghcr.io/aquasecurity/trivy-db:2 --java-db-repository ghcr.io/aquasecurity/trivy-java-db:1 --scanners vuln --severity HIGH,CRITICAL --exit-code 1 --format json --output artifacts/t2/g9a-r2/security/trivy-server-vuln.json "$server_sbom"
+          /tmp/trivy sbom --skip-version-check --db-repository ghcr.io/aquasecurity/trivy-db:2 --scanners vuln --severity HIGH,CRITICAL --exit-code 1 --format json --output artifacts/t2/g9a-r2/security/trivy-flutter-vuln.json "$flutter_sbom"
+          python scripts/check_sbom_licenses.py "$server_sbom" docs/compliance/reviewed-license-allowlist.json | tee artifacts/t2/g9a-r2/security/server-license-policy.txt
+          /tmp/trivy fs --skip-version-check --offline-scan --scanners secret --severity HIGH,CRITICAL --exit-code 1 --skip-dirs .git --skip-dirs downloaded --format json --output artifacts/t2/g9a-r2/security/trivy-secret.json .
+          /tmp/trivy config --skip-version-check --checks-bundle-repository ghcr.io/aquasecurity/trivy-checks:2 --severity HIGH,CRITICAL --exit-code 1 --format json --output artifacts/t2/g9a-r2/security/trivy-config.json .github/workflows/t2-g9a-r2-runtime.yml
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          {
+            name: t2-g9a-r2-security,
+            path: artifacts/t2/g9a-r2/security,
+            if-no-files-found: error,
+            retention-days: 30,
+          }
+
+  evidence:
+    needs:
+      [
+        governance-ubuntu,
+        governance-windows,
+        server,
+        web,
+        flutter,
+        mysql-sqlite,
+        security,
+      ]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with: { python-version: "3.12" }
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with: { pattern: t2-g9a-r2-*, path: downloaded, merge-multiple: false }
+      - name: Normalize producers and build immutable evidence index
+        run: |
+          mkdir -p artifacts/t2/g9a-r2/bundle artifacts/t2/g9a-r2/final
+          for pair in \
+            "governance-ubuntu:t2-g9a-r2-governance-ubuntu" \
+            "governance-windows:t2-g9a-r2-governance-windows" \
+            "server:t2-g9a-r2-server" \
+            "web:t2-g9a-r2-web" \
+            "flutter-ubuntu:t2-g9a-r2-flutter-ubuntu-latest" \
+            "flutter-windows:t2-g9a-r2-flutter-windows-latest" \
+            "mysql-sqlite:t2-g9a-r2-mysql-sqlite" \
+            "security:t2-g9a-r2-security"; do
+            producer="${pair%%:*}"; artifact="${pair#*:}"
+            mkdir -p "artifacts/t2/g9a-r2/bundle/$producer"
+            cp -R "downloaded/$artifact/." "artifacts/t2/g9a-r2/bundle/$producer/"
+          done
+          python scripts/build_t2_g9a_r2_evidence.py --bundle-dir artifacts/t2/g9a-r2/bundle --output artifacts/t2/g9a-r2/final/evidence-index.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          {
+            name: t2-g9a-r2-evidence-index,
+            path: artifacts/t2/g9a-r2/final,
+            if-no-files-found: error,
+            retention-days: 90,
+          }

@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.0",
+  "findingId": "G9A-ASM-P1-001",
+  "sequence": ["FAILING_REGRESSION", "MAVEN_JAR", "WEB_ROUTE", "FOUR_DIALECT_SQL", "SBOM_CONFIG", "STARTUP_FULL_CI"],
+  "tests": [
+    {"id":"R2-T01","plane":"Maven","assertion":"默认reactor和ruoyi-admin依赖树不含demo/generator/workflow/job"},
+    {"id":"R2-T02","plane":"JAR","assertion":"BOOT-INF/lib和Spring运行时不含四类非V1模块"},
+    {"id":"R2-T03","plane":"Web","assertion":"生产dist不含demo/generator/workflow/job页面或API"},
+    {"id":"R2-T04","plane":"SQL","assertion":"四方言初始化无演示种子、测试表和非V1菜单"},
+    {"id":"R2-T05","plane":"SBOM_CONFIG","assertion":"商业SBOM无四模块，Springdoc与WarmFlow默认关闭"},
+    {"id":"R2-T06","plane":"STARTUP_REGRESSION","assertion":"300项API、22 Owner、启动与全量CI保持通过"}
+  ]
+}

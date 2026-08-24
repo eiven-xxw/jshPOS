@@ -117,7 +117,6 @@ security:
     - /error
     - /*/api-docs
     - /*/api-docs/**
-    - /warm-flow-ui/config
 
 # 多租户配置
 tenant:
@@ -197,19 +196,13 @@ springdoc:
       name: Lion Li
       email: crazylionli@163.com
       url: https://gitee.com/dromara/RuoYi-Vue-Plus
-  #这里定义了两个分组，可定义多个，也可以不定义
+  # 商业默认装配只发布正式平台与鲸熵汇 Owner 接口；非 V1 工具不进入运行时。
   group-configs:
-    - group: 1.演示模块
-      packages-to-scan: org.dromara.demo
-    - group: 2.通用模块
+    - group: 1.通用模块
       packages-to-scan: org.dromara.web
-    - group: 3.系统模块
+    - group: 2.系统模块
       packages-to-scan: org.dromara.system
-    - group: 4.代码生成模块
-      packages-to-scan: org.dromara.generator
-    - group: 5.工作流模块
-      packages-to-scan: org.dromara.workflow
-    - group: 6.鲸熵汇基础模块
+    - group: 3.鲸熵汇基础模块
       packages-to-scan: com.jingshanghui.pos.foundation.interfaces.rest
 
 --- # Gate 0 Flyway 数据库版本治理
@@ -231,7 +224,6 @@ xss:
   # 排除链接
   excludeUrls:
     - /system/notice
-    - /warm-flow/save-json
 
 --- # 分布式锁 lock4j 全局配置
 lock4j:
@@ -268,10 +260,10 @@ websocket:
 
 --- # warm-flow工作流配置
 warm-flow:
-  # 是否开启工作流，默认true
-  enabled: true
+  # 工作流未进入商业 V1；无参数默认配置必须失败关闭。
+  enabled: false
   # 是否开启设计器ui
-  ui: true
+  ui: false
   # 是否显示流程图顶部文字
   top-text-show: true
   # 是否渲染节点悬浮提示，默认true

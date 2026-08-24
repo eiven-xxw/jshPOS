@@ -16,7 +16,6 @@
         <module>ruoyi-common-doc</module>
         <module>ruoyi-common-excel</module>
         <module>ruoyi-common-idempotent</module>
-        <module>ruoyi-common-job</module>
         <module>ruoyi-common-log</module>
         <module>ruoyi-common-mail</module>
         <module>ruoyi-common-mybatis</module>
@@ -35,6 +34,16 @@
         <module>ruoyi-common-websocket</module>
         <module>ruoyi-common-sse</module>
     </modules>
+
+    <!-- SnailJob 适配层只服务于已隔离的 ruoyi-job，不进入商业默认 reactor。 -->
+    <profiles>
+        <profile>
+            <id>non-commercial-platform-tools</id>
+            <modules>
+                <module>ruoyi-common-job</module>
+            </modules>
+        </profile>
+    </profiles>
 
     <artifactId>ruoyi-common</artifactId>
     <packaging>pom</packaging>

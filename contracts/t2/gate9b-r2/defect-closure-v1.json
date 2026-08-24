@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "1.0",
+  "findingId": "G9A-ASM-P1-001",
+  "reusedRequirements": ["T2-CORE-001", "T2-SEC-002", "T2-RDY-001"],
+  "baselineState": "OPEN",
+  "state": "VERIFIED",
+  "closureState": "VERIFIED_CLOSURE_CANDIDATE",
+  "baseline": {"jarLibraries":4,"defaultReactorModules":4,"demoControllers":19,"demoViews":2,"sqlDialectsWithDemo":4,"sbomExcludedModulesPresent":4},
+  "current": {"jarLibraries":0,"defaultReactorModules":0,"demoControllers":0,"demoViews":0,"sqlDialectsWithDemo":0,"sbomExcludedModulesPresent":0},
+  "newRequirementIds": 0,
+  "newBusinessCapabilities": 0,
+  "publishedMigrationChanges": 0,
+  "projectSponsorConfirmationRequired": true,
+  "evidenceLevel": "STATIC_AND_SOFTWARE_EXECUTION_CANDIDATE",
+  "externalExecution": {"providerNetwork":0,"realFunds":0,"realDeviceCommands":0,"realPeripheralCommands":0,"partnerFieldExecution":0,"fullAlpha":0,"productionDeployment":0}
+}

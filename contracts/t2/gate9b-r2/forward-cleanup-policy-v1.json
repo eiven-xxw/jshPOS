@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "1.0",
+  "findingId": "G9A-ASM-P1-001",
+  "baselineCommit": "b9333b85f1b46ac444b83346a6a3d44204e7d723",
+  "supportedDialects": ["mysql", "oracle", "postgres", "sqlserver"],
+  "targetMenuIds": [3, 4, 5, 115, 116, 120, 1055, 1056, 1057, 1058, 1059, 1060, 1500, 1501, 1502, 1503, 1504, 1505, 1506, 1507, 1508, 1509, 1510, 1511],
+  "baselineCounts": {
+    "targetMenus": 24,
+    "targetRoleBindings": 26,
+    "demoTables": 2,
+    "demoRows": 26
+  },
+  "demoTables": ["test_demo", "test_tree"],
+  "requiredPreflight": {
+    "signatureAlgorithm": "HMAC-SHA256",
+    "targetMenuMismatchCount": 0,
+    "nonBaselineRoleBindingCount": 0,
+    "nonBaselineDemoRowCount": 0,
+    "ownerFactReferenceCount": 0,
+    "schemaDriftCount": 0
+  },
+  "execution": {
+    "publishedMigrationChanges": 0,
+    "requiresFreshPreflightMinutes": 30,
+    "requiresMaintenanceWindow": true,
+    "requiresBeforeAndAfterEvidence": true,
+    "onAnyDrift": "FAIL_CLOSED_MANUAL_REVIEW",
+    "rollback": "FORWARD_ONLY_NO_REINSERT"
+  }
+}

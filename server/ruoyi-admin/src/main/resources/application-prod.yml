@@ -17,18 +17,6 @@ spring.boot.admin.client:
   username: ${JSH_ACTUATOR_USERNAME}
   password: ${JSH_ACTUATOR_PASSWORD}
 
---- # 可选任务调度默认关闭；显式启用时启动门禁要求受控令牌
-snail-job:
-  enabled: ${JSH_SNAIL_JOB_ENABLED:false}
-  group: ${JSH_SNAIL_JOB_GROUP:ruoyi_group}
-  token: ${JSH_SNAIL_JOB_TOKEN:}
-  server:
-    host: ${JSH_SNAIL_JOB_HOST:127.0.0.1}
-    port: ${JSH_SNAIL_JOB_PORT:17888}
-  namespace: ${spring.profiles.active}
-  port: 2${server.port}
-  host:
-
 --- # 生产数据源：禁止静态默认账号和口令
 spring:
   datasource:

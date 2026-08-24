@@ -9,7 +9,7 @@ import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** 生产 YAML 不得回归静态凭据、全量 Actuator 或默认启用外部集成。 */
+/** 生产 YAML 不得回归静态凭据、全量 Actuator 或已隔离的非 V1 平台入口。 */
 @Tag("dev")
 class ProductionConfigurationContractTest {
 
@@ -27,7 +27,8 @@ class ProductionConfigurationContractTest {
             () -> assertTrue(yaml.contains("password: ${JSH_REDIS_PASSWORD}")),
             () -> assertTrue(yaml.contains("jwt-secret-key: ${JSH_JWT_SECRET}")),
             () -> assertTrue(yaml.contains("enabled: ${JSH_BOOT_ADMIN_ENABLED:false}")),
-            () -> assertTrue(yaml.contains("enabled: ${JSH_SNAIL_JOB_ENABLED:false}")),
+            () -> assertFalse(yaml.contains("snail-job:")),
+            () -> assertFalse(yaml.contains("JSH_SNAIL_JOB_")),
             () -> assertTrue(yaml.contains("include: health,info,prometheus")),
             () -> assertTrue(yaml.contains("show-details: when_authorized"))
         );

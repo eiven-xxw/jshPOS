@@ -32,12 +32,23 @@
         <module>jshpos-saas</module>
         <module>jshpos-subscription</module>
         <module>jshpos-service</module>
-        <module>ruoyi-demo</module>
-        <module>ruoyi-generator</module>
-        <module>ruoyi-job</module>
         <module>ruoyi-system</module>
-        <module>ruoyi-workflow</module>
     </modules>
+
+    <!--
+      仅供隔离研发环境显式启用；不能进入商业默认 reactor、JAR、SBOM 或发布清单。
+      重新启用任何能力都必须经过独立 CR、Requirement ID 和安全评审。
+    -->
+    <profiles>
+        <profile>
+            <id>non-commercial-platform-tools</id>
+            <modules>
+                <module>ruoyi-generator</module>
+                <module>ruoyi-job</module>
+                <module>ruoyi-workflow</module>
+            </modules>
+        </profile>
+    </profiles>
 
     <artifactId>ruoyi-modules</artifactId>
     <packaging>pom</packaging>

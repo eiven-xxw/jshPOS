@@ -64,9 +64,6 @@ public class ProductionSecurityConfiguration {
         if (environment.getProperty("spring.boot.admin.client.enabled", Boolean.class, false)) {
             requireIdentifier(environment, "spring.boot.admin.client.url");
         }
-        if (environment.getProperty("snail-job.enabled", Boolean.class, false)) {
-            requireSecret(environment, "snail-job.token", 32);
-        }
         if (environment.getProperty("mail.enabled", Boolean.class, false)) {
             requireIdentifier(environment, "mail.host");
             requireIdentifier(environment, "mail.user");

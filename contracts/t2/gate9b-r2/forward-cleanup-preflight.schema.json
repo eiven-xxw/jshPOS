@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jshpos.example/contracts/t2/gate9b-r2/forward-cleanup-preflight.schema.json",
+  "title": "G9A-R2既有环境前向清理预检",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "findingId", "dialect", "environmentRef", "observedAt", "expiresAt", "snapshotSha256", "targetMenuCount", "targetRoleBindingCount", "demoTableCount", "demoRowCount", "targetMenuMismatchCount", "nonBaselineRoleBindingCount", "nonBaselineDemoRowCount", "ownerFactReferenceCount", "schemaDriftCount", "custodian", "signatureAlgorithm", "signature"],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "findingId": {"const": "G9A-ASM-P1-001"},
+    "dialect": {"enum": ["mysql", "oracle", "postgres", "sqlserver"]},
+    "environmentRef": {"type": "string", "minLength": 8, "maxLength": 128},
+    "observedAt": {"type": "string", "format": "date-time"},
+    "expiresAt": {"type": "string", "format": "date-time"},
+    "snapshotSha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "targetMenuCount": {"const": 24},
+    "targetRoleBindingCount": {"const": 26},
+    "demoTableCount": {"const": 2},
+    "demoRowCount": {"const": 26},
+    "targetMenuMismatchCount": {"const": 0},
+    "nonBaselineRoleBindingCount": {"const": 0},
+    "nonBaselineDemoRowCount": {"const": 0},
+    "ownerFactReferenceCount": {"const": 0},
+    "schemaDriftCount": {"const": 0},
+    "custodian": {"type": "string", "minLength": 3, "maxLength": 128},
+    "signatureAlgorithm": {"const": "HMAC-SHA256"},
+    "signature": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  }
+}

@@ -785,6 +785,32 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
 - 完成后只提交《G9A-R2 启动评审报告》和下一步正式整改指令等待项目发起人确认；
   不得自动进入 G9A-R2 正式编码、G9A-R3、完整 Alpha、现场试点或生产发布。
 
+## 4.64 当前 G9A-R2 生产装配与演示面收敛正式整改条件准入
+
+- 项目发起人已于 2026-08-24 接受 G9A-R2 准备阶段 `CONDITIONAL PASS` 和 ADR-070
+  的商业默认装配建议，授权从准备阶段最终封存提交
+  `b9333b85f1b46ac444b83346a6a3d44204e7d723` 建立
+  `t2/gate9b-sprint27b-g9a-r2-runtime`。
+- 本批只允许关闭 `G9A-ASM-P1-001`，复用已接受的
+  `T2-CORE-001/T2-SEC-002/T2-RDY-001`；不得新增 Requirement ID、业务能力、领域状态机、
+  资金/库存/租户行为或已发布迁移。
+- 必须先建立失败回归，再按 Maven/JAR、Web/路由、MySQL/Oracle/PostgreSQL/SQL Server
+  初始化、SBOM/配置、启动和完整 CI 串行收敛；前一面未验证不得将后一面作为缺陷关闭证据。
+- 商业无参数默认构建必须移除 `ruoyi-demo`；`ruoyi-generator`、`ruoyi-workflow`、
+  `ruoyi-job` 服务端源码只允许保留在默认 reactor 和商业 JAR/Web/菜单/SBOM 之外。
+  仅隐藏菜单、关闭按钮或依赖前端权限均不构成关闭。
+- `ruoyi-demo` 活动生产源码和 Vue 演示面按 ADR-070 删除，必要时仅从本基线 Git 历史恢复；
+  `src/test` 纯测试夹具和已接受 Owner 的虚构合成数据不得按名称误删。
+- 四方言新装初始化源必须移除演示菜单、角色绑定、测试表和未准入平台菜单；既有环境只允许
+  带冻结目标、摘要校验、审计与失败关闭的前向清理，禁止改写已发布 Flyway/SQLite 迁移。
+- 正式 300 项 Controller/OpenAPI、22 个 Owner、租户权限、安全、Server/Web/Flutter、
+  Android/Kotlin、MySQL/SQLite、SBOM、许可证、覆盖率和既有 Gate 必须完整回归且不得降级。
+- `T2-PAY-002/HWD-001/PRN-001/PAR-001` 继续 `BLOCKED`；`T2-UAT-001/REL-001`
+  继续 `DRAFT`；`T2-LIC-001/JSH-001` 继续 `DEFERRED`。Provider 网络、真实资金、
+  设备/外设命令、伙伴现场、完整 Alpha、生产部署和商业声明必须为 0。
+- 完成后只提交《G9A-R2 生产装配与演示面收敛独立周门禁报告》等待项目发起人确认；
+  不得自动进入 G9A-R3、完整 Alpha、现场试点或生产发布。
+
 ## 5. 工程与测试规则
 
 - 服务端采用 RuoYi-Vue-Plus 模块化单体，不得把领域逻辑写入 Controller、通用工具类或框架系统模块。

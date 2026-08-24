@@ -43,14 +43,6 @@ class ProductionSecurityConfigurationTest {
         assertStartupRejected(properties, "Actuator");
     }
 
-    @Test
-    void shouldFailStartupWhenOptionalIntegrationIsEnabledWithoutSecret() {
-        Map<String, Object> properties = validProperties();
-        properties.put("snail-job.enabled", "true");
-        properties.put("snail-job.token", "");
-        assertStartupRejected(properties, "snail-job.token");
-    }
-
     private static AnnotationConfigApplicationContext context(Map<String, Object> properties) {
         AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
         context.getEnvironment().setActiveProfiles("prod");
@@ -92,7 +84,6 @@ class ProductionSecurityConfigurationTest {
         properties.put("management.endpoint.health.show-details", "when_authorized");
         properties.put("springdoc.api-docs.enabled", "false");
         properties.put("spring.boot.admin.client.enabled", "false");
-        properties.put("snail-job.enabled", "false");
         properties.put("mail.enabled", "false");
         return properties;
     }
