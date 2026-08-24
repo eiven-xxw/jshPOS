@@ -39,6 +39,14 @@ def one(root: pathlib.Path, pattern: str) -> pathlib.Path:
     return paths[0]
 
 
+def producer(root: pathlib.Path, name: str) -> pathlib.Path:
+    """返回具名 CI 生产者目录，禁止跨 Artifact 猜测同名证据。"""
+    path = root / name
+    if not path.is_dir():
+        fail(f"producer directory missing: {name}")
+    return path
+
+
 def junit(path: pathlib.Path) -> dict[str, Any]:
     node = etree.parse(path).getroot()
     failures = int(node.attrib.get("failures", "0")) + int(node.attrib.get("errors", "0"))
@@ -154,25 +162,28 @@ def main() -> None:
     workload = load(CONTRACT_DIR / "workload-model-v1.json")
     thresholds = load(CONTRACT_DIR / "thresholds-v1.json")
     admission = load(CONTRACT_DIR / "perf002-admission.json")
-    runtime = load(one(args.bundle_dir, "formal-runtime-performance.json"))
-    dependency_faults = load(one(args.bundle_dir, "dependency-faults.json"))
-    cold = load(one(args.bundle_dir, "server-cold-start.json"))
+    formal_root = producer(args.bundle_dir, "formal-runtime")
+    owner_root = producer(args.bundle_dir, "owner-capacity")
+    pos_root = producer(args.bundle_dir, "pos-performance")
+    runtime = load(one(formal_root, "formal-runtime-performance.json"))
+    dependency_faults = load(one(formal_root, "dependency-faults.json"))
+    cold = load(one(formal_root, "server-cold-start.json"))
     if cold.get("status") != "PASS" or cold.get("milliseconds", 10**9) > thresholds["formalRuntime"]["coldStartMaxMs"]:
         fail("server cold start exceeds frozen threshold")
     validate_runtime(runtime, thresholds["formalRuntime"])
     validate_dependency_faults(dependency_faults)
 
-    catalog = load(one(args.bundle_dir, "gate1-capacity.json"))
+    catalog = load(one(owner_root, "gate1-capacity.json"))
     if [item.get("rows") for item in catalog.get("runs", [])] != workload["ownerCapacity"]["catalogRows"] \
             or not all(item.get("accepted") is True for item in catalog.get("runs", [])):
         fail("catalog 10k/100k capacity evidence invalid")
     suites = {
-        "migration": junit(one(args.bundle_dir, "TEST-*MigrationCapacityTrendTest.xml")),
-        "reporting": junit(one(args.bundle_dir, "TEST-*ReportingMigrationMySqlIT.xml")),
-        "dailyClose": junit(one(args.bundle_dir, "TEST-*DailyCloseMySqlIT.xml")),
-        "exceptionCenter": junit(one(args.bundle_dir, "TEST-*ExceptionCenterMySqlIT.xml")),
+        "migration": junit(one(owner_root, "TEST-*MigrationCapacityTrendTest.xml")),
+        "reporting": junit(one(owner_root, "TEST-*ReportingMigrationMySqlIT.xml")),
+        "dailyClose": junit(one(owner_root, "TEST-*DailyCloseMySqlIT.xml")),
+        "exceptionCenter": junit(one(owner_root, "TEST-*ExceptionCenterMySqlIT.xml")),
     }
-    pos = flutter_metrics(one(args.bundle_dir, "flutter-performance.jsonl"), thresholds["posLocal"])
+    pos = flutter_metrics(one(pos_root, "flutter-performance.jsonl"), thresholds["posLocal"])
     fault_vectors = {
         "PERF-F001": "formal runtime connection pressure",
         "PERF-F002": "bounded HTTP timeout and dependency timeout observation",
