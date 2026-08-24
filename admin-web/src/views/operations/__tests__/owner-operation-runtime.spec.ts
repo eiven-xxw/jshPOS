@@ -85,7 +85,10 @@ describe('G9A-R3B R0 受控页面操作底座', () => {
 
   it('读取空集合与失败分别进入 EMPTY 和 FAILED，且只展示安全错误信封', async () => {
     const page = useControlledOperation();
-    const empty = await page.runRead(() => Promise.resolve({ data: [] as string[] }), (value) => value.length === 0);
+    const empty = await page.runRead(
+      () => Promise.resolve({ data: [] as string[] }),
+      (value) => value.length === 0
+    );
     expect(empty).toEqual([]);
     expect(page.pageState.value).toBe('EMPTY');
 

@@ -216,19 +216,19 @@ const uploadAndPreflight = async () => {
   const correlationId = command(`upload:${upload.dataType}:${digest}`).idempotencyKey;
   const uploaded = await request(
     () =>
-    uploadMigrationFile(
-      batchId.value,
-      {
-        dataType: upload.dataType,
-        mappingVersion: '1.0',
-        charset: upload.charset,
-        sourceSystem: upload.sourceSystem,
-        custodyReference: upload.custodyReference,
-        declaredSha256: digest,
-        correlationId
-      },
-      selectedFile.value!
-    ),
+      uploadMigrationFile(
+        batchId.value,
+        {
+          dataType: upload.dataType,
+          mappingVersion: '1.0',
+          charset: upload.charset,
+          sourceSystem: upload.sourceSystem,
+          custodyReference: upload.custodyReference,
+          declaredSha256: digest,
+          correlationId
+        },
+        selectedFile.value!
+      ),
     correlationId
   );
   if (!uploaded) return;

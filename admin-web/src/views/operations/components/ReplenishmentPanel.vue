@@ -133,12 +133,18 @@ const lastReadMode = ref<'policies' | 'suggestions'>('policies');
 
 const loadPolicies = async () => {
   lastReadMode.value = 'policies';
-  const result = await runRead(() => listReplenishmentPolicies(form.storeId), (value) => value.length === 0);
+  const result = await runRead(
+    () => listReplenishmentPolicies(form.storeId),
+    (value) => value.length === 0
+  );
   if (result) policies.value = result;
 };
 const loadSuggestions = async () => {
   lastReadMode.value = 'suggestions';
-  const result = await runRead(() => listReplenishmentSuggestions(form.storeId), (value) => value.length === 0);
+  const result = await runRead(
+    () => listReplenishmentSuggestions(form.storeId),
+    (value) => value.length === 0
+  );
   if (result) suggestions.value = result;
 };
 const reloadCurrent = () => (lastReadMode.value === 'suggestions' ? loadSuggestions() : loadPolicies());

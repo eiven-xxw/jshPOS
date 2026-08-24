@@ -186,11 +186,9 @@ const run = async (name: 'claim' | 'transfer' | 'start' | 'plan' | 'repair' | 'r
     reopen: () => reopenExceptionCase(id, form.reason, i)
   };
   if (['transfer', 'plan', 'repair', 'review', 'close', 'reopen'].includes(name))
-    await ElMessageBox.confirm(
-      `案件：${id}；动作：${name}；只保存修复命令引用和结果摘要，不覆盖来源事实。确认继续？`,
-      '受控异常操作',
-      { type: 'warning' }
-    );
+    await ElMessageBox.confirm(`案件：${id}；动作：${name}；只保存修复命令引用和结果摘要，不覆盖来源事实。确认继续？`, '受控异常操作', {
+      type: 'warning'
+    });
   const result = await write(i.idempotencyKey, calls[name]);
   if (!result) return;
   detail.value = result;

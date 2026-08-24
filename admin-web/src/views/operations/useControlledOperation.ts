@@ -38,9 +38,11 @@ export const useControlledOperation = () => {
   };
 
   const parseFailure = (error: unknown, operationIdentity?: string): OwnerPageFailure => {
-    const response = (error as {
-      response?: { data?: { code?: string | number; msg?: string; message?: string }; headers?: Record<string, unknown> };
-    })?.response;
+    const response = (
+      error as {
+        response?: { data?: { code?: string | number; msg?: string; message?: string }; headers?: Record<string, unknown> };
+      }
+    )?.response;
     const correlation = response?.headers?.['x-correlation-id'] ?? response?.headers?.['X-Correlation-ID'];
     return {
       code: safeText(response?.data?.code == null ? undefined : String(response.data.code), 'OWNER_OPERATION_FAILED', 64),

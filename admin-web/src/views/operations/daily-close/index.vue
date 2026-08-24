@@ -185,7 +185,10 @@ const write = async <T,>(operationIdentity: string, work: () => Promise<{ data: 
 
 const loadList = async () => {
   if (!form.storeId) return ElMessage.warning('请先选择有权访问的门店');
-  const result = await read(() => listDailyCloses({ storeId: form.storeId!, businessDate: form.businessDate, limit: 100 }), (value) => value.length === 0);
+  const result = await read(
+    () => listDailyCloses({ storeId: form.storeId!, businessDate: form.businessDate, limit: 100 }),
+    (value) => value.length === 0
+  );
   if (result) rows.value = result;
 };
 
@@ -210,7 +213,9 @@ const runAction = async (action: 'preflight' | 'approve' | 'late-facts') => {
   const id = detail.value.close.closeId;
   if (action === 'approve' || action === 'late-facts') {
     await ElMessageBox.confirm(
-      action === 'approve' ? '审批人必须独立于创建人，且不会改写来源事实。确认继续？' : '扫描只会追加晚到差异和更正要求，不会覆盖已签署日结。确认继续？',
+      action === 'approve'
+        ? '审批人必须独立于创建人，且不会改写来源事实。确认继续？'
+        : '扫描只会追加晚到差异和更正要求，不会覆盖已签署日结。确认继续？',
       action === 'approve' ? '确认独立审批' : '确认扫描晚到事实',
       { type: 'warning' }
     );

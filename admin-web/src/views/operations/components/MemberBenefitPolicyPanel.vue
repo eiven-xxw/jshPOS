@@ -5,7 +5,7 @@
       :closable="false"
       show-icon
       title="会员等级权益与会员价（默认关闭）"
-      description="页面只提交版本和审批意图；会员价、促销组合、成交分摊与退款恢复全部由各 Owner 服务端计算。"
+      description="页面只提交版本和审批意图；会员价、促销组合、成交分摊与退款恢复全部由各 Owner 服务端计算，页面不会计算成交价。"
     />
     <OwnerPageFeedback surface-id="VUE-08" :state="pageState" :failure="pageFailure" @retry="recoverOriginalOperation" />
 
@@ -271,7 +271,13 @@ const createPrice = async () => {
         versionNo: price.versionNo,
         storeId: Number(price.storeId),
         items: [
-          { itemId: price.itemId, levelCode: price.levelCode, skuId: Number(price.skuId), unitId: Number(price.unitId), amountMinor: price.amountMinor }
+          {
+            itemId: price.itemId,
+            levelCode: price.levelCode,
+            skuId: Number(price.skuId),
+            unitId: Number(price.unitId),
+            amountMinor: price.amountMinor
+          }
         ],
         correlationId: command
       })
@@ -316,8 +322,7 @@ const publishPackage = async () => {
   if (changed) packageResult.value = changed;
 };
 
-const recoverOriginalOperation = () =>
-  ElMessage.warning('未知写结果不会重新提交；请通过审计关联标识查询原命令，确认终态后再继续操作。');
+const recoverOriginalOperation = () => ElMessage.warning('未知写结果不会重新提交；请通过审计关联标识查询原命令，确认终态后再继续操作。');
 </script>
 
 <style scoped>

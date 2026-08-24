@@ -189,11 +189,9 @@ const runAction = async (action: 'preflight' | 'approve' | 'apply' | 'checks' | 
   if (!planId.value) return ElMessage.warning('请先读取开店计划');
   const request = identity(action);
   if (['approve', 'apply', 'cancel'].includes(action)) {
-    await ElMessageBox.confirm(
-      `计划：${planId.value}；动作：${action}；只应用冻结白名单配置，不复制历史事实。确认继续？`,
-      '受控开店操作',
-      { type: 'warning' }
-    );
+    await ElMessageBox.confirm(`计划：${planId.value}；动作：${action}；只应用冻结白名单配置，不复制历史事实。确认继续？`, '受控开店操作', {
+      type: 'warning'
+    });
   }
   const calls = {
     preflight: () => preflightOnboardingPlan(planId.value, request),

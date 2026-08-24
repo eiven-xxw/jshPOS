@@ -4,7 +4,13 @@
     <el-empty v-else-if="state === 'EMPTY'" :description="emptyTitle" :data-testid="`${normalizedSurface}-empty`" />
     <div v-else-if="failure" :data-testid="`${normalizedSurface}-error`">
       <el-alert :type="alertType" :closable="false" show-icon :title="failure.message" :description="failureDescription" />
-      <el-button class="mt-2" :type="state === 'UNKNOWN' ? 'warning' : 'primary'" plain :data-testid="`${normalizedSurface}-retry`" @click="emit('retry')">
+      <el-button
+        class="mt-2"
+        :type="state === 'UNKNOWN' ? 'warning' : 'primary'"
+        plain
+        :data-testid="`${normalizedSurface}-retry`"
+        @click="emit('retry')"
+      >
         {{ state === 'UNKNOWN' ? '查询原操作结果' : '重新加载权威状态' }}
       </el-button>
     </div>

@@ -38,8 +38,8 @@ describe('T2-ADM-002 advanced operations UI', () => {
     }
   });
 
-  it('requires state version confirmation single-flight and idempotency reuse', () => {
-    for (const token of ['buildOperationConfirmation', 'ElMessageBox.confirm', 'createSingleFlight', 'retryKeys', 'STALE']) {
+  it('requires state version confirmation per-operation single-flight and idempotency reuse', () => {
+    for (const token of ['buildOperationConfirmation', 'ElMessageBox.confirm', 'pending', 'retryKeys', 'STALE', 'UNKNOWN', 'unresolved']) {
       expect(orchestration).toContain(token);
     }
     expect(orchestration).toContain('currentState');
