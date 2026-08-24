@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "1.0",
+  "gate": "T2-GATE8C-S26B",
+  "requirementId": "T2-MTN-001",
+  "baseCommit": "eb2a8fec7c102da2db291c34822a01cced768c5d",
+  "branch": "t2/gate8c-sprint26b-mtn001-runtime",
+  "status": "IN_PROGRESS",
+  "decision": "CONDITIONAL_GO",
+  "orderedFindings": [
+    "G8C-MTN-P1-001",
+    "G8C-MTN-P1-002",
+    "G8C-MTN-P1-003",
+    "G8C-MTN-P1-004",
+    "G8C-MTN-P1-005"
+  ],
+  "runtimeBehaviorChangeAllowed": false,
+  "publishedMigrationChangeAllowed": false,
+  "externalExecutionAllowed": false,
+  "evidenceCeiling": "INTERNAL_MAINTAINABILITY_HARDENING_CANDIDATE"
+}

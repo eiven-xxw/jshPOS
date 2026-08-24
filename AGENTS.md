@@ -696,6 +696,18 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
 - 必须执行治理、Server、Web、Flutter 双平台、Android/Kotlin、MySQL、SQLite、安全、依赖、SBOM、许可证、覆盖率和既有 Gate 全量回归。不得自动重跑失败 Job、降低阈值、修改已发布迁移或以内部整改解除外部证据阻断。
 - 完成后只可将 `T2-SEC-002` 更新为 `VERIFIED` 并提交独立周门禁报告等待项目发起人确认；不得自动进入可维护性、性能、发布整改、完整 Alpha 或生产发布。
 
+## 4.57 当前 T2 Gate 8C / Sprint S26-B 条件准入
+
+- 项目发起人已于 2026-08-24 接受 `T2-SEC-002 CONDITIONAL PASS`，授权其更新为 `ACCEPTED`，并授权从 SEC-002 最终封存提交 `eb2a8fec7c102da2db291c34822a01cced768c5d` 建立 `t2/gate8c-sprint26b-mtn001-runtime`。
+- 本批唯一允许准入和实现的需求为 `T2-MTN-001`；只允许串行关闭 `G8C-MTN-P1-001..005` 五个既定可维护性发现，不得新增业务能力、状态机、表、迁移、Controller、页面旅程或外部适配能力。
+- 串行顺序固定为：Service 对 SaaS 的只读端口化、OpenAPI 当前权威契约唯一化、Flyway 回调审计器修正、Foundation 锁定 SQL 迁入 XML、Flutter 结算应用服务与主页面按职责拆分。前项未通过定向验证，后项不得开始。
+- 跨 Owner 调用只能经内层端口与适配器完成；OpenAPI 历史草案必须显式标记且不得参与当前运行时权威契约；审计器兼容合法回调时不得放宽版本迁移命名和已发布迁移保护。
+- 锁定查询必须使用 Mapper XML、显式列、`resultMap` 与可信租户条件；Flutter 拆分必须保持 SQLite 单事务、幂等键、错误码、恢复语义、金额数量守恒、金标向量与故障 seed 不变。
+- 本批不得修改任何已发布 MySQL/SQLite 迁移，不得改变资金、库存、租户或其他 Owner 事实，不得通过重构引入新依赖或扩大对外 API。
+- `T2-PERF-002/T2-RDY-001` 继续 `DRAFT`；`T2-PAY-002/HWD-001/PRN-001/PAR-001` 继续 `BLOCKED`；`T2-UAT-001/REL-001` 继续 `DRAFT`；`T2-LIC-001/JSH-001` 继续 `DEFERRED`。Provider 网络、真实资金、设备/外设命令、伙伴现场、完整 Alpha、生产部署和商业声明必须为 0。
+- 必须执行治理、Server、Web、Flutter 双平台、Android/Kotlin、MySQL、SQLite、契约唯一性、迁移审计、租户权限、安全、依赖、SBOM、许可证、覆盖率和既有 Gate 全量回归。不得自动重跑失败 Job、降低阈值、跳过测试、修改历史证据或创建绿色占位。
+- 完成后只可将 `T2-MTN-001` 更新为 `VERIFIED` 并提交独立周门禁报告等待项目发起人确认；不得自动进入性能、发布整改、完整 Alpha、现场试点或生产发布。
+
 ## 5. 工程与测试规则
 
 - 服务端采用 RuoYi-Vue-Plus 模块化单体，不得把领域逻辑写入 Controller、通用工具类或框架系统模块。
