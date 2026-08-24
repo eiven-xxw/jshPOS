@@ -59,6 +59,9 @@ public class RuoYiServiceAttachmentStorageAdapter implements ServiceAttachmentSt
         } catch (IOException | NoSuchAlgorithmException exception) {
             deleteQuietly(temporary);
             throw new ServiceException("SVC-ATT-003: 附件受限流式暂存失败", 503);
+        } catch (RuntimeException exception) {
+            deleteQuietly(temporary);
+            throw new ServiceException("SVC-ATT-003: 附件暂存安全边界建立失败", 503);
         }
     }
 
@@ -102,10 +105,10 @@ public class RuoYiServiceAttachmentStorageAdapter implements ServiceAttachmentSt
         return total;
     }
 
-    private static void restrictPermissions(Path file) {
+    private static void restrictPermissions(Path file) throws IOException {
         try {
             Files.setPosixFilePermissions(file, java.nio.file.attribute.PosixFilePermissions.fromString("rw-------"));
-        } catch (IOException | UnsupportedOperationException ignored) {
+        } catch (UnsupportedOperationException ignored) {
             // Windows 不支持 POSIX 权限；随机文件名和受控目录 ACL 继续构成边界。
         }
     }
