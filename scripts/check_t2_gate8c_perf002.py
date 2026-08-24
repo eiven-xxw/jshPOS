@@ -70,7 +70,8 @@ def validate_scope() -> list[str]:
         "docs/governance/CR-T2G8C-013_perf002-ci-conditional-pass.md",
         ".github/workflows/t2-gate8c-perf002.yml",
         "scripts/check_t2_gate8c_perf002.py", "scripts/run_t2_gate8c_perf002_runtime.py",
-        "scripts/build_t2_gate8c_perf002_evidence.py",
+        "scripts/run_t2_gate8c_perf002_dependency_faults.py",
+        "scripts/build_t2_gate8c_perf002_evidence.py", "scripts/build_t2_gate8c_perf002_evidence_index.py",
     }
     allowed_prefixes = (
         "docs/t2-gate8c-perf002/", "contracts/t2/gate8c-perf002/",

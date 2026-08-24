@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-PERF-002",
+  "status": "VERIFIED",
+  "findings": {
+    "G8C-PERF-P1-001": {
+      "state": "CLOSED_INTERNAL_VERIFIED",
+      "closure": "Gate 7/8 当前代码面由正式运行栈、Owner 容量与 POS 本地三个性能平面覆盖",
+      "evidence": [
+        "contracts/t2/gate8c-perf002/workload-model-v1.json",
+        "scripts/build_t2_gate8c_perf002_evidence.py",
+        ".github/workflows/t2-gate8c-perf002.yml"
+      ]
+    },
+    "G8C-PERF-P1-002": {
+      "state": "CLOSED_INTERNAL_VERIFIED",
+      "closure": "正式 MySQL/Redis/JAR/HTTP 栈补齐并发、持续、尾延迟、资源、连接压力和依赖退化门禁",
+      "evidence": [
+        "scripts/run_t2_gate8c_perf002_runtime.py",
+        "scripts/run_t2_gate8c_perf002_dependency_faults.py",
+        "contracts/t2/gate8c-perf002/thresholds-v1.json"
+      ]
+    }
+  },
+  "openPerformanceP0": 0,
+  "openPerformanceP1": 0,
+  "newBusinessCapabilities": 0,
+  "databaseMigrationsChanged": 0,
+  "commercialSla": false,
+  "realDeviceEvidence": false,
+  "evidenceCeiling": "INTERNAL_FULL_STACK_PERFORMANCE_CANDIDATE"
+}

@@ -22,7 +22,8 @@
   "posLocal": {
     "scan1000MaxMs": 15000,
     "settlement200MaxMs": 15000,
-    "syncBacklog10000MaxMs": 30000
+    "syncBacklog10000MaxMs": 30000,
+    "dataPackage100000MaxMs": 120000
   },
   "changeControl": {
     "independentCrRequired": true,
