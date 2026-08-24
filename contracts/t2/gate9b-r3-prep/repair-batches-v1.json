@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "1.0",
+  "findingId": "G9A-UI-P1-001",
+  "serial": true,
+  "batches": [
+    {
+      "batchId": "G9A-R3A",
+      "title": "主路径、测试底座与组合支付可达性",
+      "surfaces": ["VUE-01","VUE-02","VUE-03","VUE-04","FLT-03","FLT-04","FLT-06"],
+      "entry": "G9A-R3准备阶段独立通过并经项目发起人确认",
+      "allowed": "失败回归、必要的Vue组件测试依赖评审、共享页面状态、显式权限、组合支付可信导航",
+      "exit": "7页逐维PASS且完整CI全绿"
+    },
+    {
+      "batchId": "G9A-R3B",
+      "title": "Owner运营页面与高风险写操作收口",
+      "surfaces": ["VUE-05","VUE-06","VUE-07","VUE-08","VUE-09","VUE-10","VUE-11","VUE-12","VUE-13","VUE-14","VUE-15"],
+      "entry": "G9A-R3A独立VERIFIED并经项目发起人确认",
+      "allowed": "页面状态绑定、组件测试、权限拒绝、幂等恢复和空错态，不改Owner算法",
+      "exit": "11页逐维PASS且Owner事实不变"
+    },
+    {
+      "batchId": "G9A-R3C",
+      "title": "报表、终端、SaaS服务运营与POS辅助页面收口",
+      "surfaces": ["VUE-16","VUE-17","VUE-18","VUE-19","VUE-20","FLT-01","FLT-02","FLT-05"],
+      "entry": "G9A-R3B独立VERIFIED并经项目发起人确认",
+      "allowed": "页面状态、直接测试、离线/业务日恢复和权限呈现，不新增业务能力",
+      "exit": "8页逐维PASS且外部失败关闭不变"
+    },
+    {
+      "batchId": "G9A-R3D",
+      "title": "26页三业态联合页面验收",
+      "surfaces": ["ALL_26"],
+      "entry": "G9A-R3A至R3C全部独立VERIFIED并经项目发起人确认",
+      "allowed": "仅修复汇总页面回归发现的既有P0/P1缺陷",
+      "exit": "26页验收矩阵全PASS、P0/P1为0、G9A-UI-P1-001形成关闭候选"
+    }
+  ]
+}

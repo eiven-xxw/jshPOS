@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "1.0",
+  "findingId": "G9A-UI-P1-001",
+  "surfaceCount": 26,
+  "checks": [
+    {"checkId":"UI-ACC-001","dimension":"route","acceptance":"20个Vue页面/面板均由菜单或父级装配；6个Flutter页面均有可信运行时入口且越权不可达","current":"24_OF_26_REACHABLE","status":"GAP"},
+    {"checkId":"UI-ACC-002","dimension":"buttons","acceptance":"所有服务端动作按钮具有可解释可测试状态，危险动作二次确认","current":"AUDITED_REPAIR_REQUIRED","status":"PREPARED"},
+    {"checkId":"UI-ACC-003","dimension":"permission","acceptance":"动作按钮展示权限与Controller最小权限一致，服务端始终最终授权","current":"5_SURFACES_PARTIAL_UI_GUARD_SERVER_AUTH_PASS","status":"GAP"},
+    {"checkId":"UI-ACC-004","dimension":"dataScope","acceptance":"客户端不声明tenant_id授权，组织门店范围由可信上下文与服务端裁剪","current":"STATIC_PASS_RUNTIME_ATTACK_REGRESSION_REQUIRED","status":"PREPARED"},
+    {"checkId":"UI-ACC-005","dimension":"loading_empty","acceptance":"初始、加载、空结果和完成状态可区分且不会出现空白页","current":"DIRECT_INTERACTION_EVIDENCE_INCOMPLETE","status":"GAP"},
+    {"checkId":"UI-ACC-006","dimension":"error","acceptance":"错误显示安全消息、错误码和关联标识，敏感报文不泄漏","current":"12_VUE_SURFACES_NEED_VISIBLE_STATE_OR_RECOVERY","status":"GAP"},
+    {"checkId":"UI-ACC-007","dimension":"singleFlight","acceptance":"重复点击只执行一个业务命令，重试复用原幂等键，同键异内容失败关闭","current":"SHARED_GUARD_PARTIAL_PAGE_BINDING","status":"GAP"},
+    {"checkId":"UI-ACC-008","dimension":"offline","acceptance":"POS断网明确提示并继续使用已安装包和冻结本地事实，禁止伪造外部成功","current":"3_POS_SURFACES_NEED_PAGE_LEVEL_EVIDENCE","status":"GAP"},
+    {"checkId":"UI-ACC-009","dimension":"businessDate","acceptance":"业务日由可信会话冻结，切换后旧页面不得生成新命令或静默跨日","current":"3_POS_SURFACES_NEED_INTEGRATION_EVIDENCE","status":"GAP"},
+    {"checkId":"UI-ACC-010","dimension":"recovery","acceptance":"超时、ACK丢失、UNKNOWN、重启和返回页面均观察或恢复原命令","current":"FAILURE_VECTORS_PREPARED_NOT_26_PAGE_ACCEPTED","status":"PREPARED"},
+    {"checkId":"UI-ACC-011","dimension":"directTest","acceptance":"26页均有挂载组件或Widget交互测试，源码字符串断言仅为补充","current":"4_WIDGET_13_STATIC_9_NONE","status":"GAP"},
+    {"checkId":"UI-ACC-012","dimension":"fullRegression","acceptance":"三业态、权限矩阵、离线和故障seed在Linux/Windows及既有Gate回归全绿","current":"NOT_STARTED_PREP_ONLY","status":"BLOCKED_AWAITING_SPONSOR"}
+  ],
+  "closureRule": "ALL_12_CHECKS_PASS_AND_ALL_26_SURFACES_PASS_WITH_OPEN_P0_P1_ZERO"
+}

@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "1.0",
+  "findingId": "G9A-UI-P1-001",
+  "state": "OPEN",
+  "summary": {
+    "surfaceCount": 26,
+    "runtimeReachable": 24,
+    "directWidgetInteractionEvidence": 4,
+    "vueStaticSourceAssertionOnly": 13,
+    "noDirectPageEvidence": 9,
+    "openP0": 0,
+    "openP1": 5
+  },
+  "gaps": [
+    {
+      "gapId": "G9A-R3-P1-ROUTE-001",
+      "severity": "P1",
+      "category": "RUNTIME_REACHABILITY",
+      "surfaces": ["VUE-10","FLT-06"],
+      "finding": "ReplenishmentPanel具备源码和静态测试但未被高级运营页或菜单挂载；PosTenderPage具备Widget测试但未被正式Flutter运行时引用。",
+      "closure": "通过现有高级运营与可信会话边界分别提供补货和组合支付入口，增加不可达、越权、上下文冻结与返回恢复测试。"
+    },
+    {
+      "gapId": "G9A-R3-P1-TEST-001",
+      "severity": "P1",
+      "category": "DIRECT_INTERACTION_EVIDENCE",
+      "surfaces": ["VUE-01","VUE-02","VUE-03","VUE-04","VUE-05","VUE-06","VUE-07","VUE-08","VUE-09","VUE-10","VUE-11","VUE-12","VUE-13","VUE-14","VUE-15","VUE-16","VUE-17","VUE-18","VUE-19","VUE-20","FLT-04","FLT-05"],
+      "finding": "20个Vue页面/面板没有挂载后的交互级组件测试；其中13个仅有源码字符串断言、7个没有直接页面测试；Flutter会话壳和现金管理页没有直接Widget测试。",
+      "closure": "逐页增加可执行组件/Widget测试，至少覆盖路由或装配、按钮权限、加载、空态、错误码、重复点击、失败重试及适用的离线/业务日行为；源码字符串断言只能保留为边界补充。"
+    },
+    {
+      "gapId": "G9A-R3-P1-PERM-001",
+      "severity": "P1",
+      "category": "VISIBLE_ACTION_PERMISSION",
+      "surfaces": ["VUE-01","VUE-02","VUE-03","VUE-08","VUE-20"],
+      "finding": "部分弹窗提交、会员权益/会员价状态动作或终端签发按钮依赖入口按钮和服务端权限，缺少动作按钮自身的显式权限约束。服务端最终授权未发现放宽。",
+      "closure": "每个服务端写动作按钮绑定与Controller一致的最小权限并补允许/拒绝组件测试；服务端授权继续是最终边界，禁止只靠隐藏菜单或弹窗入口。"
+    },
+    {
+      "gapId": "G9A-R3-P1-STATE-001",
+      "severity": "P1",
+      "category": "VISIBLE_STATE_AND_RECOVERY",
+      "surfaces": ["VUE-01","VUE-03","VUE-06","VUE-08","VUE-09","VUE-10","VUE-11","VUE-16","VUE-17","VUE-18","VUE-19","VUE-20"],
+      "finding": "12个Vue页面/面板的写操作未同时向用户呈现可定位的忙碌、错误码/关联标识和原幂等键恢复状态；其中部分已复用single-flight或全局拦截，但页面证据不完整。",
+      "closure": "先用失败测试固定重复点击、超时、409/权限拒绝和未知结果，再复用或扩展统一受控操作状态并在页面绑定；失败重试必须复用原幂等键。"
+    },
+    {
+      "gapId": "G9A-R3-P1-OFFLINE-001",
+      "severity": "P1",
+      "category": "OFFLINE_AND_BUSINESS_DATE_EVIDENCE",
+      "surfaces": ["FLT-01","FLT-05","FLT-06"],
+      "finding": "换货、班次现金和组合支付页面继承可信会话或冻结Owner快照，但缺少页面级证据证明断网、业务日切换和恢复后仍使用原上下文且不重新生成命令。",
+      "closure": "增加断网/重启/业务日切换Widget与应用集成向量，证明页面显示冻结上下文、原命令恢复和失败关闭；不得在页面重新计算业务日或创建替代命令。"
+    }
+  ]
+}

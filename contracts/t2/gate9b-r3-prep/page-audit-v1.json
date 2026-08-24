@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "1.0",
+  "findingId": "G9A-UI-P1-001",
+  "auditDimensions": ["route","buttons","permission","dataScope","loading","empty","error","singleFlight","offline","businessDate","recovery","directTest"],
+  "globalFindings": {
+    "serverAuthorization": "PASS_FROM_G9A_R1_300_OF_300_WITHOUT_PERMISSION_RELAXATION",
+    "trustedTenantBoundary": "PASS_STATIC_NO_NEW_CLIENT_TENANT_AUTHORITY",
+    "directDatabaseOrDevicePrimitive": "PASS_STATIC_NONE_IN_26_SURFACES",
+    "finalUiAcceptance": "NOT_ACHIEVED"
+  },
+  "surfaceAssessments": [
+    {"surfaceId":"VUE-01","classification":"REPAIR_REQUIRED","gaps":["G9A-R3-P1-TEST-001","G9A-R3-P1-PERM-001","G9A-R3-P1-STATE-001"]},
+    {"surfaceId":"VUE-02","classification":"REPAIR_REQUIRED","gaps":["G9A-R3-P1-TEST-001","G9A-R3-P1-PERM-001"]},
+    {"surfaceId":"VUE-03","classification":"REPAIR_REQUIRED","gaps":["G9A-R3-P1-TEST-001","G9A-R3-P1-PERM-001","G9A-R3-P1-STATE-001"]},
+    {"surfaceId":"VUE-04","classification":"INTERACTION_EVIDENCE_REQUIRED","gaps":["G9A-R3-P1-TEST-001"]},
+    {"surfaceId":"VUE-05","classification":"INTERACTION_EVIDENCE_REQUIRED","gaps":["G9A-R3-P1-TEST-001"]},
+    {"surfaceId":"VUE-06","classification":"REPAIR_REQUIRED","gaps":["G9A-R3-P1-TEST-001","G9A-R3-P1-STATE-001"]},
+    {"surfaceId":"VUE-07","classification":"INTERACTION_EVIDENCE_REQUIRED","gaps":["G9A-R3-P1-TEST-001"]},
+    {"surfaceId":"VUE-08","classification":"REPAIR_REQUIRED","gaps":["G9A-R3-P1-TEST-001","G9A-R3-P1-PERM-001","G9A-R3-P1-STATE-001"]},
+    {"surfaceId":"VUE-09","classification":"REPAIR_REQUIRED","gaps":["G9A-R3-P1-TEST-001","G9A-R3-P1-STATE-001"]},
+    {"surfaceId":"VUE-10","classification":"REPAIR_REQUIRED","gaps":["G9A-R3-P1-ROUTE-001","G9A-R3-P1-TEST-001","G9A-R3-P1-STATE-001"]},
+    {"surfaceId":"VUE-11","classification":"REPAIR_REQUIRED","gaps":["G9A-R3-P1-TEST-001","G9A-R3-P1-STATE-001"]},
+    {"surfaceId":"VUE-12","classification":"INTERACTION_EVIDENCE_REQUIRED","gaps":["G9A-R3-P1-TEST-001"]},
+    {"surfaceId":"VUE-13","classification":"INTERACTION_EVIDENCE_REQUIRED","gaps":["G9A-R3-P1-TEST-001"]},
+    {"surfaceId":"VUE-14","classification":"INTERACTION_EVIDENCE_REQUIRED","gaps":["G9A-R3-P1-TEST-001"]},
+    {"surfaceId":"VUE-15","classification":"INTERACTION_EVIDENCE_REQUIRED","gaps":["G9A-R3-P1-TEST-001"]},
+    {"surfaceId":"VUE-16","classification":"REPAIR_REQUIRED","gaps":["G9A-R3-P1-TEST-001","G9A-R3-P1-STATE-001"]},
+    {"surfaceId":"VUE-17","classification":"REPAIR_REQUIRED","gaps":["G9A-R3-P1-TEST-001","G9A-R3-P1-STATE-001"]},
+    {"surfaceId":"VUE-18","classification":"REPAIR_REQUIRED","gaps":["G9A-R3-P1-TEST-001","G9A-R3-P1-STATE-001"]},
+    {"surfaceId":"VUE-19","classification":"REPAIR_REQUIRED","gaps":["G9A-R3-P1-TEST-001","G9A-R3-P1-STATE-001"]},
+    {"surfaceId":"VUE-20","classification":"REPAIR_REQUIRED","gaps":["G9A-R3-P1-TEST-001","G9A-R3-P1-PERM-001","G9A-R3-P1-STATE-001"]},
+    {"surfaceId":"FLT-01","classification":"INTEGRATION_EVIDENCE_REQUIRED","gaps":["G9A-R3-P1-OFFLINE-001"]},
+    {"surfaceId":"FLT-02","classification":"BASELINE_BEHAVIOR_EVIDENCED","gaps":[]},
+    {"surfaceId":"FLT-03","classification":"BASELINE_BEHAVIOR_EVIDENCED","gaps":[]},
+    {"surfaceId":"FLT-04","classification":"INTERACTION_EVIDENCE_REQUIRED","gaps":["G9A-R3-P1-TEST-001"]},
+    {"surfaceId":"FLT-05","classification":"REPAIR_OR_EVIDENCE_REQUIRED","gaps":["G9A-R3-P1-TEST-001","G9A-R3-P1-OFFLINE-001"]},
+    {"surfaceId":"FLT-06","classification":"REPAIR_REQUIRED","gaps":["G9A-R3-P1-ROUTE-001","G9A-R3-P1-OFFLINE-001"]}
+  ],
+  "decision": "26_SURFACES_FROZEN_24_REACHABLE_G9A_UI_REMAINS_OPEN"
+}
