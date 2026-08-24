@@ -1,1 +1,19 @@
-TODO: Add your license here.
+鲸熵汇 POS Device Adapter
+INTERNAL PROPRIETARY SOFTWARE NOTICE
+
+Copyright (c) 2026 鲸熵汇项目所有者. All rights reserved.
+
+This package is proprietary software maintained for use inside the authorized
+鲸熵汇收银系统 product and its approved delivery process. It is not published
+as a standalone public package. Copying, redistribution, sublicensing, reverse
+engineering, or use outside an authorized product delivery requires prior
+written approval from the software owner.
+
+This notice applies only to the original pos_device_adapter package code. The
+licenses and notices of Flutter, plugin_platform_interface, Android, Kotlin,
+device-vendor SDKs, and other third-party components remain governed by their
+respective terms. This internal notice does not close T2-LIC-001 or authorize
+commercial distribution of any third-party dependency.
+
+THE SOFTWARE IS PROVIDED FOR AUTHORIZED INTERNAL USE "AS IS", WITHOUT WARRANTY
+OF ANY KIND, TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW.
