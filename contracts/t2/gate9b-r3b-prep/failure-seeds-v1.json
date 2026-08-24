@@ -1,0 +1,67 @@
+{
+  "schemaVersion": "1.0",
+  "findingId": "G9A-UI-P1-001",
+  "state": "OPEN",
+  "summary": {"openP0": 0, "openP1": 7, "auditCorrections": 1},
+  "seeds": [
+    {
+      "seedId": "R3B-P1-TEST-001",
+      "surfaces": ["VUE-05", "VUE-06", "VUE-07", "VUE-08", "VUE-09", "VUE-10", "VUE-11", "VUE-12", "VUE-15"],
+      "condition": "现有测试只读取源码字符串而不挂载组件",
+      "expectedFailure": "按钮权限、加载、空态、错误、重复点击和恢复行为没有交互证据",
+      "requiredEvidence": "每页至少一个真实mount测试集，覆盖许可与拒绝、成功、空态、失败、重复点击和原命令恢复"
+    },
+    {
+      "seedId": "R3B-P1-TEST-002",
+      "surfaces": ["VUE-13", "VUE-14"],
+      "condition": "页面没有任何直接测试文件",
+      "expectedFailure": "高风险写操作无法由页面级回归复现",
+      "requiredEvidence": "新增挂载交互测试并进入现有Web CI，禁止源码断言替代"
+    },
+    {
+      "seedId": "R3B-P1-PERM-001",
+      "surfaces": ["VUE-08"],
+      "condition": "会员权益预检和会员价预检/审批/发布四个按钮缺少v-hasPermi",
+      "expectedFailure": "无对应展示权限的用户仍可看到高风险动作",
+      "requiredEvidence": "分别绑定member:benefit:validate与pricing:member-price:publish，并证明Controller继续最终拒绝"
+    },
+    {
+      "seedId": "R3B-P1-STATE-001",
+      "surfaces": ["VUE-06", "VUE-07", "VUE-09", "VUE-10", "VUE-11"],
+      "condition": "页面调用共享受控操作但未完整呈现安全错误、关联标识、EMPTY/FAILED/UNKNOWN与可执行恢复入口",
+      "expectedFailure": "Owner超时或结果未知时，操作者无法判断是重试读取还是继续原命令",
+      "requiredEvidence": "共享状态只负责技术状态，页面呈现Owner语义、原键恢复与查询原结果，禁止生成替代命令"
+    },
+    {
+      "seedId": "R3B-P1-RECOVERY-001",
+      "surfaces": ["VUE-08", "VUE-13", "VUE-14"],
+      "condition": "写动作每次调用均生成新的operation/command ID，失败后没有按对象和动作保留原键",
+      "expectedFailure": "超时、ACK丢失或未知结果后再次点击可能创建第二个业务命令",
+      "requiredEvidence": "同对象同动作失败复用原幂等键和内容摘要；确认成功后才清理；UNKNOWN只查询或观察"
+    },
+    {
+      "seedId": "R3B-P1-FEEDBACK-001",
+      "surfaces": ["VUE-05", "VUE-12", "VUE-13", "VUE-14", "VUE-15"],
+      "condition": "页面只有共享loading或全局错误，缺少稳定的EMPTY/FAILED状态、安全错误码与关联标识",
+      "expectedFailure": "空结果或失败表现为无内容/瞬时消息，无法安全恢复与审计",
+      "requiredEvidence": "页面内具名状态、安全消息、错误码、关联标识、重载/恢复原操作入口"
+    },
+    {
+      "seedId": "R3B-P1-CONFIRM-001",
+      "surfaces": ["VUE-06", "VUE-07", "VUE-08", "VUE-09", "VUE-10", "VUE-11", "VUE-13", "VUE-14", "VUE-15"],
+      "condition": "发布、撤回、重建、审批入账、修复、批次策略或开店应用等不可逆/高影响动作的二次确认与摘要展示不完整",
+      "expectedFailure": "操作者可在未核对对象、版本、范围和后果时触发高风险命令",
+      "requiredEvidence": "只对冻结的高风险动作增加二次确认，显示对象/版本/门店/影响与失败关闭边界；不把确认框当服务端授权"
+    }
+  ],
+  "auditCorrections": [
+    {
+      "correctionId": "R3B-AUDIT-CORRECTION-001",
+      "surfaceId": "VUE-10",
+      "previousConclusion": "ORPHANED_EMBEDDED_SURFACE",
+      "correctedConclusion": "REACHABLE_VIA_ADVANCED_TO_SUPPLY_TO_REPLENISHMENT",
+      "evidence": ["admin-web/src/views/operations/advanced/index.vue", "admin-web/src/views/operations/components/SupplyPanel.vue"],
+      "runtimeChangeRequired": false
+    }
+  ]
+}

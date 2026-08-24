@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0",
+  "dimensions": ["route", "buttons", "permission", "dataScope", "loading", "empty", "error", "singleFlight", "idempotencyRecovery", "dangerConfirmation", "ownerInvariant", "mountedInteraction"],
+  "requiredForEverySurface": [
+    "正式入口或完整父子装配链可达",
+    "每个写按钮与Controller最小权限一致且服务端最终授权",
+    "可信tenant_id与门店数据范围越权失败关闭",
+    "加载与空结果为可见具名状态",
+    "安全错误包含稳定错误码和关联标识，不泄露Secret/PII/堆栈",
+    "重复点击只发送一个在途命令",
+    "失败恢复复用原幂等键与内容摘要，UNKNOWN只观察",
+    "冻结的高风险动作展示对象/版本/范围并二次确认",
+    "不复制Owner算法、不跨Owner持久化",
+    "真实mount后交互测试进入Web CI"
+  ],
+  "faultVectors": ["permission_denied", "cross_tenant", "cross_store", "empty_result", "http_4xx", "http_5xx", "timeout_unknown", "duplicate_click", "stale_version", "same_key_different_content", "owner_partial_failure", "component_remount"],
+  "surfaceSpecific": {
+    "VUE-05": ["文件预检失败", "Owner部分成功", "检查点恢复", "摘要漂移", "激活中断"],
+    "VUE-06": ["真实PII拒绝", "规则版本冲突", "积分审批职责分离", "隐私请求失败"],
+    "VUE-07": ["投影重建失败", "盘点并发版本", "库存/成本流水不变"],
+    "VUE-08": ["四个缺失权限", "等级过期", "会员价发布失败", "旧权益包"],
+    "VUE-09": ["摘要/签名错误", "待同步Outbox", "UNKNOWN支付退款", "终端吊销"],
+    "VUE-10": ["两级组件可达", "规则过期", "建议STALE", "重复转采购草稿"],
+    "VUE-11": ["采购收货部分失败", "调拨ACK丢失", "目的成本继承", "重复入账"],
+    "VUE-12": ["未关班次", "独立审批", "晚到事实", "业务日/时区边界"],
+    "VUE-13": ["认领租约竞态", "Owner超时", "原修复命令恢复", "关闭后重现"],
+    "VUE-14": ["非社区模板禁用", "闰年到期日", "过期禁售", "批次包损坏"],
+    "VUE-15": ["跨租户复制拒绝", "Secret/PII过滤", "外部BLOCKED呈现", "开店中断恢复"]
+  },
+  "exit": {"openP0": 0, "openP1": 0, "mountedSurfaceCount": 11, "ownerFactChanges": 0, "externalExecution": 0}
+}

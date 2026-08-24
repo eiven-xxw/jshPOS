@@ -1,0 +1,129 @@
+{
+  "schemaVersion": "1.0",
+  "gate": "T2-GATE9B-G9A-R3B-PREP",
+  "surfaceCount": 11,
+  "surfaces": [
+    {
+      "surfaceId": "VUE-05",
+      "title": "开业资料迁移",
+      "path": "admin-web/src/views/operations/business-migration/index.vue",
+      "requirements": ["T2-DMT-001"],
+      "owner": "Migration",
+      "routeChain": ["menu:operations/business-migration/index"],
+      "routeEvidence": "server/ruoyi-modules/jshpos-migration/src/main/resources/db/migration/V202608220065__gate7c_business_migration_permissions.sql",
+      "currentDirectTest": "STATIC_SOURCE_ASSERTION",
+      "testEvidence": "admin-web/src/views/operations/__tests__/business-migration-view.spec.ts"
+    },
+    {
+      "surfaceId": "VUE-06",
+      "title": "促销、会员隐私与积分",
+      "path": "admin-web/src/views/operations/components/CustomerPromotionPanel.vue",
+      "requirements": ["T2-ADM-002", "T2-PRM-001", "T2-PRM-002"],
+      "owner": "Promotion/Member",
+      "routeChain": ["menu:operations/advanced/index", "component:CustomerPromotionPanel"],
+      "routeEvidence": "admin-web/src/views/operations/advanced/index.vue",
+      "currentDirectTest": "STATIC_SOURCE_ASSERTION",
+      "testEvidence": "admin-web/src/views/operations/__tests__/advanced-view.spec.ts"
+    },
+    {
+      "surfaceId": "VUE-07",
+      "title": "库存、成本与盘点",
+      "path": "admin-web/src/views/operations/components/InventoryCostPanel.vue",
+      "requirements": ["T2-ADM-002", "T2-INV-001", "T2-CST-001"],
+      "owner": "Inventory/Costing",
+      "routeChain": ["menu:operations/advanced/index", "component:InventoryCostPanel"],
+      "routeEvidence": "admin-web/src/views/operations/advanced/index.vue",
+      "currentDirectTest": "STATIC_SOURCE_ASSERTION",
+      "testEvidence": "admin-web/src/views/operations/__tests__/advanced-view.spec.ts"
+    },
+    {
+      "surfaceId": "VUE-08",
+      "title": "会员等级权益与会员价",
+      "path": "admin-web/src/views/operations/components/MemberBenefitPolicyPanel.vue",
+      "requirements": ["T2-MEM-003"],
+      "owner": "Member/Pricing/Promotion",
+      "routeChain": ["menu:operations/advanced/index", "component:CustomerPromotionPanel", "component:MemberBenefitPolicyPanel"],
+      "routeEvidence": "admin-web/src/views/operations/components/CustomerPromotionPanel.vue",
+      "currentDirectTest": "STATIC_SOURCE_ASSERTION",
+      "testEvidence": "admin-web/src/views/operations/__tests__/member-benefit-view.spec.ts"
+    },
+    {
+      "surfaceId": "VUE-09",
+      "title": "发布与灰度治理",
+      "path": "admin-web/src/views/operations/components/ReleasePanel.vue",
+      "requirements": ["T2-ADM-002", "T2-UPG-001"],
+      "owner": "Release",
+      "routeChain": ["menu:operations/advanced/index", "component:ReleasePanel"],
+      "routeEvidence": "admin-web/src/views/operations/advanced/index.vue",
+      "currentDirectTest": "STATIC_SOURCE_ASSERTION",
+      "testEvidence": "admin-web/src/views/operations/__tests__/advanced-view.spec.ts"
+    },
+    {
+      "surfaceId": "VUE-10",
+      "title": "缺货预警与补货建议",
+      "path": "admin-web/src/views/operations/components/ReplenishmentPanel.vue",
+      "requirements": ["T2-RPL-001"],
+      "owner": "Replenishment/Procurement",
+      "routeChain": ["menu:operations/advanced/index", "component:SupplyPanel", "component:ReplenishmentPanel"],
+      "routeEvidence": "admin-web/src/views/operations/components/SupplyPanel.vue",
+      "currentDirectTest": "STATIC_SOURCE_ASSERTION",
+      "testEvidence": "admin-web/src/views/operations/__tests__/replenishment-view.spec.ts",
+      "auditCorrection": "旧审计只检查Advanced对Replenishment的直接引用而误判不可达；当前两级装配链已存在，运行时无须新增路由"
+    },
+    {
+      "surfaceId": "VUE-11",
+      "title": "供应商、采购与调拨",
+      "path": "admin-web/src/views/operations/components/SupplyPanel.vue",
+      "requirements": ["T2-ADM-002", "T2-PUR-001", "T2-TRF-001"],
+      "owner": "Procurement/Transfer",
+      "routeChain": ["menu:operations/advanced/index", "component:SupplyPanel"],
+      "routeEvidence": "admin-web/src/views/operations/advanced/index.vue",
+      "currentDirectTest": "STATIC_SOURCE_ASSERTION",
+      "testEvidence": "admin-web/src/views/operations/__tests__/advanced-view.spec.ts"
+    },
+    {
+      "surfaceId": "VUE-12",
+      "title": "门店业务日日结",
+      "path": "admin-web/src/views/operations/daily-close/index.vue",
+      "requirements": ["T2-CLS-001"],
+      "owner": "Operations/DailyClose",
+      "routeChain": ["menu:operations/daily-close/index"],
+      "routeEvidence": "server/ruoyi-modules/jshpos-operations/src/main/resources/db/migration/V202608230072__gate7d_daily_close_permissions.sql",
+      "currentDirectTest": "STATIC_SOURCE_ASSERTION",
+      "testEvidence": "admin-web/src/views/operations/__tests__/daily-close-view.spec.ts"
+    },
+    {
+      "surfaceId": "VUE-13",
+      "title": "统一异常中心",
+      "path": "admin-web/src/views/operations/exception-center/index.vue",
+      "requirements": ["T2-EXC-001"],
+      "owner": "Operations/Exception",
+      "routeChain": ["menu:operations/exception-center/index"],
+      "routeEvidence": "server/ruoyi-modules/jshpos-operations/src/main/resources/db/migration/V202608230074__gate7d_exception_center_permissions.sql",
+      "currentDirectTest": "NONE",
+      "testEvidence": null
+    },
+    {
+      "surfaceId": "VUE-14",
+      "title": "社区超市批次与效期",
+      "path": "admin-web/src/views/operations/lot-expiry/index.vue",
+      "requirements": ["T2-LOT-001"],
+      "owner": "Catalog/Inventory",
+      "routeChain": ["menu:operations/lot-expiry/index"],
+      "routeEvidence": "server/ruoyi-modules/jshpos-inventory/src/main/resources/db/migration/V202608230070__gate7c_lot_permissions.sql",
+      "currentDirectTest": "NONE",
+      "testEvidence": null
+    },
+    {
+      "surfaceId": "VUE-15",
+      "title": "门店复制与开店检查",
+      "path": "admin-web/src/views/operations/store-onboarding/index.vue",
+      "requirements": ["T2-ONB-001"],
+      "owner": "Onboarding",
+      "routeChain": ["menu:operations/store-onboarding/index"],
+      "routeEvidence": "server/ruoyi-modules/jshpos-onboarding/src/main/resources/db/migration/V202608230067__gate7c_store_onboarding_permissions.sql",
+      "currentDirectTest": "STATIC_SOURCE_ASSERTION",
+      "testEvidence": "admin-web/src/views/operations/__tests__/store-onboarding-view.spec.ts"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "1.0",
+  "entries": [
+    {"surfaceId":"VUE-05","owners":["Migration","Catalog","Procurement","Inventory","Member"],"mustPreserve":["Migration只编排staging/预检/检查点/对账","业务事实只经各Owner正式端口写入","激活前双人审批且所有必需Owner已RECONCILED","期初库存激活后只以新流水修正"],"forbidden":["直接写Owner私有表","绕过预检部分激活","删除已被业务引用的事实"]},
+    {"surfaceId":"VUE-06","owners":["Promotion","Member"],"mustPreserve":["促销金额与解释链由Promotion计算","会员身份最小化且积分事实只追加","隐私请求和积分调整经服务端权限与审计"],"forbidden":["前端重算优惠或积分","输入真实PII","覆盖历史积分流水"]},
+    {"surfaceId":"VUE-07","owners":["Inventory","Costing"],"mustPreserve":["库存和成本流水不可变","余额投影可重建","盘点入账只追加正式流水","数量与成本使用精确数值"],"forbidden":["人工覆盖余额或历史成本","前端计算库存或移动平均成本","跨Owner直接写表"]},
+    {"surfaceId":"VUE-08","owners":["Member","Pricing","Promotion","Order","Refund"],"mustPreserve":["权益与会员价版本化且默认关闭","定价促销顺序和金额由Owner决定","成交冻结权益/会员价/促销摘要","退款读取原成交快照"],"forbidden":["按当前等级重算退款","在页面扩散PII","前端合并定价算法"]},
+    {"surfaceId":"VUE-09","owners":["Release","Terminal"],"mustPreserve":["发布物绑定摘要签名兼容窗口和范围","吊销终端/待同步/UNKNOWN/营业时段失败关闭","迁移只前进并安全前向修复"],"forbidden":["真实设备命令","伪造验签或健康成功","绕过外部硬件阻断"]},
+    {"surfaceId":"VUE-10","owners":["Replenishment","Inventory","Procurement"],"mustPreserve":["建议只消费冻结库存检查点和版本规则","规则确定性且可解释","转采购只创建DRAFT并绑定原建议"],"forbidden":["自动下单或审批","直接修改库存/采购事实","AI黑盒补货"]},
+    {"surfaceId":"VUE-11","owners":["Procurement","Transfer","Inventory","Costing"],"mustPreserve":["采购和调拨单据由各Owner独占","库存效果只追加库存流水","调拨收货继承来源发出成本快照","发出和收货是独立幂等事实"],"forbidden":["跨仓大事务覆盖余额","客户端提交成本结果","直接改历史流水"]},
+    {"surfaceId":"VUE-12","owners":["Operations/DailyClose"],"mustPreserve":["CLOSED日结只追加且不可覆盖","开始人与审批签署人分离","晚到事实形成差异和更正版本","金额与权威Owner逐日守恒"],"forbidden":["用报表覆盖权威事实","重开或改写已签署日结","客户端提交权威金额或完成状态"]},
+    {"surfaceId":"VUE-13","owners":["Operations/Exception","SourceOwners"],"mustPreserve":["异常中心只保存案件与修复命令引用","修复由来源Owner具名端口执行","关闭需可验证结果和独立复核","UNKNOWN资金只观察收敛"],"forbidden":["直接修改来源Owner事实","重新生成支付退款业务命令","覆盖历史案件状态"]},
+    {"surfaceId":"VUE-14","owners":["Catalog","Inventory"],"mustPreserve":["批次能力仅社区超市模板启用","批次数量事实归Inventory","FEFO和过期判断使用冻结规则与业务时区","成本继续仓级移动加权"],"forbidden":["引入批次成本或复杂WMS","客户端决定过期状态","直接修改批次余额"]},
+    {"surfaceId":"VUE-15","owners":["Onboarding","Foundation","Catalog","Pricing","Terminal"],"mustPreserve":["只复制白名单配置选择与版本引用","外部P0未解阻显示BLOCKED/UNAVAILABLE","模板原子切换并安全回退","产生事实后只用新配置版本修复"],"forbidden":["复制Secret/PII/历史事实/库存余额","伪造外部检查通过","删除或覆盖已营业门店"]}
+  ]
+}

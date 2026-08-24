@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "1.0",
+  "serial": true,
+  "runtimeAuthorized": false,
+  "steps": [
+    {"order":0,"stepId":"R3B-R0","scope":["test-harness","useControlledOperation"],"purpose":"先冻结共享页面状态、UNKNOWN、单航班和原幂等键语义；不得改变Owner/API","exit":"共享失败seed先红后绿，锁文件和供应链无新增漂移"},
+    {"order":1,"stepId":"R3B-R1","scope":["VUE-08"],"purpose":"先关闭四个最小权限缺口和原命令恢复","exit":"权限、状态、危险操作和mount测试独立PASS"},
+    {"order":2,"stepId":"R3B-R2","scope":["VUE-07"],"purpose":"保护库存/成本/盘点不可变事实","exit":"投影重建、盘点审批、空错态和重复点击PASS"},
+    {"order":3,"stepId":"R3B-R3","scope":["VUE-11", "VUE-10"],"purpose":"先供应链再验证嵌套补货可达性和建议转草稿","exit":"采购/调拨/补货独立状态与Owner边界PASS"},
+    {"order":4,"stepId":"R3B-R4","scope":["VUE-09"],"purpose":"收敛合成发布和灰度高风险操作","exit":"签名摘要、兼容、失败关闭和mount测试PASS，真实设备命令仍为0"},
+    {"order":5,"stepId":"R3B-R5","scope":["VUE-06"],"purpose":"收敛促销、会员隐私和积分操作","exit":"PII、金额算法、积分历史与权限边界PASS"},
+    {"order":6,"stepId":"R3B-R6","scope":["VUE-05"],"purpose":"收敛迁移预检、审批、Saga恢复和激活","exit":"原检查点恢复、零差异激活和失败清理PASS"},
+    {"order":7,"stepId":"R3B-R7","scope":["VUE-12"],"purpose":"收敛只追加日结与更正版本交互","exit":"独立审批、签署、晚到事实与金额守恒PASS"},
+    {"order":8,"stepId":"R3B-R8","scope":["VUE-13"],"purpose":"收敛异常案件原修复命令和独立复核","exit":"租约、UNKNOWN、修复恢复、关闭重开PASS"},
+    {"order":9,"stepId":"R3B-R9","scope":["VUE-14"],"purpose":"收敛社区超市批次策略与临期查询","exit":"模板开关、业务日、原命令恢复和外部边界PASS"},
+    {"order":10,"stepId":"R3B-R10","scope":["VUE-15"],"purpose":"收敛白名单开店编排和外部失败关闭","exit":"检查、审批、应用、开店与安全回退PASS"},
+    {"order":11,"stepId":"R3B-R11","scope":["ALL_11"],"purpose":"联合交互与完整CI验收","exit":"11页十二维全PASS、Owner事实不变、P0/P1为0，形成R3B VERIFIED候选"}
+  ]
+}
