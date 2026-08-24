@@ -7,6 +7,7 @@
       title="只允许合成会员与既有促销规则"
       description="促销金额由 Promotion Owner 计算；会员身份只允许虚构 MEMBER_CODE，不得在本 Sprint 输入真实手机号、证件或其他 PII。"
     />
+    <OwnerPageFeedback surface-id="VUE-06" :state="pageState" :failure="pageFailure" @retry="reloadCurrent" />
     <el-tabs class="mt-3" type="border-card">
       <el-tab-pane label="促销规则生命周期">
         <el-form label-width="115px" class="form-grid">
@@ -59,7 +60,9 @@
           <el-form-item label="虚构会员码"><el-input v-model="member.identityValue" class="medium-input" show-password /></el-form-item>
           <el-form-item>
             <el-button v-hasPermi="['member:profile:create']" type="primary" @click="createSyntheticMember">创建虚构会员</el-button>
-            <el-button v-hasPermi="['member:profile:read']" @click="resolveSyntheticMember">安全解析</el-button>
+            <el-button v-hasPermi="['member:profile:read']" data-testid="member-resolve" :disabled="submitting" @click="resolveSyntheticMember"
+              >安全解析</el-button
+            >
           </el-form-item>
         </el-form>
         <el-descriptions v-if="memberResult" :column="4" border>
@@ -132,8 +135,9 @@ import type { OwnerOperationView, PointsAccountView, ResolvedMemberView, RuleVer
 import { exactDecimal } from '../model';
 import { useControlledOperation } from '../useControlledOperation';
 import MemberBenefitPolicyPanel from './MemberBenefitPolicyPanel.vue';
+import OwnerPageFeedback from './OwnerPageFeedback.vue';
 
-const { runRead, runControlled } = useControlledOperation();
+const { pageState, pageFailure, submitting, runRead, runControlled } = useControlledOperation();
 const promotion = reactive({
   ruleId: newOperationCommandId(),
   ruleVersionId: newOperationCommandId(),
@@ -151,6 +155,11 @@ const promotionResult = ref<RuleVersionView>();
 const member = reactive({
   memberId: newOperationCommandId(),
   identityId: newOperationCommandId(),
+  consentId: newOperationCommandId(),
+  privacyRequestId: newOperationCommandId(),
+  pointsLedgerId: newOperationCommandId(),
+  approvalRef: newOperationCommandId(),
+  pointsOccurredAt: new Date().toISOString(),
   storeId: '1101',
   identityValue: 'SYN-MEMBER-0001',
   consentState: 'GRANTED' as 'GRANTED' | 'REVOKED',
@@ -162,6 +171,7 @@ const memberResult = ref<ResolvedMemberView>();
 const memberWriteResult = ref<OwnerOperationView>();
 const points = ref<PointsAccountView>();
 const activeMemberId = computed(() => memberResult.value?.member.memberId || (memberWriteResult.value?.memberId as string | undefined));
+const lastReadMode = ref<'member' | 'points'>('member');
 
 const createRule = async () => {
   const benefit =
@@ -254,9 +264,11 @@ const createSyntheticMember = async () => {
 
 const resolveSyntheticMember = async () => {
   if (!member.identityValue.startsWith('SYN-')) return ElMessage.error('本 Sprint 禁止输入真实 PII');
-  memberResult.value = await runRead(() =>
+  lastReadMode.value = 'member';
+  const result = await runRead(() =>
     resolveMember({ storeId: Number(member.storeId), identityType: 'MEMBER_CODE', identityValue: member.identityValue })
   );
+  if (result) memberResult.value = result;
 };
 
 const recordConsent = async () => {
@@ -272,7 +284,7 @@ const recordConsent = async () => {
     execute: (key) =>
       recordMemberConsent(activeMemberId.value!, {
         commandId: key,
-        consentId: newOperationCommandId(),
+        consentId: member.consentId,
         purposeCode: 'LOYALTY_PROGRAM',
         policyVersion: 'synthetic-v1',
         state: member.consentState,
@@ -285,10 +297,9 @@ const recordConsent = async () => {
 
 const requestPrivacy = async () => {
   if (!activeMemberId.value) return;
-  const requestId = newOperationCommandId();
   const changed = await runControlled({
     owner: 'Member.Privacy',
-    objectId: requestId,
+    objectId: member.privacyRequestId,
     currentState: 'LOCAL_DRAFT',
     currentVersion: 0,
     action: member.privacyType,
@@ -297,7 +308,7 @@ const requestPrivacy = async () => {
     execute: (key) =>
       createPrivacyRequest(activeMemberId.value!, {
         commandId: key,
-        requestId,
+        requestId: member.privacyRequestId,
         requestType: member.privacyType,
         reason: '内部合成隐私请求',
         correlationId: key
@@ -308,8 +319,12 @@ const requestPrivacy = async () => {
 
 const loadPoints = async () => {
   if (!activeMemberId.value) return;
-  points.value = await runRead(() => getMemberPoints(activeMemberId.value!, member.storeId));
+  lastReadMode.value = 'points';
+  const result = await runRead(() => getMemberPoints(activeMemberId.value!, member.storeId));
+  if (result) points.value = result;
 };
+
+const reloadCurrent = () => (lastReadMode.value === 'points' ? loadPoints() : resolveSyntheticMember());
 
 const adjustPoints = async () => {
   if (!points.value || !activeMemberId.value) return ElMessage.warning('请先查询积分服务端版本');
@@ -324,14 +339,14 @@ const adjustPoints = async () => {
     execute: (key) =>
       adjustMemberPoints(activeMemberId.value!, {
         commandId: key,
-        ledgerId: newOperationCommandId(),
+        ledgerId: member.pointsLedgerId,
         storeId: Number(member.storeId),
         signedAmount: exactDecimal(member.pointsDelta, true),
         policyVersion: 'synthetic-points-v1',
         reason: '内部合成双人审批调整',
         approvalUserId: Number(member.approvalUserId),
-        approvalRef: newOperationCommandId(),
-        occurredAt: new Date().toISOString(),
+        approvalRef: member.approvalRef,
+        occurredAt: member.pointsOccurredAt,
         correlationId: key
       })
   });
