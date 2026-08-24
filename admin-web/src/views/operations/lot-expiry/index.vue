@@ -7,6 +7,7 @@
       title="批次与效期仅适用于社区超市模板"
       description="便利店和零食折扣店默认关闭。页面不计算 FEFO、库存或成本；所有状态、余额和预警均来自 Inventory/Catalog Owner。批次成本、复杂 WMS 和真实设备不在本功能范围。"
     />
+    <OwnerPageFeedback surface-id="VUE-14" :state="phase" :failure="pageFailure" @retry="reloadCurrent" />
 
     <el-card class="mt-3" shadow="never">
       <template #header><span>1. 发布不可变批次策略版本</span></template>
@@ -29,7 +30,9 @@
         <el-form-item label="生效时间"><el-date-picker v-model="effectiveAt" type="datetime" /></el-form-item>
         <el-form-item>
           <el-button v-hasPermi="['catalog:lot-policy:publish']" type="primary" :loading="loading" @click="publishPolicy"> 发布策略 </el-button>
-          <el-button v-hasPermi="['catalog:lot-policy:read']" :loading="loading" @click="loadPolicy">读取当前策略</el-button>
+          <el-button v-hasPermi="['catalog:lot-policy:read']" data-testid="lot-policy-read" :loading="loading" @click="loadPolicy"
+            >读取当前策略</el-button
+          >
         </el-form-item>
       </el-form>
       <el-descriptions v-if="currentPolicy" :column="4" border>
@@ -79,6 +82,10 @@
 import { getEffectiveLotPolicy, listLotExpiryAlerts, publishLotPolicy } from '@/api/lot-expiry';
 import type { ExpiryBasis, LotPolicyView, LotView, PublishLotPolicyCommand } from '@/api/lot-expiry/types';
 import { newOperationCommandId } from '@/api/operations';
+import { useRecoverablePage } from '@/composables/useRecoverablePage';
+import OwnerPageFeedback from '../components/OwnerPageFeedback.vue';
+
+const { phase, failure: pageFailure, runRead, runWrite } = useRecoverablePage('LOT_EXPIRY_PAGE_FAILED');
 
 const policy = reactive<{
   policyVersionId: string;
@@ -94,15 +101,22 @@ const effectiveAt = ref(new Date());
 const businessDate = ref(new Date());
 const currentPolicy = ref<LotPolicyView>();
 const alerts = ref<LotView[]>([]);
-const loading = ref(false);
+const loading = computed(() => phase.value === 'LOADING' || phase.value === 'SUBMITTING');
+const commandKeys = new Map<string, string>();
+const lastReadMode = ref<'policy' | 'alerts'>('policy');
 
-const execute = async (work: () => Promise<unknown>): Promise<unknown> => {
-  loading.value = true;
-  try {
-    return await work();
-  } finally {
-    loading.value = false;
-  }
+const commandIdentity = (action: string): string => {
+  const mapKey = `${policy.policyVersionId || policy.storeId || 'none'}:${action}`;
+  if (!commandKeys.has(mapKey)) commandKeys.set(mapKey, newOperationCommandId());
+  return commandKeys.get(mapKey)!;
+};
+const read = async <T,>(work: () => Promise<{ data: T }>, empty: (value: T) => boolean = () => false): Promise<T | undefined> => {
+  const response = await runRead(work, (value) => empty(value.data));
+  return response?.data;
+};
+const write = async <T,>(operationIdentity: string, work: () => Promise<{ data: T }>): Promise<T | undefined> => {
+  const response = await runWrite(operationIdentity, work);
+  return response?.data;
 };
 const isoDate = (value: Date) => value.toISOString().slice(0, 10);
 
@@ -118,22 +132,33 @@ const publishPolicy = async () => {
     nearExpiryDays: policy.nearExpiryDays,
     effectiveFrom: effectiveAt.value.toISOString()
   };
-  currentPolicy.value = (await execute(() => publishLotPolicy(command, newOperationCommandId()))) as LotPolicyView;
+  await ElMessageBox.confirm(
+    `门店：${policy.storeId}；SKU：${policy.skuId}；策略版本：${policy.policyVersionId}；发布后不可原地修改。确认继续？`,
+    '发布批次效期策略',
+    { type: 'warning' }
+  );
+  const operationIdentity = commandIdentity('publish');
+  const result = await write(operationIdentity, () => publishLotPolicy(command, operationIdentity));
+  if (result) currentPolicy.value = result;
 };
 
 const loadPolicy = async () => {
   if (!policy.storeId || !policy.skuId) return ElMessage.warning('门店和 SKU 不能为空');
-  currentPolicy.value = (await execute(() =>
-    getEffectiveLotPolicy(policy.storeId!, policy.skuId!, effectiveAt.value.toISOString())
-  )) as LotPolicyView;
+  lastReadMode.value = 'policy';
+  const result = await read(() => getEffectiveLotPolicy(policy.storeId!, policy.skuId!, effectiveAt.value.toISOString()));
+  if (result) currentPolicy.value = result;
 };
 
 const loadAlerts = async () => {
   if (!query.storeId || !query.warehouseId) return ElMessage.warning('门店和仓库不能为空');
-  alerts.value = (await execute(() =>
-    listLotExpiryAlerts({ storeId: query.storeId!, warehouseId: query.warehouseId, businessDate: isoDate(businessDate.value), limit: 500 })
-  )) as LotView[];
+  lastReadMode.value = 'alerts';
+  const result = await read(
+    () => listLotExpiryAlerts({ storeId: query.storeId!, warehouseId: query.warehouseId, businessDate: isoDate(businessDate.value), limit: 500 }),
+    (value) => value.length === 0
+  );
+  if (result) alerts.value = result;
 };
+const reloadCurrent = () => (lastReadMode.value === 'alerts' ? loadAlerts() : loadPolicy());
 </script>
 
 <style scoped>
