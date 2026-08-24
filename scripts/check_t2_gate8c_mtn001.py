@@ -68,6 +68,7 @@ def validate_scope() -> list[str]:
         "docs/adr/ADR-064-gate8c-maintainability-hardening.md",
         "docs/governance/CR-T2G8C-008_sec002-accept-mtn001-runtime-admission.md",
         "docs/governance/CR-T2G8C-009_mtn001-verified-candidate.md",
+        "docs/governance/CR-T2G8C-010_mtn001-ci-conditional-pass.md",
         ".github/workflows/t2-gate8c-mtn001.yml",
         "scripts/check_t2_gate8c_mtn001.py", "scripts/build_t2_gate8c_mtn001_evidence.py",
         "scripts/audit_t2_gate6g_api.py", "scripts/audit_t2_gate6g_data.py",
