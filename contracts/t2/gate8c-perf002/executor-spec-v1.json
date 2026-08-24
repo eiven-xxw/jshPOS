@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1.0",
+  "comparableExecutor": "github-hosted-ubuntu-latest-x64",
+  "requiredTools": {
+    "java": "21",
+    "python": "3.12",
+    "mysql": "8.4.11",
+    "redis": "7.4.10",
+    "flutter": "3.47.0"
+  },
+  "minimumObservedResources": {"logicalCpu": 2, "memoryMiB": 7000, "freeDiskMiB": 10000},
+  "requiredFingerprintFields": [
+    "commitSha", "runnerOs", "kernel", "cpuModel", "logicalCpu", "memoryMiB",
+    "freeDiskMiB", "javaVersion", "mysqlImage", "redisImage"
+  ],
+  "crossExecutorWallClockComparisonAllowed": false
+}

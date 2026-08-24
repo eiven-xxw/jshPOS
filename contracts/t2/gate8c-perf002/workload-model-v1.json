@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-PERF-002",
+  "syntheticOnly": true,
+  "warmup": {"httpRequests": 50, "posIterations": 20},
+  "formalRuntime": {
+    "coldStarts": 1,
+    "httpConcurrency": [1, 8, 16],
+    "requestsPerConcurrency": 240,
+    "sustainedSeconds": 120,
+    "resourceSampleSeconds": 2,
+    "connectionPressureConcurrency": 32,
+    "backlogEvents": 10000
+  },
+  "ownerCapacity": {
+    "catalogRows": [10000, 100000],
+    "migrationRows": [100000, 1000000],
+    "reportProjectionRows": 1000000,
+    "dailyCloseFacts": 1000000,
+    "exceptionCases": 1000000,
+    "saasEntitlementDecisions": 10000,
+    "subscriptionScheduleItems": 10000,
+    "serviceTicketMetadata": 10000
+  },
+  "posLocal": {
+    "scanIterations": 1000,
+    "settlementIterations": 200,
+    "syncBacklogEvents": 10000,
+    "dataPackageRecords": 100000
+  },
+  "industries": ["CONVENIENCE", "SNACK_DISCOUNT", "COMMUNITY_SUPERMARKET"],
+  "tenants": 2
+}

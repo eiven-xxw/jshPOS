@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "1.0",
+  "fixedSeed": 826002,
+  "vectors": [
+    {"id": "PERF-F001", "fault": "HTTP_CONNECTION_PRESSURE", "expected": "BOUNDED_RESPONSE_OR_REJECTION_PROCESS_ALIVE"},
+    {"id": "PERF-F002", "fault": "REQUEST_TIMEOUT", "expected": "NAMED_FAILURE_NO_FAKE_SUCCESS"},
+    {"id": "PERF-F003", "fault": "REDIS_UNAVAILABLE", "expected": "FAIL_CLOSED_RECOVERABLE"},
+    {"id": "PERF-F004", "fault": "MYSQL_LIMITED", "expected": "BOUNDED_TIMEOUT_NO_FACT_MUTATION"},
+    {"id": "PERF-F005", "fault": "SYNC_BACKLOG", "expected": "NO_LOSS_BOUNDED_RECOVERY"},
+    {"id": "PERF-F006", "fault": "PROCESS_TERMINATION", "expected": "ORIGINAL_IDEMPOTENCY_RECOVERY"},
+    {"id": "PERF-F007", "fault": "CORRUPTED_SAMPLE", "expected": "EVIDENCE_REJECTED"},
+    {"id": "PERF-F008", "fault": "MISSING_RESOURCE_SAMPLE", "expected": "EVIDENCE_REJECTED"},
+    {"id": "PERF-F009", "fault": "SAME_KEY_DIFFERENT_CONTENT", "expected": "CONFLICT_REJECTED"},
+    {"id": "PERF-F010", "fault": "CROSS_TENANT_REQUEST", "expected": "ACCESS_DENIED"}
+  ]
+}

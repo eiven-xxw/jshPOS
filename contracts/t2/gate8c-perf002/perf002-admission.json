@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "1.0",
+  "gate": "T2-GATE8C-S26C",
+  "requirementId": "T2-PERF-002",
+  "baseCommit": "262099bf788bcb6916af2480644883fa6c5aed49",
+  "branch": "t2/gate8c-sprint26c-perf002-runtime",
+  "status": "IN_PROGRESS",
+  "decision": "CONDITIONAL_GO",
+  "orderedFindings": ["G8C-PERF-P1-001", "G8C-PERF-P1-002"],
+  "newBusinessCapabilityAllowed": false,
+  "publishedMigrationChangeAllowed": false,
+  "dependencyChangeAllowed": false,
+  "automaticRetryAllowed": false,
+  "commercialSlaAllowed": false,
+  "evidenceCeiling": "INTERNAL_FULL_STACK_PERFORMANCE_CANDIDATE",
+  "externalExecution": {
+    "providerNetworkCalls": 0,
+    "realFunds": 0,
+    "realDeviceCommands": 0,
+    "realPeripheralCommands": 0,
+    "partnerOnsite": 0,
+    "fullAlpha": 0,
+    "productionDeployments": 0
+  }
+}

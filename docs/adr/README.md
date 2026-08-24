@@ -74,3 +74,4 @@ ADR 一经接受不得删除或静默改写。需要改变决策时，新建 ADR
 | ADR-062 | [Gate 8C 质量、性能、可维护性与发布差距复核](ADR-062-gate8c-quality-performance-release-gap-audit.md) | Accepted |
 | ADR-063 | [Gate 8C 生产安全配置、管理端点与附件资源边界](ADR-063-gate8c-production-security-hardening.md) | Accepted |
 | ADR-064 | [Gate 8C 可维护性边界与行为保持重构](ADR-064-gate8c-maintainability-hardening.md) | Accepted |
+| ADR-065 | [Gate 8C 正式运行栈性能重基线与退化门禁](ADR-065-gate8c-formal-runtime-performance-rebaseline.md) | Accepted |

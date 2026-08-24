@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0",
+  "classification": "INTERNAL_REGRESSION_GUARDRAIL_NOT_SLA",
+  "correctness": {
+    "maxErrorRate": 0.0,
+    "maxIntegrityViolations": 0,
+    "maxTenantViolations": 0,
+    "maxLostEvents": 0,
+    "missingMeasurementAllowed": false
+  },
+  "formalRuntime": {
+    "coldStartMaxMs": 90000,
+    "httpP95MaxMs": 2500,
+    "httpP99MaxMs": 5000,
+    "minimumThroughputRpsAtConcurrency16": 8.0,
+    "maxApplicationRssMiB": 2048,
+    "maxJvmGcPauseMs": 2000,
+    "maxMysqlConnections": 80,
+    "maxRedisMemoryMiB": 512,
+    "backlogRecoveryMaxSeconds": 120
+  },
+  "posLocal": {
+    "scan1000MaxMs": 15000,
+    "settlement200MaxMs": 15000,
+    "syncBacklog10000MaxMs": 30000
+  },
+  "changeControl": {
+    "independentCrRequired": true,
+    "sameFailureChangeMayRelaxThreshold": false,
+    "commercialSlaAllowed": false
+  }
+}
