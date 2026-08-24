@@ -12,6 +12,14 @@
     "sealedArtifact": 9501459414,
     "sealedIndexSha256": "3eb5cbfc7e9bc6b7ee7dc52e96598a23da5984f63753f9608b90d9908187396"
   },
+  "prepCandidateEvidence": {
+    "commit": "12e8f0d8995143f10f48ae182616747cf007d3a3",
+    "workflowRun": 32683909601,
+    "workflowConclusion": "success",
+    "jobCount": 4,
+    "evidenceArtifact": 9505009721,
+    "evidenceArtifactDigest": "sha256:9731f70d3b72e523a1054834985de9a70c5fefe5fa83d43aebe9ff1ccde604b7"
+  },
   "candidateRequirements": [
     {"requirementId": "T2-SEC-002", "priority": "P0", "status": "DRAFT", "sequence": 1},
     {"requirementId": "T2-MTN-001", "priority": "P1", "status": "DRAFT", "sequence": 2},

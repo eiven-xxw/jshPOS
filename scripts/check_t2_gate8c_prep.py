@@ -88,6 +88,15 @@ def validate_rtm_and_contract() -> tuple[dict, dict, dict[str, dict[str, str]]]:
     require(admission["priorAccepted"]["requirementId"] == "T2-E2E-005", "Gate 8B 接受引用漂移")
     require(admission["priorAccepted"]["sealedRun"] == 32670901692, "Gate 8B 封存 Run 漂移")
     require(admission["priorAccepted"]["sealedArtifact"] == 9501459414, "Gate 8B 证据 Artifact 漂移")
+    candidate = admission["prepCandidateEvidence"]
+    require(candidate["commit"] == "12e8f0d8995143f10f48ae182616747cf007d3a3"
+            and candidate["workflowRun"] == 32683909601
+            and candidate["workflowConclusion"] == "success"
+            and candidate["jobCount"] == 4
+            and candidate["evidenceArtifact"] == 9505009721
+            and candidate["evidenceArtifactDigest"] ==
+            "sha256:9731f70d3b72e523a1054834985de9a70c5fefe5fa83d43aebe9ff1ccde604b7",
+            "Gate 8C-Prep 候选证据漂移")
     require(rows["T2-E2E-005"]["status"] == "ACCEPTED", "T2-E2E-005 未按确认更新")
     require([item["requirementId"] for item in admission["candidateRequirements"]] == CANDIDATES,
             "质量整改需求顺序漂移")
