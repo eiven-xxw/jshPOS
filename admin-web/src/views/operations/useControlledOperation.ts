@@ -1,9 +1,16 @@
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { newOperationCommandId } from '@/api/operations';
-import type { OwnerOperationView } from '@/api/operations/types';
-import { buildOperationConfirmation, createSingleFlight, type OperationPageState } from './model';
+import { buildOperationConfirmation, type OperationPageState } from './model';
 
-export interface ControlledOperationInput<T extends OwnerOperationView> {
+/** 可安全展示的 Owner 页面失败信封；不得保存响应正文、堆栈、Secret 或 PII。 */
+export interface OwnerPageFailure {
+  code: string;
+  message: string;
+  correlationId: string;
+  operationIdentity?: string;
+}
+
+export interface ControlledOperationInput<T> {
   owner: string;
   objectId: string;
   currentState: string;
@@ -19,10 +26,29 @@ export interface ControlledOperationInput<T extends OwnerOperationView> {
  */
 export const useControlledOperation = () => {
   const pageState = ref<OperationPageState>('IDLE');
-  const lastError = ref('');
+  const pageFailure = ref<OwnerPageFailure>();
   const lastCorrelationId = ref('');
   const retryKeys = new Map<string, string>();
-  const singleFlight = createSingleFlight();
+  const unresolved = new Map<string, OwnerPageFailure>();
+  const pending = new Map<string, Promise<unknown>>();
+
+  const safeText = (value: unknown, fallback: string, limit: number): string => {
+    const text = typeof value === 'string' ? value.trim() : '';
+    return text && text.length <= limit ? text : fallback;
+  };
+
+  const parseFailure = (error: unknown, operationIdentity?: string): OwnerPageFailure => {
+    const response = (error as {
+      response?: { data?: { code?: string | number; msg?: string; message?: string }; headers?: Record<string, unknown> };
+    })?.response;
+    const correlation = response?.headers?.['x-correlation-id'] ?? response?.headers?.['X-Correlation-ID'];
+    return {
+      code: safeText(response?.data?.code == null ? undefined : String(response.data.code), 'OWNER_OPERATION_FAILED', 64),
+      message: safeText(response?.data?.msg ?? response?.data?.message, '操作未完成，请使用关联标识查询权威状态。', 240),
+      correlationId: safeText(correlation, '未返回', 128),
+      operationIdentity
+    };
+  };
 
   const retryKey = (owner: string, objectId: string, action: string): string => {
     const identity = `${owner}:${objectId}:${action}`;
@@ -33,55 +59,82 @@ export const useControlledOperation = () => {
     return created;
   };
 
-  const runRead = async <T>(work: () => Promise<{ data: T }>): Promise<T> => {
+  const runRead = async <T>(work: () => Promise<{ data: T }>, empty: (value: T) => boolean = () => false): Promise<T | undefined> => {
     pageState.value = 'LOADING';
-    lastError.value = '';
+    if (unresolved.size === 0) pageFailure.value = undefined;
     try {
       const response = await work();
-      pageState.value = 'READY';
+      if (unresolved.size > 0) {
+        pageState.value = 'UNKNOWN';
+        pageFailure.value ??= unresolved.values().next().value;
+      } else {
+        pageState.value = empty(response.data) ? 'EMPTY' : 'READY';
+      }
       return response.data;
     } catch (error) {
       pageState.value = 'FAILED';
-      lastError.value = error instanceof Error ? error.message : '查询失败，请使用关联标识联系管理员';
-      throw error;
+      pageFailure.value = parseFailure(error);
+      return undefined;
     }
   };
 
-  const runControlled = async <T extends OwnerOperationView>(input: ControlledOperationInput<T>): Promise<T | undefined> => {
+  const runControlled = <T>(input: ControlledOperationInput<T>): Promise<T | undefined> => {
     const identity = `${input.owner}:${input.objectId}:${input.action}`;
+    const existing = pending.get(identity);
+    if (existing) return existing as Promise<T | undefined>;
+
     const idempotencyKey = retryKey(input.owner, input.objectId, input.action);
-    const snapshot = buildOperationConfirmation({ ...input, idempotencyKey });
-    pageState.value = 'CONFIRMING';
-    try {
-      await ElMessageBox.confirm(
-        `对象：${snapshot.objectId}\n当前状态/版本：${snapshot.currentState} / ${snapshot.currentVersion}\n动作：${snapshot.action}\n影响：${snapshot.impact}\n原因：${snapshot.reason}\n幂等键：${snapshot.idempotencyKey}`,
-        `${snapshot.owner} 高风险操作确认`,
-        { type: 'warning', confirmButtonText: '确认执行', cancelButtonText: '取消' }
-      );
-    } catch {
-      pageState.value = 'READY';
-      return undefined;
+    if (unresolved.has(identity)) {
+      pageState.value = 'UNKNOWN';
+      pageFailure.value = unresolved.get(identity);
+      ElMessage.warning(`原操作结果仍未知，只能查询权威状态；幂等键：${idempotencyKey}`);
+      return Promise.resolve(undefined);
     }
 
-    return singleFlight(async () => {
+    const current = (async () => {
+      const snapshot = buildOperationConfirmation({ ...input, idempotencyKey });
+      pageState.value = 'CONFIRMING';
+      try {
+        await ElMessageBox.confirm(
+          `对象：${snapshot.objectId}\n当前状态/版本：${snapshot.currentState} / ${snapshot.currentVersion}\n动作：${snapshot.action}\n影响：${snapshot.impact}\n原因：${snapshot.reason}\n幂等键：${snapshot.idempotencyKey}`,
+          `${snapshot.owner} 高风险操作确认`,
+          { type: 'warning', confirmButtonText: '确认执行', cancelButtonText: '取消' }
+        );
+      } catch {
+        pageState.value = 'READY';
+        return undefined;
+      }
+
       pageState.value = 'SUBMITTING';
-      lastError.value = '';
+      pageFailure.value = undefined;
       try {
         const response = await input.execute(idempotencyKey);
         pageState.value = 'SUCCEEDED';
-        lastCorrelationId.value = String(response.data.correlationId || idempotencyKey);
+        const correlationId = (response.data as { correlationId?: unknown } | undefined)?.correlationId;
+        lastCorrelationId.value = safeText(correlationId, idempotencyKey, 128);
         retryKeys.delete(identity);
+        unresolved.delete(identity);
         ElMessage.success(`操作已由服务端确认，关联标识：${lastCorrelationId.value}`);
         return response.data;
       } catch (error: unknown) {
-        const status = (error as { response?: { status?: number } })?.response?.status;
-        pageState.value = status === 409 ? 'STALE' : 'FAILED';
-        lastError.value = error instanceof Error ? error.message : '结果未知，请复用原幂等键查询或重试';
-        ElMessage.error(`${lastError.value}；原幂等键已保留：${idempotencyKey}`);
-        throw error;
+        const candidate = error as { isAxiosError?: boolean; response?: { status?: number } };
+        const status = candidate.response?.status;
+        const unknownResult = candidate.isAxiosError === true && (status == null || status >= 500);
+        pageState.value = unknownResult ? 'UNKNOWN' : status === 409 ? 'STALE' : 'FAILED';
+        pageFailure.value = parseFailure(error, idempotencyKey);
+        if (unknownResult) unresolved.set(identity, pageFailure.value);
+        ElMessage.error(`${pageFailure.value.message}；原幂等键已保留：${idempotencyKey}`);
+        return undefined;
+      } finally {
+        pending.delete(identity);
       }
-    });
+    })();
+    pending.set(identity, current);
+    return current;
   };
 
-  return { pageState, lastError, lastCorrelationId, runRead, runControlled };
+  const lastError = computed(() => pageFailure.value?.message ?? '');
+  const submitting = computed(() => pageState.value === 'CONFIRMING' || pageState.value === 'SUBMITTING');
+
+  return { pageState, pageFailure, lastError, lastCorrelationId, submitting, runRead, runControlled };
 };

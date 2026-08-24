@@ -80,7 +80,17 @@ export const buildOperationsSummary = (input: {
 });
 
 /** Gate 6E 受控写操作的页面状态，不映射也不推演任何领域状态机。 */
-export type OperationPageState = 'IDLE' | 'LOADING' | 'READY' | 'CONFIRMING' | 'SUBMITTING' | 'SUCCEEDED' | 'FAILED' | 'STALE';
+export type OperationPageState =
+  | 'IDLE'
+  | 'LOADING'
+  | 'READY'
+  | 'EMPTY'
+  | 'CONFIRMING'
+  | 'SUBMITTING'
+  | 'SUCCEEDED'
+  | 'FAILED'
+  | 'STALE'
+  | 'UNKNOWN';
 
 /** 二次确认快照；状态和版本必须来自 Owner 最近一次查询结果。 */
 export interface OperationConfirmation {
