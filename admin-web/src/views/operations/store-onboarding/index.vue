@@ -7,6 +7,7 @@
       title="门店开通采用白名单复制、版本化行业模板、独立审批和权威事实检查"
       description="订单、支付、退款、库存、成本、会员、审计及同步历史不会被复制。支付、硬件、打印和设计伙伴未解阻时只显示 BLOCKED/UNAVAILABLE，绝不伪造通过。"
     />
+    <OwnerPageFeedback surface-id="VUE-15" :state="phase" :failure="pageFailure" @retry="refresh" />
 
     <el-card class="mt-3" shadow="never">
       <template #header><span>1. 创建或读取开店计划</span></template>
@@ -30,7 +31,7 @@
       <el-form :inline="true">
         <el-form-item label="计划 ULID"><el-input v-model="planId" class="plan-id" /></el-form-item>
         <el-form-item>
-          <el-button v-hasPermi="['onboarding:plan:read']" :loading="loading" @click="refresh">读取计划</el-button>
+          <el-button v-hasPermi="['onboarding:plan:read']" data-testid="onboarding-read" :loading="loading" @click="refresh">读取计划</el-button>
         </el-form-item>
       </el-form>
     </el-card>
@@ -129,12 +130,16 @@ import {
 } from '@/api/onboarding';
 import type { OnboardingCheckStatus, OnboardingPlanDetail, OnboardingState } from '@/api/onboarding/types';
 import { newOperationCommandId } from '@/api/operations';
+import { useRecoverablePage } from '@/composables/useRecoverablePage';
+import OwnerPageFeedback from '../components/OwnerPageFeedback.vue';
+
+const { phase, failure: pageFailure, runRead, runWrite } = useRecoverablePage('ONBOARDING_PAGE_FAILED');
 
 const form = reactive<{ sourceStoreId?: number; targetStoreId?: number; templateId?: number; templateVersionId?: number }>({});
 const planId = ref('');
 const detail = ref<OnboardingPlanDetail>();
 const reason = ref('已复核冻结版本、权限、检查结果和外部阻断边界');
-const loading = ref(false);
+const loading = computed(() => phase.value === 'LOADING' || phase.value === 'SUBMITTING');
 const identities = new Map<string, string>();
 
 const identity = (action: string) => {
@@ -144,21 +149,21 @@ const identity = (action: string) => {
   return { idempotencyKey: value, correlationId: value };
 };
 
-const execute = async (work: () => Promise<unknown>) => {
-  loading.value = true;
-  try {
-    return await work();
-  } finally {
-    loading.value = false;
-  }
+const read = async <T,>(work: () => Promise<{ data: T }>): Promise<T | undefined> => {
+  const response = await runRead(work);
+  return response?.data;
+};
+const write = async <T,>(operationIdentity: string, work: () => Promise<{ data: T }>): Promise<T | undefined> => {
+  const response = await runWrite(operationIdentity, work);
+  return response?.data;
 };
 
 const createPlan = async () => {
   if (!form.targetStoreId || !form.templateId || !form.templateVersionId) {
     return ElMessage.warning('目标门店、行业模板和模板版本不能为空');
   }
-  const commandId = newOperationCommandId();
-  const created = (await execute(() =>
+  const requestIdentity = identity('create');
+  const created = await write(requestIdentity.idempotencyKey, () =>
     createOnboardingPlan(
       {
         sourceStoreId: form.sourceStoreId,
@@ -166,21 +171,30 @@ const createPlan = async () => {
         templateId: form.templateId!,
         templateVersionId: form.templateVersionId!
       },
-      { idempotencyKey: commandId, correlationId: commandId }
+      requestIdentity
     )
-  )) as OnboardingPlanDetail;
+  );
+  if (!created) return;
   planId.value = created.plan.planId;
   detail.value = created;
 };
 
 const refresh = async () => {
   if (!planId.value) return ElMessage.warning('请输入或创建开店计划');
-  detail.value = (await execute(() => getOnboardingPlan(planId.value))) as OnboardingPlanDetail;
+  const result = await read(() => getOnboardingPlan(planId.value));
+  if (result) detail.value = result;
 };
 
 const runAction = async (action: 'preflight' | 'approve' | 'apply' | 'checks' | 'cancel') => {
   if (!planId.value) return ElMessage.warning('请先读取开店计划');
   const request = identity(action);
+  if (['approve', 'apply', 'cancel'].includes(action)) {
+    await ElMessageBox.confirm(
+      `计划：${planId.value}；动作：${action}；只应用冻结白名单配置，不复制历史事实。确认继续？`,
+      '受控开店操作',
+      { type: 'warning' }
+    );
+  }
   const calls = {
     preflight: () => preflightOnboardingPlan(planId.value, request),
     approve: () => approveOnboardingPlan(planId.value, reason.value, request),
@@ -188,7 +202,8 @@ const runAction = async (action: 'preflight' | 'approve' | 'apply' | 'checks' | 
     checks: () => checkOnboardingPlan(planId.value, request),
     cancel: () => cancelOnboardingPlan(planId.value, reason.value, request)
   };
-  detail.value = (await execute(calls[action])) as OnboardingPlanDetail;
+  const result = await write(request.idempotencyKey, calls[action]);
+  if (result) detail.value = result;
 };
 
 const confirmOpen = async () => {
@@ -197,7 +212,9 @@ const confirmOpen = async () => {
     confirmButtonText: '确认',
     cancelButtonText: '取消'
   });
-  detail.value = (await execute(() => openOnboardingStore(planId.value, reason.value, identity('open')))) as OnboardingPlanDetail;
+  const requestIdentity = identity('open');
+  const result = await write(requestIdentity.idempotencyKey, () => openOnboardingStore(planId.value, reason.value, requestIdentity));
+  if (result) detail.value = result;
 };
 
 const industryName = (value: string) =>
