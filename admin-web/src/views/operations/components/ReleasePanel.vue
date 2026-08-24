@@ -7,6 +7,7 @@
       title="仅合成发布治理"
       description="本页只登记合成签名包和虚构终端范围；不安装 APK、不调用厂商 SDK、不发送固件、重启或真实远程命令。"
     />
+    <OwnerPageFeedback surface-id="VUE-09" :state="pageState" :failure="pageFailure" @retry="loadRelease" />
     <el-card class="mt-3" shadow="never">
       <template #header><span>发布物状态与兼容窗口</span></template>
       <el-form :inline="true">
@@ -19,7 +20,7 @@
         <el-form-item label="版本"><el-input v-model="form.version" class="medium-input" /></el-form-item>
         <el-form-item label="目标门店"><el-input v-model="form.storeIds" class="medium-input" placeholder="1101,1102" /></el-form-item>
         <el-form-item>
-          <el-button v-hasPermi="['release:read']" @click="loadRelease">查询</el-button>
+          <el-button v-hasPermi="['release:read']" data-testid="release-read" :disabled="submitting" @click="loadRelease">查询</el-button>
           <el-button v-hasPermi="['release:create']" type="primary" @click="createSyntheticRelease">创建合成发布</el-button>
           <el-button v-hasPermi="['release:verify']" @click="releaseAction('verify')">验签冻结</el-button>
           <el-button v-hasPermi="['release:rollout']" type="warning" @click="releaseAction('stage')">进入灰度</el-button>
@@ -64,8 +65,9 @@ import { createRelease, createRollout, getRelease, newOperationCommandId, transi
 import type { ReleaseCreateRequest, ReleaseSummary, RolloutSummary } from '@/api/operations/types';
 import { parseSafePlatformIds } from '../model';
 import { useControlledOperation } from '../useControlledOperation';
+import OwnerPageFeedback from './OwnerPageFeedback.vue';
 
-const { runRead, runControlled } = useControlledOperation();
+const { pageState, pageFailure, submitting, runRead, runControlled } = useControlledOperation();
 const artifactTypes: ReleaseCreateRequest['artifactType'][] = [
   'SERVER',
   'WEB',
@@ -88,7 +90,8 @@ const release = ref<ReleaseSummary>();
 const rollout = ref<RolloutSummary>();
 
 const loadRelease = async () => {
-  release.value = await runRead(() => getRelease(form.releaseId));
+  const result = await runRead(() => getRelease(form.releaseId));
+  if (result) release.value = result;
 };
 const createSyntheticRelease = async () => {
   const stores = parseSafePlatformIds(form.storeIds, 10_000);
