@@ -286,5 +286,6 @@
 
 | CR-T2G9B-001 | 2026-08-24 | CMP001_ACCEPTED_API_ALIGNMENT_IN_PROGRESS | 项目发起人接受 Gate 9A 静态治理与仓库审计 CONDITIONAL PASS，将 T2-CMP-001 更新为 ACCEPTED，并授权从 `f708271e977f995e83a24fe398a1bd658726fd09` 串行修复 G9A-API-P1-001；冻结300项Controller、257项当前OpenAPI和64/21双向差异 | T2-CMP-001、T2-API-001、G9A-API-P1-001、ADR-069 | 不新增业务能力或Requirement ID；优先修当前契约，禁止修改已发布迁移、权限、资金、库存或租户事实；外部四项、UAT/REL、LIC/JSH及全部零执行边界不变 |
 | CR-T2G9B-002 | 2026-08-24 | API_ALIGNMENT_VERIFIED_CANDIDATE_AWAITING_CI | 十个Owner的85项差异全部分类并以七份当前契约收口；历史API审计达到Controller/OpenAPI 300/300、差异0/0、operationId重复0，本批权限80/80、客户端根14/14、错误码1388；本地Server 854项与Web 71项测试全绿 | T2-API-001、G9A-API-P1-001、ADR-069 | 无Controller、客户端业务代码和迁移变更；缺陷仅为VERIFIED关闭候选，必须由GitHub双平台、Flutter/Android、MySQL/SQLite与安全供应链完整CI复核 |
+| CR-T2G9B-003 | 2026-08-24 | API_ALIGNMENT_VERIFIED_CONDITIONAL_PASS_AWAITING_CONFIRMATION | 候选提交`5ebcde37f753193757f6cf9de0ae960808f406b7`的Run`32728598791`从头完成治理双平台、Server、Web、Flutter双平台与Android/Kotlin、MySQL/SQLite、安全和证据聚合9个Artifact全绿；Evidence Artifact`9520855018`摘要`5344766fb9d2bf07f01e61a51aa27424f18ecfb30305f72a02ae9d4725e603f8` | T2-API-001、G9A-API-P1-001、T2-CI-001、ADR-069 | 维持T2-API-001 ACCEPTED并将缺陷更新为VERIFIED；仅形成CONDITIONAL PASS等待发起人确认，不自动进入G9A-R2；外部状态及全部零执行边界不变 |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。

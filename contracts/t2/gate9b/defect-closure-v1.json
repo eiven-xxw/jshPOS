@@ -3,13 +3,21 @@
   "findingId": "G9A-API-P1-001",
   "requirementId": "T2-API-001",
   "baselineState": "OPEN",
-  "state": "VERIFIED_CLOSURE_CANDIDATE",
+  "state": "VERIFIED",
   "baseline": {"controllerOperations":300,"currentOpenApiOperations":257,"controllerWithoutOpenApi":64,"openApiWithoutController":21},
   "current": {"controllerOperations":300,"currentOpenApiOperations":300,"controllerWithoutOpenApi":0,"openApiWithoutController":0,"missingOperationId":0,"duplicateOperationId":0,"alignedPermissions":80,"clientApiRootsWithoutFormalServer":0},
   "runtimeBehaviorChanges": 0,
   "publishedMigrationChanges": 0,
   "newBusinessCapabilities": 0,
   "projectSponsorConfirmationRequired": true,
+  "verification": {
+    "candidateCommit": "5ebcde37f753193757f6cf9de0ae960808f406b7",
+    "githubRunId": "32728598791",
+    "githubRunUrl": "https://github.com/eiven-xxw/jshPOS/actions/runs/32728598791",
+    "githubConclusion": "success",
+    "evidenceArtifactId": "9520855018",
+    "evidenceArtifactSha256": "5344766fb9d2bf07f01e61a51aa27424f18ecfb30305f72a02ae9d4725e603f8"
+  },
   "evidenceLevel": "STATIC_AND_SOFTWARE_EXECUTION",
   "externalExecution": {"providerNetwork":0,"realFunds":0,"realDeviceCommands":0,"realPeripheralCommands":0,"partnerFieldExecution":0,"fullAlpha":0,"productionDeployment":0}
 }
