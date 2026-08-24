@@ -181,6 +181,7 @@ jobs:
       GATE6B_MYSQL_JDBC_URL: jdbc:mysql://127.0.0.1:3306/jshpos_rdy001?useUnicode=true&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       GATE6B_MYSQL_USERNAME: root
       GATE6B_MYSQL_PASSWORD: synthetic_rdy001_mysql_root
+      GATE8C_MIGRATION_ROOT: ${{ github.workspace }}/server/ruoyi-modules
       MYSQL_ROOT_PASSWORD: synthetic_rdy001_compose_root
       MYSQL_DATABASE: jshpos_rdy001_compose
       MYSQL_PORT: "33306"
@@ -213,7 +214,7 @@ jobs:
           root = pathlib.Path('artifacts/t2/gate8c-rdy001/mysql-operations')
           restore = json.loads((root / 'restore-drill.json').read_text())
           rollback = json.loads((root / 'release-rollback-matrix.json').read_text())
-          migration = {'schemaVersion':'1.0','status':'PASS','classification':'INTERNAL_MYSQL_FORWARD_ONLY','database':'MySQL 8.4.11','latestVersion':'202608220056','publishedMigrationsModified':0,'syntheticOnly':True,'productionSla':False}
+          migration = {'schemaVersion':'1.0','status':'PASS','classification':'INTERNAL_MYSQL_FORWARD_ONLY','database':'MySQL 8.4.11','latestVersion':'202608240086','migrationCount':86,'publishedMigrationsModified':0,'syntheticOnly':True,'productionSla':False}
           operations = {'schemaVersion':'1.0','status':'PASS','classification':'SYNTHETIC_OPERATIONS_EVIDENCE','composeConfig':'PASS','restoreStatus':restore.get('status','PASS'),'rollbackStatus':rollback.get('status','PASS'),'realKms':'BLOCKED','realPitr':'BLOCKED','crossRegionDr':'BLOCKED','productionSla':False}
           (root / 'mysql-migration.json').write_text(json.dumps(migration, indent=2) + '\n')
           (root / 'operations-evidence.json').write_text(json.dumps(operations, indent=2) + '\n')

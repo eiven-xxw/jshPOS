@@ -67,12 +67,14 @@ def validate_scope() -> list[str]:
         "docs/governance/rtm.csv", "docs/adr/ADR-066-gate8c-internal-release-readiness.md",
         "docs/governance/CR-T2G8C-019_perf002-accept-rdy001-runtime-admission.md",
         "docs/governance/CR-T2G8C-020_rdy001-verified-candidate.md",
-        "docs/governance/CR-T2G8C-021_rdy001-ci-conditional-pass.md",
+        "docs/governance/CR-T2G8C-021_rdy001-first-candidate-migration-catalog-failure.md",
+        "docs/governance/CR-T2G8C-022_rdy001-ci-conditional-pass.md",
         ".github/workflows/t2-gate8c-rdy001.yml",
         "scripts/check_t2_gate8c_rdy001.py", "scripts/build_t2_gate8c_rdy001_release.py",
         "scripts/run_t2_gate8c_rdy001_faults.py", "scripts/build_t2_gate8c_rdy001_evidence.py",
         "scripts/build_t2_gate8c_rdy001_evidence_index.py",
         "packages/pos_device_adapter/LICENSE", "packages/pos_device_adapter/CHANGELOG.md",
+        "server/ruoyi-modules/jshpos-release/src/test/java/com/jingshanghui/pos/release/migration/ReleaseMigrationMySqlIT.java",
     }
     allowed_prefixes = ("docs/t2-gate8c-rdy001/", "contracts/t2/gate8c-rdy001/")
     illegal = [path for path in changed if path not in allowed_exact and not path.startswith(allowed_prefixes)]

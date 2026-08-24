@@ -3,13 +3,14 @@ package com.jingshanghui.pos.release.migration;
 import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.Test;
 
+import java.nio.file.*;
 import java.sql.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.*;
 
-/** Gate 7B MySQL 8.4 空库迁移、元数据、权限、冻结身份、状态机和只追加保护集成测试。 */
+/** Gate 8C MySQL 8.4 全 Owner 空库迁移、元数据、权限、冻结身份、状态机和只追加保护集成测试。 */
 class ReleaseMigrationMySqlIT {
     private final String url = required("GATE6B_MYSQL_JDBC_URL");
     private final String username = required("GATE6B_MYSQL_USERNAME");
@@ -17,7 +18,7 @@ class ReleaseMigrationMySqlIT {
 
     @Test void migratesAllVersionsAndEnforcesReleaseGuards() throws Exception {
         createFrameworkMenuFixture();
-        Flyway flyway = Flyway.configure().dataSource(url,username,password).locations("classpath:db/migration")
+        Flyway flyway = Flyway.configure().dataSource(url,username,password).locations(migrationLocations())
             .table("jshpos_flyway_schema_history").baselineOnMigrate(true).baselineVersion("0")
             .cleanDisabled(true).load();
         Set<String> expected = expectedVersions();
@@ -26,7 +27,7 @@ class ReleaseMigrationMySqlIT {
             .collect(Collectors.toSet());
         assertThat(applied.remove("0")).isTrue();
         assertThat(applied).containsExactlyInAnyOrderElementsOf(expected);
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("202608220056");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("202608240086");
         assertThat(flyway.migrate().migrationsExecuted).isZero();
         flyway.validate();
         assertGate6GDataMetadata();
@@ -53,7 +54,7 @@ class ReleaseMigrationMySqlIT {
                 }
             }
         }
-        assertThat(tables).hasSize(169);
+        assertThat(tables).hasSize(287);
         try (Connection c = DriverManager.getConnection(url, username, password);
              PreparedStatement query = c.prepareStatement("SELECT t.table_name FROM information_schema.tables t LEFT JOIN information_schema.columns c ON c.table_schema=t.table_schema AND c.table_name=t.table_name AND c.column_name='tenant_id' WHERE t.table_schema=DATABASE() AND t.table_type='BASE TABLE' AND t.table_name NOT IN ('sys_menu','jshpos_flyway_schema_history') AND c.column_name IS NULL ORDER BY t.table_name");
              ResultSet rows = query.executeQuery()) {
@@ -148,8 +149,26 @@ class ReleaseMigrationMySqlIT {
         versions.add("202608180038"); versions.add("202608180039");
         versions.add("202608200040"); versions.add("202608200041"); versions.add("202608200042");
         for(int v=43;v<=54;v++) versions.add("20260821"+String.format("%04d",v));
-        versions.add("202608220055"); versions.add("202608220056");
+        for(int v=55;v<=65;v++) versions.add("20260822"+String.format("%04d",v));
+        for(int v=66;v<=84;v++) versions.add("20260823"+String.format("%04d",v));
+        versions.add("202608240085"); versions.add("202608240086");
         return versions;
+    }
+
+    /**
+     * 从仓库正式 Owner 迁移目录聚合资源，避免仅由某个模块依赖闭包决定发布验收范围。
+     * 该路径只用于 CI 空库验收，不改变应用运行时 Flyway 装配或任何已发布迁移。
+     */
+    private static String[] migrationLocations() throws Exception {
+        Path root=Path.of(required("GATE8C_MIGRATION_ROOT")).toAbsolutePath().normalize();
+        assertThat(root).isDirectory();
+        try(var paths=Files.walk(root)) {
+            List<String> locations=paths.filter(Files::isDirectory)
+                .filter(path -> path.endsWith(Path.of("src","main","resources","db","migration")))
+                .sorted().map(path -> "filesystem:"+path.toString().replace('\\','/')).toList();
+            assertThat(locations).hasSize(22);
+            return locations.toArray(String[]::new);
+        }
     }
     private static String required(String name) { String value=System.getenv(name); if(value==null||value.isBlank()) throw new IllegalStateException(name+" must be provided by CI"); return value; }
 }
