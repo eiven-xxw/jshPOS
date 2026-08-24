@@ -7,17 +7,20 @@
       title="库存与成本只读投影"
       description="数量、成本和历史流水均来自正式 Owner；重建只校验并重建可丢弃投影，不允许覆盖历史流水。"
     />
+    <OwnerPageFeedback surface-id="VUE-07" :state="pageState" :failure="pageFailure" @retry="reloadCurrent" />
 
     <el-card class="mt-3" shadow="never">
       <template #header><span>库存 / 成本余额与不可变流水</span></template>
       <el-form :inline="true" label-width="90px">
-        <el-form-item label="仓库 ULID"><el-input v-model="query.warehouseId" class="id-input" /></el-form-item>
-        <el-form-item label="SKU ID"><el-input v-model="query.skuId" class="small-input" /></el-form-item>
+        <el-form-item label="仓库 ULID"><el-input v-model="query.warehouseId" data-testid="inventory-warehouse" class="id-input" /></el-form-item>
+        <el-form-item label="SKU ID"><el-input v-model="query.skuId" data-testid="inventory-sku" class="small-input" /></el-form-item>
         <el-form-item>
-          <el-button v-hasPermi="['inventory:balance:read']" type="primary" :loading="busy" @click="loadInventory">查询库存</el-button>
+          <el-button v-hasPermi="['inventory:balance:read']" data-testid="inventory-read" type="primary" :loading="busy" @click="loadInventory"
+            >查询库存</el-button
+          >
           <el-button v-hasPermi="['inventory:cost-balance:read']" type="primary" plain :loading="busy" @click="loadCost">查询成本</el-button>
-          <el-button v-hasPermi="['inventory:rebuild']" type="warning" plain @click="rebuildInventory">重建库存投影</el-button>
-          <el-button v-hasPermi="['inventory:cost-rebuild']" type="warning" plain @click="rebuildCost">重建成本投影</el-button>
+          <el-button v-hasPermi="['inventory:rebuild']" type="warning" plain :disabled="submitting" @click="rebuildInventory">重建库存投影</el-button>
+          <el-button v-hasPermi="['inventory:cost-rebuild']" type="warning" plain :disabled="submitting" @click="rebuildCost">重建成本投影</el-button>
         </el-form-item>
       </el-form>
 
@@ -134,8 +137,9 @@ import type {
 } from '@/api/operations/types';
 import { exactDecimal, parseSafePlatformIds } from '../model';
 import { useControlledOperation } from '../useControlledOperation';
+import OwnerPageFeedback from './OwnerPageFeedback.vue';
 
-const { pageState, runRead, runControlled } = useControlledOperation();
+const { pageState, pageFailure, submitting, runRead, runControlled } = useControlledOperation();
 const busy = computed(() => ['LOADING', 'SUBMITTING'].includes(pageState.value));
 const query = reactive({ warehouseId: '', skuId: '' });
 const inventoryBalance = ref<InventoryBalanceView>();
@@ -146,15 +150,33 @@ const stocktakeId = ref('');
 const stocktake = ref<StocktakeDetail>();
 const stocktakeDraft = reactive({ skuIds: '', blindCount: true, recountThreshold: '0' });
 const countDraft = reactive({ lineId: '', quantity: '0', deviceId: 'SYNTHETIC-ADMIN-01' });
+const lastReadMode = ref<'inventory' | 'cost' | 'stocktake'>('inventory');
 
 const loadInventory = async () => {
-  inventoryBalance.value = await runRead(() => getInventoryBalance(query.warehouseId, query.skuId));
-  inventoryLedger.value = await runRead(() => getInventoryLedger(query.warehouseId, query.skuId));
+  lastReadMode.value = 'inventory';
+  const result = await runRead(async () => {
+    const [balance, ledger] = await Promise.all([
+      getInventoryBalance(query.warehouseId, query.skuId),
+      getInventoryLedger(query.warehouseId, query.skuId)
+    ]);
+    return { data: { balance: balance.data, ledger: ledger.data } };
+  });
+  if (result) {
+    inventoryBalance.value = result.balance;
+    inventoryLedger.value = result.ledger;
+  }
 };
 
 const loadCost = async () => {
-  costBalance.value = await runRead(() => getCostBalance(query.warehouseId, query.skuId));
-  costLedger.value = await runRead(() => getCostLedger(query.warehouseId, query.skuId));
+  lastReadMode.value = 'cost';
+  const result = await runRead(async () => {
+    const [balance, ledger] = await Promise.all([getCostBalance(query.warehouseId, query.skuId), getCostLedger(query.warehouseId, query.skuId)]);
+    return { data: { balance: balance.data, ledger: ledger.data } };
+  });
+  if (result) {
+    costBalance.value = result.balance;
+    costLedger.value = result.ledger;
+  }
 };
 
 const rebuildInventory = async () => {
@@ -188,8 +210,18 @@ const rebuildCost = async () => {
 };
 
 const loadStocktake = async () => {
-  stocktake.value = await runRead(() => getStocktake(stocktakeId.value));
-  query.warehouseId ||= stocktake.value.head.warehouseId;
+  lastReadMode.value = 'stocktake';
+  const result = await runRead(() => getStocktake(stocktakeId.value));
+  if (result) {
+    stocktake.value = result;
+    query.warehouseId ||= result.head.warehouseId;
+  }
+};
+
+const reloadCurrent = async () => {
+  if (lastReadMode.value === 'cost') return loadCost();
+  if (lastReadMode.value === 'stocktake') return loadStocktake();
+  return loadInventory();
 };
 
 const createNewStocktake = async () => {
