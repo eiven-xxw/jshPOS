@@ -1,0 +1,123 @@
+openapi: 3.1.0
+info:
+  title: 鲸熵汇 T2-SVC-001 服务运营 API
+  version: 1.0.1-gate9b
+  description: 服务目录、实施项目、工单和附件元数据正式契约；tenant_id 只来自可信上下文。
+x-contract-authority: CURRENT_RUNTIME
+servers: [{url: /}]
+security: [{bearerAuth: []}]
+paths:
+  /api/v1/service/catalogs:
+    post:
+      operationId: createServiceCatalog
+      x-owner: SERVICE
+      x-permission: service:catalog:manage
+      parameters: [{$ref: '#/components/parameters/IdempotencyKey'}, {$ref: '#/components/parameters/CorrelationId'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/CreateCatalog'}}}}
+      responses: {'200': {description: 目录草稿及检查项}, '409': {$ref: '#/components/responses/Conflict'}}
+  /api/v1/service/catalogs/{catalogId}/publish:
+    post:
+      operationId: publishServiceCatalog
+      x-permission: service:catalog:manage
+      parameters: [{$ref: '#/components/parameters/CatalogId'}, {$ref: '#/components/parameters/IdempotencyKey'}, {$ref: '#/components/parameters/CorrelationId'}]
+      responses: {'200': {description: 已发布不可变目录}, '409': {$ref: '#/components/responses/Conflict'}}
+  /api/v1/service/projects:
+    get:
+      operationId: listImplementationProjects
+      x-permission: service:project:read
+      parameters: [{$ref: '#/components/parameters/StoreId'}]
+      responses: {'200': {description: 门店范围内项目}}
+    post:
+      operationId: createImplementationProject
+      x-permission: service:project:create
+      parameters: [{$ref: '#/components/parameters/IdempotencyKey'}, {$ref: '#/components/parameters/CorrelationId'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/CreateProject'}}}}
+      responses: {'200': {description: 项目及冻结检查项}}
+  /api/v1/service/projects/{projectId}/commands:
+    post:
+      operationId: commandImplementationProject
+      x-permission: service:project:operate
+      parameters: [{$ref: '#/components/parameters/ProjectId'}, {$ref: '#/components/parameters/ExpectedVersion'}, {$ref: '#/components/parameters/IdempotencyKey'}, {$ref: '#/components/parameters/CorrelationId'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/StateCommand'}}}}
+      responses: {'200': {description: 新项目状态}, '409': {$ref: '#/components/responses/Conflict'}}
+  /api/v1/service/projects/{projectId}:
+    get:
+      operationId: getImplementationProject
+      x-permission: service:project:read
+      parameters: [{$ref: '#/components/parameters/ProjectId'}]
+      responses: {'200': {description: 项目及冻结检查项}, '403': {$ref: '#/components/responses/Forbidden'}}
+  /api/v1/service/projects/{projectId}/checks/{checkId}/complete:
+    post:
+      operationId: completeProjectCheck
+      x-permission: service:project:operate
+      parameters: [{$ref: '#/components/parameters/ProjectId'}, {$ref: '#/components/parameters/CheckId'}, {$ref: '#/components/parameters/ExpectedVersion'}, {$ref: '#/components/parameters/IdempotencyKey'}, {$ref: '#/components/parameters/CorrelationId'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/Reason'}}}}
+      responses: {'200': {description: 检查项完成结果}}
+  /api/v1/service/tickets:
+    get:
+      operationId: listServiceTickets
+      x-permission: service:ticket:read
+      parameters: [{$ref: '#/components/parameters/StoreId'}, {name: state, in: query, schema: {type: string}}, {name: limit, in: query, schema: {type: integer, minimum: 1, maximum: 100, default: 50}}]
+      responses: {'200': {description: 工单列表}}
+    post:
+      operationId: createServiceTicket
+      x-permission: service:ticket:create
+      parameters: [{$ref: '#/components/parameters/IdempotencyKey'}, {$ref: '#/components/parameters/CorrelationId'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/CreateTicket'}}}}
+      responses: {'200': {description: OPEN 工单}}
+  /api/v1/service/tickets/{ticketId}/commands:
+    post:
+      operationId: commandServiceTicket
+      x-permission: service:ticket:operate
+      parameters: [{$ref: '#/components/parameters/TicketId'}, {$ref: '#/components/parameters/ExpectedVersion'}, {$ref: '#/components/parameters/IdempotencyKey'}, {$ref: '#/components/parameters/CorrelationId'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/TicketCommand'}}}}
+      responses: {'200': {description: 新工单状态/租约}, '409': {$ref: '#/components/responses/Conflict'}}
+  /api/v1/service/tickets/{ticketId}:
+    get:
+      operationId: getServiceTicket
+      x-permission: service:ticket:read
+      parameters: [{$ref: '#/components/parameters/TicketId'}]
+      responses: {'200': {description: 工单、附件元数据和内部超时提示}, '403': {$ref: '#/components/responses/Forbidden'}}
+  /api/v1/service/tickets/{ticketId}/attachments:
+    post:
+      operationId: uploadServiceAttachment
+      x-permission: service:attachment:upload
+      parameters: [{$ref: '#/components/parameters/TicketId'}, {$ref: '#/components/parameters/IdempotencyKey'}, {$ref: '#/components/parameters/CorrelationId'}]
+      requestBody: {required: true, content: {multipart/form-data: {schema: {type: object, required: [file], properties: {file: {type: string, format: binary}}}}}}
+      responses: {'200': {description: 仅返回附件元数据，不返回永久对象地址}}
+  /api/v1/service/tickets/{ticketId}/attachments/{attachmentId}/download:
+    post:
+      operationId: issueServiceAttachmentDownload
+      x-permission: service:attachment:download
+      parameters: [{$ref: '#/components/parameters/TicketId'}, {$ref: '#/components/parameters/AttachmentId'}]
+      responses: {'200': {description: 最长300秒短期链接，每次重新授权}, '403': {$ref: '#/components/responses/Forbidden'}}
+  /api/v1/service/tickets/{ticketId}/attachments/{attachmentId}/cleanup:
+    post:
+      operationId: cleanupServiceAttachment
+      x-permission: service:attachment:cleanup
+      parameters: [{$ref: '#/components/parameters/TicketId'}, {$ref: '#/components/parameters/AttachmentId'}, {$ref: '#/components/parameters/IdempotencyKey'}, {$ref: '#/components/parameters/CorrelationId'}]
+      responses: {'200': {description: 正文清理且摘要与审计保留}, '409': {$ref: '#/components/responses/Conflict'}}
+components:
+  securitySchemes: {bearerAuth: {type: http, scheme: bearer, bearerFormat: JWT}}
+  parameters:
+    IdempotencyKey: {name: Idempotency-Key, in: header, required: true, schema: {type: string, minLength: 8, maxLength: 64, pattern: '^[A-Za-z0-9._:-]+$'}}
+    CorrelationId: {name: X-Correlation-ID, in: header, required: true, schema: {type: string, minLength: 1, maxLength: 64, pattern: '^[A-Za-z0-9._:-]+$'}}
+    ExpectedVersion: {name: If-Match-Version, in: header, required: true, schema: {type: integer, minimum: 0}}
+    StoreId: {name: storeId, in: query, required: true, schema: {type: integer, minimum: 1}}
+    CatalogId: {name: catalogId, in: path, required: true, schema: {$ref: '#/components/schemas/Ulid'}}
+    ProjectId: {name: projectId, in: path, required: true, schema: {$ref: '#/components/schemas/Ulid'}}
+    CheckId: {name: checkId, in: path, required: true, schema: {$ref: '#/components/schemas/Ulid'}}
+    TicketId: {name: ticketId, in: path, required: true, schema: {$ref: '#/components/schemas/Ulid'}}
+    AttachmentId: {name: attachmentId, in: path, required: true, schema: {$ref: '#/components/schemas/Ulid'}}
+  responses:
+    Conflict: {description: 状态、版本、租约、职责分离、检查项或幂等冲突}
+    Forbidden: {description: SaaS/Subscription、可信租户、门店范围或独立权限拒绝}
+  schemas:
+    Ulid: {type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'}
+    CatalogItem: {type: object, additionalProperties: false, required: [itemCode, itemName, mandatory], properties: {itemCode: {type: string, maxLength: 64}, itemName: {type: string, maxLength: 120}, mandatory: {type: boolean}, sequenceNo: {type: integer, minimum: 1, maximum: 1000}}}
+    CreateCatalog: {type: object, additionalProperties: false, required: [catalogCode, versionNo, industryTemplate, name, items], properties: {catalogCode: {type: string, maxLength: 64}, versionNo: {type: integer, minimum: 1}, industryTemplate: {enum: [CONVENIENCE, SNACK_DISCOUNT, COMMUNITY_SUPERMARKET]}, name: {type: string, maxLength: 120}, items: {type: array, minItems: 1, maxItems: 100, items: {$ref: '#/components/schemas/CatalogItem'}}}}
+    CreateProject: {type: object, additionalProperties: false, required: [storeId, catalogId, targetDate], properties: {storeId: {type: integer, minimum: 1}, catalogId: {$ref: '#/components/schemas/Ulid'}, targetDate: {type: string, format: date}, ownerUserId: {type: integer, minimum: 1}}}
+    StateCommand: {type: object, additionalProperties: false, required: [command, reason], properties: {command: {enum: [PREFLIGHT, PREFLIGHT_FAILED, MARK_READY, START, BLOCK, UNBLOCK, READY_TO_HANDOVER, HANDOVER, CANCEL]}, reason: {type: string, minLength: 1, maxLength: 500}}}
+    Reason: {type: object, additionalProperties: false, required: [reason], properties: {reason: {type: string, minLength: 1, maxLength: 500}}}
+    CreateTicket: {type: object, additionalProperties: false, required: [storeId, serviceType, priority, subject, internalTargetMinutes], properties: {storeId: {type: integer, minimum: 1}, projectId: {$ref: '#/components/schemas/Ulid'}, serviceType: {type: string, maxLength: 64}, priority: {enum: [P0, P1, P2, P3]}, subject: {type: string, maxLength: 200}, description: {type: string, maxLength: 2000}, internalTargetMinutes: {type: integer, minimum: 1, maximum: 525600, description: 内部目标，不构成商业SLA}}}
+    TicketCommand: {type: object, additionalProperties: false, required: [command, reason], properties: {command: {enum: [CLAIM, ASSIGN, START, WAIT_FOR_INPUT, RESOLVE, CLOSE, REOPEN, CANCEL]}, assigneeUserId: {type: integer, minimum: 1}, leaseMinutes: {type: integer, minimum: 1, maximum: 1440}, reason: {type: string, minLength: 1, maxLength: 1000}, resolutionSummary: {type: string, maxLength: 1000}}}

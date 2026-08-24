@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "1.0",
+  "findingId": "G9A-API-P1-001",
+  "requirementId": "T2-API-001",
+  "baselineState": "OPEN",
+  "state": "VERIFIED_CLOSURE_CANDIDATE",
+  "baseline": {"controllerOperations":300,"currentOpenApiOperations":257,"controllerWithoutOpenApi":64,"openApiWithoutController":21},
+  "current": {"controllerOperations":300,"currentOpenApiOperations":300,"controllerWithoutOpenApi":0,"openApiWithoutController":0,"missingOperationId":0,"duplicateOperationId":0,"alignedPermissions":80,"clientApiRootsWithoutFormalServer":0},
+  "runtimeBehaviorChanges": 0,
+  "publishedMigrationChanges": 0,
+  "newBusinessCapabilities": 0,
+  "projectSponsorConfirmationRequired": true,
+  "evidenceLevel": "STATIC_AND_SOFTWARE_EXECUTION",
+  "externalExecution": {"providerNetwork":0,"realFunds":0,"realDeviceCommands":0,"realPeripheralCommands":0,"partnerFieldExecution":0,"fullAlpha":0,"productionDeployment":0}
+}

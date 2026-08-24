@@ -1,12 +1,13 @@
 openapi: 3.1.0
 info:
   title: JSH POS Member Benefit and Price API
-  version: 1.0.0
+  version: 1.0.1-gate9b
   description: >-
     T2-MEM-003 内部正式契约。tenant_id 仅来自可信认证上下文；
     请求与响应禁止包含会员身份明文。
 x-contract-status: ACTIVE_INTERNAL
-x-requirement-status: IN_PROGRESS
+x-contract-authority: CURRENT_RUNTIME
+x-requirement-status: ACCEPTED
 paths:
   /api/v1/member-benefit-policies:
     post:
@@ -54,25 +55,35 @@ paths:
       responses:
         '200': {description: 发布或调度版本}
         '409': {description: 生效窗口、门店范围或摘要冲突}
-  /api/v1/member-benefit-policies/{policyId}/versions/{versionId}/{action}:
+  /api/v1/member-benefit-policies/{policyId}/versions/{versionId}/pause:
     post:
-      operationId: transitionMemberBenefitVersion
+      operationId: pauseMemberBenefitVersion
       x-owner: MEMBER
-      x-permission: member:benefit:operate
-      parameters:
-        - {$ref: '#/components/parameters/PolicyId'}
-        - {$ref: '#/components/parameters/VersionId'}
-        - name: action
-          in: path
-          required: true
-          schema: {enum: [pause, resume, revoke]}
+      x-permission: member:benefit:pause
+      parameters: [{$ref: '#/components/parameters/PolicyId'}, {$ref: '#/components/parameters/VersionId'}]
       requestBody:
         required: true
         content:
           application/json:
             schema: {$ref: '#/components/schemas/ReasonCommand'}
       responses:
-        '200': {description: 只追加状态事实}
+        '200': {description: 只追加 PAUSED 状态事实}
+  /api/v1/member-benefit-policies/{policyId}/versions/{versionId}/resume:
+    post:
+      operationId: resumeMemberBenefitVersion
+      x-owner: MEMBER
+      x-permission: member:benefit:publish
+      parameters: [{$ref: '#/components/parameters/PolicyId'}, {$ref: '#/components/parameters/VersionId'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/ReasonCommand'}}}}
+      responses: {'200': {description: 只追加恢复状态事实}}
+  /api/v1/member-benefit-policies/{policyId}/versions/{versionId}/revoke:
+    post:
+      operationId: revokeMemberBenefitVersion
+      x-owner: MEMBER
+      x-permission: member:benefit:revoke
+      parameters: [{$ref: '#/components/parameters/PolicyId'}, {$ref: '#/components/parameters/VersionId'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/ReasonCommand'}}}}
+      responses: {'200': {description: 只追加 REVOKED 状态事实}}
   /api/v1/member-entitlements/issue:
     post:
       operationId: issueEntitlementSnapshot
@@ -87,11 +98,11 @@ paths:
       responses:
         '200': {description: 最小化权益快照}
         '409': {description: 等级、权益版本或门店范围无效}
-  /api/v1/member-benefit-quotes:
+  /api/v1/promotions/member-benefit/quotes:
     post:
       operationId: quoteMemberBenefitPrice
       x-owner: PROMOTION
-      x-permission: pos:member-benefit:quote
+      x-permission: promotion:quote:calculate
       x-idempotency-required: true
       x-no-pii: true
       requestBody:
@@ -102,10 +113,60 @@ paths:
       responses:
         '200': {description: 可解释 BEST_PRICE 报价和 fingerprint}
         '409': {description: 权益无效、报价过期或同键异内容}
+  /api/v1/member-price-versions:
+    post:
+      operationId: createMemberPriceVersion
+      x-owner: CATALOG_PRICING
+      x-permission: pricing:member-price:publish
+      x-idempotency-required: true
+      responses: {'200': {description: 返回会员价 DRAFT 版本及内容摘要}, '409': {description: 版本、门店范围或幂等冲突}}
+  /api/v1/member-price-versions/{versionId}/validate:
+    post:
+      operationId: validateMemberPriceVersion
+      x-owner: CATALOG_PRICING
+      x-permission: pricing:member-price:publish
+      parameters: [{$ref: '#/components/parameters/VersionId'}]
+      responses: {'200': {description: 完整预检和服务端摘要}}
+  /api/v1/member-price-versions/{versionId}/approve:
+    post:
+      operationId: approveMemberPriceVersion
+      x-owner: CATALOG_PRICING
+      x-permission: pricing:member-price:publish
+      parameters: [{$ref: '#/components/parameters/VersionId'}]
+      responses: {'200': {description: 职责分离审批结果}, '409': {description: 审批、版本或摘要冲突}}
+  /api/v1/member-price-versions/{versionId}/publish:
+    post:
+      operationId: publishMemberPriceVersion
+      x-owner: CATALOG_PRICING
+      x-permission: pricing:member-price:publish
+      parameters: [{$ref: '#/components/parameters/VersionId'}]
+      responses: {'200': {description: 发布或调度会员价版本}, '409': {description: 生效窗口、门店或摘要冲突}}
+  /api/v1/promotions/member-benefit-packages:
+    post:
+      operationId: publishMemberBenefitPackage
+      x-owner: PROMOTION
+      x-permission: promotion:rule:publish
+      description: 发布只含最小权益与会员价、无 PII 的签名离线包。
+      responses: {'200': {description: 包版本、摘要、签名键引用和适用门店}}
+  /api/v1/promotions/member-benefit-packages/{packageVersion}:
+    get:
+      operationId: getMemberBenefitPackage
+      x-owner: PROMOTION
+      x-permission: promotion:package:read
+      parameters: [{$ref: '#/components/parameters/PackageVersion'}]
+      responses: {'200': {description: 服务端权威包元数据}}
+  /api/v1/promotions/member-benefit-packages/{packageVersion}/content:
+    get:
+      operationId: downloadMemberBenefitPackage
+      x-owner: PROMOTION
+      x-permission: promotion:package:read
+      parameters: [{$ref: '#/components/parameters/PackageVersion'}]
+      responses: {'200': {description: canonical 包正文及摘要、签名响应头}}
 components:
   parameters:
     PolicyId: {name: policyId, in: path, required: true, schema: {type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'}}
     VersionId: {name: versionId, in: path, required: true, schema: {type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'}}
+    PackageVersion: {name: packageVersion, in: path, required: true, schema: {type: integer, format: int64, minimum: 1}}
   schemas:
     CreatePolicy:
       type: object

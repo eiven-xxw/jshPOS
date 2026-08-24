@@ -1,67 +1,82 @@
-openapi: 3.0.3
+openapi: 3.1.0
 info:
-  title: T2-RPL-001 Deterministic Replenishment API
-  version: 1.0.0
+  title: 鲸熵汇 T2-RPL-001 确定性补货 API
+  version: 1.0.1-gate9b
+  description: tenant_id 来自可信上下文；建议只可经 Procurement Owner 正式端口转采购草稿。
+x-contract-authority: CURRENT_RUNTIME
 servers:
-  - url: /api/v1/procurement/replenishment
+  - url: /api/v1/replenishment
 paths:
   /policies:
     get:
       operationId: listReplenishmentPolicies
-      responses:
-        '200': {description: Trusted-scope policy versions}
+      x-permission: procurement:replenishment:read
+      responses: {'200': {description: 可信门店范围内规则版本}}
     post:
       operationId: createReplenishmentPolicy
-      description: tenant_id is injected from trusted server context.
-      responses:
-        '200': {description: Idempotent DRAFT policy}
-        '409': {description: Same key different content or invalid deterministic rule}
+      x-permission: procurement:replenishment:policy
+      responses: {'200': {description: 幂等 DRAFT 规则}, '409': {description: 同键异内容或规则不变量冲突}}
+  /policies/{policyVersionId}:
+    get:
+      operationId: getReplenishmentPolicy
+      x-permission: procurement:replenishment:read
+      parameters: [{$ref: '#/components/parameters/PolicyVersionId'}]
+      responses: {'200': {description: 服务端权威规则详情}}
   /policies/{policyVersionId}/publish:
     post:
       operationId: publishReplenishmentPolicy
-      responses:
-        '200': {description: Immutable PUBLISHED policy}
+      x-permission: procurement:replenishment:policy
+      parameters: [{$ref: '#/components/parameters/PolicyVersionId'}]
+      responses: {'200': {description: 不可变 PUBLISHED 规则}}
   /policies/{policyVersionId}/retire:
     post:
       operationId: retireReplenishmentPolicy
-      responses:
-        '200': {description: RETIRED policy; history remains immutable}
-  /runs:
+      x-permission: procurement:replenishment:policy
+      parameters: [{$ref: '#/components/parameters/PolicyVersionId'}]
+      responses: {'200': {description: RETIRED 且历史保留}}
+  /suggestions/generate:
     post:
       operationId: generateReplenishmentSuggestions
-      description: Uses authoritative inventory checkpoint and optional approved in-transit facts.
-      responses:
-        '200': {description: Idempotent generation result}
-        '409': {description: Stale checkpoint, hash conflict or invalid source fact}
+      x-permission: procurement:replenishment:generate
+      description: 使用权威库存检查点、版本化规则和可选已确认在途事实。
+      responses: {'200': {description: 幂等生成结果}, '409': {description: 检查点过期、摘要冲突或来源事实无效}}
   /suggestions:
     get:
       operationId: listReplenishmentSuggestions
-      responses:
-        '200': {description: Trusted store-scoped suggestions}
+      x-permission: procurement:replenishment:read
+      responses: {'200': {description: 可信门店范围内建议}}
   /suggestions/{suggestionId}/review:
     post:
       operationId: reviewReplenishmentSuggestion
-      responses:
-        '200': {description: REVIEWED}
+      x-permission: procurement:replenishment:review
+      parameters: [{$ref: '#/components/parameters/SuggestionId'}]
+      responses: {'200': {description: REVIEWED}}
   /suggestions/{suggestionId}/approve:
     post:
       operationId: approveReplenishmentSuggestion
-      responses:
-        '200': {description: APPROVED}
+      x-permission: procurement:replenishment:approve
+      parameters: [{$ref: '#/components/parameters/SuggestionId'}]
+      responses: {'200': {description: APPROVED}}
   /suggestions/{suggestionId}/reject:
     post:
       operationId: rejectReplenishmentSuggestion
-      responses:
-        '200': {description: REJECTED with audited reason}
+      x-permission: procurement:replenishment:review
+      parameters: [{$ref: '#/components/parameters/SuggestionId'}]
+      responses: {'200': {description: REJECTED 且原因受审计}}
   /suggestions/{suggestionId}/purchase-draft:
     post:
       operationId: createPurchaseDraftFromSuggestion
-      description: Procurement Owner creates DRAFT only; no inventory or cost effect.
-      responses:
-        '200': {description: PURCHASE_DRAFTED and bound purchase order ID}
-        '409': {description: Supplier/unit/checkpoint conflict or same key different content}
+      x-permission: procurement:replenishment:draft
+      parameters: [{$ref: '#/components/parameters/SuggestionId'}]
+      description: 只创建 Procurement Owner 的 DRAFT，不产生采购承诺、库存或成本效果。
+      responses: {'200': {description: PURCHASE_DRAFTED}, '409': {description: 供应商、单位、检查点或幂等冲突}}
 components:
   securitySchemes:
     trustedSession: {type: apiKey, in: header, name: Authorization}
+  parameters:
+    PolicyVersionId: {name: policyVersionId, in: path, required: true, schema: {$ref: '#/components/schemas/Ulid'}}
+    SuggestionId: {name: suggestionId, in: path, required: true, schema: {$ref: '#/components/schemas/Ulid'}}
+  schemas:
+    Ulid: {type: string, pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'}
 security:
   - trustedSession: []

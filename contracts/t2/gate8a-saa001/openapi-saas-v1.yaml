@@ -1,16 +1,18 @@
 openapi: 3.1.0
 info:
   title: 鲸熵汇商业 SaaS 开户与权益 API
-  version: 1.0.0-gate8a-saa001
+  version: 1.0.1-gate9b
   description: >-
     T2-SAA-001 内部正式契约。申请阶段仅允许平台管理员；tenant_id 由 Foundation
     服务端分配，不在申请请求体或 Header 中接受租户覆盖。真实计费和 Provider 调用不在本契约内。
+x-contract-authority: CURRENT_RUNTIME
 servers:
   - url: /api/v1/saas
 paths:
   /applications:
     post:
       operationId: createSaasApplication
+      x-permission: saas:application:create
       x-requirement-id: T2-SAA-001
       x-platform-admin-required: true
       parameters:
@@ -22,26 +24,29 @@ paths:
           application/json:
             schema: {$ref: '#/components/schemas/ApplicationCreate'}
       responses: {'200': {$ref: '#/components/responses/ApplicationSuccess'}, '409': {$ref: '#/components/responses/Conflict'}}
-  /applications/{applicationId}:
+  /applications/{id}:
     get:
       operationId: getSaasApplication
+      x-permission: saas:application:read
       x-requirement-id: T2-SAA-001
       x-platform-admin-required: true
       parameters:
         - {$ref: '#/components/parameters/ApplicationId'}
       responses: {'200': {$ref: '#/components/responses/ApplicationSuccess'}, '404': {$ref: '#/components/responses/NotFound'}}
-  /applications/{applicationId}/preflight:
+  /applications/{id}/preflight:
     post:
       operationId: preflightSaasApplication
+      x-permission: saas:application:preflight
       x-idempotency-required: true
       parameters:
         - {$ref: '#/components/parameters/ApplicationId'}
         - {$ref: '#/components/parameters/IdempotencyKey'}
         - {$ref: '#/components/parameters/CorrelationId'}
       responses: {'200': {$ref: '#/components/responses/ApplicationSuccess'}, '409': {$ref: '#/components/responses/Conflict'}}
-  /applications/{applicationId}/approve:
+  /applications/{id}/approve:
     post:
       operationId: approveSaasApplication
+      x-permission: saas:application:approve
       x-idempotency-required: true
       parameters:
         - {$ref: '#/components/parameters/ApplicationId'}
@@ -49,9 +54,10 @@ paths:
         - {$ref: '#/components/parameters/CorrelationId'}
       requestBody: {$ref: '#/components/requestBodies/Reason'}
       responses: {'200': {$ref: '#/components/responses/ApplicationSuccess'}, '409': {$ref: '#/components/responses/Conflict'}}
-  /applications/{applicationId}/provision:
+  /applications/{id}/provision:
     post:
       operationId: provisionTechnicalTenant
+      x-permission: saas:application:provision
       x-idempotency-required: true
       x-request-response-logging: disabled
       x-server-allocated-tenant-id: true
@@ -65,18 +71,20 @@ paths:
           application/json:
             schema: {$ref: '#/components/schemas/ProvisionRequest'}
       responses: {'200': {$ref: '#/components/responses/ApplicationSuccess'}, '409': {$ref: '#/components/responses/Conflict'}}
-  /applications/{applicationId}/initialize:
+  /applications/{id}/initialize:
     post:
       operationId: initializeSaasTenant
+      x-permission: saas:application:initialize
       x-idempotency-required: true
       parameters:
         - {$ref: '#/components/parameters/ApplicationId'}
         - {$ref: '#/components/parameters/IdempotencyKey'}
         - {$ref: '#/components/parameters/CorrelationId'}
       responses: {'200': {$ref: '#/components/responses/ApplicationSuccess'}, '409': {$ref: '#/components/responses/Conflict'}}
-  /applications/{applicationId}/activate:
+  /applications/{id}/activate:
     post:
       operationId: activateSaasTenant
+      x-permission: saas:application:activate
       x-idempotency-required: true
       parameters:
         - {$ref: '#/components/parameters/ApplicationId'}
@@ -86,6 +94,7 @@ paths:
   /plans:
     post:
       operationId: createSaasPlan
+      x-permission: saas:plan:create
       x-platform-admin-required: true
       parameters:
         - {$ref: '#/components/parameters/IdempotencyKey'}
@@ -97,6 +106,7 @@ paths:
   /plans/{planId}/versions:
     post:
       operationId: createEntitlementVersion
+      x-permission: saas:entitlement:create
       x-idempotency-required: true
       parameters:
         - {name: planId, in: path, required: true, schema: {type: integer, format: int64, minimum: 1}}
@@ -106,12 +116,13 @@ paths:
         required: true
         content: {application/json: {schema: {$ref: '#/components/schemas/VersionCreate'}}}
       responses: {'200': {description: 权益草稿创建成功}, '409': {$ref: '#/components/responses/Conflict'}}
-  /entitlements/{versionId}/{action}:
+  /entitlements/{id}/{action}:
     post:
       operationId: advanceEntitlementVersion
+      x-permission: saas:entitlement:publish
       x-idempotency-required: true
       parameters:
-        - {name: versionId, in: path, required: true, schema: {$ref: '#/components/schemas/Ulid'}}
+        - {name: id, in: path, required: true, schema: {$ref: '#/components/schemas/Ulid'}}
         - {name: action, in: path, required: true, schema: {enum: [validate, approve, publish, activate]}}
         - {$ref: '#/components/parameters/IdempotencyKey'}
         - {$ref: '#/components/parameters/CorrelationId'}
@@ -119,6 +130,7 @@ paths:
   /tenants/{tenantId}/{action}:
     post:
       operationId: changeCommercialTenantLifecycle
+      x-permission: saas:tenant:lifecycle
       description: tenantId 是平台管理员选定的操作目标，不是当前会话的授权声明；服务端仍执行平台权限与记录交叉校验。
       x-idempotency-required: true
       x-platform-admin-required: true
@@ -132,6 +144,7 @@ paths:
   /entitlement-decisions/{featureCode}:
     get:
       operationId: decideCurrentTenantEntitlement
+      x-permission: saas:entitlement:read
       x-trusted-tenant-context: required
       parameters:
         - {name: featureCode, in: path, required: true, schema: {type: string, pattern: '^[A-Za-z][A-Za-z0-9_]{1,63}$'}}
@@ -139,6 +152,7 @@ paths:
   /entitlement-decisions/{featureCode}/consume:
     post:
       operationId: consumeCurrentTenantQuota
+      x-permission: saas:entitlement:consume
       x-trusted-tenant-context: required
       x-atomic-quota-check: true
       parameters:
@@ -149,7 +163,7 @@ paths:
       responses: {'200': {description: 原子消费后的授权结论}, '409': {$ref: '#/components/responses/Conflict'}}
 components:
   parameters:
-    ApplicationId: {name: applicationId, in: path, required: true, schema: {$ref: '#/components/schemas/Ulid'}}
+    ApplicationId: {name: id, in: path, required: true, schema: {$ref: '#/components/schemas/Ulid'}}
     IdempotencyKey: {name: Idempotency-Key, in: header, required: true, schema: {type: string, minLength: 8, maxLength: 64, pattern: '^[A-Za-z0-9._:-]+$'}}
     CorrelationId: {name: X-Correlation-ID, in: header, required: true, schema: {type: string, minLength: 1, maxLength: 64, pattern: '^[A-Za-z0-9._:-]+$'}}
   requestBodies:

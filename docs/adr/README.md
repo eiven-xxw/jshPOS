@@ -78,3 +78,4 @@ ADR 一经接受不得删除或静默改写。需要改变决策时，新建 ADR
 | ADR-066 | [Gate 8C 内部发布准备、供应链证据与强制 NO-GO](ADR-066-gate8c-internal-release-readiness.md) | Accepted |
 | ADR-067 | [Gate 8D 外部 P0、许可证、完整 Alpha 与发布准入复核](ADR-067-gate8d-external-p0-license-alpha-release-admission.md) | Accepted |
 | ADR-068 | [Gate 9A 商业 V1 内部产品完整性审计](ADR-068-gate9a-internal-product-completeness-audit.md) | Accepted |
+| ADR-069 | [Gate 9B 正式 API 与当前 OpenAPI 双向一致性](ADR-069-gate9b-formal-api-openapi-alignment.md) | Accepted |

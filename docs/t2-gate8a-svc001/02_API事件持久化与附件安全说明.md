@@ -9,7 +9,7 @@
 
 ## 2. API、幂等与事件
 
-正式 OpenAPI 位于 `contracts/t2/gate8a-svc001/openapi.yaml`，覆盖目录创建/发布、实施项目查询与命令、
+正式 OpenAPI 当前权威位于 `contracts/t2/gate8a-svc001/openapi-service-v1.yaml`，覆盖目录创建/发布、实施项目查询与命令、
 检查项完成、工单查询与命令、附件上传、短期下载和清理。写命令要求稳定 `Idempotency-Key` 和
 `X-Correlation-ID`；同键同摘要返回原结果，同键异摘要以 `SVC-IDEM-001` 失败关闭。
 

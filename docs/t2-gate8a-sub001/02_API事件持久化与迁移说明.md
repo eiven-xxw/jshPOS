@@ -9,7 +9,7 @@
 
 ## 2. API 与幂等
 
-OpenAPI 冻结在 `contracts/t2/gate8a-sub001/openapi.yaml`。创建、激活、续期、暂停、恢复、
+OpenAPI 当前权威位于 `contracts/t2/gate8a-sub001/openapi-subscription-v1.yaml`。创建、激活、续期、暂停、恢复、
 申请终止和逻辑终止均要求稳定 `Idempotency-Key` 与关联标识；同键同摘要返回原结果，同键异摘要以
 `SUB-IDEMP-002` 失败关闭。平台可显式触发具名到期扫描，运行时未注册隐式定时器。
 

@@ -752,6 +752,18 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
 - `T2-PAY-002/HWD-001/PRN-001/PAR-001` 继续 `BLOCKED`，`T2-UAT-001/REL-001` 继续 `DRAFT`，`T2-LIC-001/JSH-001` 继续 `DEFERRED`；Provider 网络、真实资金、设备/外设命令、伙伴现场、完整 Alpha 和生产部署继续为 0。
 - 完成后只允许提交完整性审计报告、缺陷账、页面/API 覆盖矩阵、分批修复计划和第一批正式修复启动指令，等待项目发起人确认；不得自动进入运行时缺陷修复、完整 Alpha、现场试点或生产发布。
 
+## 4.62 当前 T2 Gate 9B / Sprint S27-A 正式 API 与 OpenAPI 一致性修复条件准入
+
+- 项目发起人已于 2026-08-24 接受 `T2-CMP-001 STATIC_GOVERNANCE_AND_REPOSITORY_AUDIT CONDITIONAL PASS`，授权其更新为 `ACCEPTED`，并授权从 Gate 9A-Prep 最终封存提交 `f708271e977f995e83a24fe398a1bd658726fd09` 建立 `t2/gate9b-sprint27a-api-openapi-alignment`。
+- 本批只允许修复 `G9A-API-P1-001`，复用已接受的 `T2-API-001`；不得新增 Requirement ID、业务能力、Controller、页面旅程、状态机、表、任务、依赖或数据库迁移。
+- 必须冻结 300 项 Controller、257 项当前 OpenAPI、Vue/Flutter 客户端调用以及 64 项 Controller 无当前 OpenAPI、21 项当前 OpenAPI 无精确 Controller 的基线；每项差异必须归为补齐当前契约、修正实现、历史草案/替代契约或经审批删除的孤立能力。
+- 当前正式 Controller、已接受 Owner 行为和客户端调用共同确定当前契约；优先修正 OpenAPI。确需修改实现时必须先增加失败回归，并证明不改变权限、可信租户、资金、库存、幂等、错误和失败关闭语义。
+- 当前 OpenAPI 必须使用机器可发现的 `openapi-*.yaml`，每项操作具有全局唯一 `operationId`；历史草案必须显式声明 `HISTORICAL_DRAFT_NON_RUNTIME` 和有效替代契约，禁止为了归零静默删除能力或把草案提升为当前。
+- Gate 9A 原始报告、缺陷账和历史 Gate 6G 审计器保持不可变；Gate 9B 必须建立独立 85 项分类账、闭环证据和周门禁报告。退出时 Controller/OpenAPI 必须达到 300/300、双向差异 0/0、客户端调用全部有正式服务端实现。
+- 必须执行治理、Server、Web、Flutter 双平台、Android/Kotlin、MySQL、SQLite、权限、租户、错误码、幂等、兼容、安全、依赖、SBOM、许可证、覆盖率及既有 Gate 全量回归；不得降低阈值、跳过失败测试、自动重跑掩盖 Flaky 或修改已发布迁移。
+- `T2-PAY-002/HWD-001/PRN-001/PAR-001` 继续 `BLOCKED`；`T2-UAT-001/REL-001` 继续 `DRAFT`；`T2-LIC-001/JSH-001` 继续 `DEFERRED`。Provider 网络、真实资金、设备/外设命令、伙伴现场、完整 Alpha、生产部署和商业声明必须为 0。
+- 完成后只可提交《G9A-R1 正式 API 契约修复独立周门禁报告》等待项目发起人确认；不得自动进入 G9A-R2、完整 Alpha、现场试点或生产发布。
+
 ## 5. 工程与测试规则
 
 - 服务端采用 RuoYi-Vue-Plus 模块化单体，不得把领域逻辑写入 Controller、通用工具类或框架系统模块。

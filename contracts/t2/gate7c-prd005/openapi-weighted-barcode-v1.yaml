@@ -1,24 +1,45 @@
 openapi: 3.1.0
 info:
   title: 鲸熵汇 T2-PRD-005 秤码金额码 API
-  version: 1.0.0
+  version: 1.0.1-gate9b
   x-requirement-id: T2-PRD-005
   x-real-device-commands: 0
+x-contract-authority: CURRENT_RUNTIME
 paths:
   /api/v1/catalog/weighted-barcode-templates:
     post:
       operationId: createWeightedBarcodeTemplate
-      security: [{ bearerAuth: [] }]
+      x-permission: catalog:weighted-barcode:manage
+      security: [{bearerAuth: []}]
       responses: {'200': {description: 已创建 DRAFT 模板}}
+  /api/v1/catalog/weighted-barcode-templates/{templateId}:
+    get:
+      operationId: getWeightedBarcodeTemplate
+      x-permission: catalog:weighted-barcode:query
+      parameters: [{$ref: '#/components/parameters/TemplateId'}]
+      responses: {'200': {description: 服务端权威模板}}
   /api/v1/catalog/weighted-barcode-templates/{templateId}/publish:
     put:
       operationId: publishWeightedBarcodeTemplate
-      parameters: [{name: templateId, in: path, required: true, schema: {type: integer, format: int64}}]
+      x-permission: catalog:weighted-barcode:publish
+      parameters: [{$ref: '#/components/parameters/TemplateId'}]
       responses: {'200': {description: 已发布且内容不可变}}
-  /api/v1/catalog/weighted-barcodes/resolve:
+  /api/v1/catalog/weighted-barcode-templates/{templateId}/retire:
+    put:
+      operationId: retireWeightedBarcodeTemplate
+      x-permission: catalog:weighted-barcode:manage
+      parameters: [{$ref: '#/components/parameters/TemplateId'}]
+      responses: {'200': {description: 已退役且历史保留}}
+  /api/v1/catalog/weighted-barcode-templates/preview:
     post:
-      operationId: resolveWeightedBarcodePreview
-      responses: {'200': {description: 返回冻结解析快照}}
+      operationId: previewWeightedBarcode
+      x-permission: catalog:weighted-barcode:preview
+      description: 只执行键盘楔入或合成输入预览，不调用真实电子秤或厂商扫码 SDK。
+      responses:
+        '200': {description: 返回服务端权威精确计量预览}
+        '409': {description: 模板歧义、过期、校验失败、溢出或摘要冲突}
 components:
   securitySchemes:
     bearerAuth: {type: http, scheme: bearer}
+  parameters:
+    TemplateId: {name: templateId, in: path, required: true, schema: {type: integer, format: int64, minimum: 1}}

@@ -1,4 +1,4 @@
 requirement_id,owner,module,formal_api,event_contract,migrations,status,evidence
 T2-SAA-001,SaaS,jshpos-saas,contracts/t2/gate8a-saa001/openapi-saas-v1.yaml,contracts/t2/gate8a-saa001/saas-events-v1.schema.json,V202608230081;V202608230082,ACCEPTED,docs/t2-gate8a-saa001/05_T2_SAA001独立周门禁报告.md
-T2-SUB-001,Subscription,jshpos-subscription,contracts/t2/gate8a-sub001/openapi.yaml,contracts/t2/gate8a-sub001/subscription-events.schema.json,V202608230083;V202608230084,ACCEPTED,docs/t2-gate8a-sub001/05_T2_SUB001独立周门禁报告.md
-T2-SVC-001,Service,jshpos-service,contracts/t2/gate8a-svc001/openapi.yaml,contracts/t2/gate8a-svc001/service-events.schema.json,V202608240085;V202608240086,ACCEPTED,docs/t2-gate8a-svc001/08_T2_SVC001项目发起人接受记录.md
+T2-SUB-001,Subscription,jshpos-subscription,contracts/t2/gate8a-sub001/openapi-subscription-v1.yaml,contracts/t2/gate8a-sub001/subscription-events.schema.json,V202608230083;V202608230084,ACCEPTED,docs/t2-gate8a-sub001/05_T2_SUB001独立周门禁报告.md
+T2-SVC-001,Service,jshpos-service,contracts/t2/gate8a-svc001/openapi-service-v1.yaml,contracts/t2/gate8a-svc001/service-events.schema.json,V202608240085;V202608240086,ACCEPTED,docs/t2-gate8a-svc001/08_T2_SVC001项目发起人接受记录.md
