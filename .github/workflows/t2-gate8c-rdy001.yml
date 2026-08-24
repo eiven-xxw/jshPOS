@@ -184,6 +184,8 @@ jobs:
       GATE8C_MIGRATION_ROOT: ${{ github.workspace }}/server/ruoyi-modules
       MYSQL_ROOT_PASSWORD: synthetic_rdy001_compose_root
       MYSQL_DATABASE: jshpos_rdy001_compose
+      MYSQL_USER: jshpos_rdy001
+      MYSQL_PASSWORD: synthetic_rdy001_compose_app
       MYSQL_PORT: "33306"
       REDIS_PASSWORD: synthetic_rdy001_compose_redis
       REDIS_PORT: "36379"
