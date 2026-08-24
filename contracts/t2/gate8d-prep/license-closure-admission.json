@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-LIC-001",
+  "status": "DEFERRED",
+  "commercialReleaseBlocker": true,
+  "components": [
+    {
+      "name": "Aviator",
+      "repositoryObservation": "DECLARED_IN_SERVER_DEPENDENCY_MANAGEMENT_AND_LISTED_IN_PRIOR_RC_BLOCKERS",
+      "preferredPath": "REMOVE_IF_UNUSED_WITH_FULL_REGRESSION_AND_FINAL_SBOM_ZERO",
+      "alternatePath": "WRITTEN_LEGAL_APPROVAL_FOR_EXACT_VERSION_AND_DISTRIBUTION",
+      "closureState": "OPEN"
+    },
+    {
+      "name": "simple-http",
+      "repositoryObservation": "NO_CURRENT_DIRECT_POM_DECLARATION_FOUND_BUT_PRIOR_RC_BLOCKER_NOT_FORMALLY_CLOSED",
+      "preferredPath": "PROVE_ABSENT_FROM_DEPENDENCY_TREE_JAR_IMAGE_AND_FINAL_SBOMS",
+      "alternatePath": "REPLACE_OR_WRITTEN_LEGAL_APPROVAL_IF_PRESENT",
+      "closureState": "OPEN"
+    },
+    {
+      "name": "MySQL Connector/J",
+      "repositoryObservation": "DECLARED_AS_RUOYI_ADMIN_RUNTIME_AND_MULTIPLE_OWNER_TEST_DEPENDENCY",
+      "preferredPath": "WRITTEN_LEGAL_APPROVAL_AND_OBLIGATION_PLAN_FOR_DEPLOYMENT_DISTRIBUTION",
+      "alternatePath": "CHANGE_DRIVER_OR_DELIVERY_MODEL_WITH_FULL_REGRESSION",
+      "closureState": "OPEN"
+    }
+  ],
+  "requiredClosureEvidence": [
+    "EXACT_USAGE_AND_ARTIFACT_INVENTORY", "REPLACEMENT_REGRESSION_OR_WRITTEN_LEGAL_APPROVAL",
+    "FINAL_SBOM_AND_LICENSE_LIST", "NOTICE_AND_SOURCE_OFFER_IF_REQUIRED",
+    "RELEASE_BOM", "LEGAL_AND_RELEASE_OWNER_SIGN_OFF"
+  ],
+  "closedComponentCount": 0,
+  "requiredClosedComponentCount": 3,
+  "commercialReleaseDecision": "NO_GO"
+}

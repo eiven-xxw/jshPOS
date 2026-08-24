@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-HWD-001",
+  "track": "REAL_ANDROID_HOST",
+  "status": "BLOCKED",
+  "candidates": [
+    {
+      "role": "PRIMARY",
+      "vendor": "SUNMI",
+      "modelFamily": "T3 PRO MAX / L15B1",
+      "exactSku": null,
+      "firmwareBuild": null,
+      "sdkOpaqueReference": null,
+      "sampleAssetId": null,
+      "state": "MISSING_CONTROLLED_BUNDLE"
+    },
+    {
+      "role": "COMPATIBLE",
+      "vendor": "IMIN",
+      "modelFamily": "D4 Pro",
+      "exactSku": null,
+      "firmwareBuild": null,
+      "sdkOpaqueReference": null,
+      "sampleAssetId": null,
+      "state": "MISSING_CONTROLLED_BUNDLE"
+    }
+  ],
+  "requiredMetadata": [
+    "SOURCE", "AUTHORIZATION_SIGNER", "EXACT_SKU", "ANDROID_VERSION", "FIRMWARE_BUILD",
+    "CPU_ABI", "MEMORY_STORAGE", "SECURITY_PATCH", "SDK_VERSION_SHA256_LICENSE",
+    "SAMPLE_ASSET", "APK_INSTALL_UPGRADE_SCOPE", "CUSTODIAN", "EXPIRY_DELETION_REVOCATION",
+    "RMA_EOL", "TECHNICAL_CONTACT"
+  ],
+  "verifiedCandidateCount": 0,
+  "requiredCandidateCount": 2,
+  "verifiedDocumentStatus": "NOT_ACHIEVED",
+  "executionAdmission": "NO_GO",
+  "realDeviceCommandsAllowed": false,
+  "realDeviceCommands": 0
+}

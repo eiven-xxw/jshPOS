@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-PAR-001",
+  "track": "DESIGN_PARTNERS",
+  "status": "BLOCKED",
+  "targetRequired": 5,
+  "verifiedRealTargetCount": 0,
+  "verifiedWrittenIntentRequired": 3,
+  "verifiedWrittenIntentCount": 0,
+  "slots": [
+    {"opaqueId": "PAR-01", "industry": "CONVENIENCE", "state": "MISSING"},
+    {"opaqueId": "PAR-02", "industry": "CONVENIENCE", "state": "MISSING"},
+    {"opaqueId": "PAR-03", "industry": "SNACK_DISCOUNT", "state": "MISSING"},
+    {"opaqueId": "PAR-04", "industry": "COMMUNITY_SUPERMARKET", "state": "MISSING"},
+    {"opaqueId": "PAR-05", "industry": "COMMUNITY_SUPERMARKET", "state": "MISSING"}
+  ],
+  "requiredEvidence": [
+    "VERIFIED_ENTITY_AND_SCOPE", "AUTHORIZED_SIGNER", "WRITTEN_PILOT_INTENT",
+    "MASKED_SAMPLE_AUTHORIZATION", "RETENTION_WITHDRAWAL_DELETION",
+    "LEGACY_RECONCILIATION", "ONSITE_RESPONSIBILITY_AND_EXIT"
+  ],
+  "controlledMetadataRequired": [
+    "OPAQUE_REFERENCE", "SOURCE", "AUTHORIZATION_SIGNER", "SCOPE", "SHA256",
+    "CUSTODIAN", "EXPIRY", "DELETION", "REVOCATION"
+  ],
+  "verifiedDocumentStatus": "NOT_ACHIEVED",
+  "executionAdmission": "NO_GO",
+  "contactAllowed": false,
+  "partnerContacts": 0,
+  "onsitePilotAllowed": false,
+  "onsitePilots": 0
+}

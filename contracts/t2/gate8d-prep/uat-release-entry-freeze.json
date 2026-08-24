@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0",
+  "requirements": {
+    "T2-UAT-001": "DRAFT",
+    "T2-REL-001": "DRAFT"
+  },
+  "internalCandidate": {
+    "requirementId": "T2-RDY-001",
+    "status": "ACCEPTED",
+    "classification": "INTERNAL_RELEASE_READINESS_CANDIDATE",
+    "baselineCommit": "bd1dee42bacfb75874d601e16828c8f82720986b"
+  },
+  "fullAlpha": {
+    "decision": "NO_GO_FULL_ALPHA",
+    "allowed": false,
+    "entryBlockers": ["T2-PAY-002", "T2-HWD-001", "T2-PRN-001", "T2-PAR-001"],
+    "requiredConditions": [
+      "FOUR_TRACKS_VERIFIED_DOCUMENT_AND_INDEPENDENT_EXECUTION_APPROVAL",
+      "ISOLATED_ENVIRONMENT_PROVISIONED",
+      "NAMED_NINE_ROLE_RACI_SIGNED",
+      "SECRET_DATA_STOP_RECOVERY_AND_DESTRUCTION_CONTROLS_READY",
+      "P0_ZERO_AND_P1_ZERO"
+    ],
+    "runs": 0
+  },
+  "release": {
+    "decision": "NO_GO_PRODUCTION_AND_COMMERCIAL",
+    "allowed": false,
+    "requiredConditions": [
+      "T2_UAT_001_ACCEPTED", "T2_LIC_001_CLOSED_3_OF_3",
+      "REAL_SIGNING_KMS_AND_SECRET_BOUNDARY", "PRODUCTION_MIGRATION_BACKUP_PITR_ROLLBACK_EVIDENCE",
+      "FINAL_ARTIFACT_SBOM_LICENSE_NOTICE_RELEASE_BOM", "JOINT_GO_NO_GO_SIGN_OFF"
+    ],
+    "productionDeployments": 0,
+    "commercialTags": 0,
+    "commercialClaims": 0
+  }
+}

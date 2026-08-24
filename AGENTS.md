@@ -730,6 +730,17 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
 - `T2-PAY-002/HWD-001/PRN-001/PAR-001` 继续 `BLOCKED`；`T2-UAT-001/REL-001` 继续 `DRAFT`；`T2-LIC-001/JSH-001` 继续 `DEFERRED`。Provider 网络、真实资金、真实设备/外设命令、伙伴现场、完整 Alpha、生产部署、商业 tag、商业声明和 SLA 必须为 0。
 - 必须执行治理双平台、Server、Web、Flutter 双平台、Android/Kotlin、MySQL、SQLite、部署预检、恢复/升级回退、安全、依赖、SBOM、许可证、覆盖率、发布制品装配、签名验真和既有 Gate 全量回归。完成后只可将 `T2-RDY-001` 更新为 `VERIFIED` 并提交独立周门禁报告等待确认；不得自动启动外部执行、完整 Alpha、现场试点或生产发布。
 
+## 4.60 当前 T2 Gate 8D-Prep 条件准入
+
+- 项目发起人已于 2026-08-24 接受 `T2-RDY-001 CONDITIONAL PASS`，授权其更新为 `ACCEPTED`；接受上限仍为 `INTERNAL_RELEASE_READINESS_CANDIDATE`，不代表真实签名/KMS、生产 PITR/灾备、外部执行、完整 Alpha、生产或商业 SLA。
+- Gate 8D-Prep 只能从 RDY-001 最终封存提交 `bd1dee42bacfb75874d601e16828c8f82720986b` 建立 `t2/gate8d-prep-external-p0-license-alpha-admission`；只允许受控材料离线核验、商业许可证关闭证据复核、UAT/REL 启动条件冻结和治理证据，不得修改运行时、迁移、依赖、业务能力或外部适配器。
+- `T2-PAY-002/HWD-001/PRN-001/PAR-001` 必须逐轨、逐项核验不透明引用、来源、授权签署、适用产品/型号与版本、范围、SHA-256、保管、到期、轮换、删除和吊销规则；缺少真实受控材料时必须维持 `NOT_ACHIEVED/BLOCKED/NO_GO`，不得用公开资料、内部合成证据或历史模板创建绿色占位。
+- `T2-LIC-001` 必须分别核验 Aviator、simple-http、MySQL Connector/J 的精确使用清单、替换回归或适用分发模式的书面法务批准、最终 SBOM/许可证/NOTICE/发布 BOM。三项未全部 `CLOSED` 时保持 `DEFERRED`，商业发布固定 `NO_GO`。
+- `T2-UAT-001` 只有在四条外部轨分别达到 `VERIFIED_DOCUMENT`、取得独立执行批准、具名 RACI/隔离环境/停止开关/恢复点/数据清除方案就绪且 P0/P1 为 0 后，才可另行评审启动；本阶段继续 `DRAFT`，完整 Alpha 运行数为 0。
+- `T2-REL-001` 只有在完整 Alpha `ACCEPTED`、许可证 3/3 关闭、真实签名与密钥边界、生产恢复/回退、发布物和角色联合签署齐备后，才可另行准入；本阶段继续 `DRAFT`，生产部署、商业 tag、商业声明和 SLA 为 0。
+- Secret、商户号、终端号、证书、真实 PII、未脱敏商户数据和受控原文不得进入 Git、普通日志、CI 或普通制品；仓库只能保存经批准的不透明引用和不含敏感内容的验证元数据。
+- 完成后只能提交五条独立准入/关闭报告和《T2 Gate 8D-Prep 启动评审报告》等待项目发起人确认；不得自动进入 Provider 网络、真实资金、设备/外设命令、伙伴现场、完整 Alpha、生产发布或商业可用声明。
+
 ## 5. 工程与测试规则
 
 - 服务端采用 RuoYi-Vue-Plus 模块化单体，不得把领域逻辑写入 Controller、通用工具类或框架系统模块。

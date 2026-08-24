@@ -76,3 +76,4 @@ ADR 一经接受不得删除或静默改写。需要改变决策时，新建 ADR
 | ADR-064 | [Gate 8C 可维护性边界与行为保持重构](ADR-064-gate8c-maintainability-hardening.md) | Accepted |
 | ADR-065 | [Gate 8C 正式运行栈性能重基线与退化门禁](ADR-065-gate8c-formal-runtime-performance-rebaseline.md) | Accepted |
 | ADR-066 | [Gate 8C 内部发布准备、供应链证据与强制 NO-GO](ADR-066-gate8c-internal-release-readiness.md) | Accepted |
+| ADR-067 | [Gate 8D 外部 P0、许可证、完整 Alpha 与发布准入复核](ADR-067-gate8d-external-p0-license-alpha-release-admission.md) | Accepted |

@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "1.0",
+  "phase": "T2-GATE8D-PREP-EXTERNAL-P0-LICENSE-ALPHA-RELEASE-ADMISSION",
+  "baselineCommit": "bd1dee42bacfb75874d601e16828c8f82720986b",
+  "branch": "t2/gate8d-prep-external-p0-license-alpha-admission",
+  "decision": "CONDITIONAL_GO_OFFLINE_REVIEW_ONLY",
+  "evidenceLevel": "STATIC_GOVERNANCE_AND_OFFLINE_METADATA_REVIEW",
+  "acceptedRequirement": {
+    "T2-RDY-001": "ACCEPTED"
+  },
+  "evidenceCeiling": "INTERNAL_RELEASE_READINESS_CANDIDATE",
+  "preservedStates": {
+    "T2-PAY-002": "BLOCKED",
+    "T2-HWD-001": "BLOCKED",
+    "T2-PRN-001": "BLOCKED",
+    "T2-PAR-001": "BLOCKED",
+    "T2-LIC-001": "DEFERRED",
+    "T2-JSH-001": "DEFERRED",
+    "T2-UAT-001": "DRAFT",
+    "T2-REL-001": "DRAFT"
+  },
+  "allowedActions": [
+    "CONTROLLED_METADATA_OFFLINE_VERIFICATION",
+    "INDEPENDENT_EXECUTION_ADMISSION_REPORT",
+    "LICENSE_CLOSURE_EVIDENCE_REVIEW",
+    "FULL_ALPHA_AND_RELEASE_ENTRY_FREEZE",
+    "GOVERNANCE_AND_EVIDENCE_CI"
+  ],
+  "forbiddenActions": [
+    "PAYMENT_PROVIDER_NETWORK",
+    "REAL_FUNDS",
+    "REAL_DEVICE_INSTALL_RESTART_OR_COMMAND",
+    "REAL_PERIPHERAL_COMMAND",
+    "PARTNER_OR_STORE_CONTACT",
+    "ONSITE_PILOT",
+    "FULL_ALPHA_UAT_EXECUTION",
+    "PRODUCTION_DEPLOYMENT",
+    "COMMERCIAL_TAG_OR_CLAIM",
+    "SECRET_REAL_PII_OR_CONTROLLED_ORIGINAL_IN_REPOSITORY"
+  ],
+  "externalExecution": {
+    "providerNetworkCalls": 0,
+    "realFundsTransactions": 0,
+    "realDeviceCommands": 0,
+    "realPeripheralCommands": 0,
+    "partnerContacts": 0,
+    "onsitePilots": 0,
+    "fullAlphaRuns": 0,
+    "productionDeployments": 0,
+    "commercialTags": 0,
+    "commercialClaims": 0
+  },
+  "overallDecision": "PREPARED_NO_GO_EXTERNAL_EXECUTION_FULL_ALPHA_AND_RELEASE"
+}

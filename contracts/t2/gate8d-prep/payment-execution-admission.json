@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-PAY-002",
+  "track": "LAKALA_AUTHORIZED_SANDBOX",
+  "status": "BLOCKED",
+  "selectedProvider": "LAKALA",
+  "mandatoryItems": [
+    {"id": "PAY-AUTH", "state": "MISSING"},
+    {"id": "PAY-MERCHANT", "state": "MISSING"},
+    {"id": "PAY-TERMINAL", "state": "MISSING"},
+    {"id": "PAY-API", "state": "MISSING"},
+    {"id": "PAY-SIGN", "state": "MISSING"},
+    {"id": "PAY-CALLBACK", "state": "MISSING"},
+    {"id": "PAY-BILL", "state": "MISSING"},
+    {"id": "PAY-LIMIT", "state": "MISSING"},
+    {"id": "PAY-NETWORK", "state": "MISSING"},
+    {"id": "PAY-SECRET", "state": "MISSING"},
+    {"id": "PAY-CONTACT", "state": "MISSING"}
+  ],
+  "requiredMetadata": [
+    "OPAQUE_REFERENCE", "SOURCE", "AUTHORIZATION_SIGNER", "APPLICABLE_PRODUCT",
+    "API_OR_DOCUMENT_VERSION", "SCOPE", "SHA256", "CUSTODIAN", "EXPIRES_AT",
+    "ROTATION_RULE", "DELETION_RULE", "REVOCATION_RULE"
+  ],
+  "receivedItemCount": 0,
+  "verifiedItemCount": 0,
+  "requiredItemCount": 11,
+  "verifiedDocumentStatus": "NOT_ACHIEVED",
+  "executionAdmission": "NO_GO",
+  "providerNetworkAllowed": false,
+  "providerNetworkCalls": 0,
+  "realFundsAllowed": false,
+  "realFundsTransactions": 0
+}

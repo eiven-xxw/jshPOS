@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-PRN-001",
+  "track": "REAL_PRINT_AND_PERIPHERALS",
+  "status": "BLOCKED",
+  "bundles": [
+    {"id": "PRN-A", "name": "内置打印", "state": "MISSING"},
+    {"id": "PRN-B", "name": "外置打印", "state": "MISSING"},
+    {"id": "SCANNER", "name": "扫码", "state": "MISSING"},
+    {"id": "SCALE", "name": "电子秤", "state": "MISSING"},
+    {"id": "CASH-DRAWER", "name": "钱箱", "state": "MISSING"},
+    {"id": "CUSTOMER-DISPLAY", "name": "客显", "state": "MISSING"}
+  ],
+  "requiredMetadata": [
+    "VENDOR_EXACT_MODEL", "PROTOCOL_OR_SDK_VERSION", "DRIVER_OR_FIRMWARE",
+    "ERROR_CODES", "PAPER_ENCODING_OR_MEASUREMENT", "COMPATIBILITY_MATRIX",
+    "SAMPLE_ASSET", "AUTHORIZATION_SIGNER", "SOURCE_SHA256", "CUSTODIAN",
+    "EXPIRY_DELETION_REVOCATION", "ACCEPTANCE_OWNER"
+  ],
+  "verifiedBundleCount": 0,
+  "requiredBundleCount": 6,
+  "verifiedDocumentStatus": "NOT_ACHIEVED",
+  "executionAdmission": "NO_GO",
+  "realPeripheralCommandsAllowed": false,
+  "realPeripheralCommands": 0
+}
