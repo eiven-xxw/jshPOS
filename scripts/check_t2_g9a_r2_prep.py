@@ -34,7 +34,7 @@ def fail(message: str) -> None:
 
 def git(*args: str) -> str:
     return subprocess.check_output(
-        ["git", *args], cwd=ROOT, text=True, encoding="utf-8"
+        ["git", "-c", "core.quotepath=false", *args], cwd=ROOT, text=True, encoding="utf-8"
     ).strip()
 
 
