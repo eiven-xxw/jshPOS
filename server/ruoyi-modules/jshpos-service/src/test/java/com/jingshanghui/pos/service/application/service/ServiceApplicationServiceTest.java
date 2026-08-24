@@ -3,12 +3,12 @@ package com.jingshanghui.pos.service.application.service;
 import com.jingshanghui.pos.foundation.application.context.TrustedPrincipal;
 import com.jingshanghui.pos.foundation.application.context.TrustedTenantContext;
 import com.jingshanghui.pos.foundation.application.security.ScopeAuthorizationService;
-import com.jingshanghui.pos.saas.application.model.SaasModels.EntitlementDecision;
-import com.jingshanghui.pos.saas.application.service.SaasEntitlementService;
 import com.jingshanghui.pos.service.application.model.ServiceModels.*;
 import com.jingshanghui.pos.service.application.port.ServiceAttachmentStoragePort;
 import com.jingshanghui.pos.service.application.port.ServiceAttachmentStoragePort.StagedAttachment;
 import com.jingshanghui.pos.service.application.port.ServiceAttachmentStoragePort.StoreObject;
+import com.jingshanghui.pos.service.application.port.ServiceEntitlementReadPort;
+import com.jingshanghui.pos.service.application.port.ServiceEntitlementReadPort.AccessDecision;
 import com.jingshanghui.pos.service.application.port.ServicePersistencePort;
 import com.jingshanghui.pos.service.application.port.ServicePersistencePort.*;
 import com.jingshanghui.pos.service.domain.ServiceIdGenerator;
@@ -40,7 +40,7 @@ class ServiceApplicationServiceTest {
     private static final LocalDateTime NOW = LocalDateTime.of(2026, 8, 24, 0, 0);
     @Mock private TrustedTenantContext tenantContext;
     @Mock private ScopeAuthorizationService authorization;
-    @Mock private SaasEntitlementService entitlements;
+    @Mock private ServiceEntitlementReadPort entitlements;
     @Mock private ServicePersistencePort persistence;
     @Mock private ServiceAttachmentStoragePort storage;
     @Mock private ServiceIdGenerator ids;
@@ -85,7 +85,7 @@ class ServiceApplicationServiceTest {
 
     @Test
     void shouldFailClosedWhenSaasOrSubscriptionDeniesFeature() {
-        when(entitlements.decide("SERVICE_OPERATIONS")).thenReturn(new EntitlementDecision(false, "SUBSCRIPTION_ACCESS_DENIED", null, null, null));
+        when(entitlements.decide("SERVICE_OPERATIONS")).thenReturn(new AccessDecision(false, "SUBSCRIPTION_ACCESS_DENIED"));
         ServiceException error = assertThrows(ServiceException.class, () -> service.listTickets(1001L, null, 20));
         assertTrue(error.getMessage().contains("SVC-ACCESS-001"));
         verifyNoInteractions(persistence);
@@ -146,8 +146,7 @@ class ServiceApplicationServiceTest {
     }
 
     private void allow() {
-        when(entitlements.decide("SERVICE_OPERATIONS")).thenReturn(new EntitlementDecision(true, "ALLOWED",
-            "01K00000000000000000000001", null, null));
+        when(entitlements.decide("SERVICE_OPERATIONS")).thenReturn(new AccessDecision(true, "ALLOWED"));
     }
 
     private TrustedPrincipal principal() {
