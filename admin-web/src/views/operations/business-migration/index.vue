@@ -7,13 +7,14 @@
       title="开业资料迁移采用预检、双人审批、Owner Saga、对账后激活"
       description="原文件不会进入日志或普通制品；页面只展示文件元数据、脱敏错误和 Owner 检查点。迁移不得自动开店、发布价格或形成采购承诺。"
     />
+    <OwnerPageFeedback surface-id="VUE-05" :state="phase" :failure="pageFailure" @retry="refresh" />
 
     <el-card class="mt-3" shadow="never">
       <template #header><span>1. 建立隔离批次</span></template>
       <el-form :inline="true">
         <el-form-item label="资料类型">
           <el-checkbox-group v-model="selectedTypes">
-            <el-checkbox v-for="item in typeOptions" :key="item.value" :label="item.value">{{ item.label }}</el-checkbox>
+            <el-checkbox v-for="item in typeOptions" :key="item.value" :value="item.value">{{ item.label }}</el-checkbox>
           </el-checkbox-group>
         </el-form-item>
         <el-form-item>
@@ -22,7 +23,9 @@
       </el-form>
       <el-form :inline="true">
         <el-form-item label="批次 ULID"><el-input v-model="batchId" class="batch-input" /></el-form-item>
-        <el-form-item><el-button v-hasPermi="['migration:read']" :loading="loading" @click="refresh">读取</el-button></el-form-item>
+        <el-form-item
+          ><el-button v-hasPermi="['migration:read']" data-testid="migration-read" :loading="loading" @click="refresh">读取</el-button></el-form-item
+        >
       </el-form>
     </el-card>
 
@@ -138,6 +141,10 @@ import {
 import { sha256Hex } from '@/api/migration/contract';
 import type { MigrationBatchDetail, MigrationDataType, MigrationPreflightErrorPage, MigrationReconciliation } from '@/api/migration/types';
 import { newOperationCommandId } from '@/api/operations';
+import { useRecoverablePage } from '@/composables/useRecoverablePage';
+import OwnerPageFeedback from '../components/OwnerPageFeedback.vue';
+
+const { phase, failure: pageFailure, runRead, runWrite } = useRecoverablePage('MIGRATION_PAGE_FAILED');
 
 const typeOptions: Array<{ label: string; value: MigrationDataType }> = [
   { label: '商品、条码和基础单位', value: 'CATALOG' },
@@ -151,7 +158,7 @@ const detail = ref<MigrationBatchDetail>();
 const errorPage = ref<MigrationPreflightErrorPage>();
 const errorRows = computed(() => errorPage.value?.records ?? detail.value?.errors ?? []);
 const reconciliation = ref<MigrationReconciliation>();
-const loading = ref(false);
+const loading = computed(() => phase.value === 'LOADING' || phase.value === 'SUBMITTING');
 const selectedFile = shallowRef<File>();
 const reason = ref('开业资料已完成预检、权限和对账复核');
 const upload = reactive({
@@ -168,32 +175,35 @@ const command = (action: string) => {
   return { idempotencyKey: actionKeys.get(key)!, reason: reason.value, correlationId: actionKeys.get(key)! };
 };
 
-const run = async (work: () => Promise<unknown>) => {
-  loading.value = true;
-  try {
-    return await work();
-  } finally {
-    loading.value = false;
-  }
+const request = async <T,>(work: () => Promise<{ data: T }>, operationIdentity?: string): Promise<T | undefined> => {
+  const response = operationIdentity ? await runWrite(operationIdentity, work) : await runRead(work);
+  return response?.data;
 };
 
 const createBatch = async () => {
   if (!selectedTypes.value.length) return ElMessage.warning('至少选择一类资料');
-  const identity = newOperationCommandId();
-  const created = await run(() => createMigrationBatch({ dataTypes: selectedTypes.value, idempotencyKey: identity, correlationId: identity }));
-  batchId.value = (created as { batchId: string }).batchId;
+  const requestIdentity = command('create').idempotencyKey;
+  const created = await request(
+    () => createMigrationBatch({ dataTypes: selectedTypes.value, idempotencyKey: requestIdentity, correlationId: requestIdentity }),
+    requestIdentity
+  );
+  if (!created) return;
+  batchId.value = created.batchId;
   await refresh();
 };
 
 const refresh = async () => {
   if (!batchId.value) return ElMessage.warning('请输入或创建批次');
-  detail.value = (await run(() => getMigrationBatch(batchId.value))) as MigrationBatchDetail;
+  const result = await request(() => getMigrationBatch(batchId.value));
+  if (!result) return;
+  detail.value = result;
   errorPage.value = undefined;
   if (detail.value.batch.errorCount > 0) await loadErrors(1);
 };
 
 const loadErrors = async (page: number) => {
-  errorPage.value = (await run(() => getMigrationErrors(batchId.value, page, 200))) as MigrationPreflightErrorPage;
+  const result = await request(() => getMigrationErrors(batchId.value, page, 200));
+  if (result) errorPage.value = result;
 };
 
 const selectFile = (event: Event) => {
@@ -203,8 +213,9 @@ const selectFile = (event: Event) => {
 const uploadAndPreflight = async () => {
   if (!selectedFile.value || !detail.value) return ElMessage.warning('请选择文件并先读取批次');
   const digest = await sha256Hex(selectedFile.value);
-  const correlationId = newOperationCommandId();
-  await run(() =>
+  const correlationId = command(`upload:${upload.dataType}:${digest}`).idempotencyKey;
+  const uploaded = await request(
+    () =>
     uploadMigrationFile(
       batchId.value,
       {
@@ -217,33 +228,47 @@ const uploadAndPreflight = async () => {
         correlationId
       },
       selectedFile.value!
-    )
+    ),
+    correlationId
   );
+  if (!uploaded) return;
   selectedFile.value = undefined;
   await refresh();
 };
 
 const approve = async () => {
   await ElMessageBox.confirm('审批不会跳过预检；第二人必须使用不同账号。', '确认迁移审批', { type: 'warning' });
-  detail.value = (await run(() => approveMigration(batchId.value, command('approve')))) as MigrationBatchDetail;
+  const requestIdentity = command('approve').idempotencyKey;
+  const result = await request(() => approveMigration(batchId.value, command('approve')), requestIdentity);
+  if (result) detail.value = result;
 };
 const resume = async () => {
   await ElMessageBox.confirm('将从已保存检查点继续原 Saga，不会重新生成 Owner 命令。', '确认执行', { type: 'warning' });
-  detail.value = (await run(() => resumeMigration(batchId.value, command('resume')))) as MigrationBatchDetail;
+  const requestIdentity = command('resume').idempotencyKey;
+  const result = await request(() => resumeMigration(batchId.value, command('resume')), requestIdentity);
+  if (result) detail.value = result;
 };
 const reconcile = async () => {
-  reconciliation.value = (await run(() => reconcileMigration(batchId.value, command('reconcile')))) as MigrationReconciliation;
+  await ElMessageBox.confirm('对账只比较各 Owner 稳定摘要和检查点，不会覆盖业务事实。确认继续？', '确认逐 Owner 对账', { type: 'warning' });
+  const requestIdentity = command('reconcile').idempotencyKey;
+  const result = await request(() => reconcileMigration(batchId.value, command('reconcile')), requestIdentity);
+  if (!result) return;
+  reconciliation.value = result;
   await refresh();
 };
 const activate = async () => {
   await ElMessageBox.confirm('仅在双人审批且逐 Owner 零差异时激活；不自动开店或发布价格。', '确认激活', {
     type: 'warning'
   });
-  detail.value = (await run(() => activateMigration(batchId.value, command('activate')))) as MigrationBatchDetail;
+  const requestIdentity = command('activate').idempotencyKey;
+  const result = await request(() => activateMigration(batchId.value, command('activate')), requestIdentity);
+  if (result) detail.value = result;
 };
 const cleanup = async () => {
   await ElMessageBox.confirm('清理加密 staging 后不可恢复，不会删除已激活 Owner 事实。', '确认到期清理', { type: 'error' });
-  detail.value = (await run(() => cleanupMigration(batchId.value, command('cleanup')))) as MigrationBatchDetail;
+  const requestIdentity = command('cleanup').idempotencyKey;
+  const result = await request(() => cleanupMigration(batchId.value, command('cleanup')), requestIdentity);
+  if (result) detail.value = result;
 };
 </script>
 
