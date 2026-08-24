@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1.0",
+  "findingId": "G9A-ASM-P1-001",
+  "runtimeAdmissionRequired": true,
+  "tests": [
+    {"id":"R2-T01","plane":"Maven","assertion":"默认reactor和ruoyi-admin依赖树不含demo/generator/workflow/job","level":"BUILD"},
+    {"id":"R2-T02","plane":"JAR","assertion":"BOOT-INF/lib与Spring映射不含四类非V1平台模块和演示端点","level":"SOFTWARE_EXECUTION"},
+    {"id":"R2-T03","plane":"Web","assertion":"生产dist不含demo/generator/workflow页面、API或动态路由映射","level":"BUILD"},
+    {"id":"R2-T04","plane":"SQL","assertion":"四方言初始化脚本无演示菜单、角色绑定、test_demo/test_tree和非V1平台菜单","level":"STATIC"},
+    {"id":"R2-T05","plane":"SBOM","assertion":"商业Server SBOM不含被排除模块且许可证门禁不降级","level":"SUPPLY_CHAIN"},
+    {"id":"R2-T06","plane":"Config","assertion":"Springdoc无演示分组，WarmFlow和非V1工具默认关闭且缺少显式准入时失败关闭","level":"CONFIG"},
+    {"id":"R2-T07","plane":"Startup","assertion":"正式JAR空环境启动、Actuator白名单、300项正式API和22 Owner装配保持通过","level":"SOFTWARE_EXECUTION"},
+    {"id":"R2-T08","plane":"Regression","assertion":"Server/Web/Flutter/Android/MySQL/SQLite/安全/SBOM/许可证及既有Gate全绿","level":"FULL_CI"},
+    {"id":"R2-T09","plane":"Rollback","assertion":"仅允许回退完整应用制品；数据库仅前向清理残留菜单/表，不回写已发布迁移","level":"RECOVERY"},
+    {"id":"R2-T10","plane":"Scope","assertion":"不新增业务能力、Requirement ID、外部调用或证据升级","level":"GOVERNANCE"}
+  ]
+}

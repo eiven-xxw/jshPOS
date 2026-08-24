@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "1.0",
+  "findingId": "G9A-ASM-P1-001",
+  "baselineCommit": "53e540fd14559e7ae0f907b244b0dbac37167cfe",
+  "findingState": "OPEN",
+  "server": {
+    "ruoyiAdminDirectDependencies": ["ruoyi-job", "ruoyi-generator", "ruoyi-demo", "ruoyi-workflow"],
+    "defaultReactorModules": ["ruoyi-job", "ruoyi-generator", "ruoyi-demo", "ruoyi-workflow"],
+    "demoControllers": 19,
+    "demoJavaFiles": 44,
+    "demoResourceFiles": 6,
+    "demoSpringdocGroup": true,
+    "warmFlowEnabledByDefault": true,
+    "warmFlowUiEnabledByDefault": true,
+    "acceptedOwnerReferencesToGeneratorWorkflowOrJob": 0,
+    "currentJarLibraries": ["ruoyi-job-5.6.2.jar", "ruoyi-generator-5.6.2.jar", "ruoyi-demo-5.6.2.jar", "ruoyi-workflow-5.6.2.jar"]
+  },
+  "web": {
+    "demoViews": 2,
+    "demoApiFiles": 4,
+    "dynamicViewGlobIncludesDemo": true,
+    "compiledDemoSignalFiles": 3,
+    "generatorViews": 5,
+    "workflowViews": 12
+  },
+  "initialization": {
+    "dialects": ["mysql", "oracle", "postgres", "sqlserver"],
+    "filesWithDemoSeed": 4,
+    "demoMenuRowsPerDialect": 13,
+    "demoRoleBindingsPerDialect": 24,
+    "demoTablesPerDialect": 2
+  },
+  "supplyChain": {
+    "aggregateBomComponents": 435,
+    "containsRuoyiDemo": true,
+    "containsGenerator": true,
+    "containsWorkflow": true,
+    "containsRuoyiJob": true
+  },
+  "classification": "CONFIRMED_PRODUCTION_ASSEMBLY_GAP",
+  "evidenceLevel": "STATIC_AND_LOCAL_BUILD_BASELINE"
+}

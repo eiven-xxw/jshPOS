@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "1.0",
+  "status": "PROPOSED_AWAITING_PROJECT_SPONSOR",
+  "commercialAssemblyProfile": "DEFAULT_AND_FAIL_CLOSED",
+  "decisions": [
+    {
+      "capability": "ruoyi-demo",
+      "decision": "REMOVE",
+      "commercialJar": false,
+      "commercialWeb": false,
+      "commercialSeed": false,
+      "commercialSbom": false,
+      "sourceDisposition": "REMOVE_FROM_ACTIVE_SOURCE; recoverable from Git baseline",
+      "reason": "19个演示Controller、测试表和高风险示例端点不属于商业V1"
+    },
+    {
+      "capability": "ruoyi-generator",
+      "decision": "RETAIN_SOURCE_EXCLUDE_COMMERCIAL",
+      "commercialJar": false,
+      "commercialWeb": false,
+      "commercialSeed": false,
+      "commercialSbom": false,
+      "sourceDisposition": "server source may remain outside default reactor; no production route/menu",
+      "reason": "仅为研发工具，无已接受Owner依赖且可读取数据库元数据"
+    },
+    {
+      "capability": "ruoyi-workflow",
+      "decision": "RETAIN_SOURCE_EXCLUDE_COMMERCIAL",
+      "commercialJar": false,
+      "commercialWeb": false,
+      "commercialSeed": false,
+      "commercialSbom": false,
+      "sourceDisposition": "server source may remain outside default reactor; future use requires CR",
+      "reason": "既有Owner已自行维护审批状态，通用工作流未获商业V1准入"
+    },
+    {
+      "capability": "ruoyi-job",
+      "decision": "RETAIN_SOURCE_EXCLUDE_COMMERCIAL",
+      "commercialJar": false,
+      "commercialWeb": false,
+      "commercialSeed": false,
+      "commercialSbom": false,
+      "sourceDisposition": "server source may remain outside default reactor; simulated bill jobs never enter release",
+      "reason": "无已接受Owner依赖且包含支付宝/微信模拟账单执行器"
+    },
+    {
+      "capability": "DemoUnitTest",
+      "decision": "RETAIN_TEST_ONLY",
+      "commercialJar": false,
+      "commercialWeb": false,
+      "commercialSeed": false,
+      "commercialSbom": false,
+      "sourceDisposition": "retain under src/test only",
+      "reason": "测试类命名不构成生产演示能力"
+    }
+  ],
+  "excludedFromThisFinding": [
+    {
+      "surface": "SaaS内部合成旅程中的虚构演示商户文本",
+      "reason": "属于Gate8B内部合成证据而非RuoYi演示模块；页面完整性另由G9A-R3复核"
+    }
+  ]
+}

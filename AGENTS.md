@@ -764,6 +764,27 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
 - `T2-PAY-002/HWD-001/PRN-001/PAR-001` 继续 `BLOCKED`；`T2-UAT-001/REL-001` 继续 `DRAFT`；`T2-LIC-001/JSH-001` 继续 `DEFERRED`。Provider 网络、真实资金、设备/外设命令、伙伴现场、完整 Alpha、生产部署和商业声明必须为 0。
 - 完成后只可提交《G9A-R1 正式 API 契约修复独立周门禁报告》等待项目发起人确认；不得自动进入 G9A-R2、完整 Alpha、现场试点或生产发布。
 
+## 4.63 当前 G9A-R2 生产装配与演示面收敛准备阶段条件准入
+
+- 项目发起人已于 2026-08-24 接受 `G9A-API-P1-001 CONDITIONAL PASS` 并确认其
+  `CLOSED_IN_GATE9B`，授权从 Gate 9B 最终封板提交
+  `53e540fd14559e7ae0f907b244b0dbac37167cfe` 建立
+  `t2/gate9b-sprint27b-g9a-r2-prep`。
+- 本阶段只允许复用 `T2-CORE-001/T2-SEC-002/T2-RDY-001` 对
+  `G9A-ASM-P1-001` 做静态装配审计、构建/SBOM/路由/初始化影响验证、保留能力决策、
+  回退设计、测试矩阵和启动评审；不得新增 Requirement ID 或业务能力。
+- 必须分别核验 `ruoyi-demo` 在 `ruoyi-admin`、默认 Maven reactor、JAR、Springdoc、
+  聚合 SBOM、Vue 动态视图、编译产物、四方言初始化菜单/角色绑定/测试表中的实际装配。
+- `ruoyi-generator`、`ruoyi-workflow`、`ruoyi-job` 等非商业 V1 平台能力必须逐项说明
+  保留价值、默认开关、商业 JAR/Web/菜单/SBOM 边界和重新启用准入；不得仅隐藏菜单。
+- `G9A-ASM-P1-001` 在准备阶段继续 `OPEN`。本阶段不得修改 POM、运行时配置、Vue 页面、
+  初始化 SQL、已发布迁移、Controller、领域代码、依赖锁文件或正式发布物。
+- `T2-PAY-002/HWD-001/PRN-001/PAR-001` 继续 `BLOCKED`；`T2-UAT-001/REL-001`
+  继续 `DRAFT`；`T2-LIC-001/JSH-001` 继续 `DEFERRED`。Provider 网络、真实资金、
+  设备/外设命令、伙伴现场、完整 Alpha、生产部署和商业声明必须为 0。
+- 完成后只提交《G9A-R2 启动评审报告》和下一步正式整改指令等待项目发起人确认；
+  不得自动进入 G9A-R2 正式编码、G9A-R3、完整 Alpha、现场试点或生产发布。
+
 ## 5. 工程与测试规则
 
 - 服务端采用 RuoYi-Vue-Plus 模块化单体，不得把领域逻辑写入 Controller、通用工具类或框架系统模块。
