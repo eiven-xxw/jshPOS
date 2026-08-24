@@ -28,6 +28,26 @@ SQLITE_SCHEMA_FILES = {
     "pos-flutter/lib/infrastructure/local_database/s10_settlement_schema.dart",
     "pos-flutter/lib/infrastructure/local_database/s11_member_schema.dart",
 }
+FLYWAY_CALLBACK_EVENTS = {
+    "beforeValidate", "afterValidate", "afterValidateError",
+    "beforeMigrate", "beforeEachMigrate", "afterEachMigrate", "afterMigrate", "afterMigrateError",
+    "beforeUndo", "beforeEachUndo", "afterEachUndo", "afterUndo", "afterUndoError",
+    "beforeClean", "afterClean", "beforeInfo", "afterInfo", "beforeBaseline", "afterBaseline",
+    "beforeRepair", "afterRepair",
+}
+
+
+def classify_flyway_file_name(name: str) -> dict:
+    """按 Flyway 正式命名区分版本、可重复迁移与 SQL callback；未知命名失败关闭。"""
+    versioned = re.fullmatch(r"V([0-9]+(?:\.[0-9]+)*)__[A-Za-z0-9][A-Za-z0-9_-]*\.sql", name)
+    if versioned:
+        return {"kind": "VERSIONED", "version": versioned.group(1)}
+    if re.fullmatch(r"R__[A-Za-z0-9][A-Za-z0-9_-]*\.sql", name):
+        return {"kind": "REPEATABLE", "version": None}
+    callback = re.fullmatch(r"([A-Za-z]+)(?:__[A-Za-z0-9][A-Za-z0-9_-]*)?\.sql", name)
+    if callback and callback.group(1) in FLYWAY_CALLBACK_EVENTS:
+        return {"kind": "CALLBACK", "event": callback.group(1), "version": None}
+    raise AssertionError(f"非法 Flyway 文件名: {name}")
 
 
 def git_changed_files() -> list[tuple[str, str]]:
@@ -57,12 +77,16 @@ def mysql_schema() -> tuple[list[dict], list[dict], list[dict]]:
     alterations: dict[str, str] = {}
     versions: dict[str, list[str]] = {}
     migrations = migration_files()
+    classifications: dict[Path, dict] = {}
     for source in migrations:
         relative = source.relative_to(ROOT).as_posix()
-        version_match = re.match(r"V([0-9]+)__", source.name)
-        if not version_match:
-            raise AssertionError(f"非法 Flyway 文件名: {relative}")
-        versions.setdefault(version_match.group(1), []).append(relative)
+        try:
+            classification = classify_flyway_file_name(source.name)
+        except AssertionError as error:
+            raise AssertionError(f"{error.args[0]}: {relative}") from error
+        classifications[source] = classification
+        if classification["kind"] == "VERSIONED":
+            versions.setdefault(classification["version"], []).append(relative)
         text = source.read_text(encoding="utf-8")
         for match in re.finditer(
             r"CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?`?([A-Za-z0-9_]+)`?\s*\(", text, re.IGNORECASE
@@ -103,6 +127,7 @@ def mysql_schema() -> tuple[list[dict], list[dict], list[dict]]:
     return list(tables.values()), duplicate_versions, [
         {
             "path": source.relative_to(ROOT).as_posix(),
+            **classifications[source],
             "sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
         }
         for source in migrations
