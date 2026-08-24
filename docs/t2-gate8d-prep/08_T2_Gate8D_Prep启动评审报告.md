@@ -42,5 +42,11 @@ Gate 8D-Prep 已完成 RDY-001 接受落盘、四条外部 P0 离线缺件复核
 
 ## 6. CI 与封存证据
 
-候选 commit、GitHub Run、Job、Artifact ID 和 SHA-256 在专用 CI 首次全绿后回填本节及
-[证据索引](10_Gate8D_Prep证据索引.md)。回填前结论保持 `AWAITING_CI`，不得据此提升证据等级。
+- 候选提交：`135a39e7adb03bb7b98594dd3bfc4aaaf4d17004`
+- GitHub Actions Run：[`32721705711`](https://github.com/eiven-xxw/jshPOS/actions/runs/32721705711)
+- 结果：governance-ubuntu、governance-windows、offline-boundary、evidence 四个 Job 首次全绿；
+- 最终证据 Artifact：`9517987402`
+- Artifact SHA-256：`f41b96743d02e41a9d3ea4c09be5a81d580779d61ef5358bde9658fa967e2dcc`
+
+该 CI 只证明准备材料、状态守恒、仓库事实检查、运行时/迁移/依赖未扩张和外部执行为 0；
+不证明任何外部材料存在、许可证已关闭、完整 Alpha 可启动或可以发布。

@@ -17,12 +17,15 @@
 
 ## 3. CI 证据
 
-| Producer | 预期 | Run/Artifact/SHA-256 |
-|---|---|---|
-| governance-ubuntu | RTM、合同、UTF-8、ADR/CR、状态守恒 | AWAITING_CI |
-| governance-windows | 双平台复现 | AWAITING_CI |
-| offline-boundary | 范围、Secret/PII、依赖差异、零执行 | AWAITING_CI |
-| evidence | 不可变证据索引 | AWAITING_CI |
+候选提交 `135a39e7adb03bb7b98594dd3bfc4aaaf4d17004` 的 Run
+[`32721705711`](https://github.com/eiven-xxw/jshPOS/actions/runs/32721705711) 已全绿。
 
-CI 全绿后只把 `AWAITING_CI` 回填为可核验 Run、Artifact ID 和 SHA-256；绿色只证明准备包和
-边界可重复，不证明任何外部材料存在或可执行。
+| Producer | Job ID | Artifact ID | Artifact SHA-256 |
+|---|---:|---:|---|
+| governance-ubuntu | 97414314002 | 9517968312 | `b038108aa7b34e2c6e7e53105c4a0ab42535ac68e9be8c8ee883f14bafe0bf17` |
+| governance-windows | 97414313797 | 9517979620 | `8a1b8d717f855068154f5aa89c2876899fd013fb611bde94c5d0cd47cf653fd3` |
+| offline-boundary | 97414314063 | 9517968354 | `080d6cbf0e8cd3c66bd66c492137889e482f6b8a9cd82c37b0d8c22818044dbf` |
+| evidence | 97414467979 | 9517987402 | `f41b96743d02e41a9d3ea4c09be5a81d580779d61ef5358bde9658fa967e2dcc` |
+
+绿色只证明准备包和边界可重复，不证明任何外部材料存在或可执行。封存回填提交仍需复跑
+同一完整工作流，确保报告回填没有破坏门禁。
