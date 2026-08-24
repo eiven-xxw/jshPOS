@@ -251,7 +251,8 @@ jobs:
           mysql_container="$(docker ps --filter publish=3306 --format '{{.ID}}' | head -1)"
           redis_container="$(docker ps --filter publish=6379 --format '{{.ID}}' | head -1)"
           test -n "$mysql_container" && test -n "$redis_container"
-          docker exec "$mysql_container" mysql -uroot -psynthetic_gate9b_root -e 'CREATE DATABASE jshpos_g9a_runtime CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci'
+          # 已发布 Owner 迁移统一使用 MySQL 8 的 utf8mb4_0900_ai_ci；启动空库必须与其一致。
+          docker exec "$mysql_container" mysql -uroot -psynthetic_gate9b_root -e 'CREATE DATABASE jshpos_g9a_runtime CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci'
           docker exec -i "$mysql_container" mysql --default-character-set=utf8mb4 -uroot -psynthetic_gate9b_root jshpos_g9a_runtime < server/script/sql/ry_vue_5.X.sql 2> artifacts/t2/g9a-r2/mysql-sqlite/schema-bootstrap.log
           docker exec "$redis_container" redis-cli CONFIG SET requirepass synthetic_g9a_r2_redis
           server_jar="$(find downloaded/server -name ruoyi-admin.jar -type f -print -quit)"
