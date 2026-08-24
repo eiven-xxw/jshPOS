@@ -36,6 +36,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -92,7 +93,7 @@ class CommercialSaasOperationsFormalApiE2ETest {
         verify(saas).createApplication(any());
         verify(subscription).create(any());
         verify(service).createProject(any());
-        verify(service).uploadAttachment(any(), any(), any(), any(), any(), any());
+        verify(service).uploadAttachment(any(), any(), any(), anyLong(), any(), any(), any());
         verify(saas).deactivate(any());
         verify(saas).restore(any());
     }
@@ -246,7 +247,7 @@ class CommercialSaasOperationsFormalApiE2ETest {
         when(service.commandTicket(any())).thenReturn(ticket("ASSIGNED", 1), ticket("IN_PROGRESS", 2),
             ticket("RESOLVED", 3), ticket("CLOSED", 4));
         AttachmentRecord stored = attachment("STORED");
-        when(service.uploadAttachment(any(), any(), any(), any(), any(), any())).thenReturn(stored);
+        when(service.uploadAttachment(any(), any(), any(), anyLong(), any(), any(), any())).thenReturn(stored);
         when(service.issueDownload(TICKET_ID, ATTACHMENT_ID)).thenReturn(
             new AttachmentDownload(stored, "https://object.invalid/short-lived", NOW.plusMinutes(5)));
         when(service.cleanAttachment(any(), any(), any(), any())).thenReturn(attachment("CLEANED"));

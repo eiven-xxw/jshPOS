@@ -100,8 +100,10 @@ public class SecurityConfig implements WebMvcConfigurer {
             })
             .setError(e -> {
                 HttpServletResponse response = ServletUtils.getResponse();
+                HttpServletRequest request = ServletUtils.getRequest();
+                log.warn("管理端点独立认证拒绝 uri={} remote={}", request.getRequestURI(), request.getRemoteAddr());
                 response.setContentType(SaTokenConsts.CONTENT_TYPE_APPLICATION_JSON);
-                return SaResult.error(e.getMessage()).setCode(HttpStatus.UNAUTHORIZED);
+                return SaResult.error("管理端点认证失败").setCode(HttpStatus.UNAUTHORIZED);
             });
     }
 

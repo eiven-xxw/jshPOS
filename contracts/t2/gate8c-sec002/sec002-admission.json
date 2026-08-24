@@ -3,7 +3,7 @@
   "gate": "T2-GATE8C-SPRINT-S26A",
   "baseCommit": "d31bcb325dc94185ed94f87a9028fc381d1932ea",
   "branch": "t2/gate8c-sprint26a-sec002-runtime",
-  "requirement": {"requirementId": "T2-SEC-002", "status": "IN_PROGRESS"},
+  "requirement": {"requirementId": "T2-SEC-002", "status": "VERIFIED"},
   "findings": ["G8C-SEC-P0-001", "G8C-SEC-P1-002", "G8C-SEC-P1-003"],
   "allowedRuntimeAreas": ["production-configuration", "management-endpoints", "service-attachment-streaming"],
   "databaseMigrations": 0,

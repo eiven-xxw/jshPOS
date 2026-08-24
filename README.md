@@ -2,7 +2,7 @@
 
 连接器型、多租户、离线可营业的商业收银经营平台。
 
-当前阶段：**T2 Gate 8C-Prep：商业 V1 与 SaaS 运营现有代码的 P0/P1 质量和发布差距复核**。`T2-E2E-005` 已被项目发起人接受，但证据上限仍为 `INTERNAL_COMMERCIAL_OPERATIONS_CANDIDATE`。本阶段只允许静态审计、治理、契约、测试和准入准备，不修改运行时；`T2-SEC-002/T2-MTN-001/T2-PERF-002/T2-RDY-001` 均为 `DRAFT`。支付沙箱、真实硬件、真实外设和设计伙伴继续 `BLOCKED`，完整 Alpha 与发布继续 `DRAFT`，不得宣称可试点、可生产或可商用。
+当前阶段：**T2 Gate 8C / Sprint S26-A：T2-SEC-002 生产安全配置与资源边界加固**。项目发起人已接受 Gate 8C-Prep，并仅授权关闭生产默认凭据、Actuator 暴露和服务附件资源三个既定安全发现；`T2-SEC-002` 当前为 `VERIFIED` 候选，必须在完整 CI 全绿并再次确认后才能 `ACCEPTED`。`T2-MTN-001/T2-PERF-002/T2-RDY-001` 继续 `DRAFT`；支付沙箱、真实硬件、真实外设和设计伙伴继续 `BLOCKED`，完整 Alpha 与发布继续 `DRAFT`，不得宣称可试点、可生产或可商用。
 
 ## 工程
 

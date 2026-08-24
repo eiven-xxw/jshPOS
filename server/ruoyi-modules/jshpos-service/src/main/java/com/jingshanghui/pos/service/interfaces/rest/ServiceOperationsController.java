@@ -3,6 +3,7 @@ package com.jingshanghui.pos.service.interfaces.rest;
 import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.jingshanghui.pos.service.application.model.ServiceModels.*;
 import com.jingshanghui.pos.service.application.service.ServiceApplicationService;
+import com.jingshanghui.pos.service.domain.ServiceRules;
 import com.jingshanghui.pos.service.interfaces.rest.dto.ServiceRequests;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 
 /** 服务运营 HTTP 协议边界；不计算状态、租约、职责分离、对象键或授权结论。 */
@@ -89,7 +91,10 @@ public class ServiceOperationsController {
     public R<AttachmentRecord> upload(@PathVariable @Pattern(regexp=ULID) String ticketId,
         @RequestParam("file") MultipartFile file,@RequestHeader("Idempotency-Key") @Size(min=8,max=64) @Pattern(regexp=SAFE) String key,
         @RequestHeader("X-Correlation-ID") @Size(min=1,max=64) @Pattern(regexp=SAFE) String correlation){
-        try{return R.ok(service.uploadAttachment(ticketId,file.getOriginalFilename(),file.getContentType(),file.getBytes(),key,correlation));}
+        long declaredSize = ServiceRules.attachmentSize(file.getSize());
+        try(InputStream content = file.getInputStream()){
+            return R.ok(service.uploadAttachment(ticketId,file.getOriginalFilename(),file.getContentType(),
+                declaredSize,content,key,correlation));}
         catch(IOException e){throw new ServiceException("SVC-ATT-003: 附件读取失败",503);}}
     @PostMapping("/tickets/{ticketId}/attachments/{attachmentId}/download") @SaCheckPermission("service:attachment:download")
     public R<AttachmentDownload> download(@PathVariable @Pattern(regexp=ULID) String ticketId,@PathVariable @Pattern(regexp=ULID) String attachmentId){return R.ok(service.issueDownload(ticketId,attachmentId));}

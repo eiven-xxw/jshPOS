@@ -7,10 +7,12 @@ import com.jingshanghui.pos.saas.application.model.SaasModels.EntitlementDecisio
 import com.jingshanghui.pos.saas.application.service.SaasEntitlementService;
 import com.jingshanghui.pos.service.application.model.ServiceModels.*;
 import com.jingshanghui.pos.service.application.port.ServiceAttachmentStoragePort;
+import com.jingshanghui.pos.service.application.port.ServiceAttachmentStoragePort.StagedAttachment;
 import com.jingshanghui.pos.service.application.port.ServiceAttachmentStoragePort.StoreObject;
 import com.jingshanghui.pos.service.application.port.ServicePersistencePort;
 import com.jingshanghui.pos.service.application.port.ServicePersistencePort.*;
 import com.jingshanghui.pos.service.domain.ServiceIdGenerator;
+import com.jingshanghui.pos.service.domain.ServiceRules;
 import org.dromara.common.core.exception.ServiceException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,6 +25,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.io.ByteArrayInputStream;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -108,6 +111,10 @@ class ServiceApplicationServiceTest {
         when(tenantContext.requireTenantId()).thenReturn(TENANT);
         when(tenantContext.requirePrincipal()).thenReturn(principal());
         byte[] content = "synthetic evidence".getBytes();
+        StagedAttachment staged = mock(StagedAttachment.class);
+        when(staged.sizeBytes()).thenReturn((long) content.length);
+        when(staged.sha256()).thenReturn("57dc4b48ff8837ebae5d17633ab6f39d31135f34be1f073f5a9d1cafb24271a0");
+        when(storage.stage(any(), eq((long) content.length), eq(ServiceRules.MAX_ATTACHMENT_BYTES))).thenReturn(staged);
         String attachment = "01K00000000000000000000010";
         when(ids.next()).thenReturn(attachment, "01K00000000000000000000011", "01K00000000000000000000012", "01K00000000000000000000013");
         when(persistence.lockTicket(TENANT, TICKET)).thenReturn(ticket(TICKET));
@@ -116,7 +123,8 @@ class ServiceApplicationServiceTest {
             "evidence.txt", "text/plain", (long) content.length,
             "57dc4b48ff8837ebae5d17633ab6f39d31135f34be1f073f5a9d1cafb24271a0", "STORED", NOW.plusYears(1), NOW));
 
-        AttachmentRecord result = service.uploadAttachment(TICKET, "evidence.txt", "text/plain", content,
+        AttachmentRecord result = service.uploadAttachment(TICKET, "evidence.txt", "text/plain", content.length,
+            new ByteArrayInputStream(content),
             "attachment-upload-001", "corr-attachment-001");
 
         ArgumentCaptor<StoreObject> stored = ArgumentCaptor.forClass(StoreObject.class);
@@ -124,11 +132,12 @@ class ServiceApplicationServiceTest {
         assertAll(
             () -> assertEquals(attachment, result.attachmentId()),
             () -> assertEquals("service/TENANT_A/tickets/" + TICKET + "/attachments/" + attachment, stored.getValue().objectKey()),
-            () -> assertArrayEquals(content, stored.getValue().content()),
+            () -> assertSame(staged, stored.getValue().content()),
             () -> assertFalse(stored.getValue().objectKey().contains("operator"))
         );
         verify(persistence).insertAttachment(argThat(value -> value.objectKey().equals(stored.getValue().objectKey())
             && value.sizeBytes() == content.length && value.retentionUntil().equals(NOW.plusYears(1))));
+        verify(staged).close();
     }
 
     private TicketRecord ticket(String id) {

@@ -7,6 +7,7 @@ import com.jingshanghui.pos.foundation.domain.CanonicalJson;
 import com.jingshanghui.pos.saas.application.service.SaasEntitlementService;
 import com.jingshanghui.pos.service.application.model.ServiceModels.*;
 import com.jingshanghui.pos.service.application.port.ServiceAttachmentStoragePort;
+import com.jingshanghui.pos.service.application.port.ServiceAttachmentStoragePort.StagedAttachment;
 import com.jingshanghui.pos.service.application.port.ServiceAttachmentStoragePort.StoreObject;
 import com.jingshanghui.pos.service.application.port.ServicePersistencePort;
 import com.jingshanghui.pos.service.application.port.ServicePersistencePort.*;
@@ -21,7 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-import java.security.MessageDigest;
+import java.io.InputStream;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -218,32 +219,35 @@ public class ServiceApplicationService {
         return ticketDetail(tenant, before.ticketId());
     }
 
-    /** 附件正文直接写入租户命名空间对象存储，数据库只保存元数据。 */
+    /** 附件正文经受限流式暂存后写入租户命名空间对象存储，数据库只保存元数据。 */
     @Transactional
-    public AttachmentRecord uploadAttachment(String ticketId, String fileName, String mediaType, byte[] content,
-                                               String idempotencyKey, String correlationId) {
+    public AttachmentRecord uploadAttachment(String ticketId, String fileName, String mediaType, long declaredSize,
+                                               InputStream content, String idempotencyKey, String correlationId) {
         String tenant = tenantContext.requireTenantId(); TicketRecord ticket = requireTicket(tenant, ticketId, true);
         TrustedPrincipal actor = requireStore(ticket.storeId());
         if (Set.of("CLOSED", "CANCELLED").contains(ticket.state())) throw conflict("SVC-STATE-001", "关闭或取消工单不能新增附件");
         if (content == null) throw bad("SVC-ATT-001", "附件正文为空");
         String safeName = ServiceRules.safeFileName(fileName); String type = ServiceRules.mediaType(mediaType);
-        long size = ServiceRules.attachmentSize(content.length); String sha = digest(content);
-        String key = ServiceRules.idempotencyKey(idempotencyKey); String correlation = correlation(correlationId);
-        CanonicalJson.Result payload = canonical(Map.of("ticketId", ticketId, "fileName", safeName,
-            "mediaType", type, "sizeBytes", size, "sha256", sha));
-        CommandRecord replay = replay(tenant, "UPLOAD_ATTACHMENT", key, payload.sha256());
-        if (replay != null) return requireAttachment(tenant, ticketId, replay.resultId()).toPublic();
-        if (persistence.countAttachments(tenant, ticketId) >= 50) throw conflict("SVC-ATT-004", "单工单附件数量已达上限");
-        LocalDateTime at = now(); String attachmentId = ids.next();
-        String objectKey = ServiceRules.objectKey(tenant, ticketId, attachmentId);
-        storage.store(new StoreObject(objectKey, content, type, sha));
-        registerObjectRollbackCleanup(objectKey);
-        persistence.insertAttachment(new AttachmentWrite(attachmentId, tenant, ticket.storeId(), ticketId, objectKey,
-            safeName, type, size, sha, "STORED", actor.userId(), at.plusYears(1), at));
-        appendAuditOutbox(tenant, ticket.storeId(), "ATTACHMENT", attachmentId, 1, "UPLOAD_ATTACHMENT", "STORED",
-            payload, correlation, actor.userId(), at);
-        record(tenant, "UPLOAD_ATTACHMENT", key, payload.sha256(), "ATTACHMENT", attachmentId, "STORED", at);
-        return requireAttachment(tenant, ticketId, attachmentId).toPublic();
+        long expectedSize = ServiceRules.attachmentSize(declaredSize);
+        try (StagedAttachment staged = storage.stage(content, expectedSize, ServiceRules.MAX_ATTACHMENT_BYTES)) {
+            long size = ServiceRules.attachmentSize(staged.sizeBytes()); String sha = ServiceRules.sha256(staged.sha256());
+            String key = ServiceRules.idempotencyKey(idempotencyKey); String correlation = correlation(correlationId);
+            CanonicalJson.Result payload = canonical(Map.of("ticketId", ticketId, "fileName", safeName,
+                "mediaType", type, "sizeBytes", size, "sha256", sha));
+            CommandRecord replay = replay(tenant, "UPLOAD_ATTACHMENT", key, payload.sha256());
+            if (replay != null) return requireAttachment(tenant, ticketId, replay.resultId()).toPublic();
+            if (persistence.countAttachments(tenant, ticketId) >= 50) throw conflict("SVC-ATT-004", "单工单附件数量已达上限");
+            LocalDateTime at = now(); String attachmentId = ids.next();
+            String objectKey = ServiceRules.objectKey(tenant, ticketId, attachmentId);
+            storage.store(new StoreObject(objectKey, staged, type, sha));
+            registerObjectRollbackCleanup(objectKey);
+            persistence.insertAttachment(new AttachmentWrite(attachmentId, tenant, ticket.storeId(), ticketId, objectKey,
+                safeName, type, size, sha, "STORED", actor.userId(), at.plusYears(1), at));
+            appendAuditOutbox(tenant, ticket.storeId(), "ATTACHMENT", attachmentId, 1, "UPLOAD_ATTACHMENT", "STORED",
+                payload, correlation, actor.userId(), at);
+            record(tenant, "UPLOAD_ATTACHMENT", key, payload.sha256(), "ATTACHMENT", attachmentId, "STORED", at);
+            return requireAttachment(tenant, ticketId, attachmentId).toPublic();
+        }
     }
 
     /** 每次签发短期下载地址前重新执行订阅、租户、门店和附件状态授权。 */
@@ -345,7 +349,6 @@ public class ServiceApplicationService {
     private String correlation(String value){String result=ServiceRules.required(value,"correlationId");if(!result.matches("^[A-Za-z0-9._:-]{1,64}$"))throw bad("SVC-CORR-001","关联标识格式非法");return result;}
     private int bounded(int limit){return Math.max(1,Math.min(limit,100));}
     private LocalDateTime now(){return LocalDateTime.ofInstant(clock.instant(),ZoneOffset.UTC);}
-    private String digest(byte[] content){try{return java.util.HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(content));}catch(Exception e){throw new IllegalStateException(e);}}
     private String nullToEmpty(String value){return value==null?"":value;}
     private AttachmentStored requireAttachment(String tenant,String ticket,String id){AttachmentStoredRecord value=persistence.findAttachment(tenant,ticket,id);if(value==null)throw notFound();return new AttachmentStored(value);}
     /** 对象正文先于数据库元数据写入时，事务回滚必须尽力删除确定性对象键，避免孤儿正文。 */

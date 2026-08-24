@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0",
+  "gate": "T2-GATE8C-SPRINT-S26A",
+  "requirementId": "T2-SEC-002",
+  "evidenceCeiling": "INTERNAL_SECURITY_HARDENING_CANDIDATE",
+  "findings": {
+    "G8C-SEC-P0-001": {
+      "state": "CLOSED_INTERNAL_VERIFIED",
+      "closure": "生产静态默认凭据已移除，必需 Secret 使用受控引用，可选集成默认关闭，prod 启动门禁失败关闭",
+      "evidence": [
+        "server/ruoyi-admin/src/main/resources/application-prod.yml",
+        "server/ruoyi-admin/src/main/java/org/dromara/web/config/ProductionSecurityConfiguration.java",
+        "server/ruoyi-admin/src/test/java/org/dromara/web/config/ProductionSecurityConfigurationTest.java",
+        "server/ruoyi-admin/src/test/java/org/dromara/web/config/ProductionConfigurationContractTest.java"
+      ]
+    },
+    "G8C-SEC-P1-002": {
+      "state": "CLOSED_INTERNAL_VERIFIED",
+      "closure": "Actuator 仅允许 health/info/prometheus，健康详情按授权显示，独立认证失败响应脱敏并审计",
+      "evidence": [
+        "server/ruoyi-admin/src/main/resources/application.yml",
+        "server/ruoyi-admin/src/main/resources/application-prod.yml",
+        "server/ruoyi-common/ruoyi-common-security/src/main/java/org/dromara/common/security/config/SecurityConfig.java",
+        "server/ruoyi-admin/src/test/java/org/dromara/web/config/ProductionSecurityConfigurationTest.java"
+      ]
+    },
+    "G8C-SEC-P1-003": {
+      "state": "CLOSED_INTERNAL_VERIFIED",
+      "closure": "服务附件在打开输入流前执行 10 MiB 上限，以 64 KiB 固定缓冲暂存、计算摘要、租户对象键上传并在成功及失败路径清理",
+      "evidence": [
+        "server/ruoyi-modules/jshpos-service/src/main/java/com/jingshanghui/pos/service/interfaces/rest/ServiceOperationsController.java",
+        "server/ruoyi-modules/jshpos-service/src/main/java/com/jingshanghui/pos/service/infrastructure/storage/RuoYiServiceAttachmentStorageAdapter.java",
+        "server/ruoyi-modules/jshpos-service/src/test/java/com/jingshanghui/pos/service/infrastructure/storage/RuoYiServiceAttachmentStorageAdapterTest.java",
+        "server/ruoyi-modules/jshpos-service/src/test/java/com/jingshanghui/pos/service/interfaces/rest/ServiceOperationsControllerAttachmentTest.java"
+      ]
+    }
+  }
+}

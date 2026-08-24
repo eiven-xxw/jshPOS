@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-SEC-002",
+  "vectors": [
+    {"id": "SEC002-PROD-01", "input": "完整受控生产配置", "expected": "START_ALLOWED"},
+    {"id": "SEC002-PROD-02", "input": "缺少任一必需 Secret", "expected": "START_REJECTED"},
+    {"id": "SEC002-PROD-03", "input": "数据库 root 或已知默认口令", "expected": "START_REJECTED"},
+    {"id": "SEC002-PROD-04", "input": "可选集成开启但 Secret 缺失", "expected": "START_REJECTED"},
+    {"id": "SEC002-ACT-01", "input": "health,info,prometheus + authorized details", "expected": "START_ALLOWED"},
+    {"id": "SEC002-ACT-02", "input": "* 或扩大端点集合", "expected": "START_REJECTED"},
+    {"id": "SEC002-ATT-01", "input": "10 MiB 正文", "expected": "STAGED_HASHED_AND_CLEANED"},
+    {"id": "SEC002-ATT-02", "input": "10 MiB + 1 byte 正文", "expected": "REJECTED_AND_CLEANED"},
+    {"id": "SEC002-ATT-03", "input": "声明量与实际量不一致", "expected": "REJECTED_AND_CLEANED"},
+    {"id": "SEC002-ATT-04", "input": "24 个并发 512 KiB 上传", "expected": "64_KIB_EACH_AND_ZERO_TEMP_FILES"},
+    {"id": "SEC002-ATT-05", "input": "跨租户对象键尝试", "expected": "TRUSTED_TENANT_NAMESPACE_ONLY"}
+  ]
+}

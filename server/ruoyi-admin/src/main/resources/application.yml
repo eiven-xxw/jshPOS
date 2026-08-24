@@ -7,8 +7,8 @@ server:
     context-path: /
   # undertow 配置
   undertow:
-    # HTTP post内容的最大大小。当值为-1时，默认值为大小是无限的
-    max-http-post-size: 1GB
+    # 与 64 MiB 正式迁移文件及 multipart 边界开销对齐，禁止超大请求耗尽连接资源
+    max-http-post-size: 66MB
     # 以下的配置会影响buffer,这些buffer会用于服务器连接的IO操作,有点类似netty的池化内存管理
     # 每块buffer的空间大小,越小的空间被利用越充分
     buffer-size: 512
@@ -75,6 +75,8 @@ spring:
       max-file-size: 64MB
       # 为 multipart 元数据和边界保留少量开销，业务文件本身不得超过 64 MiB。
       max-request-size: 66MB
+      # 立即落盘，避免并发上传在堆内存聚合正文；各 Owner 仍须执行更小的业务上限。
+      file-size-threshold: 0B
   mvc:
     # 设置静态资源路径 防止所有请求都去查静态资源
     static-path-pattern: /static/**
@@ -243,10 +245,10 @@ management:
   endpoints:
     web:
       exposure:
-        include: '*'
+        include: health,info,prometheus
   endpoint:
     health:
-      show-details: ALWAYS
+      show-details: when_authorized
     logfile:
       external-file: ./logs/sys-console.log
 
