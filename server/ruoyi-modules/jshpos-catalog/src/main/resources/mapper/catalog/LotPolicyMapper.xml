@@ -4,9 +4,9 @@
     <resultMap id="policyView" type="com.jingshanghui.pos.catalog.application.model.LotPolicyModels$PolicyView">
         <constructor>
             <arg column="policyVersionId" javaType="java.lang.String"/><arg column="storeId" javaType="java.lang.Long"/>
-            <arg column="skuId" javaType="java.lang.Long"/><arg column="enabled" javaType="boolean"/>
+            <arg column="skuId" javaType="java.lang.Long"/><arg column="enabled" javaType="_boolean"/>
             <arg column="expiryBasis" javaType="java.lang.String"/><arg column="shelfLifeDays" javaType="java.lang.Integer"/>
-            <arg column="nearExpiryDays" javaType="int"/><arg column="industry" javaType="java.lang.String"/>
+            <arg column="nearExpiryDays" javaType="_int"/><arg column="industry" javaType="java.lang.String"/>
             <arg column="templateVersionId" javaType="java.lang.Long"/><arg column="effectiveFrom" javaType="java.time.Instant"/>
             <arg column="contentSha256" javaType="java.lang.String"/><arg column="state" javaType="java.lang.String"/>
         </constructor>
