@@ -38,5 +38,13 @@
     "fullAlphaRuns": 0,
     "productionDeployments": 0
   },
-  "decision": "CONDITIONAL_PASS_CANDIDATE_AWAITING_SPONSOR_CONFIRMATION"
+  "ciCandidate": {
+    "commit": "d0d9d48e147c0e5586123b1728f6c8ec3e4816ea",
+    "githubRunId": 32839420045,
+    "conclusion": "SUCCESS",
+    "jobNodes": 8,
+    "evidenceArtifactId": 9560138972,
+    "evidenceArtifactSha256": "fb9297da12fc8d653138ba7b7cc3caeb58d48542652ce7a42e3af9a77d60ad64"
+  },
+  "decision": "CONDITIONAL_PASS_AWAITING_SPONSOR_CONFIRMATION"
 }
