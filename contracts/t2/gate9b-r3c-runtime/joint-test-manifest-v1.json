@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "1.0",
+  "batchId": "G9A-R3C",
+  "stepId": "R3C-R9",
+  "surfaces": ["VUE-16", "VUE-17", "VUE-18", "VUE-19", "VUE-20", "FLT-01", "FLT-02", "FLT-05"],
+  "localExecution": {
+    "web": {
+      "command": "pnpm test:unit:ci",
+      "result": "PASS",
+      "testFiles": 44,
+      "tests": 106
+    },
+    "flutter": {
+      "result": "PENDING_CLEAN_GITHUB_EXECUTORS",
+      "reason": "本地工作区未安装 Flutter SDK，不以静态检查伪造 Widget 绿色结果"
+    }
+  },
+  "requiredRemoteExecution": ["flutter-ubuntu", "flutter-windows", "android-kotlin"],
+  "openP0": 0,
+  "openP1InBatch": 0,
+  "overallFindingState": "OPEN",
+  "nextBatchAutomaticallyAuthorized": false
+}
