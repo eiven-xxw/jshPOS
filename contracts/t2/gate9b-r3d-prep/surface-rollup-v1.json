@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "1.0",
+  "findingId": "G9A-UI-P1-001",
+  "findingState": "OPEN",
+  "dimensions": [
+    "route",
+    "buttons",
+    "permission",
+    "dataScope",
+    "loading",
+    "empty",
+    "error",
+    "singleFlight",
+    "offline",
+    "businessDate",
+    "recovery",
+    "directTest"
+  ],
+  "sources": [
+    {
+      "batch": "G9A-R3A",
+      "path": "contracts/t2/gate9b-r3a/surface-acceptance-v1.json",
+      "sha256": "9bfd2e316b8e509492f65abccadfde70707728959d3cd42ca2071ac33fb2f67f",
+      "surfaceIds": ["VUE-01", "VUE-02", "VUE-03", "VUE-04", "FLT-03", "FLT-04", "FLT-06"],
+      "surfaceCount": 7,
+      "acceptedEvidenceRun": 32745606377
+    },
+    {
+      "batch": "G9A-R3B",
+      "path": "contracts/t2/gate9b-r3b-runtime/surface-acceptance-v1.json",
+      "sha256": "c3258af8396cf62a52781dedfac755b46ae336d18117912c812a1ac9f41dd209",
+      "surfaceIds": ["VUE-05", "VUE-06", "VUE-07", "VUE-08", "VUE-09", "VUE-10", "VUE-11", "VUE-12", "VUE-13", "VUE-14", "VUE-15"],
+      "surfaceCount": 11,
+      "acceptedEvidenceRun": 32760070927
+    },
+    {
+      "batch": "G9A-R3C",
+      "path": "contracts/t2/gate9b-r3c-runtime/surface-acceptance-v1.json",
+      "sha256": "8c5194425bd14bc7a460e353f540bf067ee81b7e915dfbd641f80cd97694aa1e",
+      "surfaceIds": ["VUE-16", "VUE-17", "VUE-18", "VUE-19", "VUE-20", "FLT-01", "FLT-02", "FLT-05"],
+      "surfaceCount": 8,
+      "acceptedEvidenceRun": 32805916059
+    }
+  ],
+  "expectedSurfaceIds": [
+    "VUE-01", "VUE-02", "VUE-03", "VUE-04", "VUE-05", "VUE-06", "VUE-07", "VUE-08", "VUE-09", "VUE-10",
+    "VUE-11", "VUE-12", "VUE-13", "VUE-14", "VUE-15", "VUE-16", "VUE-17", "VUE-18", "VUE-19", "VUE-20",
+    "FLT-01", "FLT-02", "FLT-03", "FLT-04", "FLT-05", "FLT-06"
+  ],
+  "sourceSurfaceResult": "26_OF_26_BATCH_VERIFIED_CANDIDATE",
+  "jointAcceptanceResult": "NOT_EXECUTED_PREP_ONLY"
+}

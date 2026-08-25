@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0",
+  "evidenceLevel": "INTERNAL_UI_EVIDENCE_CHAIN",
+  "journeys": [
+    {
+      "journeyId": "R3D-JNY-WEB-01",
+      "name": "后台主数据到门店运营与经营报表",
+      "surfaces": ["VUE-01", "VUE-02", "VUE-03", "VUE-04", "VUE-05", "VUE-06", "VUE-07", "VUE-08", "VUE-10", "VUE-11", "VUE-12", "VUE-13", "VUE-14", "VUE-15", "VUE-16"],
+      "trustedContext": ["tenant", "organization", "store", "permissions", "businessDate"],
+      "baselineRerun": "REQUIRED",
+      "integratedTraversal": "OPEN_SEED"
+    },
+    {
+      "journeyId": "R3D-JNY-WEB-02",
+      "name": "SaaS开户到订阅、服务、终端和发布治理",
+      "surfaces": ["VUE-17", "VUE-19", "VUE-18", "VUE-20", "VUE-09"],
+      "trustedContext": ["platformRole", "tenant", "storeScope", "entitlement", "permission"],
+      "baselineRerun": "REQUIRED",
+      "integratedTraversal": "OPEN_SEED"
+    },
+    {
+      "journeyId": "R3D-JNY-POS-01",
+      "name": "可信POS会话到销售、组合支付、现金、退货和换货",
+      "surfaces": ["FLT-04", "FLT-03", "FLT-06", "FLT-05", "FLT-02", "FLT-01"],
+      "trustedContext": ["tenant", "store", "terminal", "employee", "shift", "businessDate", "originalCommand"],
+      "baselineRerun": "REQUIRED",
+      "integratedTraversal": "OPEN_SEED"
+    }
+  ],
+  "executionCommands": {
+    "webFull": "pnpm test:unit:ci",
+    "flutterFull": "flutter test --machine --coverage",
+    "webQuality": ["pnpm build:prod", "pnpm lint:eslint", "pnpm typecheck"],
+    "flutterQuality": ["dart format --output=none --set-exit-if-changed lib test", "flutter analyze --fatal-infos"]
+  },
+  "crossClientRule": "Vue与Flutter不可用证据拼接冒充单一端到端执行；这里只证明来源连续性",
+  "productionOrAlphaClaim": false
+}

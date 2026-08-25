@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "1.0",
+  "findingId": "G9A-UI-P1-001",
+  "dimensions": [
+    "route",
+    "buttons",
+    "permission",
+    "dataScope",
+    "loading",
+    "empty",
+    "error",
+    "singleFlight",
+    "offline",
+    "businessDate",
+    "recovery",
+    "directTest"
+  ],
+  "sourceBatchAcceptance": {
+    "surfaceCount": 26,
+    "result": "PASS_BY_IMMUTABLE_BATCH_EVIDENCE"
+  },
+  "jointDimensions": [
+    {"dimension": "surfaceIdentityAndSourceDigest", "status": "READY"},
+    {"dimension": "routeAndNavigationContinuity", "status": "OPEN_SEED"},
+    {"dimension": "permissionAndDataScopeContinuity", "status": "OPEN_SEED"},
+    {"dimension": "stateAndSingleFlightContinuity", "status": "OPEN_SEED"},
+    {"dimension": "offlineBusinessDateAndRecoveryContinuity", "status": "OPEN_SEED"},
+    {"dimension": "directComponentAndWidgetBaselineRerun", "status": "READY"}
+  ],
+  "prepExitCriteria": [
+    "26个页面身份无重复无缺失",
+    "三份历史契约摘要不漂移",
+    "三条跨页旅程和三组P1 seed冻结",
+    "Web与Flutter双平台现有基线复跑通过",
+    "运行时API依赖数据库迁移变更为0",
+    "外部状态与执行计数不变"
+  ],
+  "prepDecision": "CONDITIONAL_PASS_ELIGIBLE_AFTER_CI",
+  "findingStateAfterPrep": "OPEN"
+}

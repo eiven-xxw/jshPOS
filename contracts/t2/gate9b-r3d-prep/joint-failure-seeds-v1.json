@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.0",
+  "findingId": "G9A-UI-P1-001",
+  "state": "OPEN",
+  "seeds": [
+    {
+      "seedId": "R3D-JNT-P1-001",
+      "severity": "P1",
+      "scope": "VUE-01..16",
+      "condition": "缺少同一Router与可信上下文中串联主数据、门店运营和报表的联合挂载旅程",
+      "expected": "路由、权限、数据范围、状态和原操作恢复在跨页切换中保持连续",
+      "status": "OPEN_FOR_AUTHORIZED_R3D"
+    },
+    {
+      "seedId": "R3D-JNT-P1-002",
+      "severity": "P1",
+      "scope": "VUE-17/19/18/20/09",
+      "condition": "缺少同一平台角色与租户范围中串联SaaS、订阅、服务、终端和发布的联合旅程",
+      "expected": "套餐权益、订阅模式、附件/凭据和发布边界均由服务端权限失败关闭",
+      "status": "OPEN_FOR_AUTHORIZED_R3D"
+    },
+    {
+      "seedId": "R3D-JNT-P1-003",
+      "severity": "P1",
+      "scope": "FLT-04/03/06/05/02/01",
+      "condition": "缺少同一可信会话中遍历六个POS页面并验证班次、业务日和原命令身份连续性的Widget旅程",
+      "expected": "页面切换、离线、UNKNOWN和失败恢复始终复用冻结上下文与原命令",
+      "status": "OPEN_FOR_AUTHORIZED_R3D"
+    }
+  ],
+  "summary": {
+    "openP0": 0,
+    "openP1": 3
+  },
+  "closureAuthorized": false,
+  "findingClosureCandidateAllowedInPrep": false
+}

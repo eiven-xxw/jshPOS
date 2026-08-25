@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "1.0",
+  "gate": "T2-GATE9B-G9A-R3D-PREP",
+  "stage": "JOINT_UI_ACCEPTANCE_PREPARATION",
+  "findingId": "G9A-UI-P1-001",
+  "findingState": "OPEN",
+  "baselineCommit": "f5909b6094d004e4320d3afaa1dce7a1f170485b",
+  "branch": "t2/gate9b-sprint27f-g9a-r3d-prep",
+  "projectSponsorDecision": "CONDITIONAL_GO_PREP_ONLY",
+  "expectedAcceptedT2Requirements": 88,
+  "surfaceCounts": {
+    "vue": 20,
+    "flutter": 6,
+    "total": 26
+  },
+  "allowedChanges": [
+    "governance-and-prep-contracts",
+    "read-only-audit-and-evidence-scripts",
+    "prep-ci",
+    "cross-page-journey-rerun",
+    "joint-failure-seed-and-acceptance-plan"
+  ],
+  "forbiddenChanges": [
+    "new-requirement-or-business-capability",
+    "vue-or-flutter-runtime",
+    "server-api-controller-or-owner-runtime",
+    "dependency-or-lockfile",
+    "database-or-published-migration",
+    "external-execution",
+    "full-alpha-or-production-release"
+  ],
+  "preservedStates": {
+    "T2-PAY-002": "BLOCKED",
+    "T2-HWD-001": "BLOCKED",
+    "T2-PRN-001": "BLOCKED",
+    "T2-PAR-001": "BLOCKED",
+    "T2-UAT-001": "DRAFT",
+    "T2-REL-001": "DRAFT",
+    "T2-LIC-001": "DEFERRED",
+    "T2-JSH-001": "DEFERRED"
+  },
+  "externalExecution": {
+    "providerNetwork": 0,
+    "realFunds": 0,
+    "realDeviceCommands": 0,
+    "realPeripheralCommands": 0,
+    "partnerFieldExecution": 0,
+    "fullAlpha": 0,
+    "productionDeployment": 0
+  },
+  "runtimeJointAcceptanceAuthorized": false,
+  "nextStageAutomaticallyAuthorized": false
+}
