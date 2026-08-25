@@ -1,0 +1,84 @@
+{
+  "schemaVersion": "1.0",
+  "findingId": "G9A-UI-P1-001",
+  "batchId": "G9A-R3C",
+  "dimensions": [
+    "route",
+    "buttons",
+    "permission",
+    "dataScope",
+    "loading",
+    "empty",
+    "error",
+    "singleFlight",
+    "offline",
+    "businessDate",
+    "recovery",
+    "directTest"
+  ],
+  "surfaces": [
+    {
+      "surfaceId": "VUE-16",
+      "title": "经营报表与安全导出",
+      "statuses": ["PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "NOT_APPLICABLE", "PASS", "PASS", "PASS"],
+      "marker": "surface-id=\"reporting\"",
+      "evidence": ["admin-web/src/views/reporting/operation/index.vue", "admin-web/src/views/g9a-r3c/__tests__/reporting-page.spec.ts"]
+    },
+    {
+      "surfaceId": "VUE-17",
+      "title": "SaaS 商户与套餐运营",
+      "statuses": ["PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "NOT_APPLICABLE", "NOT_APPLICABLE", "PASS", "PASS"],
+      "marker": "surface-id=\"saas\"",
+      "evidence": ["admin-web/src/views/saas/operations/index.vue", "admin-web/src/views/g9a-r3c/__tests__/saas-page.spec.ts"]
+    },
+    {
+      "surfaceId": "VUE-18",
+      "title": "服务目录、实施与工单",
+      "statuses": ["PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "NOT_APPLICABLE", "NOT_APPLICABLE", "PASS", "PASS"],
+      "marker": "surface-id=\"service\"",
+      "evidence": ["admin-web/src/views/service/operations/index.vue", "admin-web/src/views/g9a-r3c/__tests__/service-page.spec.ts"]
+    },
+    {
+      "surfaceId": "VUE-19",
+      "title": "订阅续期、降级与恢复",
+      "statuses": ["PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "NOT_APPLICABLE", "NOT_APPLICABLE", "PASS", "PASS"],
+      "marker": "surface-id=\"subscription\"",
+      "evidence": ["admin-web/src/views/subscription/operations/index.vue", "admin-web/src/views/g9a-r3c/__tests__/subscription-page.spec.ts"]
+    },
+    {
+      "surfaceId": "VUE-20",
+      "title": "可信终端登记与凭据轮换",
+      "statuses": ["PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "NOT_APPLICABLE", "NOT_APPLICABLE", "PASS", "PASS"],
+      "marker": "surface-id=\"terminal\"",
+      "evidence": ["admin-web/src/views/terminal/registry/index.vue", "admin-web/src/views/g9a-r3c/__tests__/terminal-page.spec.ts"]
+    },
+    {
+      "surfaceId": "FLT-01",
+      "title": "POS 换货辅助页",
+      "statuses": ["PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS"],
+      "marker": "allowCreate",
+      "evidence": ["pos-flutter/lib/features/exchange/presentation/pos_exchange_page.dart", "pos-flutter/test/gate7b/exchange_runtime_test.dart"]
+    },
+    {
+      "surfaceId": "FLT-02",
+      "title": "POS 原单退货退款辅助页",
+      "statuses": ["PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS"],
+      "marker": "class PosReturnPage",
+      "evidence": ["pos-flutter/lib/features/return_refund/presentation/pos_return_page.dart", "pos-flutter/test/gate6e/pos_return_page_test.dart"]
+    },
+    {
+      "surfaceId": "FLT-05",
+      "title": "POS 班次现金收支与钱箱事件辅助页",
+      "statuses": ["PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS", "PASS"],
+      "marker": "BLOCKED_EXTERNAL",
+      "evidence": ["pos-flutter/lib/features/shift/presentation/pos_cash_management_page.dart", "pos-flutter/test/gate9b/g9a_r3c_cash_management_page_test.dart"]
+    }
+  ],
+  "notApplicableRules": {
+    "onlineVueOffline": "五个 Vue 运营页不承载离线事实；网络故障以安全错误、关联标识和原幂等键恢复处理",
+    "nonTransactionalBusinessDate": "VUE-16 与三个 POS 辅助页消费可信业务日；其他商业运营页不生成交易业务日事实"
+  },
+  "batchResult": "VERIFIED_CANDIDATE",
+  "overallFindingState": "OPEN",
+  "overallFindingReason": "G9A-R3D 对全部 26 页的联合验收尚未获批或执行"
+}

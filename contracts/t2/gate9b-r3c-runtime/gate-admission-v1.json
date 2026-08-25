@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "1.0",
+  "gate": "T2-GATE9B-G9A-R3C",
+  "stage": "AUTHORIZED_REPORTING_TERMINAL_COMMERCIAL_POS_AUX_RUNTIME_REPAIR",
+  "findingId": "G9A-UI-P1-001",
+  "baselineCommit": "35cc22316faf5389844dfeeee3dfa840ce06cdf8",
+  "branch": "t2/gate9b-sprint27e-g9a-r3c-runtime",
+  "surfaces": ["VUE-16", "VUE-17", "VUE-18", "VUE-19", "VUE-20", "FLT-01", "FLT-02", "FLT-05"],
+  "expectedAcceptedT2Requirements": 88,
+  "newRequirementIds": 0,
+  "serverRuntimeChanges": 0,
+  "serverApiEndpointChanges": 0,
+  "clientApiSignatureExtensions": 1,
+  "dependencyChanges": 0,
+  "migrationChanges": 0,
+  "externalExecution": {
+    "providerNetwork": 0,
+    "realFunds": 0,
+    "realDeviceCommands": 0,
+    "realPeripheralCommands": 0,
+    "partnerFieldExecution": 0,
+    "fullAlpha": 0,
+    "productionDeployment": 0
+  },
+  "nextBatchAutomaticallyAuthorized": false
+}

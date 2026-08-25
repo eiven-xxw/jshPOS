@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "1.0",
+  "batchId": "G9A-R3C",
+  "serial": true,
+  "steps": [
+    {"order":0,"stepId":"R3C-R0","scope":["shared-operation-identity","failure-tests"],"commit":"eca86fe"},
+    {"order":1,"stepId":"R3C-R1","scope":["VUE-16"],"commit":"e33cb7a"},
+    {"order":2,"stepId":"R3C-R2","scope":["VUE-18"],"commit":"6de0278"},
+    {"order":3,"stepId":"R3C-R3","scope":["VUE-20"],"commit":"60c97f6"},
+    {"order":4,"stepId":"R3C-R4","scope":["VUE-17"],"commit":"1cc434b"},
+    {"order":5,"stepId":"R3C-R5","scope":["VUE-19"],"commit":"c4ae6b0"},
+    {"order":6,"stepId":"R3C-R6","scope":["FLT-05"],"commit":"65fbb5b"},
+    {"order":7,"stepId":"R3C-R7","scope":["FLT-02"],"commit":"1aa735e"},
+    {"order":8,"stepId":"R3C-R8","scope":["FLT-01"],"commit":"ddf125e"},
+    {"order":9,"stepId":"R3C-R9","scope":["ALL_8","FULL_WEB_GATE","REMOTE_FLUTTER_REQUIRED"],"commit":"0af0152"}
+  ],
+  "batchState": "VERIFIED_CANDIDATE",
+  "overallFindingState": "OPEN",
+  "nextBatchAutomaticallyAuthorized": false
+}

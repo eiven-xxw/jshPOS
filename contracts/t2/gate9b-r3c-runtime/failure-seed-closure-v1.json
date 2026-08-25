@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "1.0",
+  "batchId": "G9A-R3C",
+  "findingId": "G9A-UI-P1-001",
+  "closures": [
+    {"seedId":"R3C-P1-TEST-001","state":"CLOSED_IN_BATCH","evidence":["admin-web/src/views/g9a-r3c/__tests__/reporting-page.spec.ts","admin-web/src/views/g9a-r3c/__tests__/saas-page.spec.ts","admin-web/src/views/g9a-r3c/__tests__/service-page.spec.ts","admin-web/src/views/g9a-r3c/__tests__/subscription-page.spec.ts","admin-web/src/views/g9a-r3c/__tests__/terminal-page.spec.ts"]},
+    {"seedId":"R3C-P1-TEST-002","state":"CLOSED_IN_BATCH","evidence":["pos-flutter/test/gate7b/exchange_runtime_test.dart","pos-flutter/test/gate6e/pos_return_page_test.dart","pos-flutter/test/gate9b/g9a_r3c_cash_management_page_test.dart"]},
+    {"seedId":"R3C-P1-STATE-001","state":"CLOSED_IN_BATCH","evidence":["admin-web/src/views/reporting/operation/index.vue","admin-web/src/views/service/operations/index.vue","admin-web/src/views/terminal/registry/index.vue"]},
+    {"seedId":"R3C-P1-RECOVERY-001","state":"CLOSED_IN_BATCH","evidence":["admin-web/src/composables/useStableOperationIdentity.ts","admin-web/src/composables/__tests__/useStableOperationIdentity.spec.ts","pos-flutter/test/gate6e/pos_return_page_test.dart"]},
+    {"seedId":"R3C-P1-CONFIRM-001","state":"CLOSED_IN_BATCH","evidence":["admin-web/src/views/g9a-r3c/__tests__/reporting-page.spec.ts","admin-web/src/views/g9a-r3c/__tests__/terminal-page.spec.ts","pos-flutter/test/gate7b/exchange_runtime_test.dart","pos-flutter/test/gate9b/g9a_r3c_cash_management_page_test.dart"]},
+    {"seedId":"R3C-P1-SCOPE-001","state":"CLOSED_IN_BATCH","evidence":["contracts/t2/gate9b-r3c-runtime/surface-acceptance-v1.json","scripts/check_t2_g9a_r3c_runtime.py"]},
+    {"seedId":"R3C-P1-DATA-ACCESS-001","state":"CLOSED_IN_BATCH","evidence":["admin-web/src/views/g9a-r3c/__tests__/service-page.spec.ts","admin-web/src/views/g9a-r3c/__tests__/terminal-page.spec.ts","pos-flutter/test/gate7b/exchange_runtime_test.dart"]},
+    {"seedId":"R3C-P1-OFFLINE-DAY-001","state":"CLOSED_IN_BATCH","evidence":["pos-flutter/test/gate6e/pos_return_page_test.dart","pos-flutter/test/gate9b/g9a_r3c_cash_management_page_test.dart","admin-web/src/views/g9a-r3c/__tests__/reporting-page.spec.ts"]}
+  ],
+  "executionBoundary": {
+    "localWeb": "PASS_44_FILES_106_TESTS",
+    "localFlutter": "PENDING_CLEAN_GITHUB_EXECUTORS_NO_LOCAL_SDK",
+    "remoteFlutterRequired": ["ubuntu-latest", "windows-latest", "android-kotlin"]
+  },
+  "openP0": 0,
+  "openP1InBatch": 0,
+  "autoRetryUsed": false,
+  "testsSkippedToPass": false
+}
