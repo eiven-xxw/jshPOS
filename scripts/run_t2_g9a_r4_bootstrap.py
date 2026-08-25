@@ -220,6 +220,21 @@ def create_tenant(client: ApiClient, passwords: dict[str, str], plan_id: Any, in
         "name": f"{display}虚构门店", "zoneId": "Asia/Shanghai", "businessDayStart": "06:00:00",
     }))
     store_id = require_value(store.get("storeId"), f"{label}-store-create")
+    reviewer_rows = client.call(
+        "GET", "/system/user/list?" + urllib.parse.urlencode({
+            "userName": reviewer_username, "pageNum": 1, "pageSize": 20,
+        }), f"{label}-tenant-reviewer-read",
+    ).get("rows", [])
+    reviewer_user_id = require_value(
+        find_by(reviewer_rows, "userName", reviewer_username,
+                f"{label}-tenant-reviewer-read").get("userId"),
+        f"{label}-tenant-reviewer-read",
+    )
+    tenant_scope = {"scopes": [{"scopeType": "TENANT", "orgUnitId": None, "storeId": None}]}
+    client.call("PUT", f"/api/v1/foundation/staff-scopes/{user_id}",
+                f"{label}-tenant-admin-scope", body=tenant_scope)
+    client.call("PUT", f"/api/v1/foundation/staff-scopes/{reviewer_user_id}",
+                f"{label}-tenant-reviewer-scope", body=tenant_scope)
 
     service_catalog = data(client.call("POST", "/api/v1/service/catalogs", f"{label}-service-catalog", body={
         "catalogCode": f"R4_{label.upper()}_OPENING", "versionNo": 1, "industryTemplate": industry,
@@ -315,7 +330,8 @@ def create_tenant(client: ApiClient, passwords: dict[str, str], plan_id: Any, in
     context = {
         "journeyId": f"R4-{label.upper()}", "industry": industry, "tenantId": tenant_id,
         "applicationId": application_id, "subscriptionId": subscription_id, "orgId": org_id,
-        "storeId": store_id, "userId": user_id, "serviceProjectId": service_project_id,
+        "storeId": store_id, "userId": user_id, "reviewerUserId": reviewer_user_id,
+        "serviceProjectId": service_project_id,
         "manualTemplateId": template["templateId"], "manualConfigVersionId": config["configVersionId"],
         "skuId": product["skuId"], "unitId": unit["id"],
         "skuCode": product["skuCode"], "barcode": barcode, "catalogVersion": catalog_package["packageVersion"],
