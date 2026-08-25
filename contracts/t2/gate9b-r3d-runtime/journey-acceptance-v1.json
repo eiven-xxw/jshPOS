@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0",
+  "findingId": "G9A-UI-P1-001",
+  "journeys": [
+    {
+      "journeyId": "R3D-JNY-WEB-01",
+      "step": "R3D-R1",
+      "surfaces": ["VUE-01", "VUE-02", "VUE-03", "VUE-04", "VUE-05", "VUE-06", "VUE-07", "VUE-08", "VUE-10", "VUE-11", "VUE-12", "VUE-13", "VUE-14", "VUE-15", "VUE-16"],
+      "status": "PASS",
+      "evidence": "admin-web/src/views/g9a-r3d/__tests__/joint-main-operations.spec.ts"
+    },
+    {
+      "journeyId": "R3D-JNY-WEB-02",
+      "step": "R3D-R2",
+      "surfaces": ["VUE-17", "VUE-19", "VUE-18", "VUE-20", "VUE-09"],
+      "status": "PASS",
+      "evidence": "admin-web/src/views/g9a-r3d/__tests__/joint-commercial-operations.spec.ts"
+    },
+    {
+      "journeyId": "R3D-JNY-POS-01",
+      "step": "R3D-R3",
+      "surfaces": ["FLT-04", "FLT-03", "FLT-06", "FLT-05", "FLT-02", "FLT-01"],
+      "status": "PASS",
+      "evidence": "pos-flutter/test/gate9b/g9a_r3d_trusted_session_journey_test.dart"
+    }
+  ],
+  "surfaceCount": 26,
+  "openP0": 0,
+  "openP1": 0,
+  "externalExecution": 0,
+  "findingState": "OPEN_AWAITING_SPONSOR_CONFIRMATION"
+}

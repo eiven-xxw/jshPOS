@@ -321,5 +321,6 @@
 | CR-T2G9R3-024 | 2026-08-25 | G9A_R3D_R1_MAIN_OPERATIONS_JOURNEY_VERIFIED | 首轮联合回归在VUE-02发现价签抽屉缺少稳定页面根标识并失败关闭；仅增加稳定surface标识后，VUE-01..16在同一Router和冻结可信上下文中真实挂载，UNKNOWN跨页返回仍复用原操作且不生成第二条修复命令 | G9A-UI-P1-001、ADR-071、T2-CI-001 | R3D-JNT-P1-001更新为CLOSED_IN_BATCH；不改API、Controller、依赖、数据库或迁移，整体Finding继续OPEN，等待R2/R3/R4 |
 | CR-T2G9R3-025 | 2026-08-25 | G9A_R3D_R2_COMMERCIAL_RELEASE_JOURNEY_VERIFIED | SaaS、订阅、服务、终端、发布五页在同一平台角色与可信租户范围中真实挂载；联合失败回归纠正了订阅条件按钮和终端菜单/动作权限混用的测试假设，跨页返回仍保留终端越权错误且不伪造外部成功 | G9A-UI-P1-001、ADR-071、T2-CI-001 | R3D-JNT-P1-002更新为CLOSED_IN_BATCH；仅修正联合测试模型，不改运行时/API/依赖/迁移，整体Finding继续OPEN，等待R3/R4 |
 | CR-T2G9R3-026 | 2026-08-25 | G9A_R3D_R3_TRUSTED_POS_SESSION_JOURNEY_VERIFIED | 首轮联合回归证明班次现金失败命令的幂等键只存在页面State，退出重进后由尾号2错误变为尾号1；将操作身份登记表提升为可信员工会话作用域后，FLT-01..06正式Widget在同一租户/门店/班次/业务日中联合通过，跨页恢复复用原键 | G9A-UI-P1-001、ADR-071、既有POS/Shift/Payment/Return/Exchange Requirement | R3D-JNT-P1-003更新为CLOSED_IN_BATCH；成功后释放、关班/安全退出清理，不改资金/班次事实、API、依赖、数据库或迁移；整体Finding继续OPEN，等待R4完整门禁与发起人确认 |
+| CR-T2G9R3-027 | 2026-08-25 | G9A_R3D_R4_FULL_GATE_IN_PROGRESS | 三条联合旅程和三个P1 seed已按R0至R3串行关闭，开始汇总26页/12维矩阵并配置治理双平台、Server、Web、Flutter双平台、Android/数据库、安全和证据聚合完整门禁 | G9A-UI-P1-001、ADR-071、T2-CI-001 | 只形成INTERNAL_SOFTWARE_UI_JOINT_ACCEPTANCE，RTM/API/依赖/迁移及外部状态不变；完整CI全绿前不形成最终建议，发起人确认前Finding继续OPEN且不得进入G9A-R4/Alpha/生产 |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。

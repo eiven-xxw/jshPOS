@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "1.0",
+  "findingId": "G9A-UI-P1-001",
+  "dimensions": [
+    "route",
+    "buttons",
+    "permission",
+    "dataScope",
+    "loading",
+    "empty",
+    "error",
+    "singleFlight",
+    "offline",
+    "businessDate",
+    "recovery",
+    "directTest"
+  ],
+  "surfaceIds": [
+    "VUE-01", "VUE-02", "VUE-03", "VUE-04", "VUE-05", "VUE-06", "VUE-07", "VUE-08", "VUE-09", "VUE-10",
+    "VUE-11", "VUE-12", "VUE-13", "VUE-14", "VUE-15", "VUE-16", "VUE-17", "VUE-18", "VUE-19", "VUE-20",
+    "FLT-01", "FLT-02", "FLT-03", "FLT-04", "FLT-05", "FLT-06"
+  ],
+  "sourceBatchResult": "26_OF_26_VERIFIED",
+  "jointJourneyResult": "3_OF_3_PASS",
+  "jointFailureSeedResult": "3_OF_3_CLOSED_IN_BATCH",
+  "openP0": 0,
+  "openP1": 0,
+  "testBypassUsed": false,
+  "automaticRetryUsed": false,
+  "batchDecision": "CONDITIONAL_PASS_CANDIDATE",
+  "findingState": "OPEN_AWAITING_SPONSOR_CONFIRMATION",
+  "highestEvidence": "INTERNAL_SOFTWARE_UI_JOINT_ACCEPTANCE",
+  "externalExecution": 0
+}

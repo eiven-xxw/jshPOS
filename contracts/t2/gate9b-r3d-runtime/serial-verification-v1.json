@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "1.0",
+  "serial": true,
+  "steps": [
+    {
+      "step": "R3D-R0",
+      "commit": "eef6973f9fc739431dbf0e5cf29eeee02c2aa03e",
+      "result": "VERIFIED"
+    },
+    {
+      "step": "R3D-R1",
+      "commit": "999f838794839354bcab0252ee7eb7543d21585d",
+      "result": "VERIFIED"
+    },
+    {
+      "step": "R3D-R2",
+      "commit": "7d2d6b8df525352c9c1c06acfcf5164818a28dd5",
+      "result": "VERIFIED"
+    },
+    {
+      "step": "R3D-R3",
+      "commit": "563a1f1",
+      "result": "VERIFIED"
+    }
+  ],
+  "r4State": "FULL_CI_REQUIRED",
+  "batchState": "CONDITIONAL_PASS_CANDIDATE",
+  "overallFindingState": "OPEN",
+  "nextBatchAutomaticallyAuthorized": false
+}
