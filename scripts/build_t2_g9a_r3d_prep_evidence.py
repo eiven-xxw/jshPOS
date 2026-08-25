@@ -27,6 +27,25 @@ def sha256(path: pathlib.Path) -> str:
     return value.hexdigest()
 
 
+def find_joint_audit_summary(producer_dir: pathlib.Path) -> pathlib.Path:
+    """兼容不同执行器上传目录根差异，并拒绝缺失或歧义的联合审计摘要。"""
+    direct = producer_dir / "joint-audit" / "summary.json"
+    if direct.is_file():
+        return direct
+    candidates = sorted(
+        path
+        for path in producer_dir.rglob("summary.json")
+        if path.parent.name == "joint-audit"
+    )
+    if len(candidates) != 1:
+        relative = [path.relative_to(producer_dir).as_posix() for path in candidates]
+        raise AssertionError(
+            f"{producer_dir.name} joint audit summary count must be 1, "
+            f"actual={len(candidates)} candidates={relative}"
+        )
+    return candidates[0]
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--bundle-dir", required=True)
@@ -38,7 +57,8 @@ def main() -> int:
     if missing:
         raise AssertionError(f"missing evidence producers: {sorted(missing)}")
     for producer in ("governance-ubuntu", "governance-windows"):
-        summary = json.loads((bundle / producer / "joint-audit" / "summary.json").read_text(encoding="utf-8"))
+        summary_path = find_joint_audit_summary(bundle / producer)
+        summary = json.loads(summary_path.read_text(encoding="utf-8-sig"))
         expected = {
             "result": "PASS_PREP_SOURCE_CLOSURE",
             "surfaceCount": 26,
