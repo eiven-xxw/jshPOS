@@ -62,6 +62,12 @@ def main() -> None:
     require(activate_marker in bootstrap_text, "formal bootstrap must activate PREPARING stores through API")
     require(bootstrap_text.index(activate_marker) < bootstrap_text.index(publish_marker),
             "store activation must precede tenant price publication")
+    create_tenant = bootstrap_text.split("def create_tenant", 1)[1]
+    platform_login = 'f"{label}-platform-login-before-application"'
+    application_create = '"/api/v1/saas/applications"'
+    require(platform_login in create_tenant, "each onboarding journey must restore the trusted platform context")
+    require(create_tenant.index(platform_login) < create_tenant.index(application_create),
+            "trusted platform context must be restored before application creation")
 
     flutter_text = flutter.read_text(encoding="utf-8")
     require("HttpServer.bind" not in flutter_text, "formal Flutter journey must not bind an embedded HTTP server")

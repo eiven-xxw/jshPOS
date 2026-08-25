@@ -153,6 +153,9 @@ def activate_terminal(client: ApiClient, ids: dict[str, Any], label: str) -> dic
 def create_tenant(client: ApiClient, passwords: dict[str, str], plan_id: Any, industry: str,
                   label: str, display: str, run_tag: str) -> tuple[dict[str, Any], dict[str, Any]]:
     now = datetime.now(timezone.utc)
+    # 每条商户开户旅程都从平台可信身份重新开始，禁止沿用上一租户管理员会话。
+    client.login(PLATFORM_TENANT, "admin", passwords["platform"],
+                 f"{label}-platform-login-before-application")
     application = data(client.call("POST", "/api/v1/saas/applications", f"{label}-application-create", body={
         "applicationCode": f"G9AR4_{run_tag}_{label.upper()}", "companyName": f"G9A-R4虚构{display}",
         "industry": industry, "planId": plan_id,
