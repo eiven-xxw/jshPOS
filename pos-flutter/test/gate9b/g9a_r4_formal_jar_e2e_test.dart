@@ -585,10 +585,9 @@ String _sumExactQuantities(Iterable<String> values) {
   }
   final padded = total.toString().padLeft(7, '0');
   final integer = padded.substring(0, padded.length - 6);
-  final fraction = padded.substring(padded.length - 6).replaceFirst(
-    RegExp(r'0+$'),
-    '',
-  );
+  final fraction = padded
+      .substring(padded.length - 6)
+      .replaceFirst(RegExp(r'0+$'), '');
   return fraction.isEmpty ? integer : '$integer.$fraction';
 }
 
