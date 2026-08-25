@@ -8,12 +8,19 @@
       title="Gate 6A 终端登记"
       description="激活秘密和设备凭据仅显示一次；当前只具备 SYNTHETIC 软件证据，真实设备验收仍为 BLOCKED。"
     />
+    <OwnerPageFeedback
+      surface-id="terminal"
+      :state="phase"
+      :failure="failure"
+      empty-title="当前可信租户和门店范围内暂无已登记终端"
+      @retry="load"
+    />
     <el-card shadow="hover">
       <el-form :inline="true">
         <el-form-item label="门店 ID"><el-input-number v-model="queryStoreId" :min="1" :controls="false" clearable /></el-form-item>
         <el-form-item>
-          <el-button v-hasPermi="['terminal:registry:read']" type="primary" icon="Search" :loading="loading" @click="load">查询</el-button>
-          <el-button v-hasPermi="['terminal:activation:issue']" type="success" icon="Plus" @click="openIssue">签发激活</el-button>
+          <el-button v-hasPermi="['terminal:registry:read']" data-testid="terminal-query" type="primary" icon="Search" :loading="loading" @click="load">查询</el-button>
+          <el-button v-hasPermi="['terminal:activation:issue']" data-testid="terminal-issue-open" type="success" icon="Plus" :disabled="submitting" @click="openIssue">签发激活</el-button>
         </el-form-item>
       </el-form>
       <el-table v-loading="loading" :data="page.items" border>
@@ -85,11 +92,11 @@
         <el-form-item label="有效期（秒）"><el-input-number v-model="issueForm.expiresInSeconds" :min="60" :max="86400" /></el-form-item>
       </el-form>
       <template #footer
-        ><el-button @click="issueDialog = false">取消</el-button><el-button type="primary" @click="submitIssue">签发</el-button></template
+        ><el-button @click="issueDialog = false">取消</el-button><el-button data-testid="terminal-issue-submit" type="primary" :loading="submitting" @click="submitIssue">签发</el-button></template
       >
     </el-dialog>
 
-    <el-dialog v-model="secretDialog" title="一次性秘密（关闭后无法再次查看）" width="720px" :close-on-click-modal="false">
+    <el-dialog v-model="secretDialog" title="一次性秘密（关闭后无法再次查看）" width="720px" :close-on-click-modal="false" @closed="clearSecret">
       <el-alert type="error" :closable="false" show-icon>请立即交给受权实施人员并存入批准的密钥通道，禁止截图进工单或提交 Git。</el-alert>
       <el-descriptions :column="1" border class="mt-3">
         <el-descriptions-item label="用途">{{ shownSecret.purpose }}</el-descriptions-item>
@@ -98,17 +105,23 @@
           ><el-text class="break-all" type="danger">{{ shownSecret.secret }}</el-text></el-descriptions-item
         >
       </el-descriptions>
-      <template #footer><el-button type="primary" @click="secretDialog = false">我已安全保存</el-button></template>
+      <template #footer><el-button data-testid="terminal-secret-close" type="primary" @click="closeSecret">我已安全保存</el-button></template>
     </el-dialog>
   </div>
 </template>
 
 <script setup name="TerminalRegistry" lang="ts">
 import { ElMessage, ElMessageBox } from 'element-plus';
+import OwnerPageFeedback from '@/views/operations/components/OwnerPageFeedback.vue';
+import { useRecoverablePage } from '@/composables/useRecoverablePage';
+import { useStableOperationIdentity } from '@/composables/useStableOperationIdentity';
 import { changeTerminalStatus, issueTerminalActivation, listTerminals, rotateTerminalCredential } from '@/api/terminal';
+import { newTerminalCommandKey } from '@/api/terminal/contract';
 import type { TerminalPageVO, TerminalVO } from '@/api/terminal/types';
 
-const loading = ref(false);
+const { phase, failure, submitting, runRead, runWrite } = useRecoverablePage('TERMINAL_PAGE_FAILED');
+const operationKeys = useStableOperationIdentity(newTerminalCommandKey);
+const loading = computed(() => phase.value === 'LOADING');
 const queryStoreId = ref<number>();
 const page = reactive<TerminalPageVO>({ items: [], total: 0, page: 1, size: 50 });
 const issueDialog = ref(false);
@@ -116,17 +129,14 @@ const secretDialog = ref(false);
 const shownSecret = reactive({ purpose: '', id: '', secret: '' });
 const issueForm = reactive({ orgUnitId: 1, storeId: 1, boundUserId: 1, terminalProfileCode: 'ANDROID_POS_V1', expiresInSeconds: 600 });
 
-const idempotencyKey = (purpose: string) => `${purpose}-${Date.now()}-${crypto.randomUUID()}`.slice(0, 64);
 const statusType = (status: TerminalVO['status']) => (status === 'ACTIVE' ? 'success' : status === 'BLOCKED' ? 'warning' : 'danger');
 
 const load = async () => {
-  loading.value = true;
-  try {
-    const result = await listTerminals({ storeId: queryStoreId.value, page: page.page, size: page.size });
-    Object.assign(page, result.data);
-  } finally {
-    loading.value = false;
-  }
+  const result = await runRead(
+    () => listTerminals({ storeId: queryStoreId.value, page: page.page, size: page.size }),
+    (value) => value.data.items.length === 0
+  );
+  if (result) Object.assign(page, result.data);
 };
 
 const openIssue = () => {
@@ -135,7 +145,19 @@ const openIssue = () => {
 };
 
 const submitIssue = async () => {
-  const result = await issueTerminalActivation({ ...issueForm, idempotencyKey: idempotencyKey('terminal-issue') });
+  const operation = `terminal:activation:${issueForm.storeId}:${issueForm.terminalProfileCode}`;
+  try {
+    await ElMessageBox.confirm(
+      `门店 ${issueForm.storeId}；绑定用户 ${issueForm.boundUserId}；模板 ${issueForm.terminalProfileCode}。激活秘密只显示一次。`,
+      '签发终端激活确认',
+      { type: 'warning' }
+    );
+  } catch {
+    return;
+  }
+  const result = await runWrite(operation, () => issueTerminalActivation({ ...issueForm, idempotencyKey: operationKeys.get(operation) }));
+  if (!result) return;
+  operationKeys.complete(operation);
   issueDialog.value = false;
   shownSecret.purpose = '终端激活';
   shownSecret.id = result.data.activationId;
@@ -148,24 +170,41 @@ const change = async (terminal: TerminalVO, targetStatus: TerminalVO['status']) 
     inputValue: targetStatus === 'ACTIVE' ? '安全复核通过并批准解阻' : `按终端安全规范执行${targetStatus}`,
     inputValidator: (text) => (!!text && text.trim().length >= 4) || '原因至少 4 个字符'
   });
-  await changeTerminalStatus(terminal.deviceId, {
-    targetStatus,
-    reason: value,
-    idempotencyKey: idempotencyKey('terminal-status'),
-    expectedVersion: terminal.recordVersion
-  });
+  const operation = `terminal:${terminal.deviceId}:status:${targetStatus}`;
+  const result = await runWrite(operation, () =>
+    changeTerminalStatus(terminal.deviceId, {
+      targetStatus,
+      reason: value,
+      idempotencyKey: operationKeys.get(operation),
+      expectedVersion: terminal.recordVersion
+    })
+  );
+  if (!result) return;
+  operationKeys.complete(operation);
   ElMessage.success('终端状态已更新并记录审计');
   await load();
 };
 
 const rotate = async (terminal: TerminalVO) => {
-  await ElMessageBox.confirm('旧凭据将立即失效。确认轮换？', '轮换终端凭据', { type: 'warning' });
-  const result = await rotateTerminalCredential(terminal.deviceId);
+  await ElMessageBox.confirm(`设备 ${terminal.deviceId}；当前凭据版本 ${terminal.credentialVersion}。旧凭据将立即失效。`, '轮换终端凭据', {
+    type: 'warning'
+  });
+  const operation = `terminal:${terminal.deviceId}:credential:rotate`;
+  const result = await runWrite(operation, () => rotateTerminalCredential(terminal.deviceId, operationKeys.get(operation)));
+  if (!result) return;
+  operationKeys.complete(operation);
   shownSecret.purpose = `设备凭据 v${result.data.credentialVersion}`;
   shownSecret.id = terminal.deviceId;
   shownSecret.secret = result.data.deviceCredential || '凭据不会再次显示，请重新执行受权轮换。';
   secretDialog.value = true;
   await load();
+};
+
+/** 一次性秘密关闭即从响应式内存清除，禁止在页面历史中持久化。 */
+const clearSecret = () => Object.assign(shownSecret, { purpose: '', id: '', secret: '' });
+const closeSecret = () => {
+  clearSecret();
+  secretDialog.value = false;
 };
 
 onMounted(load);

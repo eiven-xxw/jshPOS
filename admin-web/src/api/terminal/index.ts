@@ -26,9 +26,9 @@ export const changeTerminalStatus = (deviceId: string, data: ChangeTerminalStatu
     data: trustedTerminalPayload(data)
   });
 
-export const rotateTerminalCredential = (deviceId: string): AxiosPromise<RotatedCredentialVO> =>
+export const rotateTerminalCredential = (deviceId: string, idempotencyKey = newTerminalCommandKey()): AxiosPromise<RotatedCredentialVO> =>
   request({
     url: `${TERMINAL_ENDPOINTS.terminals}/${deviceId}/credentials/rotate`,
     method: 'post',
-    headers: { 'Idempotency-Key': newTerminalCommandKey() }
+    headers: { 'Idempotency-Key': idempotencyKey }
   });
