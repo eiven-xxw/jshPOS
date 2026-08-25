@@ -22,7 +22,7 @@ class PromotionSnapshotQueryAdapterTest {
         String tenant="TENANT_A", snapshotId="01K5E000000000000000000001",
             orderId="01K5E000000000000000000002", quoteId="01K5E000000000000000000003";
         when(persistence.lockSnapshot(tenant,snapshotId)).thenReturn(new StoredSnapshot(snapshotId,orderId,quoteId,
-            1101L,"01K5E000000000000000000004",LocalDate.parse("2026-08-23"),"CNY","a".repeat(64),
+            1101L,"01K5E000000000000000000004",LocalDate.parse("2026-08-23"),"CNY","9".repeat(64),
             "b".repeat(64),100,20,80));
         when(persistence.findQuote(tenant,quoteId)).thenReturn(new StoredQuote(quoteId,1101L,
             "01K5E000000000000000000004", LocalDateTime.parse("2026-08-23T05:00:00"),"CNY",
@@ -37,6 +37,8 @@ class PromotionSnapshotQueryAdapterTest {
         var result=new PromotionSnapshotQueryAdapter(persistence).requireSnapshot(tenant,snapshotId);
 
         assertThat(result.memberBenefit()).isNotNull();
+        assertThat(result.quoteFingerprint()).isEqualTo("a".repeat(64));
+        assertThat(result.settlementFingerprint()).isEqualTo("9".repeat(64));
         assertThat(result.memberBenefit().selectedPath()).isEqualTo("MEMBER_PATH");
         assertThat(result.memberBenefit().contentSha256()).isEqualTo("2".repeat(64));
         verify(persistence).findMemberBenefitBinding(tenant,quoteId);

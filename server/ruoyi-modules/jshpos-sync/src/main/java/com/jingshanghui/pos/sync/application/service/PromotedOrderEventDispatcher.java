@@ -49,7 +49,8 @@ public class PromotedOrderEventDispatcher {
             text(payload, "quoteId"), text(payload, "promotionSnapshotId"), text(payload, "orderId"),
             context.storeId(), context.terminalId(), LocalDate.parse(text(payload, "businessDate")),
             number(payload, "packageVersion"), text(payload, "promotionEngineVersion"),
-            text(payload, "quoteFingerprint"), hash(payload, "promotionSnapshotHash"),
+            text(payload, "quoteFingerprint"), text(payload, "settlementFingerprint"),
+            hash(payload, "promotionSnapshotHash"),
             number(payload, "grossAmountMinor"), number(payload, "discountAmountMinor"),
             number(payload, "grossAmountMinor") - number(payload, "discountAmountMinor"),
             event.occurredAt(), array(payload, "lines").stream().map(this::snapshotLine).toList()));

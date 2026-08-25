@@ -10,11 +10,15 @@ import java.util.Map;
 public interface PromotionSnapshotIngestionPort {
     void ingest(SnapshotCommand command);
 
-    /** 命令不包含 tenant_id；租户与操作者只能由可信服务端上下文提供。 */
+    /**
+     * 命令不包含 tenant_id；租户与操作者只能由可信服务端上下文提供。
+     * quoteFingerprint 标识原始规则报价，settlementFingerprint 标识人工优惠后的最终成交结果，二者不得混用。
+     */
     record SnapshotCommand(String sourceEventId, String correlationId, String quoteId, String snapshotId,
                            String orderId, Long storeId, String terminalId, LocalDate businessDate,
                            long packageVersion, String engineVersion, String quoteFingerprint,
-                           String snapshotSha256, long grossAmountMinor, long discountAmountMinor,
+                           String settlementFingerprint, String snapshotSha256,
+                           long grossAmountMinor, long discountAmountMinor,
                            long payableAmountMinor, Instant occurredAt, List<SnapshotLine> lines) {
         public SnapshotCommand { lines = lines == null ? List.of() : List.copyOf(lines); }
     }

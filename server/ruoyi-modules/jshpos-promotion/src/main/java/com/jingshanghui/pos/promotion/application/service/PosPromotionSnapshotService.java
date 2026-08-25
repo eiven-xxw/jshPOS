@@ -66,7 +66,7 @@ public class PosPromotionSnapshotService implements PromotionSnapshotIngestionPo
         LocalDateTime occurredAt = LocalDateTime.ofInstant(command.occurredAt(), ZoneOffset.UTC);
         persistence.insertSnapshot(new SnapshotWrite(principal.tenantId(), command.snapshotId(), command.orderId(),
             command.quoteId(), command.storeId(), command.terminalId(), command.businessDate(), "CNY",
-            command.quoteFingerprint(), command.snapshotSha256(), command.grossAmountMinor(),
+            command.settlementFingerprint(), command.snapshotSha256(), command.grossAmountMinor(),
             command.discountAmountMinor(), command.payableAmountMinor(), principal.userId(),
             command.correlationId(), occurredAt));
         for (SnapshotLine line : ordered(command.lines())) {
@@ -119,7 +119,8 @@ public class PosPromotionSnapshotService implements PromotionSnapshotIngestionPo
             || command.storeId() == null || command.storeId() <= 0 || !ulid(command.terminalId())
             || command.businessDate() == null || command.packageVersion() <= 0 || command.occurredAt() == null
             || !"promotion-engine-1.0.0".equals(command.engineVersion())
-            || !sha(command.quoteFingerprint()) || !sha(command.snapshotSha256())
+            || !sha(command.quoteFingerprint()) || !sha(command.settlementFingerprint())
+            || !sha(command.snapshotSha256())
             || command.lines().isEmpty() || command.lines().size() > 500) {
             throw new ServiceException("PRM-POS-001: POS促销快照上下文无效", 400);
         }
@@ -154,7 +155,7 @@ public class PosPromotionSnapshotService implements PromotionSnapshotIngestionPo
         if (!existing.orderId().equals(command.orderId()) || !existing.quoteId().equals(command.quoteId())
             || !existing.storeId().equals(command.storeId()) || !existing.terminalId().equals(command.terminalId())
             || !existing.businessDate().equals(command.businessDate())
-            || !existing.quoteFingerprint().equals(command.quoteFingerprint())
+            || !existing.quoteFingerprint().equals(command.settlementFingerprint())
             || !existing.snapshotSha256().equals(command.snapshotSha256()) || lines.size() != command.lines().size()) {
             throw new ServiceException("PRM-POS-004: 同一快照标识对应不同内容", 409);
         }

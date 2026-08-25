@@ -36,14 +36,18 @@ class PromotedOrderEventDispatcherTest {
         dispatcher.apply(trusted, event);
 
         ArgumentCaptor<SubmitPromotedCashOrder> captor = ArgumentCaptor.forClass(SubmitPromotedCashOrder.class);
+        ArgumentCaptor<PromotionSnapshotIngestionPort.SnapshotCommand> snapshotCaptor =
+            ArgumentCaptor.forClass(PromotionSnapshotIngestionPort.SnapshotCommand.class);
         verify(orders).submit(captor.capture());
-        verify(snapshots).ingest(org.mockito.ArgumentMatchers.any());
+        verify(snapshots).ingest(snapshotCaptor.capture());
         SubmitPromotedCashOrder command = captor.getValue();
         assertThat(command.storeId()).isEqualTo(1101L);
         assertThat(command.terminalId()).isEqualTo(trusted.terminalId());
         assertThat(command.cashierId()).isEqualTo("101");
         assertThat(command.discountAmountMinor()).isEqualTo(200L);
         assertThat(command.receivableAmountMinor()).isEqualTo(1100L);
+        assertThat(snapshotCaptor.getValue().quoteFingerprint()).isEqualTo("2".repeat(64));
+        assertThat(snapshotCaptor.getValue().settlementFingerprint()).isEqualTo("3".repeat(64));
         assertThat(command.lines()).singleElement().satisfies(line -> {
             assertThat(line.quantity()).isEqualTo("1.000000");
             assertThat(line.sourceAllocations()).containsEntry("RULE_A", 200L);
