@@ -68,6 +68,11 @@ def main() -> None:
     require(platform_login in create_tenant, "each onboarding journey must restore the trusted platform context")
     require(create_tenant.index(platform_login) < create_tenant.index(application_create),
             "trusted platform context must be restored before application creation")
+    inventory_policy = '"/api/v1/inventory/policies"'
+    lot_prepare = "prepare_community_lots("
+    require(inventory_policy in create_tenant, "formal journey must publish an Inventory Owner policy through API")
+    require(create_tenant.index(inventory_policy) < create_tenant.index(lot_prepare),
+            "inventory policy must be effective before community procurement receipt")
 
     flutter_text = flutter.read_text(encoding="utf-8")
     require("HttpServer.bind" not in flutter_text, "formal Flutter journey must not bind an embedded HTTP server")

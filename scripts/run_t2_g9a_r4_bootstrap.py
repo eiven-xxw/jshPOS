@@ -400,6 +400,17 @@ def create_tenant(client: ApiClient, passwords: dict[str, str], plan_id: Any, in
         "templateId": template["templateId"], "configVersionId": config["configVersionId"],
         "targetType": "STORE", "targetId": store_id,
     })
+    # 所有三业态在产生库存事实前都必须经正式 API 发布明确的失败关闭策略。
+    # 不能依赖数据库默认值，更不能为了 E2E 绕过 Inventory Owner 的策略冻结点。
+    inventory_policy_version_id = stable_ulid(f"r4-inventory-policy-{run_tag}-{label}")
+    client.call("POST", "/api/v1/inventory/policies", f"{label}-inventory-policy", body={
+        "policyVersionId": inventory_policy_version_id,
+        "storeId": str(store_id),
+        "warehouseId": WAREHOUSE_ID,
+        "negativeStockMode": "DENY",
+        "effectiveFrom": timestamp(now - timedelta(days=1)),
+        "correlationId": stable_ulid(f"r4-inventory-policy-trace-{run_tag}-{label}"),
+    })
     lot_package_version = 0
     if industry == "COMMUNITY_SUPERMARKET":
         lot_package_version = prepare_community_lots(
@@ -423,6 +434,7 @@ def create_tenant(client: ApiClient, passwords: dict[str, str], plan_id: Any, in
         "storeId": store_id, "userId": user_id, "reviewerUserId": reviewer_user_id,
         "serviceProjectId": service_project_id,
         "manualTemplateId": template["templateId"], "manualConfigVersionId": config["configVersionId"],
+        "inventoryPolicyVersionId": inventory_policy_version_id,
         "skuId": product["skuId"], "unitId": unit["id"],
         "skuCode": product["skuCode"], "barcode": barcode, "catalogVersion": catalog_package["packageVersion"],
         "promotionVersion": promotion_package["packageVersion"], "lotPackageVersion": lot_package_version,
