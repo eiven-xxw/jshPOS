@@ -1,5 +1,12 @@
 <template>
-  <el-drawer :model-value="modelValue" title="货架价签工作台" size="92%" destroy-on-close @update:model-value="emit('update:modelValue', $event)">
+  <el-drawer
+    data-testid="vue-02-surface"
+    :model-value="modelValue"
+    title="货架价签工作台"
+    size="92%"
+    destroy-on-close
+    @update:model-value="emit('update:modelValue', $event)"
+  >
     <el-alert
       class="mb-3"
       type="warning"

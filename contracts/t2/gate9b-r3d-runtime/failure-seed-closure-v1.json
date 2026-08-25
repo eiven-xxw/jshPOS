@@ -5,8 +5,11 @@
     {
       "seedId": "R3D-JNT-P1-001",
       "step": "R3D-R1",
-      "state": "AUTHORIZED_NOT_EXECUTED",
-      "evidence": []
+      "state": "CLOSED_IN_BATCH",
+      "evidence": [
+        "admin-web/src/views/g9a-r3d/__tests__/joint-main-operations.spec.ts",
+        "admin-web/src/views/catalog/components/ShelfLabelPanel.vue"
+      ]
     },
     {
       "seedId": "R3D-JNT-P1-002",
@@ -22,7 +25,7 @@
     }
   ],
   "openP0": 0,
-  "openP1": 3,
+  "openP1": 2,
   "findingState": "OPEN",
   "autoRetryUsed": false,
   "testsSkippedToPass": false
