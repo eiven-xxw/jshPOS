@@ -143,6 +143,31 @@ class PromotionTransactionServiceTest {
     }
 
     @Test
+    void previewsPosSnapshotUsingImmutableQuoteFingerprintWhenHeaderCarriesSettlementFingerprint() {
+        var frozen = service.freeze(freeze());
+        ArgumentCaptor<SnapshotLineWrite> line = ArgumentCaptor.forClass(SnapshotLineWrite.class);
+        verify(persistence).insertSnapshotLine(line.capture());
+        SnapshotLineWrite saved = line.getValue();
+        String settlementFingerprint = "9".repeat(64);
+        when(persistence.findSnapshot(TENANT, SNAPSHOT)).thenReturn(new StoredSnapshot(SNAPSHOT, ORDER, QUOTE,
+            1101L, "TERM-01", LocalDate.of(2026, 8, 17), "CNY", settlementFingerprint,
+            frozen.snapshotHash(), 1000, 100, 900));
+        when(persistence.findQuote(TENANT, QUOTE)).thenReturn(new StoredQuote(QUOTE, 1101L, "TERM-01",
+            LocalDateTime.ofInstant(NOW, ZoneOffset.UTC), "CNY", "c".repeat(64), fingerprint,
+            PromotionEngine.ENGINE_VERSION, 31L, 1000, 100, 900));
+        when(persistence.listSnapshotLines(TENANT, SNAPSHOT)).thenReturn(List.of(new StoredSnapshotLine(saved.lineId(),
+            saved.lineNo(), saved.skuId(), saved.quantity(), saved.grossAmountMinor(), saved.discountAmountMinor(),
+            saved.payableAmountMinor(), saved.sourceAllocationsJson(), saved.sourceAllocationsSha256())));
+        when(persistence.listRefundHistory(TENANT, SNAPSHOT)).thenReturn(List.of());
+
+        var result = service.previewRefund(SNAPSHOT, List.of(new RefundLine(LINE, BigDecimal.ONE)));
+
+        assertThat(result.refundableAmountMinor()).isEqualTo(300);
+        verify(persistence).findQuote(TENANT, QUOTE);
+        verify(persistence, never()).insertRefundAllocation(any());
+    }
+
+    @Test
     void blocksPendingManualOrChangedFingerprintBeforeWritingSnapshot() {
         when(persistence.findPendingManualEvent(TENANT, QUOTE))
             .thenReturn(mock(ManualEvent.class))

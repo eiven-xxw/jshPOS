@@ -138,7 +138,7 @@ public class PromotionTransactionService {
         if (snapshot.grossAmountMinor() != stored.grossAmountMinor()
             || snapshot.discountAmountMinor() != stored.discountAmountMinor()
             || snapshot.payableAmountMinor() != stored.payableAmountMinor()
-            || !canonicalStoredSnapshot(stored, storedLines).sha256().equals(stored.snapshotSha256())) {
+            || !matchesStoredSnapshotHash(principal.tenantId(), stored, storedLines)) {
             throw new ServiceException("PRM-REFUND-013: 成交优惠快照摘要或金额已损坏", 500);
         }
         List<PriorRefund> history = persistence.listRefundHistory(principal.tenantId(), stored.snapshotId()).stream()
@@ -188,7 +188,7 @@ public class PromotionTransactionService {
         if (snapshot.grossAmountMinor() != stored.grossAmountMinor()
             || snapshot.discountAmountMinor() != stored.discountAmountMinor()
             || snapshot.payableAmountMinor() != stored.payableAmountMinor()
-            || !canonicalStoredSnapshot(stored, storedLines).sha256().equals(stored.snapshotSha256())) {
+            || !matchesStoredSnapshotHash(principal.tenantId(), stored, storedLines)) {
             throw new ServiceException("PRM-REFUND-013: 成交优惠快照摘要或金额已损坏", 500);
         }
         List<PriorRefund> history = persistence.listRefundHistory(principal.tenantId(), snapshotId).stream()
@@ -273,7 +273,27 @@ public class PromotionTransactionService {
         return CanonicalJson.from(content);
     }
 
-    private CanonicalJson.Result canonicalStoredSnapshot(StoredSnapshot stored, List<StoredSnapshotLine> lines) {
+    /**
+     * 校验成交快照的不可变内容摘要。
+     *
+     * <p>正式 POS 接入同时冻结“报价指纹”和“结算指纹”。既有快照表为保持 Order Owner
+     * 的结算校验，把结算指纹保存在快照头，而报价指纹仍由不可变报价事实持有。因此退款
+     * 重放先按快照头校验；仅当不匹配时，再按同租户同 quote_id 的不可变报价摘要校验。
+     * 两个来源都不匹配才判定损坏，不能接受客户端补传或当前规则重算。</p>
+     */
+    private boolean matchesStoredSnapshotHash(String tenantId, StoredSnapshot stored,
+                                              List<StoredSnapshotLine> lines) {
+        if (canonicalStoredSnapshot(stored, lines, stored.quoteFingerprint()).sha256()
+            .equals(stored.snapshotSha256())) {
+            return true;
+        }
+        StoredQuote quote = persistence.findQuote(tenantId, stored.quoteId());
+        return quote != null && canonicalStoredSnapshot(stored, lines, quote.resultSha256()).sha256()
+            .equals(stored.snapshotSha256());
+    }
+
+    private CanonicalJson.Result canonicalStoredSnapshot(StoredSnapshot stored, List<StoredSnapshotLine> lines,
+                                                         String quoteFingerprint) {
         for (StoredSnapshotLine line : lines) {
             try {
                 Map<String, Object> sources = objectMapper.readValue(line.sourceAllocationsJson(), new TypeReference<>() { });
@@ -291,7 +311,7 @@ public class PromotionTransactionService {
         content.put("snapshotId", stored.snapshotId()); content.put("orderId", stored.orderId());
         content.put("quoteId", stored.quoteId()); content.put("storeId", stored.storeId());
         content.put("terminalId", stored.terminalId()); content.put("currency", stored.currency());
-        content.put("quoteFingerprint", stored.quoteFingerprint());
+        content.put("quoteFingerprint", quoteFingerprint);
         content.put("grossAmountMinor", stored.grossAmountMinor());
         content.put("discountAmountMinor", stored.discountAmountMinor());
         content.put("payableAmountMinor", stored.payableAmountMinor()); content.put("lines", canonicalLines(views));
