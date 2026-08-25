@@ -1,6 +1,7 @@
 package com.jingshanghui.pos.sync.application.service;
 
 import com.jingshanghui.pos.order.application.model.OrderCommands.RecordCashMovement;
+import com.jingshanghui.pos.order.application.model.OrderCommands.CloseSyncedShift;
 import com.jingshanghui.pos.order.application.model.OrderCommands.RequestNoSaleDrawer;
 import com.jingshanghui.pos.order.application.port.ShiftSubmissionPort;
 import com.jingshanghui.pos.sync.application.model.SyncModels.DeviceContext;
@@ -62,6 +63,19 @@ class ShiftEventDispatcherTest {
         verify(shifts).requestNoSaleDrawer(captor.capture());
         assertThat(captor.getValue().expectedVersion()).isEqualTo(1);
         assertThat(captor.getValue().reasonCode()).isEqualTo("CHANGE_REQUEST");
+    }
+
+    @Test
+    void mapsCloseToTheDedicatedSyncedCommandWithFrozenPriorVersion() {
+        Map<String, Object> payload = basePayload();
+        payload.put("actualCashMinor", 10990);
+
+        dispatcher.apply(trusted, event("shift.closed.v1", payload));
+
+        ArgumentCaptor<CloseSyncedShift> captor = ArgumentCaptor.forClass(CloseSyncedShift.class);
+        verify(shifts).closeSynced(captor.capture());
+        assertThat(captor.getValue().localExpectedVersion()).isEqualTo(1);
+        assertThat(captor.getValue().actualCashMinor()).isEqualTo(10990);
     }
 
     @Test

@@ -1,6 +1,6 @@
 package com.jingshanghui.pos.sync.application.service;
 
-import com.jingshanghui.pos.order.application.model.OrderCommands.CloseShift;
+import com.jingshanghui.pos.order.application.model.OrderCommands.CloseSyncedShift;
 import com.jingshanghui.pos.order.application.model.OrderCommands.OpenSyncedShift;
 import com.jingshanghui.pos.order.application.model.OrderCommands.RecordCashMovement;
 import com.jingshanghui.pos.order.application.model.OrderCommands.RequestNoSaleDrawer;
@@ -55,7 +55,7 @@ public class ShiftEventDispatcher {
             throw new ServiceException("SYNC_PAYLOAD_INVALID: 关班身份或版本无效", 400);
         }
         Object approval = payload.get("approvalId");
-        shifts.close(new CloseShift(event.correlationId(), event.idempotencyKey(), event.aggregateId(),
+        shifts.closeSynced(new CloseSyncedShift(event.correlationId(), event.idempotencyKey(), event.aggregateId(),
             number(payload, "actualCashMinor"), event.aggregateVersion() - 1,
             approval == null ? null : String.valueOf(approval), event.occurredAt()));
     }

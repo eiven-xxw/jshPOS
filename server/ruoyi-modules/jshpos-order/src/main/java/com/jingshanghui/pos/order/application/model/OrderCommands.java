@@ -32,6 +32,16 @@ public final class OrderCommands {
                              Instant occurredAt) {
     }
 
+    /**
+     * POS 同步关班命令；localExpectedVersion 是本地关班事实冻结前的班次版本。
+     * 服务端可能已因已同步成交、退款等权威现金事实推进版本，不能把该本地版本
+     * 直接当作服务端更新条件，但必须验证服务端版本没有落后于它。
+     */
+    public record CloseSyncedShift(String commandId, String idempotencyKey, String shiftId,
+                                   long actualCashMinor, long localExpectedVersion, String approvalId,
+                                   Instant occurredAt) {
+    }
+
     /** 班次非销售现金动作；amountMinor 始终为正，方向由 movementType 决定。 */
     public record RecordCashMovement(String commandId, String idempotencyKey, String movementId,
                                      String shiftId, String movementType, long amountMinor,

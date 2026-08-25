@@ -6,6 +6,7 @@ import com.jingshanghui.pos.foundation.application.security.ScopeAuthorizationSe
 import com.jingshanghui.pos.foundation.domain.CanonicalJson;
 import com.jingshanghui.pos.order.application.model.OrderCommands.ApproveDifference;
 import com.jingshanghui.pos.order.application.model.OrderCommands.CloseShift;
+import com.jingshanghui.pos.order.application.model.OrderCommands.CloseSyncedShift;
 import com.jingshanghui.pos.order.application.model.OrderCommands.OpenShift;
 import com.jingshanghui.pos.order.application.model.OrderCommands.OpenSyncedShift;
 import com.jingshanghui.pos.order.application.model.OrderCommands.RecordCashMovement;
@@ -273,13 +274,33 @@ public class ShiftService implements ShiftSubmissionPort {
     }
 
     @Transactional
-    @Override
     public ShiftView close(CloseShift command) {
+        return closeInternal(new CloseInput(command.commandId(), command.idempotencyKey(), command.shiftId(),
+            command.actualCashMinor(), command.expectedVersion(), command.approvalId(), command.occurredAt(), false));
+    }
+
+    /**
+     * 同步关班保留 POS 冻结的版本身份，同时允许服务端已被成交、退款等权威事实推进。
+     * 锁定行后的服务端版本只能等于或领先本地版本；真正关闭仍使用服务端当前版本，
+     * 普通在线关班的严格等值乐观锁语义不受影响。
+     */
+    @Transactional
+    @Override
+    public ShiftView closeSynced(CloseSyncedShift command) {
+        return closeInternal(new CloseInput(command.commandId(), command.idempotencyKey(), command.shiftId(),
+            command.actualCashMinor(), command.localExpectedVersion(), command.approvalId(), command.occurredAt(),
+            true));
+    }
+
+    private ShiftView closeInternal(CloseInput command) {
         TrustedPrincipal principal = tenantContext.requirePrincipal();
         OrderRules.requireUlid(command.commandId(), "commandId");
         OrderRules.requireUlid(command.shiftId(), "shiftId");
         OrderRules.requireIdempotencyKey(command.idempotencyKey());
         OrderRules.requireMoney(command.actualCashMinor(), "actualCashMinor");
+        if (command.expectedVersion() <= 0) {
+            throw new ServiceException("SHIFT_INPUT_INVALID: 关班版本必须为正数", 400);
+        }
         String requestHash = CanonicalHash.sha256(CanonicalHash.lengthPrefixed(java.util.Arrays.asList(
             command.shiftId(), command.actualCashMinor(), command.expectedVersion(), command.approvalId())));
         ShiftView duplicate = idempotency.find(principal.tenantId(), CLOSE, command.idempotencyKey(), requestHash, ShiftView.class);
@@ -291,10 +312,17 @@ public class ShiftService implements ShiftSubmissionPort {
             throw new ServiceException("RESOURCE_NOT_VISIBLE: 班次不存在或不可见", 404);
         }
         authorizationService.requireStoreAccess(shift.storeId());
-        if (!principal.userId().equals(shift.cashierUserId()) || !"OPEN".equals(shift.status())
-            || command.expectedVersion() != shift.recordVersion()) {
+        if (!principal.userId().equals(shift.cashierUserId()) || !"OPEN".equals(shift.status())) {
             throw new ServiceException("SHIFT_STATE_CONFLICT: 班次状态、操作者或版本冲突", 409);
         }
+        if (command.synchronizedClose()) {
+            if (shift.recordVersion() < command.expectedVersion()) {
+                throw new ServiceException("SHIFT_SYNC_VERSION_AHEAD: POS 关班版本领先服务端", 409);
+            }
+        } else if (command.expectedVersion() != shift.recordVersion()) {
+            throw new ServiceException("SHIFT_STATE_CONFLICT: 班次状态、操作者或版本冲突", 409);
+        }
+        long authoritativeVersion = shift.recordVersion();
         long ledger = totalCashLedger(principal.tenantId(), shift.shiftId());
         long theoretical = safeAdd(shift.openingCashMinor(), ledger);
         long difference = safeSubtract(command.actualCashMinor(), theoretical);
@@ -317,7 +345,7 @@ public class ShiftService implements ShiftSubmissionPort {
         }
         LocalDateTime at = utc(command.occurredAt());
         if (mapper.closeShift(principal.tenantId(), shift.shiftId(), theoretical, command.actualCashMinor(),
-            difference, approval == null ? null : approval.approvalId(), at, command.expectedVersion()) != 1) {
+            difference, approval == null ? null : approval.approvalId(), at, authoritativeVersion) != 1) {
             throw new ServiceException("SHIFT_STATE_CONFLICT: 并发关闭冲突", 409);
         }
         ShiftView result = requireShift(principal.tenantId(), shift.shiftId());
@@ -334,6 +362,11 @@ public class ShiftService implements ShiftSubmissionPort {
             requestHash, shift.shiftId(), result, at);
         return result;
     }
+
+    /** 统一在线/同步关班输入；同步标识只改变版本收敛规则，不改变资金和审批规则。 */
+    private record CloseInput(String commandId, String idempotencyKey, String shiftId,
+                              long actualCashMinor, long expectedVersion, String approvalId,
+                              Instant occurredAt, boolean synchronizedClose) { }
 
     private ShiftView requireShift(String tenantId, String shiftId) {
         ShiftView result = mapper.findShift(tenantId, shiftId);

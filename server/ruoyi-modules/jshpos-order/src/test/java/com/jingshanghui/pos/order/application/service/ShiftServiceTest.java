@@ -5,6 +5,7 @@ import com.jingshanghui.pos.foundation.application.context.TrustedTenantContext;
 import com.jingshanghui.pos.foundation.application.security.ScopeAuthorizationService;
 import com.jingshanghui.pos.order.application.model.OrderCommands.ApproveDifference;
 import com.jingshanghui.pos.order.application.model.OrderCommands.CloseShift;
+import com.jingshanghui.pos.order.application.model.OrderCommands.CloseSyncedShift;
 import com.jingshanghui.pos.order.application.model.OrderCommands.OpenShift;
 import com.jingshanghui.pos.order.application.model.OrderCommands.OpenSyncedShift;
 import com.jingshanghui.pos.order.application.model.OrderCommands.RecordCashMovement;
@@ -178,6 +179,47 @@ class ShiftServiceTest {
         assertThat(result.status()).isEqualTo("CLOSED");
         verify(mapper).closeShift(eq("TENANT_A"), eq(SHIFT), eq(6299L), eq(6300L), eq(1L),
             eq(APPROVAL), any(), eq(1L));
+    }
+
+    @Test
+    void closesSyncedShiftAgainstAuthoritativeServerVersionWhenServerFactsAdvanced() {
+        when(context.requirePrincipal()).thenReturn(principal(101L));
+        when(mapper.lockShift("TENANT_A", SHIFT)).thenReturn(shift("OPEN", 4, 10990, null, null));
+        when(mapper.sumCashLedger("TENANT_A", SHIFT)).thenReturn(5990L);
+        when(differencePolicy.approvalThresholdMinor(1101L)).thenReturn(0L);
+        when(mapper.closeShift(eq("TENANT_A"), eq(SHIFT), eq(10990L), eq(10990L), eq(0L),
+            eq(null), any(), eq(4L))).thenReturn(1);
+        when(mapper.findShift("TENANT_A", SHIFT)).thenReturn(shift("CLOSED", 5, 10990, 10990L, 0L));
+
+        ShiftView result = service.closeSynced(new CloseSyncedShift(
+            "01K2A000000000000000000058", "sync-close-shift-001", SHIFT, 10990, 2, null, NOW));
+
+        assertThat(result.status()).isEqualTo("CLOSED");
+        assertThat(result.recordVersion()).isEqualTo(5);
+        verify(mapper).closeShift(eq("TENANT_A"), eq(SHIFT), eq(10990L), eq(10990L), eq(0L),
+            eq(null), any(), eq(4L));
+    }
+
+    @Test
+    void keepsOnlineCloseOnStrictVersionEquality() {
+        when(context.requirePrincipal()).thenReturn(principal(101L));
+        when(mapper.lockShift("TENANT_A", SHIFT)).thenReturn(shift("OPEN", 2, 5000, null, null));
+
+        assertThatThrownBy(() -> service.close(new CloseShift("01K2A000000000000000000060",
+            "online-close-shift-01", SHIFT, 5000, 1, null, NOW)))
+            .isInstanceOf(ServiceException.class).hasMessageContaining("SHIFT_STATE_CONFLICT");
+        verify(mapper, never()).closeShift(any(), any(), anyLong(), anyLong(), anyLong(), any(), any(), anyLong());
+    }
+
+    @Test
+    void rejectsSyncedCloseWhenServerShiftVersionIsBehindTheFrozenLocalVersion() {
+        when(context.requirePrincipal()).thenReturn(principal(101L));
+        when(mapper.lockShift("TENANT_A", SHIFT)).thenReturn(shift("OPEN", 2, 5000, null, null));
+
+        assertThatThrownBy(() -> service.closeSynced(new CloseSyncedShift(
+            "01K2A000000000000000000059", "sync-close-shift-002", SHIFT, 5000, 3, null, NOW)))
+            .isInstanceOf(ServiceException.class).hasMessageContaining("SHIFT_SYNC_VERSION_AHEAD");
+        verify(mapper, never()).closeShift(any(), any(), anyLong(), anyLong(), anyLong(), any(), any(), anyLong());
     }
 
     @Test
