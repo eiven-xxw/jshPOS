@@ -50,6 +50,7 @@ class _PosSessionShellState extends State<PosSessionShell> {
   final _loginController = TextEditingController();
   final _secretController = TextEditingController();
   final _secretFocus = FocusNode();
+  final _shiftOperationIdentities = ShiftOperationIdentityRegistry();
 
   PosSessionState get _state => widget.sessionService.state;
   IndustryExperienceProfile get _experience =>
@@ -86,6 +87,9 @@ class _PosSessionShellState extends State<PosSessionShell> {
 
   Future<void> _logout() async {
     await widget.sessionService.logout();
+    if (widget.sessionService.state.employee == null) {
+      _shiftOperationIdentities.clear();
+    }
     _loginController.clear();
     _secretController.clear();
     if (mounted) setState(() {});
@@ -135,6 +139,7 @@ class _PosSessionShellState extends State<PosSessionShell> {
         idempotencyKey: 'close:${shift.shiftId}:$actualCash',
       );
       widget.sessionService.acceptClosedShift(shift.shiftId);
+      _shiftOperationIdentities.clear();
       if (mounted) setState(() {});
     } on PosSessionFailure catch (error) {
       _showFailure(error);
@@ -441,6 +446,7 @@ class _PosSessionShellState extends State<PosSessionShell> {
                           allowDrawerRequest: _state.hasPermission(
                             PosPermission.drawerNoSale,
                           ),
+                          operationIdentityRegistry: _shiftOperationIdentities,
                         ),
                       ),
                     ),

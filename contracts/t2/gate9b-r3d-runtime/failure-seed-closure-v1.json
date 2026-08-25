@@ -20,12 +20,16 @@
     {
       "seedId": "R3D-JNT-P1-003",
       "step": "R3D-R3",
-      "state": "AUTHORIZED_NOT_EXECUTED",
-      "evidence": []
+      "state": "CLOSED_IN_BATCH",
+      "evidence": [
+        "pos-flutter/test/gate9b/g9a_r3d_trusted_session_journey_test.dart",
+        "pos-flutter/lib/features/session/presentation/pos_session_shell.dart",
+        "pos-flutter/lib/features/shift/presentation/pos_cash_management_page.dart"
+      ]
     }
   ],
   "openP0": 0,
-  "openP1": 1,
+  "openP1": 0,
   "findingState": "OPEN",
   "autoRetryUsed": false,
   "testsSkippedToPass": false

@@ -4,6 +4,40 @@ import '../../session/domain/pos_session_models.dart';
 import '../application/pos_shift_application_service.dart';
 import '../domain/shift_models.dart';
 
+/// 已认证 POS 会话内的班次操作身份登记表。
+///
+/// 页面退出或重建不得改变失败命令的幂等身份；完成后释放，安全退出时整体清理。
+final class ShiftOperationIdentityRegistry {
+  final Map<String, String> _keys = <String, String>{};
+  int _sequence = 0;
+
+  String resolve({
+    required String shiftId,
+    required String businessDate,
+    required String operation,
+  }) {
+    final scope = _scope(shiftId, businessDate, operation);
+    return _keys.putIfAbsent(
+      scope,
+      () => 'shift:$shiftId:$businessDate:${++_sequence}',
+    );
+  }
+
+  void complete({
+    required String shiftId,
+    required String businessDate,
+    required String operation,
+  }) => _keys.remove(_scope(shiftId, businessDate, operation));
+
+  void clear() {
+    _keys.clear();
+    _sequence = 0;
+  }
+
+  String _scope(String shiftId, String businessDate, String operation) =>
+      '$shiftId\u001f$businessDate\u001f$operation';
+}
+
 /// 班次现金管理页面只发送具名应用命令，不直接访问 SQLite 或设备通道。
 final class PosCashManagementPage extends StatefulWidget {
   const PosCashManagementPage({
@@ -12,6 +46,7 @@ final class PosCashManagementPage extends StatefulWidget {
     required this.service,
     required this.allowCashMovement,
     required this.allowDrawerRequest,
+    this.operationIdentityRegistry,
     super.key,
   });
 
@@ -20,6 +55,9 @@ final class PosCashManagementPage extends StatefulWidget {
   final PosShiftApplicationService service;
   final bool allowCashMovement;
   final bool allowDrawerRequest;
+
+  /// 会话壳注入时可跨页面保留原命令；独立页面测试默认使用本页私有登记表。
+  final ShiftOperationIdentityRegistry? operationIdentityRegistry;
 
   @override
   State<PosCashManagementPage> createState() => _PosCashManagementPageState();
@@ -30,8 +68,8 @@ class _PosCashManagementPageState extends State<PosCashManagementPage> {
   final _reason = TextEditingController();
   ShiftCashMovementType _type = ShiftCashMovementType.cashIn;
   bool _busy = false;
-  final Map<String, String> _operationKeys = <String, String>{};
-  int _keySequence = 0;
+  late final ShiftOperationIdentityRegistry _operationIdentities =
+      widget.operationIdentityRegistry ?? ShiftOperationIdentityRegistry();
 
   @override
   void dispose() {
@@ -99,7 +137,11 @@ class _PosCashManagementPageState extends State<PosCashManagementPage> {
     setState(() => _busy = true);
     try {
       final result = await command();
-      _operationKeys.remove(operation);
+      _operationIdentities.complete(
+        shiftId: widget.shiftId,
+        businessDate: widget.businessDate,
+        operation: operation,
+      );
       _amount.clear();
       _reason.clear();
       _message(
@@ -122,9 +164,10 @@ class _PosCashManagementPageState extends State<PosCashManagementPage> {
         .showSnackBar(SnackBar(content: Text(message)));
   }
 
-  String _keyFor(String operation) => _operationKeys.putIfAbsent(
-    operation,
-    () => 'r3c:${widget.shiftId}:${++_keySequence}',
+  String _keyFor(String operation) => _operationIdentities.resolve(
+    shiftId: widget.shiftId,
+    businessDate: widget.businessDate,
+    operation: operation,
   );
 
   Future<bool> _confirm({
