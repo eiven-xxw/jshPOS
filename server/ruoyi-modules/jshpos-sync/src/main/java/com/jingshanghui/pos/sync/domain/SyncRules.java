@@ -24,7 +24,7 @@ public final class SyncRules {
         "cash.received.v1", "order.completed.v1", "order.submitted.v2", "order.completed.v2",
         "receipt.document-frozen.v1", "receipt.reprint-requested.v1",
         "order.cancelled.v1", "order.reversal-routed.v1",
-        "tender.plan-frozen.v1"
+        "tender.plan-frozen.v1", "inventory.lot-sale.requested.v1"
     );
 
     private SyncRules() {

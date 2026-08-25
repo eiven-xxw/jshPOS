@@ -13,7 +13,8 @@
         <dependency><groupId>com.jingshanghui.pos</groupId><artifactId>jshpos-catalog</artifactId></dependency>
         <dependency><groupId>com.jingshanghui.pos</groupId><artifactId>jshpos-order</artifactId></dependency>
         <dependency><groupId>com.jingshanghui.pos</groupId><artifactId>jshpos-payment</artifactId></dependency>
-        <dependency><groupId>com.jingshanghui.pos</groupId><artifactId>jshpos-sync</artifactId><scope>test</scope></dependency>
+        <!-- POS 批次成交通过 Sync 定义的窄端口进入 Inventory Owner；Sync 不反向依赖 Inventory。 -->
+        <dependency><groupId>com.jingshanghui.pos</groupId><artifactId>jshpos-sync</artifactId></dependency>
         <dependency><groupId>org.dromara</groupId><artifactId>ruoyi-common-core</artifactId></dependency>
         <dependency><groupId>org.dromara</groupId><artifactId>ruoyi-common-mybatis</artifactId></dependency>
         <dependency><groupId>org.dromara</groupId><artifactId>ruoyi-common-satoken</artifactId></dependency>

@@ -87,7 +87,22 @@ def main() -> None:
     require("PosLocalDatabase.openPath" not in flutter_text, "test must use production assembler, not direct database writes")
     require("FilePosBusinessRuntimeAssembler" in flutter_text, "file SQLite production assembler is required")
     require("OpenMode.readOnly" in flutter_text, "SQLite evidence must be read-only after the journey")
+    require("G9A_R4_JOURNEY_EVIDENCE" in flutter_text,
+            "each completed formal journey must emit non-secret diagnostic evidence")
+    require("OBSERVED_PENDING_VALIDATION" in flutter_text,
+            "partial formal evidence must survive a later aggregate assertion failure")
     require("T2-PAY-002" not in flutter_text, "blocked Provider capability must not be implemented in Flutter test")
+
+    sync_rules = (ROOT / "server/ruoyi-modules/jshpos-sync/src/main/java/com/jingshanghui/pos/sync/domain/SyncRules.java").read_text(encoding="utf-8")
+    sync_processor = (ROOT / "server/ruoyi-modules/jshpos-sync/src/main/java/com/jingshanghui/pos/sync/application/service/SyncFactProcessor.java").read_text(encoding="utf-8")
+    lot_adapter = ROOT / "server/ruoyi-modules/jshpos-inventory/src/main/java/com/jingshanghui/pos/inventory/infrastructure/integration/PosLotSaleCommandAdapter.java"
+    lot_event = "inventory.lot-sale.requested.v1"
+    require(lot_event in sync_rules and lot_event in sync_processor,
+            "formal community lot-sale Outbox event must be accepted and dispatched by Sync")
+    require(lot_adapter.is_file(), "formal lot sale must enter Inventory Owner through a narrow adapter")
+    lot_adapter_text = lot_adapter.read_text(encoding="utf-8")
+    require("InventoryLedgerService" in lot_adapter_text and "AuthoritativeLotMovementPort" in lot_adapter_text,
+            "lot sale adapter must reuse authoritative inventory ledger and server FEFO ports")
 
     # MyBatis 的 int/long/boolean 别名对应包装类型；record 构造器的 primitive 参数必须使用下划线别名。
     # 正式 MySQL 旅程会真实回读 Owner record，静态阻断可避免单元 Mock 掩盖构造器类型不匹配。

@@ -53,16 +53,24 @@ void main() {
         final secretJourney = secretJourneys.singleWhere(
           (item) => item['journeyId'] == publicJourney['journeyId'],
         );
-        results.add(
-          await _runJourney(
-            baseUri: baseUri,
-            runId: runId,
-            journey: publicJourney,
-            secret: secretJourney,
-            sqliteRoot: sqliteRoot,
-            signingKey: signingKey,
-            sequence: index + 1,
-          ),
+        final result = await _runJourney(
+          baseUri: baseUri,
+          runId: runId,
+          journey: publicJourney,
+          secret: secretJourney,
+          sqliteRoot: sqliteRoot,
+          signingKey: signingKey,
+          sequence: index + 1,
+        );
+        results.add(result);
+        // 每条旅程完成即落盘非敏感诊断；后续联合断言失败时不得丢失已观察事实。
+        stdout.writeln('G9A_R4_JOURNEY_EVIDENCE=${jsonEncode(result)}');
+        _writeEvidence(
+          output: output,
+          baseUri: baseUri,
+          runId: runId,
+          status: 'OBSERVED_PENDING_VALIDATION',
+          journeys: results,
         );
       }
 
@@ -75,28 +83,12 @@ void main() {
       expect(results.every((item) => item['deadLetters'] == 0), isTrue);
       expect(results.every((item) => item['orderCount'] == 1), isTrue);
 
-      final evidence = <String, Object?>{
-        'schemaVersion': '1.0',
-        'gate': 'G9A-R4',
-        'phase': 'R4-R3',
-        'runId': runId,
-        'status': 'PASS',
-        'classification': 'FORMAL_JAR_FLUTTER_FILE_SQLITE',
-        'server': <String, Object?>{
-          'scheme': baseUri.scheme,
-          'host': baseUri.host,
-          'port': baseUri.port,
-          'embeddedHttpServerCount': 0,
-        },
-        'journeys': results,
-        'journeyCount': results.length,
-        'directDatabaseBusinessWrites': 0,
-        'providerNetworkCalls': 0,
-        'realDeviceOrPeripheralCommands': 0,
-      };
-      output.parent.createSync(recursive: true);
-      output.writeAsStringSync(
-        '${const JsonEncoder.withIndent('  ').convert(evidence)}\n',
+      _writeEvidence(
+        output: output,
+        baseUri: baseUri,
+        runId: runId,
+        status: 'PASS',
+        journeys: results,
       );
     },
     timeout: const Timeout(Duration(minutes: 8)),
@@ -230,6 +222,30 @@ Future<Map<String, Object?>> _runJourney({
     final unsettled = statuses.entries
         .where((entry) => entry.key != 'ACKED')
         .fold<int>(0, (sum, entry) => sum + entry.value);
+    final unsettledEvents = database
+        .select('''SELECT event_type,status,COALESCE(last_ack_status,'') AS last_ack_status,
+                    COALESCE(last_error_code,'') AS last_error_code
+             FROM local_outbox WHERE status<>'ACKED' ORDER BY device_sequence''')
+        .map(
+          (row) => <String, Object?>{
+            'eventType': row['event_type']! as String,
+            'status': row['status']! as String,
+            'lastAckStatus': row['last_ack_status']! as String,
+            'lastErrorCode': row['last_error_code']! as String,
+          },
+        )
+        .toList(growable: false);
+    final deadLetterCodes = database
+        .select('''SELECT failure_code,status,COUNT(*) AS count FROM local_sync_dead_letter
+             GROUP BY failure_code,status ORDER BY failure_code,status''')
+        .map(
+          (row) => <String, Object?>{
+            'failureCode': row['failure_code']! as String,
+            'status': row['status']! as String,
+            'count': row['count']! as int,
+          },
+        )
+        .toList(growable: false);
     return <String, Object?>{
       'journeyId': journeyId,
       'industry': _text(journey, 'industry'),
@@ -255,12 +271,46 @@ Future<Map<String, Object?>> _runJourney({
       'outboxCount': _count(database, 'local_outbox'),
       'outboxStatuses': statuses,
       'outboxUnsettled': unsettled,
+      'unsettledEvents': unsettledEvents,
       'deadLetters': _count(database, 'local_sync_dead_letter'),
+      'deadLetterCodes': deadLetterCodes,
       'eventTypes': eventTypes,
     };
   } finally {
     database.close();
   }
+}
+
+void _writeEvidence({
+  required File output,
+  required Uri baseUri,
+  required String runId,
+  required String status,
+  required List<Map<String, Object?>> journeys,
+}) {
+  final evidence = <String, Object?>{
+    'schemaVersion': '1.0',
+    'gate': 'G9A-R4',
+    'phase': 'R4-R3',
+    'runId': runId,
+    'status': status,
+    'classification': 'FORMAL_JAR_FLUTTER_FILE_SQLITE',
+    'server': <String, Object?>{
+      'scheme': baseUri.scheme,
+      'host': baseUri.host,
+      'port': baseUri.port,
+      'embeddedHttpServerCount': 0,
+    },
+    'journeys': journeys,
+    'journeyCount': journeys.length,
+    'directDatabaseBusinessWrites': 0,
+    'providerNetworkCalls': 0,
+    'realDeviceOrPeripheralCommands': 0,
+  };
+  output.parent.createSync(recursive: true);
+  output.writeAsStringSync(
+    '${const JsonEncoder.withIndent('  ').convert(evidence)}\n',
+  );
 }
 
 final class _ControlledMaterialProvider implements PosTerminalMaterialProvider {
