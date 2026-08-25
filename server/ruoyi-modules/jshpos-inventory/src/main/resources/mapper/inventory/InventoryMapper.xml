@@ -9,12 +9,12 @@
             <arg column="skuId" javaType="java.lang.Long"/><arg column="stockStatus" javaType="java.lang.String"/>
             <arg column="onHandQuantity" javaType="java.math.BigDecimal"/><arg column="reservedQuantity" javaType="java.math.BigDecimal"/>
             <arg column="frozenQuantity" javaType="java.math.BigDecimal"/><arg column="safetyStockQuantity" javaType="java.math.BigDecimal"/>
-            <arg column="lastLedgerSequence" javaType="long"/><arg column="recordVersion" javaType="long"/>
+            <arg column="lastLedgerSequence" javaType="_long"/><arg column="recordVersion" javaType="_long"/>
         </constructor>
     </resultMap>
     <resultMap id="ledgerView" type="com.jingshanghui.pos.inventory.application.model.InventoryViews$LedgerView">
         <constructor>
-            <arg column="ledgerId" javaType="java.lang.String"/><arg column="ledgerSequence" javaType="long"/>
+            <arg column="ledgerId" javaType="java.lang.String"/><arg column="ledgerSequence" javaType="_long"/>
             <arg column="dimensionKey" javaType="java.lang.String"/><arg column="warehouseId" javaType="java.lang.String"/>
             <arg column="skuId" javaType="java.lang.Long"/><arg column="movementType" javaType="java.lang.String"/>
             <arg column="quantityBefore" javaType="java.math.BigDecimal"/><arg column="quantityDelta" javaType="java.math.BigDecimal"/>

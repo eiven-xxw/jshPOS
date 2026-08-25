@@ -77,6 +77,17 @@ def main() -> None:
     require("OpenMode.readOnly" in flutter_text, "SQLite evidence must be read-only after the journey")
     require("T2-PAY-002" not in flutter_text, "blocked Provider capability must not be implemented in Flutter test")
 
+    # MyBatis 的 int/long/boolean 别名对应包装类型；record 构造器的 primitive 参数必须使用下划线别名。
+    # 正式 MySQL 旅程会真实回读 Owner record，静态阻断可避免单元 Mock 掩盖构造器类型不匹配。
+    wrapper_alias = re.compile(r'javaType="(?:int|long|boolean|double|float|short|byte|char)"')
+    wrapper_alias_hits = []
+    mapper_root = ROOT / "server/ruoyi-modules"
+    for mapper in sorted(mapper_root.glob("**/src/main/resources/mapper/**/*.xml")):
+        if wrapper_alias.search(mapper.read_text(encoding="utf-8")):
+            wrapper_alias_hits.append(mapper.relative_to(ROOT).as_posix())
+    require(not wrapper_alias_hits,
+            f"MyBatis record primitive fields must use underscore aliases: {wrapper_alias_hits}")
+
     changed = subprocess.check_output(
         ["git", "diff", "--name-only", f"{BASELINE}...HEAD"], cwd=ROOT, text=True,
     ).splitlines()
@@ -100,6 +111,7 @@ def main() -> None:
         "providerNetworkCalls": 0,
         "realDeviceOrPeripheralCommands": 0,
         "externalExecution": 0,
+        "wrapperPrimitiveAliasViolations": 0,
     }
     target = args.output if args.output.is_absolute() else ROOT / args.output
     target.parent.mkdir(parents=True, exist_ok=True)

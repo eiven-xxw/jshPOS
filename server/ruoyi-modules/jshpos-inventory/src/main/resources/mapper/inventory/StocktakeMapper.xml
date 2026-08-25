@@ -6,12 +6,12 @@
         <constructor>
             <arg column="stocktakeId" javaType="java.lang.String"/><arg column="storeId" javaType="java.lang.Long"/>
             <arg column="warehouseId" javaType="java.lang.String"/><arg column="status" javaType="java.lang.String"/>
-            <arg column="blindCount" javaType="boolean"/><arg column="recountThreshold" javaType="java.math.BigDecimal"/>
+            <arg column="blindCount" javaType="_boolean"/><arg column="recountThreshold" javaType="java.math.BigDecimal"/>
             <arg column="adjustmentEventId" javaType="java.lang.String"/><arg column="correlationId" javaType="java.lang.String"/>
             <arg column="creatorUserId" javaType="java.lang.Long"/><arg column="reviewerUserId" javaType="java.lang.Long"/>
             <arg column="approverUserId" javaType="java.lang.Long"/><arg column="snapshotAt" javaType="java.time.LocalDateTime"/>
             <arg column="cutoffAt" javaType="java.time.LocalDateTime"/><arg column="postedAt" javaType="java.time.LocalDateTime"/>
-            <arg column="version" javaType="long"/>
+            <arg column="version" javaType="_long"/>
         </constructor>
     </resultMap>
     <resultMap id="line" type="com.jingshanghui.pos.inventory.application.model.StocktakeViews$Line">
@@ -19,10 +19,10 @@
             <arg column="lineId" javaType="java.lang.String"/><arg column="stocktakeId" javaType="java.lang.String"/>
             <arg column="dimensionKey" javaType="java.lang.String"/><arg column="warehouseId" javaType="java.lang.String"/>
             <arg column="skuId" javaType="java.lang.Long"/><arg column="baseUnitId" javaType="java.lang.Long"/>
-            <arg column="snapshotQuantity" javaType="java.math.BigDecimal"/><arg column="snapshotLedgerSequence" javaType="long"/>
+            <arg column="snapshotQuantity" javaType="java.math.BigDecimal"/><arg column="snapshotLedgerSequence" javaType="_long"/>
             <arg column="countedQuantity" javaType="java.math.BigDecimal"/><arg column="adjustedBookQuantity" javaType="java.math.BigDecimal"/>
-            <arg column="cutoffLedgerSequence" javaType="long"/><arg column="varianceQuantity" javaType="java.math.BigDecimal"/>
-            <arg column="countRevision" javaType="int"/><arg column="lastCounterUserId" javaType="java.lang.Long"/>
+            <arg column="cutoffLedgerSequence" javaType="_long"/><arg column="varianceQuantity" javaType="java.math.BigDecimal"/>
+            <arg column="countRevision" javaType="_int"/><arg column="lastCounterUserId" javaType="java.lang.Long"/>
         </constructor>
     </resultMap>
 

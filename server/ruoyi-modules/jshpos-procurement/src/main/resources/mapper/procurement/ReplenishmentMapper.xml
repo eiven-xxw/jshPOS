@@ -4,27 +4,27 @@
 
     <resultMap id="policy" type="com.jingshanghui.pos.procurement.application.model.ReplenishmentModels$PolicyView">
         <constructor><arg column="policyVersionId" javaType="java.lang.String"/><arg column="storeId" javaType="java.lang.Long"/>
-            <arg column="warehouseId" javaType="java.lang.String"/><arg column="versionNo" javaType="int"/>
+            <arg column="warehouseId" javaType="java.lang.String"/><arg column="versionNo" javaType="_int"/>
             <arg column="state" javaType="java.lang.String"/><arg column="effectiveFrom" javaType="java.time.LocalDateTime"/>
-            <arg column="contentSha256" javaType="java.lang.String"/><arg column="version" javaType="long"/></constructor>
+            <arg column="contentSha256" javaType="java.lang.String"/><arg column="version" javaType="_long"/></constructor>
     </resultMap>
     <resultMap id="policyItem" type="com.jingshanghui.pos.procurement.application.model.ReplenishmentModels$PolicyItemView">
         <constructor><arg column="policyItemId" javaType="java.lang.String"/><arg column="policyVersionId" javaType="java.lang.String"/>
             <arg column="skuId" javaType="java.lang.Long"/><arg column="skuCode" javaType="java.lang.String"/>
             <arg column="baseUnitId" javaType="java.lang.Long"/><arg column="purchaseUnitId" javaType="java.lang.Long"/>
-            <arg column="conversionNumerator" javaType="long"/><arg column="conversionDenominator" javaType="long"/>
+            <arg column="conversionNumerator" javaType="_long"/><arg column="conversionDenominator" javaType="_long"/>
             <arg column="supplierId" javaType="java.lang.String"/><arg column="minimumBaseQuantity" javaType="java.math.BigDecimal"/>
             <arg column="maximumBaseQuantity" javaType="java.math.BigDecimal"/><arg column="minimumOrderQuantity" javaType="java.math.BigDecimal"/>
-            <arg column="orderMultiple" javaType="java.math.BigDecimal"/><arg column="includeConfirmedInTransit" javaType="boolean"/>
-            <arg column="unitPriceMinor" javaType="long"/><arg column="taxRateBps" javaType="int"/>
+            <arg column="orderMultiple" javaType="java.math.BigDecimal"/><arg column="includeConfirmedInTransit" javaType="_boolean"/>
+            <arg column="unitPriceMinor" javaType="_long"/><arg column="taxRateBps" javaType="_int"/>
             <arg column="itemSha256" javaType="java.lang.String"/></constructor>
     </resultMap>
     <resultMap id="run" type="com.jingshanghui.pos.procurement.application.model.ReplenishmentModels$GenerationRunView">
         <constructor><arg column="generationRunId" javaType="java.lang.String"/><arg column="policyVersionId" javaType="java.lang.String"/>
             <arg column="storeId" javaType="java.lang.Long"/><arg column="warehouseId" javaType="java.lang.String"/>
             <arg column="calculationAt" javaType="java.time.LocalDateTime"/><arg column="requestSha256" javaType="java.lang.String"/>
-            <arg column="state" javaType="java.lang.String"/><arg column="suggestionCount" javaType="int"/>
-            <arg column="version" javaType="long"/></constructor>
+            <arg column="state" javaType="java.lang.String"/><arg column="suggestionCount" javaType="_int"/>
+            <arg column="version" javaType="_long"/></constructor>
     </resultMap>
     <resultMap id="suggestion" type="com.jingshanghui.pos.procurement.application.model.ReplenishmentModels$SuggestionView">
         <constructor><arg column="suggestionId" javaType="java.lang.String"/><arg column="generationRunId" javaType="java.lang.String"/>
@@ -39,13 +39,13 @@
             <arg column="minimumBaseQuantity" javaType="java.math.BigDecimal"/><arg column="maximumBaseQuantity" javaType="java.math.BigDecimal"/>
             <arg column="requiredBaseQuantity" javaType="java.math.BigDecimal"/><arg column="suggestedPurchaseQuantity" javaType="java.math.BigDecimal"/>
             <arg column="minimumOrderQuantity" javaType="java.math.BigDecimal"/><arg column="orderMultiple" javaType="java.math.BigDecimal"/>
-            <arg column="conversionNumerator" javaType="long"/><arg column="conversionDenominator" javaType="long"/>
-            <arg column="inputLedgerSequence" javaType="long"/><arg column="inputBalanceVersion" javaType="long"/>
+            <arg column="conversionNumerator" javaType="_long"/><arg column="conversionDenominator" javaType="_long"/>
+            <arg column="inputLedgerSequence" javaType="_long"/><arg column="inputBalanceVersion" javaType="_long"/>
             <arg column="reasonCode" javaType="java.lang.String"/><arg column="state" javaType="java.lang.String"/>
             <arg column="contentSha256" javaType="java.lang.String"/><arg column="purchaseOrderId" javaType="java.lang.String"/>
             <arg column="failureCode" javaType="java.lang.String"/><arg column="reviewerUserId" javaType="java.lang.Long"/>
             <arg column="approverUserId" javaType="java.lang.Long"/><arg column="createdAt" javaType="java.time.LocalDateTime"/>
-            <arg column="version" javaType="long"/></constructor>
+            <arg column="version" javaType="_long"/></constructor>
     </resultMap>
 
     <sql id="policyColumns">policy_version_id AS policyVersionId,store_id AS storeId,warehouse_id AS warehouseId,

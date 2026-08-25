@@ -8,9 +8,9 @@
             <arg column="baseUnitId" javaType="java.lang.Long"/><arg column="supplierLotCode" javaType="java.lang.String"/>
             <arg column="internalLotCode" javaType="java.lang.String"/><arg column="productionDate" javaType="java.time.LocalDate"/>
             <arg column="receivedDate" javaType="java.time.LocalDate"/><arg column="expiryDate" javaType="java.time.LocalDate"/>
-            <arg column="policyVersionId" javaType="java.lang.String"/><arg column="nearExpiryDays" javaType="int"/>
+            <arg column="policyVersionId" javaType="java.lang.String"/><arg column="nearExpiryDays" javaType="_int"/>
             <arg column="onHandQuantity" javaType="java.math.BigDecimal"/>
-            <arg column="lastLedgerSequence" javaType="long"/><arg column="expiryStatus" javaType="java.lang.String"/>
+            <arg column="lastLedgerSequence" javaType="_long"/><arg column="expiryStatus" javaType="java.lang.String"/>
             <arg column="updatedAt" javaType="java.time.LocalDateTime"/>
         </constructor>
     </resultMap>
@@ -214,11 +214,11 @@
     </update>
     <resultMap id="lotPackageRelease" type="com.jingshanghui.pos.inventory.application.model.LotInventoryModels$LotPackageRelease">
         <constructor>
-            <arg column="releaseId" javaType="java.lang.String"/><arg column="packageVersion" javaType="long"/>
-            <arg column="previousVersion" javaType="long"/><arg column="sourceSha256" javaType="java.lang.String"/>
+            <arg column="releaseId" javaType="java.lang.String"/><arg column="packageVersion" javaType="_long"/>
+            <arg column="previousVersion" javaType="_long"/><arg column="sourceSha256" javaType="java.lang.String"/>
             <arg column="payloadBytes" javaType="_byte[]"/><arg column="payloadSha256" javaType="java.lang.String"/>
             <arg column="signingKeyId" javaType="java.lang.String"/><arg column="signatureBytes" javaType="_byte[]"/>
-            <arg column="recordCount" javaType="int"/><arg column="generatedAt" javaType="java.time.LocalDateTime"/>
+            <arg column="recordCount" javaType="_int"/><arg column="generatedAt" javaType="java.time.LocalDateTime"/>
         </constructor>
     </resultMap>
     <sql id="lotPackageColumns">

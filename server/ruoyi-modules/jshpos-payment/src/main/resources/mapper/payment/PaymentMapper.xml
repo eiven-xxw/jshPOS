@@ -10,10 +10,10 @@
             <arg column="storeId" javaType="java.lang.Long"/>
             <arg column="terminalId" javaType="java.lang.String"/>
             <arg column="status" javaType="java.lang.String"/>
-            <arg column="amountMinor" javaType="long"/>
+            <arg column="amountMinor" javaType="_long"/>
             <arg column="currency" javaType="java.lang.String"/>
-            <arg column="succeededRefundMinor" javaType="long"/>
-            <arg column="recordVersion" javaType="long"/>
+            <arg column="succeededRefundMinor" javaType="_long"/>
+            <arg column="recordVersion" javaType="_long"/>
             <arg column="occurredAt" javaType="java.time.LocalDateTime"/>
         </constructor>
     </resultMap>
@@ -22,26 +22,26 @@
             <arg column="attemptId" javaType="java.lang.String"/><arg column="paymentId" javaType="java.lang.String"/>
             <arg column="providerCode" javaType="java.lang.String"/><arg column="providerRequestNo" javaType="java.lang.String"/>
             <arg column="providerTransactionNo" javaType="java.lang.String"/><arg column="status" javaType="java.lang.String"/>
-            <arg column="amountMinor" javaType="long"/><arg column="currency" javaType="java.lang.String"/>
-            <arg column="recordVersion" javaType="long"/>
+            <arg column="amountMinor" javaType="_long"/><arg column="currency" javaType="java.lang.String"/>
+            <arg column="recordVersion" javaType="_long"/>
         </constructor>
     </resultMap>
     <resultMap id="refundView" type="com.jingshanghui.pos.payment.application.model.PaymentViews$RefundView">
         <constructor>
             <arg column="refundId" javaType="java.lang.String"/><arg column="paymentId" javaType="java.lang.String"/>
             <arg column="orderId" javaType="java.lang.String"/><arg column="storeId" javaType="java.lang.Long"/>
-            <arg column="status" javaType="java.lang.String"/><arg column="amountMinor" javaType="long"/>
+            <arg column="status" javaType="java.lang.String"/><arg column="amountMinor" javaType="_long"/>
             <arg column="currency" javaType="java.lang.String"/><arg column="requesterUserId" javaType="java.lang.Long"/>
             <arg column="approverUserId" javaType="java.lang.Long"/><arg column="providerCode" javaType="java.lang.String"/>
             <arg column="providerRequestNo" javaType="java.lang.String"/><arg column="providerRefundNo" javaType="java.lang.String"/>
-            <arg column="recordVersion" javaType="long"/>
+            <arg column="recordVersion" javaType="_long"/>
         </constructor>
     </resultMap>
     <resultMap id="internalFact" type="com.jingshanghui.pos.payment.application.model.PaymentViews$InternalFactView">
         <constructor>
             <arg column="reference" javaType="java.lang.String"/><arg column="aggregateId" javaType="java.lang.String"/>
             <arg column="businessType" javaType="java.lang.String"/><arg column="status" javaType="java.lang.String"/>
-            <arg column="amountMinor" javaType="long"/><arg column="currency" javaType="java.lang.String"/>
+            <arg column="amountMinor" javaType="_long"/><arg column="currency" javaType="java.lang.String"/>
             <arg column="occurredAt" javaType="java.time.LocalDateTime"/>
         </constructor>
     </resultMap>
@@ -51,7 +51,7 @@
             <arg column="differenceType" javaType="java.lang.String"/><arg column="internalReference" javaType="java.lang.String"/>
             <arg column="providerReference" javaType="java.lang.String"/><arg column="status" javaType="java.lang.String"/>
             <arg column="resolverUserId" javaType="java.lang.Long"/><arg column="approverUserId" javaType="java.lang.Long"/>
-            <arg column="recordVersion" javaType="long"/>
+            <arg column="recordVersion" javaType="_long"/>
         </constructor>
     </resultMap>
     <resultMap id="tenderPlanView" type="com.jingshanghui.pos.payment.application.model.PaymentViews$TenderPlanView">
@@ -60,22 +60,22 @@
             <arg column="orderSnapshotSha256" javaType="java.lang.String"/><arg column="storeId" javaType="java.lang.Long"/>
             <arg column="terminalId" javaType="java.lang.String"/><arg column="shiftId" javaType="java.lang.String"/>
             <arg column="businessDate" javaType="java.time.LocalDate"/><arg column="status" javaType="java.lang.String"/>
-            <arg column="receivableAmountMinor" javaType="long"/><arg column="succeededAmountMinor" javaType="long"/>
-            <arg column="occupiedAmountMinor" javaType="long"/><arg column="currency" javaType="java.lang.String"/>
-            <arg column="allocationCount" javaType="int"/><arg column="contentSha256" javaType="java.lang.String"/>
-            <arg column="correlationId" javaType="java.lang.String"/><arg column="recordVersion" javaType="long"/>
+            <arg column="receivableAmountMinor" javaType="_long"/><arg column="succeededAmountMinor" javaType="_long"/>
+            <arg column="occupiedAmountMinor" javaType="_long"/><arg column="currency" javaType="java.lang.String"/>
+            <arg column="allocationCount" javaType="_int"/><arg column="contentSha256" javaType="java.lang.String"/>
+            <arg column="correlationId" javaType="java.lang.String"/><arg column="recordVersion" javaType="_long"/>
             <arg column="frozenAt" javaType="java.time.LocalDateTime"/>
         </constructor>
     </resultMap>
     <resultMap id="tenderAllocationView" type="com.jingshanghui.pos.payment.application.model.PaymentViews$TenderAllocationView">
         <constructor>
             <arg column="allocationId" javaType="java.lang.String"/><arg column="planId" javaType="java.lang.String"/>
-            <arg column="sequenceNo" javaType="int"/><arg column="tenderType" javaType="java.lang.String"/>
-            <arg column="status" javaType="java.lang.String"/><arg column="amountMinor" javaType="long"/>
+            <arg column="sequenceNo" javaType="_int"/><arg column="tenderType" javaType="java.lang.String"/>
+            <arg column="status" javaType="java.lang.String"/><arg column="amountMinor" javaType="_long"/>
             <arg column="currency" javaType="java.lang.String"/><arg column="allocationSha256" javaType="java.lang.String"/>
             <arg column="ownerFactId" javaType="java.lang.String"/><arg column="observationRef" javaType="java.lang.String"/>
             <arg column="collectionCommandId" javaType="java.lang.String"/><arg column="collectionRequestSha256" javaType="java.lang.String"/>
-            <arg column="recordVersion" javaType="long"/>
+            <arg column="recordVersion" javaType="_long"/>
         </constructor>
     </resultMap>
 

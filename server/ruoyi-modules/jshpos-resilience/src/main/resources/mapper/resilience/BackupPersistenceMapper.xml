@@ -16,8 +16,8 @@
         <constructor>
             <arg column="object_id" javaType="String"/><arg column="data_class" javaType="String"/>
             <arg column="logical_name" javaType="String"/><arg column="media_type" javaType="String"/>
-            <arg column="tenant_scope_sha256" javaType="String"/><arg column="plaintext_size_bytes" javaType="long"/>
-            <arg column="plaintext_sha256" javaType="String"/><arg column="ciphertext_size_bytes" javaType="long"/>
+            <arg column="tenant_scope_sha256" javaType="String"/><arg column="plaintext_size_bytes" javaType="_long"/>
+            <arg column="plaintext_sha256" javaType="String"/><arg column="ciphertext_size_bytes" javaType="_long"/>
             <arg column="ciphertext_sha256" javaType="String"/><arg column="key_version" javaType="String"/>
             <arg column="nonce_base64" javaType="String"/><arg column="object_key" javaType="String"/>
         </constructor>
@@ -26,8 +26,8 @@
         <constructor>
             <arg column="drill_id" javaType="String"/><arg column="backup_id" javaType="String"/>
             <arg column="request_sha256" javaType="String"/><arg column="started_at" javaType="java.time.Instant"/>
-            <arg column="ended_at" javaType="java.time.Instant"/><arg column="rpo_seconds" javaType="long"/>
-            <arg column="rto_seconds" javaType="long"/><arg column="state" javaType="String"/>
+            <arg column="ended_at" javaType="java.time.Instant"/><arg column="rpo_seconds" javaType="_long"/>
+            <arg column="rto_seconds" javaType="_long"/><arg column="state" javaType="String"/>
             <arg column="evidence_sha256" javaType="String"/>
         </constructor>
     </resultMap>

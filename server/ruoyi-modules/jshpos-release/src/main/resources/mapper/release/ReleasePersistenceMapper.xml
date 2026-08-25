@@ -14,14 +14,14 @@
             <arg column="min_schema_version" javaType="String"/><arg column="max_schema_version" javaType="String"/>
             <arg column="min_system_version" javaType="String"/><arg column="max_system_version" javaType="String"/>
             <arg column="required_capability_sha256" javaType="String"/><arg column="state" javaType="String"/>
-            <arg column="version_no" javaType="long"/><arg column="created_at" javaType="java.time.Instant"/>
+            <arg column="version_no" javaType="_long"/><arg column="created_at" javaType="java.time.Instant"/>
         </constructor>
     </resultMap>
     <resultMap id="rolloutRow" type="com.jingshanghui.pos.release.infrastructure.persistence.ReleasePersistenceParams$RolloutRow">
         <constructor>
             <arg column="rollout_id" javaType="String"/><arg column="tenant_id" javaType="String"/>
-            <arg column="release_id" javaType="String"/><arg column="canary_percent" javaType="int"/>
-            <arg column="state" javaType="String"/><arg column="version_no" javaType="long"/>
+            <arg column="release_id" javaType="String"/><arg column="canary_percent" javaType="_int"/>
+            <arg column="state" javaType="String"/><arg column="version_no" javaType="_long"/>
             <arg column="created_at" javaType="java.time.Instant"/>
         </constructor>
     </resultMap>
@@ -31,7 +31,7 @@
             <arg column="rollout_id" javaType="String"/><arg column="release_id" javaType="String"/>
             <arg column="device_id" javaType="String"/><arg column="store_id" javaType="java.lang.Long"/>
             <arg column="state" javaType="String"/><arg column="last_evidence_sha256" javaType="String"/>
-            <arg column="version_no" javaType="long"/><arg column="created_at" javaType="java.time.Instant"/>
+            <arg column="version_no" javaType="_long"/><arg column="created_at" javaType="java.time.Instant"/>
         </constructor>
     </resultMap>
     <resultMap id="commandRow" type="com.jingshanghui.pos.release.infrastructure.persistence.ReleasePersistenceParams$CommandRow">
