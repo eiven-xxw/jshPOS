@@ -12,7 +12,7 @@
     {"order":6,"stepId":"R3C-R6","scope":["FLT-05"],"commit":"65fbb5b"},
     {"order":7,"stepId":"R3C-R7","scope":["FLT-02"],"commit":"1aa735e"},
     {"order":8,"stepId":"R3C-R8","scope":["FLT-01"],"commit":"ddf125e"},
-    {"order":9,"stepId":"R3C-R9","scope":["ALL_8","FULL_WEB_GATE","REMOTE_FLUTTER_REQUIRED"],"commit":"6a9256b"}
+    {"order":9,"stepId":"R3C-R9","scope":["ALL_8","FULL_WEB_GATE","REMOTE_FLUTTER_REQUIRED"],"commit":"871c367"}
   ],
   "batchState": "VERIFIED_CANDIDATE",
   "overallFindingState": "OPEN",
