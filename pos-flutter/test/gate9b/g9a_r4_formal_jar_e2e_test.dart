@@ -8,6 +8,8 @@ import 'package:jshpos_pos/features/exchange/domain/pos_exchange_models.dart';
 import 'package:jshpos_pos/features/session/domain/pos_session_models.dart';
 import 'package:jshpos_pos/features/session/infrastructure/http_pos_session_repository.dart';
 import 'package:jshpos_pos/features/session/infrastructure/ruoyi_api_request_encryptor.dart';
+import 'package:jshpos_pos/features/synchronization/domain/sync_models.dart';
+import 'package:jshpos_pos/features/synchronization/infrastructure/pos_sync_http_transport.dart';
 import 'package:jshpos_pos/infrastructure/runtime/session_bound_pos_runtime.dart';
 import 'package:pos_device_adapter/pos_device_adapter.dart';
 import 'package:sqlite3/sqlite3.dart';
@@ -86,17 +88,117 @@ void main() {
       expect(results.every((item) => item['returnCount'] == 1), isTrue);
       expect(results.every((item) => item['exchangeCount'] == 1), isTrue);
 
+      // 固定 seed F07：以错误公钥装配一个全新文件库，生产安装器必须拒绝正式包，
+      // 且不能留下任何 ACTIVE 包绑定。该探针仍只使用虚构终端和正式 JAR。
+      final corruptPackage = await _verifyCorruptedPackageFailsClosed(
+        baseUri: baseUri,
+        journey: publicJourneys.first,
+        secret: secretJourneys.singleWhere(
+          (item) => item['journeyId'] == publicJourneys.first['journeyId'],
+        ),
+        sqliteRoot: sqliteRoot,
+      );
+
       _writeEvidence(
         output: output,
         baseUri: baseUri,
         runId: runId,
         status: 'PASS',
         journeys: results,
+        faultEvidence: [corruptPackage],
       );
     },
     timeout: const Timeout(Duration(minutes: 8)),
     skip: formalRuntimeEnabled ? false : '仅在 G9A-R4 正式运行栈作业中执行',
   );
+}
+
+/// 使用生产运行时装配路径验证坏签名包不会被部分安装或切换为活动版本。
+Future<Map<String, Object?>> _verifyCorruptedPackageFailsClosed({
+  required Uri baseUri,
+  required Map<String, Object?> journey,
+  required Map<String, Object?> secret,
+  required Directory sqliteRoot,
+}) async {
+  final path =
+      '${sqliteRoot.path}${Platform.pathSeparator}r4-f07-corrupt-package.sqlite3';
+  final file = File(path);
+  if (file.existsSync()) file.deleteSync();
+  final session = HttpPosSessionRepository(
+    baseUri: baseUri,
+    clientId: _clientId,
+    materialProvider: _ControlledMaterialProvider(secret),
+    loginEncryptor: const _PlainJsonEncryptor(),
+  );
+  final wrongKey = SimplePublicKey(
+    List<int>.generate(32, (index) => index + 1),
+    type: KeyPairType.ed25519,
+  );
+  final runtime = SessionBoundPosRuntime(
+    sessions: session,
+    assembler: FilePosBusinessRuntimeAssembler(
+      databasePathProvider: (_) async => path,
+      baseUri: baseUri,
+      clientId: _clientId,
+      accessTokenProvider: session.accessToken,
+      catalogPackageVersion: _integer(journey, 'catalogVersion'),
+      promotionPackageVersion: _integer(journey, 'promotionVersion'),
+      catalogSigningKeys: {_signingKeyId: wrongKey},
+      promotionSigningKeys: {_signingKeyId: wrongKey},
+      industryTemplateVersion: '${_text(journey, 'industry')}_V1',
+      returnWarehouseId: _warehouseId,
+      configVersion: 1,
+      cashDifferenceApprovalMinor: 1000,
+      lotPackageVersion: _integer(journey, 'lotPackageVersion'),
+      lotPackageSigningKeys: {_signingKeyId: wrongKey},
+    ),
+  );
+  try {
+    final terminal = await runtime.verifyTerminal(_device());
+    await expectLater(
+      runtime.authenticate(
+        terminal,
+        EmployeeLoginCommand(
+          loginName: _text(secret, 'username'),
+          secret: _text(secret, 'password'),
+          correlationId: _ulid(906),
+          occurredAt: DateTime.now().toUtc(),
+        ),
+      ),
+      throwsA(isA<StateError>()),
+    );
+  } finally {
+    session.close();
+  }
+  expect(file.existsSync(), isTrue);
+  final database = sqlite3.open(path, mode: OpenMode.readOnly);
+  try {
+    final activeBindings =
+        database
+                .select(
+                  'SELECT COUNT(*) AS count FROM local_catalog_package_binding',
+                )
+                .single['count']!
+            as int;
+    final activeSlots =
+        database
+                .select(
+                  "SELECT COUNT(*) AS count FROM local_catalog_package_slot WHERE state='ACTIVE'",
+                )
+                .single['count']!
+            as int;
+    expect(activeBindings, 0);
+    expect(activeSlots, 0);
+    return {
+      'seedId': 'R4-F07',
+      'status': 'PASS_FAILED_CLOSED',
+      'activeBindings': activeBindings,
+      'activeSlots': activeSlots,
+      'partialInstall': false,
+    };
+  } finally {
+    database.close();
+  }
 }
 
 Future<Map<String, Object?>> _runJourney({
@@ -149,6 +251,7 @@ Future<Map<String, Object?>> _runJourney({
   String? completedExchangeRef;
   String? originalOrderRef;
   String? replacementOrderRef;
+  Map<String, Object?>? ackLossRecovery;
   var completedReturnAmountMinor = 0;
   try {
     terminal = await runtime.verifyTerminal(_device());
@@ -190,6 +293,28 @@ Future<Map<String, Object?>> _runJourney({
     expect(settled.receivableAmountMinor, 940);
     expect(settled.changeAmountMinor, 1060);
     expect(preview.adapterEvidence, contains('BLOCKED_REAL_PRINTER'));
+
+    // 固定 seed F02：服务端先收下首个本地事件，但客户端故意不落 ACK；随后关闭并
+    // 重新装配同一文件 SQLite，正式同步器必须复用原 eventId 收敛，禁止生成新命令。
+    ackLossRecovery = await _pushFirstOutboxWithoutPersistingAck(
+      databasePath: databasePath,
+      baseUri: baseUri,
+      session: session,
+      terminal: terminal,
+      batchId: _ulid(sequence * 10 + 6),
+    );
+    await runtime.logout(terminal, employee, _ulid(sequence * 10 + 7));
+    employee = null;
+    final resumed = await runtime.authenticate(
+      terminal,
+      EmployeeLoginCommand(
+        loginName: _text(secret, 'username'),
+        secret: _text(secret, 'password'),
+        correlationId: _ulid(sequence * 10 + 8),
+        occurredAt: DateTime.now().toUtc(),
+      ),
+    );
+    employee = resumed.employee;
 
     // 先同步原成交，Return Owner 只能读取服务端不可变订单和原促销快照。
     for (var attempt = 0; attempt < 4; attempt += 1) {
@@ -427,9 +552,80 @@ Future<Map<String, Object?>> _runJourney({
       'deadLetters': _count(database, 'local_sync_dead_letter'),
       'deadLetterCodes': deadLetterCodes,
       'eventTypes': eventTypes,
+      'ackLossRecovery': ackLossRecovery,
     };
   } finally {
     database.close();
+  }
+}
+
+/// 通过正式同步 HTTP 端口投递一次但不写本地 ACK，用于复现服务端已收、客户端未知。
+Future<Map<String, Object?>> _pushFirstOutboxWithoutPersistingAck({
+  required String databasePath,
+  required Uri baseUri,
+  required HttpPosSessionRepository session,
+  required TrustedTerminalContext terminal,
+  required String batchId,
+}) async {
+  final database = sqlite3.open(databasePath, mode: OpenMode.readOnly);
+  late final SyncEventEnvelope event;
+  try {
+    final row = database
+        .select(
+          "SELECT * FROM local_outbox WHERE status='PENDING' ORDER BY device_sequence LIMIT 1",
+        )
+        .single;
+    final payloadJson = row['payload_json']! as String;
+    final payloadHash = sha256.convert(utf8.encode(payloadJson)).toString();
+    expect(payloadHash, row['payload_sha256']);
+    final eventType = row['event_type']! as String;
+    final version = RegExp(r'\.v([1-9][0-9]*)$').firstMatch(eventType);
+    expect(version, isNotNull);
+    event = SyncEventEnvelope(
+      eventId: row['event_id']! as String,
+      stream: row['stream_code']! as String,
+      eventType: eventType,
+      eventVersion: int.parse(version!.group(1)!),
+      aggregateId: row['aggregate_id']! as String,
+      aggregateVersion: row['aggregate_version']! as int,
+      deviceId: terminal.deviceId,
+      storeId: terminal.storeId,
+      terminalId: terminal.terminalId,
+      sequenceNo: row['device_sequence']! as int,
+      occurredAt: DateTime.parse(row['created_at']! as String).toUtc(),
+      idempotencyKey: row['event_id']! as String,
+      correlationId: row['correlation_id']! as String,
+      payloadHash: payloadHash,
+      payload: jsonDecode(payloadJson)! as Map<String, Object?>,
+      attemptCount: 1,
+    );
+  } finally {
+    database.close();
+  }
+  final transport = PosSyncHttpTransport(
+    baseUri: baseUri,
+    clientId: _clientId,
+    deviceId: terminal.deviceId,
+    accessTokenProvider: session.accessToken,
+  );
+  try {
+    final response = await transport.push(
+      SyncPushBatch(batchId: batchId, events: [event]),
+    );
+    expect(response.acks, hasLength(1));
+    expect(response.acks.single.eventId, event.eventId);
+    expect(response.acks.single.payloadHash, event.payloadHash);
+    expect(response.acks.single.status, anyOf('ACCEPTED', 'DUPLICATE'));
+    return {
+      'seedId': 'R4-F02',
+      'eventId': event.eventId,
+      'payloadHash': event.payloadHash,
+      'initialAckStatus': response.acks.single.status,
+      'ackPersistedBeforeRestart': false,
+      'runtimeReopened': true,
+    };
+  } finally {
+    transport.close();
   }
 }
 
@@ -524,6 +720,7 @@ void _writeEvidence({
   required String runId,
   required String status,
   required List<Map<String, Object?>> journeys,
+  List<Map<String, Object?>> faultEvidence = const [],
 }) {
   final evidence = <String, Object?>{
     'schemaVersion': '1.0',
@@ -540,6 +737,7 @@ void _writeEvidence({
     },
     'journeys': journeys,
     'journeyCount': journeys.length,
+    'faultEvidence': faultEvidence,
     'directDatabaseBusinessWrites': 0,
     'providerNetworkCalls': 0,
     'realDeviceOrPeripheralCommands': 0,

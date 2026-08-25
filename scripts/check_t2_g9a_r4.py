@@ -45,6 +45,7 @@ def main() -> None:
     red = ROOT / "scripts/run_t2_g9a_r4_r0_red_regressions.py"
     bootstrap = ROOT / "scripts/run_t2_g9a_r4_bootstrap.py"
     postflight = ROOT / "scripts/run_t2_g9a_r4_postflight.py"
+    fault_runner = ROOT / "scripts/run_t2_g9a_r4_faults.py"
     flutter = ROOT / "pos-flutter/test/gate9b/g9a_r4_formal_jar_e2e_test.dart"
 
     require(admission.get("findingId") == "G9A-E2E-P1-001", "finding identity drift")
@@ -55,8 +56,9 @@ def main() -> None:
             "external execution must remain zero")
     require({item.lower() for item in checkpoints.get("owners", [])} == OWNERS, "22 Owner set drift")
     require(len(faults.get("seeds", [])) == 12, "twelve fixed fault seeds are required")
-    require(red.is_file() and bootstrap.is_file() and postflight.is_file() and flutter.is_file(),
-            "R0/bootstrap/postflight/Flutter harness missing")
+    require(red.is_file() and bootstrap.is_file() and postflight.is_file()
+            and fault_runner.is_file() and flutter.is_file(),
+            "R0/bootstrap/postflight/fault/Flutter harness missing")
 
     postflight_text = postflight.read_text(encoding="utf-8")
     require("/api/v1/" in postflight_text, "postflight must use formal HTTP APIs")
@@ -66,6 +68,14 @@ def main() -> None:
             "postflight must emit 22 Owner checkpoint evidence")
     require("conservationCheckCount\": len(invariants)" in postflight_text,
             "postflight must emit twelve conservation checks per journey")
+    fault_text = fault_runner.read_text(encoding="utf-8")
+    require("R4-F01" in fault_text and "R4-F12" in fault_text,
+            "R4-R5 runner must emit the complete fixed seed ledger")
+    require("directBusinessDatabaseWrites\": 0" in fault_text,
+            "fault runner must declare zero direct business database writes")
+    workflow = (ROOT / ".github/workflows/t2-g9a-r4-runtime.yml").read_text(encoding="utf-8")
+    require("FLUSHDB" in workflow and "launch_server 2" in workflow,
+            "formal job must inject a real Redis loss and JAR restart")
 
     bootstrap_text = bootstrap.read_text(encoding="utf-8")
     activate_marker = 'f"{label}-store-activate"'
