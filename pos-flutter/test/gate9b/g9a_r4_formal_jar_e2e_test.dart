@@ -237,7 +237,11 @@ Future<Map<String, Object?>> _runJourney({
       sequence: sequence,
     );
     var observedExchange = exchange;
-    for (var attempt = 0; attempt < 8 && !observedExchange.status.terminal; attempt += 1) {
+    for (
+      var attempt = 0;
+      attempt < 8 && !observedExchange.status.terminal;
+      attempt += 1
+    ) {
       observedExchange = await runtime.refreshExchange(exchange.exchangeRef);
     }
     expect(observedExchange.status.name, 'completed');
