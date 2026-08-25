@@ -236,6 +236,18 @@ def create_tenant(client: ApiClient, passwords: dict[str, str], plan_id: Any, in
     client.call("PUT", f"/api/v1/foundation/staff-scopes/{reviewer_user_id}",
                 f"{label}-tenant-reviewer-scope", body=tenant_scope)
 
+    # 门店正式创建语义是 PREPARING；只有完成可信范围配置后才能通过正式 API 激活。
+    # 价签、数据包和 POS 后续旅程必须消费 ACTIVE 门店，不能在测试脚本中绕过该冻结点。
+    store = data(client.call("PUT", f"/api/v1/foundation/stores/{store_id}",
+                             f"{label}-store-activate", body={
+        "orgUnitId": org_id, "platformDeptId": None,
+        "code": f"R4_{label.upper()}_STORE", "name": f"{display}虚构门店",
+        "zoneId": "Asia/Shanghai", "businessDayStart": "06:00:00",
+        "status": "ACTIVE", "version": store["version"],
+    }))
+    if store.get("status") != "ACTIVE":
+        raise RuntimeError(f"G9A-R4 bootstrap failed: {label}-store-activate did not reach ACTIVE")
+
     service_catalog = data(client.call("POST", "/api/v1/service/catalogs", f"{label}-service-catalog", body={
         "catalogCode": f"R4_{label.upper()}_OPENING", "versionNo": 1, "industryTemplate": industry,
         "name": f"{display}内部开店检查",

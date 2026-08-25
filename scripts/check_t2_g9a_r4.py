@@ -56,6 +56,13 @@ def main() -> None:
     require(len(faults.get("seeds", [])) == 12, "twelve fixed fault seeds are required")
     require(red.is_file() and bootstrap.is_file() and flutter.is_file(), "R0/bootstrap/Flutter harness missing")
 
+    bootstrap_text = bootstrap.read_text(encoding="utf-8")
+    activate_marker = 'f"{label}-store-activate"'
+    publish_marker = 'f"{label}-price-book-publish"'
+    require(activate_marker in bootstrap_text, "formal bootstrap must activate PREPARING stores through API")
+    require(bootstrap_text.index(activate_marker) < bootstrap_text.index(publish_marker),
+            "store activation must precede tenant price publication")
+
     flutter_text = flutter.read_text(encoding="utf-8")
     require("HttpServer.bind" not in flutter_text, "formal Flutter journey must not bind an embedded HTTP server")
     require("R4_BASE_URL" in flutter_text, "formal Flutter journey must receive the live JAR URL")
