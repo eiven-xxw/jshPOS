@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -46,6 +47,21 @@ void main() {
           "SELECT status FROM local_outbox WHERE event_type='order.completed.v2'",
         ),
         'PENDING',
+      );
+      final submittedPayload = (jsonDecode(
+        fixture.scalar(
+          "SELECT payload_json FROM local_outbox WHERE event_type='order.submitted.v2'",
+        ) as String,
+      ) as Map).cast<String, Object?>();
+      final receiptPayload = (jsonDecode(
+        fixture.scalar(
+          "SELECT payload_json FROM local_outbox WHERE event_type='receipt.document-frozen.v1'",
+        ) as String,
+      ) as Map).cast<String, Object?>();
+      expect(submittedPayload['printJobId'], receiptPayload['printJobId']);
+      expect(
+        submittedPayload['printJobId'],
+        fixture.scalar('SELECT print_job_id FROM local_print_job'),
       );
       expect(
         fixture.scalar(

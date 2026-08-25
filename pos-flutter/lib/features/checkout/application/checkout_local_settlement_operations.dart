@@ -535,6 +535,8 @@ extension CheckoutLocalSettlementOperations on CheckoutLocalService {
         payload: {
           'schemaVersion': '2.0',
           'orderId': command.basket.orderId,
+          // 与收据冻结事件共享同一不可变打印任务身份，服务端不得重新生成替代。
+          'printJobId': printJobId,
           'localOrderNo': command.basket.localOrderNo,
           'storeId': _binding.storeId,
           'terminalId': _binding.terminalId,

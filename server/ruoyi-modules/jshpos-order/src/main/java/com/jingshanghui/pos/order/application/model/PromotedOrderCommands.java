@@ -41,6 +41,7 @@ public final class PromotedOrderCommands {
      * @param receivableAmountMinor 应收分
      * @param tenderedAmountMinor 实收分
      * @param lines 成交行
+     * @param printJobId POS 本地事务冻结的原始打印任务ULID；旧事件可为空并由服务端兼容分配
      * @param occurredAt POS成交时间UTC
      */
     public record SubmitPromotedCashOrder(String commandId, String idempotencyKey, String orderId,
@@ -53,7 +54,27 @@ public final class PromotedOrderCommands {
                                            List<String> manualEventRefs, long grossAmountMinor,
                                            long discountAmountMinor, long surchargeAmountMinor,
                                            long receivableAmountMinor, long tenderedAmountMinor,
-                                           List<PromotedLine> lines, Instant occurredAt) {
+                                           List<PromotedLine> lines, String printJobId, Instant occurredAt) {
+        /** 兼容既有服务端/测试调用；同步新事件必须显式携带本地冻结的打印任务身份。 */
+        public SubmitPromotedCashOrder(String commandId, String idempotencyKey, String orderId,
+                                       String localOrderNo, Long storeId, String terminalId, String shiftId,
+                                       String cashierId, LocalDate businessDate, String storeTimezone,
+                                       long catalogVersion, long priceVersion, String industryTemplateVersion,
+                                       String promotionSnapshotId, String promotionSnapshotSha256,
+                                       String quoteFingerprint, String settlementFingerprint,
+                                       long promotionPackageVersion, String orderSnapshotSha256,
+                                       List<String> manualEventRefs, long grossAmountMinor,
+                                       long discountAmountMinor, long surchargeAmountMinor,
+                                       long receivableAmountMinor, long tenderedAmountMinor,
+                                       List<PromotedLine> lines, Instant occurredAt) {
+            this(commandId, idempotencyKey, orderId, localOrderNo, storeId, terminalId, shiftId,
+                cashierId, businessDate, storeTimezone, catalogVersion, priceVersion,
+                industryTemplateVersion, promotionSnapshotId, promotionSnapshotSha256,
+                quoteFingerprint, settlementFingerprint, promotionPackageVersion, orderSnapshotSha256,
+                manualEventRefs, grossAmountMinor, discountAmountMinor, surchargeAmountMinor,
+                receivableAmountMinor, tenderedAmountMinor, lines, null, occurredAt);
+        }
+
         public SubmitPromotedCashOrder {
             manualEventRefs = List.copyOf(manualEventRefs);
             lines = List.copyOf(lines);

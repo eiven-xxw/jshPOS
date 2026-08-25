@@ -7,6 +7,7 @@
   "properties": {
     "schemaVersion": {"const": "2.0"},
     "orderId": {"$ref": "#/$defs/ulid"},
+    "printJobId": {"$ref": "#/$defs/ulid", "description": "POS本地成交事务冻结的原始打印任务身份；兼容旧v2事件时可缺省"},
     "localOrderNo": {"type": "string", "minLength": 1, "maxLength": 40},
     "storeId": {"type": "string", "pattern": "^[1-9][0-9]*$"},
     "terminalId": {"$ref": "#/$defs/ulid"},

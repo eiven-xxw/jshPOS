@@ -64,7 +64,7 @@ public class PromotedOrderEventDispatcher {
             hash(payload, "orderSnapshotHash"), manualRefs, number(payload, "grossAmountMinor"),
             number(payload, "discountAmountMinor"), number(payload, "surchargeAmountMinor"),
             number(payload, "receivableAmountMinor"), number(payload, "tenderedAmountMinor"), lines,
-            event.occurredAt()));
+            optionalStrictText(payload, "printJobId"), event.occurredAt()));
     }
 
     private SnapshotLine snapshotLine(Object source) {
@@ -155,6 +155,11 @@ public class PromotedOrderEventDispatcher {
 
     private String optionalText(Object value) {
         return value == null ? null : String.valueOf(value);
+    }
+
+    /** 可选契约字段仍必须保持字符串类型，禁止数字或对象被 String.valueOf 静默接受。 */
+    private String optionalStrictText(Map<String, Object> value, String field) {
+        return value.get(field) == null ? null : text(value, field);
     }
 
     private long number(Map<String, Object> value, String field) {

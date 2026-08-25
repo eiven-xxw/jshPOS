@@ -133,7 +133,8 @@ public class PromotedCashOrderService implements PromotedOrderSubmissionPort {
         if (orderMapper.addShiftCash(principal.tenantId(), command.shiftId(), cash.netMinor()) != 1) {
             throw conflict("SHIFT_STATE_CONFLICT", "现金写入时班次不再可用");
         }
-        orderMapper.insertPrintJob(principal.tenantId(), ulids.next(), command.orderId(),
+        String printJobId = command.printJobId() == null ? ulids.next() : command.printJobId();
+        orderMapper.insertPrintJob(principal.tenantId(), printJobId, command.orderId(),
             command.industryTemplateVersion(), orderSnapshot.sha256(), at);
         appendEvents(principal.tenantId(), command, paymentId, cash, at);
         CashOrderResult result = new CashOrderResult(command.orderId(), paymentId, "COMPLETED", "PAID",
@@ -201,6 +202,9 @@ public class PromotedCashOrderService implements PromotedOrderSubmissionPort {
         OrderRules.requireUlid(command.terminalId(), "terminalId");
         OrderRules.requireUlid(command.shiftId(), "shiftId");
         OrderRules.requireUlid(command.promotionSnapshotId(), "promotionSnapshotId");
+        if (command.printJobId() != null) {
+            OrderRules.requireUlid(command.printJobId(), "printJobId");
+        }
         OrderRules.requireIdempotencyKey(command.idempotencyKey());
         if (command.localOrderNo() == null || command.localOrderNo().isBlank() || command.localOrderNo().length() > 40
             || command.businessDate() == null || command.storeTimezone() == null || command.storeTimezone().isBlank()
@@ -327,6 +331,7 @@ public class PromotedCashOrderService implements PromotedOrderSubmissionPort {
             command.settlementFingerprint(), command.promotionPackageVersion(), command.orderSnapshotSha256(),
             command.grossAmountMinor(), command.discountAmountMinor(), command.surchargeAmountMinor(),
             command.receivableAmountMinor(), command.tenderedAmountMinor()));
+        values.add(command.printJobId() == null ? "LEGACY_SERVER_ASSIGNED_PRINT_JOB" : command.printJobId());
         values.addAll(command.manualEventRefs());
         command.lines().stream().sorted(Comparator.comparingInt(PromotedLine::lineNo)).forEach(line -> {
             values.add(line.lineId()); values.add(line.lineNo()); values.add(line.skuId()); values.add(line.skuCode());

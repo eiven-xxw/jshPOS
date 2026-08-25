@@ -93,6 +93,8 @@ class PromotedCashOrderServiceTest {
         verify(mapper).insertCashPayment(eq("TENANT_A"), any(), eq(ORDER), eq(SHIFT),
             eq(900L), eq(2000L), eq(1100L), eq(900L), any());
         verify(mapper).addShiftCash("TENANT_A", SHIFT, 900);
+        verify(mapper).insertPrintJob(eq("TENANT_A"), eq("01K5P000000000000000000001"), eq(ORDER),
+            eq("CONVENIENCE_V1"), any(), any());
         verify(mapper).insertIdempotency(eq("TENANT_A"), any(), eq("SUBMIT_PROMOTED_CASH_ORDER"),
             eq("01K5C000000000000000000001"), eq("gate5b-order-key-0001"), any(), eq(ORDER),
             eq("CREATED"), any(), any());
@@ -224,7 +226,7 @@ class PromotedCashOrderServiceTest {
             draft.quoteFingerprint(), draft.settlementFingerprint(), draft.promotionPackageVersion(), orderHash,
             draft.manualEventRefs(), draft.grossAmountMinor(), draft.discountAmountMinor(),
             draft.surchargeAmountMinor(), draft.receivableAmountMinor(), draft.tenderedAmountMinor(),
-            draft.lines(), draft.occurredAt());
+            draft.lines(), "01K5P000000000000000000001", draft.occurredAt());
     }
 
     private Snapshot snapshot(String orderId, String hash) {

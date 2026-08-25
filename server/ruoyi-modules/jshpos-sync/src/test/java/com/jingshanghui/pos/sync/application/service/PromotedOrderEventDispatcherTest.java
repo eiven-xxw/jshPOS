@@ -44,6 +44,7 @@ class PromotedOrderEventDispatcherTest {
         assertThat(command.storeId()).isEqualTo(1101L);
         assertThat(command.terminalId()).isEqualTo(trusted.terminalId());
         assertThat(command.cashierId()).isEqualTo("101");
+        assertThat(command.printJobId()).isEqualTo("01K2A000000000000000000071");
         assertThat(command.discountAmountMinor()).isEqualTo(200L);
         assertThat(command.receivableAmountMinor()).isEqualTo(1100L);
         assertThat(snapshotCaptor.getValue().quoteFingerprint()).isEqualTo("2".repeat(64));
@@ -98,6 +99,7 @@ class PromotedOrderEventDispatcherTest {
         Map<String, Object> value = new LinkedHashMap<>();
         value.put("tenantId", "TENANT_A");
         value.put("orderId", "01K2A000000000000000000031");
+        value.put("printJobId", "01K2A000000000000000000071");
         value.put("localOrderNo", "A-T1-1");
         value.put("storeId", storeId);
         value.put("terminalId", terminalId);
