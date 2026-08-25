@@ -138,11 +138,13 @@ jobs:
         with: { python-version: "3.12" }
       - name: Execute Flutter analysis tests coverage and supply chain
         working-directory: pos-flutter
+        shell: bash
         run: |
+          set -o pipefail
           flutter pub get --enforce-lockfile
           dart format --output=none --set-exit-if-changed lib test
           flutter analyze --fatal-infos
-          flutter test --machine --coverage > ../flutter-tests.jsonl
+          flutter test --machine --coverage 2>&1 | tee ../flutter-tests.jsonl
           python ../scripts/check_flutter_gate2_coverage.py --input coverage/lcov.info --minimum 0.90 --output ../flutter-gate2-coverage.json
           python ../scripts/check_flutter_gate6d_coverage.py --input coverage/lcov.info --minimum 0.90 --output ../flutter-gate6d-coverage.json
           python ../scripts/check_flutter_gate6e_coverage.py --input coverage/lcov.info --minimum 0.90 --output ../flutter-gate6e-coverage.json

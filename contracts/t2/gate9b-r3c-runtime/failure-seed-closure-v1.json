@@ -32,6 +32,11 @@
       "findingId": "R3C-R9-FLUTTER-FORMAT-001",
       "observed": "首个远程候选 GitHub Actions Run 32803979146 的 Flutter Ubuntu Job 97670356321 在 dart format 门禁发现 4 个本批 Dart 文件未满足 Dart 3.13.0 格式并失败关闭",
       "resolution": "保留原失败 Run，不执行自动重跑；使用官方 Dart 3.13.0 仅格式化该 4 个文件，并对 lib/test 共 131 个文件执行零差异复核后提交新候选"
+    },
+    {
+      "findingId": "R3C-R9-FLUTTER-TEST-OUTPUT-001",
+      "observed": "第二个远程候选 GitHub Actions Run 32804503972 的 Flutter Ubuntu Job 97672430082 已通过格式和 analyze，但 flutter test 失败；原工作流将机器输出仅重定向到文件，失败时未进入制品上传，页面缺少具体失败用例",
+      "resolution": "保留失败 Run；不改变测试命令和阈值，仅启用 bash pipefail 并用 tee 同时输出与保存机器日志，使下一候选在失败时仍提供可诊断证据"
     }
   ],
   "openP0": 0,
