@@ -416,6 +416,16 @@ def create_tenant(client: ApiClient, passwords: dict[str, str], plan_id: Any, in
         "effectiveFrom": instant_timestamp(now - timedelta(days=1)),
         "correlationId": stable_ulid(f"r4-inventory-policy-trace-{run_tag}-{label}"),
     })
+    # 采购收货会在库存 Owner 的同一应用编排中消费 Costing Owner；正式旅程必须先
+    # 发布仓级移动加权策略，不能依赖隐式默认策略或在收货时绕开成本失败关闭。
+    cost_policy_version_id = stable_ulid(f"r4-cost-policy-{run_tag}-{label}")
+    client.call("POST", "/api/inventory/cost-policies", f"{label}-cost-policy", body={
+        "policyVersionId": cost_policy_version_id,
+        "storeId": str(store_id),
+        "warehouseId": WAREHOUSE_ID,
+        "effectiveFrom": instant_timestamp(now - timedelta(days=1)),
+        "correlationId": stable_ulid(f"r4-cost-policy-trace-{run_tag}-{label}"),
+    })
     lot_package_version = 0
     if industry == "COMMUNITY_SUPERMARKET":
         lot_package_version = prepare_community_lots(
@@ -440,6 +450,7 @@ def create_tenant(client: ApiClient, passwords: dict[str, str], plan_id: Any, in
         "serviceProjectId": service_project_id,
         "manualTemplateId": template["templateId"], "manualConfigVersionId": config["configVersionId"],
         "inventoryPolicyVersionId": inventory_policy_version_id,
+        "costPolicyVersionId": cost_policy_version_id,
         "skuId": product["skuId"], "unitId": unit["id"],
         "skuCode": product["skuCode"], "barcode": barcode, "catalogVersion": catalog_package["packageVersion"],
         "promotionVersion": promotion_package["packageVersion"], "lotPackageVersion": lot_package_version,
