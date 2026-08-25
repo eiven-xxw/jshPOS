@@ -4,6 +4,7 @@ import 'package:jshpos_pos/features/return_refund/application/pos_return_control
 import 'package:jshpos_pos/features/return_refund/domain/pos_return_models.dart';
 import 'package:jshpos_pos/features/return_refund/infrastructure/locked_pos_return_application_service.dart';
 import 'package:jshpos_pos/features/return_refund/presentation/pos_return_page.dart';
+import 'package:jshpos_pos/features/session/domain/pos_session_models.dart';
 
 import 'pos_return_controller_test.dart';
 
@@ -33,6 +34,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('原单 SYN-20260820-0001'), findsOneWidget);
+    expect(find.textContaining('业务日 2026-08-20'), findsOneWidget);
     expect(find.byKey(const Key('originalPromotionSnapshot')), findsOneWidget);
     expect(find.textContaining('当前最多可退 ¥12.00'), findsOneWidget);
 
@@ -104,5 +106,44 @@ void main() {
 
     expect(find.textContaining('尚未完成安全配置'), findsOneWidget);
     expect(find.textContaining('RETURN_WORKSPACE_UNAVAILABLE'), findsOneWidget);
+  });
+
+  testWidgets('可信会话缺少原单读取权限时页面失败关闭', (tester) async {
+    final fixture = await ReturnFixture.ready(
+      permissions: {PosPermission.returnCreate},
+    );
+    await tester.pumpWidget(
+      MaterialApp(home: PosReturnPage(controller: fixture.controller)),
+    );
+    await tester.enterText(find.byKey(const Key('returnOrderQuery')), orderRef);
+    await tester.tap(find.byKey(const Key('searchOriginalOrder')));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('PERMISSION_DENIED'), findsOneWidget);
+    expect(fixture.returns.findCount, 0);
+  });
+
+  testWidgets('离线未知结果重建页面后仍只查询原 returnRef', (tester) async {
+    final fixture = await ReturnFixture.ready();
+    await fixture.controller.searchOriginalOrder(orderRef);
+    await fixture.controller.changeQuantity(lineRef, '1');
+    fixture.returns.failure = const PosReturnFailure(
+      'RETURN_RESULT_UNKNOWN',
+      '离线结果未知，请查询原申请。',
+      resultUnknown: true,
+      returnRef: returnRef,
+    );
+    await fixture.controller.submitCashReturn(reasonCode: 'CUSTOMER_RETURN');
+    await tester.pumpWidget(
+      MaterialApp(home: PosReturnPage(controller: fixture.controller)),
+    );
+    expect(find.textContaining('禁止重新发起退款'), findsOneWidget);
+
+    fixture.returns.failure = null;
+    fixture.returns.nextStatus = PosReturnSagaStatus.completed;
+    await tester.tap(find.byKey(const Key('recoverUnknownReturn')));
+    await tester.pumpAndSettle();
+    expect(fixture.returns.submitCount, 1);
+    expect(fixture.returns.refreshRef, returnRef);
   });
 }
