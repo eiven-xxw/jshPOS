@@ -9,6 +9,14 @@
       show-icon
     />
 
+    <OwnerPageFeedback
+      surface-id="reporting"
+      :state="phase"
+      :failure="failure"
+      empty-title="当前权限、门店和业务日范围内暂无报表事实"
+      @retry="loadReport"
+    />
+
     <el-card shadow="hover">
       <el-form :inline="true" :model="query" label-width="80px">
         <el-form-item label="报表类型">
@@ -21,7 +29,7 @@
         <el-form-item label="业务日">
           <el-date-picker v-model="dateRange" type="daterange" value-format="YYYY-MM-DD" range-separator="至" />
         </el-form-item>
-        <el-form-item label="门店 ID"><el-input v-model="query.storeId" style="width: 140px" /></el-form-item>
+        <el-form-item label="门店 ID"><el-input v-model="query.storeId" data-testid="reporting-store" style="width: 140px" /></el-form-item>
         <el-form-item v-if="reportType === 'SALES_DAILY'" label="终端"><el-input v-model="query.terminalId" clearable /></el-form-item>
         <el-form-item v-if="reportType === 'INVENTORY_COST_DAILY'" label="仓库 ULID"><el-input v-model="query.warehouseId" clearable /></el-form-item>
         <el-form-item v-if="reportType === 'PAYMENT_RECONCILIATION'" label="差异">
@@ -40,8 +48,8 @@
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button v-hasPermi="queryPermissions" type="primary" icon="Search" :loading="loading" @click="loadReport">查询</el-button>
-          <el-button v-hasPermi="['report:export:request']" icon="Download" @click="openExport">安全导出</el-button>
+          <el-button v-hasPermi="queryPermissions" data-testid="reporting-query" type="primary" icon="Search" :loading="pageBusy" @click="loadReport">查询</el-button>
+          <el-button v-hasPermi="['report:export:request']" data-testid="reporting-export-open" icon="Download" :disabled="pageBusy" @click="openExport">安全导出</el-button>
         </el-form-item>
       </el-form>
 
@@ -128,7 +136,7 @@
       <template #footer>
         <el-button @click="exportDialog = false">关闭</el-button>
         <el-button @click="refreshExport">刷新状态</el-button>
-        <el-button v-hasPermi="['report:export:request']" type="primary" @click="submitExport">申请</el-button>
+        <el-button v-hasPermi="['report:export:request']" data-testid="reporting-export-request" type="primary" :loading="submitting" @click="submitExport">申请</el-button>
         <el-button
           v-if="currentExport?.state === 'REQUESTED' && currentExport.approvalRequired"
           v-hasPermi="['report:export:approve']"
@@ -185,7 +193,11 @@
 </template>
 
 <script setup name="ReportingOperation" lang="ts">
+import { ElMessage, ElMessageBox } from 'element-plus';
 import { saveAs } from 'file-saver';
+import OwnerPageFeedback from '@/views/operations/components/OwnerPageFeedback.vue';
+import { useRecoverablePage } from '@/composables/useRecoverablePage';
+import { useStableOperationIdentity } from '@/composables/useStableOperationIdentity';
 import {
   approveReportExport,
   downloadReportExport,
@@ -214,7 +226,10 @@ const today = new Date().toISOString().slice(0, 10);
 const reportType = ref<ReportType>('SALES_DAILY');
 const dateRange = ref<[string, string]>([today, today]);
 const query = reactive<ReportQuery>({ fromDate: today, toDate: today, storeId: '', terminalId: '', warehouseId: '' });
-const loading = ref(false);
+const { phase, failure, submitting, runRead, runWrite } = useRecoverablePage('REPORTING_PAGE_FAILED');
+const operationKeys = useStableOperationIdentity(newUlid);
+const pageBusy = computed(() => phase.value === 'LOADING' || submitting.value);
+const loading = computed(() => phase.value === 'LOADING');
 const salesRows = ref<SalesDailyVO[]>([]);
 const inventoryRows = ref<InventoryCostDailyVO[]>([]);
 const paymentRows = ref<PaymentReconciliationVO[]>([]);
@@ -289,14 +304,34 @@ const normalizedQuery = (): ReportQuery => ({
 });
 
 const loadReport = async () => {
-  loading.value = true;
+  const result = await runRead(
+    async () =>
+      reportType.value === 'SALES_DAILY'
+        ? (await querySalesDaily(normalizedQuery())).data
+        : reportType.value === 'INVENTORY_COST_DAILY'
+          ? (await queryInventoryCostDaily(normalizedQuery())).data
+          : (await queryPaymentReconciliation(normalizedQuery())).data,
+    (rows) => rows.length === 0
+  );
+  if (!result) return;
+  salesRows.value = reportType.value === 'SALES_DAILY' ? (result as SalesDailyVO[]) : [];
+  inventoryRows.value = reportType.value === 'INVENTORY_COST_DAILY' ? (result as InventoryCostDailyVO[]) : [];
+  paymentRows.value = reportType.value === 'PAYMENT_RECONCILIATION' ? (result as PaymentReconciliationVO[]) : [];
+};
+
+const confirmImpact = async (title: string, message: string): Promise<boolean> => {
   try {
-    if (reportType.value === 'SALES_DAILY') salesRows.value = (await querySalesDaily(normalizedQuery())).data;
-    else if (reportType.value === 'INVENTORY_COST_DAILY') inventoryRows.value = (await queryInventoryCostDaily(normalizedQuery())).data;
-    else paymentRows.value = (await queryPaymentReconciliation(normalizedQuery())).data;
-  } finally {
-    loading.value = false;
+    await ElMessageBox.confirm(message, title, { type: 'warning', confirmButtonText: '确认执行', cancelButtonText: '取消' });
+    return true;
+  } catch {
+    return false;
   }
+};
+
+const executeWrite = async <T,>(operation: string, work: (key: string) => Promise<T>): Promise<T | undefined> => {
+  const result = await runWrite(operation, () => work(operationKeys.get(operation)));
+  if (result !== undefined) operationKeys.complete(operation);
+  return result;
 };
 
 const openExport = () => {
@@ -308,58 +343,82 @@ const openExport = () => {
 };
 
 const submitExport = async () => {
-  currentExport.value = (
-    await requestReportExport({
+  const operation = `report:export:${exportId.value}:request`;
+  if (!(await confirmImpact('安全导出申请确认', `导出 ${exportId.value}；门店范围 ${exportStoreIds.value || '当前数据范围'}；最多 31 个业务日。`))) return;
+  const result = await executeWrite(operation, (key) =>
+    requestReportExport({
       exportId: exportId.value,
       reportType: reportType.value,
       fromDate: dateRange.value[0],
       toDate: dateRange.value[1],
       storeIds: parseStoreIds(exportStoreIds.value),
       fields: exportFields.value,
-      correlationId: newUlid()
+      correlationId: key
     })
-  ).data;
+  );
+  if (!result) return;
+  currentExport.value = result.data;
   ElMessage.success('导出申请已提交');
 };
 
 const refreshExport = async () => {
-  currentExport.value = (await getReportExport(exportId.value)).data;
+  const result = await runRead(() => getReportExport(exportId.value));
+  if (result) currentExport.value = result.data;
 };
 
 const approveExport = async () => {
   if (!currentExport.value) return;
-  currentExport.value = (await approveReportExport(exportId.value, true, approvalReason.value, currentExport.value.version, newUlid())).data;
+  if (!(await confirmImpact('独立审批确认', `批准导出 ${exportId.value}；版本 ${currentExport.value.version}；原因：${approvalReason.value}`))) return;
+  const operation = `report:export:${exportId.value}:approve`;
+  const result = await executeWrite(operation, (key) =>
+    approveReportExport(exportId.value, true, approvalReason.value, currentExport.value!.version, key)
+  );
+  if (result) currentExport.value = result.data;
 };
 
 const generateExport = async () => {
   if (!currentExport.value) return;
-  currentExport.value = (await generateReportExport(exportId.value, currentExport.value.version, newUlid())).data;
+  if (!(await confirmImpact('导出制品生成确认', `生成导出 ${exportId.value}；版本 ${currentExport.value.version}；制品受短期下载权限保护。`))) return;
+  const operation = `report:export:${exportId.value}:generate`;
+  const result = await executeWrite(operation, (key) => generateReportExport(exportId.value, currentExport.value!.version, key));
+  if (result) currentExport.value = result.data;
 };
 
 const downloadExport = async () => {
-  const token = (await issueReportDownloadToken(exportId.value)).data;
-  const artifact = await downloadReportExport(exportId.value, token.token);
+  if (!(await confirmImpact('单次下载确认', `下载导出 ${exportId.value}；链接仅供当前受权操作使用并受服务端数据范围复核。`))) return;
+  const operation = `report:export:${exportId.value}:download`;
+  const artifact = await executeWrite(operation, async () => {
+    const token = (await issueReportDownloadToken(exportId.value)).data;
+    return downloadReportExport(exportId.value, token.token);
+  });
+  if (!artifact) return;
   saveAs(artifact.data, `jshpos-report-${exportId.value}.csv`);
 };
 
 const openReconciliation = async (row: PaymentReconciliationVO) => {
   selectedReconciliation.value = row;
   transitionState.value = row.handlingState === 'OPEN' ? 'ASSIGNED' : 'RESOLVED';
-  reconciliationAudit.value = (await getPaymentReconciliationAudit(row.reconciliationId)).data;
+  const result = await runRead(() => getPaymentReconciliationAudit(row.reconciliationId));
+  if (!result) return;
+  reconciliationAudit.value = result.data;
   reconciliationDialog.value = true;
 };
 
 const submitReconciliationTransition = async () => {
   if (!selectedReconciliation.value || !transitionReason.value.trim()) return;
-  const changed = (
-    await transitionPaymentReconciliation(
+  if (!(await confirmImpact('对账差异处置确认', `对账 ${selectedReconciliation.value.reconciliationId}；版本 ${selectedReconciliation.value.version}；目标状态 ${transitionState.value}。UNKNOWN 只能查询原事实。`))) return;
+  const operation = `report:reconciliation:${selectedReconciliation.value.reconciliationId}:${transitionState.value}`;
+  const result = await executeWrite(operation, (key) =>
+    transitionPaymentReconciliation(
       selectedReconciliation.value.reconciliationId,
       transitionState.value,
       transitionReason.value,
       selectedReconciliation.value.version,
-      newUlid()
+      key
     )
-  ).data;
+  );
+  if (!result) return;
+  const changed = result.data;
   selectedReconciliation.value = changed;
   reconciliationAudit.value = (await getPaymentReconciliationAudit(changed.reconciliationId)).data;
   paymentRows.value = paymentRows.value.map((row) => (row.reconciliationId === changed.reconciliationId ? changed : row));
