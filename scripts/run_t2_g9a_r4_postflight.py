@@ -189,15 +189,30 @@ def run_journey(
                  f"{label}-onboarding-admin-login")
     client.call("POST", f"/api/v1/onboarding/plans/{plan_id}/apply", f"{label}-onboarding-apply",
                 headers=api_headers(f"{label}-onboard-apply", stable_ulid(f"{run_id}:{label}:onboard:apply")))
+
+    # 模板应用只冻结 Foundation 配置，不越权替 Catalog/Inventory Owner 伪造就绪事实。
+    # 待开门店必须继续经各 Owner 正式 API 发布自己的数据包和库存策略，才能进入开店检查。
+    client.call("POST", "/api/v1/catalog/packages", f"{label}-onboarding-catalog-package", body={
+        "storeId": context["onboardingTargetStoreId"], "packageVersion": 1, "previousVersion": 0,
+    })
+    client.call("POST", "/api/v1/inventory/policies", f"{label}-onboarding-inventory-policy", body={
+        "policyVersionId": stable_ulid(f"{run_id}:{label}:onboarding:inventory-policy"),
+        "storeId": str(context["onboardingTargetStoreId"]), "warehouseId": WAREHOUSE_ID,
+        "negativeStockMode": "DENY", "effectiveFrom": point_text,
+        "correlationId": stable_ulid(f"{run_id}:{label}:onboarding:inventory-policy:trace"),
+    })
     plan = data(client.call("POST", f"/api/v1/onboarding/plans/{plan_id}/checks", f"{label}-onboarding-checks",
                             headers=api_headers(f"{label}-onboard-checks",
                                                 stable_ulid(f"{run_id}:{label}:onboard:checks"))))
+    all_checks = {check.get("checkCode"): check.get("status") for check in plan.get("checks", [])}
     external_checks = {check.get("checkCode"): check.get("status") for check in plan.get("checks", [])
                        if check.get("external") is True}
     if (plan.get("plan", {}).get("state") != "READY_TO_OPEN"
             or external_checks != {code: "BLOCKED" for code in EXTERNAL_ONBOARDING_CHECKS}):
         raise JourneyFailure(
-            f"{label}-onboarding-checks: internal checks must pass and all external P0 remain BLOCKED")
+            f"{label}-onboarding-checks: state={plan.get('plan', {}).get('state')} "
+            f"checks={json.dumps(all_checks, sort_keys=True, separators=(',', ':'))}; "
+            "internal checks must pass and all external P0 remain BLOCKED")
 
     transfer_id = stable_ulid(f"{run_id}:{label}:transfer")
     transfer_line_id = stable_ulid(f"{run_id}:{label}:transfer-line")

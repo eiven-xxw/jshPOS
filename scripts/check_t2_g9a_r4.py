@@ -72,6 +72,10 @@ def main() -> None:
             and "SYNTHETIC_RESTORE" in postflight_text
             and "EXTERNAL_ONBOARDING_CHECKS" in postflight_text,
             "postflight must prove synthetic restore while all external onboarding P0 stay blocked")
+    require("onboarding-catalog-package" in postflight_text
+            and "onboarding-inventory-policy" in postflight_text
+            and 'context["onboardingTargetStoreId"]' in postflight_text,
+            "postflight must provision target-store Catalog and Inventory readiness through formal APIs")
     fault_text = fault_runner.read_text(encoding="utf-8")
     require("R4-F01" in fault_text and "R4-F12" in fault_text,
             "R4-R5 runner must emit the complete fixed seed ledger")
