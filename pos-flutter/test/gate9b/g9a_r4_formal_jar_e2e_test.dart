@@ -603,7 +603,9 @@ Future<Map<String, Object?>> _pushFirstOutboxWithoutPersistingAck({
     database.close();
   }
   final transport = PosSyncHttpTransport(
-    baseUri: baseUri,
+    // 与正式 SessionBoundPosRuntime 复用同一 POS API 根路径；
+    // ACK 丢失夹具只能省略本地 ACK 持久化，不能绕过或另造同步端点。
+    baseUri: baseUri.resolve('api/pos/v1/'),
     clientId: _clientId,
     deviceId: terminal.deviceId,
     accessTokenProvider: session.accessToken,
