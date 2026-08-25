@@ -1,6 +1,7 @@
 package com.jingshanghui.pos.foundation.application.service;
 
 import com.jingshanghui.pos.foundation.application.port.TrustedDeviceStoreContextPort;
+import com.jingshanghui.pos.foundation.application.context.VerifiedDeviceTenantScope;
 import com.jingshanghui.pos.foundation.domain.BusinessDay;
 import com.jingshanghui.pos.foundation.infrastructure.persistence.entity.StoreEntity;
 import com.jingshanghui.pos.foundation.infrastructure.persistence.mapper.StoreMapper;
@@ -18,6 +19,7 @@ import java.time.ZoneId;
 @RequiredArgsConstructor
 public class TrustedDeviceStoreContextService implements TrustedDeviceStoreContextPort {
     private final StoreMapper storeMapper;
+    private final VerifiedDeviceTenantScope deviceTenantScope;
 
     @Override
     @Transactional(readOnly = true)
@@ -26,6 +28,7 @@ public class TrustedDeviceStoreContextService implements TrustedDeviceStoreConte
             || orgUnitId == null || orgUnitId <= 0 || storeId == null || storeId <= 0 || at == null) {
             throw new ServiceException("TRM_STORE_CONTEXT_INVALID: 可信门店查询参数无效", 400);
         }
+        deviceTenantScope.requireMatches(tenantId, orgUnitId, storeId);
         StoreEntity store = TenantHelper.dynamic(tenantId, () -> storeMapper.selectById(storeId));
         if (store == null || !tenantId.equals(store.getTenantId()) || !orgUnitId.equals(store.getOrgUnitId())
             || !"ACTIVE".equals(store.getStatus())) {

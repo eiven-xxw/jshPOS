@@ -7,6 +7,7 @@ import com.jingshanghui.pos.sync.application.port.TerminalRegistryPort;
 import com.jingshanghui.pos.sync.domain.SyncIdGenerator;
 import com.jingshanghui.pos.sync.infrastructure.security.HmacTerminalSecretProtector;
 import com.jingshanghui.pos.foundation.application.port.TrustedDeviceStoreContextPort;
+import com.jingshanghui.pos.foundation.application.context.VerifiedDeviceTenantScope;
 import org.dromara.common.core.exception.ServiceException;
 import org.junit.jupiter.api.Test;
 
@@ -31,8 +32,9 @@ class TerminalAuthenticationServiceTest {
     private final TrustedDeviceStoreContextPort storeContexts = mock(TrustedDeviceStoreContextPort.class);
     private final HmacTerminalSecretProtector protector =
         new HmacTerminalSecretProtector("synthetic-test-pepper-32-characters-minimum");
+    private final VerifiedDeviceTenantScope deviceScope = new VerifiedDeviceTenantScope();
     private final TerminalAuthenticationService service = new TerminalAuthenticationService(port, protector, ids,
-        storeContexts, Clock.fixed(NOW, ZoneOffset.UTC));
+        storeContexts, deviceScope, Clock.fixed(NOW, ZoneOffset.UTC));
 
     @Test
     void derivesTenantAndStoreOnlyAfterCredentialVerification() {
