@@ -56,13 +56,18 @@ def numeric(value: dict[str, Any], key: str) -> int:
     return result
 
 
+def canonical_occurred_at() -> str:
+    """生成可由 Java Instant 无损往返的 UTC 秒级时间，避免尾随零改变摘要。"""
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+
 def report_event(
     *, context: dict[str, Any], journey: dict[str, Any], owner: str, family: str,
     sequence: int, delta: dict[str, Any], run_id: str,
 ) -> dict[str, Any]:
     event_id = stable_ulid(f"{run_id}:{journey['journeyId']}:report:{owner}")
     correlation = stable_ulid(f"{run_id}:{journey['journeyId']}:report:{owner}:correlation")
-    occurred_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    occurred_at = canonical_occurred_at()
     terminal_id = text(context, "terminalId") if family == "SALES" else None
     cashier_id = int(context["userId"]) if family == "SALES" else None
     warehouse_id = None if family == "SALES" else WAREHOUSE_ID

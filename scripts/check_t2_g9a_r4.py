@@ -80,6 +80,10 @@ def main() -> None:
             and "onboarding-inventory-policy" in postflight_text
             and 'context["onboardingTargetStoreId"]' in postflight_text,
             "postflight must provision target-store Catalog and Inventory readiness through formal APIs")
+    require("def canonical_occurred_at()" in postflight_text
+            and "replace(microsecond=0)" in postflight_text
+            and "occurred_at = canonical_occurred_at()" in postflight_text,
+            "report source timestamps must round-trip through Java Instant without hash drift")
     fault_text = fault_runner.read_text(encoding="utf-8")
     require("R4-F01" in fault_text and "R4-F12" in fault_text,
             "R4-R5 runner must emit the complete fixed seed ledger")
