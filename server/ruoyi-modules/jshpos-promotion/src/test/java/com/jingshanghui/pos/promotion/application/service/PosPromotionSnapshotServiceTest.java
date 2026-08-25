@@ -51,7 +51,7 @@ class PosPromotionSnapshotServiceTest {
         when(persistence.findPackage("TENANT_A", 1101L, 1L)).thenReturn(mock(PackageView.class));
         when(ids.next()).thenReturn("01K2A000000000000000000301", "01K2A000000000000000000302",
             "01K2A000000000000000000303", "01K2A000000000000000000304");
-        assertThat(snapshotHash()).isEqualTo("b747993a40606c06fcd0799286ffae1f50249fc7ccdd0c07c46a9d3e2f04a1d8");
+        assertThat(snapshotHash()).isEqualTo("e32cc5b8aff62083a1688fa2946b93c2d53f90bf363752c28a857be03611d84d");
         SnapshotCommand command = command(snapshotHash());
 
         service.ingest(command);
@@ -94,7 +94,7 @@ class PosPromotionSnapshotServiceTest {
         SnapshotLine line = line();
         String sources = CanonicalJson.from(new LinkedHashMap<>(line.sourceAllocations())).sha256();
         Map<String, Object> canonicalLine = Map.of("lineId", LINE, "lineNo", 1, "skuId", 701L,
-            "quantity", "1.000000", "grossAmountMinor", 1299L, "discountAmountMinor", 200L,
+            "quantity", "1", "grossAmountMinor", 1299L, "discountAmountMinor", 200L,
             "payableAmountMinor", 1099L, "sourceAllocationsSha256", sources);
         Map<String, Object> content = new LinkedHashMap<>();
         content.put("snapshotId", SNAPSHOT); content.put("orderId", ORDER); content.put("quoteId", QUOTE);
