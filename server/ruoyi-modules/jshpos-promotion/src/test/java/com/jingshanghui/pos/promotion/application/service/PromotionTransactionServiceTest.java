@@ -104,7 +104,7 @@ class PromotionTransactionServiceTest {
             1101L, "TERM-01", LocalDate.of(2026, 8, 17), "CNY", fingerprint, frozen.snapshotHash(),
             1000, 100, 900));
         when(persistence.listSnapshotLines(TENANT, SNAPSHOT)).thenReturn(List.of(new StoredSnapshotLine(saved.lineId(),
-            saved.lineNo(), saved.skuId(), saved.quantity(), saved.grossAmountMinor(), saved.discountAmountMinor(),
+            saved.lineNo(), saved.skuId(), saved.quantity().setScale(6), saved.grossAmountMinor(), saved.discountAmountMinor(),
             saved.payableAmountMinor(), saved.sourceAllocationsJson(), saved.sourceAllocationsSha256())));
         when(persistence.listRefundHistory(TENANT, SNAPSHOT)).thenReturn(List.of());
 
@@ -128,7 +128,7 @@ class PromotionTransactionServiceTest {
             1101L, "TERM-01", LocalDate.of(2026, 8, 17), "CNY", fingerprint, frozen.snapshotHash(),
             1000, 100, 900));
         when(persistence.listSnapshotLines(TENANT, SNAPSHOT)).thenReturn(List.of(new StoredSnapshotLine(saved.lineId(),
-            saved.lineNo(), saved.skuId(), saved.quantity(), saved.grossAmountMinor(), saved.discountAmountMinor(),
+            saved.lineNo(), saved.skuId(), saved.quantity().setScale(6), saved.grossAmountMinor(), saved.discountAmountMinor(),
             saved.payableAmountMinor(), saved.sourceAllocationsJson(), saved.sourceAllocationsSha256())));
         when(persistence.listRefundHistory(TENANT, SNAPSHOT)).thenReturn(List.of());
         clearInvocations(persistence);
@@ -156,7 +156,7 @@ class PromotionTransactionServiceTest {
             LocalDateTime.ofInstant(NOW, ZoneOffset.UTC), "CNY", "c".repeat(64), fingerprint,
             PromotionEngine.ENGINE_VERSION, 31L, 1000, 100, 900));
         when(persistence.listSnapshotLines(TENANT, SNAPSHOT)).thenReturn(List.of(new StoredSnapshotLine(saved.lineId(),
-            saved.lineNo(), saved.skuId(), saved.quantity(), saved.grossAmountMinor(), saved.discountAmountMinor(),
+            saved.lineNo(), saved.skuId(), saved.quantity().setScale(6), saved.grossAmountMinor(), saved.discountAmountMinor(),
             saved.payableAmountMinor(), saved.sourceAllocationsJson(), saved.sourceAllocationsSha256())));
         when(persistence.listRefundHistory(TENANT, SNAPSHOT)).thenReturn(List.of());
 

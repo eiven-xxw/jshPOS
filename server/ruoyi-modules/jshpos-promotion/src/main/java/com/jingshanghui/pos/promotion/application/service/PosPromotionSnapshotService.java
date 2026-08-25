@@ -185,7 +185,7 @@ public class PosPromotionSnapshotService implements PromotionSnapshotIngestionPo
         for (SnapshotLine line : ordered(lines)) {
             CanonicalJson.Result sources = CanonicalJson.from(new LinkedHashMap<>(line.sourceAllocations()));
             result.add(Map.of("lineId", line.lineId(), "lineNo", line.lineNo(), "skuId", line.skuId(),
-                "quantity", line.quantity().toPlainString(), "grossAmountMinor", line.grossAmountMinor(),
+                "quantity", canonicalQuantity(line.quantity()), "grossAmountMinor", line.grossAmountMinor(),
                 "discountAmountMinor", line.discountAmountMinor(), "payableAmountMinor", line.payableAmountMinor(),
                 "sourceAllocationsSha256", sources.sha256()));
         }
@@ -195,6 +195,11 @@ public class PosPromotionSnapshotService implements PromotionSnapshotIngestionPo
     private List<SnapshotLine> ordered(List<SnapshotLine> lines) {
         return lines.stream().sorted(Comparator.comparingInt(SnapshotLine::lineNo)
             .thenComparing(SnapshotLine::skuId).thenComparing(SnapshotLine::lineId)).toList();
+    }
+
+    /** 固定摘要中的十进制表达，避免 MySQL DECIMAL 回读补零改变不可变事实身份。 */
+    private String canonicalQuantity(BigDecimal value) {
+        return value.stripTrailingZeros().toPlainString();
     }
 
     private boolean ulid(String value) { return value != null && value.matches(ULID); }

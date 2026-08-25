@@ -322,9 +322,14 @@ public class PromotionTransactionService {
         return lines.stream().sorted(Comparator.comparingInt(SnapshotLineView::lineNo)
             .thenComparing(SnapshotLineView::skuId).thenComparing(SnapshotLineView::lineId)).map(line ->
             Map.<String, Object>of("lineId", line.lineId(), "lineNo", line.lineNo(), "skuId", line.skuId(),
-                "quantity", line.quantity().toPlainString(), "grossAmountMinor", line.grossAmountMinor(),
+                "quantity", canonicalQuantity(line.quantity()), "grossAmountMinor", line.grossAmountMinor(),
                 "discountAmountMinor", line.discountAmountMinor(), "payableAmountMinor", line.payableAmountMinor(),
                 "sourceAllocationsSha256", line.sourceAllocationsSha256())).toList();
+    }
+
+    /** 与 POS 及首次入库摘要保持相同的精确十进制规范，数据库补零不改变事实身份。 */
+    private String canonicalQuantity(BigDecimal value) {
+        return value.stripTrailingZeros().toPlainString();
     }
 
     private CanonicalJson.Result canonicalFreeze(FreezeSnapshot value) {
