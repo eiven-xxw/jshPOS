@@ -331,7 +331,7 @@ Future<Map<String, Object?>> _runJourney({
                   .single['order_id']!
               as String,
       'cashPaymentCount': _count(database, 'local_cash_payment'),
-      'returnCount': completedReturnRef == null ? 0 : 1,
+      'returnCount': 1,
       'exchangeCount': _count(database, 'local_exchange_command'),
       'returnRef': completedReturnRef,
       'exchangeRef': completedExchangeRef,
