@@ -69,7 +69,13 @@ void main() {
                   'userName': 'cashier01',
                   'nickName': '合成收银员',
                 },
-                'permissions': ['pos:session:login', 'pos:shift:open'],
+                'permissions': [
+                  'pos:shift:open',
+                  'pos:basket:operate',
+                  'pos:cash:collect',
+                  'promotion:manual:authorize',
+                  'pos:sync:operate',
+                ],
                 'roles': ['cashier'],
               },
             }),
@@ -114,6 +120,11 @@ void main() {
     expect(terminal.tenantId, 'TENANT_A');
     expect(terminal.storeName, '合成便利店一店');
     expect(login.employee.permissions, contains(PosPermission.shiftOpen));
+    expect(login.employee.permissions, contains(PosPermission.sessionLogin));
+    expect(login.employee.permissions, contains(PosPermission.saleOperate));
+    expect(login.employee.permissions, contains(PosPermission.cashSettle));
+    expect(login.employee.permissions, contains(PosPermission.manualDiscount));
+    expect(login.employee.permissions, contains(PosPermission.syncView));
     expect(refreshed.employee.employeeId, '201');
     expect(
       requests.where((item) => item.path.endsWith('/authenticate')),

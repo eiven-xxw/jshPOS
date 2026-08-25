@@ -166,10 +166,7 @@ final class HttpPosSessionRepository implements PosSessionRepository {
         );
       }
       final now = DateTime.now().toUtc();
-      final permissions = _strings(info['permissions'])
-          .map(_permission)
-          .whereType<PosPermission>()
-          .toSet();
+      final permissions = _permissions(info['permissions']);
       final employee = EmployeeSession(
         employeeId: userId,
         employeeName: _text(
@@ -225,10 +222,7 @@ final class HttpPosSessionRepository implements PosSessionRepository {
         '刷新后的员工、租户或终端绑定不一致。',
       );
     }
-    final permissions = _strings(info['permissions'])
-        .map(_permission)
-        .whereType<PosPermission>()
-        .toSet();
+    final permissions = _permissions(info['permissions']);
     final refreshedEmployee = EmployeeSession(
       employeeId: employee.employeeId,
       employeeName: _text(user, 'nickName', fallback: _text(user, 'userName')),
@@ -371,7 +365,24 @@ PosPermission? _permission(String wire) {
   for (final permission in PosPermission.values) {
     if (permission.wireCode == wire) return permission;
   }
-  return null;
+  return switch (wire) {
+    'pos:basket:operate' => PosPermission.saleOperate,
+    'pos:cash:collect' => PosPermission.cashSettle,
+    'promotion:manual:authorize' => PosPermission.manualDiscount,
+    'promotion:manual:approve' => PosPermission.approveDiscount,
+    'pos:sync:operate' => PosPermission.syncView,
+    _ => null,
+  };
+}
+
+Set<PosPermission> _permissions(Object? value) {
+  final wires = _strings(value).toSet();
+  // RuoYi 超级管理员的通配授权与服务端语义保持一致；普通角色只映射明确的正式权限。
+  if (wires.contains('*:*:*')) return PosPermission.values.toSet();
+  final result = wires.map(_permission).whereType<PosPermission>().toSet();
+  // 登录能力表示终端、员工、租户绑定已经由服务端验证，不额外扩大任何业务权限。
+  result.add(PosPermission.sessionLogin);
+  return result;
 }
 
 String _safeMessage(Object? value) {
