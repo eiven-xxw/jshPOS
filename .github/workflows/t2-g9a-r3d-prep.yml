@@ -49,15 +49,16 @@ jobs:
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with: { python-version: "3.12" }
       - name: Validate UTF-8 and cross-platform joint audit
-        shell: pwsh
+        shell: bash
         run: |
-          New-Item -ItemType Directory -Force artifacts/t2/g9a-r3d-prep/governance-windows/joint-audit | Out-Null
+          set -euo pipefail
+          mkdir -p artifacts/t2/g9a-r3d-prep/governance-windows/joint-audit
           python scripts/check_t0_structure.py
           python scripts/check_rtm.py
           python scripts/check_contracts.py
           python -m py_compile scripts/check_t2_g9a_r3d_prep.py scripts/audit_t2_g9a_r3d_joint_pages.py scripts/build_t2_g9a_r3d_prep_evidence.py
           python scripts/audit_t2_gate6g_api.py --output artifacts/t2/g9a-r3d-prep/governance-windows/g9a-r1-regression.json
-          python scripts/check_t2_g9a_r3d_prep.py | Tee-Object artifacts/t2/g9a-r3d-prep/governance-windows/scope.txt
+          python scripts/check_t2_g9a_r3d_prep.py | tee artifacts/t2/g9a-r3d-prep/governance-windows/scope.txt
           python scripts/audit_t2_g9a_r3d_joint_pages.py --output-dir artifacts/t2/g9a-r3d-prep/governance-windows/joint-audit
           git diff --check
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4

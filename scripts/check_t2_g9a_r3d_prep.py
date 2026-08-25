@@ -36,8 +36,11 @@ def git(*args: str) -> str:
     ).strip()
 
 
-def digest(path: pathlib.Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+def git_blob_digest(path: pathlib.Path) -> str:
+    """按 Git Blob 原始字节校验封存来源，避免 Windows 检出换行改变证据摘要。"""
+    relative = path.relative_to(ROOT).as_posix()
+    content = subprocess.check_output(["git", "show", f"HEAD:{relative}"], cwd=ROOT)
+    return hashlib.sha256(content).hexdigest()
 
 
 def rtm() -> tuple[dict[str, str], int]:
@@ -102,7 +105,7 @@ def main() -> int:
     all_ids: list[str] = []
     for source in rollup["sources"]:
         source_path = ROOT / source["path"]
-        if digest(source_path) != source["sha256"]:
+        if git_blob_digest(source_path) != source["sha256"]:
             fail(f"historical source digest drift: {source['path']}")
         document = json.loads(source_path.read_text(encoding="utf-8"))
         ids = [item["surfaceId"] for item in document["surfaces"]]

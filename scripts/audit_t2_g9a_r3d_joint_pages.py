@@ -6,18 +6,18 @@ import argparse
 import hashlib
 import json
 import pathlib
+import subprocess
 
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 CONTRACT = ROOT / "contracts/t2/gate9b-r3d-prep"
 
 
-def sha256(path: pathlib.Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for block in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(block)
-    return digest.hexdigest()
+def git_blob_sha256(path: pathlib.Path) -> str:
+    """使用封存 Git Blob 字节计算摘要，避免执行器换行策略改变证据身份。"""
+    relative = path.relative_to(ROOT).as_posix()
+    content = subprocess.check_output(["git", "show", f"HEAD:{relative}"], cwd=ROOT)
+    return hashlib.sha256(content).hexdigest()
 
 
 def load(path: pathlib.Path) -> dict:
@@ -30,7 +30,7 @@ def collect() -> tuple[list[dict], list[dict]]:
     sources: list[dict] = []
     for source in rollup["sources"]:
         path = ROOT / source["path"]
-        actual_hash = sha256(path)
+        actual_hash = git_blob_sha256(path)
         if actual_hash != source["sha256"]:
             raise AssertionError(f"immutable source digest drift: {source['path']}")
         document = load(path)
