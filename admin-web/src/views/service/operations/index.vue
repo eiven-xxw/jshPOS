@@ -7,6 +7,13 @@
       title="Gate 8A 服务运营（内部软件执行）"
       description="所有状态、租约、职责分离、租户门店范围和附件对象键均由服务端决定；内部时间目标不构成合同 SLA。"
     />
+    <OwnerPageFeedback
+      surface-id="service"
+      :state="phase"
+      :failure="failure"
+      empty-title="当前可信租户和门店范围内暂无服务记录"
+      @retry="retryActive"
+    />
 
     <el-tabs v-model="activeTab" class="mt-3" type="border-card">
       <el-tab-pane label="服务目录" name="catalog">
@@ -62,7 +69,7 @@
           <el-form-item label="目标日期"><el-date-picker v-model="projectForm.targetDate" type="date" value-format="YYYY-MM-DD" /></el-form-item>
           <el-form-item>
             <el-button v-hasPermi="['service:project:create']" type="primary" :loading="loading" @click="createProject">创建项目</el-button>
-            <el-button v-hasPermi="['service:project:read']" :loading="loading" @click="refreshProjects">刷新</el-button>
+            <el-button v-hasPermi="['service:project:read']" data-testid="service-project-refresh" :loading="loading" @click="refreshProjects">刷新</el-button>
           </el-form-item>
         </el-form>
         <el-table :data="projects" border @row-click="openProject">
@@ -161,6 +168,7 @@
                 <el-button
                   v-if="scope.row.state === 'STORED'"
                   v-hasPermi="['service:attachment:cleanup']"
+                  data-testid="service-attachment-cleanup"
                   link
                   type="danger"
                   @click.stop="cleanupAttachment(scope.row)"
@@ -176,6 +184,10 @@
 </template>
 
 <script setup lang="ts">
+import { ElMessageBox } from 'element-plus';
+import OwnerPageFeedback from '@/views/operations/components/OwnerPageFeedback.vue';
+import { useRecoverablePage } from '@/composables/useRecoverablePage';
+import { useStableOperationIdentity } from '@/composables/useStableOperationIdentity';
 import {
   cleanupServiceAttachment,
   commandServiceProject,
@@ -205,7 +217,9 @@ import type {
 import { newOperationCommandId } from '@/api/operations';
 
 const activeTab = ref('catalog');
-const loading = ref(false);
+const { phase, failure, submitting, runRead, runWrite } = useRecoverablePage('SERVICE_PAGE_FAILED');
+const operationKeys = useStableOperationIdentity(newOperationCommandId);
+const loading = computed(() => phase.value === 'LOADING' || submitting.value);
 const storeId = ref(1001);
 const actionReason = ref('已完成权限、影响与审计复核');
 const catalogDetail = ref<CatalogDetail>();
@@ -237,76 +251,93 @@ const ticketForm = reactive({
   internalTargetMinutes: 240
 });
 const ticketAction = reactive({ assigneeUserId: 1, leaseMinutes: 30 });
-const keys = new Map<string, string>();
-
 const identity = (action: string): ServiceIdentity => {
-  if (!keys.has(action)) keys.set(action, newOperationCommandId());
-  const value = keys.get(action)!;
+  const value = operationKeys.get(action);
   return { idempotencyKey: value, correlationId: value };
 };
-const run = async <T,>(work: () => Promise<T>): Promise<T> => {
-  loading.value = true;
-  try {
-    return await work();
-  } finally {
-    loading.value = false;
-  }
-};
-const command = async <T,>(action: string, work: (value: ServiceIdentity) => Promise<T>): Promise<T> => {
-  const result = await run(() => work(identity(action)));
-  keys.delete(action);
+const run = <T,>(work: () => Promise<T>, empty: (value: T) => boolean = () => false): Promise<T | undefined> => runRead(work, empty);
+const command = async <T,>(action: string, work: (value: ServiceIdentity) => Promise<T>): Promise<T | undefined> => {
+  const result = await runWrite(`service:${action}`, () => work(identity(action)));
+  if (result !== undefined) operationKeys.complete(action);
   return result;
 };
 
+const confirmImpact = async (title: string, message: string): Promise<boolean> => {
+  try {
+    await ElMessageBox.confirm(message, title, { type: 'warning', confirmButtonText: '确认执行', cancelButtonText: '取消' });
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 const createCatalog = async () => {
-  catalogDetail.value = (await command('catalog-create', (i) => createServiceCatalog({ ...catalogForm }, i))).data;
+  const result = await command('catalog-create', (i) => createServiceCatalog({ ...catalogForm }, i));
+  if (!result) return;
+  catalogDetail.value = result.data;
   projectForm.catalogId = catalogDetail.value.catalog.catalogId;
 };
 const publishCatalog = async () => {
   if (!catalogDetail.value) return;
-  catalogDetail.value = (await command('catalog-publish', (i) => publishServiceCatalog(catalogDetail.value!.catalog.catalogId, i))).data;
+  if (!(await confirmImpact('发布服务目录', `目录 ${catalogDetail.value.catalog.catalogId} 将成为不可变版本。`))) return;
+  const result = await command('catalog-publish', (i) => publishServiceCatalog(catalogDetail.value!.catalog.catalogId, i));
+  if (result) catalogDetail.value = result.data;
 };
-const refreshProjects = async () => (projects.value = (await run(() => listServiceProjects(storeId.value))).data);
+const refreshProjects = async () => {
+  const result = await run(() => listServiceProjects(storeId.value), (value) => value.data.length === 0);
+  if (result) projects.value = result.data;
+};
 const createProject = async () => {
-  projectDetail.value = (await command('project-create', (i) => createServiceProject({ storeId: storeId.value, ...projectForm }, i))).data;
+  const result = await command('project-create', (i) => createServiceProject({ storeId: storeId.value, ...projectForm }, i));
+  if (!result) return;
+  projectDetail.value = result.data;
   await refreshProjects();
 };
-const openProject = async (row: ProjectRecord) => (projectDetail.value = (await run(() => getServiceProject(row.projectId))).data);
+const openProject = async (row: ProjectRecord) => {
+  const result = await run(() => getServiceProject(row.projectId));
+  if (result) projectDetail.value = result.data;
+};
 const runProjectCommand = async (name: string) => {
   if (!projectDetail.value) return;
   const project = projectDetail.value.project;
-  projectDetail.value = (
-    await command(`project-${name}-${project.recordVersion}`, (i) =>
-      commandServiceProject(project.projectId, project.recordVersion, { command: name, reason: actionReason.value }, i)
-    )
-  ).data;
+  if (!(await confirmImpact('实施项目状态确认', `项目 ${project.projectId}；版本 ${project.recordVersion}；动作 ${name}。`))) return;
+  const result = await command(`project-${name}-${project.recordVersion}`, (i) =>
+    commandServiceProject(project.projectId, project.recordVersion, { command: name, reason: actionReason.value }, i)
+  );
+  if (!result) return;
+  projectDetail.value = result.data;
   await refreshProjects();
 };
 const completeCheck = async (check: CheckRecord) => {
   if (!projectDetail.value) return;
   const projectId = projectDetail.value.project.projectId;
-  projectDetail.value = (
-    await command(`check-${check.checkId}-${check.recordVersion}`, (i) =>
-      completeServiceProjectCheck(projectId, check.checkId, check.recordVersion, actionReason.value, i)
-    )
-  ).data;
+  const result = await command(`check-${check.checkId}-${check.recordVersion}`, (i) =>
+    completeServiceProjectCheck(projectId, check.checkId, check.recordVersion, actionReason.value, i)
+  );
+  if (result) projectDetail.value = result.data;
 };
 
-const refreshTickets = async () => (tickets.value = (await run(() => listServiceTickets(storeId.value))).data);
+const refreshTickets = async () => {
+  const result = await run(() => listServiceTickets(storeId.value), (value) => value.data.length === 0);
+  if (result) tickets.value = result.data;
+};
 const createTicket = async () => {
-  ticketDetail.value = (
-    await command('ticket-create', (i) =>
-      createServiceTicket({ storeId: storeId.value, projectId: projectDetail.value?.project.projectId, ...ticketForm }, i)
-    )
-  ).data;
+  const result = await command('ticket-create', (i) =>
+    createServiceTicket({ storeId: storeId.value, projectId: projectDetail.value?.project.projectId, ...ticketForm }, i)
+  );
+  if (!result) return;
+  ticketDetail.value = result.data;
   await refreshTickets();
 };
-const openTicket = async (row: TicketRecord) => (ticketDetail.value = (await run(() => getServiceTicket(row.ticketId))).data);
+const openTicket = async (row: TicketRecord) => {
+  const result = await run(() => getServiceTicket(row.ticketId));
+  if (result) ticketDetail.value = result.data;
+};
 const runTicketCommand = async (name: string) => {
   if (!ticketDetail.value) return;
   const ticket = ticketDetail.value.ticket;
-  ticketDetail.value = (
-    await command(`ticket-${name}-${ticket.recordVersion}`, (i) =>
+  if (!(await confirmImpact('服务工单状态确认', `工单 ${ticket.ticketId}；版本 ${ticket.recordVersion}；动作 ${name}；租约 ${ticketAction.leaseMinutes} 分钟。`))) return;
+  const result = await command(`ticket-${name}-${ticket.recordVersion}`, (i) =>
       commandServiceTicket(
         ticket.ticketId,
         ticket.recordVersion,
@@ -319,28 +350,40 @@ const runTicketCommand = async (name: string) => {
         },
         i
       )
-    )
-  ).data;
+    );
+  if (!result) return;
+  ticketDetail.value = result.data;
   await refreshTickets();
 };
 const uploadAttachment = async () => {
   const file = fileInput.value?.files?.[0];
   if (!ticketDetail.value || !file) return;
   const ticketId = ticketDetail.value.ticket.ticketId;
-  await command(`attachment-upload-${file.name}-${file.size}`, (i) => uploadServiceAttachment(ticketId, file, i));
-  ticketDetail.value = (await getServiceTicket(ticketId)).data;
+  const uploaded = await command(`attachment-upload-${file.name}-${file.size}`, (i) => uploadServiceAttachment(ticketId, file, i));
+  if (!uploaded) return;
+  const refreshed = await run(() => getServiceTicket(ticketId));
+  if (refreshed) ticketDetail.value = refreshed.data;
 };
 const downloadAttachment = async (attachment: AttachmentRecord) => {
   if (!ticketDetail.value) return;
-  const value = (await issueServiceAttachmentDownload(ticketDetail.value.ticket.ticketId, attachment.attachmentId)).data;
-  window.open(value.downloadUrl, '_blank', 'noopener,noreferrer');
+  const ticketId = ticketDetail.value.ticket.ticketId;
+  await runWrite(`service:attachment:${attachment.attachmentId}:download`, async () => {
+    const value = (await issueServiceAttachmentDownload(ticketId, attachment.attachmentId)).data;
+    const opened = window.open(value.downloadUrl, '_blank', 'noopener,noreferrer');
+    if (!opened) throw new Error('SERVICE_ATTACHMENT_DOWNLOAD_BLOCKED');
+    return value;
+  });
 };
 const cleanupAttachment = async (attachment: AttachmentRecord) => {
   if (!ticketDetail.value) return;
   const ticketId = ticketDetail.value.ticket.ticketId;
+  if (!(await confirmImpact('清理附件正文', `附件 ${attachment.attachmentId}；SHA-256 ${attachment.sha256}。清理后正文不可通过该引用下载。`))) return;
   await command(`attachment-clean-${attachment.attachmentId}`, (i) => cleanupServiceAttachment(ticketId, attachment.attachmentId, i));
-  ticketDetail.value = (await getServiceTicket(ticketId)).data;
+  const refreshed = await run(() => getServiceTicket(ticketId));
+  if (refreshed) ticketDetail.value = refreshed.data;
 };
+
+const retryActive = () => (activeTab.value === 'project' ? refreshProjects() : activeTab.value === 'ticket' ? refreshTickets() : Promise.resolve());
 </script>
 
 <style scoped>
