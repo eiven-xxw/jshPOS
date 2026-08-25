@@ -25,6 +25,7 @@ void main() {
       final database = PosLocalDatabase.inMemory(binding);
       addTearDown(database.close);
       final ulids = UlidGenerator(random: Random(31), now: () => now);
+      var synchronizationCount = 0;
       final service = LocalPosShiftApplicationService(
         database: database,
         checkout: CheckoutLocalService(
@@ -34,6 +35,9 @@ void main() {
         ),
         ulids: ulids,
         configVersion: 1,
+        synchronizeAfterClose: () async {
+          synchronizationCount += 1;
+        },
         now: () => now,
       );
 
@@ -52,6 +56,7 @@ void main() {
       expect(opened.status, 'OPEN');
       expect(row['status'], 'CLOSED');
       expect(row['difference_minor'], 0);
+      expect(synchronizationCount, 1);
       expect(
         database.database
             .select(
@@ -62,4 +67,47 @@ void main() {
       );
     },
   );
+
+  test('关班后同步失败保留已提交事实和原 Outbox 身份', () async {
+    final database = PosLocalDatabase.inMemory(binding);
+    addTearDown(database.close);
+    final ulids = UlidGenerator(random: Random(32), now: () => now);
+    final service = LocalPosShiftApplicationService(
+      database: database,
+      checkout: CheckoutLocalService(
+        localDatabase: database,
+        ulids: ulids,
+        shiftPolicy: const ShiftPolicy(cashDifferenceApprovalMinor: 500),
+      ),
+      ulids: ulids,
+      configVersion: 1,
+      synchronizeAfterClose: () async => throw StateError('synthetic network'),
+      now: () => now,
+    );
+
+    final opened = await service.open(
+      businessDate: '2026-08-21',
+      openingCash: '100.00',
+      idempotencyKey: 'open-shift:gate6g-sync-failure',
+    );
+    await service.close(
+      shiftId: opened.shiftId,
+      actualCash: '100.00',
+      idempotencyKey: 'close-shift:gate6g-sync-failure',
+    );
+
+    expect(
+      database.database
+          .select('SELECT status FROM local_shift')
+          .single['status'],
+      'CLOSED',
+    );
+    final closeEvent = database.database
+        .select(
+          "SELECT event_id,status FROM local_outbox WHERE event_type='shift.closed.v1'",
+        )
+        .single;
+    expect(closeEvent['status'], 'PENDING');
+    expect(closeEvent['event_id'], isNotEmpty);
+  });
 }

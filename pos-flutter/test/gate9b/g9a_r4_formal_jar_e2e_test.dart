@@ -194,9 +194,6 @@ Future<Map<String, Object?>> _runJourney({
       actualCash: '109.40',
       idempotencyKey: '$runId:$journeyId:shift-close',
     );
-    for (var attempt = 0; attempt < 4; attempt += 1) {
-      await runtime.refreshSyncStatus();
-    }
     await runtime.logout(terminal, employee, _ulid(sequence * 10 + 2));
     employee = null;
     terminal = null;

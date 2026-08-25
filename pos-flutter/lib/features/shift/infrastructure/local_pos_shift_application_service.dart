@@ -15,6 +15,7 @@ final class LocalPosShiftApplicationService
     required this.configVersion,
     Set<PosPermission>? permissions,
     this.authorizationRef = 'LOCKED_AUTHORIZATION',
+    this.synchronizeAfterClose,
     DateTime Function()? now,
   }) : permissions = Set.unmodifiable(permissions ?? const <PosPermission>{}),
        _now = now ?? DateTime.now;
@@ -25,6 +26,9 @@ final class LocalPosShiftApplicationService
   final int configVersion;
   final Set<PosPermission> permissions;
   final String authorizationRef;
+
+  /// 关班本地事实提交后触发的同步观察；失败时保留原 Outbox，禁止把已完成关班伪装为失败。
+  final Future<void> Function()? synchronizeAfterClose;
   final DateTime Function() _now;
 
   @override
@@ -83,6 +87,11 @@ final class LocalPosShiftApplicationService
         expectedVersion: rows.single['record_version']! as int,
         occurredAt: _now().toUtc(),
       );
+      try {
+        await synchronizeAfterClose?.call();
+      } on Object {
+        // POS 采用本地优先：网络或服务端不可用时，关班事实仍由原 Outbox 身份等待后续观察。
+      }
     } on PosDomainException catch (error) {
       throw PosSessionFailure(error.code, error.message);
     }

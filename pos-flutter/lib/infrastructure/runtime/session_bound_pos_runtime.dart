@@ -217,6 +217,7 @@ final class FilePosBusinessRuntimeAssembler
         checkout: checkout,
         ulids: ulids,
         configVersion: configVersion,
+        synchronizeAfterClose: sync.runOnce,
         permissions: employee.permissions,
         authorizationRef: employee.sessionRef,
       );
