@@ -66,14 +66,11 @@ void main() {
         );
       }
 
-      expect(
-        results.map((item) => item['industry']).toSet(),
-        {
-          'CONVENIENCE',
-          'SNACK_DISCOUNT',
-          'COMMUNITY_SUPERMARKET',
-        },
-      );
+      expect(results.map((item) => item['industry']).toSet(), {
+        'CONVENIENCE',
+        'SNACK_DISCOUNT',
+        'COMMUNITY_SUPERMARKET',
+      });
       expect(results.every((item) => item['outboxUnsettled'] == 0), isTrue);
       expect(results.every((item) => item['deadLetters'] == 0), isTrue);
       expect(results.every((item) => item['orderCount'] == 1), isTrue);
@@ -117,7 +114,8 @@ Future<Map<String, Object?>> _runJourney({
   required int sequence,
 }) async {
   final journeyId = _text(journey, 'journeyId');
-  final databasePath = '${sqliteRoot.path}${Platform.pathSeparator}'
+  final databasePath =
+      '${sqliteRoot.path}${Platform.pathSeparator}'
       '${journeyId.toLowerCase()}.sqlite3';
   final databaseFile = File(databasePath);
   if (databaseFile.existsSync()) databaseFile.deleteSync();
@@ -221,7 +219,9 @@ Future<Map<String, Object?>> _runJourney({
       statuses[row['status']! as String] = row['count']! as int;
     }
     final eventTypes = database
-        .select('SELECT DISTINCT event_type FROM local_outbox ORDER BY event_type')
+        .select(
+          'SELECT DISTINCT event_type FROM local_outbox ORDER BY event_type',
+        )
         .map((row) => row['event_type']! as String)
         .toList(growable: false);
     final unsettled = statuses.entries
@@ -237,9 +237,13 @@ Future<Map<String, Object?>> _runJourney({
       'sqlitePathSha256': sha256.convert(utf8.encode(databasePath)).toString(),
       'sqliteFileBytes': databaseFile.lengthSync(),
       'orderCount': _count(database, 'local_order'),
-      'orderRef': database
-          .select('SELECT order_id FROM local_order ORDER BY occurred_at DESC LIMIT 1')
-          .single['order_id']! as String,
+      'orderRef':
+          database
+                  .select(
+                    'SELECT order_id FROM local_order ORDER BY occurred_at DESC LIMIT 1',
+                  )
+                  .single['order_id']!
+              as String,
       'cashPaymentCount': _count(database, 'local_cash_payment'),
       'promotionSnapshotCount': _count(
         database,
