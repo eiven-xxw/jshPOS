@@ -298,7 +298,7 @@ public interface CatalogMapper {
         JOIN cat_spu p ON p.tenant_id=s.tenant_id AND p.spu_id=s.spu_id
         JOIN cat_sku_unit su ON su.tenant_id=s.tenant_id AND su.sku_id=s.sku_id AND su.primary_unit=TRUE
         JOIN cat_unit u ON u.tenant_id=su.tenant_id AND u.unit_id=su.unit_id
-        WHERE s.tenant_id=#{tenantId} AND s.status='ACTIVE' AND p.status='ACTIVE' AND u.status='ACTIVE'
+        WHERE s.tenant_id=#{tenantId} AND s.status='ACTIVE' AND u.status='ACTIVE'
         ORDER BY s.sku_id
         """)
     List<String> listProductPackageRows(@Param("tenantId") String tenantId);
