@@ -249,7 +249,15 @@ jobs:
           openssl pkey -in "$RUNNER_TEMP/r4-signing.pem" -pubout -outform DER -out "$RUNNER_TEMP/r4-public.der"
           signing_private="$(base64 -w0 "$RUNNER_TEMP/r4-signing.der")"
           signing_public="$(tail -c 32 "$RUNNER_TEMP/r4-public.der" | base64 -w0)"
+          member_lookup_key="$(openssl rand -base64 32 | tr -d '\n')"
+          member_encryption_key="$(openssl rand -base64 32 | tr -d '\n')"
           echo "::add-mask::$signing_private"
+          echo "::add-mask::$member_lookup_key"
+          echo "::add-mask::$member_encryption_key"
+          # 会员身份密钥只存在于本次正式栈进程环境，并在同一运行窗口的 JAR 重启后继续复用。
+          export JSH_MEMBER_LOOKUP_KEY_B64="$member_lookup_key"
+          export JSH_MEMBER_ENCRYPTION_KEY_B64="$member_encryption_key"
+          export JSH_MEMBER_KEY_VERSION=1
           server_jar="$(find downloaded/server -name ruoyi-admin.jar -type f -print -quit)"
           test -s "$server_jar"
           launch_server() {

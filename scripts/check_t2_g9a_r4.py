@@ -76,6 +76,11 @@ def main() -> None:
     workflow = (ROOT / ".github/workflows/t2-g9a-r4-runtime.yml").read_text(encoding="utf-8")
     require("FLUSHDB" in workflow and "launch_server 2" in workflow,
             "formal job must inject a real Redis loss and JAR restart")
+    require(workflow.count("openssl rand -base64 32") >= 2
+            and "export JSH_MEMBER_LOOKUP_KEY_B64=" in workflow
+            and "export JSH_MEMBER_ENCRYPTION_KEY_B64=" in workflow
+            and "export JSH_MEMBER_KEY_VERSION=" in workflow,
+            "formal member journey must receive ephemeral external identity keys")
 
     bootstrap_text = bootstrap.read_text(encoding="utf-8")
     activate_marker = 'f"{label}-store-activate"'
