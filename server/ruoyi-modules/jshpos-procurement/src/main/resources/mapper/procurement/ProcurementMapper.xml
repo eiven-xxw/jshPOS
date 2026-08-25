@@ -6,30 +6,61 @@
         <constructor><arg column="orderId" javaType="java.lang.String"/><arg column="supplierId" javaType="java.lang.String"/>
             <arg column="storeId" javaType="java.lang.Long"/><arg column="warehouseId" javaType="java.lang.String"/>
             <arg column="expectedDate" javaType="java.time.LocalDate"/><arg column="status" javaType="java.lang.String"/>
-            <arg column="toleranceBps" javaType="int"/><arg column="creatorUserId" javaType="java.lang.Long"/>
+            <arg column="toleranceBps" javaType="_int"/><arg column="creatorUserId" javaType="java.lang.Long"/>
             <arg column="approverUserId" javaType="java.lang.Long"/><arg column="approvedAt" javaType="java.time.LocalDateTime"/>
-            <arg column="version" javaType="long"/></constructor>
+            <arg column="version" javaType="_long"/></constructor>
     </resultMap>
     <resultMap id="orderLine" type="com.jingshanghui.pos.procurement.application.model.ProcurementViews$OrderLine">
         <constructor><arg column="orderLineId" javaType="java.lang.String"/><arg column="orderId" javaType="java.lang.String"/>
             <arg column="skuId" javaType="java.lang.Long"/><arg column="purchaseUnitId" javaType="java.lang.Long"/>
-            <arg column="numerator" javaType="long"/><arg column="denominator" javaType="long"/>
+            <arg column="numerator" javaType="_long"/><arg column="denominator" javaType="_long"/>
             <arg column="orderedQuantity" javaType="java.math.BigDecimal"/><arg column="receivedQuantity" javaType="java.math.BigDecimal"/>
-            <arg column="unitPriceMinor" javaType="long"/><arg column="taxRateBps" javaType="int"/></constructor>
+            <arg column="unitPriceMinor" javaType="_long"/><arg column="taxRateBps" javaType="_int"/></constructor>
     </resultMap>
     <resultMap id="receiptHead" type="com.jingshanghui.pos.procurement.application.model.ProcurementViews$ReceiptHead">
         <constructor><arg column="receiptId" javaType="java.lang.String"/><arg column="orderId" javaType="java.lang.String"/>
             <arg column="sourceEventId" javaType="java.lang.String"/><arg column="storeId" javaType="java.lang.Long"/>
             <arg column="warehouseId" javaType="java.lang.String"/><arg column="status" javaType="java.lang.String"/>
             <arg column="correlationId" javaType="java.lang.String"/><arg column="confirmedAt" javaType="java.time.LocalDateTime"/>
-            <arg column="version" javaType="long"/></constructor>
+            <arg column="version" javaType="_long"/></constructor>
     </resultMap>
     <resultMap id="receiptLine" type="com.jingshanghui.pos.procurement.application.model.ProcurementViews$ReceiptLine">
         <constructor><arg column="receiptLineId" javaType="java.lang.String"/><arg column="receiptId" javaType="java.lang.String"/>
             <arg column="orderLineId" javaType="java.lang.String"/><arg column="skuId" javaType="java.lang.Long"/>
             <arg column="baseUnitId" javaType="java.lang.Long"/><arg column="receivedQuantity" javaType="java.math.BigDecimal"/>
             <arg column="baseQuantity" javaType="java.math.BigDecimal"/><arg column="returnedQuantity" javaType="java.math.BigDecimal"/>
-            <arg column="numerator" javaType="long"/><arg column="denominator" javaType="long"/></constructor>
+            <arg column="numerator" javaType="_long"/><arg column="denominator" javaType="_long"/></constructor>
+    </resultMap>
+    <resultMap id="supplier" type="com.jingshanghui.pos.procurement.application.model.ProcurementViews$Supplier">
+        <constructor><arg column="supplierId" javaType="java.lang.String"/><arg column="code" javaType="java.lang.String"/>
+            <arg column="name" javaType="java.lang.String"/><arg column="status" javaType="java.lang.String"/>
+            <arg column="version" javaType="_long"/></constructor>
+    </resultMap>
+    <resultMap id="receiptCostSource" type="com.jingshanghui.pos.procurement.application.port.ProcurementCostSourcePort$ReceiptCostSource">
+        <constructor><arg column="receiptLineId" javaType="java.lang.String"/><arg column="receiptId" javaType="java.lang.String"/>
+            <arg column="orderLineId" javaType="java.lang.String"/><arg column="skuId" javaType="java.lang.Long"/>
+            <arg column="baseUnitId" javaType="java.lang.Long"/><arg column="baseQuantity" javaType="java.math.BigDecimal"/>
+            <arg column="purchaseUnitPriceMinor" javaType="_long"/><arg column="conversionNumerator" javaType="_long"/>
+            <arg column="conversionDenominator" javaType="_long"/><arg column="currencyCode" javaType="java.lang.String"/></constructor>
+    </resultMap>
+    <resultMap id="returnCostSource" type="com.jingshanghui.pos.procurement.application.port.ProcurementCostSourcePort$ReturnCostSource">
+        <constructor><arg column="returnLineId" javaType="java.lang.String"/><arg column="purchaseReturnId" javaType="java.lang.String"/>
+            <arg column="originalReceiptLineId" javaType="java.lang.String"/><arg column="skuId" javaType="java.lang.Long"/>
+            <arg column="baseUnitId" javaType="java.lang.Long"/><arg column="baseQuantity" javaType="java.math.BigDecimal"/>
+            <arg column="currencyCode" javaType="java.lang.String"/></constructor>
+    </resultMap>
+    <resultMap id="returnHead" type="com.jingshanghui.pos.procurement.application.model.ProcurementViews$ReturnHead">
+        <constructor><arg column="purchaseReturnId" javaType="java.lang.String"/><arg column="receiptId" javaType="java.lang.String"/>
+            <arg column="sourceEventId" javaType="java.lang.String"/><arg column="status" javaType="java.lang.String"/>
+            <arg column="reason" javaType="java.lang.String"/><arg column="requesterUserId" javaType="java.lang.Long"/>
+            <arg column="approverUserId" javaType="java.lang.Long"/><arg column="postedAt" javaType="java.time.LocalDateTime"/>
+            <arg column="version" javaType="_long"/></constructor>
+    </resultMap>
+    <resultMap id="returnLine" type="com.jingshanghui.pos.procurement.application.model.ProcurementViews$ReturnLine">
+        <constructor><arg column="returnLineId" javaType="java.lang.String"/><arg column="purchaseReturnId" javaType="java.lang.String"/>
+            <arg column="receiptLineId" javaType="java.lang.String"/><arg column="skuId" javaType="java.lang.Long"/>
+            <arg column="baseUnitId" javaType="java.lang.Long"/><arg column="returnQuantity" javaType="java.math.BigDecimal"/>
+            <arg column="baseQuantity" javaType="java.math.BigDecimal"/></constructor>
     </resultMap>
 
     <sql id="orderHeadColumns">order_id AS orderId,supplier_id AS supplierId,store_id AS storeId,
@@ -48,8 +79,7 @@
       conversion_numerator AS numerator,conversion_denominator AS denominator</sql>
 
     <!-- 成本模块只能读取已确认收货，单价以采购单位的最小货币单位计量。 -->
-    <select id="findConfirmedReceiptCostSource"
-            resultType="com.jingshanghui.pos.procurement.application.port.ProcurementCostSourcePort$ReceiptCostSource">
+    <select id="findConfirmedReceiptCostSource" resultMap="receiptCostSource">
       SELECT rl.receipt_line_id AS receiptLineId,rl.receipt_id AS receiptId,rl.order_line_id AS orderLineId,
         rl.sku_id AS skuId,rl.base_unit_id AS baseUnitId,rl.base_quantity AS baseQuantity,
         ol.unit_price_minor AS purchaseUnitPriceMinor,rl.conversion_numerator AS conversionNumerator,
@@ -61,8 +91,7 @@
     </select>
 
     <!-- 采购退货只暴露已入账事实及原收货行，不暴露调用方自报成本。 -->
-    <select id="findPostedReturnCostSource"
-            resultType="com.jingshanghui.pos.procurement.application.port.ProcurementCostSourcePort$ReturnCostSource">
+    <select id="findPostedReturnCostSource" resultMap="returnCostSource">
       SELECT prl.return_line_id AS returnLineId,prl.purchase_return_id AS purchaseReturnId,
         prl.receipt_line_id AS originalReceiptLineId,prl.sku_id AS skuId,prl.base_unit_id AS baseUnitId,
         prl.base_quantity AS baseQuantity,'CNY' AS currencyCode
@@ -74,10 +103,10 @@
 
     <insert id="insertSupplier">INSERT INTO sup_supplier(supplier_id,tenant_id,supplier_code,supplier_name,status,version,creator_user_id,created_at,updated_at)
       VALUES(#{supplierId},#{tenantId},#{code},#{name},'ACTIVE',0,#{creatorUserId},#{at},#{at})</insert>
-    <select id="findSupplier" resultType="com.jingshanghui.pos.procurement.application.model.ProcurementViews$Supplier">
+    <select id="findSupplier" resultMap="supplier">
       SELECT supplier_id AS supplierId,supplier_code AS code,supplier_name AS name,status,version FROM sup_supplier
       WHERE tenant_id=#{tenantId} AND supplier_id=#{supplierId}</select>
-    <select id="lockSupplier" resultType="com.jingshanghui.pos.procurement.application.model.ProcurementViews$Supplier">
+    <select id="lockSupplier" resultMap="supplier">
       SELECT supplier_id AS supplierId,supplier_code AS code,supplier_name AS name,status,version FROM sup_supplier
       WHERE tenant_id=#{tenantId} AND supplier_id=#{supplierId} FOR UPDATE</select>
     <update id="updateSupplierState">UPDATE sup_supplier SET status=#{nextState},version=version+1,updated_at=#{at}
@@ -149,17 +178,17 @@
       sku_id,base_unit_id,return_quantity,base_quantity,created_at)
       VALUES(#{returnLineId},#{tenantId},#{purchaseReturnId},#{receiptLineId},#{skuId},#{baseUnitId},
       #{returnQuantity},#{baseQuantity},#{at})</insert>
-    <select id="findReturn" resultType="com.jingshanghui.pos.procurement.application.model.ProcurementViews$ReturnHead">
+    <select id="findReturn" resultMap="returnHead">
       SELECT purchase_return_id AS purchaseReturnId,receipt_id AS receiptId,source_event_id AS sourceEventId,
       status,reason,requester_user_id AS requesterUserId,approver_user_id AS approverUserId,
       posted_at AS postedAt,version FROM pur_purchase_return
       WHERE tenant_id=#{tenantId} AND purchase_return_id=#{purchaseReturnId}</select>
-    <select id="lockReturn" resultType="com.jingshanghui.pos.procurement.application.model.ProcurementViews$ReturnHead">
+    <select id="lockReturn" resultMap="returnHead">
       SELECT purchase_return_id AS purchaseReturnId,receipt_id AS receiptId,source_event_id AS sourceEventId,
       status,reason,requester_user_id AS requesterUserId,approver_user_id AS approverUserId,
       posted_at AS postedAt,version FROM pur_purchase_return
       WHERE tenant_id=#{tenantId} AND purchase_return_id=#{purchaseReturnId} FOR UPDATE</select>
-    <select id="findReturnLines" resultType="com.jingshanghui.pos.procurement.application.model.ProcurementViews$ReturnLine">
+    <select id="findReturnLines" resultMap="returnLine">
       SELECT return_line_id AS returnLineId,purchase_return_id AS purchaseReturnId,receipt_line_id AS receiptLineId,
       sku_id AS skuId,base_unit_id AS baseUnitId,return_quantity AS returnQuantity,base_quantity AS baseQuantity
       FROM pur_purchase_return_line WHERE tenant_id=#{tenantId} AND purchase_return_id=#{purchaseReturnId}
