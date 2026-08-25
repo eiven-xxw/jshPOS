@@ -32,7 +32,9 @@ from run_t2_gate8b_runtime_api_journey import (
 
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-PLATFORM_ROLE_KEY = "g9a_r4_platform_reviewer"
+# SaaS/Subscription 的服务端平台治理边界按已接受契约检查该角色键；
+# 复核员仍是独立账号，只授予本次审批所需菜单，不与发起人复用身份。
+PLATFORM_ROLE_KEY = "platform_admin"
 PLATFORM_REVIEWER_MENU_IDS = [9201700, 9201703, 9201709]
 INDUSTRIES = (
     ("CONVENIENCE", "convenience", "便利店"),
@@ -191,6 +193,24 @@ def create_tenant(client: ApiClient, passwords: dict[str, str], plan_id: Any, in
     client.login(tenant_id, username, passwords["tenant"], f"{label}-tenant-login")
     profile = data(client.call("GET", "/system/user/getInfo", f"{label}-tenant-profile"))
     user_id = require_value(profile.get("user", {}).get("userId"), f"{label}-tenant-profile")
+    tenant_role_rows = client.call(
+        "GET", "/system/role/list?" + urllib.parse.urlencode({
+            "roleKey": TENANT_ADMIN_ROLE_KEY, "pageNum": 1, "pageSize": 20,
+        }), f"{label}-tenant-admin-role-read",
+    ).get("rows", [])
+    tenant_admin_role_id = require_value(
+        find_by(tenant_role_rows, "roleKey", TENANT_ADMIN_ROLE_KEY,
+                f"{label}-tenant-admin-role-read").get("roleId"),
+        f"{label}-tenant-admin-role-read",
+    )
+    reviewer_username = f"r4_{label}_reviewer"
+    client.call("POST", "/system/user", f"{label}-tenant-reviewer-create", body={
+        "deptId": profile.get("user", {}).get("deptId"),
+        "userName": reviewer_username, "nickName": f"{display}合成复核员",
+        "password": passwords["reviewer"], "status": "0",
+        "roleIds": [tenant_admin_role_id], "postIds": [],
+        "remark": "G9A-R4 内部正式栈职责分离账号",
+    })
     org = data(client.call("POST", "/api/v1/foundation/org-units", f"{label}-org-create", body={
         "parentId": None, "code": f"R4_{label.upper()}_HQ", "name": f"{display}虚构总部", "type": "HEADQUARTERS",
     }))
@@ -248,7 +268,8 @@ def create_tenant(client: ApiClient, passwords: dict[str, str], plan_id: Any, in
     product = data(client.call("POST", "/api/v1/catalog/products", f"{label}-product-create", body={
         "spuCode": f"R4-{label.upper()}-SPU", "skuCode": f"R4-{label.upper()}-SKU", "name": f"{display}合成商品",
         "categoryId": category["id"], "brandId": brand["id"],
-        "productType": "WEIGHTED" if industry != "CONVENIENCE" else "STANDARD", "attributes": {},
+        # Catalog 与 Flutter 正式契约使用 WEIGHT；WEIGHTED 不是已发布枚举值。
+        "productType": "WEIGHT" if industry != "CONVENIENCE" else "STANDARD", "attributes": {},
         "units": [{"unitId": unit["id"], "ratioNumerator": 1, "ratioDenominator": 1,
                    "primary": True, "barcodes": [barcode]}],
     }))
@@ -295,6 +316,7 @@ def create_tenant(client: ApiClient, passwords: dict[str, str], plan_id: Any, in
         "journeyId": f"R4-{label.upper()}", "industry": industry, "tenantId": tenant_id,
         "applicationId": application_id, "subscriptionId": subscription_id, "orgId": org_id,
         "storeId": store_id, "userId": user_id, "serviceProjectId": service_project_id,
+        "manualTemplateId": template["templateId"], "manualConfigVersionId": config["configVersionId"],
         "skuId": product["skuId"], "unitId": unit["id"],
         "skuCode": product["skuCode"], "barcode": barcode, "catalogVersion": catalog_package["packageVersion"],
         "promotionVersion": promotion_package["packageVersion"], "terminalId": terminal["terminalId"],
@@ -302,7 +324,8 @@ def create_tenant(client: ApiClient, passwords: dict[str, str], plan_id: Any, in
     }
     secret = {
         "journeyId": context["journeyId"], "tenantId": tenant_id, "username": username,
-        "password": passwords["tenant"], **terminal,
+        "password": passwords["tenant"], "reviewerUsername": reviewer_username,
+        "reviewerPassword": passwords["reviewer"], **terminal,
     }
     return context, secret
 
