@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.0",
+  "entries": [
+    {"surfaceId":"VUE-16","owners":["Reporting","Order","Shift","Inventory","Costing","Payment","Refund"],"mustPreserve":["报表只消费版本化事件或只读端口","可信tenant和门店范围约束查询/缓存/导出","导出独立权限、审批、脱敏、水印、短期下载与审计","投影可重建且不得覆盖权威事实"],"forbidden":["前端重算金额库存成本或对账状态","用报表值修正Owner事实","导出Secret、支付敏感数据或不必要PII"]},
+    {"surfaceId":"VUE-17","owners":["SaaS","Foundation"],"mustPreserve":["tenant_id只由可信平台编排分配","套餐权益版本化并由服务端授权","审批人与申请人职责分离","暂停停用不删除历史且保留受控恢复入口"],"forbidden":["客户端创建或激活tenant_id","直接写RuoYi或其他Owner表","菜单隐藏代替服务端权益校验"]},
+    {"surfaceId":"VUE-18","owners":["Service","SaaS","Subscription"],"mustPreserve":["Service只读SaaS/Subscription快照","项目检查和工单状态只追加且有租约审计","附件正文只进受控对象存储","每次下载重新校验tenant/门店和独立权限"],"forbidden":["工单激活租户或修改订阅","附件正文进入数据库日志或普通制品","服务页执行设备、支付或生产变更"]},
+    {"surfaceId":"VUE-19","owners":["Subscription","SaaS"],"mustPreserve":["订阅绑定可信tenant和已接受套餐版本","续期降级恢复使用稳定幂等和只追加历史","到期仍保留退款对账审计备份导出迁移入口","服务端时钟决定生效与宽限"],"forbidden":["真实计费扣款或支付Provider","物理删除历史","客户端本地时间或目标tenant成为授权依据"]},
+    {"surfaceId":"VUE-20","owners":["Terminal","Release","Foundation"],"mustPreserve":["终端身份由服务端绑定tenant/门店/能力","激活凭据只显示一次且只存摘要","吊销克隆版本欺骗必须失败关闭","真实设备与升级执行继续BLOCKED"],"forbidden":["持久化或日志记录一次性秘密","客户端声明认证状态/能力/范围","调用真实终端或厂商SDK"]},
+    {"surfaceId":"FLT-01","owners":["Exchange","Order","Refund"],"mustPreserve":["换货仅为原单退货退款加新销售加只追加关联","两条资金与订单事实独立保留","UNKNOWN只查询原换货检查点","审批和恢复使用可信员工权限"],"forbidden":["创建净额换货资金事实","重新生成退货或销售命令","在页面拼装Owner状态机"]},
+    {"surfaceId":"FLT-02","owners":["Return","Refund","Promotion","Payment","Inventory"],"mustPreserve":["读取原订单和原促销/会员权益快照","累计数量金额不得超原单上限","UNKNOWN只查询原returnRef","现金退款与本地事实使用原幂等键恢复"],"forbidden":["按当前规则重算退款","重新生成退款命令","直接访问SQLite/Mapper/MethodChannel"]},
+    {"surfaceId":"FLT-05","owners":["Shift","POS"],"mustPreserve":["现金动作绑定可信班次员工门店终端业务日","现金事实和Outbox同SQLite事务","非销售开钱箱仅记录BLOCKED外设请求","失败重试复用原幂等键"],"forbidden":["未授权现金或钱箱动作","真实外设命令","用新命令掩盖未知结果"]}
+  ]
+}

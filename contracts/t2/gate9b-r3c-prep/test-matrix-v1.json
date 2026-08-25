@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "1.0",
+  "dimensions": ["routeNavigation", "buttonsActions", "permission", "trustedContextDataScope", "loading", "empty", "safeError", "singleFlight", "offlineBusinessDate", "idempotencyRecovery", "highRiskOwnerInvariant", "mountedWidgetInteraction"],
+  "requiredForEverySurface": [
+    "正式菜单、父级装配或可信会话导航可达",
+    "按钮只触发既有正式API或应用端口",
+    "展示权限与服务端最小权限一致且服务端最终授权",
+    "可信tenant、门店、终端、员工和业务日越权失败关闭",
+    "加载、空结果与无可用动作均为可见具名状态",
+    "安全错误包含稳定错误码和关联标识且不泄露Secret/PII/堆栈",
+    "重复点击只发送一个在途操作",
+    "失败恢复复用原幂等键与内容摘要，UNKNOWN只查询或观察",
+    "离线、重启和业务日切换遵守冻结上下文",
+    "导出、附件、租户/订阅生命周期、终端秘密、资金动作保护Owner不变量",
+    "真实mount或Widget交互测试进入现有CI"
+  ],
+  "faultVectors": ["permission_denied", "cross_tenant", "cross_store", "stale_business_date", "empty_result", "http_4xx", "http_5xx", "timeout_unknown", "duplicate_click", "same_key_different_content", "component_remount", "offline_restart", "secret_or_pii_leak", "external_boundary_blocked"],
+  "surfaceSpecific": {
+    "VUE-16": ["报表空投影", "跨门店导出", "独立审批", "短期下载", "对账UNKNOWN只观察"],
+    "VUE-17": ["重复开户", "独立审批", "套餐配额", "停用恢复", "逻辑注销历史保留"],
+    "VUE-18": ["认领租约", "附件10MiB", "短期链接到期", "清理确认", "跨租户对象键"],
+    "VUE-19": ["时钟偏移", "重复续期", "宽限降级", "终止确认", "恢复白名单"],
+    "VUE-20": ["一次性秘密", "重复签发", "克隆/吊销", "凭据轮换", "REAL_DEVICE继续BLOCKED"],
+    "FLT-01": ["会话导航", "审批权限", "UNKNOWN原检查点", "离线重启", "不得创建净额事实"],
+    "FLT-02": ["原快照退款", "部分/最终上限", "UNKNOWN原returnRef", "业务日切换", "离线恢复"],
+    "FLT-05": ["现金权限", "钱箱权限", "原幂等键", "旧班次拒绝", "外设BLOCKED"]
+  }
+}

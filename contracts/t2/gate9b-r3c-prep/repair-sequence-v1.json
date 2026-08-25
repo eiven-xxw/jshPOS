@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1.0",
+  "serial": true,
+  "runtimeAuthorized": false,
+  "steps": [
+    {"order":0,"stepId":"R3C-R0","scope":["test-harness","shared-page-state"],"purpose":"冻结Vue/Flutter挂载底座、安全错误、单航班和原幂等键语义","exit":"共享失败seed先红后绿且Owner/API/依赖/迁移不变"},
+    {"order":1,"stepId":"R3C-R1","scope":["VUE-16"],"purpose":"先收敛报表查询、导出与对账处置的数据泄漏和恢复风险","exit":"查询/导出/审批/生成/下载/处置的权限、空错态、确认和原键恢复PASS"},
+    {"order":2,"stepId":"R3C-R2","scope":["VUE-18"],"purpose":"收敛服务目录、工单、附件权限和高风险清理","exit":"门店范围、租约、附件上传/下载/清理和关闭重开PASS"},
+    {"order":3,"stepId":"R3C-R3","scope":["VUE-20"],"purpose":"收敛终端一次性秘密、状态和凭据治理","exit":"签发/轮换/吊销、单次展示、原键恢复及外部BLOCKED PASS"},
+    {"order":4,"stepId":"R3C-R4","scope":["VUE-17"],"purpose":"收敛SaaS开户、权益发布与租户生命周期","exit":"职责分离、可信tenant、配额、生命周期和历史保留PASS"},
+    {"order":5,"stepId":"R3C-R5","scope":["VUE-19"],"purpose":"在SaaS边界稳定后收敛订阅生命周期","exit":"续期、宽限、暂停、恢复、终止、时钟和原键恢复PASS"},
+    {"order":6,"stepId":"R3C-R6","scope":["FLT-05"],"purpose":"收敛班次现金/钱箱页面原键、权限、业务日与外设阻断","exit":"Widget交互、重复点击、离线/重启、旧班次和BLOCKED外设PASS"},
+    {"order":7,"stepId":"R3C-R7","scope":["FLT-02"],"purpose":"补齐原单退货退款会话、离线和业务日联合证据","exit":"权限、原快照、UNKNOWN、部分/最终退货和旧业务日失败关闭PASS"},
+    {"order":8,"stepId":"R3C-R8","scope":["FLT-01"],"purpose":"补齐换货会话导航、审批恢复和离线检查点证据","exit":"只追加关联、权限、UNKNOWN、重启和两腿Owner边界PASS"},
+    {"order":9,"stepId":"R3C-R9","scope":["ALL_8"],"purpose":"八页联合交互与完整CI验收","exit":"八页十二维全PASS、批次P0/P1为0，形成R3C VERIFIED候选"}
+  ]
+}

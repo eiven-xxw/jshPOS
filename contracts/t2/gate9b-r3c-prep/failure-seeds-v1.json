@@ -1,0 +1,64 @@
+{
+  "schemaVersion": "1.0",
+  "findingId": "G9A-UI-P1-001",
+  "state": "OPEN",
+  "summary": {"openP0": 0, "openP1": 8},
+  "seeds": [
+    {
+      "seedId": "R3C-P1-TEST-001",
+      "surfaces": ["VUE-16", "VUE-17", "VUE-18", "VUE-19", "VUE-20"],
+      "condition": "五个Vue正式页面均无直接组件测试",
+      "expectedFailure": "路由内真实挂载后的权限、空错态、重复点击和恢复行为没有页面级证据",
+      "requiredEvidence": "每页建立真实mount交互测试并进入Web CI，源码字符串断言不得替代"
+    },
+    {
+      "seedId": "R3C-P1-TEST-002",
+      "surfaces": ["FLT-01", "FLT-02", "FLT-05"],
+      "condition": "FLT-01/02已有局部Widget测试但缺少会话导航、业务日与离线联合证据，FLT-05没有Widget测试",
+      "expectedFailure": "辅助页在可信会话切换、离线和失败恢复下的实际交互不可完整复现",
+      "requiredEvidence": "补齐三页Widget及会话导航测试，覆盖许可/拒绝、离线、业务日切换和原命令恢复"
+    },
+    {
+      "seedId": "R3C-P1-STATE-001",
+      "surfaces": ["VUE-16", "VUE-17", "VUE-18", "VUE-19", "VUE-20"],
+      "condition": "页面主要依赖共享loading或全局拦截器，缺少稳定EMPTY/FAILED/UNKNOWN、安全错误码、关联标识和页内恢复入口",
+      "expectedFailure": "空结果、超时和未知结果可能表现为空白或瞬时消息，操作者无法安全区分读取重试和原命令恢复",
+      "requiredEvidence": "为每页提供具名状态、安全错误、关联标识、空态和只读刷新/原命令恢复入口"
+    },
+    {
+      "seedId": "R3C-P1-RECOVERY-001",
+      "surfaces": ["VUE-16", "VUE-20", "FLT-05"],
+      "condition": "报表审批/生成/处置、终端签发/状态变化和班次现金/钱箱失败重试会生成新的操作键，或未保存原键",
+      "expectedFailure": "超时、ACK丢失或结果未知后再次点击可能形成第二个高风险命令",
+      "requiredEvidence": "同对象同动作失败复用原幂等键和内容摘要，确认成功后清理；UNKNOWN只查询或观察"
+    },
+    {
+      "seedId": "R3C-P1-CONFIRM-001",
+      "surfaces": ["VUE-16", "VUE-17", "VUE-18", "VUE-19", "VUE-20", "FLT-05"],
+      "condition": "导出/对账处置、租户生命周期、附件清理、订阅终止、终端签发/吊销及现金动作的二次确认与影响摘要不完整",
+      "expectedFailure": "操作者可在未核对对象、版本、门店范围和不可逆后果时触发高风险命令",
+      "requiredEvidence": "冻结动作显示对象/版本/范围/后果并二次确认；确认框不得替代服务端授权"
+    },
+    {
+      "seedId": "R3C-P1-SCOPE-001",
+      "surfaces": ["VUE-16", "VUE-17", "VUE-18", "VUE-19", "VUE-20"],
+      "condition": "页面允许输入门店或目标租户等查询/编排参数，但无直接交互测试证明服务端可信tenant和数据范围最终拒绝越权",
+      "expectedFailure": "仅凭模板中的安全说明无法证明客户端范围参数不会成为授权依据",
+      "requiredEvidence": "许可与拒绝双向测试覆盖可信tenant、组织/门店数据范围；客户端值只作查询条件或业务目标"
+    },
+    {
+      "seedId": "R3C-P1-DATA-ACCESS-001",
+      "surfaces": ["VUE-16", "VUE-18", "VUE-20"],
+      "condition": "安全导出、附件短期下载/清理和一次性终端秘密缺少直接组件级权限、过期、失败清理与敏感信息不持久化证据",
+      "expectedFailure": "高敏制品或一次性秘密的展示、下载和清理边界不能由页面回归证明",
+      "requiredEvidence": "覆盖独立权限、短期链接、单次展示、关闭清空、失败关闭和无Secret/PII泄漏"
+    },
+    {
+      "seedId": "R3C-P1-OFFLINE-DAY-001",
+      "surfaces": ["FLT-01", "FLT-02", "FLT-05"],
+      "condition": "辅助页缺少可信会话业务日切换、断网/重启及外设BLOCKED联合Widget向量",
+      "expectedFailure": "旧班次或旧业务日操作、断网恢复和钱箱外部阻断可能缺少明确失败关闭交互证据",
+      "requiredEvidence": "会话上下文变化后旧页面失败关闭；离线操作沿原本地事实恢复；真实外设继续BLOCKED/UNAVAILABLE"
+    }
+  ]
+}

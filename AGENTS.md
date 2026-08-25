@@ -901,6 +901,28 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
   继续 `DRAFT`；`T2-LIC-001/JSH-001` 继续 `DEFERRED`。Provider 网络、真实资金、
   设备/外设命令、伙伴现场、完整 Alpha、生产部署和商业声明必须为 0。
 
+## 4.69 当前 G9A-R3C 报表、终端、商业运营与 POS 辅助页整改准备条件准入
+
+- 项目发起人已于 2026-08-25 接受 G9A-R3B `CONDITIONAL PASS`；该接受只覆盖
+  `VUE-05..15` 的内部页面状态、权限、Owner 不变量、原幂等键恢复、高风险确认和交互证据，
+  整体 `G9A-UI-P1-001` 继续 `OPEN`。本阶段从 G9A-R3B 最终治理提交
+  `2b8e56a22a6a742be73b8055fa2ea5872b628630` 建立独立准备分支。
+- 本阶段只允许审计和冻结 `VUE-16..20`、`FLT-01/02/05`；不得修改 Vue/Flutter 页面运行时、
+  服务端、API、Controller、Owner 领域代码、依赖、数据库表、任务或已发布迁移。
+- 必须逐页核验路由/导航、按钮、最小权限、可信租户/门店/终端/员工/业务日、导出和附件权限、
+  加载、空态、安全错误、单航班、离线、原幂等键恢复及真实组件/Widget 测试。全局错误拦截器、
+  源码字符串断言或服务端测试不得冒充页面交互证据。
+- 必须冻结 Reporting、SaaS、Foundation、Service、Subscription、Terminal、Release、Exchange、
+  Return/Refund、Promotion、Payment、Inventory、Shift/POS 的 Owner 不变量；后续修复只能调用
+  既有正式 API 或应用端口，不得前端重算、跨 Owner Mapper、重新生成 UNKNOWN 命令或持久化
+  Secret/PII。
+- 本阶段只形成治理记录、失败 seed、Owner 矩阵、串行计划、十二维测试矩阵、专用静态审计、
+  CI 和启动评审报告；`G9A-UI-P1-001` 继续 `OPEN`。未经项目发起人再次确认不得进入 R3C
+  正式整改、R3D 联合验收、G9A-R4、完整 Alpha、现场试点或生产发布。
+- `T2-PAY-002/HWD-001/PRN-001/PAR-001` 继续 `BLOCKED`；`T2-UAT-001/REL-001`
+  继续 `DRAFT`；`T2-LIC-001/JSH-001` 继续 `DEFERRED`。Provider 网络、真实资金、
+  设备/外设命令、伙伴现场、完整 Alpha、生产部署和商业声明必须为 0。
+
 ## 5. 工程与测试规则
 
 - 服务端采用 RuoYi-Vue-Plus 模块化单体，不得把领域逻辑写入 Controller、通用工具类或框架系统模块。
