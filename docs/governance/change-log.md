@@ -310,5 +310,6 @@
 | CR-T2G9R3-013 | 2026-08-25 | G9A_R3C_LOCAL_WEB_FORMAT_GATE_FAILURE_CLOSED | 首次完整Web门禁在本批页面与测试发现60项Prettier错误并失败关闭；格式修复后又从挂载回归识别VUE-16 checkbox旧属性弃用告警 | G9A-UI-P1-001、ADR-071、T2-CI-001 | 仅使用项目Prettier机械格式化本批文件并将label-as-value改为value；production build、ESLint、typecheck、44文件106测试及VUE-16直接测试通过，不跳过、不降阈值、不自动重跑掩盖失败 |
 | CR-T2G9R3-014 | 2026-08-25 | G9A_R3C_FIRST_CANDIDATE_FLUTTER_FORMAT_FAILURE | 首个远程候选Run`32803979146`的Flutter Ubuntu Job`97670356321`在Dart 3.13.0格式门禁发现4个本批文件不一致并失败关闭 | G9A-UI-P1-001、ADR-071、T2-CI-001 | 原失败Run完整保留且不自动重跑；仅以官方Dart 3.13.0机械格式化4文件并复核lib/test共131文件零差异，新提交必须从头复跑完整CI |
 | CR-T2G9R3-015 | 2026-08-25 | G9A_R3C_SECOND_CANDIDATE_FLUTTER_TEST_FAILURE_DIAGNOSIS | 第二个候选Run`32804503972`的Flutter Ubuntu Job`97672430082`通过格式与analyze后在flutter test失败；原重定向使失败机器日志未上传，页面只有退出码 | G9A-UI-P1-001、ADR-071、T2-CI-001 | 原失败Run保留；仅以bash pipefail和tee同时打印/保存同一机器日志，不改命令、测试、阈值或失败语义，新候选须从头复跑完整CI |
+| CR-T2G9R3-016 | 2026-08-25 | G9A_R3C_DIAGNOSTIC_CANDIDATE_FLUTTER_FINDER_FAILURE | 诊断Run`32805231740`的Flutter Ubuntu Job`97673974003`证明FLT-05确认弹窗已出现，但测试用包含班次号定位同时命中冻结上下文和弹窗正文，2个匹配被错误断言为1个 | G9A-UI-P1-001、ADR-071、T2-CI-001 | 原失败Run保留；仅将测试断言收紧为唯一确认标题和确认按钮，不改变运行时/权限/幂等/恢复语义，新候选须从头复跑完整CI |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。

@@ -37,6 +37,11 @@
       "findingId": "R3C-R9-FLUTTER-TEST-OUTPUT-001",
       "observed": "第二个远程候选 GitHub Actions Run 32804503972 的 Flutter Ubuntu Job 97672430082 已通过格式和 analyze，但 flutter test 失败；原工作流将机器输出仅重定向到文件，失败时未进入制品上传，页面缺少具体失败用例",
       "resolution": "保留失败 Run；不改变测试命令和阈值，仅启用 bash pipefail 并用 tee 同时输出与保存机器日志，使下一候选在失败时仍提供可诊断证据"
+    },
+    {
+      "findingId": "R3C-R9-FLUTTER-FINDER-001",
+      "observed": "诊断候选 GitHub Actions Run 32805231740 的 Flutter Ubuntu Job 97673974003 证明 FLT-05 回归已出现确认弹窗，但测试用 textContaining(班次号) 同时命中冻结上下文与弹窗正文，错误断言只允许一个匹配",
+      "resolution": "保留失败 Run；将断言收紧为唯一确认标题与 confirmCashOperation 按钮，不修改运行时、权限、幂等或失败恢复语义，并要求新候选完整复跑"
     }
   ],
   "openP0": 0,

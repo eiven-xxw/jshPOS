@@ -64,7 +64,8 @@ void main() {
       Future<void> submit() async {
         await tester.tap(find.byKey(const Key('recordShiftCashMovement')));
         await tester.pumpAndSettle();
-        expect(find.textContaining('班次 SHIFT-R3C-002'), findsOneWidget);
+        expect(find.text('确认班次现金动作'), findsOneWidget);
+        expect(find.byKey(const Key('confirmCashOperation')), findsOneWidget);
         await tester.tap(find.byKey(const Key('confirmCashOperation')));
         await tester.pumpAndSettle();
       }
