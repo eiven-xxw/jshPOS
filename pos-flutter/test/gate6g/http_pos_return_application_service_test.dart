@@ -27,6 +27,7 @@ void main() {
       unawaited(() async {
         await for (final request in server) {
           expect(request.headers.value('X-Tenant-Id'), isNull);
+          expect(request.headers.value('clientid'), 'synthetic-pos-client');
           expect(request.headers.value('X-Device-Id'), terminalId);
           final body = request.method == 'POST'
               ? jsonDecode(await utf8.decoder.bind(request).join())
@@ -59,6 +60,7 @@ void main() {
         baseUri: Uri.parse(
           'http://${server.address.address}:${server.port}/api/v1/',
         ),
+        clientId: 'synthetic-pos-client',
         binding: const TrustedDeviceBinding(
           tenantId: 'TENANT_A',
           storeId: '1101',
@@ -124,6 +126,7 @@ void main() {
         baseUri: Uri.parse(
           'http://${server.address.address}:${server.port}/api/v1/',
         ),
+        clientId: 'synthetic-pos-client',
         binding: const TrustedDeviceBinding(
           tenantId: 'TENANT_A',
           storeId: '1101',

@@ -12,6 +12,7 @@ import '../../features/session/domain/pos_session_models.dart';
 final class HttpSignedPackageSource {
   HttpSignedPackageSource({
     required Uri baseUri,
+    required this.clientId,
     required this.accessTokenProvider,
     HttpClient? client,
     this.timeout = const Duration(seconds: 30),
@@ -21,6 +22,7 @@ final class HttpSignedPackageSource {
        _client = client ?? HttpClient();
 
   final Uri baseUri;
+  final String clientId;
   final Future<String> Function() accessTokenProvider;
   final HttpClient _client;
   final Duration timeout;
@@ -87,6 +89,7 @@ final class HttpSignedPackageSource {
           HttpHeaders.authorizationHeader,
           'Bearer ${await accessTokenProvider()}',
         )
+        ..set('clientid', clientId)
         ..set(HttpHeaders.acceptHeader, ContentType.binary.mimeType);
       final response = await request.close().timeout(timeout);
       if (response.statusCode < 200 || response.statusCode >= 300) {

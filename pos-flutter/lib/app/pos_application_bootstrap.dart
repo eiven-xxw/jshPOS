@@ -148,6 +148,7 @@ final class PosApplicationBootstrap {
       databasePathProvider: (binding) async =>
           '${support.path}/pos-${binding.tenantId}-${binding.storeId}-${binding.deviceId}.sqlite3',
       baseUri: resolved.serverUri,
+      clientId: resolved.clientId,
       accessTokenProvider: session.accessToken,
       catalogPackageVersion: resolved.catalogPackageVersion,
       promotionPackageVersion: resolved.promotionPackageVersion,

@@ -16,6 +16,7 @@ final class HttpPosExchangeApplicationService
     implements PosExchangeApplicationService {
   HttpPosExchangeApplicationService({
     required this.baseUri,
+    required this.clientId,
     required this.binding,
     required this.database,
     required this.accessTokenProvider,
@@ -26,6 +27,7 @@ final class HttpPosExchangeApplicationService
        _client = client ?? HttpClient();
 
   final Uri baseUri;
+  final String clientId;
   final TrustedDeviceBinding binding;
   final PosLocalDatabase database;
   final Future<String> Function() accessTokenProvider;
@@ -374,6 +376,7 @@ final class HttpPosExchangeApplicationService
           HttpHeaders.authorizationHeader,
           'Bearer ${await accessTokenProvider()}',
         )
+        ..set('clientid', clientId)
         ..set('X-Device-Id', binding.terminalId)
         ..set(HttpHeaders.acceptHeader, ContentType.json.mimeType);
       if (body != null) {

@@ -9,6 +9,7 @@ typedef AccessTokenProvider = Future<String> Function();
 final class PosSyncHttpTransport implements PosSyncTransport {
   PosSyncHttpTransport({
     required Uri baseUri,
+    required this.clientId,
     required this.deviceId,
     required this.accessTokenProvider,
     HttpClient? client,
@@ -19,6 +20,7 @@ final class PosSyncHttpTransport implements PosSyncTransport {
        _client = client ?? HttpClient();
 
   final Uri baseUri;
+  final String clientId;
   final String deviceId;
   final AccessTokenProvider accessTokenProvider;
   final Duration timeout;
@@ -125,6 +127,7 @@ final class PosSyncHttpTransport implements PosSyncTransport {
           HttpHeaders.authorizationHeader,
           'Bearer ${await accessTokenProvider()}',
         )
+        ..set('clientid', clientId)
         ..set('X-Device-Id', deviceId)
         ..set('X-Correlation-Id', correlationId)
         ..set(HttpHeaders.acceptHeader, ContentType.json.mimeType);

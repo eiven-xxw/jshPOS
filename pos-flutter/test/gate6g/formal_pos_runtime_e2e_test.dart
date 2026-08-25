@@ -35,6 +35,7 @@ void main() {
           method: request.method,
           path: request.uri.path,
           tenantHeader: request.headers.value('X-Tenant-Id'),
+          clientId: request.headers.value('clientid'),
           authorization: request.headers.value(HttpHeaders.authorizationHeader),
           body: body,
         ),
@@ -57,6 +58,7 @@ void main() {
       assembler: FilePosBusinessRuntimeAssembler(
         databasePathProvider: (_) async => databasePath,
         baseUri: baseUri,
+        clientId: 'synthetic-pos-client',
         accessTokenProvider: session.accessToken,
         catalogPackageVersion: 1,
         promotionPackageVersion: 1,
@@ -135,6 +137,10 @@ void main() {
     expect(settled.changeAmountMinor, 151);
     expect(preview.adapterEvidence, contains('BLOCKED_REAL_PRINTER'));
     expect(observed.every((item) => item.tenantHeader == null), isTrue);
+    expect(
+      observed.every((item) => item.clientId == 'synthetic-pos-client'),
+      isTrue,
+    );
     expect(
       observed
           .where(
@@ -389,6 +395,7 @@ final class _ObservedRequest {
     required this.method,
     required this.path,
     required this.tenantHeader,
+    required this.clientId,
     required this.authorization,
     required this.body,
   });
@@ -396,6 +403,7 @@ final class _ObservedRequest {
   final String method;
   final String path;
   final String? tenantHeader;
+  final String? clientId;
   final String? authorization;
   final List<int> body;
 }

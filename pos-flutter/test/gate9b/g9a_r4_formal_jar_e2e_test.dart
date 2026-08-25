@@ -131,6 +131,7 @@ Future<Map<String, Object?>> _runJourney({
     assembler: FilePosBusinessRuntimeAssembler(
       databasePathProvider: (_) async => databasePath,
       baseUri: baseUri,
+      clientId: _clientId,
       accessTokenProvider: session.accessToken,
       catalogPackageVersion: _integer(journey, 'catalogVersion'),
       promotionPackageVersion: _integer(journey, 'promotionVersion'),

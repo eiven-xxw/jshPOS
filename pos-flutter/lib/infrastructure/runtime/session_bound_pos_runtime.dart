@@ -62,6 +62,7 @@ final class FilePosBusinessRuntimeAssembler
   FilePosBusinessRuntimeAssembler({
     required this.databasePathProvider,
     required this.baseUri,
+    required this.clientId,
     required this.accessTokenProvider,
     required this.catalogPackageVersion,
     required this.promotionPackageVersion,
@@ -81,12 +82,14 @@ final class FilePosBusinessRuntimeAssembler
            packageSource ??
            HttpSignedPackageSource(
              baseUri: baseUri,
+             clientId: clientId,
              accessTokenProvider: accessTokenProvider,
            );
 
   final Future<String> Function(TrustedDeviceBinding binding)
   databasePathProvider;
   final Uri baseUri;
+  final String clientId;
   final Future<String> Function() accessTokenProvider;
   final int catalogPackageVersion;
   final int promotionPackageVersion;
@@ -168,6 +171,7 @@ final class FilePosBusinessRuntimeAssembler
       );
       final transport = PosSyncHttpTransport(
         baseUri: baseUri.resolve('api/pos/v1/'),
+        clientId: clientId,
         deviceId: binding.deviceId,
         accessTokenProvider: accessTokenProvider,
       );
@@ -218,6 +222,7 @@ final class FilePosBusinessRuntimeAssembler
       );
       final returns = HttpPosReturnApplicationService(
         baseUri: baseUri.resolve('api/v1/'),
+        clientId: clientId,
         binding: binding,
         accessTokenProvider: accessTokenProvider,
         currentShiftIdProvider: () => _currentShift(database),
@@ -226,6 +231,7 @@ final class FilePosBusinessRuntimeAssembler
       );
       final exchange = HttpPosExchangeApplicationService(
         baseUri: baseUri.resolve('api/v1/'),
+        clientId: clientId,
         binding: binding,
         database: database,
         accessTokenProvider: accessTokenProvider,

@@ -20,6 +20,7 @@ void main() {
         request.headers.value(HttpHeaders.authorizationHeader),
         'Bearer synthetic-session',
       );
+      expect(request.headers.value('clientid'), 'synthetic-pos-client');
       expect(request.headers.value('X-Tenant-Id'), isNull);
       request.response.headers.contentType = ContentType.json;
       request.response.write(
@@ -44,6 +45,7 @@ void main() {
       baseUri: Uri.parse(
         'http://${server.address.address}:${server.port}/api/pos/v1/',
       ),
+      clientId: 'synthetic-pos-client',
       deviceId: '01K2A000000000000000000011',
       accessTokenProvider: () async => 'synthetic-session',
     );
@@ -61,6 +63,7 @@ void main() {
     final observed = <String>[];
     final subscription = server.listen((request) async {
       observed.add('${request.method} ${request.uri.path}');
+      expect(request.headers.value('clientid'), 'synthetic-pos-client');
       expect(request.headers.value('X-Tenant-Id'), isNull);
       request.response.headers.contentType = ContentType.json;
       if (request.uri.path.endsWith('/sync/push')) {
@@ -137,6 +140,7 @@ void main() {
       baseUri: Uri.parse(
         'http://${server.address.address}:${server.port}/api/pos/v1',
       ),
+      clientId: 'synthetic-pos-client',
       deviceId: '01K2A000000000000000000011',
       accessTokenProvider: () async => 'synthetic-session',
     );
@@ -214,6 +218,7 @@ void main() {
         baseUri: Uri.parse(
           'http://${server.address.address}:${server.port}/api/pos/v1/',
         ),
+        clientId: 'synthetic-pos-client',
         deviceId: '01K2A000000000000000000011',
         accessTokenProvider: () async => 'synthetic-session',
       );

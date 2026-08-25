@@ -12,6 +12,7 @@ final class HttpPosReturnApplicationService
     implements PosReturnApplicationService {
   HttpPosReturnApplicationService({
     required this.baseUri,
+    required this.clientId,
     required this.binding,
     required this.accessTokenProvider,
     required this.currentShiftIdProvider,
@@ -23,6 +24,7 @@ final class HttpPosReturnApplicationService
        _client = client ?? HttpClient();
 
   final Uri baseUri;
+  final String clientId;
   final TrustedDeviceBinding binding;
   final Future<String> Function() accessTokenProvider;
   final String Function() currentShiftIdProvider;
@@ -182,6 +184,7 @@ final class HttpPosReturnApplicationService
           HttpHeaders.authorizationHeader,
           'Bearer ${await accessTokenProvider()}',
         )
+        ..set('clientid', clientId)
         ..set('X-Device-Id', binding.terminalId)
         ..set(HttpHeaders.acceptHeader, ContentType.json.mimeType);
       if (body != null) {
