@@ -433,6 +433,7 @@ class _PosSessionShellState extends State<PosSessionShell> {
                       MaterialPageRoute<void>(
                         builder: (_) => PosCashManagementPage(
                           shiftId: shift.shiftId,
+                          businessDate: shift.businessDate,
                           service: widget.shiftService,
                           allowCashMovement: _state.hasPermission(
                             PosPermission.cashManage,
