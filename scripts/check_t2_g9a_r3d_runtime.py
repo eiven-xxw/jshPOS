@@ -38,6 +38,8 @@ ALLOWED_PREFIXES = (
     "docs/governance/CR-T2G9R3-023_",
     "docs/governance/CR-T2G9R3-026_",
     "docs/governance/CR-T2G9R3-027_",
+    "docs/governance/CR-T2G9R3-028_",
+    "docs/governance/CR-T2G9R3-029_",
     "docs/governance/change-log.md",
     "docs/t2-gate9b-r3d-runtime/",
     "scripts/check_t2_g9a_r3d_runtime.py",
