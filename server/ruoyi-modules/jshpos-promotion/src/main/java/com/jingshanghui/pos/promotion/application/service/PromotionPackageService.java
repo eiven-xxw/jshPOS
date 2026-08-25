@@ -75,9 +75,19 @@ public class PromotionPackageService {
         List<PromotionPackageCodec.Record> records = frozenRules.stream()
             .map(value -> new PromotionPackageCodec.Record(value.ruleVersionId(), value.canonicalRule())).toList();
         var policyRow = persistence.findManualPolicy(tenantId, storeId);
-        manualPolicyCodec.decode(policyRow);
+        var policy = manualPolicyCodec.decode(policyRow);
+        CanonicalJson.Result canonicalPolicy = CanonicalJson.from(Map.of(
+            "policyType", "PROMOTION_MANUAL_AUTHORITY",
+            "withoutApprovalMinor", policy.withoutApprovalMinor(),
+            "withApprovalMinor", policy.withApprovalMinor(),
+            "minimumLinePayableMinor", policy.minimumLinePayableMinor(),
+            "maximumRoundingMinor", policy.maximumRoundingMinor(),
+            "roundingMultiplesMinor", policy.roundingMultiplesMinor()));
+        if (!canonicalPolicy.sha256().equals(policy.policySha256())) {
+            throw new ServiceException("PRM-PKG-018: 人工优惠策略规范摘要不一致", 500);
+        }
         var manualPolicy = new PromotionPackageCodec.ManualPolicyRecord(policyRow.policyVersionId(),
-            policyRow.contentSha256(), policyRow.contentJson());
+            policyRow.contentSha256(), canonicalPolicy.json());
         var encoded = PromotionPackageCodec.encode(tenantId, storeId, packageVersion, previousVersion,
             generatedAt, expiresAt, records, manualPolicy);
         var signed = signer.sign(tenantId, encoded.payload());

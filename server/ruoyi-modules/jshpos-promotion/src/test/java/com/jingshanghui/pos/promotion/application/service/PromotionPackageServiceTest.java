@@ -94,8 +94,9 @@ class PromotionPackageServiceTest {
         ArgumentCaptor<byte[]> payload = ArgumentCaptor.forClass(byte[].class);
         verify(objects).put(startsWith("tenant/TENANT_A/object/"), payload.capture(), argThat(value -> value.length == 64));
         assertThat(service.download(1101L, 1).payload()).containsExactly(payload.getValue());
+        CanonicalJson.Result canonicalPolicy = canonicalPolicy();
         assertThat(new String(payload.getValue(), java.nio.charset.StandardCharsets.UTF_8))
-            .contains("@MANUAL_POLICY|31|");
+            .contains("@MANUAL_POLICY|31|" + canonicalPolicy.sha256() + "|" + canonicalPolicy.json());
         verify(persistence).insertAudit(any());
         verify(persistence).insertOutbox(any());
         verify(authorization, times(3)).requireStoreAccess(1101L);
@@ -126,6 +127,15 @@ class PromotionPackageServiceTest {
     }
 
     private static PromotionPersistencePort.ManualPolicyRow policy() {
+        CanonicalJson.Result canonical = canonicalPolicy();
+        // 模拟 MySQL JSON 列读取时的键顺序和空格变化，封包前必须再次规范化。
+        String mysqlJson = "{\"withApprovalMinor\": 1000, \"withoutApprovalMinor\": 100, "
+            + "\"roundingMultiplesMinor\": [1, 10], \"policyType\": \"PROMOTION_MANUAL_AUTHORITY\", "
+            + "\"minimumLinePayableMinor\": 20, \"maximumRoundingMinor\": 9}";
+        return new PromotionPersistencePort.ManualPolicyRow(31L, canonical.sha256(), mysqlJson);
+    }
+
+    private static CanonicalJson.Result canonicalPolicy() {
         Map<String, Object> content = new LinkedHashMap<>();
         content.put("policyType", "PROMOTION_MANUAL_AUTHORITY");
         content.put("withoutApprovalMinor", 100L);
@@ -133,7 +143,6 @@ class PromotionPackageServiceTest {
         content.put("minimumLinePayableMinor", 20L);
         content.put("maximumRoundingMinor", 9L);
         content.put("roundingMultiplesMinor", List.of(1L, 10L));
-        CanonicalJson.Result canonical = CanonicalJson.from(content);
-        return new PromotionPersistencePort.ManualPolicyRow(31L, canonical.sha256(), canonical.json());
+        return CanonicalJson.from(content);
     }
 }
