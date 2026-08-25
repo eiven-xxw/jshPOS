@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "1.0",
+  "owners": [
+    "saas", "subscription", "foundation", "service", "migration", "onboarding", "catalog",
+    "sync", "order", "promotion", "member", "payment", "inventory", "costing",
+    "procurement", "transfer", "returns", "reporting", "operations", "resilience", "release",
+    "integration"
+  ],
+  "requiredFields": [
+    "runId", "journeyId", "industry", "owner", "checkpoint", "tenantIdSha256",
+    "storeId", "businessDate", "sourceFactId", "sourceSequence", "contentSha256", "observedAt"
+  ],
+  "writeAuthority": "OWNER_FACTS_ONLY",
+  "checkpointAuthority": "READ_ONLY_EVIDENCE_REFERENCE",
+  "clientTenantAuthoritative": false
+}

@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1.0",
+  "baselineCommit": "059f47ebd6877b683345d1e6f7c0cd9a18d712b5",
+  "findingId": "G9A-E2E-P1-001",
+  "expectedFailures": [
+    {"id":"G9A-R4-P1-001","reason":"Flutter uses an embedded HttpServer instead of the commercial JAR"},
+    {"id":"G9A-R4-P1-002","reason":"commercial operations and business journeys run in different evidence windows"},
+    {"id":"G9A-R4-P1-003","reason":"all 22 Owners do not emit checkpoints under one run identity"},
+    {"id":"G9A-R4-P1-004","reason":"compound recovery seeds are not executed in the same formal stack window"}
+  ],
+  "expectedFailureCount": 4,
+  "redEvidenceClassification": "EXPECTED_BASELINE_FAILURES_REPRODUCED",
+  "closureAllowed": false
+}

@@ -1019,6 +1019,30 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
   继续 `DRAFT`；`T2-LIC-001/JSH-001` 继续 `DEFERRED`。Provider 网络、真实资金、
   设备/外设命令、伙伴现场、完整 Alpha、生产部署和商业声明必须为 0。
 
+## 4.74 当前 G9A-R4 正式运行栈跨 Owner E2E 正式整改条件准入
+
+- 项目发起人已于 2026-08-25 接受 G9A-R4 准备阶段 `CONDITIONAL PASS`，授权从
+  `059f47ebd6877b683345d1e6f7c0cd9a18d712b5` 建立
+  `t2/gate9b-sprint27i-g9a-r4-runtime`。本阶段只允许关闭既有 `G9A-E2E-P1-001`，
+  复用 `T2-E2E-004/T2-E2E-005/T2-INT-001`，不得新增业务能力或 Requirement ID。
+- 必须按 `R4-R0 → R4-R1 → R4-R2 → R4-R3 → R4-R4 → R4-R5` 严格串行：先将四个
+  既有缺口固化为可复现失败回归，再建立同一提交、同一运行窗口的正式 MySQL、Redis、
+  商业 JAR、HTTP/OpenAPI、Vue dist、Flutter POS 与文件 SQLite；最后执行 22 Owner
+  检查点、12 组数据守恒、固定故障 seed 和完整 CI。
+- Flutter 必须连接当前提交构建的正式商业 JAR，禁止使用测试内置 HTTP Server、Mock/InMemory
+  Owner、直接业务数据库写入或测试专用后门。初始化与旅程只能通过正式 API、应用端口、事件、
+  Inbox/Outbox、POS Repository 和已发布迁移执行。
+- 商业运营前置与便利店、零食折扣店、社区超市三条业务旅程必须处于同一运行窗口，并保存可信
+  tenant、组织/门店、终端、员工、班次、业务日、幂等键、关联标识、事件摘要和 Owner 检查点。
+  金额、数量、优惠、库存、成本、会员权益、同步、报表与日结必须按冻结矩阵逐项守恒。
+- `UNKNOWN` 只能查询、回调观察或对账观察原命令；重复、乱序、ACK 丢失、重启和部分 Owner
+  失败必须复用原身份收敛。不得为通过测试改变资金、库存或租户语义，不得修改已发布迁移。
+- 本阶段完成后只能形成 `G9A-E2E-P1-001 VERIFIED_CLOSURE_CANDIDATE`；未经项目发起人确认
+  不得更新为 `CLOSED_IN_GATE9B`，不得自动进入完整 Alpha、现场试点或生产发布。
+- `T2-PAY-002/HWD-001/PRN-001/PAR-001` 继续 `BLOCKED`；`T2-UAT-001/REL-001`
+  继续 `DRAFT`；`T2-LIC-001/JSH-001` 继续 `DEFERRED`。Provider 网络、真实资金、
+  设备/外设命令、伙伴现场、完整 Alpha、生产部署和商业声明必须为 0。
+
 ## 5. 工程与测试规则
 
 - 服务端采用 RuoYi-Vue-Plus 模块化单体，不得把领域逻辑写入 Controller、通用工具类或框架系统模块。

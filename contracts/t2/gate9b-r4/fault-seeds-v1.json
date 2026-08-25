@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "1.0",
+  "seeds": [
+    {"id":"R4-F01","scenario":"duplicate and same idempotency key with different content","expected":"stable replay and conflict denial"},
+    {"id":"R4-F02","scenario":"ACK loss followed by POS restart","expected":"reuse original event identity and converge"},
+    {"id":"R4-F03","scenario":"server restart after Inbox acceptance","expected":"original event result remains observable"},
+    {"id":"R4-F04","scenario":"Redis cache loss","expected":"authoritative MySQL facts remain correct"},
+    {"id":"R4-F05","scenario":"cross tenant store and terminal substitution","expected":"fail closed"},
+    {"id":"R4-F06","scenario":"business-day switch with offline transaction","expected":"frozen original business day"},
+    {"id":"R4-F07","scenario":"old corrupt or cross-tenant package","expected":"reject without partial installation"},
+    {"id":"R4-F08","scenario":"payment or refund UNKNOWN","expected":"observe original command without retrying funds"},
+    {"id":"R4-F09","scenario":"partial Owner failure and late event","expected":"stable command recovery or explicit failure"},
+    {"id":"R4-F10","scenario":"report inventory and cost projection rebuild","expected":"rebuild equals authoritative facts"},
+    {"id":"R4-F11","scenario":"backup restore with Inbox Outbox cursor check","expected":"cursor and fact conservation"},
+    {"id":"R4-F12","scenario":"schema and release failure","expected":"safe forward repair and prior healthy version"}
+  ],
+  "automaticRetryToHideFlaky": false,
+  "externalExecution": 0
+}

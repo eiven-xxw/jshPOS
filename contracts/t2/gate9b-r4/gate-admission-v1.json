@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "1.0",
+  "gate": "G9A-R4",
+  "baselineCommit": "059f47ebd6877b683345d1e6f7c0cd9a18d712b5",
+  "branch": "t2/gate9b-sprint27i-g9a-r4-runtime",
+  "findingId": "G9A-E2E-P1-001",
+  "findingState": "OPEN",
+  "targetState": "VERIFIED_CLOSURE_CANDIDATE",
+  "reusedRequirements": ["T2-E2E-004", "T2-E2E-005", "T2-INT-001"],
+  "newRequirementIds": [],
+  "serialBatches": ["R4-R0", "R4-R1", "R4-R2", "R4-R3", "R4-R4", "R4-R5"],
+  "runtimeTopology": ["MYSQL", "REDIS", "COMMERCIAL_JAR", "HTTP_OPENAPI", "VUE_DIST", "FLUTTER_POS", "FILE_SQLITE"],
+  "industries": ["CONVENIENCE", "SNACK_DISCOUNT", "COMMUNITY_SUPERMARKET"],
+  "expectedOwnerCount": 22,
+  "expectedConservationCount": 12,
+  "expectedFaultSeedCount": 12,
+  "directDatabaseBusinessWrites": 0,
+  "mockOrInMemoryOwners": 0,
+  "flutterEmbeddedHttpServers": 0,
+  "publishedMigrationChangesAllowed": false,
+  "externalStates": {
+    "T2-PAY-002": "BLOCKED",
+    "T2-HWD-001": "BLOCKED",
+    "T2-PRN-001": "BLOCKED",
+    "T2-PAR-001": "BLOCKED",
+    "T2-UAT-001": "DRAFT",
+    "T2-REL-001": "DRAFT",
+    "T2-LIC-001": "DEFERRED",
+    "T2-JSH-001": "DEFERRED"
+  },
+  "externalExecution": {
+    "providerNetwork": 0,
+    "realFunds": 0,
+    "realDeviceOrPeripheralCommands": 0,
+    "partnerFieldExecution": 0,
+    "fullAlpha": 0,
+    "productionDeployment": 0
+  }
+}

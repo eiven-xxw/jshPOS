@@ -1,0 +1,328 @@
+name: T2 Gate 9B G9A R4 Formal Runtime Cross Owner E2E
+
+on:
+  push:
+    branches: ["t2/gate9b-sprint27i-g9a-r4-runtime"]
+  pull_request:
+    paths:
+      - "AGENTS.md"
+      - ".github/workflows/t2-g9a-r4-runtime.yml"
+      - "contracts/t2/gate9b-r4/**"
+      - "docs/adr/**"
+      - "docs/governance/**"
+      - "docs/t2-gate9b-r4-runtime/**"
+      - "scripts/*g9a_r4*"
+      - "pos-flutter/test/gate9b/g9a_r4_formal_jar_e2e_test.dart"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: g9a-r4-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  R4_BASELINE: 059f47ebd6877b683345d1e6f7c0cd9a18d712b5
+
+jobs:
+  governance-ubuntu:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with: { python-version: "3.12" }
+      - name: Validate R4 admission red baseline and zero external execution
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/t2/g9a-r4/governance-ubuntu
+          python scripts/check_t0_structure.py
+          python scripts/check_rtm.py
+          python scripts/check_contracts.py
+          python -m py_compile scripts/check_t2_g9a_r4.py scripts/run_t2_g9a_r4_r0_red_regressions.py scripts/run_t2_g9a_r4_bootstrap.py
+          python scripts/run_t2_g9a_r4_r0_red_regressions.py --output artifacts/t2/g9a-r4/governance-ubuntu/r0-red-regressions.json
+          python scripts/check_t2_g9a_r4.py --output artifacts/t2/g9a-r4/governance-ubuntu/gate.json
+          python scripts/audit_t2_gate6g_api.py --output artifacts/t2/g9a-r4/governance-ubuntu/api-regression.json
+          python scripts/review_dependency_diff.py "$R4_BASELINE" "$(git rev-parse HEAD)" > artifacts/t2/g9a-r4/governance-ubuntu/dependency-diff.json
+          git diff --check "$R4_BASELINE" HEAD
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with: { name: t2-g9a-r4-governance-ubuntu, path: artifacts/t2/g9a-r4/governance-ubuntu, if-no-files-found: error, retention-days: 30 }
+
+  governance-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with: { python-version: "3.12" }
+      - name: Validate UTF-8 R4 governance on Windows
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/t2/g9a-r4/governance-windows
+          python scripts/check_t0_structure.py
+          python scripts/check_rtm.py
+          python scripts/check_contracts.py
+          python -m py_compile scripts/check_t2_g9a_r4.py scripts/run_t2_g9a_r4_r0_red_regressions.py scripts/run_t2_g9a_r4_bootstrap.py
+          python scripts/run_t2_g9a_r4_r0_red_regressions.py --output artifacts/t2/g9a-r4/governance-windows/r0-red-regressions.json
+          python scripts/check_t2_g9a_r4.py --output artifacts/t2/g9a-r4/governance-windows/gate.json
+          python scripts/audit_t2_gate6g_api.py --output artifacts/t2/g9a-r4/governance-windows/api-regression.json
+          git diff --check "$R4_BASELINE" HEAD
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with: { name: t2-g9a-r4-governance-windows, path: artifacts/t2/g9a-r4/governance-windows, if-no-files-found: error, retention-days: 30 }
+
+  server:
+    needs: governance-ubuntu
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with: { distribution: temurin, java-version: "21", cache: maven }
+      - name: Execute complete commercial reactor and generate SBOM
+        working-directory: server
+        run: |
+          ./mvnw -pl ruoyi-admin -am clean verify -DskipTests=false
+          ./mvnw org.cyclonedx:cyclonedx-maven-plugin:2.9.1:makeAggregateBom
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with: { python-version: "3.12" }
+      - name: Collect JAR tests coverage SBOM and license evidence
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/t2/g9a-r4/server
+          python scripts/check_sbom_licenses.py server/target/bom.json docs/compliance/reviewed-license-allowlist.json | tee artifacts/t2/g9a-r4/server/license-policy.txt
+          cp server/target/bom.json artifacts/t2/g9a-r4/server/server-cyclonedx.json
+          cp server/ruoyi-admin/target/ruoyi-admin.jar artifacts/t2/g9a-r4/server/
+          find server/ruoyi-modules -path '*/target/surefire-reports/TEST-*.xml' -exec cp --parents {} artifacts/t2/g9a-r4/server/ \;
+          find server/ruoyi-modules -path '*/target/site/jacoco/jacoco.xml' -exec cp --parents {} artifacts/t2/g9a-r4/server/ \;
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with: { name: t2-g9a-r4-server, path: artifacts/t2/g9a-r4/server, if-no-files-found: error, retention-days: 30 }
+
+  web:
+    needs: governance-ubuntu
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+        with: { version: 10.33.0 }
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with: { node-version: "24", cache: pnpm, cache-dependency-path: admin-web/pnpm-lock.yaml }
+      - name: Build lint typecheck test and freeze Vue dist
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/t2/g9a-r4/web
+          cd admin-web
+          pnpm install --frozen-lockfile
+          pnpm audit --registry https://registry.npmjs.org --audit-level high
+          pnpm build:prod
+          pnpm lint:eslint
+          pnpm typecheck
+          pnpm test:unit:ci
+          pnpm licenses list --json > ../artifacts/t2/g9a-r4/web/licenses.json
+          cp gate0-vitest-junit.xml ../artifacts/t2/g9a-r4/web/
+          tar -czf ../artifacts/t2/g9a-r4/web/vue-dist.tar.gz dist
+          find dist -type f -print0 | sort -z | xargs -0 sha256sum > ../artifacts/t2/g9a-r4/web/dist.sha256
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with: { name: t2-g9a-r4-web, path: artifacts/t2/g9a-r4/web, if-no-files-found: error, retention-days: 30 }
+
+  flutter:
+    needs: governance-ubuntu
+    strategy:
+      fail-fast: false
+      matrix: { os: [ubuntu-latest, windows-latest] }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with: { flutter-version: "3.47.0", channel: stable, cache: true }
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with: { python-version: "3.12" }
+      - name: Execute Flutter analysis tests coverage and supply chain
+        working-directory: pos-flutter
+        shell: bash
+        run: |
+          set -euo pipefail
+          flutter pub get --enforce-lockfile
+          dart format --output=none --set-exit-if-changed lib test
+          flutter analyze --fatal-infos
+          flutter test --machine --coverage 2>&1 | tee ../flutter-tests.jsonl
+          python ../scripts/check_flutter_gate2_coverage.py --input coverage/lcov.info --minimum 0.90 --output ../flutter-gate2-coverage.json
+          python ../scripts/check_flutter_gate6d_coverage.py --input coverage/lcov.info --minimum 0.90 --output ../flutter-gate6d-coverage.json
+          python ../scripts/check_flutter_gate6e_coverage.py --input coverage/lcov.info --minimum 0.90 --output ../flutter-gate6e-coverage.json
+          flutter pub deps --json > ../flutter-dependencies.json
+          python ../scripts/build_flutter_supply_chain.py --deps ../flutter-dependencies.json --package-config .dart_tool/package_config.json --output-dir ../flutter-supply-chain
+      - name: Collect Flutter evidence
+        shell: bash
+        run: |
+          mkdir -p artifacts/t2/g9a-r4/flutter
+          cp flutter-tests.jsonl flutter-gate2-coverage.json flutter-gate6d-coverage.json flutter-gate6e-coverage.json flutter-dependencies.json artifacts/t2/g9a-r4/flutter/
+          cp -R flutter-supply-chain/. artifacts/t2/g9a-r4/flutter/
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with: { name: "t2-g9a-r4-flutter-${{ matrix.os }}", path: artifacts/t2/g9a-r4/flutter, if-no-files-found: error, retention-days: 30 }
+
+  android-database:
+    needs: governance-ubuntu
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4.11@sha256:b3b90af2a6552ae30c266fdb7d5dd55f3afb72404bb78d37fe8a23eb857fd3fb
+        env: { MYSQL_ROOT_PASSWORD: synthetic_g9a_r4_db_root, MYSQL_DATABASE: jshpos_g9a_r4_db }
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -psynthetic_g9a_r4_db_root"
+          --health-interval=10s --health-timeout=5s --health-retries=12
+    env:
+      GATE6B_MYSQL_JDBC_URL: jdbc:mysql://127.0.0.1:3306/jshpos_g9a_r4_db?useUnicode=true&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      GATE6B_MYSQL_USERNAME: root
+      GATE6B_MYSQL_PASSWORD: synthetic_g9a_r4_db_root
+      GATE8C_MIGRATION_ROOT: ${{ github.workspace }}/server/ruoyi-modules
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with: { distribution: temurin, java-version: "21", cache: maven }
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with: { flutter-version: "3.47.0", channel: stable, cache: true }
+      - name: Validate MySQL SQLite Kotlin and Android regression
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/t2/g9a-r4/android-database
+          cd server
+          ./mvnw -pl ruoyi-modules/jshpos-release -am test -Dtest=ReleaseMigrationMySqlIT -Dsurefire.failIfNoSpecifiedTests=false -DskipTests=false
+          cd ../pos-flutter
+          flutter pub get --enforce-lockfile
+          flutter test test/gate6g/data_migration_recovery_test.dart --machine > ../artifacts/t2/g9a-r4/android-database/sqlite-migration-tests.jsonl
+          cd android && ./gradlew :app:compileDebugKotlin --no-daemon && cd ..
+          flutter build apk --debug
+          sha256sum build/app/outputs/flutter-apk/app-debug.apk > ../artifacts/t2/g9a-r4/android-database/app-debug.apk.sha256
+          cd ..
+          test -z "$(git diff --name-only "$R4_BASELINE" HEAD -- server/ruoyi-modules pos-flutter/lib/infrastructure/local_database | grep -E '(/db/migration/|^pos-flutter/lib/infrastructure/local_database/)' || true)"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with: { name: t2-g9a-r4-android-database, path: artifacts/t2/g9a-r4/android-database, if-no-files-found: error, retention-days: 30 }
+
+  formal-runtime:
+    needs: [server, web]
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4.11@sha256:b3b90af2a6552ae30c266fdb7d5dd55f3afb72404bb78d37fe8a23eb857fd3fb
+        env: { MYSQL_ROOT_PASSWORD: synthetic_g9a_r4_runtime_root, MYSQL_DATABASE: jshpos_g9a_r4_runtime }
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -psynthetic_g9a_r4_runtime_root"
+          --health-interval=10s --health-timeout=5s --health-retries=12
+      redis:
+        image: redis:7.4.10-alpine@sha256:e7723ff73d963f5cc6d9c4643ea3d989527a402a319239054e9472a7fb9219a2
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s --health-timeout=5s --health-retries=12
+    env:
+      GATE8B_PLATFORM_PASSWORD: admin123
+      GATE8B_BOOTSTRAP_PASSWORD: Synthetic-R4-Bootstrap-2026
+      GATE8B_REVIEWER_PASSWORD: Synthetic-R4-Reviewer-2026
+      JSH_TERMINAL_ACTIVATION_PEPPER: Synthetic-R4-Terminal-Pepper-Only-For-CI-2026
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with: { distribution: temurin, java-version: "21" }
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with: { python-version: "3.12" }
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with: { flutter-version: "3.47.0", channel: stable, cache: true }
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with: { name: t2-g9a-r4-server, path: downloaded/server }
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with: { name: t2-g9a-r4-web, path: downloaded/web }
+      - name: Start one formal stack and run SAA to three Flutter file-SQLite journeys
+        run: |
+          set -euo pipefail
+          umask 077
+          mkdir -p artifacts/t2/g9a-r4/formal-runtime "$RUNNER_TEMP/r4-packages" "$RUNNER_TEMP/r4-sqlite"
+          mysql_container="$(docker ps --filter publish=3306 --format '{{.ID}}' | head -1)"
+          redis_container="$(docker ps --filter publish=6379 --format '{{.ID}}' | head -1)"
+          test -n "$mysql_container" && test -n "$redis_container"
+          docker exec -i "$mysql_container" mysql --default-character-set=utf8mb4 -uroot -psynthetic_g9a_r4_runtime_root jshpos_g9a_r4_runtime < server/script/sql/ry_vue_5.X.sql
+          docker exec -i "$mysql_container" mysql --default-character-set=utf8mb4 -uroot -psynthetic_g9a_r4_runtime_root jshpos_g9a_r4_runtime < server/script/sql/ry_workflow.sql
+          docker exec "$redis_container" redis-cli CONFIG SET requirepass synthetic_g9a_r4_redis_runtime
+          openssl genpkey -algorithm Ed25519 -out "$RUNNER_TEMP/r4-signing.pem"
+          openssl pkey -in "$RUNNER_TEMP/r4-signing.pem" -outform DER -out "$RUNNER_TEMP/r4-signing.der"
+          openssl pkey -in "$RUNNER_TEMP/r4-signing.pem" -pubout -outform DER -out "$RUNNER_TEMP/r4-public.der"
+          signing_private="$(base64 -w0 "$RUNNER_TEMP/r4-signing.der")"
+          signing_public="$(tail -c 32 "$RUNNER_TEMP/r4-public.der" | base64 -w0)"
+          echo "::add-mask::$signing_private"
+          server_jar="$(find downloaded/server -name ruoyi-admin.jar -type f -print -quit)"
+          test -s "$server_jar"
+          java -jar "$server_jar" \
+            --server.port=18080 --api-decrypt.enabled=false --captcha.enable=false \
+            --spring.datasource.dynamic.p6spy=false \
+            '--spring.datasource.dynamic.datasource.master.url=jdbc:mysql://127.0.0.1:3306/jshpos_g9a_r4_runtime?useUnicode=true&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&nullCatalogMeansCurrent=true' \
+            --spring.datasource.dynamic.datasource.master.username=root \
+            --spring.datasource.dynamic.datasource.master.password=synthetic_g9a_r4_runtime_root \
+            --spring.data.redis.host=127.0.0.1 --spring.data.redis.port=6379 \
+            --spring.data.redis.password=synthetic_g9a_r4_redis_runtime \
+            --spring.boot.admin.client.enabled=false --snail-job.enabled=false \
+            --jshpos.package-artifacts.local-root="$RUNNER_TEMP/r4-packages" \
+            --jshpos.package-artifacts.software-signing-key-id=R4_SYNTHETIC_KEY \
+            --jshpos.package-artifacts.software-signing-pkcs8-base64="$signing_private" \
+            > artifacts/t2/g9a-r4/formal-runtime/server.log 2>&1 &
+          server_pid=$!
+          tar -xzf downloaded/web/vue-dist.tar.gz -C "$RUNNER_TEMP"
+          python -m http.server 14173 --directory "$RUNNER_TEMP/dist" > artifacts/t2/g9a-r4/formal-runtime/vue.log 2>&1 &
+          web_pid=$!
+          trap 'kill "$server_pid" "$web_pid" 2>/dev/null || true' EXIT
+          ready=0
+          for attempt in $(seq 1 90); do
+            if curl -fsS http://127.0.0.1:18080/ >/dev/null && curl -fsS http://127.0.0.1:14173/ >/dev/null; then ready=1; break; fi
+            if ! kill -0 "$server_pid"; then tail -200 artifacts/t2/g9a-r4/formal-runtime/server.log; exit 1; fi
+            sleep 2
+          done
+          test "$ready" -eq 1
+          python scripts/run_t2_g9a_r4_bootstrap.py \
+            --base-url http://127.0.0.1:18080 \
+            --signing-public-key-base64 "$signing_public" \
+            --output artifacts/t2/g9a-r4/formal-runtime/bootstrap.json \
+            --secrets-output "$RUNNER_TEMP/r4-secrets.json"
+          cd pos-flutter
+          flutter pub get --enforce-lockfile
+          R4_BASE_URL=http://127.0.0.1:18080 \
+          R4_BOOTSTRAP_EVIDENCE_PATH="$GITHUB_WORKSPACE/artifacts/t2/g9a-r4/formal-runtime/bootstrap.json" \
+          R4_SECRET_BUNDLE_PATH="$RUNNER_TEMP/r4-secrets.json" \
+          R4_SIGNING_PUBLIC_KEY_BASE64="$signing_public" \
+          R4_SQLITE_ROOT="$RUNNER_TEMP/r4-sqlite" \
+          R4_FLUTTER_EVIDENCE_PATH="$GITHUB_WORKSPACE/artifacts/t2/g9a-r4/formal-runtime/flutter-live.json" \
+          flutter test --machine test/gate9b/g9a_r4_formal_jar_e2e_test.dart 2>&1 | tee "$GITHUB_WORKSPACE/artifacts/t2/g9a-r4/formal-runtime/flutter-live.jsonl"
+          cd ..
+          test "$(find "$RUNNER_TEMP/r4-sqlite" -name '*.sqlite3' -type f | wc -l)" -eq 3
+          kill -0 "$server_pid" && kill -0 "$web_pid"
+          if grep -Fq "$GATE8B_PLATFORM_PASSWORD" artifacts/t2/g9a-r4/formal-runtime/server.log \
+            || grep -Fq "$GATE8B_BOOTSTRAP_PASSWORD" artifacts/t2/g9a-r4/formal-runtime/server.log \
+            || grep -Fq "$GATE8B_REVIEWER_PASSWORD" artifacts/t2/g9a-r4/formal-runtime/server.log; then
+            echo "formal runtime log contains a controlled synthetic credential" >&2
+            exit 1
+          fi
+          sha256sum "$server_jar" downloaded/web/vue-dist.tar.gz > artifacts/t2/g9a-r4/formal-runtime/artifacts.sha256
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with: { name: t2-g9a-r4-formal-runtime, path: artifacts/t2/g9a-r4/formal-runtime, if-no-files-found: error, retention-days: 90 }
+
+  security:
+    needs: [server, web, flutter, android-database, formal-runtime]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with: { python-version: "3.12" }
+      - name: Enforce Secret PII dependency workflow and external boundaries
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/t2/g9a-r4/security
+          python scripts/check_t2_g9a_r4.py --output artifacts/t2/g9a-r4/security/gate.json
+          python scripts/review_dependency_diff.py "$R4_BASELINE" "$(git rev-parse HEAD)" > artifacts/t2/g9a-r4/security/dependency-diff.json
+          curl -fsSL -o /tmp/trivy.tar.gz https://github.com/aquasecurity/trivy/releases/download/v0.72.0/trivy_0.72.0_Linux-64bit.tar.gz
+          echo "bbb64b9695866ce4a7a8f5c9592002c5961cab378577fa3f8a040df362b9b2ea  /tmp/trivy.tar.gz" | sha256sum --check
+          tar -xzf /tmp/trivy.tar.gz -C /tmp trivy
+          /tmp/trivy fs --skip-version-check --offline-scan --scanners secret --severity HIGH,CRITICAL --exit-code 1 --skip-dirs .git --format json --output artifacts/t2/g9a-r4/security/trivy-secret.json .
+          /tmp/trivy config --skip-version-check --checks-bundle-repository ghcr.io/aquasecurity/trivy-checks:2 --severity HIGH,CRITICAL --exit-code 1 --format json --output artifacts/t2/g9a-r4/security/trivy-config.json .github/workflows/t2-g9a-r4-runtime.yml
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with: { name: t2-g9a-r4-security, path: artifacts/t2/g9a-r4/security, if-no-files-found: error, retention-days: 30 }

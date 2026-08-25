@@ -327,5 +327,6 @@
 
 | CR-T2G9R4-001 | 2026-08-25 | G9A_R3D_ACCEPTED_R4_PREP_IN_PROGRESS | 项目发起人接受G9A-R3D CONDITIONAL PASS，将G9A-UI-P1-001确认为CLOSED_IN_GATE9B，并授权从`28b4da44ed529860970412a632c807df0d1d2d3e`只审计G9A-E2E-P1-001，冻结正式栈、三业态22 Owner旅程、失败seed、守恒和分批计划 | G9A-UI-P1-001、G9A-E2E-P1-001、T2-E2E-004/005、T2-INT-001 | 仅准备和只读审计；G9A-E2E继续OPEN，不新增Requirement/运行时/API/依赖/迁移，不进入外部执行、Alpha或生产；外部状态和零执行边界不变 |
 | CR-T2G9R4-002 | 2026-08-25 | G9A_R4_PREP_CONDITIONAL_PASS_AWAITING_CONFIRMATION | 候选`d0d9d48e147c0e5586123b1728f6c8ec3e4816ea`的Run`32839420045`完成治理双平台、范围守恒、Server、Web、Flutter双平台和证据聚合8个作业节点全绿；22 Owner装配和现有两条E2E证据链已冻结 | G9A-E2E-P1-001、T2-E2E-004/005、T2-INT-001、T2-CI-001 | Evidence Artifact`9560138972`摘要`fb9297da12fc8d653138ba7b7cc3caeb58d48542652ce7a42e3af9a77d60ad64`；G9A-E2E继续OPEN，等待发起人确认后方可正式整改，外部状态和零执行边界不变 |
+| CR-T2G9R4-003 | 2026-08-25 | G9A_R4_RUNTIME_REMEDIATION_IN_PROGRESS | 项目发起人接受R4准备阶段CONDITIONAL PASS，授权从`059f47ebd6877b683345d1e6f7c0cd9a18d712b5`按R4-R0至R4-R5关闭既有正式栈跨Owner证据缺口 | G9A-E2E-P1-001、T2-E2E-004/005、T2-INT-001、ADR-072 | 只允许测试/装配/证据和既有缺陷最小修复；Finding继续OPEN直至完整CI和发起人确认；外部状态与零执行边界不变 |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。
