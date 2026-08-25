@@ -11,11 +11,19 @@
       "tests": 106
     },
     "flutter": {
-      "result": "PENDING_CLEAN_GITHUB_EXECUTORS",
-      "reason": "本地工作区未安装 Flutter SDK，不以静态检查伪造 Widget 绿色结果"
+      "result": "PASS_CLEAN_GITHUB_EXECUTORS",
+      "reason": "本地工作区未安装 Flutter SDK；GitHub Run 32805916059 已在 Ubuntu、Windows 及 Android/Kotlin 干净执行器完成真实门禁"
     }
   },
   "requiredRemoteExecution": ["flutter-ubuntu", "flutter-windows", "android-kotlin"],
+  "remoteExecution": {
+    "runId": 32805916059,
+    "headSha": "bdcfa13613a77a846b308c71c5cf200c0986f2b1",
+    "result": "PASS",
+    "jobs": 9,
+    "evidenceArtifactId": 9548292783,
+    "evidenceArtifactDigest": "sha256:8e96a467834b4e65cf8c96ec7fe15144fbb766e1bdeed5ef8ef1126f1e8bf548"
+  },
   "openP0": 0,
   "openP1InBatch": 0,
   "overallFindingState": "OPEN",
