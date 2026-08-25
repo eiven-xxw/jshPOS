@@ -7,6 +7,13 @@
       title="Gate 8A SaaS 商户运营（内部软件证据）"
       description="tenant_id、状态、审批和配额均由服务端决定；本页面不执行真实收费、支付、设备、伙伴现场或生产开户。"
     />
+    <OwnerPageFeedback
+      surface-id="saas"
+      :state="phase"
+      :failure="failure"
+      empty-title="当前平台数据范围内暂无商户申请"
+      @retry="refresh"
+    />
 
     <el-tabs v-model="activeTab" class="mt-3" type="border-card">
       <el-tab-pane label="套餐与权益" name="plan">
@@ -78,7 +85,7 @@
         <el-form :inline="true"
           ><el-form-item label="申请 ULID"><el-input v-model="applicationId" class="wide" /></el-form-item
           ><el-form-item
-            ><el-button v-hasPermi="['saas:application:read']" :loading="loading" @click="refresh">读取</el-button></el-form-item
+            ><el-button v-hasPermi="['saas:application:read']" data-testid="saas-application-read" :loading="loading" @click="refresh">读取</el-button></el-form-item
           ></el-form
         >
         <el-descriptions v-if="detail" :column="4" border
@@ -129,6 +136,7 @@
             ><el-button
               v-for="action in lifecycleActions"
               :key="action"
+              :data-testid="`saas-lifecycle-${action}`"
               v-hasPermi="['saas:tenant:lifecycle']"
               :loading="loading"
               @click="runLifecycle(action)"
@@ -142,6 +150,10 @@
 </template>
 
 <script setup lang="ts">
+import { ElMessageBox } from 'element-plus';
+import OwnerPageFeedback from '@/views/operations/components/OwnerPageFeedback.vue';
+import { useRecoverablePage } from '@/composables/useRecoverablePage';
+import { useStableOperationIdentity } from '@/composables/useStableOperationIdentity';
 import {
   activateSaasApplication,
   advanceEntitlementVersion,
@@ -160,7 +172,6 @@ import type { EntitlementVersion, SaasApplicationDetail, SaasPlan } from '@/api/
 import { newOperationCommandId } from '@/api/operations';
 
 const activeTab = ref('plan'),
-  loading = ref(false),
   applicationId = ref(''),
   detail = ref<SaasApplicationDetail>(),
   createdPlan = ref<SaasPlan>(),
@@ -182,56 +193,65 @@ const version = reactive({
 });
 const entitlementActions = ['validate', 'approve', 'publish', 'activate'] as const,
   lifecycleActions = ['suspend', 'deactivate', 'restore', 'request-termination', 'terminate-logical'] as const;
-const keys = new Map<string, string>();
+const { phase, failure, submitting, runRead, runWrite } = useRecoverablePage('SAAS_PAGE_FAILED');
+const operationKeys = useStableOperationIdentity(newOperationCommandId);
+const loading = computed(() => phase.value === 'LOADING' || submitting.value);
 const identity = (action: string) => {
-  if (!keys.has(action)) keys.set(action, newOperationCommandId());
-  const value = keys.get(action)!;
+  const value = operationKeys.get(action);
   return { idempotencyKey: value, correlationId: value };
 };
 /** 同一次失败重试复用原命令，服务端确认成功后才为下一次业务操作生成新键。 */
 const executeCommand = async <T,>(action: string, work: (commandIdentity: SaasIdentity) => Promise<T>) => {
   const commandIdentity = identity(action);
-  const result = await run(() => work(commandIdentity));
-  keys.delete(action);
+  const result = await runWrite(`saas:${action}`, () => work(commandIdentity));
+  if (result !== undefined) operationKeys.complete(action);
   return result;
 };
 const run = async <T,>(work: () => Promise<T>) => {
-  loading.value = true;
+  return runRead(work);
+};
+const confirmImpact = async (title: string, message: string): Promise<boolean> => {
   try {
-    return await work();
-  } finally {
-    loading.value = false;
+    await ElMessageBox.confirm(message, title, { type: 'warning', confirmButtonText: '确认执行', cancelButtonText: '取消' });
+    return true;
+  } catch {
+    return false;
   }
 };
 const savePlan = async () => {
-  createdPlan.value = (await executeCommand('plan:create', (i) => createSaasPlan(plan, i))).data;
+  const result = await executeCommand('plan:create', (i) => createSaasPlan(plan, i));
+  if (!result) return;
+  createdPlan.value = result.data;
   version.planId = createdPlan.value.planId;
   application.planId = createdPlan.value.planId;
 };
 const saveVersion = async () => {
-  createdVersion.value = (
-    await executeCommand('version:create', (i) =>
-      createEntitlementVersion(version.planId, { versionNo: version.versionNo, effectiveAt: version.effectiveAt, items: version.items }, i)
-    )
-  ).data;
+  const result = await executeCommand('version:create', (i) =>
+    createEntitlementVersion(version.planId, { versionNo: version.versionNo, effectiveAt: version.effectiveAt, items: version.items }, i)
+  );
+  if (result) createdVersion.value = result.data;
 };
 const advanceVersion = async (action: (typeof entitlementActions)[number]) => {
   if (!createdVersion.value) return;
-  createdVersion.value = (
-    await executeCommand(`version:${action}`, (i) => advanceEntitlementVersion(createdVersion.value!.versionId, action, i))
-  ).data;
+  if (action !== 'validate' && !(await confirmImpact('套餐权益版本确认', `权益版本 ${createdVersion.value.versionId}；动作 ${action}；发布后内容不可原地修改。`))) return;
+  const result = await executeCommand(`version:${action}`, (i) => advanceEntitlementVersion(createdVersion.value!.versionId, action, i));
+  if (result) createdVersion.value = result.data;
 };
 const createApplication = async () => {
-  detail.value = (await executeCommand('application:create', (i) => createSaasApplication(application, i))).data;
+  const result = await executeCommand('application:create', (i) => createSaasApplication(application, i));
+  if (!result) return;
+  detail.value = result.data;
   applicationId.value = detail.value.application.applicationId;
 };
 const refresh = async () => {
-  detail.value = (await run(() => getSaasApplication(applicationId.value))).data;
+  const result = await run(() => getSaasApplication(applicationId.value));
+  if (!result) return;
+  detail.value = result.data;
   lifecycleTenant.value = detail.value.application.tenantId || '';
 };
 const appAction = async (action: 'preflight' | 'approve' | 'initialize' | 'activate') => {
-  detail.value = (
-    await executeCommand(`application:${action}`, (i) =>
+  if (action !== 'preflight' && !(await confirmImpact('商户开户状态确认', `申请 ${applicationId.value}；动作 ${action}；租户号只允许由服务端编排。`))) return;
+  const result = await executeCommand(`application:${action}`, (i) =>
       action === 'preflight'
         ? preflightSaasApplication(applicationId.value, i)
         : action === 'approve'
@@ -239,19 +259,24 @@ const appAction = async (action: 'preflight' | 'approve' | 'initialize' | 'activ
           : action === 'initialize'
             ? initializeSaasApplication(applicationId.value, i)
             : activateSaasApplication(applicationId.value, i)
-    )
-  ).data;
+    );
+  if (result) detail.value = result.data;
 };
 const provisionTenant = async () => {
   try {
-    detail.value = (await executeCommand('application:provision', (i) => provisionSaasApplication(applicationId.value, { ...provision }, i))).data;
+    if (!(await confirmImpact('创建停用态技术租户', `申请 ${applicationId.value}；初始账号 ${provision.bootstrapUsername}；一次性密码提交后立即清空。`))) return;
+    const result = await executeCommand('application:provision', (i) => provisionSaasApplication(applicationId.value, { ...provision }, i));
+    if (!result) return;
+    detail.value = result.data;
     lifecycleTenant.value = detail.value.application.tenantId || '';
   } finally {
     provision.bootstrapPassword = '';
   }
 };
 const runLifecycle = async (action: (typeof lifecycleActions)[number]) => {
-  await executeCommand(`lifecycle:${action}`, (i) => changeTenantLifecycle(lifecycleTenant.value, action, reason.value, i));
+  if (!(await confirmImpact('租户生命周期确认', `租户 ${lifecycleTenant.value}；动作 ${action}；历史事实不会被删除，受控恢复入口保留。`))) return;
+  const result = await executeCommand(`lifecycle:${action}`, (i) => changeTenantLifecycle(lifecycleTenant.value, action, reason.value, i));
+  if (!result) return;
   await refresh();
 };
 </script>
