@@ -55,6 +55,11 @@ def stable_ulid(label: str) -> str:
     return "01" + "".join(reversed(chars))
 
 
+def instant_timestamp(value: datetime) -> str:
+    """按 REST ``Instant`` 契约输出 UTC ISO-8601，避免复用 LocalDateTime 格式。"""
+    return value.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
 def all_commercial_menu_ids() -> list[int]:
     """从已发布迁移读取商业菜单身份，不查询或写入数据库。"""
     result = {1, 100, 101, 1001, 1002, 1008}
@@ -408,7 +413,7 @@ def create_tenant(client: ApiClient, passwords: dict[str, str], plan_id: Any, in
         "storeId": str(store_id),
         "warehouseId": WAREHOUSE_ID,
         "negativeStockMode": "DENY",
-        "effectiveFrom": timestamp(now - timedelta(days=1)),
+        "effectiveFrom": instant_timestamp(now - timedelta(days=1)),
         "correlationId": stable_ulid(f"r4-inventory-policy-trace-{run_tag}-{label}"),
     })
     lot_package_version = 0
