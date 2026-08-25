@@ -69,7 +69,9 @@
           <el-form-item label="目标日期"><el-date-picker v-model="projectForm.targetDate" type="date" value-format="YYYY-MM-DD" /></el-form-item>
           <el-form-item>
             <el-button v-hasPermi="['service:project:create']" type="primary" :loading="loading" @click="createProject">创建项目</el-button>
-            <el-button v-hasPermi="['service:project:read']" data-testid="service-project-refresh" :loading="loading" @click="refreshProjects">刷新</el-button>
+            <el-button v-hasPermi="['service:project:read']" data-testid="service-project-refresh" :loading="loading" @click="refreshProjects"
+              >刷新</el-button
+            >
           </el-form-item>
         </el-form>
         <el-table :data="projects" border @row-click="openProject">
@@ -284,7 +286,10 @@ const publishCatalog = async () => {
   if (result) catalogDetail.value = result.data;
 };
 const refreshProjects = async () => {
-  const result = await run(() => listServiceProjects(storeId.value), (value) => value.data.length === 0);
+  const result = await run(
+    () => listServiceProjects(storeId.value),
+    (value) => value.data.length === 0
+  );
   if (result) projects.value = result.data;
 };
 const createProject = async () => {
@@ -318,7 +323,10 @@ const completeCheck = async (check: CheckRecord) => {
 };
 
 const refreshTickets = async () => {
-  const result = await run(() => listServiceTickets(storeId.value), (value) => value.data.length === 0);
+  const result = await run(
+    () => listServiceTickets(storeId.value),
+    (value) => value.data.length === 0
+  );
   if (result) tickets.value = result.data;
 };
 const createTicket = async () => {
@@ -336,21 +344,27 @@ const openTicket = async (row: TicketRecord) => {
 const runTicketCommand = async (name: string) => {
   if (!ticketDetail.value) return;
   const ticket = ticketDetail.value.ticket;
-  if (!(await confirmImpact('服务工单状态确认', `工单 ${ticket.ticketId}；版本 ${ticket.recordVersion}；动作 ${name}；租约 ${ticketAction.leaseMinutes} 分钟。`))) return;
+  if (
+    !(await confirmImpact(
+      '服务工单状态确认',
+      `工单 ${ticket.ticketId}；版本 ${ticket.recordVersion}；动作 ${name}；租约 ${ticketAction.leaseMinutes} 分钟。`
+    ))
+  )
+    return;
   const result = await command(`ticket-${name}-${ticket.recordVersion}`, (i) =>
-      commandServiceTicket(
-        ticket.ticketId,
-        ticket.recordVersion,
-        {
-          command: name,
-          assigneeUserId: ticketAction.assigneeUserId,
-          leaseMinutes: ticketAction.leaseMinutes,
-          reason: actionReason.value,
-          resolutionSummary: name === 'RESOLVE' ? actionReason.value : undefined
-        },
-        i
-      )
-    );
+    commandServiceTicket(
+      ticket.ticketId,
+      ticket.recordVersion,
+      {
+        command: name,
+        assigneeUserId: ticketAction.assigneeUserId,
+        leaseMinutes: ticketAction.leaseMinutes,
+        reason: actionReason.value,
+        resolutionSummary: name === 'RESOLVE' ? actionReason.value : undefined
+      },
+      i
+    )
+  );
   if (!result) return;
   ticketDetail.value = result.data;
   await refreshTickets();

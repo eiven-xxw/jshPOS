@@ -53,7 +53,9 @@ describe('G9A-R3C R3 VUE-20 终端登记页', () => {
 
   it('签发失败重试复用原键，一次性秘密关闭后立即清空', async () => {
     terminalApi.issueTerminalActivation
-      .mockRejectedValueOnce(Object.assign(new Error('seed-issue-conflict'), { response: { status: 409, data: { code: 'TERMINAL_ISSUE_CONFLICT' } } }))
+      .mockRejectedValueOnce(
+        Object.assign(new Error('seed-issue-conflict'), { response: { status: 409, data: { code: 'TERMINAL_ISSUE_CONFLICT' } } })
+      )
       .mockResolvedValueOnce({
         data: { activationId: 'ACT-R3C-001', activationSecret: 'one-time-r3c-secret', expiresAt: '2026-08-25T11:00:00Z', status: 'ISSUED' }
       });

@@ -64,7 +64,9 @@ describe('G9A-R3C R5 VUE-19 订阅运营页', () => {
 
   it('创建失败恢复复用原命令身份，服务端成功后才释放', async () => {
     subscriptionApi.createSubscription
-      .mockRejectedValueOnce(Object.assign(new Error('seed-subscription-conflict'), { response: { status: 409, data: { code: 'SUBSCRIPTION_CONFLICT' } } }))
+      .mockRejectedValueOnce(
+        Object.assign(new Error('seed-subscription-conflict'), { response: { status: 409, data: { code: 'SUBSCRIPTION_CONFLICT' } } })
+      )
       .mockResolvedValueOnce({ data: detail });
     const wrapper = mountPage();
     await wrapper.get('[data-testid="subscription-create"]').trigger('click');

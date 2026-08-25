@@ -67,7 +67,7 @@ describe('G9A-R3C R1 VUE-16 报表运营页', () => {
       .mockRejectedValueOnce(Object.assign(new Error('seed-export-conflict'), { response: { status: 409, data: { code: 'EXPORT_CONFLICT' } } }))
       .mockResolvedValueOnce({
         data: { exportId: 'EXPORT-1', state: 'REQUESTED', estimatedRows: 0, approvalRequired: false, version: 1 }
-    });
+      });
     const wrapper = mountPage();
     await wrapper.get('[data-testid="reporting-store"]').setValue('1001');
     await wrapper.get('[data-testid="reporting-export-open"]').trigger('click');

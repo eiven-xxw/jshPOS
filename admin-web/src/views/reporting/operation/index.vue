@@ -48,8 +48,17 @@
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button v-hasPermi="queryPermissions" data-testid="reporting-query" type="primary" icon="Search" :loading="pageBusy" @click="loadReport">查询</el-button>
-          <el-button v-hasPermi="['report:export:request']" data-testid="reporting-export-open" icon="Download" :disabled="pageBusy" @click="openExport">安全导出</el-button>
+          <el-button v-hasPermi="queryPermissions" data-testid="reporting-query" type="primary" icon="Search" :loading="pageBusy" @click="loadReport"
+            >查询</el-button
+          >
+          <el-button
+            v-hasPermi="['report:export:request']"
+            data-testid="reporting-export-open"
+            icon="Download"
+            :disabled="pageBusy"
+            @click="openExport"
+            >安全导出</el-button
+          >
         </el-form-item>
       </el-form>
 
@@ -121,7 +130,7 @@
         <el-form-item label="门店范围"><el-input v-model="exportStoreIds" placeholder="11,12" /></el-form-item>
         <el-form-item label="字段白名单">
           <el-checkbox-group v-model="exportFields">
-            <el-checkbox v-for="field in availableFields" :key="field.value" :label="field.value">{{ field.label }}</el-checkbox>
+            <el-checkbox v-for="field in availableFields" :key="field.value" :value="field.value">{{ field.label }}</el-checkbox>
           </el-checkbox-group>
         </el-form-item>
         <el-form-item label="审批原因"><el-input v-model="approvalReason" maxlength="256" /></el-form-item>
@@ -136,7 +145,14 @@
       <template #footer>
         <el-button @click="exportDialog = false">关闭</el-button>
         <el-button @click="refreshExport">刷新状态</el-button>
-        <el-button v-hasPermi="['report:export:request']" data-testid="reporting-export-request" type="primary" :loading="submitting" @click="submitExport">申请</el-button>
+        <el-button
+          v-hasPermi="['report:export:request']"
+          data-testid="reporting-export-request"
+          type="primary"
+          :loading="submitting"
+          @click="submitExport"
+          >申请</el-button
+        >
         <el-button
           v-if="currentExport?.state === 'REQUESTED' && currentExport.approvalRequired"
           v-hasPermi="['report:export:approve']"
@@ -344,7 +360,8 @@ const openExport = () => {
 
 const submitExport = async () => {
   const operation = `report:export:${exportId.value}:request`;
-  if (!(await confirmImpact('安全导出申请确认', `导出 ${exportId.value}；门店范围 ${exportStoreIds.value || '当前数据范围'}；最多 31 个业务日。`))) return;
+  if (!(await confirmImpact('安全导出申请确认', `导出 ${exportId.value}；门店范围 ${exportStoreIds.value || '当前数据范围'}；最多 31 个业务日。`)))
+    return;
   const result = await executeWrite(operation, (key) =>
     requestReportExport({
       exportId: exportId.value,
@@ -368,7 +385,8 @@ const refreshExport = async () => {
 
 const approveExport = async () => {
   if (!currentExport.value) return;
-  if (!(await confirmImpact('独立审批确认', `批准导出 ${exportId.value}；版本 ${currentExport.value.version}；原因：${approvalReason.value}`))) return;
+  if (!(await confirmImpact('独立审批确认', `批准导出 ${exportId.value}；版本 ${currentExport.value.version}；原因：${approvalReason.value}`)))
+    return;
   const operation = `report:export:${exportId.value}:approve`;
   const result = await executeWrite(operation, (key) =>
     approveReportExport(exportId.value, true, approvalReason.value, currentExport.value!.version, key)
@@ -406,7 +424,13 @@ const openReconciliation = async (row: PaymentReconciliationVO) => {
 
 const submitReconciliationTransition = async () => {
   if (!selectedReconciliation.value || !transitionReason.value.trim()) return;
-  if (!(await confirmImpact('对账差异处置确认', `对账 ${selectedReconciliation.value.reconciliationId}；版本 ${selectedReconciliation.value.version}；目标状态 ${transitionState.value}。UNKNOWN 只能查询原事实。`))) return;
+  if (
+    !(await confirmImpact(
+      '对账差异处置确认',
+      `对账 ${selectedReconciliation.value.reconciliationId}；版本 ${selectedReconciliation.value.version}；目标状态 ${transitionState.value}。UNKNOWN 只能查询原事实。`
+    ))
+  )
+    return;
   const operation = `report:reconciliation:${selectedReconciliation.value.reconciliationId}:${transitionState.value}`;
   const result = await executeWrite(operation, (key) =>
     transitionPaymentReconciliation(

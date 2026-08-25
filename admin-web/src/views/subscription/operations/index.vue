@@ -7,19 +7,17 @@
       title="Gate 8A 订阅运营（内部软件执行）"
       description="服务端决定期限、状态和访问模式；本页面不执行真实计费、扣款、支付 Provider、发票或资金结算。"
     />
-    <OwnerPageFeedback
-      surface-id="subscription"
-      :state="phase"
-      :failure="failure"
-      empty-title="当前可信租户范围内暂无订阅记录"
-      @retry="refresh"
-    />
+    <OwnerPageFeedback surface-id="subscription" :state="phase" :failure="failure" empty-title="当前可信租户范围内暂无订阅记录" @retry="refresh" />
     <el-card class="mt-3" shadow="never">
       <template #header>创建或读取订阅</template>
       <el-form :inline="true">
         <el-form-item label="目标租户"><el-input v-model="targetTenant" /></el-form-item>
         <el-form-item label="订阅 ULID"><el-input v-model="subscriptionId" class="wide" /></el-form-item>
-        <el-form-item><el-button v-hasPermi="['subscription:read']" data-testid="subscription-read" :loading="loading" @click="refresh">读取</el-button></el-form-item>
+        <el-form-item
+          ><el-button v-hasPermi="['subscription:read']" data-testid="subscription-read" :loading="loading" @click="refresh"
+            >读取</el-button
+          ></el-form-item
+        >
       </el-form>
       <el-form :inline="true">
         <el-form-item label="合同引用"><el-input v-model="term.contractRef" /></el-form-item>
@@ -28,7 +26,9 @@
         <el-form-item label="结束"><el-date-picker v-model="term.endsAt" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss" /></el-form-item>
         <el-form-item label="宽限结束"><el-date-picker v-model="term.graceEndsAt" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss" /></el-form-item>
         <el-form-item
-          ><el-button v-hasPermi="['subscription:create']" data-testid="subscription-create" type="primary" :loading="loading" @click="create">创建草稿</el-button></el-form-item
+          ><el-button v-hasPermi="['subscription:create']" data-testid="subscription-create" type="primary" :loading="loading" @click="create"
+            >创建草稿</el-button
+          ></el-form-item
         >
       </el-form>
     </el-card>
@@ -55,10 +55,14 @@
         <el-form-item>
           <el-button v-hasPermi="['subscription:activate']" @click="execute('activate')">激活</el-button>
           <el-button v-hasPermi="['subscription:renew']" @click="execute('renew')">续期</el-button>
-          <el-button v-hasPermi="['subscription:suspend']" data-testid="subscription-suspend" type="warning" @click="execute('suspend')">暂停</el-button>
+          <el-button v-hasPermi="['subscription:suspend']" data-testid="subscription-suspend" type="warning" @click="execute('suspend')"
+            >暂停</el-button
+          >
           <el-button v-hasPermi="['subscription:restore']" type="success" @click="execute('restore')">恢复</el-button>
           <el-button v-hasPermi="['subscription:terminate']" type="danger" @click="execute('request-termination')">申请终止</el-button>
-          <el-button v-hasPermi="['subscription:terminate']" data-testid="subscription-terminate" type="danger" @click="execute('terminate')">确认逻辑终止</el-button>
+          <el-button v-hasPermi="['subscription:terminate']" data-testid="subscription-terminate" type="danger" @click="execute('terminate')"
+            >确认逻辑终止</el-button
+          >
         </el-form-item>
       </el-form>
       <el-table :data="detail.terms" class="mt-3" border>
@@ -145,18 +149,18 @@ const execute = async (action: 'activate' | 'renew' | 'suspend' | 'restore' | 'r
     }
   }
   const result = await command(action, (i) =>
-      action === 'activate'
-        ? activateSubscription(id, i)
-        : action === 'renew'
-          ? renewSubscription(id, term, i)
-          : action === 'suspend'
-            ? suspendSubscription(id, reason.value, i)
-            : action === 'restore'
-              ? restoreSubscription(id, term, i)
-              : action === 'request-termination'
-                ? requestSubscriptionTermination(id, reason.value, i)
-                : terminateSubscription(id, reason.value, i)
-    );
+    action === 'activate'
+      ? activateSubscription(id, i)
+      : action === 'renew'
+        ? renewSubscription(id, term, i)
+        : action === 'suspend'
+          ? suspendSubscription(id, reason.value, i)
+          : action === 'restore'
+            ? restoreSubscription(id, term, i)
+            : action === 'request-termination'
+              ? requestSubscriptionTermination(id, reason.value, i)
+              : terminateSubscription(id, reason.value, i)
+  );
   if (result) detail.value = result.data;
 };
 </script>

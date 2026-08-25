@@ -7,13 +7,7 @@
       title="Gate 8A SaaS 商户运营（内部软件证据）"
       description="tenant_id、状态、审批和配额均由服务端决定；本页面不执行真实收费、支付、设备、伙伴现场或生产开户。"
     />
-    <OwnerPageFeedback
-      surface-id="saas"
-      :state="phase"
-      :failure="failure"
-      empty-title="当前平台数据范围内暂无商户申请"
-      @retry="refresh"
-    />
+    <OwnerPageFeedback surface-id="saas" :state="phase" :failure="failure" empty-title="当前平台数据范围内暂无商户申请" @retry="refresh" />
 
     <el-tabs v-model="activeTab" class="mt-3" type="border-card">
       <el-tab-pane label="套餐与权益" name="plan">
@@ -85,7 +79,9 @@
         <el-form :inline="true"
           ><el-form-item label="申请 ULID"><el-input v-model="applicationId" class="wide" /></el-form-item
           ><el-form-item
-            ><el-button v-hasPermi="['saas:application:read']" data-testid="saas-application-read" :loading="loading" @click="refresh">读取</el-button></el-form-item
+            ><el-button v-hasPermi="['saas:application:read']" data-testid="saas-application-read" :loading="loading" @click="refresh"
+              >读取</el-button
+            ></el-form-item
           ></el-form
         >
         <el-descriptions v-if="detail" :column="4" border
@@ -233,7 +229,11 @@ const saveVersion = async () => {
 };
 const advanceVersion = async (action: (typeof entitlementActions)[number]) => {
   if (!createdVersion.value) return;
-  if (action !== 'validate' && !(await confirmImpact('套餐权益版本确认', `权益版本 ${createdVersion.value.versionId}；动作 ${action}；发布后内容不可原地修改。`))) return;
+  if (
+    action !== 'validate' &&
+    !(await confirmImpact('套餐权益版本确认', `权益版本 ${createdVersion.value.versionId}；动作 ${action}；发布后内容不可原地修改。`))
+  )
+    return;
   const result = await executeCommand(`version:${action}`, (i) => advanceEntitlementVersion(createdVersion.value!.versionId, action, i));
   if (result) createdVersion.value = result.data;
 };
@@ -250,21 +250,25 @@ const refresh = async () => {
   lifecycleTenant.value = detail.value.application.tenantId || '';
 };
 const appAction = async (action: 'preflight' | 'approve' | 'initialize' | 'activate') => {
-  if (action !== 'preflight' && !(await confirmImpact('商户开户状态确认', `申请 ${applicationId.value}；动作 ${action}；租户号只允许由服务端编排。`))) return;
+  if (action !== 'preflight' && !(await confirmImpact('商户开户状态确认', `申请 ${applicationId.value}；动作 ${action}；租户号只允许由服务端编排。`)))
+    return;
   const result = await executeCommand(`application:${action}`, (i) =>
-      action === 'preflight'
-        ? preflightSaasApplication(applicationId.value, i)
-        : action === 'approve'
-          ? approveSaasApplication(applicationId.value, reason.value, i)
-          : action === 'initialize'
-            ? initializeSaasApplication(applicationId.value, i)
-            : activateSaasApplication(applicationId.value, i)
-    );
+    action === 'preflight'
+      ? preflightSaasApplication(applicationId.value, i)
+      : action === 'approve'
+        ? approveSaasApplication(applicationId.value, reason.value, i)
+        : action === 'initialize'
+          ? initializeSaasApplication(applicationId.value, i)
+          : activateSaasApplication(applicationId.value, i)
+  );
   if (result) detail.value = result.data;
 };
 const provisionTenant = async () => {
   try {
-    if (!(await confirmImpact('创建停用态技术租户', `申请 ${applicationId.value}；初始账号 ${provision.bootstrapUsername}；一次性密码提交后立即清空。`))) return;
+    if (
+      !(await confirmImpact('创建停用态技术租户', `申请 ${applicationId.value}；初始账号 ${provision.bootstrapUsername}；一次性密码提交后立即清空。`))
+    )
+      return;
     const result = await executeCommand('application:provision', (i) => provisionSaasApplication(applicationId.value, { ...provision }, i));
     if (!result) return;
     detail.value = result.data;

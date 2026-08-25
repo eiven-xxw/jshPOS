@@ -247,4 +247,3 @@ jobs:
           python scripts/build_t2_g9a_r3c_runtime_evidence.py --bundle-dir artifacts/t2/g9a-r3c/bundle --output artifacts/t2/g9a-r3c/final/evidence-index.json
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with: { name: t2-g9a-r3c-evidence-index, path: artifacts/t2/g9a-r3c/final, if-no-files-found: error, retention-days: 90 }
-

@@ -8,19 +8,29 @@
       title="Gate 6A 终端登记"
       description="激活秘密和设备凭据仅显示一次；当前只具备 SYNTHETIC 软件证据，真实设备验收仍为 BLOCKED。"
     />
-    <OwnerPageFeedback
-      surface-id="terminal"
-      :state="phase"
-      :failure="failure"
-      empty-title="当前可信租户和门店范围内暂无已登记终端"
-      @retry="load"
-    />
+    <OwnerPageFeedback surface-id="terminal" :state="phase" :failure="failure" empty-title="当前可信租户和门店范围内暂无已登记终端" @retry="load" />
     <el-card shadow="hover">
       <el-form :inline="true">
         <el-form-item label="门店 ID"><el-input-number v-model="queryStoreId" :min="1" :controls="false" clearable /></el-form-item>
         <el-form-item>
-          <el-button v-hasPermi="['terminal:registry:read']" data-testid="terminal-query" type="primary" icon="Search" :loading="loading" @click="load">查询</el-button>
-          <el-button v-hasPermi="['terminal:activation:issue']" data-testid="terminal-issue-open" type="success" icon="Plus" :disabled="submitting" @click="openIssue">签发激活</el-button>
+          <el-button
+            v-hasPermi="['terminal:registry:read']"
+            data-testid="terminal-query"
+            type="primary"
+            icon="Search"
+            :loading="loading"
+            @click="load"
+            >查询</el-button
+          >
+          <el-button
+            v-hasPermi="['terminal:activation:issue']"
+            data-testid="terminal-issue-open"
+            type="success"
+            icon="Plus"
+            :disabled="submitting"
+            @click="openIssue"
+            >签发激活</el-button
+          >
         </el-form-item>
       </el-form>
       <el-table v-loading="loading" :data="page.items" border>
@@ -92,7 +102,8 @@
         <el-form-item label="有效期（秒）"><el-input-number v-model="issueForm.expiresInSeconds" :min="60" :max="86400" /></el-form-item>
       </el-form>
       <template #footer
-        ><el-button @click="issueDialog = false">取消</el-button><el-button data-testid="terminal-issue-submit" type="primary" :loading="submitting" @click="submitIssue">签发</el-button></template
+        ><el-button @click="issueDialog = false">取消</el-button
+        ><el-button data-testid="terminal-issue-submit" type="primary" :loading="submitting" @click="submitIssue">签发</el-button></template
       >
     </el-dialog>
 
