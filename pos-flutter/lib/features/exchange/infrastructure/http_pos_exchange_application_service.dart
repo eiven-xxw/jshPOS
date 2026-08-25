@@ -446,9 +446,10 @@ final class HttpPosExchangeApplicationService
   void _validateSource(PosExchangeSource source, String reasonCode) {
     // 换货关联负责观察并推进原退货 Saga，因此允许已提交待审批或已经完成的原退货；
     // 失败、UNKNOWN 及中间态仍必须失败关闭，禁止客户端重建退款命令。
-    if (!const {'pendingApproval', 'completed'}.contains(
-          source.originalReturn.status.name,
-        ) ||
+    if (!const {
+          'pendingApproval',
+          'completed',
+        }.contains(source.originalReturn.status.name) ||
         source.originalReturn.refundableAmountMinor <= 0 ||
         source.newSale.receivableAmountMinor <= 0 ||
         !RegExp(r'^[A-Z0-9_]{2,32}$').hasMatch(reasonCode)) {
