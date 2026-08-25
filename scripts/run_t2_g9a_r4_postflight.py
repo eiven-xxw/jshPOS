@@ -25,6 +25,9 @@ OWNERS = (
     "sync", "order", "promotion", "member", "payment", "inventory", "costing", "procurement",
     "transfer", "returns", "reporting", "operations", "resilience", "release", "integration",
 )
+EXTERNAL_ONBOARDING_CHECKS = {
+    "PAYMENT_EXTERNAL", "HARDWARE_EXTERNAL", "PRINT_EXTERNAL", "DESIGN_PARTNER_EXTERNAL",
+}
 
 
 def load(path: pathlib.Path) -> dict[str, Any]:
@@ -121,7 +124,7 @@ def checkpoint(
 
 def run_journey(
     *, client: ApiClient, run_id: str, context: dict[str, Any], secret: dict[str, Any],
-    journey: dict[str, Any], build_commit: str,
+    journey: dict[str, Any], build_commit: str, backup_key_version: str,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], dict[str, Any]]:
     label = text(context, "journeyId").lower()
     client.login(text(context, "tenantId"), text(secret, "username"), text(secret, "password"),
@@ -140,6 +143,29 @@ def run_journey(
         "identityValue": f"R4-{hashlib.sha256(label.encode()).hexdigest()[:12].upper()}",
         "correlationId": stable_ulid(f"{run_id}:{label}:member:correlation"),
     }))
+
+    # R4 只形成内部 SYNTHETIC_RESTORE 低等级证据：正式 API、加密对象目录和空文件恢复
+    # 目标均由商业 JAR 装配；它不读取生产源，也不会提升为真实 PITR/KMS/灾备结论。
+    backup_id = stable_ulid(f"{run_id}:{label}:backup")
+    restore_drill_id = stable_ulid(f"{run_id}:{label}:restore")
+    point_in_time = datetime.now(timezone.utc) - timedelta(seconds=2)
+    point_text = point_in_time.isoformat().replace("+00:00", "Z")
+    backup = data(client.call("POST", "/api/v1/backups", f"{label}-synthetic-backup", body={
+        "backupId": backup_id, "environment": "G9A_R4_INTERNAL",
+        "pointInTime": point_text, "latestIncludedFactAt": point_text,
+        "schemaVersion": "R4", "applicationVersion": "R4", "keyVersion": backup_key_version,
+        "immutableUntil": (point_in_time + timedelta(days=1)).isoformat().replace("+00:00", "Z"),
+        "correlationId": stable_ulid(f"{run_id}:{label}:backup:trace"),
+    }))
+    if backup.get("state") != "AVAILABLE" or backup.get("objectCount") != 6:
+        raise JourneyFailure(f"{label}-synthetic-backup: expected six-object AVAILABLE backup")
+    restore = data(client.call(
+        "POST", f"/api/v1/backups/{backup_id}/restore-drills", f"{label}-synthetic-restore",
+        body={"drillId": restore_drill_id, "expectedSchemaVersion": "R4",
+              "correlationId": stable_ulid(f"{run_id}:{label}:restore:trace")},
+    ))
+    if restore.get("state") != "PASS" or restore.get("checkCount") != 9 or not restore.get("evidenceSha256"):
+        raise JourneyFailure(f"{label}-synthetic-restore: expected nine-check PASS evidence")
 
     plan = data(client.call("POST", "/api/v1/onboarding/plans", f"{label}-onboarding-create", body={
         "sourceStoreId": None, "targetStoreId": context["onboardingTargetStoreId"],
@@ -166,10 +192,12 @@ def run_journey(
     plan = data(client.call("POST", f"/api/v1/onboarding/plans/{plan_id}/checks", f"{label}-onboarding-checks",
                             headers=api_headers(f"{label}-onboard-checks",
                                                 stable_ulid(f"{run_id}:{label}:onboard:checks"))))
-    if plan.get("plan", {}).get("state") != "READY_TO_OPEN" or not any(
-        check.get("external") and check.get("status") == "BLOCKED" for check in plan.get("checks", [])
-    ):
-        raise JourneyFailure(f"{label}-onboarding-checks: external P0 must remain BLOCKED")
+    external_checks = {check.get("checkCode"): check.get("status") for check in plan.get("checks", [])
+                       if check.get("external") is True}
+    if (plan.get("plan", {}).get("state") != "READY_TO_OPEN"
+            or external_checks != {code: "BLOCKED" for code in EXTERNAL_ONBOARDING_CHECKS}):
+        raise JourneyFailure(
+            f"{label}-onboarding-checks: internal checks must pass and all external P0 remain BLOCKED")
 
     transfer_id = stable_ulid(f"{run_id}:{label}:transfer")
     transfer_line_id = stable_ulid(f"{run_id}:{label}:transfer-line")
@@ -285,16 +313,6 @@ def run_journey(
     }, headers=api_headers(f"{label}-exception-scan",
                            stable_ulid(f"{run_id}:{label}:exception-scan:trace")))
 
-    backup_id = stable_ulid(f"{run_id}:{label}:backup")
-    backup_failure = client.call("POST", "/api/v1/backups", f"{label}-backup-fail-closed", body={
-        "backupId": backup_id, "environment": "G9A_R4_INTERNAL",
-        "pointInTime": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
-        "latestIncludedFactAt": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
-        "schemaVersion": "R4", "applicationVersion": "R4", "keyVersion": "R4_EXTERNAL_BLOCKED",
-        "immutableUntil": (datetime.now(timezone.utc) + timedelta(days=1)).isoformat().replace("+00:00", "Z"),
-        "correlationId": stable_ulid(f"{run_id}:{label}:backup:trace"),
-    }, expect_success=False)
-
     client.login(text(context, "tenantId"), text(secret, "username"), text(secret, "password"),
                  f"{label}-release-admin-login")
     release_body = {
@@ -337,8 +355,8 @@ def run_journey(
             "refundedAmountMinor": journey["refundedAmountMinor"]}),
         "reporting": (report_results[0]["sourceEventId"], {"sources": report_results, "report": sales_report}),
         "operations": (close_id, close),
-        "resilience": (backup_id, {"state": "FAILED_CLOSED_EXTERNAL_ADAPTER_UNAVAILABLE",
-                                    "businessCode": backup_failure.get("code")}),
+        "resilience": (backup_id, {"backup": backup, "restore": restore,
+                                    "evidenceLevel": "SYNTHETIC_RESTORE"}),
         "release": (release["releaseId"], release),
     }
     facts["integration"] = (run_id, {owner: sha256(value[1]) for owner, value in facts.items()})
@@ -360,7 +378,8 @@ def run_journey(
         {"id": "R4-C09", "pass": journey["outboxUnsettled"] == 0 and journey["deadLetters"] == 0},
         {"id": "R4-C10", "pass": bool(sales_report)},
         {"id": "R4-C11", "pass": close["close"]["state"] == "CLOSED" and len(close["signatures"]) == 1},
-        {"id": "R4-C12", "pass": release["state"] == "DRAFT" and backup_failure.get("code") != 200},
+        {"id": "R4-C12", "pass": release["state"] == "DRAFT" and backup["state"] == "AVAILABLE"
+         and restore["state"] == "PASS" and restore["checkCount"] == 9},
     ]
     if not all(item["pass"] for item in invariants):
         raise JourneyFailure(f"{label}: conservation failure {[x['id'] for x in invariants if not x['pass']]}")
@@ -368,7 +387,8 @@ def run_journey(
         "journeyId": context["journeyId"], "industry": context["industry"],
         "ownerCheckpointCount": len(checkpoints), "conservationPassCount": len(invariants),
         "dailyCloseState": close["close"]["state"], "onboardingState": plan["plan"]["state"],
-        "releaseState": release["state"], "backupState": "FAILED_CLOSED_EXTERNAL_ADAPTER_UNAVAILABLE",
+        "releaseState": release["state"], "backupState": backup["state"],
+        "restoreState": restore["state"], "externalP0States": external_checks,
     }
     return checkpoints, invariants, summary
 
@@ -380,6 +400,7 @@ def main() -> int:
     parser.add_argument("--secrets", required=True, type=pathlib.Path)
     parser.add_argument("--flutter", required=True, type=pathlib.Path)
     parser.add_argument("--build-commit", required=True)
+    parser.add_argument("--backup-key-version", required=True)
     parser.add_argument("--output", required=True, type=pathlib.Path)
     args = parser.parse_args()
     try:
@@ -403,6 +424,7 @@ def main() -> int:
             owner_rows, conservation, summary = run_journey(
                 client=client, run_id=run_id, context=contexts[journey_id], secret=secret_rows[journey_id],
                 journey=flutter_rows[journey_id], build_commit=args.build_commit,
+                backup_key_version=args.backup_key_version,
             )
             checkpoints.extend(owner_rows)
             invariants.extend({**item, "journeyId": journey_id} for item in conservation)
@@ -411,7 +433,8 @@ def main() -> int:
             raise JourneyFailure("22 Owner checkpoints are incomplete")
         evidence = {
             "schemaVersion": "1.0", "gate": "G9A-R4", "phase": "R4-R4", "runId": run_id,
-            "status": "PASS", "classification": "FORMAL_HTTP_OWNER_CHECKPOINTS_WITH_FAILED_CLOSED_EXTERNALS",
+            "status": "PASS",
+            "classification": "FORMAL_HTTP_OWNER_CHECKPOINTS_WITH_BLOCKED_EXTERNALS_AND_SYNTHETIC_RESTORE",
             "buildCommit": args.build_commit, "journeys": summaries, "journeyCount": 3,
             "ownerCheckpointCount": len(checkpoints), "ownerCount": 22,
             "conservationCheckCount": len(invariants), "conservationPassCount": sum(x["pass"] for x in invariants),

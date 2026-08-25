@@ -301,16 +301,23 @@ def main() -> int:
                             "reportDigest": digest(report_after), "inventoryBeforeDigest": digest(inventory_before)}
 
         backup_id = checkpoint_id(postflight, first_id, "resilience")
-        restore = client.call("POST", f"/api/v1/backups/{backup_id}/restore-drills", "r4-f11-restore-fail-closed",
+        restore = client.call("POST", f"/api/v1/backups/{backup_id}/restore-drills",
+                              "r4-f11-incompatible-schema-fail-closed",
                               body={"drillId": stable_ulid(f"{run_id}:f11:restore"),
-                                    "expectedSchemaVersion": "R4",
+                                    "expectedSchemaVersion": "R4-INCOMPATIBLE",
                                     "correlationId": stable_ulid(f"{run_id}:f11:restore:trace")},
                               expect_success=False)
+        backup_after_restore = data(client.call("GET", f"/api/v1/backups/{backup_id}",
+                                                "r4-f11-backup-conserved"))
         order_after_restore = data(client.call("GET", f"/api/v1/pos/orders/{first_journey['originalOrderRef']}",
-                                                   "r4-f11-order-conserved"))
-        require(order_after_restore.get("status") == "COMPLETED", "F11 failed restore changed business facts")
-        seeds["R4-F11"] = {"pass": True, "classification": "FAILED_CLOSED_EXTERNAL_ADAPTER_UNAVAILABLE",
-                            "restoreCode": restore.get("code"), "factConserved": True,
+                                                    "r4-f11-order-conserved"))
+        require(restore.get("code") != 200 and backup_after_restore.get("state") == "AVAILABLE"
+                and order_after_restore.get("status") == "COMPLETED",
+                "F11 incompatible restore did not fail closed or changed prior facts")
+        seeds["R4-F11"] = {"pass": True,
+                            "classification": "FAIL_CLOSED_SCHEMA_MISMATCH_SYNTHETIC_RESTORE",
+                            "restoreCode": restore.get("code"), "backupState": backup_after_restore.get("state"),
+                            "factConserved": True,
                             "cursorConservedByF03": True, "productionBackupOrKms": 0}
 
         release_id = checkpoint_id(postflight, first_id, "release")

@@ -36,7 +36,7 @@
     <build><plugins>
         <plugin>
             <groupId>org.jacoco</groupId><artifactId>jacoco-maven-plugin</artifactId><version>0.8.13</version>
-            <configuration><includes><include>com/jingshanghui/pos/resilience/domain/BackupRules*</include><include>com/jingshanghui/pos/resilience/domain/CanonicalBackupManifest*</include><include>com/jingshanghui/pos/resilience/infrastructure/security/*</include><include>com/jingshanghui/pos/resilience/infrastructure/storage/*</include></includes></configuration>
+            <configuration><includes><include>com/jingshanghui/pos/resilience/domain/BackupRules*</include><include>com/jingshanghui/pos/resilience/domain/CanonicalBackupManifest*</include><include>com/jingshanghui/pos/resilience/infrastructure/security/*</include><include>com/jingshanghui/pos/resilience/infrastructure/storage/*</include><include>com/jingshanghui/pos/resilience/infrastructure/synthetic/*</include><include>com/jingshanghui/pos/resilience/config/ResilienceAutoConfiguration*</include></includes></configuration>
             <executions>
                 <execution><id>gate6a-prepare-agent</id><goals><goal>prepare-agent</goal></goals><configuration><propertyName>gate6aJacocoArgLine</propertyName></configuration></execution>
                 <execution><id>gate6a-report</id><phase>verify</phase><goals><goal>report</goal></goals></execution>

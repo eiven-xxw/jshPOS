@@ -68,6 +68,10 @@ def main() -> None:
             "postflight must emit 22 Owner checkpoint evidence")
     require("conservationCheckCount\": len(invariants)" in postflight_text,
             "postflight must emit twelve conservation checks per journey")
+    require("--backup-key-version" in postflight_text
+            and "SYNTHETIC_RESTORE" in postflight_text
+            and "EXTERNAL_ONBOARDING_CHECKS" in postflight_text,
+            "postflight must prove synthetic restore while all external onboarding P0 stay blocked")
     fault_text = fault_runner.read_text(encoding="utf-8")
     require("R4-F01" in fault_text and "R4-F12" in fault_text,
             "R4-R5 runner must emit the complete fixed seed ledger")
@@ -76,11 +80,25 @@ def main() -> None:
     workflow = (ROOT / ".github/workflows/t2-g9a-r4-runtime.yml").read_text(encoding="utf-8")
     require("FLUSHDB" in workflow and "launch_server 2" in workflow,
             "formal job must inject a real Redis loss and JAR restart")
-    require(workflow.count("openssl rand -base64 32") >= 2
+    require(workflow.count("openssl rand -base64 32") >= 3
             and "export JSH_MEMBER_LOOKUP_KEY_B64=" in workflow
             and "export JSH_MEMBER_ENCRYPTION_KEY_B64=" in workflow
             and "export JSH_MEMBER_KEY_VERSION=" in workflow,
             "formal member journey must receive ephemeral external identity keys")
+    require("export JSH_RESILIENCE_EVIDENCE_LEVEL=SYNTHETIC_RESTORE" in workflow
+            and "export JSH_INTERNAL_SYNTHETIC_RESILIENCE_ACK=INTERNAL_ONLY_NOT_PRODUCTION" in workflow
+            and "export JSH_BACKUP_OBJECT_ROOT=" in workflow
+            and "export JSH_SYNTHETIC_RESTORE_ROOT=" in workflow
+            and "export JSH_BACKUP_KEY_VERSION=" in workflow
+            and "export JSH_BACKUP_KEY_B64=" in workflow
+            and '--backup-key-version "$JSH_BACKUP_KEY_VERSION"' in workflow,
+            "formal JAR must receive an ephemeral, file-isolated synthetic restore configuration")
+
+    resilience_configuration = (ROOT / "server/ruoyi-modules/jshpos-resilience/src/main/java/com/jingshanghui/pos/resilience/config/ResilienceAutoConfiguration.java").read_text(encoding="utf-8")
+    require("INTERNAL_ONLY_NOT_PRODUCTION" in resilience_configuration
+            and "production" in resilience_configuration
+            and "JSH_SYNTHETIC_RESTORE_ROOT" in resilience_configuration,
+            "synthetic restore adapter must be double-confirmed, file-isolated and forbidden in production")
 
     bootstrap_text = bootstrap.read_text(encoding="utf-8")
     activate_marker = 'f"{label}-store-activate"'

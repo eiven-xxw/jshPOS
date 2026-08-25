@@ -237,7 +237,8 @@ jobs:
         run: |
           set -euo pipefail
           umask 077
-          mkdir -p artifacts/t2/g9a-r4/formal-runtime "$RUNNER_TEMP/r4-packages" "$RUNNER_TEMP/r4-sqlite"
+          mkdir -p artifacts/t2/g9a-r4/formal-runtime "$RUNNER_TEMP/r4-packages" "$RUNNER_TEMP/r4-sqlite" \
+            "$RUNNER_TEMP/r4-backup-objects" "$RUNNER_TEMP/r4-restore-targets"
           mysql_container="$(docker ps --filter publish=3306 --format '{{.ID}}' | head -1)"
           redis_container="$(docker ps --filter publish=6379 --format '{{.ID}}' | head -1)"
           test -n "$mysql_container" && test -n "$redis_container"
@@ -251,13 +252,22 @@ jobs:
           signing_public="$(tail -c 32 "$RUNNER_TEMP/r4-public.der" | base64 -w0)"
           member_lookup_key="$(openssl rand -base64 32 | tr -d '\n')"
           member_encryption_key="$(openssl rand -base64 32 | tr -d '\n')"
+          backup_encryption_key="$(openssl rand -base64 32 | tr -d '\n')"
           echo "::add-mask::$signing_private"
           echo "::add-mask::$member_lookup_key"
           echo "::add-mask::$member_encryption_key"
+          echo "::add-mask::$backup_encryption_key"
           # 会员身份密钥只存在于本次正式栈进程环境，并在同一运行窗口的 JAR 重启后继续复用。
           export JSH_MEMBER_LOOKUP_KEY_B64="$member_lookup_key"
           export JSH_MEMBER_ENCRYPTION_KEY_B64="$member_encryption_key"
           export JSH_MEMBER_KEY_VERSION=1
+          # 仅为本次内部正式栈启用低等级 SYNTHETIC_RESTORE；生产 profile 会由应用启动门禁拒绝。
+          export JSH_RESILIENCE_EVIDENCE_LEVEL=SYNTHETIC_RESTORE
+          export JSH_INTERNAL_SYNTHETIC_RESILIENCE_ACK=INTERNAL_ONLY_NOT_PRODUCTION
+          export JSH_BACKUP_OBJECT_ROOT="$RUNNER_TEMP/r4-backup-objects"
+          export JSH_SYNTHETIC_RESTORE_ROOT="$RUNNER_TEMP/r4-restore-targets"
+          export JSH_BACKUP_KEY_VERSION="R4_SYNTHETIC_$GITHUB_RUN_ID"
+          export JSH_BACKUP_KEY_B64="$backup_encryption_key"
           server_jar="$(find downloaded/server -name ruoyi-admin.jar -type f -print -quit)"
           test -s "$server_jar"
           launch_server() {
@@ -316,6 +326,7 @@ jobs:
             --secrets "$RUNNER_TEMP/r4-secrets.json" \
             --flutter artifacts/t2/g9a-r4/formal-runtime/flutter-live.json \
             --build-commit "$GITHUB_SHA" \
+            --backup-key-version "$JSH_BACKUP_KEY_VERSION" \
             --output artifacts/t2/g9a-r4/formal-runtime/postflight.json
           # R4-F03/F04 使用真实软件故障：清空非权威 Redis，再终止并重新启动同一商业 JAR。
           test "$(docker exec "$redis_container" redis-cli -a synthetic_g9a_r4_redis_runtime FLUSHDB | tr -d '\r')" = "OK"
