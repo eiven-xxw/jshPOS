@@ -12,6 +12,10 @@ import subprocess
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 BASELINE = "059f47ebd6877b683345d1e6f7c0cd9a18d712b5"
 BRANCH = "t2/gate9b-sprint27i-g9a-r4-runtime"
+APPROVED_FORWARD_MIGRATION = (
+    "server/ruoyi-modules/jshpos-transfer/src/main/resources/db/migration/"
+    "V202608260087__g9a_r4_transfer_outbox_version_constraint.sql"
+)
 OWNERS = {
     "saas", "subscription", "foundation", "service", "migration", "onboarding", "catalog",
     "sync", "order", "promotion", "member", "payment", "inventory", "costing", "procurement",
@@ -164,10 +168,16 @@ def main() -> None:
             f"MyBatis record primitive fields must use underscore aliases: {wrapper_alias_hits}")
 
     changed = subprocess.check_output(
-        ["git", "diff", "--name-only", f"{BASELINE}...HEAD"], cwd=ROOT, text=True,
+        ["git", "diff", "--name-only", BASELINE], cwd=ROOT, text=True,
     ).splitlines()
-    published_migrations = [item for item in changed if "/db/migration/" in item.replace("\\", "/")]
-    require(not published_migrations, f"published migrations changed: {published_migrations}")
+    migration_status = subprocess.check_output(
+        ["git", "diff", "--name-status", BASELINE, "--", "server/ruoyi-modules"],
+        cwd=ROOT, text=True,
+    ).splitlines()
+    migration_status = [item for item in migration_status if "/db/migration/" in item.replace("\\", "/")]
+    require(migration_status == [f"A\t{APPROVED_FORWARD_MIGRATION}"],
+            f"only the approved V87 addition is allowed: {migration_status}")
+    require((ROOT / APPROVED_FORWARD_MIGRATION).is_file(), "approved V87 forward migration is missing")
     provider_source = [item for item in changed if re.search(r"(?i)(provider|lakala|lakara|pay-sdk|callback)", item)]
     require(not provider_source, f"Provider implementation is forbidden: {provider_source}")
 
@@ -183,6 +193,7 @@ def main() -> None:
         "faultSeedCount": 12,
         "newRequirementIds": 0,
         "publishedMigrationChanges": 0,
+        "approvedForwardMigrationAdditions": 1,
         "providerNetworkCalls": 0,
         "realDeviceOrPeripheralCommands": 0,
         "externalExecution": 0,

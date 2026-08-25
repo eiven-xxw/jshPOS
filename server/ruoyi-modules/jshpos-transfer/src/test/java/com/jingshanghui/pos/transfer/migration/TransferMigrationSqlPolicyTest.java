@@ -9,6 +9,22 @@ import static org.assertj.core.api.Assertions.assertThat;
 /** 静态确认租户复合键、不可变事实、数量恒等式与权限 ID。 */
 class TransferMigrationSqlPolicyTest {
     @Test
+    void forwardRepairAllowsDraftVersionZeroWithoutAllowingNegativeVersions() throws Exception {
+        try (var stream = getClass().getResourceAsStream(
+            "/db/migration/V202608260087__g9a_r4_transfer_outbox_version_constraint.sql")) {
+            assertThat(stream).as("approved V87 forward repair").isNotNull();
+            String sql = new String(stream.readAllBytes(), StandardCharsets.UTF_8).toLowerCase();
+            assertThat(sql)
+                .contains("drop check ck_trf_outbox_version")
+                .contains("add constraint ck_trf_outbox_version")
+                .contains("check (aggregate_version >= 0)")
+                .doesNotContain("alter column")
+                .doesNotContain("drop table")
+                .doesNotContain("delete from");
+        }
+    }
+
+    @Test
     void migrationFreezesFactsWithoutOwningInventoryOrCostBalances() throws Exception {
         String sql;
         try (var stream = getClass().getResourceAsStream("/db/migration/V202608170018__gate4d_transfer.sql")) {

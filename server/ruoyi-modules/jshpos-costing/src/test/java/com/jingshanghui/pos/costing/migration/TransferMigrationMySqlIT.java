@@ -12,23 +12,25 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/** 在干净 MySQL 8.4 执行 V1—V19，验证调拨复合租户键、不可变事实和既有账本准入。 */
+/** 在干净 MySQL 8.4 执行调拨依赖闭包与 V87，验证复合租户键、事件版本和不可变事实。 */
 class TransferMigrationMySqlIT {
     private final String url = required("GATE4D_MYSQL_JDBC_URL");
     private final String username = required("GATE4D_MYSQL_USERNAME");
     private final String password = required("GATE4D_MYSQL_PASSWORD");
 
     @Test
-    void migratesNineteenVersionsAndEnforcesTransferConstraints() throws Exception {
+    void migratesThroughForwardRepairAndEnforcesTransferConstraints() throws Exception {
         createFrameworkMenuFixture();
         Flyway flyway = Flyway.configure().dataSource(url, username, password)
             .locations("classpath:db/migration").table("jshpos_flyway_schema_history")
             .baselineOnMigrate(true).baselineVersion("0").cleanDisabled(true).load();
-        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(19);
+        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(20);
         assertThat(flyway.migrate().migrationsExecuted).isZero();
         flyway.validate();
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("202608260087");
         assertTablesPermissionsAndLedgerChecks();
         assertTenantAndImmutableFacts();
+        assertOutboxVersionConstraint();
     }
 
     private void createFrameworkMenuFixture() throws SQLException {
@@ -95,6 +97,29 @@ class TransferMigrationMySqlIT {
             assertThatThrownBy(() -> statement.executeUpdate("INSERT INTO inv_transfer_order(transfer_id,tenant_id,source_store_id,source_warehouse_id,destination_store_id,destination_warehouse_id,status,request_sha256,reason,correlation_id,creator_user_id,version,created_at,updated_at) VALUES('01K2A000000000000000000107','TENANT_A',1101,'01K2A000000000000000000010',2101,'01K2A000000000000000000012','DRAFT',REPEAT('b',64),'bad','trace-bad',101,0,UTC_TIMESTAMP(3),UTC_TIMESTAMP(3))"))
                 .isInstanceOf(SQLException.class);
         }
+    }
+
+    /** 创建事件允许版本 0，后续版本继续可写，负版本仍由数据库失败关闭。 */
+    private void assertOutboxVersionConstraint() throws SQLException {
+        try (Connection connection = DriverManager.getConnection(url, username, password);
+             Statement statement = connection.createStatement()) {
+            statement.executeUpdate(outboxInsert("01K2A000000000000000000120", 0,
+                "inventory.transfer.created.v1"));
+            statement.executeUpdate(outboxInsert("01K2A000000000000000000121", 1,
+                "inventory.transfer.submitted.v1"));
+            assertThatThrownBy(() -> statement.executeUpdate(outboxInsert(
+                "01K2A000000000000000000122", -1, "inventory.transfer.created.v1")))
+                .isInstanceOf(SQLException.class).hasMessageContaining("ck_trf_outbox_version");
+        }
+    }
+
+    private static String outboxInsert(String eventId, long version, String eventType) {
+        return "INSERT INTO inv_transfer_event_outbox(event_id,tenant_id,event_type,aggregate_id," +
+            "aggregate_version,correlation_id,payload_json,payload_sha256,delivery_state,available_at) " +
+            "VALUES('" + eventId + "','TENANT_A','" + eventType +
+            "','01K2A000000000000000000101'," + version +
+            ",'trace-trf',JSON_OBJECT('aggregateVersion'," + version +
+            "),REPEAT('d',64),'PENDING',UTC_TIMESTAMP(3))";
     }
 
     private void seedFoundationAndCatalog(Statement statement) throws SQLException {

@@ -18,21 +18,63 @@ class ReleaseMigrationMySqlIT {
 
     @Test void migratesAllVersionsAndEnforcesReleaseGuards() throws Exception {
         createFrameworkMenuFixture();
-        Flyway flyway = Flyway.configure().dataSource(url,username,password).locations(migrationLocations())
+        String[] locations=migrationLocations();
+        Flyway v86 = Flyway.configure().dataSource(url,username,password).locations(locations)
+            .table("jshpos_flyway_schema_history").baselineOnMigrate(true).baselineVersion("0")
+            .target("202608240086").cleanDisabled(true).load();
+        Set<String> expected = expectedVersions();
+        assertThat(v86.migrate().migrationsExecuted).isEqualTo(expected.size()-1);
+        assertThat(v86.info().current().getVersion().getVersion()).isEqualTo("202608240086");
+        assertV86RejectsTransferDraftEvent();
+
+        Flyway flyway = Flyway.configure().dataSource(url,username,password).locations(locations)
             .table("jshpos_flyway_schema_history").baselineOnMigrate(true).baselineVersion("0")
             .cleanDisabled(true).load();
-        Set<String> expected = expectedVersions();
-        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(expected.size());
+        assertThat(flyway.migrate().migrationsExecuted).isOne();
         Set<String> applied = Arrays.stream(flyway.info().applied()).map(info -> info.getVersion().getVersion())
             .collect(Collectors.toSet());
         assertThat(applied.remove("0")).isTrue();
         assertThat(applied).containsExactlyInAnyOrderElementsOf(expected);
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("202608240086");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("202608260087");
         assertThat(flyway.migrate().migrationsExecuted).isZero();
         flyway.validate();
+        assertV87AllowsOnlyNonNegativeTransferVersions();
         assertGate6GDataMetadata();
         assertSchemaAndGuards();
         assertHundredThousandAppendOnlyEventsRemainQueryable();
+    }
+
+    /** 证明 V86 的既有冲突可稳定复现，避免测试只验证空库最终形态。 */
+    private void assertV86RejectsTransferDraftEvent() throws SQLException {
+        try(Connection c=DriverManager.getConnection(url,username,password); Statement s=c.createStatement()) {
+            assertThatThrownBy(() -> s.executeUpdate(transferOutboxInsert(
+                "01K6C000000000000000000001",0,"inventory.transfer.created.v1")))
+                .isInstanceOf(SQLException.class).hasMessageContaining("ck_trf_outbox_version");
+        }
+    }
+
+    /** V87 只放行契约既有的版本 0；正版本、唯一键和负版本失败关闭均保持。 */
+    private void assertV87AllowsOnlyNonNegativeTransferVersions() throws SQLException {
+        try(Connection c=DriverManager.getConnection(url,username,password); Statement s=c.createStatement()) {
+            s.executeUpdate(transferOutboxInsert(
+                "01K6C000000000000000000001",0,"inventory.transfer.created.v1"));
+            s.executeUpdate(transferOutboxInsert(
+                "01K6C000000000000000000002",1,"inventory.transfer.submitted.v1"));
+            assertThatThrownBy(() -> s.executeUpdate(transferOutboxInsert(
+                "01K6C000000000000000000003",-1,"inventory.transfer.created.v1")))
+                .isInstanceOf(SQLException.class).hasMessageContaining("ck_trf_outbox_version");
+            assertThatThrownBy(() -> s.executeUpdate(transferOutboxInsert(
+                "01K6C000000000000000000001",0,"inventory.transfer.created.v1")))
+                .isInstanceOf(SQLException.class);
+        }
+    }
+
+    private static String transferOutboxInsert(String eventId,long version,String eventType) {
+        return "INSERT INTO inv_transfer_event_outbox(event_id,tenant_id,event_type,aggregate_id,"+
+            "aggregate_version,correlation_id,payload_json,payload_sha256,delivery_state,available_at) "+
+            "VALUES('"+eventId+"','TENANT_A','"+eventType+"','01K6C000000000000000000010',"+
+            version+",'trace-v87',JSON_OBJECT('aggregateVersion',"+version+
+            "),REPEAT('7',64),'PENDING',UTC_TIMESTAMP(3))";
     }
 
     /** 验证正式表主键、中文说明和租户隔离列；平台全局表与经外键派生租户的子表使用冻结白名单。 */
@@ -191,6 +233,7 @@ class ReleaseMigrationMySqlIT {
         for(int v=55;v<=65;v++) versions.add("20260822"+String.format("%04d",v));
         for(int v=66;v<=84;v++) versions.add("20260823"+String.format("%04d",v));
         versions.add("202608240085"); versions.add("202608240086");
+        versions.add("202608260087");
         return versions;
     }
 

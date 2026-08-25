@@ -14,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * 在全模块正式运行时类路径上执行 V1—V86，验证既有 Owner、SaaS、订阅与服务运营迁移可共同前向安装。
+ * 在全模块正式运行时类路径上执行至 V87，验证既有 Owner、SaaS、订阅与服务运营迁移可共同前向安装。
  * 该测试只由带受控 MySQL 8.4 服务的专属 CI Job 显式执行。
  */
 @Tag("local")
@@ -24,7 +24,7 @@ class MemberBenefitMigrationMySqlIT {
     private final String password = required("GATE8A_SVC_MYSQL_PASSWORD", "GATE8A_SUB_MYSQL_PASSWORD", "GATE8A_SAA_MYSQL_PASSWORD");
 
     @Test
-    void migratesUnifiedRuntimeThroughV86AndEnforcesOwnerFacts() throws Exception {
+    void migratesUnifiedRuntimeThroughV87AndEnforcesOwnerFacts() throws Exception {
         createFrameworkMenuFixture();
         Flyway flyway = Flyway.configure().dataSource(url, username, password)
             .locations("classpath:db/migration").table("jshpos_flyway_schema_history")
@@ -33,7 +33,7 @@ class MemberBenefitMigrationMySqlIT {
         assertThat(flyway.migrate().migrationsExecuted).isZero();
         flyway.validate();
         assertThat(flyway.info().current()).isNotNull();
-        assertThat(flyway.info().current().getVersion().toString()).isEqualTo("202608240086");
+        assertThat(flyway.info().current().getVersion().toString()).isEqualTo("202608260087");
         assertPermissionMenuRangesAreReconciled();
         assertOwnerTablesTenantKeysCommentsAndTriggers();
         assertPackageMetadataIsImmutable();

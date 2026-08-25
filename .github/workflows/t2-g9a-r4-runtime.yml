@@ -195,7 +195,8 @@ jobs:
           flutter build apk --debug
           sha256sum build/app/outputs/flutter-apk/app-debug.apk > ../artifacts/t2/g9a-r4/android-database/app-debug.apk.sha256
           cd ..
-          test -z "$(git diff --name-only "$R4_BASELINE" HEAD -- server/ruoyi-modules pos-flutter/lib/infrastructure/local_database | grep -E '(/db/migration/|^pos-flutter/lib/infrastructure/local_database/)' || true)"
+          migration_change="$(git diff --name-status "$R4_BASELINE" HEAD -- server/ruoyi-modules pos-flutter/lib/infrastructure/local_database | grep -E '(/db/migration/|^pos-flutter/lib/infrastructure/local_database/)' || true)"
+          test "$migration_change" = $'A\tserver/ruoyi-modules/jshpos-transfer/src/main/resources/db/migration/V202608260087__g9a_r4_transfer_outbox_version_constraint.sql'
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with: { name: t2-g9a-r4-android-database, path: artifacts/t2/g9a-r4/android-database, if-no-files-found: error, retention-days: 30 }
 
