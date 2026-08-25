@@ -6,6 +6,7 @@ import com.jingshanghui.pos.sync.application.model.SyncModels.DeviceContext;
 import com.jingshanghui.pos.sync.application.model.SyncModels.EventEnvelope;
 import com.jingshanghui.pos.sync.application.port.PosTenderCommandPort;
 import com.jingshanghui.pos.sync.application.port.PosLotSaleCommandPort;
+import com.jingshanghui.pos.sync.application.port.PosCompletedSaleCommandPort;
 import com.jingshanghui.pos.sync.domain.SyncHash;
 import com.jingshanghui.pos.sync.domain.SyncIdGenerator;
 import com.jingshanghui.pos.sync.infrastructure.persistence.mapper.SyncMapper;
@@ -87,7 +88,7 @@ class SyncFactProcessorTest {
             Clock.fixed(Instant.parse("2026-08-16T08:00:00Z"), ZoneOffset.UTC),
             mock(PromotedOrderEventDispatcher.class), mock(ShiftEventDispatcher.class),
             mock(ReceiptEventDispatcher.class), mock(OrderDispositionEventDispatcher.class), tenderPort,
-            mock(PosLotSaleCommandPort.class));
+            mock(PosLotSaleCommandPort.class), mock(PosCompletedSaleCommandPort.class));
 
         assertThat(processor.apply(context, event).status()).isEqualTo("ACCEPTED");
         verify(tenderPort).apply(context, event);
@@ -104,10 +105,27 @@ class SyncFactProcessorTest {
             Clock.fixed(Instant.parse("2026-08-16T08:00:00Z"), ZoneOffset.UTC),
             mock(PromotedOrderEventDispatcher.class), mock(ShiftEventDispatcher.class),
             mock(ReceiptEventDispatcher.class), mock(OrderDispositionEventDispatcher.class),
-            mock(PosTenderCommandPort.class), lotSalePort);
+            mock(PosTenderCommandPort.class), lotSalePort, mock(PosCompletedSaleCommandPort.class));
 
         assertThat(processor.apply(context, event).status()).isEqualTo("ACCEPTED");
         verify(lotSalePort).apply(context, event);
+    }
+
+    @Test
+    void dispatchesCompletedV2ToInventoryOwnerBeforeMarkingFactApplied() {
+        SyncMapper mapper = mock(SyncMapper.class);
+        PosCompletedSaleCommandPort salePort = mock(PosCompletedSaleCommandPort.class);
+        EventEnvelope event = event("order.completed.v2", id(88), 4);
+        SyncIdGenerator ids = mock(SyncIdGenerator.class);
+        when(ids.next()).thenReturn(id(90));
+        SyncFactProcessor processor = new SyncFactProcessor(mapper, json, ids,
+            Clock.fixed(Instant.parse("2026-08-16T08:00:00Z"), ZoneOffset.UTC),
+            mock(PromotedOrderEventDispatcher.class), mock(ShiftEventDispatcher.class),
+            mock(ReceiptEventDispatcher.class), mock(OrderDispositionEventDispatcher.class),
+            mock(PosTenderCommandPort.class), mock(PosLotSaleCommandPort.class), salePort);
+
+        assertThat(processor.apply(context, event).status()).isEqualTo("ACCEPTED");
+        verify(salePort).apply(context, event);
     }
 
     private SyncFactProcessor processor(SyncMapper mapper) {
@@ -121,7 +139,7 @@ class SyncFactProcessorTest {
             Clock.fixed(Instant.parse("2026-08-16T08:00:00Z"), ZoneOffset.UTC), dispatcher,
             mock(ShiftEventDispatcher.class), mock(ReceiptEventDispatcher.class),
             mock(OrderDispositionEventDispatcher.class), mock(PosTenderCommandPort.class),
-            mock(PosLotSaleCommandPort.class));
+            mock(PosLotSaleCommandPort.class), mock(PosCompletedSaleCommandPort.class));
     }
 
     private EventEnvelope event(String type, String eventId, long version) {

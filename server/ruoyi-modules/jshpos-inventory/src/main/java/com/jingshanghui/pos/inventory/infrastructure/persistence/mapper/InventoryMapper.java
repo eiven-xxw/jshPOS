@@ -37,6 +37,11 @@ public interface InventoryMapper {
                                               @Param("warehouseId") String warehouseId,
                                               @Param("effectiveAt") LocalDateTime effectiveAt);
 
+    /** 查询门店在指定时点具备已发布库存策略的仓，供 POS 销售失败关闭地解析唯一销售仓。 */
+    List<String> findEffectiveWarehouseIdsByStore(@Param("tenantId") String tenantId,
+                                                  @Param("storeId") Long storeId,
+                                                  @Param("effectiveAt") LocalDateTime effectiveAt);
+
     CommandView findCommand(@Param("tenantId") String tenantId, @Param("eventId") String eventId);
 
     int insertCommand(CommandWrite write);

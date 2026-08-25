@@ -224,6 +224,47 @@ def prepare_community_lots(client: ApiClient, passwords: dict[str, str], tenant_
     return version
 
 
+def prepare_standard_stock(client: ApiClient, passwords: dict[str, str], tenant_id: str,
+                           username: str, reviewer_username: str, store_id: Any,
+                           sku_id: Any, unit_id: Any, run_tag: str, label: str) -> None:
+    """经 Procurement/Inventory/Costing 正式端口为非批次业态形成可销售期初事实。"""
+    today = datetime.now(timezone.utc).astimezone(timezone(timedelta(hours=8))).date()
+    supplier_id = stable_ulid(f"r4-stock-supplier-{run_tag}-{label}")
+    order_id = stable_ulid(f"r4-stock-order-{run_tag}-{label}")
+    order_line_id = stable_ulid(f"r4-stock-order-line-{run_tag}-{label}")
+    receipt_id = stable_ulid(f"r4-stock-receipt-{run_tag}-{label}")
+    receipt_line_id = stable_ulid(f"r4-stock-receipt-line-{run_tag}-{label}")
+    client.call("POST", "/api/v1/procurement/suppliers", f"{label}-supplier", body={
+        "supplierId": supplier_id, "code": f"R4_STOCK_{run_tag}_{label.upper()}",
+        "name": f"{label}合成供应商",
+        "correlationId": stable_ulid(f"r4-stock-supplier-trace-{run_tag}-{label}"),
+    })
+    client.call("POST", "/api/v1/procurement/orders", f"{label}-purchase-order", body={
+        "orderId": order_id, "supplierId": supplier_id, "storeId": str(store_id),
+        "warehouseId": WAREHOUSE_ID, "expectedDate": (today + timedelta(days=1)).isoformat(),
+        "overReceiptToleranceBps": 0,
+        "lines": [{"orderLineId": order_line_id, "skuId": str(sku_id), "unitId": str(unit_id),
+                   "orderedQuantity": "100.000000", "unitPriceMinor": "500", "taxRateBps": 0}],
+        "correlationId": stable_ulid(f"r4-stock-order-trace-{run_tag}-{label}"),
+    })
+    client.call("POST", f"/api/v1/procurement/orders/{order_id}/submit", f"{label}-purchase-submit",
+                body={"correlationId": stable_ulid(f"r4-stock-submit-trace-{run_tag}-{label}")})
+    client.login(tenant_id, reviewer_username, passwords["reviewer"], f"{label}-reviewer-stock-login")
+    client.call("POST", f"/api/v1/procurement/orders/{order_id}/approve", f"{label}-purchase-approve",
+                body={"correlationId": stable_ulid(f"r4-stock-approve-trace-{run_tag}-{label}")})
+    client.login(tenant_id, username, passwords["tenant"], f"{label}-admin-after-stock-approval")
+    client.call("POST", f"/api/v1/procurement/orders/{order_id}/receipts", f"{label}-receipt-create", body={
+        "receiptId": receipt_id,
+        "lines": [{"receiptLineId": receipt_line_id, "orderLineId": order_line_id,
+                   "receivedQuantity": "100.000000"}],
+        "correlationId": stable_ulid(f"r4-stock-receipt-trace-{run_tag}-{label}"),
+    })
+    client.call("POST", f"/api/v1/procurement/receipts/{receipt_id}/confirm", f"{label}-receipt-confirm", body={
+        "eventId": stable_ulid(f"r4-stock-receipt-event-{run_tag}-{label}"),
+        "correlationId": stable_ulid(f"r4-stock-confirm-trace-{run_tag}-{label}"),
+    })
+
+
 def create_tenant(client: ApiClient, passwords: dict[str, str], plan_id: Any, industry: str,
                   label: str, display: str, run_tag: str) -> tuple[dict[str, Any], dict[str, Any]]:
     now = datetime.now(timezone.utc)
@@ -431,6 +472,11 @@ def create_tenant(client: ApiClient, passwords: dict[str, str], plan_id: Any, in
         lot_package_version = prepare_community_lots(
             client, passwords, tenant_id, username, reviewer_username, store_id,
             product["skuId"], unit["id"], run_tag,
+        )
+    else:
+        prepare_standard_stock(
+            client, passwords, tenant_id, username, reviewer_username, store_id,
+            product["skuId"], unit["id"], run_tag, label,
         )
     catalog_package = data(client.call("POST", "/api/v1/catalog/packages", f"{label}-catalog-package", body={
         "storeId": store_id, "packageVersion": 1, "previousVersion": 0,

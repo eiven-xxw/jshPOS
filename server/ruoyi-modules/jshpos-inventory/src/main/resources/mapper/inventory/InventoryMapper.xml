@@ -45,6 +45,12 @@
         WHERE tenant_id=#{tenantId} AND warehouse_id=#{warehouseId} AND effective_from&lt;=#{effectiveAt}
         ORDER BY effective_from DESC,policy_version_id DESC LIMIT 1
     </select>
+    <select id="findEffectiveWarehouseIdsByStore" resultType="java.lang.String">
+        SELECT DISTINCT warehouse_id
+        FROM inv_stock_policy_version
+        WHERE tenant_id=#{tenantId} AND store_id=#{storeId} AND effective_from&lt;=#{effectiveAt}
+        ORDER BY warehouse_id
+    </select>
 
     <select id="findCommand" resultType="com.jingshanghui.pos.inventory.application.model.InventoryViews$CommandView">
         SELECT source_event_id AS eventId,request_sha256 AS requestSha256,source_type AS sourceType,
