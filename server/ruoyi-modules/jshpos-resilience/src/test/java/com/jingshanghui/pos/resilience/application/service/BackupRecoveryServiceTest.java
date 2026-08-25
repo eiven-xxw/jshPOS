@@ -15,6 +15,7 @@ import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.GeneralSecurityException;
 import java.time.*;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.*;
@@ -81,6 +82,25 @@ class BackupRecoveryServiceTest {
         assertThat(fixture.catalog.drills).isEmpty();
     }
 
+    @Test void normalizesBackupTimesToMysqlPrecisionBeforeCreatingManifestAndSourceSnapshot() {
+        Fixture fixture = new Fixture();
+        fixture.catalog.truncateTimesOnRead = true;
+        Instant pointInTime = NOW.minusSeconds(1).plusNanos(456_789);
+        CreateBackup command = new CreateBackup(ulid(1), "synthetic", TENANTS, pointInTime,
+            pointInTime.minusSeconds(300).plusNanos(123_456), "39", "1.0.0", "synthetic-v1",
+            pointInTime.plusSeconds(86_400).plusNanos(654_321), 9, ulid(3));
+
+        BackupSet created = fixture.service.create(command);
+
+        assertThat(created.pointInTime()).isEqualTo(pointInTime.truncatedTo(ChronoUnit.MILLIS));
+        assertThat(created.latestIncludedFactAt())
+            .isEqualTo(command.latestIncludedFactAt().truncatedTo(ChronoUnit.MILLIS));
+        assertThat(created.immutableUntil()).isEqualTo(command.immutableUntil().truncatedTo(ChronoUnit.MILLIS));
+        assertThat(fixture.source.capturedPoint).isEqualTo(created.pointInTime());
+        assertThat(fixture.service.restore(new RestoreBackup(ulid(2), ulid(1), TENANTS, "39", 9, ulid(3))).result())
+            .isEqualTo("PASS");
+    }
+
     private static CreateBackup create(String environment) {
         return new CreateBackup(ulid(1), environment, TENANTS, NOW, NOW.minusSeconds(300), "39", "1.0.0",
             "synthetic-v1", NOW.plusSeconds(86400), 9, ulid(3));
@@ -145,7 +165,16 @@ class BackupRecoveryServiceTest {
     private static final class MemoryCatalog implements Catalog {
         final Map<String,BackupSet> backups = new HashMap<>();
         final Map<String,RestoreEvidence> drills = new HashMap<>();
-        @Override public Optional<BackupSet> findBackup(String id) { return Optional.ofNullable(backups.get(id)); }
+        boolean truncateTimesOnRead;
+        @Override public Optional<BackupSet> findBackup(String id) {
+            BackupSet backup = backups.get(id);
+            if (backup == null || !truncateTimesOnRead) return Optional.ofNullable(backup);
+            return Optional.of(new BackupSet(backup.backupId(), backup.environment(), backup.tenantIds(),
+                backup.tenantScopeSha256(), backup.pointInTime().truncatedTo(ChronoUnit.MILLIS),
+                backup.latestIncludedFactAt().truncatedTo(ChronoUnit.MILLIS), backup.schemaVersion(),
+                backup.applicationVersion(), backup.keyVersion(), backup.immutableUntil().truncatedTo(ChronoUnit.MILLIS),
+                backup.requestSha256(), backup.manifestSha256(), backup.manifestJson(), backup.state(), backup.objects()));
+        }
         @Override public void reserve(BackupSet item,long actor,String correlation) { backups.put(item.backupId(),item); }
         @Override public void appendObject(String id,ObjectDescriptor object) {
             BackupSet old=backups.get(id); List<ObjectDescriptor> list=new ArrayList<>(old.objects()); list.add(object);
@@ -166,8 +195,10 @@ class BackupRecoveryServiceTest {
     }
     private static final class SyntheticSource implements Source {
         boolean fail;
+        Instant capturedPoint;
         @Override public List<SourceObject> capture(Set<String> tenants,Instant point) {
             if(fail) throw new ServiceException("synthetic interruption",503);
+            capturedPoint = point;
             return List.of(
                 object(DataClass.MYSQL,"mysql/authoritative.sql","db",tenants),
                 object(DataClass.BUSINESS_OBJECT,"objects/inventory.json","objects",tenants),

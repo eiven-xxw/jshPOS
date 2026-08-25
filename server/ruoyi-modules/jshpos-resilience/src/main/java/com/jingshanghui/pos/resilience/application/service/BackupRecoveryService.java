@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.Clock;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 /**
@@ -43,39 +44,41 @@ public class BackupRecoveryService {
     public BackupSet create(CreateBackup command) {
         Instant now = clock.instant();
         BackupRules.validateCreate(command, now);
-        String requestSha = requestSha(command);
-        Optional<BackupSet> existing = catalog.findBackup(command.backupId());
+        CreateBackup effective = normalizePersistencePrecision(command);
+        BackupRules.validateCreate(effective, now);
+        String requestSha = requestSha(effective);
+        Optional<BackupSet> existing = catalog.findBackup(effective.backupId());
         if (existing.isPresent()) {
             if (!existing.get().requestSha256().equals(requestSha)) conflict();
             return existing.get();
         }
-        String scopeSha = BackupRules.tenantScopeSha256(command.tenantIds());
-        BackupSet reserved = new BackupSet(command.backupId(), command.environment(), command.tenantIds(), scopeSha,
-            command.pointInTime(), command.latestIncludedFactAt(), command.schemaVersion(), command.applicationVersion(),
-            command.keyVersion(), command.immutableUntil(), requestSha, "", "", "CREATING", List.of());
-        catalog.reserve(reserved, command.requestedBy(), command.correlationId());
+        String scopeSha = BackupRules.tenantScopeSha256(effective.tenantIds());
+        BackupSet reserved = new BackupSet(effective.backupId(), effective.environment(), effective.tenantIds(), scopeSha,
+            effective.pointInTime(), effective.latestIncludedFactAt(), effective.schemaVersion(), effective.applicationVersion(),
+            effective.keyVersion(), effective.immutableUntil(), requestSha, "", "", "CREATING", List.of());
+        catalog.reserve(reserved, effective.requestedBy(), effective.correlationId());
         try {
-            List<SourceObject> sourceObjects = source.capture(command.tenantIds(), command.pointInTime());
-            BackupRules.validateSourceObjects(command.tenantIds(), sourceObjects);
-            var key = keyProvider.resolve(command.keyVersion());
+            List<SourceObject> sourceObjects = source.capture(effective.tenantIds(), effective.pointInTime());
+            BackupRules.validateSourceObjects(effective.tenantIds(), sourceObjects);
+            var key = keyProvider.resolve(effective.keyVersion());
             List<ObjectDescriptor> descriptors = new ArrayList<>(sourceObjects.size());
             for (SourceObject item : sourceObjects) {
                 byte[] plaintext = item.content();
                 String plainSha = BackupRules.sha256(plaintext);
-                String aad = aad(command.backupId(), scopeSha, item.logicalName(), plainSha, command.keyVersion());
+                String aad = aad(effective.backupId(), scopeSha, item.logicalName(), plainSha, effective.keyVersion());
                 AesGcmBackupCipher.Encrypted encrypted = cipher.encrypt(plaintext, key, aad);
                 String cipherSha = BackupRules.sha256(encrypted.bytes());
-                String objectKey = "backups/" + scopeSha + "/" + command.backupId() + "/" + cipherSha + ".aead";
-                objectStore.putNew(objectKey, encrypted.bytes(), command.immutableUntil());
+                String objectKey = "backups/" + scopeSha + "/" + effective.backupId() + "/" + cipherSha + ".aead";
+                objectStore.putNew(objectKey, encrypted.bytes(), effective.immutableUntil());
                 ObjectDescriptor descriptor = new ObjectDescriptor(idGenerator.next(), item.dataClass(),
                     item.logicalName(), item.mediaType(), scopeSha, plaintext.length, plainSha,
-                    encrypted.bytes().length, cipherSha, command.keyVersion(), encrypted.nonceBase64(), objectKey);
-                catalog.appendObject(command.backupId(), descriptor);
+                    encrypted.bytes().length, cipherSha, effective.keyVersion(), encrypted.nonceBase64(), objectKey);
+                catalog.appendObject(effective.backupId(), descriptor);
                 descriptors.add(descriptor);
             }
-            BackupSet beforeManifest = new BackupSet(command.backupId(), command.environment(), command.tenantIds(),
-                scopeSha, command.pointInTime(), command.latestIncludedFactAt(), command.schemaVersion(),
-                command.applicationVersion(), command.keyVersion(), command.immutableUntil(), requestSha, "", "",
+            BackupSet beforeManifest = new BackupSet(effective.backupId(), effective.environment(), effective.tenantIds(),
+                scopeSha, effective.pointInTime(), effective.latestIncludedFactAt(), effective.schemaVersion(),
+                effective.applicationVersion(), effective.keyVersion(), effective.immutableUntil(), requestSha, "", "",
                 "AVAILABLE", descriptors);
             String manifestJson = new String(CanonicalBackupManifest.encode(beforeManifest), StandardCharsets.UTF_8);
             BackupSet completed = new BackupSet(beforeManifest.backupId(), beforeManifest.environment(),
@@ -83,11 +86,11 @@ public class BackupRecoveryService {
                 beforeManifest.latestIncludedFactAt(), beforeManifest.schemaVersion(), beforeManifest.applicationVersion(),
                 beforeManifest.keyVersion(), beforeManifest.immutableUntil(), requestSha,
                 BackupRules.sha256(manifestJson.getBytes(StandardCharsets.UTF_8)), manifestJson, "AVAILABLE", descriptors);
-            catalog.complete(completed, command.requestedBy(), command.correlationId());
+            catalog.complete(completed, effective.requestedBy(), effective.correlationId());
             return completed;
         } catch (RuntimeException exception) {
-            catalog.failBackup(command.backupId(), BackupRules.sha256(exception.getClass().getName()
-                .getBytes(StandardCharsets.UTF_8)), command.requestedBy(), command.correlationId());
+            catalog.failBackup(effective.backupId(), BackupRules.sha256(exception.getClass().getName()
+                .getBytes(StandardCharsets.UTF_8)), effective.requestedBy(), effective.correlationId());
             throw exception;
         }
     }
@@ -213,6 +216,18 @@ public class BackupRecoveryService {
             command.latestIncludedFactAt().toString(), command.schemaVersion(), command.applicationVersion(),
             command.keyVersion(), command.immutableUntil().toString(), Long.toString(command.requestedBy()),
             command.correlationId()).getBytes(StandardCharsets.UTF_8));
+    }
+
+    /**
+     * MySQL 备份目录使用 DATETIME(3)。在形成幂等摘要、源快照和规范清单之前统一到毫秒，
+     * 避免创建进程中的纳秒值与数据库回读值不同而破坏恢复清单的可重算性。
+     */
+    private static CreateBackup normalizePersistencePrecision(CreateBackup command) {
+        return new CreateBackup(command.backupId(), command.environment(), command.tenantIds(),
+            command.pointInTime().truncatedTo(ChronoUnit.MILLIS),
+            command.latestIncludedFactAt().truncatedTo(ChronoUnit.MILLIS), command.schemaVersion(),
+            command.applicationVersion(), command.keyVersion(),
+            command.immutableUntil().truncatedTo(ChronoUnit.MILLIS), command.requestedBy(), command.correlationId());
     }
 
     private static String restoreRequestSha(RestoreBackup command) {
