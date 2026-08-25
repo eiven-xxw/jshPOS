@@ -7,12 +7,19 @@
       title="Gate 8A 订阅运营（内部软件执行）"
       description="服务端决定期限、状态和访问模式；本页面不执行真实计费、扣款、支付 Provider、发票或资金结算。"
     />
+    <OwnerPageFeedback
+      surface-id="subscription"
+      :state="phase"
+      :failure="failure"
+      empty-title="当前可信租户范围内暂无订阅记录"
+      @retry="refresh"
+    />
     <el-card class="mt-3" shadow="never">
       <template #header>创建或读取订阅</template>
       <el-form :inline="true">
         <el-form-item label="目标租户"><el-input v-model="targetTenant" /></el-form-item>
         <el-form-item label="订阅 ULID"><el-input v-model="subscriptionId" class="wide" /></el-form-item>
-        <el-form-item><el-button v-hasPermi="['subscription:read']" :loading="loading" @click="refresh">读取</el-button></el-form-item>
+        <el-form-item><el-button v-hasPermi="['subscription:read']" data-testid="subscription-read" :loading="loading" @click="refresh">读取</el-button></el-form-item>
       </el-form>
       <el-form :inline="true">
         <el-form-item label="合同引用"><el-input v-model="term.contractRef" /></el-form-item>
@@ -21,7 +28,7 @@
         <el-form-item label="结束"><el-date-picker v-model="term.endsAt" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss" /></el-form-item>
         <el-form-item label="宽限结束"><el-date-picker v-model="term.graceEndsAt" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss" /></el-form-item>
         <el-form-item
-          ><el-button v-hasPermi="['subscription:create']" type="primary" :loading="loading" @click="create">创建草稿</el-button></el-form-item
+          ><el-button v-hasPermi="['subscription:create']" data-testid="subscription-create" type="primary" :loading="loading" @click="create">创建草稿</el-button></el-form-item
         >
       </el-form>
     </el-card>
@@ -48,10 +55,10 @@
         <el-form-item>
           <el-button v-hasPermi="['subscription:activate']" @click="execute('activate')">激活</el-button>
           <el-button v-hasPermi="['subscription:renew']" @click="execute('renew')">续期</el-button>
-          <el-button v-hasPermi="['subscription:suspend']" type="warning" @click="execute('suspend')">暂停</el-button>
+          <el-button v-hasPermi="['subscription:suspend']" data-testid="subscription-suspend" type="warning" @click="execute('suspend')">暂停</el-button>
           <el-button v-hasPermi="['subscription:restore']" type="success" @click="execute('restore')">恢复</el-button>
           <el-button v-hasPermi="['subscription:terminate']" type="danger" @click="execute('request-termination')">申请终止</el-button>
-          <el-button v-hasPermi="['subscription:terminate']" type="danger" @click="execute('terminate')">确认逻辑终止</el-button>
+          <el-button v-hasPermi="['subscription:terminate']" data-testid="subscription-terminate" type="danger" @click="execute('terminate')">确认逻辑终止</el-button>
         </el-form-item>
       </el-form>
       <el-table :data="detail.terms" class="mt-3" border>
@@ -64,6 +71,10 @@
 </template>
 
 <script setup lang="ts">
+import { ElMessageBox } from 'element-plus';
+import OwnerPageFeedback from '@/views/operations/components/OwnerPageFeedback.vue';
+import { useRecoverablePage } from '@/composables/useRecoverablePage';
+import { useStableOperationIdentity } from '@/composables/useStableOperationIdentity';
 import {
   activateSubscription,
   createSubscription,
@@ -78,8 +89,7 @@ import type { SubscriptionIdentity } from '@/api/subscription';
 import type { SubscriptionDetail } from '@/api/subscription/types';
 import { newOperationCommandId } from '@/api/operations';
 
-const loading = ref(false),
-  targetTenant = ref('TENANT_A'),
+const targetTenant = ref('TENANT_A'),
   subscriptionId = ref(''),
   detail = ref<SubscriptionDetail>(),
   reason = ref('已完成受控状态与历史保留复核');
@@ -95,39 +105,46 @@ const term = reactive({
   graceEndsAt: iso(grace),
   businessTimeZone: 'Asia/Shanghai'
 });
-const keys = new Map<string, string>();
+const { phase, failure, submitting, runRead, runWrite } = useRecoverablePage('SUBSCRIPTION_PAGE_FAILED');
+const operationKeys = useStableOperationIdentity(newOperationCommandId);
+const loading = computed(() => phase.value === 'LOADING' || submitting.value);
 const identity = (action: string): SubscriptionIdentity => {
-  if (!keys.has(action)) keys.set(action, newOperationCommandId());
-  const value = keys.get(action)!;
+  const value = operationKeys.get(action);
   return { idempotencyKey: value, correlationId: value };
 };
 const run = async <T,>(work: () => Promise<T>) => {
-  loading.value = true;
-  try {
-    return await work();
-  } finally {
-    loading.value = false;
-  }
+  return runRead(work);
 };
 const command = async <T,>(action: string, work: (i: SubscriptionIdentity) => Promise<T>) => {
-  const result = await run(() => work(identity(action)));
-  keys.delete(action);
+  const result = await runWrite(`subscription:${action}`, () => work(identity(action)));
+  if (result !== undefined) operationKeys.complete(action);
   return result;
 };
 const create = async () => {
-  detail.value = (
-    await command('create', (i) => createSubscription(targetTenant.value, { ...term, degradationPolicyVersion: 'RECOVERY-V1' }, i))
-  ).data;
+  const result = await command('create', (i) => createSubscription(targetTenant.value, { ...term, degradationPolicyVersion: 'RECOVERY-V1' }, i));
+  if (!result) return;
+  detail.value = result.data;
   subscriptionId.value = detail.value.subscription.subscriptionId;
 };
 const refresh = async () => {
-  detail.value = (await run(() => getSubscription(subscriptionId.value))).data;
+  const result = await run(() => getSubscription(subscriptionId.value));
+  if (result) detail.value = result.data;
 };
 const execute = async (action: 'activate' | 'renew' | 'suspend' | 'restore' | 'request-termination' | 'terminate') => {
   if (!detail.value) return;
   const id = subscriptionId.value;
-  detail.value = (
-    await command(action, (i) =>
+  if (['suspend', 'request-termination', 'terminate'].includes(action)) {
+    try {
+      await ElMessageBox.confirm(
+        `订阅 ${id}；当前状态 ${detail.value.subscription.state}；动作 ${action}；历史事实和受控保留能力不会被删除。`,
+        '订阅生命周期确认',
+        { type: 'warning' }
+      );
+    } catch {
+      return;
+    }
+  }
+  const result = await command(action, (i) =>
       action === 'activate'
         ? activateSubscription(id, i)
         : action === 'renew'
@@ -139,8 +156,8 @@ const execute = async (action: 'activate' | 'renew' | 'suspend' | 'restore' | 'r
               : action === 'request-termination'
                 ? requestSubscriptionTermination(id, reason.value, i)
                 : terminateSubscription(id, reason.value, i)
-    )
-  ).data;
+    );
+  if (result) detail.value = result.data;
 };
 </script>
 
