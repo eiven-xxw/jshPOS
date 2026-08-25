@@ -996,6 +996,29 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
   继续 `DRAFT`；`T2-LIC-001/JSH-001` 继续 `DEFERRED`。Provider 网络、真实资金、
   设备/外设命令、伙伴现场、完整 Alpha、生产部署和商业声明必须为 0。
 
+## 4.73 当前 G9A-R4 正式运行栈跨 Owner E2E 准备阶段条件准入
+
+- 项目发起人已于 2026-08-25 接受 G9A-R3D `CONDITIONAL PASS`，确认
+  `G9A-UI-P1-001 CLOSED_IN_GATE9B`，并授权从最终治理提交
+  `28b4da44ed529860970412a632c807df0d1d2d3e` 建立
+  `t2/gate9b-sprint27h-g9a-r4-prep`。R3D 接受仅为内部 UI 联合证据，不提升外部证据等级。
+- 本阶段只允许审计 `G9A-E2E-P1-001`，复用 `T2-E2E-004/T2-E2E-005/T2-INT-001`；
+  不得新增 Requirement ID、业务能力、运行时、API、Controller、依赖、数据库表、任务或迁移。
+- 必须冻结正式 MySQL、Redis、商业 JAR、HTTP/OpenAPI、Vue dist、Flutter POS 与文件 SQLite
+  同一运行窗口的目标拓扑；业务初始化和旅程只能通过正式 API、应用端口、事件、Inbox/Outbox
+  或 POS Repository，禁止直接数据库业务写入、Mock/InMemory Owner 或测试内置 HTTP Server
+  冒充正式 JAR。
+- 必须覆盖便利店、零食折扣店、社区超市三条旅程和全部 22 Owner，冻结可信 tenant、组织/门店、
+  终端、员工、班次、业务日、幂等键、关联标识、事件摘要、Owner 检查点和数据守恒。
+- 准备阶段只登记现有证据缺口、固定失败 seed、12 组数据守恒、R4-R0 至 R4-R5 串行整改计划、
+  测试矩阵、CI 和启动评审。`G9A-E2E-P1-001` 继续 `OPEN`，不得把 Gate 7E 的组件聚合和
+  Gate 8B 的商业运营子旅程拼接成正式全栈通过。
+- 历史 Gate 7E、Gate 8B、Gate 9A 与 R3D 来源按 Git Blob 只读冻结；准备阶段不得改写其
+  结论或用新报告覆盖原始失败/成功证据。未经项目发起人确认不得进入 R4 正式整改。
+- `T2-PAY-002/HWD-001/PRN-001/PAR-001` 继续 `BLOCKED`；`T2-UAT-001/REL-001`
+  继续 `DRAFT`；`T2-LIC-001/JSH-001` 继续 `DEFERRED`。Provider 网络、真实资金、
+  设备/外设命令、伙伴现场、完整 Alpha、生产部署和商业声明必须为 0。
+
 ## 5. 工程与测试规则
 
 - 服务端采用 RuoYi-Vue-Plus 模块化单体，不得把领域逻辑写入 Controller、通用工具类或框架系统模块。

@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "1.0",
+  "findingId": "G9A-E2E-P1-001",
+  "targetCommitPolicy": "ONE_COMMIT_ONE_CLEAN_RUN",
+  "nodes": [
+    {"id":"MYSQL","type":"AUTHORITATIVE_DATABASE","required":true,"writes":"OWNER_REPOSITORIES_ONLY"},
+    {"id":"REDIS","type":"NON_AUTHORITATIVE_CACHE_SESSION","required":true,"writes":"NAMESPACED_AND_REBUILDABLE"},
+    {"id":"SERVER_JAR","type":"MODULAR_MONOLITH","required":true,"owners":22},
+    {"id":"HTTP_API","type":"FORMAL_REST_OPENAPI","required":true,"directDatabaseBackdoor":false},
+    {"id":"VUE_DIST","type":"FORMAL_WEB_ARTIFACT","required":true,"mustCallLiveJar":true},
+    {"id":"FLUTTER_POS","type":"FORMAL_POS_CLIENT","required":true,"mustCallLiveJar":true},
+    {"id":"SQLITE_FILE","type":"POS_LOCAL_AUTHORITATIVE_TRANSACTION","required":true,"inMemoryAllowed":false},
+    {"id":"EVIDENCE","type":"MACHINE_READABLE_RECONCILIATION","required":true,"sameRun":true}
+  ],
+  "trustedContexts": ["tenant", "organization", "store", "terminal", "employee", "shift", "businessDate", "correlationId"],
+  "allowedBootstrap": [
+    "EMPTY_MYSQL_SCHEMA_AND_IMMUTABLE_FLYWAY",
+    "PLATFORM_ADMIN_FIXTURE_WITHOUT_BUSINESS_FACTS",
+    "SYNTHETIC_SECRET_IN_EPHEMERAL_CI_ENVIRONMENT"
+  ],
+  "forbiddenShortcuts": [
+    "DIRECT_INSERT_OR_UPDATE_OF_BUSINESS_FACTS",
+    "MOCK_OR_IN_MEMORY_OWNER_IN_FORMAL_JOURNEY",
+    "FLUTTER_LOCAL_HTTP_SERVER_AS_FORMAL_JAR",
+    "FRONTEND_RECALCULATION_OF_OWNER_FACTS",
+    "SYNTHETIC_EXTERNAL_SUCCESS",
+    "JOB_RERUN_TO_HIDE_FLAKY"
+  ],
+  "currentEvidence": [
+    {"source":"T2-GATE7E","mysql":true,"redis":true,"jar":true,"webArtifactProbe":true,"flutterFileSqlite":true,"flutterCallsLiveJar":false,"all22OwnersOneJourney":false,"classification":"COMPONENT_EVIDENCE_PLUS_STACK_SMOKE"},
+    {"source":"T2-GATE8B","mysql":true,"redis":true,"jar":true,"formalHttp":true,"owners":["Foundation","SaaS","Subscription","Service"],"flutter":false,"sqlite":false,"all22OwnersOneJourney":false,"classification":"FORMAL_SAAS_API_SUBJOURNEY"}
+  ],
+  "currentUnifiedClosureAchieved": false
+}

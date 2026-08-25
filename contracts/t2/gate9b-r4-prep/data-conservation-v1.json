@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "1.0",
+  "checks": [
+    {"id":"R4-INV-001","owner":"Order","expression":"grossMinor-discountMinor+surchargeMinor=receivableMinor","scope":"ORDER_AND_LINES"},
+    {"id":"R4-INV-002","owner":"Payment","expression":"sum(tenderShareMinor)=receivableMinor AND cashCollectedMinor-cashChangeMinor=cashNetMinor","scope":"TENDER_PLAN"},
+    {"id":"R4-INV-003","owner":"Returns","expression":"sum(refundedMinor)<=originalRefundableMinor AND finalReturnAbsorbsLegalRemainder","scope":"ORIGINAL_SNAPSHOT"},
+    {"id":"R4-INV-004","owner":"Promotion","expression":"sum(allocationMinor)=discountMinor","scope":"IMMUTABLE_TRANSACTION_SNAPSHOT"},
+    {"id":"R4-INV-005","owner":"Member","expression":"orderBenefitSnapshotDigest=publishedBenefitAndPriceInputsDigest","scope":"OPTIONAL_MEMBER_BENEFIT"},
+    {"id":"R4-INV-006","owner":"Inventory","expression":"opening+sum(immutableLedger)=closingProjection","scope":"TENANT_STORE_WAREHOUSE_SKU"},
+    {"id":"R4-INV-007","owner":"Inventory","expression":"sum(lotAllocationQuantity)=saleQuantity AND FEFO lineage preserved","scope":"COMMUNITY_SUPERMARKET_ONLY"},
+    {"id":"R4-INV-008","owner":"Costing","expression":"costProjection=rebuild(appendOnlyCostLedger) AND returnUsesOriginalCostSnapshot","scope":"WAREHOUSE_SKU_CNY"},
+    {"id":"R4-INV-009","owner":"Sync","expression":"acceptedEventIds=ackedEventIds+pendingOrDeadLetterExplainedIds","scope":"TERMINAL_CURSOR"},
+    {"id":"R4-INV-010","owner":"Reporting","expression":"dailyProjection=authoritativeOwnerFactsAtCheckpoints","scope":"TENANT_STORE_BUSINESS_DATE"},
+    {"id":"R4-INV-011","owner":"Operations","expression":"closedDailySnapshotIsAppendOnly AND lateFactsCreateCorrectionVersion","scope":"STORE_BUSINESS_DATE"},
+    {"id":"R4-INV-012","owner":"SaaS/Subscription/Service","expression":"degradeOrDeactivatePreservesBusinessHistoryAndRecoveryWhitelist","scope":"TENANT_LIFECYCLE"}
+  ],
+  "numericRules": {"money":"INTEGER_MINOR_UNIT_WITH_CURRENCY","quantity":"DECIMAL_EXACT","cost":"DECIMAL_BIGDECIMAL_HALF_EVEN","floatingPointAllowed":false},
+  "resultAuthority": "OWNER_FACTS_NOT_FRONTEND_OR_REPORT_OVERRIDE"
+}

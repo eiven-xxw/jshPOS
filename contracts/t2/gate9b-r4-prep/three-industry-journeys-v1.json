@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1.0",
+  "journeyCount": 3,
+  "commonPrelude": [
+    "SAAS_APPLICATION_APPROVAL", "PLAN_ENTITLEMENT_PUBLISH", "TRUSTED_TENANT_PROVISION",
+    "SUBSCRIPTION_ACTIVATE", "FOUNDATION_ORG_STORE_EMPLOYEE", "SERVICE_IMPLEMENTATION_CHECK",
+    "OPENING_DATA_MIGRATION", "STORE_ONBOARDING", "CATALOG_PRICE_PACKAGE_PUBLISH",
+    "TERMINAL_REGISTER_AND_TRUSTED_LOGIN"
+  ],
+  "commonTransaction": [
+    "SHIFT_OPEN", "SCAN_AND_BASKET", "PROMOTION_MEMBER_MANUAL_QUOTE", "SUSPEND_RESUME",
+    "CASH_OR_PARTIAL_CASH_SETTLEMENT", "SQLITE_ORDER_PAYMENT_OUTBOX_ATOMIC_COMMIT",
+    "REMOTE_SYNC_ACK_CURSOR", "SERVER_ORDER_CONSUMPTION", "INVENTORY_AND_COST_EFFECT",
+    "REPORT_RECONCILIATION", "PARTIAL_FINAL_RETURN", "EXCHANGE", "PROCUREMENT_STOCKTAKE_TRANSFER_REPLENISHMENT",
+    "DAILY_CLOSE_EXCEPTION_RESOLUTION", "SHIFT_CLOSE", "SYNTHETIC_BACKUP_RESTORE", "SYNTHETIC_RELEASE_FORWARD_REPAIR",
+    "SERVICE_TICKET_CLOSE", "SUBSCRIPTION_CONTROLLED_DEGRADE_AND_RESTORE"
+  ],
+  "journeys": [
+    {"id":"R4-J01-CONVENIENCE","industry":"CONVENIENCE","tenant":"R4_TENANT_A","stores":2,"terminals":2,"features":{"weightedBarcode":false,"lotExpiry":false,"memberBenefits":"OPTIONAL_DEFAULT_OFF"}},
+    {"id":"R4-J02-SNACK-DISCOUNT","industry":"SNACK_DISCOUNT","tenant":"R4_TENANT_B","stores":2,"terminals":2,"features":{"weightedBarcode":true,"lotExpiry":false,"memberBenefits":"OPTIONAL_DEFAULT_OFF","bulkPriceAndPromotion":true}},
+    {"id":"R4-J03-COMMUNITY","industry":"COMMUNITY_SUPERMARKET","tenant":"R4_TENANT_C","stores":2,"terminals":2,"features":{"weightedBarcode":true,"lotExpiry":true,"fefo":true,"memberBenefits":"OPTIONAL_EXPLICIT_ENABLE"}}
+  ],
+  "ownerCoverage": ["foundation","catalog","order","sync","payment","inventory","procurement","costing","transfer","promotion","returns","member","reporting","resilience","release","migration","onboarding","operations","saas","subscription","service","integration"],
+  "executionRule": "ALL_STEPS_USE_FORMAL_API_APPLICATION_PORT_EVENT_INBOX_OUTBOX_OR_POS_REPOSITORY",
+  "directDatabaseBusinessWrites": 0,
+  "externalSuccessClaims": 0
+}

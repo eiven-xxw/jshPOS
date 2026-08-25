@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "1.0",
+  "expectedOwnerCount": 22,
+  "owners": [
+    {"order":1,"owner":"SaaS","module":"saas","journeyRole":"merchant application, plan entitlement and tenant lifecycle"},
+    {"order":2,"owner":"Subscription","module":"subscription","journeyRole":"subscription activation, renewal, degradation and recovery"},
+    {"order":3,"owner":"Foundation","module":"foundation","journeyRole":"trusted tenant, organization, store, employee and business day"},
+    {"order":4,"owner":"Service","module":"service","journeyRole":"implementation checklist, ticket and attachment metadata"},
+    {"order":5,"owner":"Migration","module":"migration","journeyRole":"opening data import through formal owner ports"},
+    {"order":6,"owner":"Onboarding","module":"onboarding","journeyRole":"industry template, store opening plan and checks"},
+    {"order":7,"owner":"Catalog","module":"catalog","journeyRole":"product, barcode, unit, price and signed package"},
+    {"order":8,"owner":"Sync","module":"sync","journeyRole":"terminal context, inbox, outbox, ack and cursor"},
+    {"order":9,"owner":"Order","module":"order","journeyRole":"shift, basket, cash settlement and immutable order"},
+    {"order":10,"owner":"Promotion","module":"promotion","journeyRole":"quotation, manual adjustment and allocation snapshot"},
+    {"order":11,"owner":"Member","module":"member","journeyRole":"optional member price and benefit snapshot"},
+    {"order":12,"owner":"Payment","module":"payment","journeyRole":"cash and provider-independent tender/refund facts"},
+    {"order":13,"owner":"Inventory","module":"inventory","journeyRole":"immutable quantity ledger and optional lot/expiry"},
+    {"order":14,"owner":"Costing","module":"costing","journeyRole":"append-only moving average costing facts"},
+    {"order":15,"owner":"Procurement","module":"procurement","journeyRole":"supplier, receipt, stocktake and replenishment draft"},
+    {"order":16,"owner":"Transfer","module":"transfer","journeyRole":"source, transit and destination transfer facts"},
+    {"order":17,"owner":"Returns","module":"returns","journeyRole":"original-sale return, refund and exchange saga"},
+    {"order":18,"owner":"Reporting","module":"reporting","journeyRole":"rebuildable sales, inventory, cost and reconciliation projections"},
+    {"order":19,"owner":"Operations","module":"operations","journeyRole":"daily close and exception center"},
+    {"order":20,"owner":"Resilience","module":"resilience","journeyRole":"synthetic backup and restore verification"},
+    {"order":21,"owner":"Release","module":"release","journeyRole":"synthetic signed release and safe forward repair"},
+    {"order":22,"owner":"Integration","module":"integration","journeyRole":"composition root and cross-owner contract governance"}
+  ],
+  "requiredAssembly": ["DEFAULT_REACTOR", "COMMERCIAL_JAR", "FLYWAY_OR_EXPLICIT_NO_TABLE", "OWNER_TESTS", "E2E_CHECKPOINT"],
+  "currentAuditDecision": "ALL_22_MODULES_ASSEMBLED_BUT_NOT_ONE_FORMAL_END_TO_END_JOURNEY"
+}

@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "1.0",
+  "findingId": "G9A-E2E-P1-001",
+  "openP0": 0,
+  "openP1": 4,
+  "seeds": [
+    {"id":"R4-P1-001","state":"OPEN","case":"FLUTTER_FORMAL_JOURNEY_USES_LOCAL_HTTP_SERVER","observed":"Gate7E starts the JAR but formal_pos_runtime_e2e_test.dart binds its own loopback HttpServer","closure":"Flutter session, package and sync calls reach the same live JAR used by MySQL/Redis evidence"},
+    {"id":"R4-P1-002","state":"OPEN","case":"SAAS_AND_BUSINESS_JOURNEYS_ARE_SEPARATE","observed":"Gate8B formal HTTP covers SaaS/Subscription/Service while Gate7E business evidence is separate","closure":"one current-commit run serially joins commercial onboarding to all three business-format journeys"},
+    {"id":"R4-P1-003","state":"OPEN","case":"TWENTY_TWO_OWNER_CHECKPOINTS_NOT_RECONCILED_IN_ONE_RUN","observed":"component tests and source vectors are aggregated after independent execution","closure":"all 22 Owner checkpoints, event identities and conservation results are collected from one formal runtime journey"},
+    {"id":"R4-P1-004","state":"OPEN","case":"FULL_STACK_FAILURE_RECOVERY_NOT_EXECUTED","observed":"duplicate, ACK loss, restart, late event and rebuild evidence comes from separate component tests","closure":"fixed seeds run against the same live stack and converge using original identities"},
+    {"id":"R4-F01","state":"PLANNED","case":"DUPLICATE_AND_SAME_KEY_DIFFERENT_CONTENT","expected":"ORIGINAL_RESULT_OR_REJECT_CONFLICT"},
+    {"id":"R4-F02","state":"PLANNED","case":"ACK_LOST_AND_POS_RESTART","expected":"REUSE_ORIGINAL_EVENT_AND_CONVERGE"},
+    {"id":"R4-F03","state":"PLANNED","case":"SERVER_RESTART_AFTER_INBOX_ACCEPT","expected":"OBSERVE_ORIGINAL_EFFECT"},
+    {"id":"R4-F04","state":"PLANNED","case":"REDIS_FLUSH_OR_CACHE_MISS","expected":"AUTHORITATIVE_FACTS_UNCHANGED"},
+    {"id":"R4-F05","state":"PLANNED","case":"CROSS_TENANT_STORE_TERMINAL","expected":"FAIL_CLOSED_AND_AUDIT"},
+    {"id":"R4-F06","state":"PLANNED","case":"BUSINESS_DAY_SWITCH_DURING_OFFLINE_TRANSACTION","expected":"FREEZE_ORIGINAL_BUSINESS_DAY"},
+    {"id":"R4-F07","state":"PLANNED","case":"OLD_CORRUPTED_OR_CROSS_TENANT_PACKAGE","expected":"REJECT_WITHOUT_ACTIVE_VERSION_CHANGE"},
+    {"id":"R4-F08","state":"PLANNED","case":"PAYMENT_OR_REFUND_UNKNOWN","expected":"OBSERVE_ORIGINAL_ONLY_AND_EXTERNAL_SHARE_UNAVAILABLE"},
+    {"id":"R4-F09","state":"PLANNED","case":"PARTIAL_OWNER_FAILURE_AND_LATE_EVENT","expected":"RECOVER_OR_MARK_EXPLICIT_EXCEPTION"},
+    {"id":"R4-F10","state":"PLANNED","case":"REPORT_AND_BALANCE_REBUILD","expected":"MATCH_OWNER_FACTS_AND_CHECKPOINTS"},
+    {"id":"R4-F11","state":"PLANNED","case":"BACKUP_RESTORE_AND_OUTBOX_CURSOR_RECONCILIATION","expected":"SYNTHETIC_RESTORE_CONSERVATION"},
+    {"id":"R4-F12","state":"PLANNED","case":"SCHEMA_OR_RELEASE_FORWARD_REPAIR","expected":"FAIL_CLOSED_OR_SAFE_FORWARD_FIX"}
+  ],
+  "findingClosureAllowed": false
+}

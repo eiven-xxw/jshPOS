@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "1.0",
+  "findingId": "G9A-E2E-P1-001",
+  "serial": true,
+  "batches": [
+    {"order":0,"id":"R4-R0","title":"可复现失败基线与范围冻结","runtimeChange":"TEST_ONLY_AFTER_SPONSOR_GO","exit":"four current P1 seeds fail for the frozen reasons"},
+    {"order":1,"id":"R4-R1","title":"同一正式栈执行器与可信合成初始化","runtimeChange":"CI_AND_TEST_HARNESS_ONLY","exit":"MySQL Redis JAR Web Flutter SQLite run in one window without business DB backdoor"},
+    {"order":2,"id":"R4-R2","title":"SAA SUB SVC到三业态开通衔接","runtimeChange":"MINIMAL_EXISTING_DEFECT_REPAIR_ONLY","exit":"commercial operations prelude reaches three trusted tenant/store contexts"},
+    {"order":3,"id":"R4-R3","title":"Flutter经正式JAR完成销售同步跨Owner闭环","runtimeChange":"MINIMAL_EXISTING_DEFECT_REPAIR_ONLY","exit":"three industries traverse live HTTP SQLite sync order inventory costing reporting"},
+    {"order":4,"id":"R4-R4","title":"退货换货供应链日结异常恢复与守恒","runtimeChange":"MINIMAL_EXISTING_DEFECT_REPAIR_ONLY","exit":"all owner checkpoints and twelve conservation rules pass"},
+    {"order":5,"id":"R4-R5","title":"固定故障seed、双平台与完整CI封板","runtimeChange":"TEST_AND_EVIDENCE_ONLY","exit":"all planned seeds pass, P0/P1=0, full CI reproducible"}
+  ],
+  "entry": "SPONSOR_CONFIRMATION_OF_R4_RUNTIME_REPAIR_INSTRUCTION",
+  "stopConditions": [
+    "NEW_BUSINESS_CAPABILITY_REQUIRED",
+    "MONEY_INVENTORY_TENANT_SEMANTICS_REQUIRE_NEW_INTERPRETATION",
+    "PUBLISHED_MIGRATION_WOULD_NEED_MODIFICATION",
+    "PROVIDER_OR_REAL_DEVICE_EXECUTION_REQUIRED",
+    "P0_OR_UNEXPLAINED_P1_FOUND"
+  ],
+  "rollback": "REVERT_ONLY_UNPUBLISHED_R4_TEST_OR_MINIMAL_DEFECT_CHANGES; USE_FORWARD_REPAIR_FOR_SCHEMA; PRESERVE FAILURE EVIDENCE",
+  "automaticEntryToRuntime": false
+}

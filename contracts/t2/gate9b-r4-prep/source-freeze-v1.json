@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "1.0",
+  "baselineCommit": "28b4da44ed529860970412a632c807df0d1d2d3e",
+  "sources": [
+    {"path":"contracts/t2/gate9a-prep/defect-register-v1.json","gitBlob":"fbf0bbd177a9d311ca713461e9a921d0fcef9cfa","role":"ORIGINAL_FINDING_LEDGER"},
+    {"path":"contracts/t2/gate9a-prep/owner-catalog-v1.json","gitBlob":"b703c86aba2156a70855b206545209661c78e015","role":"TWENTY_TWO_OWNER_CATALOG"},
+    {"path":"contracts/t2/gate7e/internal-v1-business-complete-v1.json","gitBlob":"70086d6fc403519bdc8fc68bc75b34db3d5e0033","role":"THREE_INDUSTRY_BUSINESS_SOURCE"},
+    {"path":"contracts/t2/gate8b/runtime-journey-v1.json","gitBlob":"3ef493bce3bf20f3548c35a907fa2f2433d49495","role":"COMMERCIAL_OPERATIONS_SOURCE"},
+    {"path":".github/workflows/t2-gate7e.yml","gitBlob":"4876677f59b2beb168b5dca05f5a88148db0e986","role":"BUSINESS_RUNTIME_CI_SOURCE"},
+    {"path":".github/workflows/t2-gate8b.yml","gitBlob":"811b4ef8b1aa0595000a94735c696a4a7726ccb9","role":"SAAS_RUNTIME_API_CI_SOURCE"},
+    {"path":"scripts/build_t2_gate7e_runtime_stack_smoke.py","gitBlob":"87ab3d6655b890228ede47ce26acaa523e179562","role":"BUSINESS_STACK_SMOKE_SOURCE"},
+    {"path":"pos-flutter/test/gate6g/formal_pos_runtime_e2e_test.dart","gitBlob":"502d87d39011a34e5a3debbd49446a3199cdd0eb","role":"POS_LOCAL_HTTP_SOURCE"},
+    {"path":"scripts/run_t2_gate8b_runtime_api_journey.py","gitBlob":"7bd83276a223518c023a83381082bbad854e209b","role":"SAAS_FORMAL_HTTP_SOURCE"},
+    {"path":"contracts/t2/gate9b-r3d-runtime/joint-acceptance-v1.json","gitBlob":"a4555b71c9c7f3f5e4e588e50944a3afd3620ae6","role":"R3D_ACCEPTANCE_SOURCE"},
+    {"path":"docs/t2-gate9b-r3d-runtime/07_G9A-R3D全部26页联合验收独立周门禁报告.md","gitBlob":"0c2afa1096425b5e0fd4aa559706e59ab44d760e","role":"R3D_REPORT_SOURCE"}
+  ],
+  "historicalSourcesMutable": false
+}
