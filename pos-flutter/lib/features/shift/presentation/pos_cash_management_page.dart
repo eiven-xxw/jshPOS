@@ -46,7 +46,8 @@ class _PosCashManagementPageState extends State<PosCashManagementPage> {
     final operation = 'cash:${_type.wireCode}:${_amount.text}:$reason';
     if (!await _confirm(
       title: '确认班次现金动作',
-      impact: '班次 ${widget.shiftId} · 业务日 ${widget.businessDate}\n'
+      impact:
+          '班次 ${widget.shiftId} · 业务日 ${widget.businessDate}\n'
           '${_type.wireCode} ¥${_amount.text}；将形成只追加现金事实和审计。',
     )) {
       return;
@@ -70,7 +71,8 @@ class _PosCashManagementPageState extends State<PosCashManagementPage> {
     final operation = 'drawer:$reason';
     if (!await _confirm(
       title: '确认非销售开钱箱请求',
-      impact: '班次 ${widget.shiftId} · 业务日 ${widget.businessDate}\n'
+      impact:
+          '班次 ${widget.shiftId} · 业务日 ${widget.businessDate}\n'
           '仅形成受审计请求；真实钱箱仍为 BLOCKED_EXTERNAL，不执行开箱。',
     )) {
       return;
@@ -125,7 +127,10 @@ class _PosCashManagementPageState extends State<PosCashManagementPage> {
     () => 'r3c:${widget.shiftId}:${++_keySequence}',
   );
 
-  Future<bool> _confirm({required String title, required String impact}) async =>
+  Future<bool> _confirm({
+    required String title,
+    required String impact,
+  }) async =>
       await showDialog<bool>(
         context: context,
         barrierDismissible: false,

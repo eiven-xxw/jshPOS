@@ -23,9 +23,26 @@ void main() {
 
       expect(find.byKey(const Key('cashFrozenContext')), findsOneWidget);
       expect(find.textContaining('2026-08-25'), findsOneWidget);
-      expect(find.textContaining('BLOCKED_EXTERNAL / UNAVAILABLE'), findsOneWidget);
-      expect(tester.widget<FilledButton>(find.byKey(const Key('recordShiftCashMovement'))).onPressed, isNull);
-      expect(tester.widget<OutlinedButton>(find.byKey(const Key('requestNoSaleDrawer'))).onPressed, isNull);
+      expect(
+        find.textContaining('BLOCKED_EXTERNAL / UNAVAILABLE'),
+        findsOneWidget,
+      );
+      expect(
+        tester
+            .widget<FilledButton>(
+              find.byKey(const Key('recordShiftCashMovement')),
+            )
+            .onPressed,
+        isNull,
+      );
+      expect(
+        tester
+            .widget<OutlinedButton>(
+              find.byKey(const Key('requestNoSaleDrawer')),
+            )
+            .onPressed,
+        isNull,
+      );
     });
 
     testWidgets('失败恢复复用原幂等键且重复点击受单航班保护', (tester) async {

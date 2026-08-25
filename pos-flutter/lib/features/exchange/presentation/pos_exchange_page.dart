@@ -133,7 +133,8 @@ class _PosExchangePageState extends State<PosExchangePage> {
                     ? null
                     : () => _confirmAndRun(
                         title: '建立换货关联确认',
-                        impact: '退货 ${source.originalReturn.returnRef} 与新销售 ${source.newSale.orderRef} 将建立只追加关联；两笔金额不做净额重算。',
+                        impact:
+                            '退货 ${source.originalReturn.returnRef} 与新销售 ${source.newSale.orderRef} 将建立只追加关联；两笔金额不做净额重算。',
                         operation: () => widget.controller.create(_reasonCode),
                       ),
                 icon: const Icon(Icons.swap_horiz),
@@ -149,8 +150,10 @@ class _PosExchangePageState extends State<PosExchangePage> {
                       ? null
                       : () => _confirmAndRun(
                           title: '独立审批换货',
-                          impact: '换货 ${view.exchangeRef}；版本 ${view.recordVersion}。审批只推进既有 Saga，不重建退款或销售命令。',
-                          operation: () => widget.controller.approve('SUPERVISOR_APPROVED'),
+                          impact:
+                              '换货 ${view.exchangeRef}；版本 ${view.recordVersion}。审批只推进既有 Saga，不重建退款或销售命令。',
+                          operation: () =>
+                              widget.controller.approve('SUPERVISOR_APPROVED'),
                         ),
                   icon: const Icon(Icons.verified_user),
                   label: Text(widget.allowApprove ? '独立审批换货' : '需要换货审批权限'),

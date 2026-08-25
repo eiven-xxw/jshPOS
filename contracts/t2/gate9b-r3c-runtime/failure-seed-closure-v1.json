@@ -27,6 +27,11 @@
       "findingId": "R3C-R9-CHECKBOX-DEPRECATION-001",
       "observed": "报表页面挂载测试显示 Element Plus checkbox label-as-value 弃用告警",
       "resolution": "在 VUE-16 范围内改用 value 属性，重新执行格式、ESLint 和直接挂载回归，不改变字段白名单语义"
+    },
+    {
+      "findingId": "R3C-R9-FLUTTER-FORMAT-001",
+      "observed": "首个远程候选 GitHub Actions Run 32803979146 的 Flutter Ubuntu Job 97670356321 在 dart format 门禁发现 4 个本批 Dart 文件未满足 Dart 3.13.0 格式并失败关闭",
+      "resolution": "保留原失败 Run，不执行自动重跑；使用官方 Dart 3.13.0 仅格式化该 4 个文件，并对 lib/test 共 131 个文件执行零差异复核后提交新候选"
     }
   ],
   "openP0": 0,

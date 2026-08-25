@@ -88,14 +88,22 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: PosExchangePage(
-          controller: PosExchangeController(service: service, source: _source()),
+          controller: PosExchangeController(
+            service: service,
+            source: _source(),
+          ),
           allowCreate: false,
         ),
       ),
     );
 
-    expect(find.byKey(const Key('exchangeOfflineRecoveryBoundary')), findsOneWidget);
-    final create = tester.widget<FilledButton>(find.byKey(const Key('createExchangeLink')));
+    expect(
+      find.byKey(const Key('exchangeOfflineRecoveryBoundary')),
+      findsOneWidget,
+    );
+    final create = tester.widget<FilledButton>(
+      find.byKey(const Key('createExchangeLink')),
+    );
     expect(create.onPressed, isNull);
     expect(service.createCount, 0);
   });
