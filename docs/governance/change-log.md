@@ -311,5 +311,6 @@
 | CR-T2G9R3-014 | 2026-08-25 | G9A_R3C_FIRST_CANDIDATE_FLUTTER_FORMAT_FAILURE | 首个远程候选Run`32803979146`的Flutter Ubuntu Job`97670356321`在Dart 3.13.0格式门禁发现4个本批文件不一致并失败关闭 | G9A-UI-P1-001、ADR-071、T2-CI-001 | 原失败Run完整保留且不自动重跑；仅以官方Dart 3.13.0机械格式化4文件并复核lib/test共131文件零差异，新提交必须从头复跑完整CI |
 | CR-T2G9R3-015 | 2026-08-25 | G9A_R3C_SECOND_CANDIDATE_FLUTTER_TEST_FAILURE_DIAGNOSIS | 第二个候选Run`32804503972`的Flutter Ubuntu Job`97672430082`通过格式与analyze后在flutter test失败；原重定向使失败机器日志未上传，页面只有退出码 | G9A-UI-P1-001、ADR-071、T2-CI-001 | 原失败Run保留；仅以bash pipefail和tee同时打印/保存同一机器日志，不改命令、测试、阈值或失败语义，新候选须从头复跑完整CI |
 | CR-T2G9R3-016 | 2026-08-25 | G9A_R3C_DIAGNOSTIC_CANDIDATE_FLUTTER_FINDER_FAILURE | 诊断Run`32805231740`的Flutter Ubuntu Job`97673974003`证明FLT-05确认弹窗已出现，但测试用包含班次号定位同时命中冻结上下文和弹窗正文，2个匹配被错误断言为1个 | G9A-UI-P1-001、ADR-071、T2-CI-001 | 原失败Run保留；仅将测试断言收紧为唯一确认标题和确认按钮，不改变运行时/权限/幂等/恢复语义，新候选须从头复跑完整CI |
+| CR-T2G9R3-017 | 2026-08-25 | G9A_R3C_REPAIR_CANDIDATE_FLUTTER_SNACKBAR_RETRY_FAILURE | 修复Run`32805532085`的Flutter Ubuntu Job`97675075098`证明首次失败SnackBar覆盖底部提交按钮，测试未关闭提示就模拟再次点击，第二次命令未发出并缺少成功提示 | G9A-UI-P1-001、ADR-071、T2-CI-001 | 原失败Run保留；测试先验证并关闭失败提示，再沿原幂等键执行重试，不改变运行时命令、重试条件、测试阈值或成功判定 |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。

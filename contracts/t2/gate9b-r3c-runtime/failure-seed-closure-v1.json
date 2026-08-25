@@ -42,6 +42,11 @@
       "findingId": "R3C-R9-FLUTTER-FINDER-001",
       "observed": "诊断候选 GitHub Actions Run 32805231740 的 Flutter Ubuntu Job 97673974003 证明 FLT-05 回归已出现确认弹窗，但测试用 textContaining(班次号) 同时命中冻结上下文与弹窗正文，错误断言只允许一个匹配",
       "resolution": "保留失败 Run；将断言收紧为唯一确认标题与 confirmCashOperation 按钮，不修改运行时、权限、幂等或失败恢复语义，并要求新候选完整复跑"
+    },
+    {
+      "findingId": "R3C-R9-FLUTTER-SNACKBAR-RETRY-001",
+      "observed": "修复候选 GitHub Actions Run 32805532085 的 Flutter Ubuntu Job 97675075098 证明首次失败提示仍覆盖底部提交按钮，测试未关闭提示就模拟再次点击，第二次命令没有发出并因此缺少成功提示",
+      "resolution": "保留失败 Run；测试先验证并关闭首次失败 SnackBar，再以原幂等键执行重试，不改变运行时命令、重试条件或成功判定"
     }
   ],
   "openP0": 0,

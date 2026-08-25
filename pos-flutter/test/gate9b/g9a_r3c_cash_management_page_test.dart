@@ -72,6 +72,9 @@ void main() {
 
       await submit();
       expect(find.textContaining('原操作键已保留'), findsOneWidget);
+      ScaffoldMessenger.of(tester.element(find.byType(PosCashManagementPage)))
+          .hideCurrentSnackBar();
+      await tester.pumpAndSettle();
       await submit();
 
       expect(service.cashKeys, hasLength(2));
