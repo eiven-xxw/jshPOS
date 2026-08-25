@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:crypto/crypto.dart';
 import 'package:cryptography/cryptography.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:jshpos_pos/features/exchange/domain/pos_exchange_models.dart';
 import 'package:jshpos_pos/features/session/domain/pos_session_models.dart';
 import 'package:jshpos_pos/features/session/infrastructure/http_pos_session_repository.dart';
 import 'package:jshpos_pos/features/session/infrastructure/ruoyi_api_request_encryptor.dart';
@@ -81,7 +82,9 @@ void main() {
       });
       expect(results.every((item) => item['outboxUnsettled'] == 0), isTrue);
       expect(results.every((item) => item['deadLetters'] == 0), isTrue);
-      expect(results.every((item) => item['orderCount'] == 1), isTrue);
+      expect(results.every((item) => item['orderCount'] == 2), isTrue);
+      expect(results.every((item) => item['returnCount'] == 1), isTrue);
+      expect(results.every((item) => item['exchangeCount'] == 1), isTrue);
 
       _writeEvidence(
         output: output,
@@ -132,7 +135,7 @@ Future<Map<String, Object?>> _runJourney({
       industryTemplateVersion: '${_text(journey, 'industry')}_V1',
       returnWarehouseId: _warehouseId,
       configVersion: 1,
-      cashDifferenceApprovalMinor: 500,
+      cashDifferenceApprovalMinor: 1000,
       lotPackageVersion: _integer(journey, 'lotPackageVersion'),
       lotPackageSigningKeys:
           _text(journey, 'industry') == 'COMMUNITY_SUPERMARKET'
@@ -142,6 +145,8 @@ Future<Map<String, Object?>> _runJourney({
   );
   TrustedTerminalContext? terminal;
   EmployeeSession? employee;
+  String? completedReturnRef;
+  String? completedExchangeRef;
   try {
     terminal = await runtime.verifyTerminal(_device());
     expect(terminal.tenantId, _text(journey, 'tenantId'));
@@ -182,15 +187,73 @@ Future<Map<String, Object?>> _runJourney({
     expect(settled.changeAmountMinor, 1060);
     expect(preview.adapterEvidence, contains('BLOCKED_REAL_PRINTER'));
 
-    // 固定次数观察原 Outbox 身份，不通过重新生成交易命令处理未知结果。
+    // 先同步原成交，Return Owner 只能读取服务端不可变订单和原促销快照。
     for (var attempt = 0; attempt < 4; attempt += 1) {
       await runtime.refreshSyncStatus();
     }
+
+    final returnWorkspace = await runtime.findOriginalOrder(settled.orderRef);
+    final selectedReturn = await runtime.changeRequestedQuantity(
+      returnWorkspace.lines.single.lineRef,
+      returnWorkspace.lines.single.maximumReturnableQuantity,
+    );
+    final submittedReturn = await runtime.submitCashReturn(
+      reasonCode: 'CUSTOMER_RETURN',
+    );
+    expect(selectedReturn.refundableAmountMinor, settled.receivableAmountMinor);
+    expect(submittedReturn.status.name, 'pendingApproval');
+
+    final replacementQuote = await runtime.scanBarcode(
+      _text(journey, 'barcode'),
+    );
+    final replacementSale = await runtime.settleCash(
+      tenderedAmount: '20.00',
+      idempotencyKey:
+          '$runId:$journeyId:replacement:${replacementQuote.quoteFingerprint}',
+    );
+    expect(replacementSale.receivableAmountMinor, 990);
+    for (var attempt = 0; attempt < 4; attempt += 1) {
+      await runtime.refreshSyncStatus();
+    }
+    final exchange = await runtime.create(
+      source: PosExchangeSource(
+        originalReturn: submittedReturn,
+        newSale: replacementSale,
+      ),
+      reasonCode: 'CUSTOMER_EXCHANGE',
+    );
+    expect(exchange.status.name, 'draft');
+
+    // 退货与换货都由独立复核员通过正式 API 审批；收银员会话只观察原 Saga 身份。
+    await _approveReturnAndExchange(
+      baseUri: baseUri,
+      tenantId: _text(journey, 'tenantId'),
+      reviewerUsername: _text(secret, 'reviewerUsername'),
+      reviewerPassword: _text(secret, 'reviewerPassword'),
+      returnRef: submittedReturn.returnRef,
+      returnCorrelationRef: submittedReturn.correlationRef,
+      exchangeRef: exchange.exchangeRef,
+      exchangeCorrelationRef: exchange.correlationRef,
+      sequence: sequence,
+    );
+    var observedExchange = exchange;
+    for (var attempt = 0; attempt < 8 && !observedExchange.status.terminal; attempt += 1) {
+      observedExchange = await runtime.refreshExchange(exchange.exchangeRef);
+    }
+    expect(observedExchange.status.name, 'completed');
+    completedReturnRef = submittedReturn.returnRef;
+    completedExchangeRef = exchange.exchangeRef;
+
+    // 本地理论现金尚未直接写入服务端退款事实；受治理阈值允许把原退款作为可解释差异。
+    // 服务端按自身现金流水重算后，实际现金 109.90 与权威理论现金一致。
     await runtime.close(
       shiftId: shift.shiftId,
-      actualCash: '109.40',
+      actualCash: '109.90',
       idempotencyKey: '$runId:$journeyId:shift-close',
     );
+    for (var attempt = 0; attempt < 4; attempt += 1) {
+      await runtime.refreshSyncStatus();
+    }
     await runtime.logout(terminal, employee, _ulid(sequence * 10 + 2));
     employee = null;
     terminal = null;
@@ -264,6 +327,10 @@ Future<Map<String, Object?>> _runJourney({
                   .single['order_id']!
               as String,
       'cashPaymentCount': _count(database, 'local_cash_payment'),
+      'returnCount': completedReturnRef == null ? 0 : 1,
+      'exchangeCount': _count(database, 'local_exchange_command'),
+      'returnRef': completedReturnRef,
+      'exchangeRef': completedExchangeRef,
       'promotionSnapshotCount': _count(
         database,
         'local_promotion_transaction_snapshot',
@@ -279,6 +346,91 @@ Future<Map<String, Object?>> _runJourney({
   } finally {
     database.close();
   }
+}
+
+/// 使用独立账号完成 Return/Exchange 审批；不复用收银员令牌，也不写入任何凭据证据。
+Future<void> _approveReturnAndExchange({
+  required Uri baseUri,
+  required String tenantId,
+  required String reviewerUsername,
+  required String reviewerPassword,
+  required String returnRef,
+  required String returnCorrelationRef,
+  required String exchangeRef,
+  required String exchangeCorrelationRef,
+  required int sequence,
+}) async {
+  final client = HttpClient();
+  try {
+    final login = await _jsonRequest(
+      client,
+      baseUri.resolve('/auth/login'),
+      body: <String, Object?>{
+        'tenantId': tenantId,
+        'username': reviewerUsername,
+        'password': reviewerPassword,
+        'clientId': _clientId,
+        'grantType': 'password',
+      },
+    );
+    final data = login['data'];
+    if (data is! Map || data['access_token'] is! String) {
+      throw StateError('R4_REVIEWER_LOGIN_INVALID');
+    }
+    final token = data['access_token']! as String;
+    final occurredAt = DateTime.now().toUtc().toIso8601String();
+    await _jsonRequest(
+      client,
+      baseUri.resolve('/api/v1/returns/$returnRef/approve'),
+      token: token,
+      body: <String, Object?>{
+        'commandId': _ulid(sequence * 10 + 4),
+        'reasonCode': 'SUPERVISOR_APPROVED',
+        'correlationId': returnCorrelationRef,
+        'occurredAt': occurredAt,
+      },
+    );
+    await _jsonRequest(
+      client,
+      baseUri.resolve('/api/v1/pos/exchanges/$exchangeRef/approve'),
+      token: token,
+      body: <String, Object?>{
+        'commandId': _ulid(sequence * 10 + 5),
+        'reasonCode': 'SUPERVISOR_APPROVED',
+        'correlationId': exchangeCorrelationRef,
+        'occurredAt': occurredAt,
+      },
+    );
+  } finally {
+    client.close(force: true);
+  }
+}
+
+Future<Map<String, Object?>> _jsonRequest(
+  HttpClient client,
+  Uri uri, {
+  required Map<String, Object?> body,
+  String? token,
+}) async {
+  final request = await client.postUrl(uri);
+  request.headers
+    ..contentType = ContentType.json
+    ..set(HttpHeaders.acceptHeader, ContentType.json.mimeType)
+    ..set('clientid', _clientId);
+  if (token != null) {
+    request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $token');
+  }
+  request.write(jsonEncode(body));
+  final response = await request.close();
+  final text = await utf8.decoder.bind(response).join();
+  final envelope = jsonDecode(text);
+  if (envelope is! Map ||
+      response.statusCode < 200 ||
+      response.statusCode >= 300 ||
+      (envelope['code'] is num && (envelope['code']! as num).toInt() != 200)) {
+    throw StateError('R4_REVIEWER_API_FAILED:${response.statusCode}');
+  }
+  return envelope.cast<String, Object?>();
 }
 
 void _writeEvidence({

@@ -446,6 +446,25 @@ def create_tenant(client: ApiClient, passwords: dict[str, str], plan_id: Any, in
         "templateId": template["templateId"], "configVersionId": config["configVersionId"],
         "targetType": "STORE", "targetId": store_id,
     })
+    # 退货退款会在原开放班次内形成服务端现金负向流水，而 POS 本地只在同步后观察该事实。
+    # 因此双方都必须消费同一受治理阈值，不能依赖服务端缺省零阈值或测试内硬编码审批绕过。
+    shift_template = data(client.call(
+        "POST", "/api/v1/foundation/config/templates", f"{label}-shift-template", body={
+            "code": "SHIFT_CASH_DIFFERENCE", "name": "交班现金差异阈值", "industry": industry,
+        }))
+    shift_config = data(client.call(
+        "POST", f"/api/v1/foundation/config/templates/{shift_template['templateId']}/versions",
+        f"{label}-shift-version", body={
+            "schemaVersion": "1.0", "content": {"cashDifferenceApprovalMinor": 1000},
+        }))
+    client.call(
+        "POST", f"/api/v1/foundation/config/versions/{shift_config['configVersionId']}/publish",
+        f"{label}-shift-publish")
+    client.call("POST", "/api/v1/foundation/config/bindings/activate", f"{label}-shift-activate", body={
+        "templateId": shift_template["templateId"],
+        "configVersionId": shift_config["configVersionId"],
+        "targetType": "STORE", "targetId": store_id,
+    })
     # 所有三业态在产生库存事实前都必须经正式 API 发布明确的失败关闭策略。
     # 不能依赖数据库默认值，更不能为了 E2E 绕过 Inventory Owner 的策略冻结点。
     inventory_policy_version_id = stable_ulid(f"r4-inventory-policy-{run_tag}-{label}")
@@ -495,6 +514,8 @@ def create_tenant(client: ApiClient, passwords: dict[str, str], plan_id: Any, in
         "storeId": store_id, "userId": user_id, "reviewerUserId": reviewer_user_id,
         "serviceProjectId": service_project_id,
         "manualTemplateId": template["templateId"], "manualConfigVersionId": config["configVersionId"],
+        "shiftTemplateId": shift_template["templateId"],
+        "shiftConfigVersionId": shift_config["configVersionId"],
         "inventoryPolicyVersionId": inventory_policy_version_id,
         "costPolicyVersionId": cost_policy_version_id,
         "skuId": product["skuId"], "unitId": unit["id"],
