@@ -39,7 +39,7 @@ jobs:
           python scripts/check_t0_structure.py
           python scripts/check_rtm.py
           python scripts/check_contracts.py
-          python -m py_compile scripts/check_t2_g9a_r4.py scripts/run_t2_g9a_r4_r0_red_regressions.py scripts/run_t2_g9a_r4_bootstrap.py
+          python -m py_compile scripts/check_t2_g9a_r4.py scripts/run_t2_g9a_r4_r0_red_regressions.py scripts/run_t2_g9a_r4_bootstrap.py scripts/run_t2_g9a_r4_postflight.py
           python scripts/run_t2_g9a_r4_r0_red_regressions.py --output artifacts/t2/g9a-r4/governance-ubuntu/r0-red-regressions.json
           python scripts/check_t2_g9a_r4.py --output artifacts/t2/g9a-r4/governance-ubuntu/gate.json
           python scripts/audit_t2_gate6g_api.py --output artifacts/t2/g9a-r4/governance-ubuntu/api-regression.json
@@ -63,7 +63,7 @@ jobs:
           python scripts/check_t0_structure.py
           python scripts/check_rtm.py
           python scripts/check_contracts.py
-          python -m py_compile scripts/check_t2_g9a_r4.py scripts/run_t2_g9a_r4_r0_red_regressions.py scripts/run_t2_g9a_r4_bootstrap.py
+          python -m py_compile scripts/check_t2_g9a_r4.py scripts/run_t2_g9a_r4_r0_red_regressions.py scripts/run_t2_g9a_r4_bootstrap.py scripts/run_t2_g9a_r4_postflight.py
           python scripts/run_t2_g9a_r4_r0_red_regressions.py --output artifacts/t2/g9a-r4/governance-windows/r0-red-regressions.json
           python scripts/check_t2_g9a_r4.py --output artifacts/t2/g9a-r4/governance-windows/gate.json
           python scripts/audit_t2_gate6g_api.py --output artifacts/t2/g9a-r4/governance-windows/api-regression.json
@@ -293,6 +293,13 @@ jobs:
           flutter test --machine test/gate9b/g9a_r4_formal_jar_e2e_test.dart 2>&1 | tee "$GITHUB_WORKSPACE/artifacts/t2/g9a-r4/formal-runtime/flutter-live.jsonl"
           cd ..
           test "$(find "$RUNNER_TEMP/r4-sqlite" -name '*.sqlite3' -type f | wc -l)" -eq 3
+          python scripts/run_t2_g9a_r4_postflight.py \
+            --base-url http://127.0.0.1:18080 \
+            --bootstrap artifacts/t2/g9a-r4/formal-runtime/bootstrap.json \
+            --secrets "$RUNNER_TEMP/r4-secrets.json" \
+            --flutter artifacts/t2/g9a-r4/formal-runtime/flutter-live.json \
+            --build-commit "$GITHUB_SHA" \
+            --output artifacts/t2/g9a-r4/formal-runtime/postflight.json
           kill -0 "$server_pid" && kill -0 "$web_pid"
           if grep -Fq "$GATE8B_PLATFORM_PASSWORD" artifacts/t2/g9a-r4/formal-runtime/server.log \
             || grep -Fq "$GATE8B_BOOTSTRAP_PASSWORD" artifacts/t2/g9a-r4/formal-runtime/server.log \

@@ -147,6 +147,9 @@ Future<Map<String, Object?>> _runJourney({
   EmployeeSession? employee;
   String? completedReturnRef;
   String? completedExchangeRef;
+  String? originalOrderRef;
+  String? replacementOrderRef;
+  var completedReturnAmountMinor = 0;
   try {
     terminal = await runtime.verifyTerminal(_device());
     expect(terminal.tenantId, _text(journey, 'tenantId'));
@@ -180,6 +183,7 @@ Future<Map<String, Object?>> _runJourney({
       tenderedAmount: '20.00',
       idempotencyKey: '$runId:$journeyId:cash:${adjusted.quoteFingerprint}',
     );
+    originalOrderRef = settled.orderRef;
     final preview = await runtime.previewPrintTask(settled.orderRef);
     expect(quoted.totals.receivableAmountMinor, 990);
     expect(adjusted.totals.receivableAmountMinor, 940);
@@ -211,6 +215,7 @@ Future<Map<String, Object?>> _runJourney({
       idempotencyKey:
           '$runId:$journeyId:replacement:${replacementQuote.quoteFingerprint}',
     );
+    replacementOrderRef = replacementSale.orderRef;
     expect(replacementSale.receivableAmountMinor, 990);
     for (var attempt = 0; attempt < 4; attempt += 1) {
       await runtime.refreshSyncStatus();
@@ -247,6 +252,7 @@ Future<Map<String, Object?>> _runJourney({
     expect(observedExchange.status.name, 'completed');
     completedReturnRef = submittedReturn.returnRef;
     completedExchangeRef = exchange.exchangeRef;
+    completedReturnAmountMinor = selectedReturn.refundableAmountMinor;
 
     // 本地理论现金尚未直接写入服务端退款事实；受治理阈值允许把原退款作为可解释差异。
     // 服务端按自身现金流水重算后，实际现金 109.90 与权威理论现金一致。
@@ -313,6 +319,68 @@ Future<Map<String, Object?>> _runJourney({
           },
         )
         .toList(growable: false);
+    final orderTotals = database
+        .select(
+          '''SELECT
+             COALESCE(SUM(gross_amount_minor),0) AS gross,
+             COALESCE(SUM(discount_amount_minor),0) AS discount,
+             COALESCE(SUM(surcharge_amount_minor),0) AS surcharge,
+             COALESCE(SUM(receivable_amount_minor),0) AS receivable
+             FROM local_order WHERE tenant_id=? AND status='COMPLETED' ''',
+          [_text(journey, 'tenantId')],
+        )
+        .single;
+    final cashNetMinor =
+        database
+                .select(
+                  '''SELECT COALESCE(SUM(net_amount_minor),0) AS net
+             FROM local_cash_payment WHERE tenant_id=? AND status='SUCCEEDED' ''',
+                  [_text(journey, 'tenantId')],
+                )
+                .single['net']!
+            as int;
+    final firstPromotionSnapshotId =
+        database
+                .select(
+                  '''SELECT snapshot_id
+             FROM local_promotion_transaction_snapshot WHERE tenant_id=?
+             ORDER BY occurred_at ASC LIMIT 1''',
+                  [_text(journey, 'tenantId')],
+                )
+                .single['snapshot_id']!
+            as String;
+    final firstCashPaymentId =
+        database
+                .select(
+                  '''SELECT payment_id
+             FROM local_cash_payment WHERE tenant_id=?
+             ORDER BY occurred_at ASC LIMIT 1''',
+                  [_text(journey, 'tenantId')],
+                )
+                .single['payment_id']!
+            as String;
+    final promotionAllocatedMinor =
+        database
+                .select(
+                  '''SELECT
+             COALESCE(SUM(discount_amount_minor),0) AS allocated
+             FROM local_promotion_transaction_allocation WHERE tenant_id=?''',
+                  [_text(journey, 'tenantId')],
+                )
+                .single['allocated']!
+            as int;
+    final memberBenefitSnapshotCount = _count(
+      database,
+      'local_order_member_benefit_snapshot',
+    );
+    final lotAllocatedQuantity = database
+        .select(
+          '''SELECT
+             COALESCE(SUM(base_quantity),0) AS quantity
+             FROM local_order_lot_allocation WHERE tenant_id=?''',
+          [_text(journey, 'tenantId')],
+        )
+        .single['quantity'];
     return <String, Object?>{
       'journeyId': journeyId,
       'industry': _text(journey, 'industry'),
@@ -330,6 +398,19 @@ Future<Map<String, Object?>> _runJourney({
                   )
                   .single['order_id']!
               as String,
+      'originalOrderRef': originalOrderRef,
+      'replacementOrderRef': replacementOrderRef,
+      'grossAmountMinor': orderTotals['gross']! as int,
+      'discountAmountMinor': orderTotals['discount']! as int,
+      'surchargeAmountMinor': orderTotals['surcharge']! as int,
+      'receivableAmountMinor': orderTotals['receivable']! as int,
+      'cashNetAmountMinor': cashNetMinor,
+      'refundedAmountMinor': completedReturnAmountMinor,
+      'firstPromotionSnapshotId': firstPromotionSnapshotId,
+      'firstCashPaymentId': firstCashPaymentId,
+      'promotionAllocatedMinor': promotionAllocatedMinor,
+      'memberBenefitSnapshotCount': memberBenefitSnapshotCount,
+      'lotAllocatedQuantity': '$lotAllocatedQuantity',
       'cashPaymentCount': _count(database, 'local_cash_payment'),
       'returnCount': 1,
       'exchangeCount': _count(database, 'local_exchange_command'),

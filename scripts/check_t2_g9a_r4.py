@@ -44,6 +44,7 @@ def main() -> None:
     faults = load("contracts/t2/gate9b-r4/fault-seeds-v1.json")
     red = ROOT / "scripts/run_t2_g9a_r4_r0_red_regressions.py"
     bootstrap = ROOT / "scripts/run_t2_g9a_r4_bootstrap.py"
+    postflight = ROOT / "scripts/run_t2_g9a_r4_postflight.py"
     flutter = ROOT / "pos-flutter/test/gate9b/g9a_r4_formal_jar_e2e_test.dart"
 
     require(admission.get("findingId") == "G9A-E2E-P1-001", "finding identity drift")
@@ -54,7 +55,17 @@ def main() -> None:
             "external execution must remain zero")
     require({item.lower() for item in checkpoints.get("owners", [])} == OWNERS, "22 Owner set drift")
     require(len(faults.get("seeds", [])) == 12, "twelve fixed fault seeds are required")
-    require(red.is_file() and bootstrap.is_file() and flutter.is_file(), "R0/bootstrap/Flutter harness missing")
+    require(red.is_file() and bootstrap.is_file() and postflight.is_file() and flutter.is_file(),
+            "R0/bootstrap/postflight/Flutter harness missing")
+
+    postflight_text = postflight.read_text(encoding="utf-8")
+    require("/api/v1/" in postflight_text, "postflight must use formal HTTP APIs")
+    require(not re.search(r"(?im)^\s*(?:import|from)\s+(?:sqlite3|pymysql|mysql|redis)\b", postflight_text),
+            "postflight must not connect directly to MySQL, Redis or SQLite")
+    require("ownerCheckpointCount\": len(checkpoints)" in postflight_text,
+            "postflight must emit 22 Owner checkpoint evidence")
+    require("conservationCheckCount\": len(invariants)" in postflight_text,
+            "postflight must emit twelve conservation checks per journey")
 
     bootstrap_text = bootstrap.read_text(encoding="utf-8")
     activate_marker = 'f"{label}-store-activate"'

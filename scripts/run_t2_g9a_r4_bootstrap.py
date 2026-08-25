@@ -366,6 +366,36 @@ def create_tenant(client: ApiClient, passwords: dict[str, str], plan_id: Any, in
     if store.get("status") != "ACTIVE":
         raise RuntimeError(f"G9A-R4 bootstrap failed: {label}-store-activate did not reach ACTIVE")
 
+    # R4-R4 通过正式 Foundation API 准备一个 PREPARING 目标门店和已发布白名单模板；
+    # 后置旅程只能经 Onboarding Owner 应用，外部支付/硬件/打印检查仍必须失败关闭。
+    onboarding_store = data(client.call("POST", "/api/v1/foundation/stores",
+                                        f"{label}-onboarding-store-create", body={
+        "orgUnitId": org_id, "platformDeptId": None,
+        "code": f"R4_{label.upper()}_NEXT", "name": f"{display}虚构待开门店",
+        "zoneId": "Asia/Shanghai", "businessDayStart": "06:00:00",
+    }))
+    onboarding_template = data(client.call(
+        "POST", "/api/v1/foundation/config/templates", f"{label}-onboarding-template", body={
+            "code": f"R4_{label.upper()}_ONBOARD", "name": f"{display}开店白名单模板", "industry": industry,
+        }))
+    onboarding_version = data(client.call(
+        "POST", f"/api/v1/foundation/config/templates/{onboarding_template['templateId']}/versions",
+        f"{label}-onboarding-version", body={
+            "schemaVersion": "1.0",
+            "content": {
+                "business.time": "Asia/Shanghai",
+                "business.day": "06:00:00",
+                "ui.layout": f"{industry}.V1",
+                "device.expectation": "BLOCKED_REAL_DEVICE",
+                "industry.template": industry,
+                "catalog.scope": "TENANT",
+                "pricing.scope": "STORE_OVERRIDE_THEN_TENANT",
+                "permission.template": "TENANT_ADMIN",
+            },
+        }))
+    client.call("POST", f"/api/v1/foundation/config/versions/{onboarding_version['configVersionId']}/publish",
+                f"{label}-onboarding-version-publish")
+
     service_catalog = data(client.call("POST", "/api/v1/service/catalogs", f"{label}-service-catalog", body={
         "catalogCode": f"R4_{label.upper()}_OPENING", "versionNo": 1, "industryTemplate": industry,
         "name": f"{display}内部开店检查",
@@ -513,11 +543,18 @@ def create_tenant(client: ApiClient, passwords: dict[str, str], plan_id: Any, in
         "applicationId": application_id, "subscriptionId": subscription_id, "orgId": org_id,
         "storeId": store_id, "userId": user_id, "reviewerUserId": reviewer_user_id,
         "serviceProjectId": service_project_id,
+        "onboardingTargetStoreId": onboarding_store["storeId"],
+        "onboardingTemplateId": onboarding_template["templateId"],
+        "onboardingTemplateVersionId": onboarding_version["configVersionId"],
         "manualTemplateId": template["templateId"], "manualConfigVersionId": config["configVersionId"],
         "shiftTemplateId": shift_template["templateId"],
         "shiftConfigVersionId": shift_config["configVersionId"],
         "inventoryPolicyVersionId": inventory_policy_version_id,
         "costPolicyVersionId": cost_policy_version_id,
+        "procurementOrderId": stable_ulid(
+            f"r4-lot-order-{run_tag}" if industry == "COMMUNITY_SUPERMARKET"
+            else f"r4-stock-order-{run_tag}-{label}"
+        ),
         "skuId": product["skuId"], "unitId": unit["id"],
         "skuCode": product["skuCode"], "barcode": barcode, "catalogVersion": catalog_package["packageVersion"],
         "promotionVersion": promotion_package["packageVersion"], "lotPackageVersion": lot_package_version,
