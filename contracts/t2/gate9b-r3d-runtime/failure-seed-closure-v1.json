@@ -14,8 +14,8 @@
     {
       "seedId": "R3D-JNT-P1-002",
       "step": "R3D-R2",
-      "state": "AUTHORIZED_NOT_EXECUTED",
-      "evidence": []
+      "state": "CLOSED_IN_BATCH",
+      "evidence": ["admin-web/src/views/g9a-r3d/__tests__/joint-commercial-operations.spec.ts"]
     },
     {
       "seedId": "R3D-JNT-P1-003",
@@ -25,7 +25,7 @@
     }
   ],
   "openP0": 0,
-  "openP1": 2,
+  "openP1": 1,
   "findingState": "OPEN",
   "autoRetryUsed": false,
   "testsSkippedToPass": false
