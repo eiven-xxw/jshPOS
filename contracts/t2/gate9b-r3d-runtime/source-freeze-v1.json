@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "1.0",
+  "sourcePrepCommit": "b0762440c13dac5197cf5b716081278b0484407f",
+  "sources": [
+    {
+      "batch": "G9A-R3A",
+      "path": "contracts/t2/gate9b-r3a/surface-acceptance-v1.json",
+      "sha256": "9bfd2e316b8e509492f65abccadfde70707728959d3cd42ca2071ac33fb2f67f"
+    },
+    {
+      "batch": "G9A-R3B",
+      "path": "contracts/t2/gate9b-r3b-runtime/surface-acceptance-v1.json",
+      "sha256": "c3258af8396cf62a52781dedfac755b46ae336d18117912c812a1ac9f41dd209"
+    },
+    {
+      "batch": "G9A-R3C",
+      "path": "contracts/t2/gate9b-r3c-runtime/surface-acceptance-v1.json",
+      "sha256": "8c5194425bd14bc7a460e353f540bf067ee81b7e915dfbd641f80cd97694aa1e"
+    }
+  ],
+  "surfaceCount": 26,
+  "vueCount": 20,
+  "flutterCount": 6,
+  "immutable": true
+}

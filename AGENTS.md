@@ -972,6 +972,30 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
   继续 `DRAFT`；`T2-LIC-001/JSH-001` 继续 `DEFERRED`。Provider 网络、真实资金、
   设备/外设命令、伙伴现场、完整 Alpha、生产部署和商业声明必须为 0。
 
+## 4.72 当前 G9A-R3D 全部 26 页正式联合验收条件准入
+
+- 项目发起人已于 2026-08-25 接受 G9A-R3D 准备阶段 `CONDITIONAL PASS`，授权从
+  `b0762440c13dac5197cf5b716081278b0484407f` 建立
+  `t2/gate9b-sprint27g-g9a-r3d-runtime`。本阶段只允许关闭既有
+  `R3D-JNT-P1-001/002/003`，复用既有 Requirement、`G9A-UI-P1-001` 和 ADR-071，
+  不新增业务能力或 Requirement ID。
+- 必须按 `R3D-R0 → R3D-R1 → R3D-R2 → R3D-R3 → R3D-R4` 严格串行：先冻结来源与
+  联合失败回归，再分别验证 `VUE-01..16`、`VUE-17/19/18/20/09` 和
+  `FLT-04/03/06/05/02/01`，最后复跑全部 26 页、双平台和完整既有门禁。
+- 联合测试必须挂载正式页面并使用同一 Router 或同一可信 POS 会话；不得用静态字符串、
+  测试替身页面、直接数据库写入或证据拼接冒充跨页执行。单页已接受证据保持不可变。
+- 仅当联合失败回归证明既有页面存在缺陷时，才可在获批页面、页面状态组件、可信会话壳或
+  测试范围内实施最小修复。禁止新增或修改服务端 API/Controller、依赖、Owner 领域逻辑、
+  MySQL/SQLite 数据库及已发布迁移；若必须越过该边界，应停止并提交独立影响评审。
+- Vue 的服务端最终授权、可信 tenant/store 数据范围和原操作身份必须在跨页切换中连续；
+  Flutter 的 tenant/store/terminal/employee/shift/businessDate 与原命令身份必须由可信会话
+  冻结，UNKNOWN、离线或失败恢复不得生成替代业务或资金命令。
+- 本阶段完成后只能形成 `G9A-UI-P1-001 VERIFIED_CLOSURE_CANDIDATE`；未经项目发起人
+  确认不得把 Finding 更新为关闭，不得自动进入 G9A-R4、完整 Alpha、现场试点或生产发布。
+- `T2-PAY-002/HWD-001/PRN-001/PAR-001` 继续 `BLOCKED`；`T2-UAT-001/REL-001`
+  继续 `DRAFT`；`T2-LIC-001/JSH-001` 继续 `DEFERRED`。Provider 网络、真实资金、
+  设备/外设命令、伙伴现场、完整 Alpha、生产部署和商业声明必须为 0。
+
 ## 5. 工程与测试规则
 
 - 服务端采用 RuoYi-Vue-Plus 模块化单体，不得把领域逻辑写入 Controller、通用工具类或框架系统模块。

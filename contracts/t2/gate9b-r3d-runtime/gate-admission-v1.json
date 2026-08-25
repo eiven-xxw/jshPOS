@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1.0",
+  "gate": "T2-GATE9B-G9A-R3D",
+  "stage": "AUTHORIZED_ALL_26_SURFACES_JOINT_ACCEPTANCE",
+  "findingId": "G9A-UI-P1-001",
+  "baselineCommit": "b0762440c13dac5197cf5b716081278b0484407f",
+  "branch": "t2/gate9b-sprint27g-g9a-r3d-runtime",
+  "expectedAcceptedT2Requirements": 88,
+  "newRequirementIds": 0,
+  "serverRuntimeChanges": 0,
+  "serverApiEndpointChanges": 0,
+  "dependencyChanges": 0,
+  "migrationChanges": 0,
+  "authorizedSeeds": ["R3D-JNT-P1-001", "R3D-JNT-P1-002", "R3D-JNT-P1-003"],
+  "serialSteps": ["R3D-R0", "R3D-R1", "R3D-R2", "R3D-R3", "R3D-R4"],
+  "externalExecution": {
+    "providerNetwork": 0,
+    "realFunds": 0,
+    "realDeviceCommands": 0,
+    "realPeripheralCommands": 0,
+    "partnerFieldExecution": 0,
+    "fullAlpha": 0,
+    "productionDeployment": 0
+  },
+  "findingClosureRequiresSponsorConfirmation": true,
+  "nextBatchAutomaticallyAuthorized": false
+}

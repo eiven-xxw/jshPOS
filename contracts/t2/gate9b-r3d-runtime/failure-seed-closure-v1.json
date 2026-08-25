@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "1.0",
+  "findingId": "G9A-UI-P1-001",
+  "closures": [
+    {
+      "seedId": "R3D-JNT-P1-001",
+      "step": "R3D-R1",
+      "state": "AUTHORIZED_NOT_EXECUTED",
+      "evidence": []
+    },
+    {
+      "seedId": "R3D-JNT-P1-002",
+      "step": "R3D-R2",
+      "state": "AUTHORIZED_NOT_EXECUTED",
+      "evidence": []
+    },
+    {
+      "seedId": "R3D-JNT-P1-003",
+      "step": "R3D-R3",
+      "state": "AUTHORIZED_NOT_EXECUTED",
+      "evidence": []
+    }
+  ],
+  "openP0": 0,
+  "openP1": 3,
+  "findingState": "OPEN",
+  "autoRetryUsed": false,
+  "testsSkippedToPass": false
+}
