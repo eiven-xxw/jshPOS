@@ -20,6 +20,14 @@ const _signingKeyId = 'R4_SYNTHETIC_KEY';
 
 void main() {
   final formalRuntimeEnabled = Platform.environment.containsKey('R4_BASE_URL');
+  test('批次数量证据按固定六位精度求和且不经过浮点数', () {
+    expect(_sumExactQuantities(const ['0.1', '0.2', '1.000000']), '1.3');
+    expect(_sumExactQuantities(const []), '0');
+    expect(
+      () => _sumExactQuantities(const ['1.0000001']),
+      throwsFormatException,
+    );
+  });
   test(
     '三业态 Flutter POS 连接正式商业 JAR 并以文件 SQLite 完成现金成交同步',
     () async {
@@ -499,14 +507,17 @@ Future<Map<String, Object?>> _runJourney({
       database,
       'local_order_member_benefit_snapshot',
     );
-    final lotAllocatedQuantity = database
-        .select(
-          '''SELECT
-             COALESCE(SUM(base_quantity),0) AS quantity
-             FROM local_order_lot_allocation WHERE tenant_id=?''',
-          [_text(journey, 'tenantId')],
-        )
-        .single['quantity'];
+    // SQLite 的正式批次分配以 canonical decimal 文本保存；证据聚合必须按
+    // 固定六位精度精确求和，不能引用不存在的列或让 SQLite 隐式转为浮点数。
+    final lotAllocatedQuantity = _sumExactQuantities(
+      database
+          .select(
+            '''SELECT quantity_decimal FROM local_order_lot_allocation
+               WHERE tenant_id=? ORDER BY allocation_id''',
+            [_text(journey, 'tenantId')],
+          )
+          .map((row) => row['quantity_decimal']! as String),
+    );
     return <String, Object?>{
       'journeyId': journeyId,
       'industry': _text(journey, 'industry'),
@@ -536,7 +547,7 @@ Future<Map<String, Object?>> _runJourney({
       'firstCashPaymentId': firstCashPaymentId,
       'promotionAllocatedMinor': promotionAllocatedMinor,
       'memberBenefitSnapshotCount': memberBenefitSnapshotCount,
-      'lotAllocatedQuantity': '$lotAllocatedQuantity',
+      'lotAllocatedQuantity': lotAllocatedQuantity,
       'cashPaymentCount': _count(database, 'local_cash_payment'),
       'returnCount': 1,
       'exchangeCount': _count(database, 'local_exchange_command'),
@@ -558,6 +569,27 @@ Future<Map<String, Object?>> _runJourney({
   } finally {
     database.close();
   }
+}
+
+/// 对 SQLite 中 canonical decimal 数量按六位固定精度精确求和。
+String _sumExactQuantities(Iterable<String> values) {
+  var total = BigInt.zero;
+  for (final value in values) {
+    final match = RegExp(r'^(0|[1-9][0-9]{0,12})(?:\.([0-9]{1,6}))?$')
+        .firstMatch(value);
+    if (match == null) {
+      throw FormatException('LOT_QUANTITY_INVALID: $value');
+    }
+    final fraction = (match.group(2) ?? '').padRight(6, '0');
+    total += BigInt.parse('${match.group(1)}$fraction');
+  }
+  final padded = total.toString().padLeft(7, '0');
+  final integer = padded.substring(0, padded.length - 6);
+  final fraction = padded.substring(padded.length - 6).replaceFirst(
+    RegExp(r'0+$'),
+    '',
+  );
+  return fraction.isEmpty ? integer : '$integer.$fraction';
 }
 
 /// 通过正式同步 HTTP 端口投递一次但不写本地 ACK，用于复现服务端已收、客户端未知。
