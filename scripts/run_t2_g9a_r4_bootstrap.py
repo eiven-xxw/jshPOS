@@ -41,6 +41,7 @@ INDUSTRIES = (
     ("SNACK_DISCOUNT", "snack", "零食折扣店"),
     ("COMMUNITY_SUPERMARKET", "community", "社区超市"),
 )
+WAREHOUSE_ID = "01K9R400000000000000000099"
 CROCKFORD = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
 
 
@@ -148,6 +149,73 @@ def activate_terminal(client: ApiClient, ids: dict[str, Any], label: str) -> dic
         "deviceFingerprintSha256": fingerprint,
         "publicKeySha256": public_key,
     }
+
+
+def prepare_community_lots(client: ApiClient, passwords: dict[str, str], tenant_id: str,
+                           username: str, reviewer_username: str, store_id: Any,
+                           sku_id: Any, unit_id: Any, run_tag: str) -> int:
+    """经 Catalog/Procurement/Inventory 正式端口形成可签名的社区超市批次事实。"""
+    today = datetime.now(timezone.utc).astimezone(timezone(timedelta(hours=8))).date()
+    policy_id = stable_ulid(f"r4-lot-policy-{run_tag}")
+    client.call("POST", "/api/v1/catalog/lot-policies", "community-lot-policy", body={
+        "policyVersionId": policy_id, "storeId": store_id, "skuId": sku_id,
+        "enabled": True, "expiryBasis": "EXPLICIT_EXPIRY_DATE", "shelfLifeDays": None,
+        "nearExpiryDays": 7, "effectiveFrom": timestamp(datetime.now(timezone.utc) - timedelta(days=1)),
+    }, headers={"X-Correlation-ID": stable_ulid(f"r4-lot-policy-trace-{run_tag}")})
+
+    supplier_id = stable_ulid(f"r4-lot-supplier-{run_tag}")
+    order_id = stable_ulid(f"r4-lot-order-{run_tag}")
+    order_line_id = stable_ulid(f"r4-lot-order-line-{run_tag}")
+    receipt_id = stable_ulid(f"r4-lot-receipt-{run_tag}")
+    receipt_line_id = stable_ulid(f"r4-lot-receipt-line-{run_tag}")
+    client.call("POST", "/api/v1/procurement/suppliers", "community-supplier", body={
+        "supplierId": supplier_id, "code": f"R4_LOT_{run_tag}", "name": "社区超市合成供应商",
+        "correlationId": stable_ulid(f"r4-lot-supplier-trace-{run_tag}"),
+    })
+    client.call("POST", "/api/v1/procurement/orders", "community-purchase-order", body={
+        "orderId": order_id, "supplierId": supplier_id, "storeId": str(store_id),
+        "warehouseId": WAREHOUSE_ID, "expectedDate": (today + timedelta(days=1)).isoformat(),
+        "overReceiptToleranceBps": 0,
+        "lines": [{"orderLineId": order_line_id, "skuId": str(sku_id), "unitId": str(unit_id),
+                   "orderedQuantity": "100.000000", "unitPriceMinor": "500", "taxRateBps": 0}],
+        "correlationId": stable_ulid(f"r4-lot-order-trace-{run_tag}"),
+    })
+    client.call("POST", f"/api/v1/procurement/orders/{order_id}/submit", "community-purchase-submit",
+                body={"correlationId": stable_ulid(f"r4-lot-submit-trace-{run_tag}")})
+    client.login(tenant_id, reviewer_username, passwords["reviewer"], "community-reviewer-purchase-login")
+    client.call("POST", f"/api/v1/procurement/orders/{order_id}/approve", "community-purchase-approve",
+                body={"correlationId": stable_ulid(f"r4-lot-approve-trace-{run_tag}")})
+    client.login(tenant_id, username, passwords["tenant"], "community-admin-after-purchase-approval")
+    client.call("POST", f"/api/v1/procurement/orders/{order_id}/receipts", "community-receipt-create", body={
+        "receiptId": receipt_id,
+        "lines": [{"receiptLineId": receipt_line_id, "orderLineId": order_line_id,
+                   "receivedQuantity": "100.000000"}],
+        "correlationId": stable_ulid(f"r4-lot-receipt-trace-{run_tag}"),
+    })
+    client.call("POST", f"/api/v1/procurement/receipts/{receipt_id}/confirm", "community-receipt-confirm", body={
+        "eventId": stable_ulid(f"r4-lot-receipt-event-{run_tag}"),
+        "correlationId": stable_ulid(f"r4-lot-confirm-trace-{run_tag}"),
+        "lotSplits": [{"receiptLineId": receipt_line_id, "baseQuantity": "100.000000",
+                       "supplierLotCode": f"SUP-{run_tag}", "internalLotCode": f"INT-{run_tag}",
+                       "productionDate": (today - timedelta(days=2)).isoformat(),
+                       "receivedDate": today.isoformat(),
+                       "explicitExpiryDate": (today + timedelta(days=30)).isoformat()}],
+    })
+    package = data(client.call(
+        "POST", "/api/v1/inventory/lots/package?" + urllib.parse.urlencode({
+            "storeId": store_id, "warehouseId": WAREHOUSE_ID,
+        }), "community-lot-package-publish",
+        headers=api_headers(stable_ulid(f"r4-lot-package-{run_tag}"),
+                            stable_ulid(f"r4-lot-package-trace-{run_tag}")),
+    ))
+    try:
+        payload = json.loads(base64.b64decode(package["payload"], validate=True))
+        version = int(payload["packageVersion"])
+    except (KeyError, ValueError, TypeError, json.JSONDecodeError) as error:
+        raise JourneyFailure("community-lot-package-publish: 签名包内容无效") from error
+    if version <= 0:
+        raise JourneyFailure("community-lot-package-publish: 包版本无效")
+    return version
 
 
 def create_tenant(client: ApiClient, passwords: dict[str, str], plan_id: Any, industry: str,
@@ -331,6 +399,12 @@ def create_tenant(client: ApiClient, passwords: dict[str, str], plan_id: Any, in
         "templateId": template["templateId"], "configVersionId": config["configVersionId"],
         "targetType": "STORE", "targetId": store_id,
     })
+    lot_package_version = 0
+    if industry == "COMMUNITY_SUPERMARKET":
+        lot_package_version = prepare_community_lots(
+            client, passwords, tenant_id, username, reviewer_username, store_id,
+            product["skuId"], unit["id"], run_tag,
+        )
     catalog_package = data(client.call("POST", "/api/v1/catalog/packages", f"{label}-catalog-package", body={
         "storeId": store_id, "packageVersion": 1, "previousVersion": 0,
     }))
@@ -350,7 +424,8 @@ def create_tenant(client: ApiClient, passwords: dict[str, str], plan_id: Any, in
         "manualTemplateId": template["templateId"], "manualConfigVersionId": config["configVersionId"],
         "skuId": product["skuId"], "unitId": unit["id"],
         "skuCode": product["skuCode"], "barcode": barcode, "catalogVersion": catalog_package["packageVersion"],
-        "promotionVersion": promotion_package["packageVersion"], "terminalId": terminal["terminalId"],
+        "promotionVersion": promotion_package["packageVersion"], "lotPackageVersion": lot_package_version,
+        "terminalId": terminal["terminalId"],
         "deviceId": terminal["deviceId"], "businessDate": now.astimezone(timezone(timedelta(hours=8))).date().isoformat(),
     }
     secret = {

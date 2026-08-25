@@ -141,6 +141,11 @@ Future<Map<String, Object?>> _runJourney({
       returnWarehouseId: _warehouseId,
       configVersion: 1,
       cashDifferenceApprovalMinor: 500,
+      lotPackageVersion: _integer(journey, 'lotPackageVersion'),
+      lotPackageSigningKeys:
+          _text(journey, 'industry') == 'COMMUNITY_SUPERMARKET'
+          ? {_signingKeyId: signingKey}
+          : const {},
     ),
   );
   TrustedTerminalContext? terminal;

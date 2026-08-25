@@ -2,6 +2,7 @@ import 'package:cryptography/cryptography.dart';
 import 'package:pos_device_adapter/pos_device_adapter.dart';
 
 import '../../features/catalog/infrastructure/catalog_package_installer.dart';
+import '../../features/catalog/infrastructure/lot_package_installer.dart';
 import '../../features/exchange/application/pos_exchange_application_service.dart';
 import '../../features/exchange/domain/pos_exchange_models.dart';
 import '../../features/exchange/infrastructure/http_pos_exchange_application_service.dart';
@@ -72,6 +73,8 @@ final class FilePosBusinessRuntimeAssembler
     required this.returnWarehouseId,
     required this.configVersion,
     required this.cashDifferenceApprovalMinor,
+    this.lotPackageVersion = 0,
+    this.lotPackageSigningKeys = const {},
     this.memberBenefitEnabled = false,
     this.memberBenefitPackageVersion = 0,
     this.memberBenefitSigningKeys = const {},
@@ -99,6 +102,8 @@ final class FilePosBusinessRuntimeAssembler
   final String returnWarehouseId;
   final int configVersion;
   final int cashDifferenceApprovalMinor;
+  final int lotPackageVersion;
+  final Map<String, SimplePublicKey> lotPackageSigningKeys;
   final bool memberBenefitEnabled;
   final int memberBenefitPackageVersion;
   final Map<String, SimplePublicKey> memberBenefitSigningKeys;
@@ -116,6 +121,8 @@ final class FilePosBusinessRuntimeAssembler
         configVersion <= 0 ||
         catalogSigningKeys.isEmpty ||
         promotionSigningKeys.isEmpty ||
+        (lotPackageVersion < 0 ||
+            (lotPackageVersion > 0 && lotPackageSigningKeys.isEmpty)) ||
         (memberBenefitEnabled &&
             (memberBenefitPackageVersion <= 0 ||
                 memberBenefitSigningKeys.isEmpty ||
@@ -154,6 +161,15 @@ final class FilePosBusinessRuntimeAssembler
         trustedSigningKeys: promotionSigningKeys,
       );
       await _ensurePromotion(promotionPackages, binding);
+      if (lotPackageVersion > 0) {
+        await _ensureLot(
+          LotPackageInstaller(
+            database,
+            trustedSigningKeys: lotPackageSigningKeys,
+          ),
+          binding,
+        );
+      }
       MemberBenefitPackageInstaller? memberBenefitPackages;
       if (memberBenefitEnabled) {
         memberBenefitPackages = MemberBenefitPackageInstaller(
@@ -318,6 +334,29 @@ final class FilePosBusinessRuntimeAssembler
       await _packageSource.memberBenefit(
         storeId: binding.storeId,
         packageVersion: memberBenefitPackageVersion,
+      ),
+    );
+  }
+
+  Future<void> _ensureLot(
+    LotPackageInstaller installer,
+    TrustedDeviceBinding binding,
+  ) async {
+    final current = installer.database.database.select(
+      'SELECT active_package_version FROM local_lot_package_binding WHERE singleton_id=1 AND tenant_id=? AND store_id=?',
+      [binding.tenantId, binding.storeId],
+    );
+    if (current.isNotEmpty) {
+      final version = current.single['active_package_version']! as int;
+      if (version == lotPackageVersion) return;
+      if (version >= lotPackageVersion) {
+        throw StateError('LOT-DPK-104: configured lot version is stale');
+      }
+    }
+    await installer.install(
+      await _packageSource.lot(
+        storeId: binding.storeId,
+        warehouseId: returnWarehouseId,
       ),
     );
   }
