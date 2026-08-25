@@ -28,6 +28,7 @@ import '../../features/shift/application/pos_shift_application_service.dart';
 import '../../features/shift/domain/shift_models.dart';
 import '../../features/shift/infrastructure/local_pos_shift_application_service.dart';
 import '../../features/synchronization/application/sync_coordinator.dart';
+import '../../features/synchronization/domain/sync_models.dart';
 import '../../features/synchronization/infrastructure/pos_sync_http_transport.dart';
 import '../local_database/pos_local_database.dart';
 import '../local_database/member_cache_store.dart';
@@ -41,6 +42,7 @@ final class PosBusinessRuntime {
     required this.returns,
     required this.exchange,
     required this.shift,
+    required this.sync,
   });
 
   final PosLocalDatabase database;
@@ -48,6 +50,7 @@ final class PosBusinessRuntime {
   final PosReturnApplicationService returns;
   final PosExchangeApplicationService exchange;
   final PosShiftApplicationService shift;
+  final PosSyncCoordinator sync;
 }
 
 abstract interface class PosBusinessRuntimeAssembler {
@@ -260,6 +263,7 @@ final class FilePosBusinessRuntimeAssembler
         returns: returns,
         exchange: exchange,
         shift: shift,
+        sync: sync,
       );
     } catch (_) {
       database.close();
@@ -524,6 +528,12 @@ final class SessionBoundPosRuntime
   @override
   Future<PosSaleWorkspace> refreshSyncStatus() =>
       _ready.sale.refreshSyncStatus();
+
+  /// 执行一次与页面状态解耦的正式同步。
+  ///
+  /// 班次关闭后仍可能存在关班、审计等待发送事实，因此同步生命周期不得依赖
+  /// 收银工作区或进行中班次；重启恢复也必须沿用原 Outbox 身份。
+  Future<SyncRunSummary> synchronizeOnce() => _ready.sync.runOnce();
   @override
   Future<PosReturnWorkspace> findOriginalOrder(String orderQuery) =>
       _ready.returns.findOriginalOrder(orderQuery);

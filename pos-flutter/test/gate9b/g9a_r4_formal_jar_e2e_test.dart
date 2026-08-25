@@ -316,9 +316,10 @@ Future<Map<String, Object?>> _runJourney({
     );
     employee = resumed.employee;
 
-    // 先同步原成交，Return Owner 只能读取服务端不可变订单和原促销快照。
+    // 先以页面无关的正式同步端口恢复原 Outbox；重启或关班后不能要求先重建
+    // 一个进行中的收银工作区，否则关班事件永远无法发送。
     for (var attempt = 0; attempt < 4; attempt += 1) {
-      await runtime.refreshSyncStatus();
+      await runtime.synchronizeOnce();
     }
 
     final returnWorkspace = await runtime.findOriginalOrder(settled.orderRef);
@@ -343,7 +344,7 @@ Future<Map<String, Object?>> _runJourney({
     replacementOrderRef = replacementSale.orderRef;
     expect(replacementSale.receivableAmountMinor, 990);
     for (var attempt = 0; attempt < 4; attempt += 1) {
-      await runtime.refreshSyncStatus();
+      await runtime.synchronizeOnce();
     }
     final exchange = await runtime.create(
       source: PosExchangeSource(
@@ -387,7 +388,7 @@ Future<Map<String, Object?>> _runJourney({
       idempotencyKey: '$runId:$journeyId:shift-close',
     );
     for (var attempt = 0; attempt < 4; attempt += 1) {
-      await runtime.refreshSyncStatus();
+      await runtime.synchronizeOnce();
     }
     await runtime.logout(terminal, employee, _ulid(sequence * 10 + 2));
     employee = null;
