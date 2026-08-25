@@ -579,6 +579,7 @@ class _PosSessionShellState extends State<PosSessionShell> {
                   newSale: newSale,
                 ),
               ),
+              allowCreate: _state.hasPermission(PosPermission.exchangeCreate),
               allowApprove: _state.hasPermission(PosPermission.exchangeApprove),
               allowRecover: _state.hasPermission(PosPermission.exchangeRecover),
             ),

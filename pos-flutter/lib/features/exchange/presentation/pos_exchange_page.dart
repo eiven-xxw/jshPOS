@@ -7,11 +7,13 @@ import '../domain/pos_exchange_models.dart';
 final class PosExchangePage extends StatefulWidget {
   const PosExchangePage({
     required this.controller,
+    this.allowCreate = true,
     this.allowApprove = false,
     this.allowRecover = false,
     super.key,
   });
   final PosExchangeController controller;
+  final bool allowCreate;
   final bool allowApprove;
   final bool allowRecover;
   @override
@@ -28,6 +30,33 @@ class _PosExchangePageState extends State<PosExchangePage> {
     if (mounted) setState(() {});
   }
 
+  Future<void> _confirmAndRun({
+    required String title,
+    required String impact,
+    required Future<PosExchangePageState> Function() operation,
+  }) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: Text(impact),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('取消'),
+          ),
+          FilledButton(
+            key: const Key('confirmExchangeAction'),
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('确认执行'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && mounted) await _run(operation());
+  }
+
   @override
   Widget build(BuildContext context) {
     final source = widget.controller.source;
@@ -41,6 +70,10 @@ class _PosExchangePageState extends State<PosExchangePage> {
             const Text(
               '换货由“原单退货退款 + 新销售 + 只追加关联”组成，两个金额各自保留权威事实。',
               key: Key('exchangeOwnerBoundary'),
+            ),
+            const Text(
+              '离线或重启后只查询原 exchangeRef 与两腿 Owner 检查点；禁止生成净额资金事实或替代命令。',
+              key: Key('exchangeOfflineRecoveryBoundary'),
             ),
             const SizedBox(height: 16),
             _leg(
@@ -96,9 +129,13 @@ class _PosExchangePageState extends State<PosExchangePage> {
             if (view == null && _state.recoverableExchangeRef == null)
               FilledButton.icon(
                 key: const Key('createExchangeLink'),
-                onPressed: _state.busy
+                onPressed: _state.busy || !widget.allowCreate
                     ? null
-                    : () => _run(widget.controller.create(_reasonCode)),
+                    : () => _confirmAndRun(
+                        title: '建立换货关联确认',
+                        impact: '退货 ${source.originalReturn.returnRef} 与新销售 ${source.newSale.orderRef} 将建立只追加关联；两笔金额不做净额重算。',
+                        operation: () => widget.controller.create(_reasonCode),
+                      ),
                 icon: const Icon(Icons.swap_horiz),
                 label: const Text('建立只追加换货关联'),
               ),
@@ -110,8 +147,10 @@ class _PosExchangePageState extends State<PosExchangePage> {
                   key: const Key('approveExchange'),
                   onPressed: _state.busy || !widget.allowApprove
                       ? null
-                      : () => _run(
-                          widget.controller.approve('SUPERVISOR_APPROVED'),
+                      : () => _confirmAndRun(
+                          title: '独立审批换货',
+                          impact: '换货 ${view.exchangeRef}；版本 ${view.recordVersion}。审批只推进既有 Saga，不重建退款或销售命令。',
+                          operation: () => widget.controller.approve('SUPERVISOR_APPROVED'),
                         ),
                   icon: const Icon(Icons.verified_user),
                   label: Text(widget.allowApprove ? '独立审批换货' : '需要换货审批权限'),
@@ -121,8 +160,10 @@ class _PosExchangePageState extends State<PosExchangePage> {
                   key: const Key('recoverExchangeReturn'),
                   onPressed: _state.busy || !widget.allowRecover
                       ? null
-                      : () => _run(
-                          widget.controller.recover(
+                      : () => _confirmAndRun(
+                          title: '恢复原退货检查点',
+                          impact: '换货 ${view.exchangeRef}；只观察并恢复原 RETURN 检查点。',
+                          operation: () => widget.controller.recover(
                             'RETURN',
                             'AUTHORIZED_RECOVERY',
                           ),
@@ -134,8 +175,10 @@ class _PosExchangePageState extends State<PosExchangePage> {
                   key: const Key('recoverExchangeSale'),
                   onPressed: _state.busy || !widget.allowRecover
                       ? null
-                      : () => _run(
-                          widget.controller.recover(
+                      : () => _confirmAndRun(
+                          title: '恢复新销售检查点',
+                          impact: '换货 ${view.exchangeRef}；只观察并恢复原 SALE 检查点。',
+                          operation: () => widget.controller.recover(
                             'SALE',
                             'AUTHORIZED_RECOVERY',
                           ),

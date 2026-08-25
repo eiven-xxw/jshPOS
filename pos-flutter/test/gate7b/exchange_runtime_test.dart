@@ -70,14 +70,35 @@ void main() {
       );
       await tester.tap(find.byKey(const Key('createExchangeLink')));
       await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('confirmExchangeAction')));
+      await tester.pumpAndSettle();
       expect(service.createCount, 1);
       expect(find.byKey(const Key('exchangeSagaStatus')), findsOneWidget);
       expect(find.text('等待另一名受权员工审批'), findsOneWidget);
       await tester.tap(find.byKey(const Key('approveExchange')));
       await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('confirmExchangeAction')));
+      await tester.pumpAndSettle();
       expect(service.approveCount, 1);
     },
   );
+
+  testWidgets('会话无创建权限时换货页失败关闭并保留离线恢复说明', (tester) async {
+    final service = _FakeExchangeService();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PosExchangePage(
+          controller: PosExchangeController(service: service, source: _source()),
+          allowCreate: false,
+        ),
+      ),
+    );
+
+    expect(find.byKey(const Key('exchangeOfflineRecoveryBoundary')), findsOneWidget);
+    final create = tester.widget<FilledButton>(find.byKey(const Key('createExchangeLink')));
+    expect(create.onPressed, isNull);
+    expect(service.createCount, 0);
+  });
 
   test('UNKNOWN preserves original exchange id and refresh never creates replacement', () async {
     final service = _FakeExchangeService(unknownOnCreate: true);
