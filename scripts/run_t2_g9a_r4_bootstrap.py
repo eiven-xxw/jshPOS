@@ -160,7 +160,8 @@ def prepare_community_lots(client: ApiClient, passwords: dict[str, str], tenant_
     client.call("POST", "/api/v1/catalog/lot-policies", "community-lot-policy", body={
         "policyVersionId": policy_id, "storeId": store_id, "skuId": sku_id,
         "enabled": True, "expiryBasis": "EXPLICIT_EXPIRY_DATE", "shelfLifeDays": None,
-        "nearExpiryDays": 7, "effectiveFrom": timestamp(datetime.now(timezone.utc) - timedelta(days=1)),
+        "nearExpiryDays": 7,
+        "effectiveFrom": (datetime.now(timezone.utc) - timedelta(days=1)).isoformat().replace("+00:00", "Z"),
     }, headers={"X-Correlation-ID": stable_ulid(f"r4-lot-policy-trace-{run_tag}")})
 
     supplier_id = stable_ulid(f"r4-lot-supplier-{run_tag}")
