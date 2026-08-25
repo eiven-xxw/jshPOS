@@ -17,6 +17,18 @@
     "localFlutter": "PENDING_CLEAN_GITHUB_EXECUTORS_NO_LOCAL_SDK",
     "remoteFlutterRequired": ["ubuntu-latest", "windows-latest", "android-kotlin"]
   },
+  "executionFindings": [
+    {
+      "findingId": "R3C-R9-WEB-FORMAT-001",
+      "observed": "首次本地完整 Web 门禁在本批新增页面和测试发现 60 项 Prettier 错误并失败关闭",
+      "resolution": "只使用项目 Prettier 机械格式化本批文件，并从 production build、ESLint、typecheck 到 44 文件 106 测试完整复跑"
+    },
+    {
+      "findingId": "R3C-R9-CHECKBOX-DEPRECATION-001",
+      "observed": "报表页面挂载测试显示 Element Plus checkbox label-as-value 弃用告警",
+      "resolution": "在 VUE-16 范围内改用 value 属性，重新执行格式、ESLint 和直接挂载回归，不改变字段白名单语义"
+    }
+  ],
   "openP0": 0,
   "openP1InBatch": 0,
   "autoRetryUsed": false,
