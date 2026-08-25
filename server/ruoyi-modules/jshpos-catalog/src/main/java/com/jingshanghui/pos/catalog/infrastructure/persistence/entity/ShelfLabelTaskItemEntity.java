@@ -4,16 +4,16 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.annotation.Version;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-import org.dromara.common.tenant.core.TenantEntity;
 
 import java.time.LocalDateTime;
 
 /** ShelfLabel Owner 的不可变商品价格快照及受控换签状态投影。 */
 @Data
-@EqualsAndHashCode(callSuper = true)
 @TableName("lbl_label_task_item")
-public class ShelfLabelTaskItemEntity extends TenantEntity {
+public class ShelfLabelTaskItemEntity {
+
+    /** 由可信上下文注入的租户标识。 */
+    private String tenantId;
 
     /** 任务项主键。 */
     @TableId
