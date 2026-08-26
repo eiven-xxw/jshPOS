@@ -1135,6 +1135,9 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
   设备/外设命令、伙伴现场、完整 Alpha、生产部署和商业声明必须为 0。
 - R1 完成后只能把三项 Finding 更新为 `VERIFIED_AWAITING_SPONSOR_CONFIRMATION` 并提交独立
   周门禁报告；未经项目发起人确认不得关闭 Finding 或自动进入 R2。
+- 实现候选 `48c6b52664fa7f5de98db4c47750587f527b08d2` 的完整 Run `32942796926` 已全绿，
+  三项 Finding 当前均为 `VERIFIED_AWAITING_SPONSOR_CONFIRMATION`；该结果只允许提交 R1
+  周门禁报告，仍不得自行标记 `CLOSED_IN_GATE10A_R1` 或开始 R2。
 
 ## 5. 工程与测试规则
 

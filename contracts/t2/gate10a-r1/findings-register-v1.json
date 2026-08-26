@@ -1,11 +1,11 @@
 {
   "schemaVersion": "1.0",
   "gate": "T2_GATE_10A_R1",
-  "summary": {"openP0": 0, "openP1": 0, "inProgressP2": 3, "verifiedP2": 0},
+  "summary": {"openP0": 0, "openP1": 0, "inProgressP2": 0, "verifiedP2": 3},
   "findings": [
-    {"findingId": "G10A-CI-P2-001", "state": "IN_PROGRESS", "verification": ["all Node actions use node24", "all remote actions use ledger SHA", "Ubuntu and Windows jobs pass"]},
-    {"findingId": "G10A-DEP-P2-001", "state": "IN_PROGRESS", "verification": ["Maven then pnpm then Pub then Gradle snapshot", "high/critical and license gates pass", "manifest and lock digests unchanged"]},
-    {"findingId": "G10A-SUP-P2-001", "state": "IN_PROGRESS", "verification": ["single machine ledger", "active and historical workflow policy", "unknown or floating action reference rejected"]}
+    {"findingId": "G10A-CI-P2-001", "state": "VERIFIED_AWAITING_SPONSOR_CONFIRMATION", "evidenceRun": 32942796926, "verification": ["all Node actions use node24", "all remote actions use ledger SHA", "Ubuntu and Windows jobs pass"]},
+    {"findingId": "G10A-DEP-P2-001", "state": "VERIFIED_AWAITING_SPONSOR_CONFIRMATION", "evidenceRun": 32942796926, "verification": ["Maven then pnpm then Pub then Gradle snapshot", "high/critical and license gates pass", "manifest and lock digests unchanged"]},
+    {"findingId": "G10A-SUP-P2-001", "state": "VERIFIED_AWAITING_SPONSOR_CONFIRMATION", "evidenceRun": 32942796926, "verification": ["single machine ledger", "active and historical workflow policy", "unknown or floating action reference rejected"]}
   ],
   "nextGate": "GATE_10A_R2_REQUIRES_SPONSOR_CONFIRMATION"
 }

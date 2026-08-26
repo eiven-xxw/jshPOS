@@ -1,12 +1,14 @@
 {
   "schemaVersion": "1.0",
   "startCommit": "cdf0d3a5e60e679b483e1ea89b046958e4877c22",
+  "evidenceCommit": "48c6b52664fa7f5de98db4c47750587f527b08d2",
+  "evidenceRun": 32942796926,
   "policy": "KEEP_APPLICATION_DEPENDENCIES_AND_LOCKFILES_UNCHANGED_IN_R1",
   "stages": [
-    {"order": 1, "id": "MAVEN", "state": "PENDING_CLEAN_RUN", "decision": "KEEP_CURRENT", "rollback": "restore Gate10A-Prep manifest digest"},
-    {"order": 2, "id": "PNPM", "state": "PENDING_CLEAN_RUN", "decision": "KEEP_CURRENT", "rollback": "restore Gate10A-Prep package and lock digests"},
-    {"order": 3, "id": "FLUTTER_PUB", "state": "PENDING_CLEAN_RUN", "decision": "KEEP_CURRENT", "rollback": "restore both Gate10A-Prep pubspec and lock digests"},
-    {"order": 4, "id": "KOTLIN_GRADLE", "state": "PENDING_CLEAN_RUN", "decision": "KEEP_CURRENT", "rollback": "restore Gate10A-Prep plugin and wrapper digests"}
+    {"order": 1, "id": "MAVEN", "state": "CLEAN_RUN_VERIFIED", "decision": "KEEP_CURRENT", "rollback": "restore Gate10A-Prep manifest digest"},
+    {"order": 2, "id": "PNPM", "state": "CLEAN_RUN_VERIFIED", "decision": "KEEP_CURRENT", "rollback": "restore Gate10A-Prep package and lock digests"},
+    {"order": 3, "id": "FLUTTER_PUB", "state": "CLEAN_RUN_VERIFIED", "decision": "KEEP_CURRENT", "rollback": "restore both Gate10A-Prep pubspec and lock digests"},
+    {"order": 4, "id": "KOTLIN_GRADLE", "state": "CLEAN_RUN_VERIFIED", "decision": "KEEP_CURRENT", "rollback": "restore Gate10A-Prep plugin and wrapper digests"}
   ],
   "inputSets": {
     "MAVEN": {"patterns": ["server/**/pom.xml", "server/.mvn/wrapper/maven-wrapper.properties", "server/mvnw", "server/mvnw.cmd"], "fileCount": 60, "aggregateSha256": "f330a5af12cd50828154deb71da43686ca34e9cdeb71d01a47b52443be7b5844"},
