@@ -59,6 +59,7 @@ def main() -> None:
     )
     allowed_exact = {
         "AGENTS.md",
+        ".github/workflows/t2-gate10a-r2-r2-r2-r2-rpt-inventory-prep.yml",
         ".github/workflows/t2-gate10a-r2-r2-r2-r2-rpt-inventory-runtime.yml",
         "contracts/t2/gate5d/openapi-reporting-v1.yaml",
         "docs/governance/CR-T2G10A-014_RPT-INVENTORY分页导出兼容性准备.md",

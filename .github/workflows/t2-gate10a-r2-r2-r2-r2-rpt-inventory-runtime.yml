@@ -1,6 +1,7 @@
 name: T2 Gate 10A RPT Inventory Runtime
 
 on:
+  workflow_call:
   push:
     branches: ["t2/gate10a-r2-r2-r2-r2-rpt-inventory-runtime"]
   pull_request:

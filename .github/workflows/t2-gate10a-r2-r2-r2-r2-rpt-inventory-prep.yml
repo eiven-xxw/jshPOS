@@ -2,7 +2,9 @@ name: T2 Gate 10A RPT Inventory Remediation Preparation
 
 on:
   push:
-    branches: ["t2/gate10a-r2-r2-r2-r2-rpt-inventory-prep"]
+    branches:
+      - "t2/gate10a-r2-r2-r2-r2-rpt-inventory-prep"
+      - "t2/gate10a-r2-r2-r2-r2-rpt-inventory-runtime"
   pull_request:
     paths:
       - "AGENTS.md"
@@ -22,7 +24,12 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  runtime:
+    if: github.ref_name == 't2/gate10a-r2-r2-r2-r2-rpt-inventory-runtime'
+    uses: ./.github/workflows/t2-gate10a-r2-r2-r2-r2-rpt-inventory-runtime.yml
+
   governance-ubuntu:
+    if: github.ref_name == 't2/gate10a-r2-r2-r2-r2-rpt-inventory-prep'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -46,6 +53,7 @@ jobs:
         with: { name: t2-gate10a-rpt-inventory-prep-governance-ubuntu, path: artifacts/t2/gate10a-rpt-inventory-prep/governance-ubuntu, if-no-files-found: error, retention-days: 30 }
 
   governance-windows:
+    if: github.ref_name == 't2/gate10a-r2-r2-r2-r2-rpt-inventory-prep'
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -68,6 +76,7 @@ jobs:
         with: { name: t2-gate10a-rpt-inventory-prep-governance-windows, path: artifacts/t2/gate10a-rpt-inventory-prep/governance-windows, if-no-files-found: error, retention-days: 30 }
 
   test-baseline:
+    if: github.ref_name == 't2/gate10a-r2-r2-r2-r2-rpt-inventory-prep'
     needs: [governance-ubuntu, governance-windows]
     runs-on: ubuntu-latest
     steps:
@@ -91,6 +100,7 @@ jobs:
         with: { name: t2-gate10a-rpt-inventory-prep-test-baseline, path: artifacts/t2/gate10a-rpt-inventory-prep/test-baseline, if-no-files-found: error, retention-days: 30 }
 
   mysql84:
+    if: github.ref_name == 't2/gate10a-r2-r2-r2-r2-rpt-inventory-prep'
     needs: [governance-ubuntu, governance-windows]
     runs-on: ubuntu-24.04
     timeout-minutes: 45
@@ -143,6 +153,7 @@ jobs:
         with: { name: t2-gate10a-rpt-inventory-prep-mysql84, path: artifacts/t2/gate10a-rpt-inventory-prep/mysql84, if-no-files-found: error, retention-days: 30 }
 
   evidence:
+    if: github.ref_name == 't2/gate10a-r2-r2-r2-r2-rpt-inventory-prep'
     needs: [governance-ubuntu, governance-windows, test-baseline, mysql84]
     runs-on: ubuntu-latest
     steps:
