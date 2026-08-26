@@ -24,12 +24,14 @@ def main() -> None:
     payload = {
         "schemaVersion": "1.0",
         "gate": "T2_GATE10A_R2_R2_R2_R0_R1_RPT_SALES",
-        "decision": "IN_PROGRESS_AWAITING_MYSQL84_AND_COMPLETE_CI",
+        "decision": "CONDITIONAL_NO_GO_PENDING_INDEX_CR",
         "finding": {"id": "G10A-SQL-P2-001", "state": "OPEN"},
         "resourceFinding": {"id": "G10A-RES-P2-001", "state": "PREPARED"},
         "scope": {"reportingBatchPort": 1, "versionedApi": 1, "streamingExport": 1,
                   "inventoryRuntime": 0, "paymentRuntime": 0},
         "changes": {"index": 0, "migration": 0, "dependency": 0},
+        "indexProposal": {"changeRequest": "CR-T2G10A-018", "implemented": False,
+                          "requiresSponsorConfirmation": True},
         "externalExecution": 0,
         "contracts": [{"path": path.relative_to(ROOT).as_posix(), "sha256": sha256(path)} for path in files],
     }
@@ -40,4 +42,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

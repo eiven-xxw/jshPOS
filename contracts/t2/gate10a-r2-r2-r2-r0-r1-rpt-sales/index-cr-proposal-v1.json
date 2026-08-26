@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0",
+  "changeRequest": "CR-T2G10A-018",
+  "state": "PROPOSED_AWAITING_SPONSOR_CONFIRMATION",
+  "finding": { "id": "G10A-SQL-P2-001", "state": "OPEN" },
+  "evidence": {
+    "runId": 32979209873,
+    "mysqlVersion": "8.4.11",
+    "tiers": ["SMOKE_10K", "BASELINE_100K"],
+    "fullScanObserved": true,
+    "filesortObserved": true,
+    "duplicateRows": 0,
+    "missingRows": 0,
+    "crossTenantRows": 0,
+    "amountInvariantPassed": true
+  },
+  "proposal": {
+    "migrationVersion": "V202608260088",
+    "indexName": "idx_rpt_sales_keyset",
+    "columns": [
+      "tenant_id",
+      "projection_version",
+      "business_date",
+      "store_id",
+      "terminal_id",
+      "cashier_id",
+      "currency"
+    ]
+  },
+  "implemented": false,
+  "requiresSponsorConfirmation": true
+}

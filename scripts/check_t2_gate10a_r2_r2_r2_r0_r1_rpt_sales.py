@@ -67,6 +67,7 @@ def main() -> None:
         "docs/governance/CR-T2G10A-014_RPT-INVENTORY分页导出兼容性准备.md",
         "docs/governance/CR-T2G10A-015_RPT-PAY-REC分页导出兼容性准备.md",
         "docs/governance/CR-T2G10A-017_RPT-SALES精确整改运行时准入.md",
+        "docs/governance/CR-T2G10A-018_RPT-SALES-keyset索引前向迁移提案.md",
         "docs/governance/rtm.csv",
         "server/ruoyi-modules/jshpos-release/src/test/java/com/jingshanghui/pos/release/performance/SqlBaselineQueries.java",
         "server/ruoyi-modules/jshpos-release/src/test/java/com/jingshanghui/pos/release/performance/SalesKeysetRemediationMySqlIT.java",
@@ -128,7 +129,8 @@ def main() -> None:
         fail("销售页面仍调用无界 v1 列表")
 
     log = (ROOT / "docs/governance/change-log.md").read_text(encoding="utf-8")
-    if "CR-T2G10A-017" not in log or "## 4.84" not in (ROOT / "AGENTS.md").read_text(encoding="utf-8"):
+    if "CR-T2G10A-017" not in log or "CR-T2G10A-018" not in log \
+            or "## 4.84" not in (ROOT / "AGENTS.md").read_text(encoding="utf-8"):
         fail("治理准入未记录")
     print(f"T2 Gate10A R0/R1 RPT-SALES OK: changed={len(changed)} migration=0 dependency=0 external=0 finding=OPEN")
 
