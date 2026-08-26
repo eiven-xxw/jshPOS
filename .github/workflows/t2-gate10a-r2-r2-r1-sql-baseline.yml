@@ -138,6 +138,15 @@ jobs:
           assert journeys=={'REPORT_EXPORT_50_STORES_3_TYPES':150,'PAYMENT_RECONCILIATION_500_REFERENCES':501,'LOT_EXPIRY_500_CANDIDATES':501}
           permission=json.loads((root/'permission-boundary.json').read_text())
           assert permission['selectGranted'] and permission['writeDenied'] and not permission['credentialPersisted']
+          decisions=json.loads((root/'decision-candidates.json').read_text())
+          environment=json.loads((root/'environment.json').read_text())
+          compact=lambda value: json.dumps(value,sort_keys=True,separators=(',',':'))
+          # 结果同时进入不可变 Job 日志，Artifact 下载不可用时仍可离线复核；仅含合成参数摘要。
+          print('G10A_SQL_QUERY_RESULTS='+compact(rows))
+          print('G10A_SQL_DECISIONS='+compact(decisions))
+          print('G10A_SQL_JDBC_COUNTS='+compact(json.loads((root/'jdbc-query-counts.json').read_text())))
+          print('G10A_SQL_PERMISSION='+compact(permission))
+          print('G10A_SQL_ENVIRONMENT='+compact(environment))
           PY
           test -z "$(git diff --name-only 8eb77ec855b7bf89f93eedf4c01f7681465f0544 HEAD -- 'server/**/src/main/**' 'server/**/pom.xml' 'server/**/db/migration/**')"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
