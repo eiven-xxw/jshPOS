@@ -119,8 +119,18 @@ class SqlExecutableBaselineMySqlIT {
             JdbcQueryCounter counter = new JdbcQueryCounter(connection);
             long returnedRows = counter.execute(query.sql(), query.parameters(), ignored -> { });
             List<Object> attackParameters = new ArrayList<>(query.parameters());
-            assertThat(attackParameters.get(0)).isIn(SqlBaselineQueries.TENANT_A, SqlBaselineQueries.TENANT_B);
-            attackParameters.set(0, SqlBaselineQueries.ABSENT_TENANT);
+            int tenantSlots = 0;
+            for (int index = 0; index < attackParameters.size(); index++) {
+                Object parameter = attackParameters.get(index);
+                if (SqlBaselineQueries.TENANT_A.equals(parameter) || SqlBaselineQueries.TENANT_B.equals(parameter)) {
+                    attackParameters.set(index, SqlBaselineQueries.ABSENT_TENANT);
+                    tenantSlots++;
+                }
+            }
+            // UNION 查询可能在每个分支重复 tenant_id；攻击向量必须替换所有租户占位，
+            // 否则第二分支仍会读取原租户数据并把探针缺陷误报为生产 SQL 越权。
+            assertThat(tenantSlots).as(spec.queryId() + " tenant placeholders").isPositive();
+            assertThat(attackParameters).doesNotContain(SqlBaselineQueries.TENANT_A, SqlBaselineQueries.TENANT_B);
             long crossTenantRows = executeRows(connection, query.sql(), attackParameters, ignored -> { });
 
             String fileStem = spec.queryId().toLowerCase(Locale.ROOT);
