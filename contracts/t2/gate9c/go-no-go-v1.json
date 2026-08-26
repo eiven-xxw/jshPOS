@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "1.0",
+  "gate": "T2_GATE_9C",
+  "decision": "CONDITIONAL_PASS_AWAITING_SPONSOR_CONFIRMATION",
+  "internalProductCompletenessSeal": {
+    "recommendation": "GO_TO_SPONSOR_CONFIRMATION",
+    "openP0": 0,
+    "openP1": 0,
+    "automaticTag": false
+  },
+  "externalExecution": {
+    "paymentSandbox": "NO_GO_BLOCKED",
+    "realDevice": "NO_GO_BLOCKED",
+    "realPeripheral": "NO_GO_BLOCKED",
+    "partnerPilot": "NO_GO_BLOCKED"
+  },
+  "fullAlpha": "NO_GO_DRAFT",
+  "productionRelease": "NO_GO_DRAFT",
+  "commercialRelease": "NO_GO_LICENSE_AND_EXTERNAL_EVIDENCE_INCOMPLETE",
+  "nextAuthorizedAction": "SUBMIT_INTERNAL_SEAL_REPORT_AND_EXACT_COMMIT_FOR_SPONSOR_CONFIRMATION"
+}

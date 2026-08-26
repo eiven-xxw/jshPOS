@@ -1066,6 +1066,29 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
   继续 `DRAFT`；`T2-LIC-001/JSH-001` 继续 `DEFERRED`。Provider 网络、真实资金、
   设备/外设命令、伙伴现场、完整 Alpha、生产部署和商业声明必须为 0。
 
+## 4.76 当前 T2 Gate 9C 商业 V1 内部产品完整性封板条件准入
+
+- 项目发起人已于 2026-08-26 接受 Gate 9C-Prep `CONDITIONAL PASS`，确认 Gate 9B 四项
+  Finding 均为 `CLOSED_IN_GATE9B`，并授权从 Gate 9C-Prep 最终治理提交
+  `04869b4d983bdea285b758feee08def7a5652dc2` 建立
+  `t2/gate9c-internal-product-completeness-seal`。
+- 本阶段复用 `T2-CMP-001`，只允许固化四项 Finding 关闭账、当前 88 项 `ACCEPTED`、
+  300 API、26 页面、22 Owner、三业态/SAA/SUB/SVC 旅程、SBOM、许可证、失败历史、
+  制品摘要、运行手册和机器 Go/No-Go；不得新增 Requirement ID 或业务能力。
+- 只允许新增或更新 Gate 9C 专用治理、契约、审计/范围/证据脚本、CI、封板报告、RTM
+  引用和变更日志；禁止修改服务端、Vue、Flutter、Kotlin/Android、基础设施、依赖锁文件、
+  数据库对象和已发布迁移。
+- Gate 9A 原始缺陷账、Gate 9B 各批状态、失败 Run 和 CR 必须保持不可变；封板层只能保存
+  来源引用、摘要和最终关闭状态，不得删除、覆盖或把历史失败改写为成功。
+- 内部开放 P0/P1 必须为 0，Controller/OpenAPI 必须保持 300/300 与差异 0/0，26 页面、
+  22 Owner、三业态与商业运营旅程不得漂移；任一失败时机器决策必须为 `NO_GO`。
+- 本阶段最高只能形成 `INTERNAL_PRODUCT_COMPLETENESS_SEAL_CANDIDATE` 和
+  `CONDITIONAL_PASS_AWAITING_SPONSOR_CONFIRMATION`；未经项目发起人再次确认不得创建或
+  移动 tag，不得启动新一轮编码、外部执行、完整 Alpha、现场试点或生产发布。
+- `T2-PAY-002/HWD-001/PRN-001/PAR-001` 继续 `BLOCKED`；`T2-UAT-001/REL-001`
+  继续 `DRAFT`；`T2-LIC-001/JSH-001` 继续 `DEFERRED`。Provider 网络、真实资金、
+  设备/外设命令、伙伴现场、完整 Alpha、生产部署和商业声明必须为 0。
+
 ## 5. 工程与测试规则
 
 - 服务端采用 RuoYi-Vue-Plus 模块化单体，不得把领域逻辑写入 Controller、通用工具类或框架系统模块。

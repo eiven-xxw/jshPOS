@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0",
+  "historyImmutable": true,
+  "sourceChangeLog": "docs/governance/change-log.md",
+  "sourceFindingRegister": "contracts/t2/gate9c-prep/finding-closure-register-v1.json",
+  "closureChains": [
+    {
+      "findingId": "G9A-API-P1-001",
+      "finalRunId": "32728598791",
+      "report": "docs/t2-gate9b/03_G9A-R1正式API契约修复独立周门禁报告.md"
+    },
+    {
+      "findingId": "G9A-ASM-P1-001",
+      "finalRunId": "32741052481",
+      "report": "docs/t2-gate9b-r2/03_G9A-R2生产装配与演示面收敛独立周门禁报告.md"
+    },
+    {
+      "findingId": "G9A-UI-P1-001",
+      "finalRunId": "32832408085",
+      "report": "docs/t2-gate9b-r3d-runtime/07_G9A-R3D全部26页联合验收独立周门禁报告.md"
+    },
+    {
+      "findingId": "G9A-E2E-P1-001",
+      "finalRunId": "32917121269",
+      "report": "docs/t2-gate9b-r4-runtime/01_G9A-R4正式运行栈跨Owner内部E2E独立周门禁报告.md"
+    }
+  ],
+  "preservedR4FailureCRRange": {
+    "first": "CR-T2G9R4-003",
+    "last": "CR-T2G9R4-022",
+    "finalPass": "CR-T2G9R4-023",
+    "rewriteAllowed": false
+  },
+  "gate9CPrepRuns": [
+    {"runId": "32922801554", "result": "SUCCESS", "purpose": "INITIAL_COMPLETE_CANDIDATE"},
+    {"runId": "32923488551", "result": "SUCCESS", "purpose": "FINAL_GOVERNANCE_COMMIT"}
+  ]
+}

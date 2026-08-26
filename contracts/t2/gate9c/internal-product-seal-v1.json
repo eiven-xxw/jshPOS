@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "1.0",
+  "sealId": "T2-GATE9C-INTERNAL-V1-PRODUCT-COMPLETENESS",
+  "requirementId": "T2-CMP-001",
+  "sourcePrepCommit": "04869b4d983bdea285b758feee08def7a5652dc2",
+  "sourcePrepRunId": "32923488551",
+  "acceptedScope": {
+    "requirements": 88,
+    "owners": 22,
+    "controllerOperations": 300,
+    "openApiOperations": 300,
+    "vueSurfaces": 20,
+    "flutterSurfaces": 6,
+    "industries": 3,
+    "saasOwners": ["jshpos-saas", "jshpos-subscription", "jshpos-service"]
+  },
+  "gate9BFindings": [
+    "G9A-API-P1-001",
+    "G9A-ASM-P1-001",
+    "G9A-UI-P1-001",
+    "G9A-E2E-P1-001"
+  ],
+  "gate9BFindingState": "CLOSED_IN_GATE9B",
+  "openInternalP0": 0,
+  "openInternalP1": 0,
+  "sealStatus": "CANDIDATE_AWAITING_SPONSOR_CONFIRMATION",
+  "commercialReadiness": false,
+  "fullAlpha": false,
+  "production": false
+}

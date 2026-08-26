@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1.0",
+  "commitSha": "04869b4d983bdea285b758feee08def7a5652dc2",
+  "runId": "32923488551",
+  "result": "SUCCESS",
+  "duration": "PT4M7S",
+  "artifacts": [
+    {"id": "9590634148", "name": "t2-gate9c-prep-governance-ubuntu", "sha256": "94472cb674bd550fc01bdfe305a1d29900222bde7f9962d912c785f7b8634469"},
+    {"id": "9590637200", "name": "t2-gate9c-prep-governance-windows", "sha256": "3145d95bfc715f3ad0066d2b40a2aa452dadf5564251b01cfafa6466363f2984"},
+    {"id": "9590633897", "name": "t2-gate9c-prep-scope-integrity", "sha256": "76878b9d97d4e47ad6a118be782dbdde4495aaddfb472675c2ee1c1652304f8a"},
+    {"id": "9590700663", "name": "t2-gate9c-prep-server-baseline", "sha256": "28e49806894ec491449c8d233e8cdfe38e3a401984a0919a7ae59ef68188bf72"},
+    {"id": "9590667325", "name": "t2-gate9c-prep-web-baseline", "sha256": "f6a762c3df89c5f6d6c2d4008237414ee8835e485e4417f73783c916c603c889"},
+    {"id": "9590674079", "name": "t2-gate9c-prep-flutter-ubuntu-latest", "sha256": "4f0c3fccf0b317d1d7330b1b2abb7115322087bfb02af73acf8aa6f52e5cb360"},
+    {"id": "9590713100", "name": "t2-gate9c-prep-flutter-windows-latest", "sha256": "35279ce2b9e5d836f22605352662f3d3de54bb7d29b40b1aa247e5efdb544160"},
+    {"id": "9590720326", "name": "t2-gate9c-prep-evidence-index", "sha256": "039e34ea3ee3d6bcc225b3c1edfd384536c2e0ec0431502d6f674e2d08eb6fb8"}
+  ]
+}
