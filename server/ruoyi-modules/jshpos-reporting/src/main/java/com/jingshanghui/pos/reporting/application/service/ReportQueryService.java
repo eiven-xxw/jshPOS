@@ -3,15 +3,19 @@ package com.jingshanghui.pos.reporting.application.service;
 import com.jingshanghui.pos.foundation.application.context.TrustedTenantContext;
 import com.jingshanghui.pos.foundation.application.security.ScopeAuthorizationService;
 import com.jingshanghui.pos.reporting.application.model.ReportingCommands.InventoryCostQuery;
+import com.jingshanghui.pos.reporting.application.model.ReportingCommands.InventoryCostPageQuery;
 import com.jingshanghui.pos.reporting.application.model.ReportingCommands.SalesQuery;
 import com.jingshanghui.pos.reporting.application.model.ReportingCommands.SalesPageQuery;
 import com.jingshanghui.pos.reporting.application.model.ReportingViews.InventoryCostDailyView;
+import com.jingshanghui.pos.reporting.application.model.ReportingViews.InventoryCostPageView;
 import com.jingshanghui.pos.reporting.application.model.ReportingViews.SalesDailyView;
 import com.jingshanghui.pos.reporting.application.model.ReportingViews.SalesPageView;
 import com.jingshanghui.pos.reporting.application.port.ReportingBatchReadPort;
+import com.jingshanghui.pos.reporting.application.port.InventoryCostPageCursorCodec;
 import com.jingshanghui.pos.reporting.application.port.ReportingPersistencePort;
 import com.jingshanghui.pos.reporting.application.port.SalesPageCursorCodec;
 import com.jingshanghui.pos.reporting.domain.ReportRules;
+import com.jingshanghui.pos.reporting.domain.InventoryCostReportReadIdentity;
 import com.jingshanghui.pos.reporting.domain.SalesReportReadIdentity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -26,6 +30,7 @@ public class ReportQueryService {
     private final ReportingPersistencePort persistence;
     private final ReportingBatchReadPort batchReadPort;
     private final SalesPageCursorCodec cursorCodec;
+    private final InventoryCostPageCursorCodec inventoryCursorCodec;
     private final TrustedTenantContext tenantContext;
     private final ScopeAuthorizationService authorizationService;
 
@@ -73,5 +78,34 @@ public class ReportQueryService {
         String version = persistence.activeProjectionVersion(tenantId, "INVENTORY_COST");
         return version == null ? List.of() : persistence.queryInventoryCost(tenantId, version, query.fromDate(),
             query.toDate(), query.storeId(), query.warehouseId(), query.skuId());
+    }
+
+    /** 新客户端使用的有界库存成本 keyset 分页；旧列表契约在兼容窗口内保持不变。 */
+    @Transactional(readOnly = true)
+    public InventoryCostPageView inventoryCostPage(InventoryCostPageQuery query) {
+        String tenantId = tenantContext.requireTenantId();
+        ReportRules.requireDateRange(query.fromDate(), query.toDate());
+        int limit = ReportRules.requireInventoryCostPageLimit(query.limit());
+        authorizationService.requireStoreAccess(query.storeId());
+        String projectionVersion = persistence.activeProjectionVersion(tenantId, "INVENTORY_COST");
+        if (projectionVersion == null) {
+            return new InventoryCostPageView(List.of(), null, false, null);
+        }
+        String filterSha256 = InventoryCostReportReadIdentity.filterSha256(tenantId, projectionVersion,
+            query.fromDate(), query.toDate(), List.of(query.storeId()), query.warehouseId(), query.skuId());
+        ReportingBatchReadPort.InventoryCostKey after = query.cursor() == null || query.cursor().isBlank() ? null
+            : inventoryCursorCodec.decodeAndVerify(query.cursor(), tenantId, filterSha256,
+                projectionVersion).after();
+        List<InventoryCostDailyView> fetched = batchReadPort.readInventoryCost(
+            new ReportingBatchReadPort.InventoryCostBatchRequest(tenantId, projectionVersion, query.fromDate(),
+                query.toDate(), List.of(query.storeId()), query.warehouseId(), query.skuId(), after, limit + 1,
+                filterSha256));
+        boolean hasMore = fetched.size() > limit;
+        List<InventoryCostDailyView> items = hasMore ? List.copyOf(fetched.subList(0, limit))
+            : List.copyOf(fetched);
+        String nextCursor = hasMore ? inventoryCursorCodec.encode(
+            new InventoryCostPageCursorCodec.CursorEnvelope(tenantId, filterSha256, projectionVersion,
+                ReportingBatchReadPort.InventoryCostKey.from(items.get(items.size() - 1)))) : null;
+        return new InventoryCostPageView(items, nextCursor, hasMore, projectionVersion);
     }
 }

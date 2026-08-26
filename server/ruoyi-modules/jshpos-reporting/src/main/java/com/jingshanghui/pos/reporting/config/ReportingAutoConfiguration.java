@@ -2,6 +2,7 @@ package com.jingshanghui.pos.reporting.config;
 
 import com.jingshanghui.pos.reporting.application.port.ReportArtifactStore;
 import com.jingshanghui.pos.reporting.application.port.ReportDownloadTokenProtector;
+import com.jingshanghui.pos.reporting.application.port.InventoryCostPageCursorCodec;
 import com.jingshanghui.pos.reporting.application.port.SalesPageCursorCodec;
 import com.jingshanghui.pos.reporting.infrastructure.export.*;
 import com.jingshanghui.pos.reporting.infrastructure.security.*;
@@ -50,6 +51,17 @@ public class ReportingAutoConfiguration {
             return new HmacSalesPageCursorCodec(Base64.getDecoder().decode(encoded));
         } catch (RuntimeException exception) {
             return new RejectingSalesPageCursorCodec();
+        }
+    }
+
+    @Bean
+    public InventoryCostPageCursorCodec inventoryCostPageCursorCodec(Environment environment) {
+        String encoded = environment.getProperty("JSH_REPORT_INVENTORY_CURSOR_HMAC_KEY_B64");
+        if (encoded == null || encoded.isBlank()) return new RejectingInventoryCostPageCursorCodec();
+        try {
+            return new HmacInventoryCostPageCursorCodec(Base64.getDecoder().decode(encoded));
+        } catch (RuntimeException exception) {
+            return new RejectingInventoryCostPageCursorCodec();
         }
     }
 }

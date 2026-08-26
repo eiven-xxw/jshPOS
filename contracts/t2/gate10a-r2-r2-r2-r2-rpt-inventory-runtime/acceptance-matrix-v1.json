@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "1.0",
+  "queryId": "RPT-INVENTORY",
+  "matrix": [
+    {"control": "v1 compatibility", "evidence": "source statement and operation stay unchanged", "required": true},
+    {"control": "interactive bound", "evidence": "v2 limit 1..500 and limit+1 keyset read", "required": true},
+    {"control": "trusted scope", "evidence": "server tenant plus store authorization", "required": true},
+    {"control": "cursor integrity", "evidence": "HMAC binds tenant filter and projection", "required": true},
+    {"control": "export recovery", "evidence": "original request digest and cursor checkpoint", "required": true},
+    {"control": "MySQL integrity", "evidence": "10k/100k zero duplicate missing unauthorized and 12 conserved fields", "required": true},
+    {"control": "index decision", "evidence": "EXPLAIN JSON/TREE and SHOW INDEX", "required": true},
+    {"control": "migration boundary", "evidence": "zero migration change", "required": true},
+    {"control": "external boundary", "evidence": "externalExecution equals zero", "required": true}
+  ]
+}

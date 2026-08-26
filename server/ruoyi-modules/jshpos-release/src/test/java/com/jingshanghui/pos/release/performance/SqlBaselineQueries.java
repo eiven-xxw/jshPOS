@@ -170,6 +170,64 @@ final class SqlBaselineQueries {
     record SalesKey(Date businessDate, long storeId, String terminalId, long cashierId, String currency) {
     }
 
+    /** 从正式 Reporting Mapper 冻结 RPT-INVENTORY v2 keyset 查询并生成 JDBC 可执行适配。 */
+    static ExecutableQuery inventoryCostPage(Path repositoryRoot, String tenantId, String projectionVersion,
+                                             Date fromDate, Date toDate, List<Long> storeIds,
+                                             InventoryCostKey after, int limit) throws IOException {
+        if (storeIds == null || storeIds.isEmpty()) {
+            throw new IllegalArgumentException("storeIds不能为空");
+        }
+        Path mapper = repositoryRoot.resolve(
+            "server/ruoyi-modules/jshpos-reporting/src/main/resources/mapper/reporting/ReportingPersistenceMapper.xml");
+        String xml = Files.readString(mapper, StandardCharsets.UTF_8);
+        String body = selectBody(xml, "queryInventoryCostPage");
+        body = resolveIncludes(xml, body);
+        String normalized = normalize(unescapeXml(stripComments(body)));
+        if (!normalized.contains("tenant_id=#{tenantId} AND projection_version=#{projectionVersion}")
+            || !normalized.contains("store_id IN")
+            || !normalized.contains("(business_date,store_id,warehouse_id,sku_id,currency)")
+            || !normalized.contains("ORDER BY business_date,store_id,warehouse_id,sku_id,currency")
+            || !normalized.endsWith("LIMIT #{limit}")) {
+            throw new IllegalStateException("RPT-INVENTORY keyset正式SQL结构漂移");
+        }
+
+        String columns = selectColumns(xml, "inventoryColumns");
+        String placeholders = storeIds.stream().map(ignored -> "?")
+            .collect(java.util.stream.Collectors.joining(","));
+        StringBuilder sql = new StringBuilder("SELECT ").append(columns)
+            .append(" FROM rpt_inventory_cost_daily WHERE tenant_id=? AND projection_version=?")
+            .append(" AND business_date BETWEEN ? AND ? AND store_id IN (").append(placeholders).append(')');
+        List<Object> parameters = new ArrayList<>();
+        parameters.add(tenantId);
+        parameters.add(projectionVersion);
+        parameters.add(fromDate);
+        parameters.add(toDate);
+        parameters.addAll(storeIds);
+        if (after != null) {
+            sql.append(" AND (business_date,store_id,warehouse_id,sku_id,currency) > (?,?,?,?,?)");
+            parameters.add(after.businessDate());
+            parameters.add(after.storeId());
+            parameters.add(after.warehouseId());
+            parameters.add(after.skuId());
+            parameters.add(after.currency());
+        }
+        sql.append(" ORDER BY business_date,store_id,warehouse_id,sku_id,currency LIMIT ?");
+        parameters.add(limit);
+        return new ExecutableQuery(normalize(sql.toString()), List.copyOf(parameters));
+    }
+
+    /** 返回已解析 include、仍保留 MyBatis 动态标签的正式库存成本 v2 statement。 */
+    static String inventoryCostPageSource(Path repositoryRoot) throws IOException {
+        Path mapper = repositoryRoot.resolve(
+            "server/ruoyi-modules/jshpos-reporting/src/main/resources/mapper/reporting/ReportingPersistenceMapper.xml");
+        String xml = Files.readString(mapper, StandardCharsets.UTF_8);
+        return normalize(unescapeXml(resolveIncludes(xml, selectBody(xml, "queryInventoryCostPage"))));
+    }
+
+    /** RPT-INVENTORY keyset 的冻结复合游标。 */
+    record InventoryCostKey(Date businessDate, long storeId, String warehouseId, long skuId, String currency) {
+    }
+
     static List<QuerySpec> all() {
         return List.of(
             spec("INV-FEFO", "Inventory", "server/ruoyi-modules/jshpos-inventory/src/main/resources/mapper/inventory/LotInventoryMapper.xml",

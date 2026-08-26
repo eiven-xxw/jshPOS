@@ -51,6 +51,30 @@ public final class ReportCsvEncoder {
         return encode(tenantId, exportId, fields, rows, generatedAt, field -> inventoryValue(field));
     }
 
+    /** 写入库存成本 CSV 水印和字段头；断点续传仅在新制品偏移为 0 时调用一次。 */
+    public void writeInventoryCostHeader(Writer writer, String tenantId, String exportId,
+                                         Set<String> requestedFields, Instant generatedAt) throws IOException {
+        List<String> fields = requestedFields.stream().sorted().toList();
+        writer.append("# tenant=").append(csvCell(tenantId)).append(",export=").append(csvCell(exportId))
+            .append(",generatedAt=").append(csvCell(generatedAt)).append("\r\n");
+        writer.append(String.join(",", fields.stream().map(this::csvCell).toList())).append("\r\n");
+    }
+
+    /** 按冻结字段顺序追加一批库存成本行，不缓存其他批次。 */
+    public void writeInventoryCostRows(Writer writer, Set<String> requestedFields,
+                                       List<InventoryCostDailyView> rows) throws IOException {
+        List<String> fields = requestedFields.stream().sorted().toList();
+        List<Function<InventoryCostDailyView, Object>> extractors = fields.stream()
+            .map(this::inventoryValue).toList();
+        for (InventoryCostDailyView row : rows) {
+            List<String> values = new ArrayList<>(fields.size());
+            for (Function<InventoryCostDailyView, Object> extractor : extractors) {
+                values.add(csvCell(extractor.apply(row)));
+            }
+            writer.append(String.join(",", values)).append("\r\n");
+        }
+    }
+
     public byte[] paymentReconciliation(String tenantId, String exportId, Set<String> requestedFields,
                                         List<ReconciliationView> rows, Instant generatedAt) {
         List<String> fields = requestedFields.stream().sorted().toList();

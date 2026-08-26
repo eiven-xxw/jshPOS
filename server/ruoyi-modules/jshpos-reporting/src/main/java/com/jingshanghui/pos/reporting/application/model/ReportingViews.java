@@ -99,6 +99,20 @@ public final class ReportingViews {
     }
 
     /**
+     * 版本化库存成本 keyset 分页结果。
+     * @param items 当前页库存成本投影
+     * @param nextCursor 下一页服务端签名游标；无后续数据时为 null
+     * @param hasMore 是否存在下一页
+     * @param projectionVersion 本次读取冻结的投影版本
+     */
+    public record InventoryCostPageView(java.util.List<InventoryCostDailyView> items, String nextCursor,
+                                        boolean hasMore, String projectionVersion) {
+        public InventoryCostPageView {
+            items = items == null ? java.util.List.of() : java.util.List.copyOf(items);
+        }
+    }
+
+    /**
      * 报表导出状态视图。
      * @param exportId 导出标识
      * @param reportType 报表类型

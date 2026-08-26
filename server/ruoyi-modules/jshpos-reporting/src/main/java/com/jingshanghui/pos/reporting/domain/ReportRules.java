@@ -1,5 +1,6 @@
 package com.jingshanghui.pos.reporting.domain;
 
+import com.jingshanghui.pos.reporting.application.port.ReportingBatchReadPort;
 import org.dromara.common.core.exception.ServiceException;
 
 import java.math.BigDecimal;
@@ -106,6 +107,13 @@ public final class ReportRules {
     public static int requireSalesPageLimit(int limit) {
         if (limit < 1 || limit > MAX_SALES_PAGE_ROWS) {
             throw bad("RPT-R2R2-001", "销售分页行数必须为 1 至 500");
+        }
+        return limit;
+    }
+
+    public static int requireInventoryCostPageLimit(int limit) {
+        if (limit < 1 || limit > ReportingBatchReadPort.MAX_INTERACTIVE_ROWS) {
+            throw bad("RPT-R2R2-021", "库存成本分页行数必须为 1 至 500");
         }
         return limit;
     }

@@ -1,0 +1,282 @@
+name: T2 Gate 10A RPT Inventory Runtime
+
+on:
+  push:
+    branches: ["t2/gate10a-r2-r2-r2-r2-rpt-inventory-runtime"]
+  pull_request:
+    paths:
+      - "AGENTS.md"
+      - ".github/workflows/t2-gate10a-r2-r2-r2-r2-rpt-inventory-runtime.yml"
+      - "contracts/t2/gate10a-r2-r2-r2-r2-rpt-inventory-runtime/**"
+      - "contracts/t2/gate5d/openapi-reporting-v1.yaml"
+      - "docs/governance/**"
+      - "docs/t2-gate10a-r2-r2-r2-r2-rpt-inventory-runtime/**"
+      - "scripts/*gate10a_r2_r2_r2_r2_rpt_inventory_runtime*"
+      - "server/ruoyi-modules/jshpos-reporting/**"
+      - "server/ruoyi-modules/jshpos-release/src/test/java/com/jingshanghui/pos/release/performance/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gate10a-rpt-inventory-runtime-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  governance-ubuntu:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { fetch-depth: 0, fetch-tags: true }
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with: { python-version: "3.12" }
+      - name: Validate runtime scope and governance
+        run: |
+          set -euo pipefail
+          out=artifacts/t2/gate10a-rpt-inventory-runtime/governance-ubuntu
+          mkdir -p "$out"
+          python scripts/check_t0_structure.py
+          python scripts/check_rtm.py
+          python scripts/check_contracts.py
+          python -m py_compile scripts/check_t2_gate10a_r2_r2_r2_r2_rpt_inventory_runtime.py scripts/audit_t2_gate10a_r2_r2_r2_r2_rpt_inventory_runtime.py scripts/build_t2_gate10a_r2_r2_r2_r2_rpt_inventory_runtime_evidence.py
+          python scripts/check_t2_gate10a_r2_r2_r2_r2_rpt_inventory_runtime.py | tee "$out/scope.txt"
+          python scripts/audit_t2_gate10a_r2_r2_r2_r2_rpt_inventory_runtime.py --output "$out/audit.json"
+          python scripts/audit_t2_gate6g_api.py --output "$out/api-current.json"
+          git diff --check
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with: { name: t2-gate10a-rpt-inventory-runtime-governance-ubuntu, path: artifacts/t2/gate10a-rpt-inventory-runtime/governance-ubuntu, if-no-files-found: error, retention-days: 30 }
+
+  governance-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { fetch-depth: 0, fetch-tags: true }
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with: { python-version: "3.12" }
+      - name: Validate UTF8 deterministic scope on Windows
+        shell: bash
+        run: |
+          set -euo pipefail
+          out=artifacts/t2/gate10a-rpt-inventory-runtime/governance-windows
+          mkdir -p "$out"
+          python scripts/check_t0_structure.py
+          python scripts/check_rtm.py
+          python scripts/check_contracts.py
+          python scripts/check_t2_gate10a_r2_r2_r2_r2_rpt_inventory_runtime.py | tee "$out/scope.txt"
+          python scripts/audit_t2_gate10a_r2_r2_r2_r2_rpt_inventory_runtime.py --output "$out/audit.json"
+          git diff --check
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with: { name: t2-gate10a-rpt-inventory-runtime-governance-windows, path: artifacts/t2/gate10a-rpt-inventory-runtime/governance-windows, if-no-files-found: error, retention-days: 30 }
+
+  server:
+    needs: [governance-ubuntu, governance-windows]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { fetch-depth: 0, fetch-tags: true }
+      - uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
+        with: { distribution: temurin, java-version: "21", cache: maven }
+      - name: Run full Server tests coverage and SBOM
+        run: |
+          set -euo pipefail
+          out=artifacts/t2/gate10a-rpt-inventory-runtime/server
+          mkdir -p "$out/test-reports"
+          ./server/mvnw -f server/pom.xml clean verify -DskipTests=false | tee "$out/maven-verify.log"
+          ./server/mvnw -f server/pom.xml org.cyclonedx:cyclonedx-maven-plugin:2.9.1:makeAggregateBom
+          cp server/target/bom.json server/target/bom.xml server/ruoyi-admin/target/ruoyi-admin.jar "$out/"
+          find server -path '*/target/surefire-reports/TEST-*.xml' -exec cp --parents {} "$out/test-reports" \;
+          find server -path '*/target/failsafe-reports/TEST-*.xml' -exec cp --parents {} "$out/test-reports" \;
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with: { name: t2-gate10a-rpt-inventory-runtime-server, path: artifacts/t2/gate10a-rpt-inventory-runtime/server, if-no-files-found: error, retention-days: 30 }
+
+  mysql84:
+    needs: [governance-ubuntu, governance-windows]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    services:
+      mysql:
+        image: mysql:8.4.11@sha256:b3b90af2a6552ae30c266fdb7d5dd55f3afb72404bb78d37fe8a23eb857fd3fb
+        env:
+          MYSQL_ROOT_PASSWORD: synthetic_rpt_inventory_root
+          MYSQL_DATABASE: jshpos_rpt_inventory
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -psynthetic_rpt_inventory_root"
+          --health-interval=10s --health-timeout=5s --health-retries=12
+    env:
+      G10A_INVENTORY_MYSQL_JDBC_URL: jdbc:mysql://127.0.0.1:3306/jshpos_rpt_inventory?useUnicode=true&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&rewriteBatchedStatements=true
+      G10A_INVENTORY_MYSQL_USERNAME: root
+      G10A_INVENTORY_MYSQL_PASSWORD: synthetic_rpt_inventory_root
+      G10A_INVENTORY_REPO_ROOT: ${{ github.workspace }}
+      G10A_INVENTORY_MIGRATION_ROOT: ${{ github.workspace }}/server/ruoyi-modules
+      G10A_INVENTORY_EVIDENCE_DIR: ${{ github.workspace }}/artifacts/t2/gate10a-rpt-inventory-runtime/mysql84/executable
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { fetch-depth: 0, fetch-tags: true }
+      - uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
+        with: { distribution: temurin, java-version: "21", cache: maven }
+      - name: Execute inventory 10k 100k plans batching integrity and tenant attacks
+        run: |
+          set -euo pipefail
+          out=artifacts/t2/gate10a-rpt-inventory-runtime/mysql84
+          mkdir -p "$out/executable" "$out/test-reports"
+          ./server/mvnw -f server/pom.xml -pl ruoyi-modules/jshpos-release -am test \
+            -Dtest=InventoryKeysetRemediationMySqlIT -Dsurefire.failIfNoSpecifiedTests=false -DskipTests=false \
+            | tee "$out/mysql84.log"
+          cp server/ruoyi-modules/jshpos-release/target/surefire-reports/TEST-*InventoryKeysetRemediationMySqlIT.xml "$out/test-reports/"
+          python - <<'PY'
+          import json, pathlib
+          root=pathlib.Path('artifacts/t2/gate10a-rpt-inventory-runtime/mysql84/executable')
+          rows=json.loads((root/'rpt-inventory-keyset-results.json').read_text())
+          assert [r['tier'] for r in rows]==['SMOKE_10K','BASELINE_100K']
+          assert all(r['interactiveQueryCount']==1 and r['crossTenantRows']==0 for r in rows)
+          assert all(r['duplicateKeys']==0 and r['missingRows']==0 for r in rows)
+          assert all(r['twelveFieldConservationPassed'] and not r['schemaOrIndexChanged'] for r in rows)
+          for row in rows:
+              print('G10A_RPT_INVENTORY_'+row['tier']+'='+json.dumps(row,sort_keys=True,separators=(',',':')))
+          print('G10A_RPT_INVENTORY_INDEX_CR_REQUIRED='+str(any(r['indexCrRequired'] for r in rows)).lower())
+          PY
+          test -z "$(git diff --name-only f36df63b21bd3bb98ea0d5022f8fe5fac5def72f HEAD -- 'server/**/db/migration/**')"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with: { name: t2-gate10a-rpt-inventory-runtime-mysql84, path: artifacts/t2/gate10a-rpt-inventory-runtime/mysql84, if-no-files-found: error, retention-days: 30 }
+
+  web:
+    needs: [governance-ubuntu, governance-windows]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+        with: { version: 10.33.0 }
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with: { node-version: "24", cache: pnpm, cache-dependency-path: admin-web/pnpm-lock.yaml }
+      - name: Run Web build lint type tests audit and licenses
+        run: |
+          set -euo pipefail
+          out="$GITHUB_WORKSPACE/artifacts/t2/gate10a-rpt-inventory-runtime/web"; mkdir -p "$out"
+          cd admin-web
+          pnpm install --frozen-lockfile
+          pnpm build:prod
+          pnpm lint:eslint
+          pnpm typecheck
+          pnpm test:unit:ci
+          pnpm audit --audit-level high --json > "$out/audit.json"
+          pnpm licenses list --json > "$out/licenses.json"
+          cp gate0-vitest-junit.xml "$out/"
+          find dist -type f -print0 | sort -z | xargs -0 sha256sum > "$out/dist.sha256"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with: { name: t2-gate10a-rpt-inventory-runtime-web, path: artifacts/t2/gate10a-rpt-inventory-runtime/web, if-no-files-found: error, retention-days: 30 }
+
+  flutter:
+    needs: [governance-ubuntu, governance-windows]
+    strategy:
+      fail-fast: false
+      matrix: { os: [ubuntu-latest, windows-latest] }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with: { flutter-version: "3.47.0", channel: stable, cache: true }
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with: { python-version: "3.12" }
+      - name: Run Flutter POS and adapter full regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          suffix="${{ matrix.os }}"; if [[ "$suffix" == ubuntu-* ]]; then suffix=ubuntu; else suffix=windows; fi
+          out="$GITHUB_WORKSPACE/artifacts/t2/gate10a-rpt-inventory-runtime/flutter-$suffix"; mkdir -p "$out"
+          pushd pos-flutter
+          flutter pub get --enforce-lockfile
+          dart format --output=none --set-exit-if-changed lib test
+          flutter analyze --fatal-infos
+          flutter test --machine --coverage 2>&1 | tee "$out/pos-tests.jsonl"
+          flutter pub deps --json > "$out/pos-dependencies.json"
+          python ../scripts/build_flutter_supply_chain.py --deps "$out/pos-dependencies.json" --package-config .dart_tool/package_config.json --output-dir "$out/pos-supply-chain"
+          popd
+          pushd packages/pos_device_adapter
+          flutter pub get --enforce-lockfile
+          dart format --output=none --set-exit-if-changed lib test
+          flutter analyze --fatal-infos
+          flutter test --machine 2>&1 | tee "$out/adapter-tests.jsonl"
+          flutter pub deps --json > "$out/adapter-dependencies.json"
+          python ../../scripts/build_flutter_supply_chain.py --deps "$out/adapter-dependencies.json" --package-config .dart_tool/package_config.json --output-dir "$out/adapter-supply-chain"
+          popd
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with: { name: "t2-gate10a-rpt-inventory-runtime-flutter-${{ matrix.os }}", path: "artifacts/t2/gate10a-rpt-inventory-runtime/flutter-${{ matrix.os == 'ubuntu-latest' && 'ubuntu' || 'windows' }}", if-no-files-found: error, retention-days: 30 }
+
+  android:
+    needs: [governance-ubuntu, governance-windows]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
+        with: { distribution: temurin, java-version: "21", cache: gradle }
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with: { flutter-version: "3.47.0", channel: stable, cache: true }
+      - name: Run Kotlin tests and build internal debug APK
+        run: |
+          set -euo pipefail
+          out="$GITHUB_WORKSPACE/artifacts/t2/gate10a-rpt-inventory-runtime/android"; mkdir -p "$out"
+          cd pos-flutter
+          flutter pub get --enforce-lockfile
+          chmod +x android/gradlew
+          android/gradlew -p android testDebugUnitTest
+          flutter build apk --debug
+          cp build/app/outputs/flutter-apk/app-debug.apk "$out/jshpos-internal-debug.apk"
+          sha256sum "$out/jshpos-internal-debug.apk" > "$out/jshpos-internal-debug.apk.sha256"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with: { name: t2-gate10a-rpt-inventory-runtime-android, path: artifacts/t2/gate10a-rpt-inventory-runtime/android, if-no-files-found: error, retention-days: 30 }
+
+  security:
+    needs: [server, web]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with: { name: t2-gate10a-rpt-inventory-runtime-server, path: downloaded/server }
+      - name: Run vulnerability license Secret and IaC gates
+        run: |
+          set -euo pipefail
+          out=artifacts/t2/gate10a-rpt-inventory-runtime/security; mkdir -p "$out"
+          curl -fsSL -o /tmp/trivy.tar.gz https://github.com/aquasecurity/trivy/releases/download/v0.72.0/trivy_0.72.0_Linux-64bit.tar.gz
+          echo "bbb64b9695866ce4a7a8f5c9592002c5961cab378577fa3f8a040df362b9b2ea  /tmp/trivy.tar.gz" | sha256sum --check
+          tar -xzf /tmp/trivy.tar.gz -C /tmp trivy
+          cp downloaded/server/bom.json "$out/server-bom.json"
+          /tmp/trivy sbom --skip-version-check --db-repository ghcr.io/aquasecurity/trivy-db:2 --java-db-repository ghcr.io/aquasecurity/trivy-java-db:1 --scanners vuln --severity HIGH,CRITICAL --exit-code 1 "$out/server-bom.json"
+          python scripts/check_sbom_licenses.py "$out/server-bom.json" docs/compliance/reviewed-license-allowlist.json
+          /tmp/trivy fs --skip-version-check --offline-scan --scanners secret --severity HIGH,CRITICAL --exit-code 1 --skip-dirs .git --skip-dirs downloaded --skip-dirs artifacts .
+          /tmp/trivy config --skip-version-check --checks-bundle-repository ghcr.io/aquasecurity/trivy-checks:2 --severity HIGH,CRITICAL --exit-code 1 .
+          /tmp/trivy --version > "$out/trivy-version.txt"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with: { name: t2-gate10a-rpt-inventory-runtime-security, path: artifacts/t2/gate10a-rpt-inventory-runtime/security, if-no-files-found: error, retention-days: 30 }
+
+  evidence:
+    needs: [governance-ubuntu, governance-windows, server, mysql84, web, flutter, android, security]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with: { python-version: "3.12" }
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with: { pattern: t2-gate10a-rpt-inventory-runtime-*, path: downloaded, merge-multiple: false }
+      - name: Build immutable evidence index
+        run: |
+          set -euo pipefail
+          bundle=artifacts/t2/gate10a-rpt-inventory-runtime/bundle
+          final=artifacts/t2/gate10a-rpt-inventory-runtime/final
+          mkdir -p "$bundle" "$final"
+          for pair in \
+            "governance-ubuntu:t2-gate10a-rpt-inventory-runtime-governance-ubuntu" \
+            "governance-windows:t2-gate10a-rpt-inventory-runtime-governance-windows" \
+            "server:t2-gate10a-rpt-inventory-runtime-server" \
+            "mysql84:t2-gate10a-rpt-inventory-runtime-mysql84" \
+            "web:t2-gate10a-rpt-inventory-runtime-web" \
+            "flutter-ubuntu:t2-gate10a-rpt-inventory-runtime-flutter-ubuntu-latest" \
+            "flutter-windows:t2-gate10a-rpt-inventory-runtime-flutter-windows-latest" \
+            "android:t2-gate10a-rpt-inventory-runtime-android" \
+            "security:t2-gate10a-rpt-inventory-runtime-security"; do
+            producer="${pair%%:*}"; artifact="${pair#*:}"; mkdir -p "$bundle/$producer"
+            cp -R "downloaded/$artifact/." "$bundle/$producer/"
+          done
+          python scripts/build_t2_gate10a_r2_r2_r2_r2_rpt_inventory_runtime_evidence.py --bundle-dir "$bundle" --output "$final/evidence-index.json" --commit "$GITHUB_SHA"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with: { name: t2-gate10a-rpt-inventory-runtime-evidence-index, path: artifacts/t2/gate10a-rpt-inventory-runtime/final, if-no-files-found: error, retention-days: 90 }

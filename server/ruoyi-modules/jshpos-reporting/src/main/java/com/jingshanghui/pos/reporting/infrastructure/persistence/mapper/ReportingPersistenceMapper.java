@@ -28,6 +28,7 @@ public interface ReportingPersistenceMapper {
     List<SalesDailyView> querySales(SalesQueryParam param);
     List<SalesDailyView> querySalesPage(SalesPageParam param);
     List<InventoryCostDailyView> queryInventoryCost(InventoryQueryParam param);
+    List<InventoryCostDailyView> queryInventoryCostPage(InventoryCostPageParam param);
     long countSales(CountParam param);
     long countInventoryCost(CountParam param);
     List<StoredEventRow> listAppliedEvents(RangeParam param);

@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "1.0",
+  "gate": "T2_GATE10A_R2_R2_R2_R2_RPT_INVENTORY_RUNTIME",
+  "decision": "RUNTIME_IN_PROGRESS_INDEX_NOT_ADMITTED",
+  "startCommit": "f36df63b21bd3bb98ea0d5022f8fe5fac5def72f",
+  "branch": "t2/gate10a-r2-r2-r2-r2-rpt-inventory-runtime",
+  "requirements": ["T2-RPT-001", "T2-API-001"],
+  "changeRequest": "CR-T2G10A-014",
+  "finding": {"id": "G10A-SQL-P2-001", "state": "OPEN"},
+  "authorized": [
+    "ReportingBatchReadPort.readInventoryCost",
+    "versioned keyset pagination",
+    "HMAC signed cursor",
+    "controlled resumable streaming export",
+    "MySQL 8.4.11 executable evidence"
+  ],
+  "forbidden": [
+    "index or migration change without independent CR",
+    "API v1 or event semantic change",
+    "inventory or costing fact change",
+    "RPT-PAY-REC remediation",
+    "external execution"
+  ]
+}

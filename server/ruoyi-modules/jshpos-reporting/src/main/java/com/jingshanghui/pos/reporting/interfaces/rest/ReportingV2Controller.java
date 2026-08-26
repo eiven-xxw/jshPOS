@@ -2,7 +2,9 @@ package com.jingshanghui.pos.reporting.interfaces.rest;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.jingshanghui.pos.reporting.application.model.ReportingCommands.SalesPageQuery;
+import com.jingshanghui.pos.reporting.application.model.ReportingCommands.InventoryCostPageQuery;
 import com.jingshanghui.pos.reporting.application.model.ReportingViews.SalesPageView;
+import com.jingshanghui.pos.reporting.application.model.ReportingViews.InventoryCostPageView;
 import com.jingshanghui.pos.reporting.application.service.ReportQueryService;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -18,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
 
-/** RPT-SALES 版本化分页接口；旧 v1 列表端点继续处于冻结兼容窗口。 */
+/** 销售与库存成本版本化分页接口；旧 v1 列表端点继续处于冻结兼容窗口。 */
 @Validated
 @RestController
 @RequiredArgsConstructor
@@ -36,5 +38,18 @@ public class ReportingV2Controller {
                                       @RequestParam(defaultValue = "200") @Min(1) @Max(500) int limit) {
         return R.ok(queryService.salesPage(new SalesPageQuery(fromDate, toDate, storeId, terminalId, cashierId,
             cursor, limit)));
+    }
+
+    @GetMapping("/reports/inventory-cost-daily")
+    @SaCheckPermission("report:operation:read")
+    public R<InventoryCostPageView> inventoryCostPage(
+        @RequestParam LocalDate fromDate, @RequestParam LocalDate toDate,
+        @RequestParam @Positive Long storeId,
+        @RequestParam(required = false) @Size(max = 26) String warehouseId,
+        @RequestParam(required = false) @Positive Long skuId,
+        @RequestParam(required = false) @Size(max = 2048) String cursor,
+        @RequestParam(defaultValue = "200") @Min(1) @Max(500) int limit) {
+        return R.ok(queryService.inventoryCostPage(new InventoryCostPageQuery(fromDate, toDate, storeId,
+            warehouseId, skuId, cursor, limit)));
     }
 }

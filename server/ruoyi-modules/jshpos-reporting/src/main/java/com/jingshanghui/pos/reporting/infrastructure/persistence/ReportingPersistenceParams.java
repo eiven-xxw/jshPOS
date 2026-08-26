@@ -82,6 +82,17 @@ public final class ReportingPersistenceParams {
     public record InventoryQueryParam(String tenantId, String projectionVersion, LocalDate fromDate,
                                       LocalDate toDate, Long storeId, String warehouseId, Long skuId) {}
     /**
+     * @param tenantId 可信租户 @param projectionVersion 冻结投影版本 @param fromDate 起始业务日
+     * @param toDate 结束业务日 @param storeIds 已授权门店集合 @param warehouseId 可选仓库
+     * @param skuId 可选 SKU @param afterBusinessDate 上批最后业务日 @param afterStoreId 上批最后门店
+     * @param afterWarehouseId 上批最后仓库 @param afterSkuId 上批最后 SKU
+     * @param afterCurrency 上批最后币种 @param limit 本批最大行数
+     */
+    public record InventoryCostPageParam(String tenantId, String projectionVersion, LocalDate fromDate,
+                                         LocalDate toDate, List<Long> storeIds, String warehouseId, Long skuId,
+                                         LocalDate afterBusinessDate, Long afterStoreId, String afterWarehouseId,
+                                         Long afterSkuId, String afterCurrency, int limit) {}
+    /**
      * @param tenantId 可信租户 @param projectionVersion 投影版本 @param fromDate 起始日
      * @param toDate 结束日 @param storeIds 门店集合
      */

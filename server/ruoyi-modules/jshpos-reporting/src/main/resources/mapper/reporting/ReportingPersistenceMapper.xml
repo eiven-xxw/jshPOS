@@ -221,6 +221,21 @@
       <if test="skuId != null">AND sku_id=#{skuId}</if>
     ORDER BY business_date,store_id,warehouse_id,sku_id,currency
   </select>
+  <!-- R2R2R2-R2：库存成本复杂 keyset 与多门店集合读取固定在 XML，v1 查询保持不变。 -->
+  <select id="queryInventoryCostPage" resultType="com.jingshanghui.pos.reporting.application.model.ReportingViews$InventoryCostDailyView">
+    SELECT <include refid="inventoryColumns"/> FROM rpt_inventory_cost_daily
+    WHERE tenant_id=#{tenantId} AND projection_version=#{projectionVersion}
+      AND business_date BETWEEN #{fromDate} AND #{toDate}
+      AND store_id IN <foreach collection="storeIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+      <if test="warehouseId != null and warehouseId != ''">AND warehouse_id=#{warehouseId}</if>
+      <if test="skuId != null">AND sku_id=#{skuId}</if>
+      <if test="afterBusinessDate != null">
+        AND (business_date,store_id,warehouse_id,sku_id,currency)
+          &gt; (#{afterBusinessDate},#{afterStoreId},#{afterWarehouseId},#{afterSkuId},#{afterCurrency})
+      </if>
+    ORDER BY business_date,store_id,warehouse_id,sku_id,currency
+    LIMIT #{limit}
+  </select>
   <select id="countSales" resultType="long">
     SELECT COUNT(*) FROM rpt_sales_daily WHERE tenant_id=#{tenantId} AND projection_version=#{projectionVersion}
       AND business_date BETWEEN #{fromDate} AND #{toDate}

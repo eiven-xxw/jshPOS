@@ -11,6 +11,7 @@ import com.jingshanghui.pos.reporting.application.port.ReportingPersistencePort.
 import com.jingshanghui.pos.reporting.domain.CanonicalReportHash;
 import com.jingshanghui.pos.reporting.infrastructure.export.ReportCsvEncoder;
 import com.jingshanghui.pos.reporting.infrastructure.security.HmacSalesPageCursorCodec;
+import com.jingshanghui.pos.reporting.infrastructure.security.HmacInventoryCostPageCursorCodec;
 import org.dromara.common.core.exception.ServiceException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -48,7 +49,8 @@ class ReportExportServiceTest {
         audit=mock(DomainAuditService.class);
         when(context.requirePrincipal()).thenReturn(new TrustedPrincipal(TENANT,7L,1L,"synthetic"));
         service=new ReportExportService(persistence,batchRead,paymentPersistence,store,tokens,
-            new HmacSalesPageCursorCodec("sales-export-cursor-key-32-bytes!".getBytes()),context,auth,differences,audit,
+            new HmacSalesPageCursorCodec("sales-export-cursor-key-32-bytes!".getBytes()),
+            new HmacInventoryCostPageCursorCodec("inventory-export-cursor-key-32-bytes".getBytes()),context,auth,differences,audit,
             Clock.fixed(NOW,ZoneOffset.UTC),new ReportCsvEncoder());
     }
 
@@ -192,6 +194,36 @@ class ReportExportServiceTest {
         assertThat(service.generate(new ExportGenerate(id,1,"01ARZ3NDEKTSV4RRFFQ69G5FAY")).state()).isEqualTo("READY");
         verify(store).put(matches("^reporting/tenant_alpha/"+id+"/[a-f0-9]{64}\\.csv$"),
             argThat(content -> new String(content,StandardCharsets.UTF_8).contains("AMOUNT_MISMATCH")));
+    }
+
+    @Test void inventoryExportUsesOneAuthorizedBatchStreamAndOriginalResumeIdentity() {
+        String id="01ARZ3NDEKTSV4RRFFQ69G5FAV"; LocalDate day=LocalDate.of(2026,8,17);
+        ExportRow approved=row(id,"INVENTORY_COST_DAILY","businessDate,cogsDeltaMinor,warehouseId",
+            "APPROVED",true,7L,8L,1,1,null,null);
+        ExportRow ready=row(id,"INVENTORY_COST_DAILY","businessDate,cogsDeltaMinor,warehouseId",
+            "READY",true,7L,8L,1,3,"a".repeat(64),NOW.plus(Duration.ofHours(24)));
+        when(persistence.findExport(TENANT,id)).thenReturn(approved,ready);
+        when(persistence.transitionExport(TENANT,id,"APPROVED","GENERATING",8L,null,1,NOW)).thenReturn(1);
+        when(persistence.activeProjectionVersion(TENANT,"INVENTORY_COST")).thenReturn("g5d-v1");
+        java.math.BigDecimal one=new java.math.BigDecimal("1.000000");
+        when(batchRead.readInventoryCost(any())).thenReturn(List.of(new InventoryCostDailyView(day,1L,11L,
+            "W1",101L,"CNY",one,one,one,one,one,one,one,one,one,one,one,one,"CURRENT")));
+        when(store.writeResumable(eq("reporting/"+TENANT+"/"+id),anyString(),any())).thenAnswer(invocation -> {
+            ByteArrayOutputStream output=new ByteArrayOutputStream();
+            ReportArtifactStore.ResumableWriter writer=invocation.getArgument(2);
+            writer.write(output,null,cursor -> assertThat(cursor).isNotBlank());
+            byte[] content=output.toByteArray();
+            String digest=CanonicalReportHash.sha256(content);
+            assertThat(new String(content,StandardCharsets.UTF_8)).contains("W1","1.000000");
+            return new ReportArtifactStore.StoredArtifact("reporting/"+TENANT+"/"+id+"/"+digest+".csv",
+                digest,content.length);
+        });
+
+        assertThat(service.generate(new ExportGenerate(id,1,"01ARZ3NDEKTSV4RRFFQ69G5FAY")).state())
+            .isEqualTo("READY");
+        verify(batchRead,times(1)).readInventoryCost(argThat(request -> request.storeIds().equals(List.of(11L))
+            && request.limit()==ReportingBatchReadPort.MAX_EXPORT_CHUNK_ROWS));
+        verify(persistence,never()).queryInventoryCost(anyString(),anyString(),any(),any(),anyLong(),any(),any());
     }
 
     private ExportRow row(String id,String type,String fields,String state,boolean approval,Long requestedBy,

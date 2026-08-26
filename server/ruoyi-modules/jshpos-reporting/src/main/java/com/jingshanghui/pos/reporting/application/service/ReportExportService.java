@@ -11,11 +11,13 @@ import com.jingshanghui.pos.reporting.application.port.PaymentReconciliationPers
 import com.jingshanghui.pos.reporting.application.port.ReportArtifactStore;
 import com.jingshanghui.pos.reporting.application.port.ReportDownloadTokenProtector;
 import com.jingshanghui.pos.reporting.application.port.ReportingBatchReadPort;
+import com.jingshanghui.pos.reporting.application.port.InventoryCostPageCursorCodec;
 import com.jingshanghui.pos.reporting.application.port.ReportingPersistencePort;
 import com.jingshanghui.pos.reporting.application.port.SalesPageCursorCodec;
 import com.jingshanghui.pos.reporting.application.port.ReportingPersistencePort.ArtifactRow;
 import com.jingshanghui.pos.reporting.application.port.ReportingPersistencePort.ExportRow;
 import com.jingshanghui.pos.reporting.domain.CanonicalReportHash;
+import com.jingshanghui.pos.reporting.domain.InventoryCostReportReadIdentity;
 import com.jingshanghui.pos.reporting.domain.ReportRules;
 import com.jingshanghui.pos.reporting.domain.ReportStates;
 import com.jingshanghui.pos.reporting.domain.SalesReportReadIdentity;
@@ -43,6 +45,7 @@ public class ReportExportService {
     private final ReportArtifactStore artifactStore;
     private final ReportDownloadTokenProtector tokenProtector;
     private final SalesPageCursorCodec cursorCodec;
+    private final InventoryCostPageCursorCodec inventoryCursorCodec;
     private final TrustedTenantContext tenantContext;
     private final ScopeAuthorizationService authorizationService;
     private final ReportingDifferenceService differenceService;
@@ -140,9 +143,11 @@ public class ReportExportService {
         }
         Instant now = clock.instant();
         Instant expiresAt = now.plus(ARTIFACT_RETENTION);
-        ReportArtifactStore.StoredArtifact stored = "SALES_DAILY".equals(row.reportType())
-            ? writeSalesArtifact(row, principal.tenantId(), stores, now)
-            : writeLegacyArtifact(row, principal.tenantId(), stores);
+        ReportArtifactStore.StoredArtifact stored = switch (row.reportType()) {
+            case "SALES_DAILY" -> writeSalesArtifact(row, principal.tenantId(), stores, now);
+            case "INVENTORY_COST_DAILY" -> writeInventoryArtifact(row, principal.tenantId(), stores, now);
+            default -> writeLegacyArtifact(row, principal.tenantId(), stores);
+        };
         try {
             persistence.attachArtifact(principal.tenantId(), new ArtifactRow(row.exportId(), stored.objectKey(),
                 stored.sha256(), stored.sizeBytes(), "text/csv;charset=UTF-8", now, expiresAt,
@@ -257,19 +262,59 @@ public class ReportExportService {
         return new ReportArtifactStore.StoredArtifact(objectKey, sha256, content.length);
     }
 
+    /**
+     * 以原导出身份和签名检查点流式生成库存成本制品；重启不得改用新投影或重算检查点。
+     */
+    private ReportArtifactStore.StoredArtifact writeInventoryArtifact(ExportRow row, String tenantId,
+                                                                        List<Long> stores,
+                                                                        Instant generatedAt) {
+        String namespace = "reporting/" + tenantId + "/" + row.exportId();
+        Set<String> fields = new TreeSet<>(List.of(row.fieldsCsv().split(",")));
+        return artifactStore.writeResumable(namespace, row.requestSha256(), (output, resumeCursor, checkpoint) -> {
+            var text = new OutputStreamWriter(output, StandardCharsets.UTF_8);
+            String projectionVersion;
+            ReportingBatchReadPort.InventoryCostKey after;
+            if (resumeCursor == null) {
+                projectionVersion = persistence.activeProjectionVersion(tenantId, "INVENTORY_COST");
+                csvEncoder.writeInventoryCostHeader(text, tenantId, row.exportId(), fields, generatedAt);
+                text.flush();
+                if (projectionVersion == null) return;
+                checkpoint.saveCheckpoint(inventoryCursorCodec.encode(
+                    new InventoryCostPageCursorCodec.CursorEnvelope(tenantId, row.requestSha256(),
+                        projectionVersion, null)));
+                after = null;
+            } else {
+                InventoryCostPageCursorCodec.CursorEnvelope envelope = inventoryCursorCodec.decodeAndVerify(
+                    resumeCursor, tenantId, row.requestSha256(), null);
+                projectionVersion = envelope.projectionVersion();
+                after = envelope.after();
+            }
+            String filterSha256 = InventoryCostReportReadIdentity.filterSha256(tenantId, projectionVersion,
+                row.fromDate(), row.toDate(), stores, null, null);
+            while (true) {
+                List<InventoryCostDailyView> rows = batchReadPort.readInventoryCost(
+                    new ReportingBatchReadPort.InventoryCostBatchRequest(tenantId, projectionVersion,
+                        row.fromDate(), row.toDate(), stores, null, null, after,
+                        ReportingBatchReadPort.MAX_EXPORT_CHUNK_ROWS, filterSha256));
+                if (rows.isEmpty()) break;
+                csvEncoder.writeInventoryCostRows(text, fields, rows);
+                text.flush();
+                after = ReportingBatchReadPort.InventoryCostKey.from(rows.get(rows.size() - 1));
+                checkpoint.saveCheckpoint(inventoryCursorCodec.encode(
+                    new InventoryCostPageCursorCodec.CursorEnvelope(tenantId, row.requestSha256(),
+                        projectionVersion, after)));
+                if (rows.size() < ReportingBatchReadPort.MAX_EXPORT_CHUNK_ROWS) break;
+            }
+        });
+    }
+
     private byte[] encodeLegacy(ExportRow row, String tenantId, List<Long> stores) {
         Set<String> fields = new TreeSet<>(List.of(row.fieldsCsv().split(",")));
         Instant now = clock.instant();
-        if ("PAYMENT_RECONCILIATION".equals(row.reportType())) {
-            List<ReconciliationView> rows = stores.stream().flatMap(storeId ->
-                paymentReconciliationPersistence.query(tenantId, row.fromDate(), row.toDate(), storeId,
-                    null, null).stream()).toList();
-            return csvEncoder.paymentReconciliation(tenantId, row.exportId(), fields, rows, now);
-        }
-        String version = persistence.activeProjectionVersion(tenantId, "INVENTORY_COST");
-        List<InventoryCostDailyView> rows = stores.stream().flatMap(storeId -> persistence.queryInventoryCost(
-            tenantId, version, row.fromDate(), row.toDate(), storeId, null, null).stream()).toList();
-        return csvEncoder.inventoryCost(tenantId, row.exportId(), fields, rows, now);
+        List<ReconciliationView> rows = stores.stream().flatMap(storeId ->
+            paymentReconciliationPersistence.query(tenantId, row.fromDate(), row.toDate(), storeId,
+                null, null).stream()).toList();
+        return csvEncoder.paymentReconciliation(tenantId, row.exportId(), fields, rows, now);
     }
 
     private ExportRow requireExport(String tenantId, String exportId) {

@@ -9,10 +9,10 @@ import java.nio.file.Path;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * RPT-INVENTORY 精确整改准备阶段的可复现红基线。
+ * RPT-INVENTORY 精确整改准备阶段红基线的关闭回归。
  *
- * <p>本测试只证明当前正式契约仍是无界 v1 查询、库存导出仍逐门店读取，且库存批量端口、
- * keyset 游标与 v2 契约尚未实现。运行时整改获批前禁止把这些断言改成生产实现。</p>
+ * <p>保留 v1 风险证据，同时证明获批运行时已新增独立 v2、批量端口和可恢复导出；
+ * 不得通过改写 v1 契约伪造兼容。</p>
  */
 class ReportingInventoryRemediationPrepRedBaselineTest {
     private static final Path MAIN = Path.of("src/main");
@@ -28,28 +28,29 @@ class ReportingInventoryRemediationPrepRedBaselineTest {
     }
 
     @Test
-    void f04CurrentInventoryExportStillReadsEachStoreSeparately() throws IOException {
+    void f04InventoryExportNoLongerReadsEachStoreSeparately() throws IOException {
         String source = read("java/com/jingshanghui/pos/reporting/application/service/ReportExportService.java");
-        assertThat(source).contains("stores.stream().flatMap(storeId -> persistence.queryInventoryCost(");
+        assertThat(source).contains("writeInventoryArtifact", "batchReadPort.readInventoryCost")
+            .doesNotContain("stores.stream().flatMap(storeId -> persistence.queryInventoryCost(");
     }
 
     @Test
-    void inventoryBatchPortAndSignedCursorAreNotYetAdmitted() throws IOException {
+    void inventoryBatchPortAndSignedCursorAreAdmitted() throws IOException {
         String port = read("java/com/jingshanghui/pos/reporting/application/port/ReportingBatchReadPort.java");
         String service = read("java/com/jingshanghui/pos/reporting/application/service/ReportQueryService.java");
-        assertThat(port).contains("List<SalesDailyView> readSales").doesNotContain("readInventoryCost");
-        assertThat(service).contains("persistence.queryInventoryCost(").doesNotContain("inventoryCostPage(");
+        assertThat(port).contains("List<SalesDailyView> readSales", "readInventoryCost");
+        assertThat(service).contains("persistence.queryInventoryCost(", "inventoryCostPage(");
         assertThat(MAIN.resolve("java/com/jingshanghui/pos/reporting/infrastructure/security/"
-            + "HmacInventoryCostPageCursorCodec.java")).doesNotExist();
+            + "HmacInventoryCostPageCursorCodec.java")).exists();
     }
 
     @Test
-    void v1ApiMustRemainFrozenAndV2InventoryContractIsAbsent() throws IOException {
+    void v1ApiRemainsFrozenAndV2InventoryContractIsPresent() throws IOException {
         String controller = read("java/com/jingshanghui/pos/reporting/interfaces/rest/ReportingController.java");
         String v2 = read("java/com/jingshanghui/pos/reporting/interfaces/rest/ReportingV2Controller.java");
         assertThat(controller).contains("@GetMapping(\"/reports/inventory-cost-daily\")",
             "R<List<InventoryCostDailyView>> inventory(");
-        assertThat(v2).doesNotContain("inventory-cost-daily", "InventoryCostPageView");
+        assertThat(v2).contains("inventory-cost-daily", "InventoryCostPageView");
     }
 
     private String read(String relative) throws IOException {

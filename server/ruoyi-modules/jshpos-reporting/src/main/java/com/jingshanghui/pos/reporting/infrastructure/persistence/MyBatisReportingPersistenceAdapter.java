@@ -111,6 +111,19 @@ public class MyBatisReportingPersistenceAdapter implements ReportingPersistenceP
         return mapper.queryInventoryCost(new InventoryQueryParam(tenantId, projectionVersion, fromDate, toDate,
             storeId, warehouseId, skuId));
     }
+    @Override public List<InventoryCostDailyView> readInventoryCost(InventoryCostBatchRequest request) {
+        ReportRules.requireSha256(request.requestSha256(), "RPT-R2R2-024");
+        if (request.storeIds().isEmpty() || request.storeIds().size() > 50
+            || request.limit() < 1 || request.limit() > MAX_EXPORT_CHUNK_ROWS) {
+            throw new ServiceException("RPT-R2R2-025: 库存成本批量读取范围或行数非法", 400);
+        }
+        InventoryCostKey after = request.after();
+        return mapper.queryInventoryCostPage(new InventoryCostPageParam(request.tenantId(),
+            request.projectionVersion(), request.fromDate(), request.toDate(), request.storeIds(),
+            request.warehouseId(), request.skuId(), after == null ? null : after.businessDate(),
+            after == null ? null : after.storeId(), after == null ? null : after.warehouseId(),
+            after == null ? null : after.skuId(), after == null ? null : after.currency(), request.limit()));
+    }
     @Override public long countSales(String tenantId, String projectionVersion, LocalDate fromDate,
                                      LocalDate toDate, List<Long> storeIds) {
         return mapper.countSales(new CountParam(tenantId, projectionVersion, fromDate, toDate, storeIds));

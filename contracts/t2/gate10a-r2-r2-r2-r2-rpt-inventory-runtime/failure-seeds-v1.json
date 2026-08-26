@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.0",
+  "seeds": [
+    {"seedId": "RPTINV-RUNTIME-F01", "risk": "unbounded-interactive-query", "expected": "limit-at-most-500"},
+    {"seedId": "RPTINV-RUNTIME-F02", "risk": "cross-tenant-cursor", "expected": "fail-closed"},
+    {"seedId": "RPTINV-RUNTIME-F03", "risk": "cursor-filter-or-version-tamper", "expected": "fail-closed"},
+    {"seedId": "RPTINV-RUNTIME-F04", "risk": "linear-store-export", "expected": "batch-keyset-read"},
+    {"seedId": "RPTINV-RUNTIME-F05", "risk": "export-interruption", "expected": "resume-original-identity"},
+    {"seedId": "RPTINV-RUNTIME-F06", "risk": "duplicate-or-missing-keyset-row", "expected": "zero"},
+    {"seedId": "RPTINV-RUNTIME-F07", "risk": "quantity-cost-drift", "expected": "twelve-fields-conserved"},
+    {"seedId": "RPTINV-RUNTIME-F08", "risk": "current-index-plan-regression", "expected": "record-index-cr-decision"}
+  ]
+}
