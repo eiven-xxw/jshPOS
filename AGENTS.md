@@ -782,6 +782,9 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
 - `T2-PAY-002/HWD-001/PRN-001/PAR-001` 继续 `BLOCKED`；`T2-UAT-001/REL-001`
   继续 `DRAFT`；`T2-LIC-001/JSH-001` 继续 `DEFERRED`。Provider 网络、真实资金、
   设备/外设命令、伙伴现场、完整 Alpha、生产部署和商业声明必须为 0。
+- 准备候选 `6995e4fe6e4cdd52a73b4c27fc1e4c5249ca1223` 的完整 Run `32948724263` 已全绿，
+  三项 Finding 当前仍为 `PREPARED_AWAITING_SPONSOR_CONFIRMATION`；该结果只允许提交 R2
+  启动评审报告，不得自行接受 ADR-074、进入正式整改或关闭 Finding。
 - 完成后只提交《G9A-R2 启动评审报告》和下一步正式整改指令等待项目发起人确认；
   不得自动进入 G9A-R2 正式编码、G9A-R3、完整 Alpha、现场试点或生产发布。
 

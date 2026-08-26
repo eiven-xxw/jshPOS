@@ -51,6 +51,7 @@ def main() -> None:
         "docs/adr/ADR-073-gate10a-internal-quality-hardening-sequence.md",
         "docs/adr/ADR-074-gate10a-r2-server-database-resource-remediation.md",
         "docs/governance/CR-T2G10A-005_Gate10A-R1接受与R2准备准入.md",
+        "docs/governance/CR-T2G10A-006_Gate10A-R2准备CI证据回填.md",
         "docs/governance/change-log.md",
         "contracts/t2/gate10a-prep/findings-register-v1.json",
         "contracts/t2/gate10a-prep/batch-plan-v1.json",

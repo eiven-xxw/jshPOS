@@ -361,3 +361,4 @@
 | CR-T2G10A-005 | 2026-08-26 | GATE10A_R1_ACCEPTED_R2_PREP_IN_PROGRESS | 项目发起人接受Gate10A-R1 CONDITIONAL PASS并将CI/依赖/供应链三项P2确认为CLOSED_IN_GATE10A_R1，授权从`19c4ef804dc45fca8a17fd378881bbec75b29419`只读复核Server可维护性、SQL和长期资源三项P2 | G10A-MTN-P2-001、G10A-SQL-P2-001、G10A-RES-P2-001、ADR-074 | R2只允许ADR、失败红基线、影响分析、测试矩阵和串行计划；运行时/SQL/依赖/配置/迁移为0，三项Finding保持开放并等待正式整改再次确认 |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。
+| CR-T2G10A-006 | 2026-08-26 | ACCEPTED | Gate 10A-R2 准备候选 GitHub 干净执行器与制品证据回填 | ADR-074、G10A-MTN/SQL/RES-P2-001 | 候选 `6995e4fe6e4cdd52a73b4c27fc1e4c5249ca1223` / Run `32948724263` 全绿；Finding 状态不变，仍待项目发起人确认 |

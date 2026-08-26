@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "1.0",
+  "gate": "T2_GATE_10A_R2_PREP",
+  "commitSha": "6995e4fe6e4cdd52a73b4c27fc1e4c5249ca1223",
+  "runId": 32948724263,
+  "runUrl": "https://github.com/eiven-xxw/jshPOS/actions/runs/32948724263",
+  "result": "SUCCESS",
+  "duration": "PT8M25S",
+  "evidenceCeiling": "INTERNAL_SERVER_DATABASE_MAINTAINABILITY_PREPARED",
+  "findingState": "PREPARED_AWAITING_SPONSOR_CONFIRMATION",
+  "jobs": [
+    {"name": "governance-ubuntu", "id": 98115083122, "result": "SUCCESS"},
+    {"name": "governance-windows", "id": 98115083352, "result": "SUCCESS"},
+    {"name": "server-baseline", "id": 98115177373, "result": "SUCCESS", "java": "Temurin 21"},
+    {"name": "evidence", "id": 98117292227, "result": "SUCCESS"}
+  ],
+  "artifacts": [
+    {"name": "t2-gate10a-r2-prep-evidence-index", "id": 9599525370, "sha256": "3ad192e71d561827d723e06f3831300e34ae4f30abae1a9d828cc54aa29bc138"},
+    {"name": "t2-gate10a-r2-prep-server-baseline", "id": 9599517482, "sha256": "b09aaad75488db4ebf0f741736afd2490404f532449737ad02aea88d04e4d7bc"},
+    {"name": "t2-gate10a-r2-prep-governance-windows", "id": 9599271311, "sha256": "e61c811695189403e65c8cf87e59c6390d8aa21ca0b4dcf930cf7e67f34c8e20"},
+    {"name": "t2-gate10a-r2-prep-governance-ubuntu", "id": 9599265957, "sha256": "bfa2f80b78c98687fc4c334794d0a4d685ae687e40def66fb81ceb4d20587b15"}
+  ],
+  "runtimeChangesApplied": 0,
+  "sqlChangesApplied": 0,
+  "dependencyChangesApplied": 0,
+  "migrationChangesApplied": 0,
+  "externalExecution": 0
+}
