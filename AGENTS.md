@@ -1223,6 +1223,33 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
 - `G10A-RES-P2-001` 继续 `PREPARED`；所有外部 `BLOCKED`、UAT/REL `DRAFT`、LIC/JSH
   `DEFERRED` 与 Provider网络、真实资金、设备/外设、伙伴现场、完整Alpha和生产部署零执行边界不变。
 
+## 4.83 当前 T2 Gate 10A-R2-R2-R2 SQL、分页与 N+1 精确整改准备条件准入
+
+- 项目发起人已于 2026-08-26 接受 R2-R2-R1 `EXECUTABLE_BASELINE CONDITIONAL PASS`，确认
+  `G10A-SQL-P2-001` 继续 `OPEN`，并授权从可执行基线最终治理提交
+  `8c65991919757cb52786cdf037b7a44f7f095c53` 建立
+  `t2/gate10a-r2-r2-r2-sql-remediation-prep`。
+- 本阶段只允许为 `RPT-SALES`、`RPT-INVENTORY`、`RPT-PAY-REC` 形成分页/导出兼容性 CR，
+  为其余 9 条冻结查询形成候选 SQL/索引/执行计划对比，并为查询放大 `150/501/501` 形成
+  Owner 端口内批量读取方案、失败测试、影响分析、串行计划、治理 CI 和启动评审材料。
+- 三项报表 CR 只允许冻结当前接口、客户端、排序、分页游标、流式导出、兼容窗口、权限、租户、
+  错误码、摘要和回退建议；在项目发起人逐项批准前不得改变 Controller/OpenAPI、响应形态、导出
+  语义、Vue 调用或 300 API 封板结论。
+- 九项候选只能记录 `KEEP_SQL`、`SQL_CANDIDATE`、`INDEX_CANDIDATE`、`OWNER_BATCH_PORT_CANDIDATE`
+  及预期计划差异，不得把未经 MySQL 8.4 对比验证的候选写成结论，不得因 `filesort` 机械建索引。
+- 150/501/501 批量读取必须位于 Reporting、Payment、Inventory/Catalog 的正式 Owner 端口内，
+  可信 `tenant_id` 与门店范围由服务端上下文注入；禁止跨 Owner Mapper、直接数据库后门、前端拼接
+  批量事实或改变支付 `UNKNOWN`、库存批次、报表口径与数据主权。
+- 本阶段严禁修改生产 Java、Mapper Java/XML、SQL 注解、索引、数据库对象、依赖、配置和任何已发布
+  MySQL/SQLite 迁移。若后续正式整改需要索引/数据库对象，只能经独立 CR 新增前向迁移；若改变 API、
+  错误码、资金、库存、租户、支付、同步、事件 Schema、Owner 或分页业务语义，必须停止并申请唯一
+  Requirement ID 与独立 CR。
+- 本阶段最高结论只能是 `REMEDIATION_PREP_CONDITIONAL_PASS_AWAITING_SPONSOR_CONFIRMATION`；
+  `G10A-SQL-P2-001` 保持 `OPEN`，`G10A-RES-P2-001` 保持 `PREPARED`，未经再次确认不得进入
+  SQL/Mapper/索引运行时整改、资源整改、R3、完整 Alpha 或生产发布。
+- 所有外部 `BLOCKED`、UAT/REL `DRAFT`、LIC/JSH `DEFERRED` 与 Provider 网络、真实资金、
+  设备/外设、伙伴现场、完整 Alpha 和生产部署零执行边界保持不变。
+
 ## 5. 工程与测试规则
 
 - 服务端采用 RuoYi-Vue-Plus 模块化单体，不得把领域逻辑写入 Controller、通用工具类或框架系统模块。

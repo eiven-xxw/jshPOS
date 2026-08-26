@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "1.0",
+  "gate": "T2_GATE_10A_R2_R2_R2_SQL_REMEDIATION_PREP",
+  "state": "PENDING_FIRST_REMOTE_RUN",
+  "sourceExecutableBaseline": {
+    "runId": 32968444145,
+    "commit": "8c65991919757cb52786cdf037b7a44f7f095c53",
+    "mysqlArtifactId": 9606791655,
+    "mysqlArtifactSha256": "977cf130e3d9b6a1ff792f8734b5749fc3b49f611d3f6c97f22d6f0bc67354ee",
+    "evidenceArtifactId": 9606801124,
+    "evidenceArtifactSha256": "4d093d8f09202a767c82074d5f3de591de6e2ef6398ad721f6c17f695a0d89e7"
+  },
+  "currentRun": null,
+  "currentCommit": null,
+  "artifacts": []
+}

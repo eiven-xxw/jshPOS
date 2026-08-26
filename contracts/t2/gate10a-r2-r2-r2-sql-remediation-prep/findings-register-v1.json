@@ -1,0 +1,8 @@
+{
+  "schemaVersion": "1.0",
+  "findings": [
+    {"findingId":"G10A-MTN-P2-001","state":"CLOSED_IN_GATE10A_R2_R1"},
+    {"findingId":"G10A-SQL-P2-001","state":"OPEN","prepState":"REMEDIATION_PREP_IN_PROGRESS","runtimeAdmission":"NOT_AUTHORIZED","closed":false},
+    {"findingId":"G10A-RES-P2-001","state":"PREPARED","runtimeAdmission":"NOT_AUTHORIZED","closed":false}
+  ]
+}

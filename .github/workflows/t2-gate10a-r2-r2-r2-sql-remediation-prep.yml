@@ -1,0 +1,116 @@
+name: T2 Gate 10A R2 R2 R2 SQL Remediation Preparation
+
+on:
+  push:
+    branches: ["t2/gate10a-r2-r2-r2-sql-remediation-prep"]
+  pull_request:
+    paths:
+      - "AGENTS.md"
+      - ".github/workflows/t2-gate10a-r2-r2-r2-sql-remediation-prep.yml"
+      - "contracts/t2/gate10a-r2-r2-r2-sql-remediation-prep/**"
+      - "docs/governance/**"
+      - "docs/t2-gate10a-r2-r2-r2-sql-remediation-prep/**"
+      - "scripts/*gate10a_r2_r2_r2_sql_remediation_prep*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gate10a-r2-r2-r2-sql-remediation-prep-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  governance-ubuntu:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { fetch-depth: 0, fetch-tags: true }
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with: { python-version: "3.12" }
+      - name: Validate governance scope and deterministic contracts
+        run: |
+          set -euo pipefail
+          out=artifacts/t2/gate10a-r2-r2-r2-sql-remediation-prep/governance-ubuntu
+          mkdir -p "$out"
+          python scripts/check_t0_structure.py
+          python scripts/check_rtm.py
+          python scripts/check_contracts.py
+          python -m py_compile scripts/check_t2_gate10a_r2_r2_r2_sql_remediation_prep.py scripts/audit_t2_gate10a_r2_r2_r2_sql_remediation_prep.py scripts/build_t2_gate10a_r2_r2_r2_sql_remediation_prep_evidence.py
+          python scripts/check_t2_gate10a_r2_r2_r2_sql_remediation_prep.py | tee "$out/scope.txt"
+          python scripts/audit_t2_gate10a_r2_r2_r2_sql_remediation_prep.py --output "$out/audit.json"
+          git diff --check
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with: { name: t2-gate10a-r2-r2-r2-sql-remediation-prep-governance-ubuntu, path: artifacts/t2/gate10a-r2-r2-r2-sql-remediation-prep/governance-ubuntu, if-no-files-found: error, retention-days: 30 }
+
+  governance-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { fetch-depth: 0, fetch-tags: true }
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with: { python-version: "3.12" }
+      - name: Validate UTF-8 contracts and scope on Windows
+        shell: bash
+        run: |
+          set -euo pipefail
+          out=artifacts/t2/gate10a-r2-r2-r2-sql-remediation-prep/governance-windows
+          mkdir -p "$out"
+          python scripts/check_t0_structure.py
+          python scripts/check_rtm.py
+          python scripts/check_contracts.py
+          python -m py_compile scripts/check_t2_gate10a_r2_r2_r2_sql_remediation_prep.py scripts/audit_t2_gate10a_r2_r2_r2_sql_remediation_prep.py scripts/build_t2_gate10a_r2_r2_r2_sql_remediation_prep_evidence.py
+          python scripts/check_t2_gate10a_r2_r2_r2_sql_remediation_prep.py | tee "$out/scope.txt"
+          python scripts/audit_t2_gate10a_r2_r2_r2_sql_remediation_prep.py --output "$out/audit.json"
+          git diff --check
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with: { name: t2-gate10a-r2-r2-r2-sql-remediation-prep-governance-windows, path: artifacts/t2/gate10a-r2-r2-r2-sql-remediation-prep/governance-windows, if-no-files-found: error, retention-days: 30 }
+
+  baseline-contract:
+    needs: [governance-ubuntu, governance-windows]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { fetch-depth: 0, fetch-tags: true }
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with: { python-version: "3.12" }
+      - name: Verify R2-R2-R1 evidence and Gate9C invariants remain unchanged
+        run: |
+          set -euo pipefail
+          out=artifacts/t2/gate10a-r2-r2-r2-sql-remediation-prep/baseline-contract
+          mkdir -p "$out"
+          python scripts/check_t2_gate10a_r2_r2_r2_sql_remediation_prep.py | tee "$out/scope.txt"
+          python scripts/audit_t2_gate10a_r2_r2_r2_sql_remediation_prep.py --output "$out/audit.json"
+          python scripts/audit_t2_gate9c_seal.py --output-dir "$out/gate9c-seal"
+          python scripts/audit_t2_gate6g_api.py --output "$out/api-regression.json"
+          test -z "$(git diff --name-only 8c65991919757cb52786cdf037b7a44f7f095c53 HEAD -- server admin-web pos-flutter packages infra infrastructure)"
+          git diff --quiet 8c65991919757cb52786cdf037b7a44f7f095c53 HEAD -- contracts/t2/gate10a-r2-r2-r1-sql-baseline contracts/t2/gate10a-r2-r2-sql-prep/query-catalog-v1.csv
+          git diff --check
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with: { name: t2-gate10a-r2-r2-r2-sql-remediation-prep-baseline-contract, path: artifacts/t2/gate10a-r2-r2-r2-sql-remediation-prep/baseline-contract, if-no-files-found: error, retention-days: 30 }
+
+  evidence:
+    needs: [governance-ubuntu, governance-windows, baseline-contract]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with: { python-version: "3.12" }
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with: { pattern: t2-gate10a-r2-r2-r2-sql-remediation-prep-*, path: downloaded, merge-multiple: false }
+      - name: Build evidence index
+        run: |
+          set -euo pipefail
+          bundle=artifacts/t2/gate10a-r2-r2-r2-sql-remediation-prep/bundle
+          final=artifacts/t2/gate10a-r2-r2-r2-sql-remediation-prep/final
+          mkdir -p "$bundle" "$final"
+          for pair in \
+            "governance-ubuntu:t2-gate10a-r2-r2-r2-sql-remediation-prep-governance-ubuntu" \
+            "governance-windows:t2-gate10a-r2-r2-r2-sql-remediation-prep-governance-windows" \
+            "baseline-contract:t2-gate10a-r2-r2-r2-sql-remediation-prep-baseline-contract"; do
+            producer="${pair%%:*}"; artifact="${pair#*:}"
+            mkdir -p "$bundle/$producer"
+            cp -R "downloaded/$artifact/." "$bundle/$producer/"
+          done
+          python scripts/build_t2_gate10a_r2_r2_r2_sql_remediation_prep_evidence.py --bundle-dir "$bundle" --output "$final/evidence-index.json" --commit "$GITHUB_SHA"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with: { name: t2-gate10a-r2-r2-r2-sql-remediation-prep-evidence-index, path: artifacts/t2/gate10a-r2-r2-r2-sql-remediation-prep/final, if-no-files-found: error, retention-days: 90 }

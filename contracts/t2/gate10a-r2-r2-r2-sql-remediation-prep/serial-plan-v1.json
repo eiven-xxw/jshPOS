@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "1.0",
+  "runtimeAdmission": "NOT_AUTHORIZED",
+  "sequence": [
+    {"order":0,"name":"R2R2R2-R0","scope":"accept three report CR decisions and freeze executable red tests"},
+    {"order":1,"name":"R2R2R2-R1","scope":"ReportingBatchReadPort and RPT-SALES current-versus-candidate comparison"},
+    {"order":2,"name":"R2R2R2-R2","scope":"RPT-INVENTORY current-versus-candidate comparison"},
+    {"order":3,"name":"R2R2R2-R3","scope":"RPT-PAY-REC current-versus-candidate comparison"},
+    {"order":4,"name":"R2R2R2-R4","scope":"PaymentFactBatchReadPort and PAY-FACTS comparison"},
+    {"order":5,"name":"R2R2R2-R5","scope":"LotExpiryPolicyBatchReadPort plus INV-EXPIRY comparison"},
+    {"order":6,"name":"R2R2R2-R6","scope":"INV-FEFO and MBR-POINTS-FEFO locking plan comparison"},
+    {"order":7,"name":"R2R2R2-R7","scope":"INV-PACKAGE and PRM-RULES range/scope plan comparison"},
+    {"order":8,"name":"R2R2R2-R8","scope":"PRM-QUOTE-LINES, PUR-LINES and TRF-LINES keep-sql/index proof"},
+    {"order":9,"name":"R2R2R2-R9","scope":"10k/100k plus approved trend, attacks, full CI and closure recommendation"}
+  ],
+  "rule":"PREVIOUS_STEP_INDEPENDENT_VERIFIED_BEFORE_NEXT_STEP",
+  "stopConditions":[
+    "API_OR_BUSINESS_SEMANTICS_CHANGE",
+    "MONEY_INVENTORY_TENANT_PAYMENT_SYNC_EVENT_OWNER_CHANGE",
+    "HISTORICAL_MIGRATION_MODIFICATION",
+    "INDEX_OR_DATABASE_OBJECT_WITHOUT_APPROVED_CR",
+    "P0_OR_P1_REGRESSION",
+    "EXTERNAL_EXECUTION_REQUIRED"
+  ]
+}

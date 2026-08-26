@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "1.0",
+  "prepExit": [
+    {"control":"REPORT_COMPATIBILITY_CR_COUNT","expected":3},
+    {"control":"NON_REPORT_QUERY_CANDIDATE_COUNT","expected":9},
+    {"control":"OWNER_BATCH_PORT_DESIGN_COUNT","expected":3},
+    {"control":"FROZEN_AMPLIFICATION_BASELINES","expected":[150,501,501]},
+    {"control":"PRODUCTION_SQL_MAPPER_INDEX_DB_MIGRATION_CHANGE_COUNT","expected":0},
+    {"control":"G10A_SQL_FINDING_STATE","expected":"OPEN"},
+    {"control":"G10A_RES_FINDING_STATE","expected":"PREPARED"},
+    {"control":"EXTERNAL_EXECUTION_COUNT","expected":0}
+  ],
+  "runtimeAdmissionRequired": [
+    "SPONSOR_CONFIRMATION_OF_STARTUP_REVIEW",
+    "THREE_REPORT_CR_DECISION",
+    "RED_TESTS_EXECUTABLE_BEFORE_PRODUCTION_CHANGE",
+    "MYSQL84_CURRENT_VS_CANDIDATE_PLAN_COMPARISON",
+    "INDEX_CHANGE_ONLY_BY_INDEPENDENT_CR_AND_FORWARD_MIGRATION",
+    "FULL_CI_FROM_NEW_COMMIT"
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "1.0",
+  "runtimeAdmission": "NOT_AUTHORIZED",
+  "designs": [
+    {
+      "journey": "REPORT_EXPORT_50_STORES_3_TYPES",
+      "baselineQueryCount": 150,
+      "owner": "Reporting",
+      "candidatePort": "ReportingBatchReadPort",
+      "input": ["trustedTenantContext", "authorizedStoreIds", "reportTypes", "businessDateRange", "projectionVersion", "filtersSha256", "resumeCursor"],
+      "chunkRule": "STORE_IDS_MAX_50_AND_OUTPUT_ROWS_MAX_10000_PER_CHUNK",
+      "queryBudget": "AT_MOST_ONE_QUERY_PER_REPORT_TYPE_PER_STORE_CHUNK",
+      "targetAtFrozenCase": 3,
+      "output": "DETERMINISTIC_STREAM_CHUNK_WITH_SHA256_AND_NEXT_CURSOR",
+      "guards": ["DATA_SCOPE_RECHECK", "NO_FRONTEND_AMOUNT_RECALC", "NO_OWNER_PRIVATE_TABLE_ACCESS", "EXPORT_APPROVAL_AND_AUDIT"]
+    },
+    {
+      "journey": "PAYMENT_RECONCILIATION_500_REFERENCES",
+      "baselineQueryCount": 501,
+      "owner": "Payment",
+      "candidatePort": "PaymentFactBatchReadPort",
+      "input": ["trustedTenantContext", "providerCode", "utcHalfOpenRange", "references", "requestSha256"],
+      "chunkRule": "REFERENCE_IDS_MAX_200_PER_CHUNK",
+      "queryBudget": "ONE_DAY_RANGE_QUERY_PLUS_CEIL_REFERENCE_COUNT_DIV_200",
+      "targetAtFrozenCase": 4,
+      "output": "REFERENCE_TO_PROVIDER_INDEPENDENT_FACTS_WITH_STABLE_ORDER",
+      "guards": ["UNKNOWN_OBSERVE_ONLY", "NO_SECOND_CHARGE_OR_REFUND", "SAME_KEY_DIFFERENT_HASH_REJECT", "PAYMENT_OWNER_ONLY"]
+    },
+    {
+      "journey": "LOT_EXPIRY_500_CANDIDATES",
+      "baselineQueryCount": 501,
+      "owner": "InventoryWithCatalogReadPort",
+      "candidatePort": "LotExpiryPolicyBatchReadPort",
+      "input": ["trustedTenantContext", "storeId", "warehouseId", "businessDate", "lotCursor", "limit"],
+      "chunkRule": "LOT_CANDIDATES_MAX_500_AND_DISTINCT_POLICY_KEYS_MAX_500",
+      "queryBudget": "ONE_LOT_PAGE_QUERY_PLUS_ONE_CATALOG_POLICY_BATCH_QUERY",
+      "targetAtFrozenCase": 2,
+      "output": "LOT_EXPIRY_VIEW_WITH_FROZEN_POLICY_VERSION_AND_INPUT_CHECKPOINT",
+      "guards": ["NO_CROSS_OWNER_MAPPER", "STORE_TIMEZONE_FROZEN", "EXPIRED_FAIL_CLOSED", "INVENTORY_LEDGER_UNCHANGED"]
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "1.0",
+  "runtimeAdmission": "NOT_AUTHORIZED",
+  "items": [
+    {
+      "crId": "CR-T2G10A-013",
+      "queryId": "RPT-SALES",
+      "state": "PROPOSED_AWAITING_SPONSOR_RUNTIME_CONFIRMATION",
+      "currentOperation": "ReportingPersistenceMapper.querySales",
+      "currentApi": {"method":"GET","path":"/api/v1/reports/sales-daily","operationId":"querySalesDailyReport","response":"R<List<SalesDailyView>>"},
+      "baselineRows100k": 48000,
+      "baselinePlan": {"fullScan": true, "filesort": true},
+      "stableOrder": ["business_date", "store_id", "terminal_id", "cashier_id", "currency"],
+      "candidate": "VERSIONED_KEYSET_PAGE_AND_CONTROLLED_STREAM_EXPORT",
+      "legacyWindowRequired": true,
+      "runtimeChangeAuthorized": false
+    },
+    {
+      "crId": "CR-T2G10A-014",
+      "queryId": "RPT-INVENTORY",
+      "state": "PROPOSED_AWAITING_SPONSOR_RUNTIME_CONFIRMATION",
+      "currentOperation": "ReportingPersistenceMapper.queryInventoryCost",
+      "currentApi": {"method":"GET","path":"/api/v1/reports/inventory-cost-daily","operationId":"queryInventoryCostDailyReport","response":"R<List<InventoryCostDailyView>>"},
+      "baselineRows100k": 48000,
+      "baselinePlan": {"fullScan": true, "filesort": true},
+      "stableOrder": ["business_date", "store_id", "warehouse_id", "sku_id", "currency"],
+      "candidate": "VERSIONED_KEYSET_PAGE_AND_CONTROLLED_STREAM_EXPORT",
+      "legacyWindowRequired": true,
+      "runtimeChangeAuthorized": false
+    },
+    {
+      "crId": "CR-T2G10A-015",
+      "queryId": "RPT-PAY-REC",
+      "state": "PROPOSED_AWAITING_SPONSOR_RUNTIME_CONFIRMATION",
+      "currentOperation": "PaymentReconciliationMapper.query",
+      "currentApi": {"method":"GET","path":"/api/v1/reports/payment-reconciliation","operationId":"queryPaymentReconciliation","response":"R<List<ReconciliationView>>"},
+      "baselineRows100k": 48000,
+      "baselinePlan": {"fullScan": false, "filesort": true},
+      "stableOrder": ["business_date", "reconciliation_id"],
+      "candidate": "VERSIONED_KEYSET_PAGE_AND_CONTROLLED_STREAM_EXPORT",
+      "legacyWindowRequired": true,
+      "runtimeChangeAuthorized": false
+    }
+  ]
+}
