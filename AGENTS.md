@@ -1345,6 +1345,23 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
   `idx_rpt_inventory_keyset(tenant_id,projection_version,business_date,store_id,warehouse_id,sku_id,currency)`；
   当前未获索引或迁移授权，V89、DDL 和索引变化必须为 0，等待项目发起人再次确认。
 
+## 4.88 当前 T2 Gate 10A-R2-R2-R2-R2 RPT-INVENTORY V89 索引独立整改条件准入
+
+- 项目发起人已于 2026-08-27 接受 RPT-INVENTORY
+  `CONDITIONAL_NO_GO_PENDING_INDEX_CR`，并确认 `CR-T2G10A-024 CONDITIONAL GO`；授权从
+  `30edba224d9acf35f64d81c042b5153e08e2eb66` 建立
+  `t2/gate10a-r2-r2-r2-r2-rpt-inventory-index`。
+- 本批只允许唯一前向迁移 `V202608260089__reporting_inventory_keyset_index.sql` 为
+  `rpt_inventory_cost_daily` 新增
+  `idx_rpt_inventory_keyset(tenant_id,projection_version,business_date,store_id,warehouse_id,sku_id,currency)`；
+  不得删除或调整既有索引。
+- 必须先固化 V89 缺席时的失败回归，再实施迁移；不得修改 V1—V88、SQL/Mapper、API、事件、
+  库存、成本、租户或同步语义。
+- 必须在 MySQL 8.4.11 验证空库到 V89、V88 到 V89、重复执行、Flyway validate、10k/100k
+  无全扫/无 filesort、查询数预算、0 重复/缺失/越权和十二项数量/成本守恒。
+- `G10A-SQL-P2-001` 继续 `OPEN`，`G10A-RES-P2-001` 继续 `PREPARED`；RPT-PAY-REC、RES、R3、
+  完整 Alpha、生产发布和所有外部执行继续禁止。
+
 ## 5. 工程与测试规则
 
 - 服务端采用 RuoYi-Vue-Plus 模块化单体，不得把领域逻辑写入 Controller、通用工具类或框架系统模块。

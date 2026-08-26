@@ -2,7 +2,7 @@
 
 ## 1. 当前状态
 
-- 状态：`PROPOSED_AWAITING_SPONSOR_CONFIRMATION`
+- 状态：`APPROVED_INDEX_RUNTIME_IN_PROGRESS`
 - Finding：`G10A-SQL-P2-001 = OPEN`
 - 资源 Finding：`G10A-RES-P2-001 = PREPARED`
 - 依据：GitHub Actions [Run 32990329996](https://github.com/eiven-xxw/jshPOS/actions/runs/32990329996)
@@ -12,6 +12,9 @@
   租户或同步语义。
 - 当前未创建索引、迁移或数据库对象；运行时整改停在
   `CONDITIONAL_NO_GO_PENDING_INDEX_CR`。
+- 项目发起人确认：2026-08-27 `CONDITIONAL GO`；只授权从
+  `30edba224d9acf35f64d81c042b5153e08e2eb66` 建立
+  `t2/gate10a-r2-r2-r2-r2-rpt-inventory-index`，先红后绿实施唯一 V89。
 
 ## 2. 可复现实测结论
 

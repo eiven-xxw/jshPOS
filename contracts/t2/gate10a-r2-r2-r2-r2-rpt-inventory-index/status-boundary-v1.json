@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "1.0",
+  "states": {
+    "G10A-SQL-P2-001": "OPEN",
+    "G10A-RES-P2-001": "PREPARED",
+    "T2-RPT-001": "ACCEPTED",
+    "T2-API-001": "ACCEPTED",
+    "T2-PAY-002": "BLOCKED",
+    "T2-HWD-001": "BLOCKED",
+    "T2-PRN-001": "BLOCKED",
+    "T2-PAR-001": "BLOCKED",
+    "T2-UAT-001": "DRAFT",
+    "T2-REL-001": "DRAFT",
+    "T2-LIC-001": "DEFERRED",
+    "T2-JSH-001": "DEFERRED"
+  },
+  "externalExecution": 0,
+  "migrationAuthorization": "V202608260089_ONLY",
+  "indexAuthorization": "idx_rpt_inventory_keyset_ONLY"
+}
