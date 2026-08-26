@@ -6,12 +6,14 @@
 |---|---|---|---|
 | 静态范围 | 分支祖先、允许文件、19类预算、Owner依赖 | 无越界、无环、预算全通过 | PASS |
 | 行为金标 | 公开 API、错误码、事务、幂等、审计、Outbox、守恒 | 摘要与基线一致 | PASS |
-| Server | 35模块 Maven `clean verify`、聚合 SBOM | 测试全绿、JAR/SBOM可生成 | 待 GitHub 同窗确认 |
-| Web | 构建、ESLint、类型、组件测试、许可证 | 全绿 | 待 GitHub 同窗确认 |
-| Flutter | Linux/Windows 格式、分析、测试、覆盖率 | 双平台全绿 | 待 GitHub 同窗确认 |
-| Android/Kotlin | 单测与 Debug APK | 全绿、APK可构建 | 待 GitHub 同窗确认 |
-| 安全供应链 | 漏洞、许可证、Secret、IaC | 既有阈值不退化 | 待 GitHub 同窗确认 |
-| Gate 9C 回归 | 88需求、300 API、26页面、22 Owner | 当前封板基线不退化 | 待 GitHub 同窗确认 |
+| Server | 35模块 Maven `clean verify`、聚合 SBOM | 测试全绿、JAR/SBOM可生成 | PASS |
+| Web | 构建、ESLint、类型、组件测试、许可证 | 全绿 | PASS |
+| Flutter | Linux/Windows 格式、分析、测试、覆盖率 | 双平台全绿 | PASS |
+| Android/Kotlin | 单测与 Debug APK | 全绿、APK可构建 | PASS |
+| 安全供应链 | 漏洞、许可证、Secret、IaC | 既有阈值不退化 | PASS |
+| Gate 9C 回归 | 88需求、300 API、26页面、22 Owner | 当前封板基线不退化 | PASS |
+
+首轮同窗证据：GitHub Run `32954582543`，提交 `b1345e138554fe3690155c5a15ee50f2f4845322`，10 个作业节点全部成功，自动重跑为 0。
 
 ## 2. 固定失败 Seed
 
