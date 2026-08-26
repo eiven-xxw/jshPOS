@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0",
+  "startCommit": "cdf0d3a5e60e679b483e1ea89b046958e4877c22",
+  "policy": "KEEP_APPLICATION_DEPENDENCIES_AND_LOCKFILES_UNCHANGED_IN_R1",
+  "stages": [
+    {"order": 1, "id": "MAVEN", "state": "PENDING_CLEAN_RUN", "decision": "KEEP_CURRENT", "rollback": "restore Gate10A-Prep manifest digest"},
+    {"order": 2, "id": "PNPM", "state": "PENDING_CLEAN_RUN", "decision": "KEEP_CURRENT", "rollback": "restore Gate10A-Prep package and lock digests"},
+    {"order": 3, "id": "FLUTTER_PUB", "state": "PENDING_CLEAN_RUN", "decision": "KEEP_CURRENT", "rollback": "restore both Gate10A-Prep pubspec and lock digests"},
+    {"order": 4, "id": "KOTLIN_GRADLE", "state": "PENDING_CLEAN_RUN", "decision": "KEEP_CURRENT", "rollback": "restore Gate10A-Prep plugin and wrapper digests"}
+  ],
+  "inputSets": {
+    "MAVEN": {"patterns": ["server/**/pom.xml", "server/.mvn/wrapper/maven-wrapper.properties", "server/mvnw", "server/mvnw.cmd"], "fileCount": 60, "aggregateSha256": "df274fbbb09d8c4c1c6d267295113b4d040b26387717d507a8e7e7f02a7ceefa"},
+    "PNPM": {"patterns": ["admin-web/package.json", "admin-web/pnpm-lock.yaml", "admin-web/pnpm-workspace.yaml", "admin-web/.npmrc"], "fileCount": 2, "aggregateSha256": "c91c12c9587e0d778abd9543f3b3b87d85141042cf873e2baa70af31c4be6ec2"},
+    "FLUTTER_PUB": {"patterns": ["pos-flutter/pubspec.yaml", "pos-flutter/pubspec.lock", "packages/pos_device_adapter/pubspec.yaml", "packages/pos_device_adapter/pubspec.lock", "packages/pos_device_adapter/example/pubspec.yaml", "packages/pos_device_adapter/example/pubspec.lock"], "fileCount": 6, "aggregateSha256": "173b0a87fa5ad220783d048dd5b2fe21f387ed5124e44aa4a5e3b733abedce62"},
+    "KOTLIN_GRADLE": {"patterns": ["pos-flutter/android/**/*.gradle.kts", "pos-flutter/android/**/gradle-wrapper.properties", "packages/pos_device_adapter/android/**/*.gradle.kts", "packages/pos_device_adapter/example/android/**/*.gradle.kts", "packages/pos_device_adapter/example/android/**/gradle-wrapper.properties"], "fileCount": 10, "aggregateSha256": "626856f407662c3572c497aa946a6ddc5f3b5a18e80c0c4d80a6151369353327"}
+  },
+  "manifestDigests": {
+    "server/pom.xml": "5ee6df310ce599accb8bcfc9abbd707c092407ea823084b2d5bb51b67245396d",
+    "server/.mvn/wrapper/maven-wrapper.properties": "56412c498e10674e1ff55b3447a3ad946f70bda09f879fc505f1042f72bfcc72",
+    "admin-web/package.json": "7a4ac9563593cd08b4ebc54430c6bdd2dd1441b872865990ee35dae7d3ee18eb",
+    "admin-web/pnpm-lock.yaml": "80ed001dd5fe1fbc2c6c83f5468a3336bbe8f02b73c966e22e39c513c2d01fa0",
+    "pos-flutter/pubspec.yaml": "dee1d2787763fefd2550a105c8201880d1b5ecaebf36d2acadaacdea92e32b17",
+    "pos-flutter/pubspec.lock": "ae5224669f4e5f83e9f3878f365e1e05fd076c3320bc9377d3d8b4fdad68b8be",
+    "packages/pos_device_adapter/pubspec.yaml": "374654aab258fcf989d49099691131c238b713813d5be2a6da59fa8f381885a9",
+    "packages/pos_device_adapter/pubspec.lock": "bc3f8cd875a79138e7a838e2cd673d2dce5a73f3425d97458077764e98755928",
+    "pos-flutter/android/settings.gradle.kts": "092ba880c8d4a07591aafc082f45deedc9afcf60c113a4bb3d13cbe1a1fce9de",
+    "pos-flutter/android/gradle/wrapper/gradle-wrapper.properties": "594a00250ef7a36609a01f3263bf5ed63963afaf9ca9f82f2cd1de0f6f056383",
+    "packages/pos_device_adapter/android/build.gradle.kts": "ecaebb3ba700cf6811e56b1505f0f6fefed536c9332146859235f7427b923590",
+    "packages/pos_device_adapter/example/android/gradle/wrapper/gradle-wrapper.properties": "594a00250ef7a36609a01f3263bf5ed63963afaf9ca9f82f2cd1de0f6f056383"
+  }
+}

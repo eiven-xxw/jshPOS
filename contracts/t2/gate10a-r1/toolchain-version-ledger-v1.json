@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "1.0",
+  "policy": "EXACT_WHERE_REPOSITORY_CONTROLS_BINARY_MAJOR_RUNTIME_RECORDED_BY_CLEAN_RUN",
+  "tools": [
+    {"id": "maven", "requested": "3.9.9", "source": "server/.mvn/wrapper/maven-wrapper.properties", "verification": "mvnw -version", "rollback": "restore frozen wrapper input set"},
+    {"id": "jdk", "requested": "21", "distribution": "temurin", "verification": "java -version captured per clean run", "rollback": "restore Action ledger and java-version input"},
+    {"id": "cyclonedx-maven-plugin", "requested": "2.9.1", "verification": "aggregate BOM generated", "rollback": "restore existing workflow command"},
+    {"id": "node", "requested": "24", "verification": "node --version captured per clean run", "rollback": "restore existing Node 24 compatibility input"},
+    {"id": "pnpm", "requested": "10.33.0", "source": "admin-web/package.json packageManager", "verification": "pnpm --version", "rollback": "restore existing workflow input"},
+    {"id": "flutter", "requested": "3.47.0", "channel": "stable", "verification": "flutter --version --machine", "rollback": "restore existing workflow input"},
+    {"id": "gradle", "requested": "9.3.1", "source": "Gradle wrapper properties", "verification": "gradlew --version", "rollback": "restore frozen Gradle input set"},
+    {"id": "android-gradle-plugin", "requested": "9.1.0", "source": "Android settings.gradle.kts", "verification": "debug unit tests and APK build", "rollback": "restore frozen Gradle input set"},
+    {"id": "kotlin", "requested": "2.4.0", "source": "Android settings.gradle.kts", "verification": "debug unit tests and plugin build", "rollback": "restore frozen Gradle input set"},
+    {"id": "trivy", "requested": "0.72.0", "archiveSha256": "bbb64b9695866ce4a7a8f5c9592002c5961cab378577fa3f8a040df362b9b2ea", "verification": "download digest and version", "rollback": "restore existing verified binary command"}
+  ]
+}

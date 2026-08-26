@@ -1110,6 +1110,32 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
   继续 `DRAFT`；`T2-LIC-001/JSH-001` 继续 `DEFERRED`。Provider 网络、真实资金、
   设备/外设命令、伙伴现场、完整 Alpha、生产部署和商业声明必须为 0。
 
+## 4.78 当前 T2 Gate 10A-R1 CI、依赖与供应链治理条件准入
+
+- 项目发起人已于 2026-08-26 接受 Gate 10A-Prep `CONDITIONAL PASS`，授权从准备阶段
+  最终提交 `cdf0d3a5e60e679b483e1ea89b046958e4877c22` 建立
+  `t2/gate10a-r1-ci-supply-chain`，只允许验证并关闭 `G10A-CI-P2-001`、
+  `G10A-DEP-P2-001`、`G10A-SUP-P2-001`。
+- Gate 9C annotated tag `t2-internal-product-completeness-seal-2026-08-26` 已按项目发起人
+  授权创建并推送，必须保持 annotated、不可移动且 peeled commit 固定为
+  `9ca6778f315e4d702af704be3c0bad2de3d2e8bb`。
+- R1 必须按 `Action Node24 → Maven → pnpm → Flutter Pub → Kotlin/Gradle → 完整 CI`
+  严格串行。每个生态先冻结清单、失败回归、漏洞/许可证/兼容结论和回退方案；前项未验证时，
+  后项不得铺开。
+- 第三方 GitHub Action 必须由单一机器版本账管理，使用精确 40 位提交 SHA 和已核验版本说明；
+  Node Action 必须声明 Node 24 运行时。历史 Run 与历史报告不可改写，历史工作流定义只能为
+  供应链生命周期做等价维护，不得删减原门禁或伪造历史执行结果。
+- 本批默认保持 Maven、pnpm、Flutter Pub、Kotlin/Gradle 的应用依赖清单与锁文件不变；候选升级
+  只形成干净执行器快照、风险和后续独立变更建议。未经单项证据与回退批准，不得全量刷新 BOM、
+  lockfile、Gradle wrapper 或框架版本。
+- 禁止新增业务能力或 Requirement ID，禁止改变资金、库存、租户、支付、同步或迁移语义，
+  禁止修改已发布 MySQL/SQLite 迁移。若供应链整改需要越过这些边界，必须停止并提交独立 CR。
+- `T2-PAY-002/HWD-001/PRN-001/PAR-001` 继续 `BLOCKED`；`T2-UAT-001/REL-001`
+  继续 `DRAFT`；`T2-LIC-001/JSH-001` 继续 `DEFERRED`。Provider 网络、真实资金、
+  设备/外设命令、伙伴现场、完整 Alpha、生产部署和商业声明必须为 0。
+- R1 完成后只能把三项 Finding 更新为 `VERIFIED_AWAITING_SPONSOR_CONFIRMATION` 并提交独立
+  周门禁报告；未经项目发起人确认不得关闭 Finding 或自动进入 R2。
+
 ## 5. 工程与测试规则
 
 - 服务端采用 RuoYi-Vue-Plus 模块化单体，不得把领域逻辑写入 Controller、通用工具类或框架系统模块。

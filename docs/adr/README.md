@@ -82,4 +82,4 @@ ADR 一经接受不得删除或静默改写。需要改变决策时，新建 ADR
 | ADR-070 | [G9A-R2 商业默认装配与非 V1 平台能力隔离](ADR-070-g9a-r2-commercial-assembly-isolation.md) | Accepted |
 | ADR-071 | [G9A-R3 页面状态、权限与可恢复交互边界](ADR-071-g9a-r3-page-state-permission-recovery.md) | Accepted |
 | ADR-072 | [G9A-R4 同窗正式运行栈跨 Owner E2E](ADR-072-g9a-r4-formal-runtime-cross-owner-e2e.md) | Accepted |
-| ADR-073 | [Gate 10A 内部质量加固的串行批次与语义停止线](ADR-073-gate10a-internal-quality-hardening-sequence.md) | Proposed |
+| ADR-073 | [Gate 10A 内部质量加固的串行批次与语义停止线](ADR-073-gate10a-internal-quality-hardening-sequence.md) | Accepted |

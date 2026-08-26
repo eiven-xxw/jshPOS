@@ -1,0 +1,290 @@
+name: T2 Gate 10A R1 CI Dependency Supply Chain
+
+on:
+  push:
+    branches: ["t2/gate10a-r1-ci-supply-chain"]
+  pull_request:
+    paths:
+      - ".github/workflows/**"
+      - "AGENTS.md"
+      - "contracts/t2/gate10a-r1/**"
+      - "docs/adr/ADR-073-*"
+      - "docs/governance/**"
+      - "docs/t2-gate10a-r1/**"
+      - "scripts/*gate10a_r1*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gate10a-r1-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  governance-ubuntu:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { fetch-depth: 0, fetch-tags: true }
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with: { python-version: "3.12" }
+      - name: Validate R1 admission Action ledger tag and semantic stop line
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/t2/gate10a-r1/governance-ubuntu
+          python scripts/check_t0_structure.py
+          python scripts/check_rtm.py
+          python scripts/check_contracts.py
+          python -m py_compile scripts/check_t2_gate10a_r1.py scripts/snapshot_t2_gate10a_r1.py scripts/build_t2_gate10a_r1_evidence.py
+          python scripts/check_t2_gate10a_r1.py | tee artifacts/t2/gate10a-r1/governance-ubuntu/scope.txt
+          git diff --check
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with: { name: t2-gate10a-r1-governance-ubuntu, path: artifacts/t2/gate10a-r1/governance-ubuntu, if-no-files-found: error, retention-days: 30 }
+
+  governance-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { fetch-depth: 0, fetch-tags: true }
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with: { python-version: "3.12" }
+      - name: Validate R1 UTF-8 and ledger determinism
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/t2/gate10a-r1/governance-windows
+          python scripts/check_t0_structure.py
+          python scripts/check_rtm.py
+          python scripts/check_contracts.py
+          python -m py_compile scripts/check_t2_gate10a_r1.py scripts/snapshot_t2_gate10a_r1.py scripts/build_t2_gate10a_r1_evidence.py
+          python scripts/check_t2_gate10a_r1.py | tee artifacts/t2/gate10a-r1/governance-windows/scope.txt
+          git diff --check
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with: { name: t2-gate10a-r1-governance-windows, path: artifacts/t2/gate10a-r1/governance-windows, if-no-files-found: error, retention-days: 30 }
+
+  maven:
+    needs: [governance-ubuntu, governance-windows]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { fetch-depth: 0, fetch-tags: true }
+      - uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
+        with: { distribution: temurin, java-version: "21", cache: maven }
+      - name: Rebuild Server and freeze Maven dependency candidates
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/t2/gate10a-r1/maven
+          java -version 2> artifacts/t2/gate10a-r1/maven/java-version.txt
+          ./server/mvnw -f server/pom.xml -version | tee artifacts/t2/gate10a-r1/maven/maven-version.txt
+          ./server/mvnw -f server/pom.xml clean verify -DskipTests=false
+          ./server/mvnw -f server/pom.xml org.cyclonedx:cyclonedx-maven-plugin:2.9.1:makeAggregateBom
+          ./server/mvnw -f server/pom.xml dependency:tree -DoutputFile=../artifacts/t2/gate10a-r1/maven/dependency-tree.txt
+          ./server/mvnw -f server/pom.xml org.codehaus.mojo:versions-maven-plugin:2.19.1:display-dependency-updates -DallowSnapshots=false | tee artifacts/t2/gate10a-r1/maven/dependency-updates.log
+          ./server/mvnw -f server/pom.xml org.codehaus.mojo:versions-maven-plugin:2.19.1:display-plugin-updates -DallowSnapshots=false | tee artifacts/t2/gate10a-r1/maven/plugin-updates.log
+          cp server/target/bom.json server/target/bom.xml artifacts/t2/gate10a-r1/maven/
+          python scripts/snapshot_t2_gate10a_r1.py --ecosystem MAVEN --output artifacts/t2/gate10a-r1/maven/snapshot.json --tool-version "$(./server/mvnw -f server/pom.xml -version | head -n 1)" --evidence artifacts/t2/gate10a-r1/maven/dependency-tree.txt --evidence artifacts/t2/gate10a-r1/maven/dependency-updates.log --evidence artifacts/t2/gate10a-r1/maven/plugin-updates.log --evidence artifacts/t2/gate10a-r1/maven/bom.json
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with: { name: t2-gate10a-r1-maven, path: artifacts/t2/gate10a-r1/maven, if-no-files-found: error, retention-days: 30 }
+
+  pnpm:
+    needs: maven
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { fetch-depth: 0, fetch-tags: true }
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+        with: { version: 10.33.0 }
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with: { node-version: "24", cache: pnpm, cache-dependency-path: admin-web/pnpm-lock.yaml }
+      - name: Rebuild Web and freeze pnpm dependency candidates
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/t2/gate10a-r1/pnpm
+          node --version | tee artifacts/t2/gate10a-r1/pnpm/node-version.txt
+          pnpm --version | tee artifacts/t2/gate10a-r1/pnpm/pnpm-version.txt
+          cd admin-web
+          pnpm install --frozen-lockfile
+          set +e
+          pnpm outdated --format json > ../artifacts/t2/gate10a-r1/pnpm/outdated.json
+          outdated_status=$?
+          set -e
+          if [ "$outdated_status" -gt 1 ]; then exit "$outdated_status"; fi
+          test -s ../artifacts/t2/gate10a-r1/pnpm/outdated.json || echo '{}' > ../artifacts/t2/gate10a-r1/pnpm/outdated.json
+          pnpm audit --registry https://registry.npmjs.org --audit-level high --json > ../artifacts/t2/gate10a-r1/pnpm/audit.json
+          pnpm licenses list --json > ../artifacts/t2/gate10a-r1/pnpm/licenses.json
+          pnpm list --depth Infinity --json > ../artifacts/t2/gate10a-r1/pnpm/dependency-tree.json
+          pnpm build:prod
+          pnpm lint:eslint
+          pnpm typecheck
+          pnpm test:unit:ci
+          cp gate0-vitest-junit.xml ../artifacts/t2/gate10a-r1/pnpm/
+          cd ..
+          python scripts/snapshot_t2_gate10a_r1.py --ecosystem PNPM --output artifacts/t2/gate10a-r1/pnpm/snapshot.json --tool-version "node=$(node --version);pnpm=$(pnpm --version)" --evidence artifacts/t2/gate10a-r1/pnpm/outdated.json --evidence artifacts/t2/gate10a-r1/pnpm/audit.json --evidence artifacts/t2/gate10a-r1/pnpm/licenses.json --evidence artifacts/t2/gate10a-r1/pnpm/gate0-vitest-junit.xml
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with: { name: t2-gate10a-r1-pnpm, path: artifacts/t2/gate10a-r1/pnpm, if-no-files-found: error, retention-days: 30 }
+
+  flutter:
+    needs: pnpm
+    strategy:
+      fail-fast: false
+      matrix: { os: [ubuntu-latest, windows-latest] }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { fetch-depth: 0, fetch-tags: true }
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with: { flutter-version: "3.47.0", channel: stable, cache: true }
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with: { python-version: "3.12" }
+      - name: Rebuild POS packages and freeze Pub candidates
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="artifacts/t2/gate10a-r1/flutter-${{ matrix.os }}"
+          mkdir -p "$out"
+          flutter --version --machine > "$out/flutter-version.json"
+          pushd pos-flutter
+          flutter pub get --enforce-lockfile
+          flutter pub outdated --json > "../$out/pos-outdated.json"
+          flutter pub deps --json > "../$out/pos-dependencies.json"
+          dart format --output=none --set-exit-if-changed lib test
+          flutter analyze --fatal-infos
+          flutter test --machine --coverage 2>&1 | tee "../$out/pos-tests.jsonl"
+          python ../scripts/build_flutter_supply_chain.py --deps "../$out/pos-dependencies.json" --package-config .dart_tool/package_config.json --output-dir "../$out/pos-supply-chain"
+          popd
+          pushd packages/pos_device_adapter
+          flutter pub get --enforce-lockfile
+          flutter pub outdated --json > "../../$out/adapter-outdated.json"
+          flutter pub deps --json > "../../$out/adapter-dependencies.json"
+          dart format --output=none --set-exit-if-changed lib test
+          flutter analyze --fatal-infos
+          flutter test --machine 2>&1 | tee "../../$out/adapter-tests.jsonl"
+          python ../../scripts/build_flutter_supply_chain.py --deps "../../$out/adapter-dependencies.json" --package-config .dart_tool/package_config.json --output-dir "../../$out/adapter-supply-chain"
+          popd
+          python scripts/snapshot_t2_gate10a_r1.py --ecosystem FLUTTER_PUB --output "$out/snapshot.json" --tool-version "$(flutter --version | head -n 1)" --evidence "$out/pos-outdated.json" --evidence "$out/adapter-outdated.json" --evidence "$out/pos-tests.jsonl" --evidence "$out/adapter-tests.jsonl"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with: { name: "t2-gate10a-r1-flutter-${{ matrix.os }}", path: "artifacts/t2/gate10a-r1/flutter-${{ matrix.os }}", if-no-files-found: error, retention-days: 30 }
+
+  kotlin-android:
+    needs: flutter
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { fetch-depth: 0, fetch-tags: true }
+      - uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
+        with: { distribution: temurin, java-version: "21", cache: gradle }
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with: { flutter-version: "3.47.0", channel: stable, cache: true }
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with: { python-version: "3.12" }
+      - name: Rebuild Kotlin Android plugin and debug APK
+        run: |
+          set -euo pipefail
+          out="artifacts/t2/gate10a-r1/kotlin-android"
+          mkdir -p "$out"
+          pushd pos-flutter
+          flutter pub get --enforce-lockfile
+          popd
+          pushd packages/pos_device_adapter
+          flutter pub get --enforce-lockfile
+          popd
+          pushd packages/pos_device_adapter/example
+          flutter pub get --enforce-lockfile
+          popd
+          chmod +x pos-flutter/android/gradlew packages/pos_device_adapter/example/android/gradlew
+          pos-flutter/android/gradlew -p pos-flutter/android --no-daemon --version | tee "$out/gradle-version.txt"
+          pos-flutter/android/gradlew -p pos-flutter/android --no-daemon dependencies > "$out/pos-gradle-dependencies.txt"
+          pos-flutter/android/gradlew -p pos-flutter/android --no-daemon testDebugUnitTest
+          packages/pos_device_adapter/example/android/gradlew -p packages/pos_device_adapter/example/android --no-daemon dependencies > "$out/adapter-gradle-dependencies.txt"
+          packages/pos_device_adapter/example/android/gradlew -p packages/pos_device_adapter/example/android --no-daemon testDebugUnitTest assembleDebug
+          pushd pos-flutter
+          flutter build apk --debug
+          popd
+          cp pos-flutter/build/app/outputs/flutter-apk/app-debug.apk "$out/jshpos-internal-debug.apk"
+          python scripts/snapshot_t2_gate10a_r1.py --ecosystem KOTLIN_GRADLE --output "$out/snapshot.json" --tool-version "$(grep distributionUrl pos-flutter/android/gradle/wrapper/gradle-wrapper.properties)" --evidence "$out/gradle-version.txt" --evidence "$out/pos-gradle-dependencies.txt" --evidence "$out/adapter-gradle-dependencies.txt" --evidence "$out/jshpos-internal-debug.apk"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with: { name: t2-gate10a-r1-kotlin-android, path: artifacts/t2/gate10a-r1/kotlin-android, if-no-files-found: error, retention-days: 30 }
+
+  security:
+    needs: kotlin-android
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { fetch-depth: 0, fetch-tags: true }
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with: { python-version: "3.12" }
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with: { name: t2-gate10a-r1-maven, path: downloaded/maven }
+      - name: Run unchanged high critical license Secret and IaC gates
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/t2/gate10a-r1/security
+          curl -fsSL -o /tmp/trivy.tar.gz https://github.com/aquasecurity/trivy/releases/download/v0.72.0/trivy_0.72.0_Linux-64bit.tar.gz
+          echo "bbb64b9695866ce4a7a8f5c9592002c5961cab378577fa3f8a040df362b9b2ea  /tmp/trivy.tar.gz" | sha256sum --check
+          tar -xzf /tmp/trivy.tar.gz -C /tmp trivy
+          test "$(/tmp/trivy --version | awk '/Version:/ {print $2}')" = "0.72.0"
+          cp downloaded/maven/bom.json artifacts/t2/gate10a-r1/security/server-bom.json
+          /tmp/trivy sbom --skip-version-check --db-repository ghcr.io/aquasecurity/trivy-db:2 --java-db-repository ghcr.io/aquasecurity/trivy-java-db:1 --scanners vuln --severity HIGH,CRITICAL --exit-code 1 artifacts/t2/gate10a-r1/security/server-bom.json
+          python scripts/check_sbom_licenses.py artifacts/t2/gate10a-r1/security/server-bom.json docs/compliance/reviewed-license-allowlist.json
+          ignored_licenses="$(python -c 'import json; print(",".join(json.load(open("docs/compliance/reviewed-license-allowlist.json", encoding="utf-8"))["trivy_ignored_licenses"]))')"
+          /tmp/trivy sbom --skip-version-check --scanners license --severity HIGH,CRITICAL --exit-code 1 --ignored-licenses "$ignored_licenses" artifacts/t2/gate10a-r1/security/server-bom.json
+          /tmp/trivy fs --skip-version-check --db-repository ghcr.io/aquasecurity/trivy-db:2 --java-db-repository ghcr.io/aquasecurity/trivy-java-db:1 --scanners vuln --severity HIGH,CRITICAL --exit-code 1 --skip-dirs .git --skip-dirs server --skip-dirs admin-web/node_modules .
+          /tmp/trivy fs --skip-version-check --offline-scan --scanners secret --severity HIGH,CRITICAL --exit-code 1 --skip-dirs .git .
+          /tmp/trivy config --skip-version-check --checks-bundle-repository ghcr.io/aquasecurity/trivy-checks:2 --severity HIGH,CRITICAL --exit-code 1 .
+          /tmp/trivy --version > artifacts/t2/gate10a-r1/security/trivy-version.txt
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with: { name: t2-gate10a-r1-security, path: artifacts/t2/gate10a-r1/security, if-no-files-found: error, retention-days: 30 }
+
+  gate9c-regression:
+    needs: security
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { fetch-depth: 0, fetch-tags: true }
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with: { python-version: "3.12" }
+      - name: Re-run Gate9C 88 requirements 300 API 26 pages 22 Owner baseline
+        run: |
+          set -euo pipefail
+          out="artifacts/t2/gate10a-r1/gate9c-regression"
+          mkdir -p "$out/gate9c"
+          python scripts/check_t2_gate10a_r1.py | tee "$out/r1-scope.txt"
+          python scripts/audit_t2_gate9c_product_completeness.py --output-dir "$out/gate9c"
+          python scripts/audit_t2_g9a_r2_convergence.py --output "$out/r2-assembly.json"
+          python scripts/audit_t2_g9a_r3d_joint_pages.py --output-dir "$out/r3d-pages"
+          python scripts/audit_t2_g9a_r4_formal_stack.py --output "$out/r4-stack.json" --owner-csv "$out/r4-owners.csv"
+          python scripts/audit_t2_gate6g_api.py --output "$out/api-regression.json"
+          git diff --check
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with: { name: t2-gate10a-r1-gate9c-regression, path: artifacts/t2/gate10a-r1/gate9c-regression, if-no-files-found: error, retention-days: 30 }
+
+  evidence:
+    needs: [governance-ubuntu, governance-windows, maven, pnpm, flutter, kotlin-android, security, gate9c-regression]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with: { python-version: "3.12" }
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with: { pattern: t2-gate10a-r1-*, path: downloaded, merge-multiple: false }
+      - name: Build R1 evidence index
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/t2/gate10a-r1/bundle artifacts/t2/gate10a-r1/final
+          for pair in \
+            "governance-ubuntu:t2-gate10a-r1-governance-ubuntu" \
+            "governance-windows:t2-gate10a-r1-governance-windows" \
+            "maven:t2-gate10a-r1-maven" \
+            "pnpm:t2-gate10a-r1-pnpm" \
+            "flutter-ubuntu:t2-gate10a-r1-flutter-ubuntu-latest" \
+            "flutter-windows:t2-gate10a-r1-flutter-windows-latest" \
+            "kotlin-android:t2-gate10a-r1-kotlin-android" \
+            "security:t2-gate10a-r1-security" \
+            "gate9c-regression:t2-gate10a-r1-gate9c-regression"; do
+            producer="${pair%%:*}"; artifact="${pair#*:}"
+            mkdir -p "artifacts/t2/gate10a-r1/bundle/$producer"
+            cp -R "downloaded/$artifact/." "artifacts/t2/gate10a-r1/bundle/$producer/"
+          done
+          python scripts/build_t2_gate10a_r1_evidence.py --bundle-dir artifacts/t2/gate10a-r1/bundle --output artifacts/t2/gate10a-r1/final/evidence-index.json --commit "$GITHUB_SHA"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with: { name: t2-gate10a-r1-evidence-index, path: artifacts/t2/gate10a-r1/final, if-no-files-found: error, retention-days: 90 }

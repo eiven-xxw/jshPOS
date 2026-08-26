@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "1.0",
+  "gate": "T2_GATE_10A_R1",
+  "branch": "t2/gate10a-r1-ci-supply-chain",
+  "startCommit": "cdf0d3a5e60e679b483e1ea89b046958e4877c22",
+  "sealedTag": "t2-internal-product-completeness-seal-2026-08-26",
+  "sealedCommit": "9ca6778f315e4d702af704be3c0bad2de3d2e8bb",
+  "adr": "ADR-073",
+  "findings": ["G10A-CI-P2-001", "G10A-DEP-P2-001", "G10A-SUP-P2-001"],
+  "order": ["ACTION_NODE24", "MAVEN", "PNPM", "FLUTTER_PUB", "KOTLIN_GRADLE", "FULL_CI"],
+  "applicationDependencyChangesAllowedByDefault": false,
+  "publishedMigrationChangesAllowed": false,
+  "newBusinessCapabilities": 0,
+  "externalStates": {
+    "T2-PAY-002": "BLOCKED",
+    "T2-HWD-001": "BLOCKED",
+    "T2-PRN-001": "BLOCKED",
+    "T2-PAR-001": "BLOCKED",
+    "T2-UAT-001": "DRAFT",
+    "T2-REL-001": "DRAFT",
+    "T2-LIC-001": "DEFERRED",
+    "T2-JSH-001": "DEFERRED"
+  },
+  "externalExecution": {
+    "providerNetwork": 0,
+    "realFunds": 0,
+    "realDeviceCommands": 0,
+    "realPeripheralCommands": 0,
+    "partnerFieldExecution": 0,
+    "fullAlpha": 0,
+    "productionDeployment": 0
+  }
+}

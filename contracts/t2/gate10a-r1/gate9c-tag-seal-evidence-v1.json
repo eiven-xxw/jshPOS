@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1.0",
+  "tagName": "t2-internal-product-completeness-seal-2026-08-26",
+  "tagType": "annotated",
+  "tagObject": "e091439de230099f057014810e686baa704112be",
+  "peeledCommit": "9ca6778f315e4d702af704be3c0bad2de3d2e8bb",
+  "tagger": "Administrator <Administrator@qq.com>",
+  "taggerTimezone": "+0800",
+  "remote": "https://github.com/eiven-xxw/jshPOS.git",
+  "remoteVisible": true,
+  "immutable": true,
+  "messageSha256": "24d17b2dd68b4304f51b8225d42ff31cbeb285337c3a416f7b40356a76af796c",
+  "evidenceBoundary": "INTERNAL_PRODUCT_COMPLETENESS_SEAL"
+}
