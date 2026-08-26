@@ -118,9 +118,12 @@ jobs:
           set -euo pipefail
           out=artifacts/t2/gate10a-r2-r2-r1-sql/mysql84-baseline
           mkdir -p "$out/sql-executable" "$out/test-reports"
-          ./server/mvnw -f server/pom.xml -pl ruoyi-modules/jshpos-release -am test \
+          if ! ./server/mvnw -f server/pom.xml -pl ruoyi-modules/jshpos-release -am test \
             -Dtest=SqlExecutableBaselineMySqlIT -Dsurefire.failIfNoSpecifiedTests=false -DskipTests=false \
-            | tee "$out/mysql84-baseline.log"
+            > "$out/mysql84-baseline.log" 2>&1; then
+            tail -n 200 "$out/mysql84-baseline.log"
+            exit 1
+          fi
           cp server/ruoyi-modules/jshpos-release/target/surefire-reports/TEST-*SqlExecutableBaselineMySqlIT.xml "$out/test-reports/"
           test "$(find "$out/sql-executable/plans/smoke_10k" -name '*-explain.json' | wc -l)" -eq 12
           test "$(find "$out/sql-executable/plans/baseline_100k" -name '*-explain.json' | wc -l)" -eq 12
@@ -141,9 +144,11 @@ jobs:
           decisions=json.loads((root/'decision-candidates.json').read_text())
           environment=json.loads((root/'environment.json').read_text())
           compact=lambda value: json.dumps(value,sort_keys=True,separators=(',',':'))
-          # 结果同时进入不可变 Job 日志，Artifact 下载不可用时仍可离线复核；仅含合成参数摘要。
-          print('G10A_SQL_QUERY_RESULTS='+compact(rows))
-          print('G10A_SQL_DECISIONS='+compact(decisions))
+          # 每条查询独占一行，避免 GitHub 单行过长裁剪；仅含合成参数摘要。
+          for row in rows:
+              print(f"G10A_SQL_RESULT_{row['tier']}_{row['queryId']}="+compact(row))
+          for decision in decisions:
+              print(f"G10A_SQL_DECISION_{decision['queryId']}="+compact(decision))
           print('G10A_SQL_JDBC_COUNTS='+compact(json.loads((root/'jdbc-query-counts.json').read_text())))
           print('G10A_SQL_PERMISSION='+compact(permission))
           print('G10A_SQL_ENVIRONMENT='+compact(environment))
