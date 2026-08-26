@@ -1,10 +1,41 @@
 {
   "schemaVersion": "1.0",
   "gate": "T2_GATE_10A_R2_R2_R1_SQL_EXECUTABLE_BASELINE",
-  "candidateCommit": "PENDING",
-  "workflowRun": "PENDING",
-  "jobs": "PENDING",
-  "evidenceArtifact": "PENDING",
-  "evidenceSha256": "PENDING",
-  "result": "PENDING_CLEAN_RUN"
+  "candidateCommit": "e02868aa7f50e3d566e133c58ea1a75bb6212b85",
+  "workflowRun": {
+    "id": 32967025590,
+    "number": 4,
+    "url": "https://github.com/eiven-xxw/jshPOS/actions/runs/32967025590",
+    "attempt": 1,
+    "conclusion": "success"
+  },
+  "jobs": [
+    {"name": "governance-ubuntu", "id": 98171705588, "conclusion": "success"},
+    {"name": "governance-windows", "id": 98171705832, "conclusion": "success"},
+    {"name": "server", "id": 98171788991, "conclusion": "success"},
+    {"name": "mysql84-baseline", "id": 98171789078, "conclusion": "success"},
+    {"name": "web", "id": 98171789025, "conclusion": "success"},
+    {"name": "flutter-ubuntu", "id": 98171788987, "conclusion": "success"},
+    {"name": "flutter-windows", "id": 98171789053, "conclusion": "success"},
+    {"name": "android", "id": 98171789055, "conclusion": "success"},
+    {"name": "gate9c-regression", "id": 98171789039, "conclusion": "success"},
+    {"name": "security", "id": 98172592175, "conclusion": "success"},
+    {"name": "evidence", "id": 98172939681, "conclusion": "success"}
+  ],
+  "mysqlArtifact": {
+    "id": 9606201853,
+    "name": "t2-gate10a-r2-r2-r1-sql-mysql84-baseline",
+    "sha256": "d255565ddbaa429d190fe3ce8327b2de1009901436a353fad910cc4cec2ca47d"
+  },
+  "evidenceArtifact": {
+    "id": 9606210893,
+    "name": "t2-gate10a-r2-r2-r1-sql-evidence-index",
+    "sha256": "c0d2c1519efe60b1be03febcebfac1783440b818c68a46a7751a1f919a5dd115"
+  },
+  "historicalRuns": [
+    {"id": 32962757649, "commit": "2cf39f611daa67671ee9d98596cfacd0a5e96691", "conclusion": "failure", "classification": "TEST_PROBE_TENANT_PLACEHOLDER_DEFECT_PRESERVED"},
+    {"id": 32964662824, "commit": "73b2ec6c329e6a833f38754f4413f09d9333dda2", "conclusion": "success", "classification": "FIRST_CLEAN_EXECUTABLE_BASELINE"},
+    {"id": 32965805674, "commit": "33dac2bf62bd692542d4df3b5caa8f04bcb96a4b", "conclusion": "success", "classification": "COMPACT_SINGLE_LINE_EVIDENCE"}
+  ],
+  "result": "EXECUTABLE_BASELINE_VERIFIED_AWAITING_SPONSOR_CONFIRMATION"
 }

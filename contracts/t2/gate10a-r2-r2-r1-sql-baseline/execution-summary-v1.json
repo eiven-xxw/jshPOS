@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "1.0",
+  "sourceRun": 32967025590,
+  "sourceJob": 98171789078,
+  "sourceCommit": "e02868aa7f50e3d566e133c58ea1a75bb6212b85",
+  "environment": {
+    "mysqlVersion": "8.4.11",
+    "schemaVersion": "202608260087",
+    "characterSet": "utf8mb4",
+    "collation": "utf8mb4_0900_ai_ci",
+    "syntheticOnly": true,
+    "productionSla": false
+  },
+  "queryResults": [
+    {"queryId":"INV-FEFO","rows10k":100,"rows100k":100,"estimatedMax100k":4476,"actualMax100k":100,"fullScan100k":false,"filesort100k":true,"recommendation":"NO_GO_RUNTIME_PLAN_REVIEW_REQUIRED"},
+    {"queryId":"INV-EXPIRY","rows10k":500,"rows100k":500,"estimatedMax100k":39304,"actualMax100k":20000,"fullScan100k":false,"filesort100k":true,"recommendation":"NO_GO_RUNTIME_PLAN_REVIEW_REQUIRED"},
+    {"queryId":"INV-PACKAGE","rows10k":1200,"rows100k":12000,"estimatedMax100k":28094,"actualMax100k":12000,"fullScan100k":false,"filesort100k":true,"recommendation":"NO_GO_RUNTIME_PLAN_REVIEW_REQUIRED"},
+    {"queryId":"PRM-RULES","rows10k":2000,"rows100k":20000,"estimatedMax100k":49163,"actualMax100k":80000,"fullScan100k":false,"filesort100k":true,"recommendation":"NO_GO_RUNTIME_PLAN_REVIEW_REQUIRED"},
+    {"queryId":"PRM-QUOTE-LINES","rows10k":400,"rows100k":400,"estimatedMax100k":400,"actualMax100k":400,"fullScan100k":false,"filesort100k":true,"recommendation":"NO_GO_RUNTIME_PLAN_REVIEW_REQUIRED"},
+    {"queryId":"RPT-SALES","rows10k":4800,"rows100k":48000,"estimatedMax100k":98716,"actualMax100k":100000,"fullScan100k":true,"filesort100k":true,"recommendation":"CR_REQUIRED_BEFORE_PAGINATION_OR_RESPONSE_CHANGE"},
+    {"queryId":"RPT-INVENTORY","rows10k":4800,"rows100k":48000,"estimatedMax100k":98280,"actualMax100k":100000,"fullScan100k":true,"filesort100k":true,"recommendation":"CR_REQUIRED_BEFORE_PAGINATION_OR_RESPONSE_CHANGE"},
+    {"queryId":"RPT-PAY-REC","rows10k":4800,"rows100k":48000,"estimatedMax100k":48713,"actualMax100k":80000,"fullScan100k":false,"filesort100k":true,"recommendation":"CR_REQUIRED_BEFORE_PAGINATION_OR_RESPONSE_CHANGE"},
+    {"queryId":"PAY-FACTS","rows10k":516,"rows100k":5160,"estimatedMax100k":49509,"actualMax100k":80000,"fullScan100k":true,"filesort100k":true,"recommendation":"NO_GO_RUNTIME_PLAN_REVIEW_REQUIRED"},
+    {"queryId":"PUR-LINES","rows10k":400,"rows100k":400,"estimatedMax100k":400,"actualMax100k":400,"fullScan100k":false,"filesort100k":true,"recommendation":"NO_GO_RUNTIME_PLAN_REVIEW_REQUIRED"},
+    {"queryId":"TRF-LINES","rows10k":400,"rows100k":400,"estimatedMax100k":400,"actualMax100k":400,"fullScan100k":false,"filesort100k":true,"recommendation":"NO_GO_RUNTIME_PLAN_REVIEW_REQUIRED"},
+    {"queryId":"MBR-POINTS-FEFO","rows10k":1600,"rows100k":16000,"estimatedMax100k":47173,"actualMax100k":80000,"fullScan100k":false,"filesort100k":true,"recommendation":"NO_GO_RUNTIME_PLAN_REVIEW_REQUIRED"}
+  ],
+  "approvedMillionTrend": {
+    "queryId": "RPT-SALES",
+    "rowsReturned": 480000,
+    "estimatedRowsMaximum": 986716,
+    "actualPlanRowsMaximum": 480000,
+    "fullScanObserved": true,
+    "filesortObserved": true,
+    "classification": "SYNTHETIC_TREND_ONLY"
+  },
+  "jdbcJourneys": [
+    {"journey":"REPORT_EXPORT_50_STORES_3_TYPES","jdbcQueryCount":150,"rowsObserved":240000,"recommendation":"NO_GO_LINEAR_QUERY_AMPLIFICATION"},
+    {"journey":"PAYMENT_RECONCILIATION_500_REFERENCES","jdbcQueryCount":501,"rowsObserved":5660,"recommendation":"NO_GO_LINEAR_QUERY_AMPLIFICATION"},
+    {"journey":"LOT_EXPIRY_500_CANDIDATES","jdbcQueryCount":501,"rowsObserved":500,"recommendation":"NO_GO_LINEAR_QUERY_AMPLIFICATION"}
+  ],
+  "permissionBoundary": {
+    "selectGranted": true,
+    "writeDenied": true,
+    "tenantAttackRows": 0,
+    "credentialPersisted": false
+  },
+  "summary": {
+    "queryTierExecutions": 25,
+    "compatibilityCrRequired": 3,
+    "runtimePlanReviewRequired": 9,
+    "goWithoutReview": 0,
+    "productionChanges": 0,
+    "publishedMigrationChanges": 0,
+    "findingClosed": false
+  }
+}

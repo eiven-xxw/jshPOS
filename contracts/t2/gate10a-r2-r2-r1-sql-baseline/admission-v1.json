@@ -21,7 +21,7 @@
     "resource endurance remediation",
     "external execution full Alpha production release"
   ],
-  "findingState": "EXECUTABLE_BASELINE_IN_PROGRESS",
+  "findingState": "VERIFIED_AWAITING_SPONSOR_CONFIRMATION",
   "runtimeSqlRemediationAuthorized": false,
   "newBusinessCapabilities": 0,
   "externalExecution": 0

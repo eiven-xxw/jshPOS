@@ -89,6 +89,36 @@ def main() -> None:
         fail("12条查询与层级执行矩阵不完整")
     if len(load("failure-seeds-v1.json")["seeds"]) != 10:
         fail("失败 seed 必须为10项")
+    execution = load("execution-summary-v1.json")
+    if len(execution["queryResults"]) != 12:
+        fail("可执行摘要必须包含12条查询")
+    summary = execution["summary"]
+    expected_summary = {
+        "queryTierExecutions": 25,
+        "compatibilityCrRequired": 3,
+        "runtimePlanReviewRequired": 9,
+        "goWithoutReview": 0,
+        "productionChanges": 0,
+        "publishedMigrationChanges": 0,
+        "findingClosed": False,
+    }
+    if summary != expected_summary:
+        fail(f"可执行摘要结论漂移: {summary}")
+    permission = execution["permissionBoundary"]
+    if permission != {
+        "selectGranted": True,
+        "writeDenied": True,
+        "tenantAttackRows": 0,
+        "credentialPersisted": False,
+    }:
+        fail(f"租户或只读权限证据漂移: {permission}")
+    if [item["jdbcQueryCount"] for item in execution["jdbcJourneys"]] != [150, 501, 501]:
+        fail("三条 JDBC 查询数红基线漂移")
+    ci_evidence = load("ci-evidence-v1.json")
+    if ci_evidence["workflowRun"]["conclusion"] != "success" or len(ci_evidence["jobs"]) != 11:
+        fail("最终可执行 CI 证据不完整")
+    if any(job["conclusion"] != "success" for job in ci_evidence["jobs"]):
+        fail("最终可执行 CI 存在非绿色 Job")
 
     query_source = (ROOT / (TEST_PREFIX + "SqlBaselineQueries.java")).read_text(encoding="utf-8")
     integration_source = (ROOT / (TEST_PREFIX + "SqlExecutableBaselineMySqlIT.java")).read_text(encoding="utf-8")
@@ -124,7 +154,8 @@ def main() -> None:
     if states["G10A-SQL-P2-001"] != "OPEN" or states["G10A-RES-P2-001"] != "OPEN":
         fail("SQL或RES全局Finding被基线阶段提前关闭")
     print(f"T2 Gate10A R2-R2-R1 SQL BASELINE OK: changed={len(changed)} queries=12 tiers=25 "
-          f"testJava=3 accepted={accepted} production=0 migration=0 external=0")
+          f"cr=3 noGo=9 go=0 jdbc=150/501/501 testJava=3 accepted={accepted} "
+          f"production=0 migration=0 external=0")
 
 
 if __name__ == "__main__":
