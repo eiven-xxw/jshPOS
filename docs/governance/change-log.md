@@ -2,6 +2,7 @@
 
 | CR | 日期 | 状态 | 变更 | 影响需求/ADR | 批准人 |
 |---|---|---|---|---|---|
+| CR-T2G10A-020 | 2026-08-26 | RPT_SALES_INDEX_FIRST_CI_PLAN_BOOLEAN_FAILURE | 候选`d4d59d2c11d9a29818597ff8b00415aff9f6b371`的Run`32982737623`中双平台治理、Web、Flutter Ubuntu与Android已通过；MySQL8.4完成空库/V87升级、V88、validate和重复执行，计划已使用获批索引且无全扫，但测试按JSON关键字存在性把`using_filesort:false`误判为true | G10A-SQL-P2-001、T2-RPT-001、T2-CI-001、ADR-074 | 只把filesort检测改为递归读取明确boolean true并增加范围回归；不改V88/旧迁移/SQL/Mapper/API/事件/业务语义，不重跑失败Job，新提交完整复跑；Finding继续OPEN、RES继续PREPARED |
 | CR-T2G10A-019 | 2026-08-26 | RPT_SALES_INDEX_RUNTIME_IN_PROGRESS | 项目发起人接受RPT-SALES R0/R1内部结果及`CONDITIONAL_NO_GO_PENDING_INDEX_CR`，确认CR-T2G10A-018 CONDITIONAL GO，授权从`53bcf39d868092142e6464b8c9db730b0074dd2a`先红后绿新增唯一V88复合索引 | G10A-SQL-P2-001、T2-RPT-001、T2-MIG-001、ADR-074 | 只允许V202608260088新增`idx_rpt_sales_keyset`及必要测试/证据/发布清单；V1—V87、SQL/Mapper、API、事件和业务语义不变；Finding继续OPEN、RES继续PREPARED，外部执行为0 |
 | CR-T2G10A-018 | 2026-08-26 | PROPOSED_AWAITING_SPONSOR_CONFIRMATION | RPT-SALES在MySQL8.4.11的10k/100k正式SQL计划均出现全表扫描与filesort，提议唯一V202608260088新增`idx_rpt_sales_keyset` | G10A-SQL-P2-001、T2-RPT-001、ADR-074 | 仅提交索引CR和前向迁移方案；未经确认不得创建迁移/索引或修改SQL/Mapper；Finding保持OPEN，外部执行为0 |
 | CR-T2G10A-017 | 2026-08-26 | RPT_SALES_RUNTIME_IN_PROGRESS | 项目发起人接受R2-R2-R2准备阶段CONDITIONAL PASS及CR-013/014/015兼容方向，授权从`972fcfafdf131a555e47f5644e0ae914ce6297fb`先红后绿实现Reporting批量读取端口、RPT-SALES版本化keyset分页和受控流式导出 | G10A-SQL-P2-001、T2-RPT-001、T2-API-001、ADR-074 | 仅准入RPT-SALES；旧v1兼容冻结，Inventory/Payment不得提前整改；索引如有必要必须独立CR及前向迁移；Finding保持OPEN，RES保持PREPARED，外部执行为0 |

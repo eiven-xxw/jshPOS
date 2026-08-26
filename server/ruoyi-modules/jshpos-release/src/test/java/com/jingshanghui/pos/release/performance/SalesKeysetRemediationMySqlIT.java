@@ -2,6 +2,7 @@ package com.jingshanghui.pos.release.performance;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.Test;
 
@@ -128,7 +129,7 @@ class SalesKeysetRemediationMySqlIT {
         int queryBudget = (int) Math.ceil(expectedRows / 10_000.0d)
             + (expectedRows > 0 && expectedRows % 10_000 == 0 ? 1 : 0);
         boolean fullScan = FULL_SCAN.matcher(explainJson).find();
-        boolean filesort = explainJson.toLowerCase(Locale.ROOT).contains("filesort");
+        boolean filesort = observesFilesort(explainJson);
         boolean indexCrRequired = fullScan || filesort;
         boolean approvedIndexObserved = explainJson.contains("idx_rpt_sales_keyset");
 
@@ -229,7 +230,7 @@ class SalesKeysetRemediationMySqlIT {
             java.sql.Date.valueOf("2026-08-31"), AUTHORIZED_STORES, null, 501);
         String explainJson = firstColumn(connection, "EXPLAIN FORMAT=JSON " + query.sql(), query.parameters());
         boolean fullScan = FULL_SCAN.matcher(explainJson).find();
-        boolean filesort = explainJson.toLowerCase(Locale.ROOT).contains("filesort");
+        boolean filesort = observesFilesort(explainJson);
         Map<String, Object> red = new LinkedHashMap<>();
         red.put("schemaVersion", "202608260087");
         red.put("fullScanObserved", fullScan);
@@ -344,6 +345,39 @@ class SalesKeysetRemediationMySqlIT {
                 return rows.getLong(1);
             }
         }
+    }
+
+    /**
+     * 只在 MySQL 执行计划明确把 filesort 标记为 true 时判定命中。
+     *
+     * <p>JSON 会保留 {@code using_filesort:false} 字段；按关键字存在性判断会把已消除的 filesort
+     * 误报为失败，因此必须递归读取布尔值。</p>
+     */
+    private static boolean observesFilesort(String explainJson) throws Exception {
+        return observesFilesort(JSON.readTree(explainJson));
+    }
+
+    private static boolean observesFilesort(JsonNode node) {
+        if (node.isObject()) {
+            var fields = node.fields();
+            while (fields.hasNext()) {
+                var field = fields.next();
+                if (field.getKey().toLowerCase(Locale.ROOT).contains("filesort")
+                    && field.getValue().isBoolean() && field.getValue().booleanValue()) {
+                    return true;
+                }
+                if (observesFilesort(field.getValue())) {
+                    return true;
+                }
+            }
+        } else if (node.isArray()) {
+            for (JsonNode child : node) {
+                if (observesFilesort(child)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private static String firstColumn(Connection connection, String sql, List<Object> parameters) throws SQLException {

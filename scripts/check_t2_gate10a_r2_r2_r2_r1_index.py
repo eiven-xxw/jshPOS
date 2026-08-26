@@ -108,7 +108,7 @@ def main() -> None:
     for token in ("approved V88 RPT-SALES keyset index migration", "doesNotContain(\"drop index\")"):
         require(token in policy, "静态失败回归缺少 " + token)
     for token in ("202608260087", "202608260088", "captureV87RedPlan", "assertApprovedIndex",
-                  "fullScanObserved", "filesortObserved", "approvedIndexObserved"):
+                  "fullScanObserved", "filesortObserved", "approvedIndexObserved", "observesFilesort"):
         require(token in mysql, "MySQL 8.4 专项缺少 " + token)
 
     agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
