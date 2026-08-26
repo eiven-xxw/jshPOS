@@ -115,6 +115,9 @@ def main() -> None:
     fault_text = fault_runner.read_text(encoding="utf-8")
     require("R4-F01" in fault_text and "R4-F12" in fault_text,
             "R4-R5 runner must emit the complete fixed seed ledger")
+    require('owner="R4FAULT"' not in fault_text and 'owner="ORDER"' in fault_text
+            and ':R4-F09' in fault_text,
+            "late reporting seed must use an accepted authoritative Owner in an isolated fault partition")
     require("directBusinessDatabaseWrites\": 0" in fault_text,
             "fault runner must declare zero direct business database writes")
     workflow = (ROOT / ".github/workflows/t2-g9a-r4-runtime.yml").read_text(encoding="utf-8")

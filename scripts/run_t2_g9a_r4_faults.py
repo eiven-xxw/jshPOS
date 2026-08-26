@@ -128,14 +128,17 @@ def late_reporting(client: ApiClient, context: dict[str, Any], journey: dict[str
     zero = {key: 0 for key in ("orderCount", "cancelledOrderCount", "returnCount", "grossMinor",
             "discountMinor", "surchargeMinor", "receivableMinor", "refundMinor", "cashReceivedMinor",
             "cashRefundedMinor", "shiftDifferenceMinor", "promotionSnapshotCount")}
-    second = report_event(context=context, journey=journey, owner="R4FAULT", family="SALES",
+    fault_partition = f"ORDER:{context['storeId']}:{context['businessDate']}:R4-F09"
+    second = report_event(context=context, journey=journey, owner="ORDER", family="SALES",
                           sequence=2, delta=zero, run_id=run_id)
-    # report_event 的事件标识按 owner 稳定；第二条需要独立身份但保持同一 partition。
+    # 使用权威 ORDER Owner，但隔离到故障专用分区，避免复用正式旅程已有的序号 1。
     second["sourceEventId"] = stable_ulid(f"{run_id}:{context['journeyId']}:late:2")
+    second["partitionKey"] = fault_partition
     second["contentSha256"] = _report_hash(second)
-    first = report_event(context=context, journey=journey, owner="R4FAULT", family="SALES",
+    first = report_event(context=context, journey=journey, owner="ORDER", family="SALES",
                          sequence=1, delta=zero, run_id=run_id)
     first["sourceEventId"] = stable_ulid(f"{run_id}:{context['journeyId']}:late:1")
+    first["partitionKey"] = fault_partition
     first["contentSha256"] = _report_hash(first)
     gap = data(client.call("POST", "/api/v1/reporting/source-events", "r4-late-sequence-2", body=second))
     repaired = data(client.call("POST", "/api/v1/reporting/source-events", "r4-late-sequence-1", body=first))
