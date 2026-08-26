@@ -26,10 +26,10 @@ import java.util.regex.Pattern;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Gate 10A-R2-R2-R2-R1 RPT-SALES keyset、批量读取和租户边界 MySQL 8.4 可执行验收。
+ * Gate 10A-R2-R2-R2-R1-INDEX RPT-SALES keyset 索引 MySQL 8.4 可执行验收。
  *
- * <p>只在临时 MySQL 中写入确定性合成数据；测试记录当前计划是否仍需要独立索引 CR，
- * 不会修改索引、数据库对象或任何已发布迁移。</p>
+ * <p>测试分别验证空库到 V88 与 V87 到 V88，只在临时 MySQL 中写入确定性合成数据；
+ * 先保存 V87 的全扫/filesort 红基线，再验证 V88 计划、查询数、完整性和租户边界。</p>
  */
 class SalesKeysetRemediationMySqlIT {
     private static final ObjectMapper JSON = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
@@ -38,23 +38,20 @@ class SalesKeysetRemediationMySqlIT {
         .boxed().toList();
 
     private final String url = required("G10A_RPT_SALES_MYSQL_JDBC_URL");
+    private final String emptyUrl = required("G10A_RPT_SALES_EMPTY_MYSQL_JDBC_URL");
     private final String username = required("G10A_RPT_SALES_MYSQL_USERNAME");
     private final String password = required("G10A_RPT_SALES_MYSQL_PASSWORD");
     private final Path repositoryRoot = Path.of(required("G10A_RPT_SALES_REPO_ROOT")).toAbsolutePath().normalize();
     private final Path evidenceRoot = Path.of(required("G10A_RPT_SALES_EVIDENCE_DIR")).toAbsolutePath().normalize();
 
     @Test
-    void provesBoundedKeysetBatchingAndClassifiesIndexNeed() throws Exception {
+    void provesV88MigrationAndEliminatesFullScanAndFilesort() throws Exception {
         Files.createDirectories(evidenceRoot);
-        migrateEmptyDatabase();
+        verifyEmptyDatabaseToV88();
+        migrateV87ToV88WithRedBaseline();
         List<Map<String, Object>> tiers = new ArrayList<>();
         try (Connection connection = DriverManager.getConnection(url, username, password)) {
             configureSession(connection);
-            try (Statement statement = connection.createStatement()) {
-                statement.execute("TRUNCATE TABLE rpt_sales_daily");
-            }
-
-            SqlBaselineFixture.extendSalesTrend(connection, 0, 10_000);
             analyze(connection);
             tiers.add(captureTier(connection, "SMOKE_10K", 10_000));
 
@@ -73,6 +70,10 @@ class SalesKeysetRemediationMySqlIT {
             assertThat(row.get("interactiveQueryCount")).isEqualTo(1);
             assertThat((Integer) row.get("exportQueryCount")).isLessThanOrEqualTo((Integer) row.get("exportQueryBudget"));
             assertThat(row.get("amountInvariantPassed")).isEqualTo(true);
+            assertThat(row.get("fullScanObserved")).isEqualTo(false);
+            assertThat(row.get("filesortObserved")).isEqualTo(false);
+            assertThat(row.get("approvedIndexObserved")).isEqualTo(true);
+            assertThat(row.get("indexCrRequired")).isEqualTo(false);
         });
     }
 
@@ -129,6 +130,7 @@ class SalesKeysetRemediationMySqlIT {
         boolean fullScan = FULL_SCAN.matcher(explainJson).find();
         boolean filesort = explainJson.toLowerCase(Locale.ROOT).contains("filesort");
         boolean indexCrRequired = fullScan || filesort;
+        boolean approvedIndexObserved = explainJson.contains("idx_rpt_sales_keyset");
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("tier", tier);
@@ -150,6 +152,7 @@ class SalesKeysetRemediationMySqlIT {
         result.put("amountInvariantPassed", gross - discount + surcharge == receivable);
         result.put("fullScanObserved", fullScan);
         result.put("filesortObserved", filesort);
+        result.put("approvedIndexObserved", approvedIndexObserved);
         result.put("indexCrRequired", indexCrRequired);
         result.put("recommendation", indexCrRequired
             ? "STOP_AND_REQUEST_INDEPENDENT_INDEX_CR"
@@ -174,18 +177,94 @@ class SalesKeysetRemediationMySqlIT {
         return rows.size();
     }
 
-    private void migrateEmptyDatabase() throws Exception {
-        createFrameworkMenuFixture();
-        Flyway flyway = Flyway.configure().dataSource(url, username, password)
-            .locations(migrationLocations()).table("jshpos_flyway_schema_history")
-            .baselineOnMigrate(true).baselineVersion("0").cleanDisabled(true).load();
-        flyway.migrate();
+    /** 验证全新数据库一次安装至 V88、validate 与重复执行零迁移。 */
+    private void verifyEmptyDatabaseToV88() throws Exception {
+        createFrameworkMenuFixture(emptyUrl);
+        Flyway flyway = flyway(emptyUrl);
+        assertThat(flyway.migrate().migrationsExecuted).isPositive();
         flyway.validate();
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("202608260087");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("202608260088");
+        assertThat(flyway.migrate().migrationsExecuted).isZero();
+        try (Connection connection = DriverManager.getConnection(emptyUrl, username, password)) {
+            assertApprovedIndex(connection);
+        }
     }
 
-    private void createFrameworkMenuFixture() throws SQLException {
-        try (Connection connection = DriverManager.getConnection(url, username, password);
+    /** 在 V87 固化失败计划后只执行 V88，并验证重复执行与 Flyway validate。 */
+    private void migrateV87ToV88WithRedBaseline() throws Exception {
+        createFrameworkMenuFixture(url);
+        Flyway v87 = Flyway.configure().dataSource(url, username, password)
+            .locations(migrationLocations()).table("jshpos_flyway_schema_history")
+            .baselineOnMigrate(true).baselineVersion("0").target("202608260087").cleanDisabled(true).load();
+        v87.migrate();
+        v87.validate();
+        assertThat(v87.info().current().getVersion().getVersion()).isEqualTo("202608260087");
+        try (Connection connection = DriverManager.getConnection(url, username, password)) {
+            configureSession(connection);
+            SqlBaselineFixture.extendSalesTrend(connection, 0, 10_000);
+            analyze(connection);
+            captureV87RedPlan(connection);
+        }
+
+        Flyway v88 = flyway(url);
+        assertThat(v88.migrate().migrationsExecuted).isEqualTo(1);
+        v88.validate();
+        assertThat(v88.info().current().getVersion().getVersion()).isEqualTo("202608260088");
+        assertThat(v88.migrate().migrationsExecuted).isZero();
+        try (Connection connection = DriverManager.getConnection(url, username, password)) {
+            assertApprovedIndex(connection);
+        }
+    }
+
+    private Flyway flyway(String jdbcUrl) throws Exception {
+        return Flyway.configure().dataSource(jdbcUrl, username, password)
+            .locations(migrationLocations()).table("jshpos_flyway_schema_history")
+            .baselineOnMigrate(true).baselineVersion("0").cleanDisabled(true).load();
+    }
+
+    /** V87 必须稳定重现获批 CR 所针对的全扫和 filesort，防止测试伪绿。 */
+    private void captureV87RedPlan(Connection connection) throws Exception {
+        SqlBaselineQueries.ExecutableQuery query = SqlBaselineQueries.salesPage(repositoryRoot,
+            SqlBaselineQueries.TENANT_A, "v1", java.sql.Date.valueOf("2026-08-01"),
+            java.sql.Date.valueOf("2026-08-31"), AUTHORIZED_STORES, null, 501);
+        String explainJson = firstColumn(connection, "EXPLAIN FORMAT=JSON " + query.sql(), query.parameters());
+        boolean fullScan = FULL_SCAN.matcher(explainJson).find();
+        boolean filesort = explainJson.toLowerCase(Locale.ROOT).contains("filesort");
+        Map<String, Object> red = new LinkedHashMap<>();
+        red.put("schemaVersion", "202608260087");
+        red.put("fullScanObserved", fullScan);
+        red.put("filesortObserved", filesort);
+        red.put("approvedIndexObserved", explainJson.contains("idx_rpt_sales_keyset"));
+        red.put("expectedFailure", true);
+        writeJson(evidenceRoot.resolve("v87-red-plan.json"), red);
+        Path redPlan = evidenceRoot.resolve("plans/v87-red-explain.json");
+        Files.createDirectories(redPlan.getParent());
+        Files.writeString(redPlan, explainJson + "\n",
+            StandardCharsets.UTF_8);
+        assertThat(fullScan).isTrue();
+        assertThat(filesort).isTrue();
+        assertThat(explainJson).doesNotContain("idx_rpt_sales_keyset");
+    }
+
+    /** 核验索引名、唯一性属性与七列顺序；不得以同名但错序索引冒充。 */
+    private void assertApprovedIndex(Connection connection) throws SQLException {
+        List<String> columns = new ArrayList<>();
+        try (PreparedStatement statement = connection.prepareStatement("""
+            SELECT column_name FROM information_schema.statistics
+             WHERE table_schema=DATABASE() AND table_name='rpt_sales_daily'
+               AND index_name='idx_rpt_sales_keyset'
+             ORDER BY seq_in_index
+            """); ResultSet rows = statement.executeQuery()) {
+            while (rows.next()) {
+                columns.add(rows.getString(1));
+            }
+        }
+        assertThat(columns).containsExactly("tenant_id", "projection_version", "business_date", "store_id",
+            "terminal_id", "cashier_id", "currency");
+    }
+
+    private void createFrameworkMenuFixture(String jdbcUrl) throws SQLException {
+        try (Connection connection = DriverManager.getConnection(jdbcUrl, username, password);
              Statement statement = connection.createStatement()) {
             statement.executeUpdate("""
                 CREATE TABLE IF NOT EXISTS sys_menu (

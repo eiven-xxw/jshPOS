@@ -2,11 +2,14 @@
 
 ## 1. 当前状态
 
-- 状态：`PROPOSED_AWAITING_SPONSOR_CONFIRMATION`
+- 状态：`APPROVED_RUNTIME_IN_PROGRESS`
 - Finding：`G10A-SQL-P2-001 = OPEN`
 - 依据：Gate 10A-R2-R2-R2-R1 的 MySQL 8.4.11 固定 10k/100k 可执行计划
 - 证据边界：`INTERNAL_SYNTHETIC_MYSQL84_ONLY`
 - 本 CR 只申请索引及唯一前向迁移，不改变查询结果、API、事件、资金、库存、租户或同步语义。
+- 项目发起人确认：2026-08-26 `CONDITIONAL GO`；只授权
+  `Gate 10A-R2-R2-R2-R1-INDEX`，起点为
+  `53bcf39d868092142e6464b8c9db730b0074dd2a`。
 
 ## 2. 可复现实测结论
 
@@ -45,8 +48,6 @@
 
 ## 5. Go/No-Go
 
-- 建议：`CONDITIONAL GO`，仅准入上述单一索引与 V88。
-- 未经项目发起人明确确认：`NO-GO`，不得创建迁移、索引或修改 SQL/Mapper。
+- 结论：`CONDITIONAL GO`，仅准入上述单一索引与 V88；SQL/Mapper 继续冻结。
 - 即使本 CR 获批，`G10A-SQL-P2-001` 仍保持 `OPEN`；只有索引计划复验及后续获批查询全部完成，
   才能另行申请关闭 Finding。
-

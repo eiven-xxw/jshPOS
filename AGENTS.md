@@ -1283,6 +1283,25 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
 - 所有外部 `BLOCKED`、UAT/REL `DRAFT`、LIC/JSH `DEFERRED` 与 Provider 网络、真实资金、
   设备/外设、伙伴现场、完整 Alpha 和生产部署零执行边界保持不变。
 
+## 4.85 当前 T2 Gate 10A-R2-R2-R2-R1-INDEX 条件准入
+
+- 项目发起人已于 2026-08-26 接受 RPT-SALES R0/R1 内部执行结果及
+  `CONDITIONAL_NO_GO_PENDING_INDEX_CR`，并确认 `CR-T2G10A-018 CONDITIONAL GO`；授权从
+  `53bcf39d868092142e6464b8c9db730b0074dd2a` 建立
+  `t2/gate10a-r2-r2-r2-r1-index-runtime`。
+- 本批只允许新增唯一前向迁移
+  `V202608260088__reporting_sales_keyset_index.sql`，为 `rpt_sales_daily` 新增
+  `idx_rpt_sales_keyset(tenant_id,projection_version,business_date,store_id,terminal_id,cashier_id,currency)`；
+  禁止修改 V1—V87、删除既有索引或改变 SQL/Mapper、API、事件和业务语义。
+- 必须先以缺少 V88 的精确失败测试固化红基线，再实施迁移；必须在 MySQL 8.4.11 验证空库至 V88、
+  V87 至 V88、重复执行零迁移、Flyway validate、索引列序及在线 DDL 约束。
+- 固定 10k/100k 合成数据必须同时满足无全表扫描、无 filesort、交互/导出查询数预算、0 重复、
+  0 缺失、0 跨租户和金额守恒；V87 的失败计划与 V88 的通过计划必须独立保留，不得伪造绿色占位。
+- `G10A-SQL-P2-001` 继续 `OPEN`，`G10A-RES-P2-001` 继续 `PREPARED`；未经项目发起人再次确认
+  不得进入 RPT-INVENTORY、RPT-PAY-REC、RES、R3、完整 Alpha 或生产发布。
+- 所有外部 `BLOCKED`、UAT/REL `DRAFT`、LIC/JSH `DEFERRED` 与 Provider 网络、真实资金、
+  设备/外设、伙伴现场、完整 Alpha 和生产部署零执行边界保持不变。
+
 ## 5. 工程与测试规则
 
 - 服务端采用 RuoYi-Vue-Plus 模块化单体，不得把领域逻辑写入 Controller、通用工具类或框架系统模块。

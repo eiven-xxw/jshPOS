@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0",
   "changeRequest": "CR-T2G10A-018",
-  "state": "PROPOSED_AWAITING_SPONSOR_CONFIRMATION",
+  "state": "APPROVED_RUNTIME_IN_PROGRESS",
   "finding": { "id": "G10A-SQL-P2-001", "state": "OPEN" },
   "evidence": {
     "runId": 32979209873,
@@ -27,6 +27,6 @@
       "currency"
     ]
   },
-  "implemented": false,
-  "requiresSponsorConfirmation": true
+  "implemented": true,
+  "requiresSponsorConfirmation": false
 }

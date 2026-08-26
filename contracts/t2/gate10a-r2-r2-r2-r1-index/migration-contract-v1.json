@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "1.0",
+  "migration": "V202608260088__reporting_sales_keyset_index.sql",
+  "table": "rpt_sales_daily",
+  "index": "idx_rpt_sales_keyset",
+  "columns": [
+    "tenant_id",
+    "projection_version",
+    "business_date",
+    "store_id",
+    "terminal_id",
+    "cashier_id",
+    "currency"
+  ],
+  "onlineDdl": {"algorithm": "INPLACE", "lock": "NONE"},
+  "mustNotDropExistingIndex": true,
+  "publishedMigrationMutation": false
+}

@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "1.0",
+  "gate": "T2_GATE10A_R2_R2_R2_R1_INDEX",
+  "startCommit": "53bcf39d868092142e6464b8c9db730b0074dd2a",
+  "branch": "t2/gate10a-r2-r2-r2-r1-index-runtime",
+  "changeRequest": "CR-T2G10A-018",
+  "finding": {"id": "G10A-SQL-P2-001", "state": "OPEN"},
+  "admitted": [
+    "V202608260088_ONLY",
+    "IDX_RPT_SALES_KEYSET_ONLY",
+    "MYSQL_8_4_11_EMPTY_AND_V87_UPGRADE",
+    "RPT_SALES_10K_100K_PLAN_RECHECK"
+  ],
+  "notAdmitted": [
+    "V1_TO_V87_CHANGE",
+    "SQL_OR_MAPPER_CHANGE",
+    "API_OR_EVENT_CHANGE",
+    "RPT_INVENTORY_RUNTIME_REMEDIATION",
+    "RPT_PAY_REC_RUNTIME_REMEDIATION",
+    "G10A_RES_P2_001",
+    "NEW_BUSINESS_CAPABILITY"
+  ],
+  "externalExecution": 0
+}
