@@ -2,9 +2,11 @@
 
 - 日期：2026-08-26
 - 查询：`RPT-INVENTORY / ReportingPersistenceMapper.queryInventoryCost`
-- 状态：`PREP_IN_PROGRESS_RUNTIME_NOT_ADMITTED`
+- 状态：`RUNTIME_IN_PROGRESS_INDEX_NOT_ADMITTED`
 - 准备起点：`206b07f93014a468102380577a987ac85af1ceff`
 - 准备分支：`t2/gate10a-r2-r2-r2-r2-rpt-inventory-prep`
+- 准备封存提交：`f36df63b21bd3bb98ea0d5022f8fe5fac5def72f`
+- 运行分支：`t2/gate10a-r2-r2-r2-r2-rpt-inventory-runtime`
 
 ## 现状与价值
 
@@ -20,14 +22,14 @@
   审批、到期清理和可重放检查点。
 - 报表层不重新计算在手、可用、成本或 COGS，不反向覆盖 Inventory/Costing 事实。
 
-## 当前准备授权
+## 当前运行时授权
 
-项目发起人已于 2026-08-26 确认 `CONDITIONAL GO`，只授权冻结当前契约、测试范围红基线、
-MySQL 8.4.11 10k/100k 计划、Owner 端口草案、候选 SQL/索引对比、影响分析与启动评审。
-生产 Java、正式 SQL/Mapper、API、事件、依赖、索引、数据库对象和已发布迁移变化必须为 0。
+项目发起人已于 2026-08-27 接受准备阶段 `CONDITIONAL PASS`，并从唯一准备封存提交授权
+RPT-INVENTORY 运行时精确整改。允许先补冻结失败测试，再串行实现 Reporting Owner 库存成本
+批量读取端口、独立 v2 keyset 分页、HMAC 签名游标、受控流式导出与原身份恢复。
 
 ## 兼容、回退与停止线
 
 旧契约保留兼容窗口，新入口独立版本化；回退不得改写投影或权威事实。字段、数量/成本口径、
-投影版本语义或数据范围变化必须停止并单独评审。本 CR 当前不批准运行时、SQL、索引或迁移变更；
-需要索引时必须另行提交独立 CR 与唯一前向迁移方案。
+投影版本语义或数据范围变化必须停止并单独评审。本 CR 不批准索引或迁移变更；固定 MySQL 8.4.11
+计划若证明需要索引，必须立即停止并提交独立索引 CR 与唯一前向迁移方案。
