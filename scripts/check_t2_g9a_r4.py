@@ -118,6 +118,9 @@ def main() -> None:
     require('owner="R4FAULT"' not in fault_text and 'owner="ORDER"' in fault_text
             and ':R4-F09' in fault_text,
             "late reporting seed must use an accepted authoritative Owner in an isolated fault partition")
+    require("dict(seedId=seed_id, **seeds[seed_id])" not in fault_text
+            and "dict(seeds[seed_id], seedId=seed_id)" in fault_text,
+            "fault evidence must normalize an embedded seedId without duplicate keyword failure")
     require("directBusinessDatabaseWrites\": 0" in fault_text,
             "fault runner must declare zero direct business database writes")
     workflow = (ROOT / ".github/workflows/t2-g9a-r4-runtime.yml").read_text(encoding="utf-8")

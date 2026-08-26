@@ -346,7 +346,7 @@ def main() -> int:
             "schemaVersion": "1.0", "gate": "G9A-R4", "phase": "R4-R5", "runId": run_id,
             "status": "PASS", "classification": "FORMAL_RUNTIME_FAULTS_WITH_FAILED_CLOSED_EXTERNALS",
             "buildCommit": args.build_commit, "faultSeedCount": len(seeds), "faultSeedPassCount": len(seeds),
-            "seeds": [dict(seedId=seed_id, **seeds[seed_id]) for seed_id in sorted(seeds)],
+            "seeds": [dict(seeds[seed_id], seedId=seed_id) for seed_id in sorted(seeds)],
             "observations": [item.__dict__ for item in client.observations],
             "elapsedMs": round((time.perf_counter() - started) * 1000),
             "directBusinessDatabaseWrites": 0, "providerNetworkCalls": 0,
