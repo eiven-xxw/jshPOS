@@ -27,3 +27,11 @@ Gate 9C 候选基线 `9ca6778f315e4d702af704be3c0bad2de3d2e8bb` 的 88 项需求
 ## 证据边界
 
 最高结论为 `INTERNAL_QUALITY_HARDENING_PREP_CANDIDATE`，不代表外部支付、真实设备/外设、完整 Alpha、生产或商业 SLA。
+
+## 首个候选 CI
+
+候选提交 `be002acea50ec66ed54f7733a6c898c053da86c3` 的 GitHub Actions Run
+[`32936871533`](https://github.com/eiven-xxw/jshPOS/actions/runs/32936871533) 已完成 4/4 Job 全绿。
+最终证据 Artifact `9595124348` 的 GitHub SHA-256 为
+`9718e4e93b7795992fac035f39ee59d131cefa38383bf189708e43e2ab779115`。回填提交仍须从头复跑
+完整专用 CI；不得只重跑失败 Job。

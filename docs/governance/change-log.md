@@ -355,5 +355,6 @@
 | CR-T2G9C-005 | 2026-08-26 | GATE9C_COMPLETE_CI_CONDITIONAL_PASS_EVIDENCE_BACKFILL | 候选`756038c0b53323a173892535aa996fc392c825c2`的Run`32927500915`从新提交运行8个作业节点全绿，8个Artifact ID与SHA-256完整 | T2-CMP-001、T2-CI-001 | 建议内部产品完整性封板CONDITIONAL PASS并回填证据；回填提交再次完整复跑；不创建tag，不提升外部/Alpha/生产证据 |
 
 | CR-T2G10A-001 | 2026-08-26 | GATE9C_ACCEPTED_GATE10A_PREP_IN_PROGRESS | 项目发起人接受Gate9C CONDITIONAL PASS，指定`9ca6778f315e4d702af704be3c0bad2de3d2e8bb`为内部产品完整性封板候选，并授权只做质量审计、P2账、测试设计、外部最小资料清单和R1—R4计划 | T2-CMP-001、T2-SEC-002、T2-MTN-001、T2-PERF-002、T2-RDY-001、ADR-073 | 新登记10项P2但内部P0/P1仍为0；不修改运行时/依赖/迁移、不创建tag；R1等待再次确认，外部状态和零执行边界不变 |
+| CR-T2G10A-002 | 2026-08-26 | GATE10A_PREP_FIRST_CANDIDATE_CI_GREEN_EVIDENCE_BACKFILL | 候选`be002acea50ec66ed54f7733a6c898c053da86c3`的Run`32936871533`完成Ubuntu/Windows治理、仓库审计和证据聚合4个Job全绿；最终Artifact`9595124348`摘要`9718e4e93b7795992fac035f39ee59d131cefa38383bf189708e43e2ab779115` | T2-CMP-001、T2-CI-001、ADR-073 | 只回填不可变证据；10项P2保持OPEN且R1等待确认；运行时/依赖/迁移/tag/外部执行为0；回填提交完整复跑 |
 
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。
