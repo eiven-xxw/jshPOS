@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "1.0",
+  "gate": "T2_GATE_10A_R2_R2_SQL_PREP",
+  "candidateCommit": "c9f5a688e986f90deef5f330b63aefbd84b5b1f9",
+  "runId": 32958281117,
+  "runUrl": "https://github.com/eiven-xxw/jshPOS/actions/runs/32958281117",
+  "runAttempt": 1,
+  "jobs": 6,
+  "conclusion": "success",
+  "evidenceArtifactId": 9603077682,
+  "evidenceArtifactSha256": "bc28236b5a5dab52456b60d837d5315933660c8b2bdd72bfc5787e06fcadc56b",
+  "mysqlArtifactId": 9603038179,
+  "mysqlVersion": "8.4.11",
+  "runtimeChangesApplied": 0,
+  "databaseChangesApplied": 0,
+  "publishedMigrationsModified": 0,
+  "automaticRetry": 0,
+  "externalExecution": 0
+}
