@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "1.0",
+  "profiles": [
+    {"id": "SMOKE_10_MIN", "purpose": "每提交趋势与泄漏冒烟", "durationSeconds": 600, "commercialSla": false},
+    {"id": "SOAK_24H", "purpose": "内部正式栈资源斜率与故障恢复", "durationSeconds": 86400, "commercialSla": false},
+    {"id": "SOAK_72H", "purpose": "24小时稳定后执行的内部长稳候选", "durationSeconds": 259200, "commercialSla": false}
+  ],
+  "dimensions": ["rss", "heap", "gcPause", "threads", "fileHandles", "mysqlConnections", "redisMemory", "outboxBacklog", "deadLetters", "temporaryFiles", "sqlitePages", "walBytes", "p95", "p99", "errors", "recoveryTime"],
+  "fixedFaults": ["redis_pause", "mysql_pause", "ack_loss", "process_restart", "disk_full", "temp_cleanup_failure", "sqlite_wal_growth", "outbox_backlog", "projection_rebuild", "upgrade_rollback"],
+  "hardRules": ["no silent data loss", "same idempotency identity after unknown", "money quantity inventory costing invariants unchanged", "P0/P1 defects zero", "no external evidence upgrade"]
+}

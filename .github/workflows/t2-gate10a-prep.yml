@@ -1,0 +1,101 @@
+name: T2 Gate 10A Prep Internal Quality Audit
+
+on:
+  push:
+    branches: ["t2/gate10a-prep-internal-quality"]
+  pull_request:
+    paths:
+      - "AGENTS.md"
+      - ".github/workflows/t2-gate10a-prep.yml"
+      - "contracts/t2/gate10a-prep/**"
+      - "docs/adr/ADR-073-*"
+      - "docs/governance/**"
+      - "docs/t2-gate10a-prep/**"
+      - "scripts/*gate10a*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gate10a-prep-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  governance-ubuntu:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with: { python-version: "3.12" }
+      - name: Validate governance scope and repository facts
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/t2/gate10a-prep/governance-ubuntu/audit
+          python scripts/check_t0_structure.py
+          python scripts/check_rtm.py
+          python scripts/check_contracts.py
+          python -m py_compile scripts/check_t2_gate10a_prep.py scripts/audit_t2_gate10a_prep.py scripts/build_t2_gate10a_prep_evidence.py
+          python scripts/check_t2_gate10a_prep.py | tee artifacts/t2/gate10a-prep/governance-ubuntu/scope.txt
+          python scripts/audit_t2_gate10a_prep.py --output-dir artifacts/t2/gate10a-prep/governance-ubuntu/audit
+          git diff --check
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with: { name: t2-gate10a-prep-governance-ubuntu, path: artifacts/t2/gate10a-prep/governance-ubuntu, if-no-files-found: error, retention-days: 30 }
+
+  governance-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with: { python-version: "3.12" }
+      - name: Validate UTF-8 and audit determinism
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/t2/gate10a-prep/governance-windows/audit
+          python scripts/check_t0_structure.py
+          python scripts/check_rtm.py
+          python scripts/check_contracts.py
+          python scripts/check_t2_gate10a_prep.py | tee artifacts/t2/gate10a-prep/governance-windows/scope.txt
+          python scripts/audit_t2_gate10a_prep.py --output-dir artifacts/t2/gate10a-prep/governance-windows/audit
+          git diff --check
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with: { name: t2-gate10a-prep-governance-windows, path: artifacts/t2/gate10a-prep/governance-windows, if-no-files-found: error, retention-days: 30 }
+
+  repository-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with: { python-version: "3.12" }
+      - name: Re-run Gate9C integrity and Gate10A read-only audit
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/t2/gate10a-prep/repository-audit/gate9c artifacts/t2/gate10a-prep/repository-audit/gate10a
+          python scripts/audit_t2_gate9c_product_completeness.py --output-dir artifacts/t2/gate10a-prep/repository-audit/gate9c
+          python scripts/audit_t2_gate10a_prep.py --output-dir artifacts/t2/gate10a-prep/repository-audit/gate10a
+          python scripts/review_dependency_diff.py 9ca6778f315e4d702af704be3c0bad2de3d2e8bb "$(git rev-parse HEAD)" > artifacts/t2/gate10a-prep/repository-audit/dependency-diff.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with: { name: t2-gate10a-prep-repository-audit, path: artifacts/t2/gate10a-prep/repository-audit, if-no-files-found: error, retention-days: 30 }
+
+  evidence:
+    needs: [governance-ubuntu, governance-windows, repository-audit]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with: { python-version: "3.12" }
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with: { pattern: t2-gate10a-prep-*, path: downloaded, merge-multiple: false }
+      - name: Build evidence index
+        run: |
+          set -euo pipefail
+          mkdir -p bundle/governance-ubuntu bundle/governance-windows bundle/repository-audit artifacts/t2/gate10a-prep/final
+          cp -R downloaded/t2-gate10a-prep-governance-ubuntu/. bundle/governance-ubuntu/
+          cp -R downloaded/t2-gate10a-prep-governance-windows/. bundle/governance-windows/
+          cp -R downloaded/t2-gate10a-prep-repository-audit/. bundle/repository-audit/
+          python scripts/build_t2_gate10a_prep_evidence.py --bundle-dir bundle --output artifacts/t2/gate10a-prep/final/evidence-index.json --commit "$GITHUB_SHA"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with: { name: t2-gate10a-prep-evidence-index, path: artifacts/t2/gate10a-prep/final, if-no-files-found: error, retention-days: 90 }

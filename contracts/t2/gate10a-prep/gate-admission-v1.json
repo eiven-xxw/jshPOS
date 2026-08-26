@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0",
+  "gate": "T2_GATE_10A_PREP",
+  "baselineCommit": "9ca6778f315e4d702af704be3c0bad2de3d2e8bb",
+  "branch": "t2/gate10a-prep-internal-quality",
+  "evidenceLevel": "STATIC_GOVERNANCE_REPOSITORY_AND_TEST_DESIGN",
+  "acceptedRequirementCount": 88,
+  "ownerModuleCount": 22,
+  "controllerOperations": 300,
+  "formalSurfaces": 26,
+  "openInternalP0": 0,
+  "openInternalP1": 0,
+  "openP2": 10,
+  "runtimeChangesAllowed": false,
+  "dependencyChangesAllowed": false,
+  "publishedMigrationChangesAllowed": false,
+  "tagCreationAllowed": false,
+  "newBusinessCapabilities": 0,
+  "externalStates": {
+    "T2-PAY-002": "BLOCKED",
+    "T2-HWD-001": "BLOCKED",
+    "T2-PRN-001": "BLOCKED",
+    "T2-PAR-001": "BLOCKED",
+    "T2-UAT-001": "DRAFT",
+    "T2-REL-001": "DRAFT",
+    "T2-LIC-001": "DEFERRED",
+    "T2-JSH-001": "DEFERRED"
+  },
+  "externalExecution": {
+    "providerNetwork": 0,
+    "realFunds": 0,
+    "realDeviceCommands": 0,
+    "realPeripheralCommands": 0,
+    "partnerFieldExecution": 0,
+    "fullAlpha": 0,
+    "productionDeployment": 0
+  }
+}

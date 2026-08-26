@@ -1,0 +1,117 @@
+{
+  "schemaVersion": "1.0",
+  "gate": "T2_GATE_10A_PREP",
+  "summary": {"openP0": 0, "openP1": 0, "openP2": 10, "runtimeFixesApplied": 0},
+  "findings": [
+    {
+      "findingId": "G10A-CI-P2-001",
+      "batch": "GATE_10A_R1",
+      "category": "CI_LIFECYCLE",
+      "severity": "P2",
+      "mapsTo": ["T2-RDY-001", "T2-CI-001"],
+      "title": "GitHub Actions Node 20 与 setup-java v4 生命周期债务",
+      "facts": ["77 workflows including Gate10A-Prep", "setup-java v4: 172 uses in 54 files", "eight pinned Action families: 2306 uses"],
+      "state": "OPEN",
+      "closure": "建立受控 Action 版本清单，先验证 Node24 runner 兼容，再以精确 SHA 分批升级并复跑所有当前门禁；不得降低供应链阈值"
+    },
+    {
+      "findingId": "G10A-DEP-P2-001",
+      "batch": "GATE_10A_R1",
+      "category": "DEPENDENCY_LIFECYCLE",
+      "severity": "P2",
+      "mapsTo": ["T2-SEC-002", "T2-RDY-001"],
+      "title": "四技术栈缺少同一提交的升级候选与兼容风险快照",
+      "facts": ["pnpm outdated observed 33 packages on 2026-08-26", "crypto-js 4.2.0 is deprecated", "Maven/Flutter/Kotlin current high/critical gates remain green but no Gate10 immutable upgrade snapshot"],
+      "state": "OPEN",
+      "closure": "在干净执行器生成 Maven、pnpm、Pub、Gradle 的当前/候选/许可证/漏洞/破坏性风险清单，逐生态单独升级并冻结回退"
+    },
+    {
+      "findingId": "G10A-SUP-P2-001",
+      "batch": "GATE_10A_R1",
+      "category": "SUPPLY_CHAIN_MAINTAINABILITY",
+      "severity": "P2",
+      "mapsTo": ["T2-RDY-001", "T2-CI-001"],
+      "title": "Action 与供应链步骤在历史工作流中高重复，缺少单一受控版本账",
+      "facts": ["checkout 560 uses", "upload-artifact 553 uses", "download-artifact 413 uses", "setup-python 392 uses"],
+      "state": "OPEN",
+      "closure": "建立机器可读 Action/Binary 清单和历史工作流冻结策略；当前活动门禁与历史证据分离，禁止静默批量改写历史语义"
+    },
+    {
+      "findingId": "G10A-MTN-P2-001",
+      "batch": "GATE_10A_R2",
+      "category": "SERVER_MAINTAINABILITY",
+      "severity": "P2",
+      "mapsTo": ["T2-MTN-001"],
+      "title": "Server 存在 16 个不低于 400 行的 Owner 生产类且无复杂度预算门禁",
+      "facts": ["656 Java production files", "19 Java files >= 400 physical lines", "largest class 760 physical lines"],
+      "state": "OPEN",
+      "closure": "先补行为金标与依赖/事务边界测试，再按职责拆分；保持 Owner、事务、不变量、错误码和 API 不变"
+    },
+    {
+      "findingId": "G10A-SQL-P2-001",
+      "batch": "GATE_10A_R2",
+      "category": "DATABASE_PERFORMANCE",
+      "severity": "P2",
+      "mapsTo": ["T2-MTN-001", "T2-PERF-002"],
+      "title": "复杂 SQL 已有静态边界但缺少跨 Owner 查询计划、索引和 N+1 回归",
+      "facts": ["49 Mapper XML files", "365 select statements", "0 EXPLAIN-based jshpos tests", "production SELECT star violations: 0"],
+      "state": "OPEN",
+      "closure": "选择关键读写路径建立 MySQL 8.4 EXPLAIN ANALYZE/索引/分页/查询数预算；任何索引或 SQL 语义变化单独评审"
+    },
+    {
+      "findingId": "G10A-RES-P2-001",
+      "batch": "GATE_10A_R2",
+      "category": "SERVER_RESOURCE_ENDURANCE",
+      "severity": "P2",
+      "mapsTo": ["T2-PERF-002", "T2-OPS-001"],
+      "title": "Redis、连接池、任务、Outbox 与临时文件缺少多小时资源斜率证据",
+      "facts": ["formal runtime sustained window: 120 seconds", "temporary file paths are fail-cleaned by unit tests", "no 24-hour resource-slope evidence"],
+      "state": "OPEN",
+      "closure": "建立可缩短冒烟与24小时正式档的连接、线程、文件句柄、临时文件、Outbox/死信、Redis和RSS斜率门禁"
+    },
+    {
+      "findingId": "G10A-POS-P2-001",
+      "batch": "GATE_10A_R3",
+      "category": "POS_MAINTAINABILITY",
+      "severity": "P2",
+      "mapsTo": ["T2-MTN-001", "T2-PERF-002"],
+      "title": "POS 仍有 16 个不低于 500 行的生产 Dart 文件",
+      "facts": ["89 Dart production files", "18 Dart files >= 500 physical lines", "largest file 1168 physical lines"],
+      "state": "OPEN",
+      "closure": "在 Java/Dart 金标、SQLite 故障 seed 和 Widget 旅程保护下按持久化、编排、状态与展示拆分，禁止改变成交和恢复语义"
+    },
+    {
+      "findingId": "G10A-SQLITE-P2-001",
+      "batch": "GATE_10A_R3",
+      "category": "SQLITE_LIFECYCLE",
+      "severity": "P2",
+      "mapsTo": ["T2-OFF-001", "T2-PERF-002"],
+      "title": "SQLite 有 WAL 关闭截断但缺少长期膨胀、保留、归档和受控压缩策略证据",
+      "facts": ["WAL mode and FULL synchronous enabled", "wal_checkpoint(TRUNCATE) on close", "no auto_vacuum policy", "no 24/72-hour page/WAL growth evidence"],
+      "state": "OPEN",
+      "closure": "冻结事实保留与可删除投影边界，量化 page/WAL/outbox 增长并设计营业保护下的 checkpoint/归档/受控压缩；不得删除未同步或不可变事实"
+    },
+    {
+      "findingId": "G10A-OBS-P2-001",
+      "batch": "GATE_10A_R4",
+      "category": "OBSERVABILITY",
+      "severity": "P2",
+      "mapsTo": ["T2-OBS-001", "T2-OPS-001"],
+      "title": "22 Owner 缺少统一 SLI、Trace、告警和诊断包覆盖矩阵",
+      "facts": ["Prometheus endpoint is allowlisted", "one production MeterRegistry integration in Foundation", "no 22-owner SLI/alert coverage gate"],
+      "state": "OPEN",
+      "closure": "按 Owner 冻结低基数指标、关联标识、脱敏日志、Trace 采样、告警阈值和诊断包字段，完成故障到告警再到修复的闭环测试"
+    },
+    {
+      "findingId": "G10A-STB-P2-001",
+      "batch": "GATE_10A_R4",
+      "category": "SOAK_RECOVERY_RELEASE",
+      "severity": "P2",
+      "mapsTo": ["T2-PERF-002", "T2-BAK-001", "T2-RDY-001"],
+      "title": "24/72小时长稳、恢复和内部发布同提交复验尚未形成",
+      "facts": ["current formal-stack soak: 120 seconds", "restore evidence is synthetic", "release signature is ephemeral software key", "24/72-hour synthetic run evidence absent"],
+      "state": "OPEN",
+      "closure": "先执行24小时内部正式栈长稳，再在稳定阈值下执行72小时；同提交复验恢复、升级回退、摘要、SBOM和机器Go/No-Go，不形成商业SLA"
+    }
+  ]
+}

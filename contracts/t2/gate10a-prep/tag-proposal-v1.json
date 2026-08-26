@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "1.0",
+  "state": "PROPOSED_AWAITING_SPONSOR_CONFIRMATION",
+  "type": "annotated",
+  "name": "t2-internal-product-completeness-seal-2026-08-26",
+  "targetCommit": "9ca6778f315e4d702af704be3c0bad2de3d2e8bb",
+  "message": "T2 Gate 9C Internal Product Completeness Seal\n\nScope: INTERNAL_PRODUCT_COMPLETENESS_SEAL\nTarget: 9ca6778f315e4d702af704be3c0bad2de3d2e8bb\nCoverage: 88 ACCEPTED requirements; 300 API operations; 26 formal pages; 22 Owner modules; three-industry and SAA/SUB/SVC internal journeys.\nEvidence: GitHub Actions run 32927949889.\nBoundary: not SANDBOX, REAL_DEVICE, REAL_PERIPHERAL, PILOT, FULL_ALPHA, PRODUCTION, COMMERCIAL, or commercial SLA.",
+  "created": false,
+  "pushed": false
+}

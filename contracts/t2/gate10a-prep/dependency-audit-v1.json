@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "1.0",
+  "observedAt": "2026-08-26",
+  "baselineCommit": "9ca6778f315e4d702af704be3c0bad2de3d2e8bb",
+  "securityConclusion": "GATE9C_HIGH_CRITICAL_BASELINE_PASSED_R1_REVALIDATION_REQUIRED",
+  "ecosystems": {
+    "server": {
+      "current": {"ruoyiVuePlus": "5.6.2", "springBoot": "3.5.15", "javaSource": "17", "ciJdk": "21", "mybatisPlus": "3.5.16", "hutool": "5.8.43"},
+      "candidateSnapshot": "R1_CLEAN_RUN_REQUIRED",
+      "risk": "BOM and framework upgrades must be isolated from business changes"
+    },
+    "web": {
+      "current": {"node": "24", "pnpm": "10.33.0", "vue": "3.5.30", "vite": "7.3.5", "typescript": "5.9.3", "vitest": "4.1.10"},
+      "outdatedObserved": 33,
+      "deprecated": ["crypto-js@4.2.0"],
+      "majorCandidatesObserved": ["eslint", "pinia", "typescript", "vite", "vue-types"],
+      "risk": "major upgrades require route, build, type and 20-page interaction regression"
+    },
+    "flutter": {
+      "current": {"flutter": "3.47.0", "dart": ">=3.13.0 <4.0.0", "sqlite3": "3.5.1", "cryptography": "2.7.0"},
+      "candidateSnapshot": "R1_CLEAN_RUN_REQUIRED",
+      "risk": "Flutter, Dart, sqlite3 and Android toolchain must remain a tested compatibility set"
+    },
+    "androidKotlin": {
+      "current": {"androidGradlePlugin": "9.1.0", "kotlin": "2.4.0", "jvmTarget": "17", "compileSdk": "36", "minSdk": "28"},
+      "candidateSnapshot": "R1_CLEAN_RUN_REQUIRED",
+      "risk": "toolchain upgrades require debug APK, plugin ABI and vendor-SDK boundary regression"
+    }
+  },
+  "licenseBoundary": {
+    "internalBaseline": "SBOM_AND_LICENSE_GATES_PASSED_AT_GATE9C",
+    "commercialDeferred": ["Aviator", "simple-http", "MySQL Connector/J"],
+    "externalSdkLicenses": "NOT_IN_REPOSITORY"
+  }
+}

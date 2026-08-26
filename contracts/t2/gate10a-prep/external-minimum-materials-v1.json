@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "1.0",
+  "executionAllowed": false,
+  "tracks": {
+    "LAKALA": ["sandbox authorization and scope", "test merchant and terminal opaque references", "official API product and version", "payment query reversal refund and bill catalog", "signature certificate callback and replay rules", "rate limit timeout and retry rules", "network allowlist", "secret-system reference", "technical and escalation contacts", "document SHA-256 custodian expiry revocation and deletion rules"],
+    "ANDROID_POS": ["manufacturer exact model and SKU", "Android firmware build fingerprint and security patch", "CPU RAM storage and display", "SDK package version SHA-256 license and documentation", "sample opaque identity and custody", "APK install upgrade rollback and MDM policy", "debug log privacy and support contact", "warranty RMA and firmware support window"],
+    "PERIPHERALS": ["built-in printer and ESC/POS USB or LAN exact models", "paper width encoding cutter and device status", "scanner HID and SDK modes with symbologies", "scale interface protocol precision stability and certification", "cash drawer voltage pulse authorization and audit", "customer display protocol resolution privacy and disconnect behavior", "SDK driver document versions and hashes", "samples compatibility matrix acceptance owner and RMA"]
+  },
+  "secretRule": "Only opaque secret-manager references may enter governance metadata; credentials and real data never enter Git, logs, CI, or ordinary artifacts."
+}

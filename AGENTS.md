@@ -1089,6 +1089,27 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
   继续 `DRAFT`；`T2-LIC-001/JSH-001` 继续 `DEFERRED`。Provider 网络、真实资金、
   设备/外设命令、伙伴现场、完整 Alpha、生产部署和商业声明必须为 0。
 
+## 4.77 当前 T2 Gate 10A-Prep 内部质量加固准备条件准入
+
+- 项目发起人已于 2026-08-26 接受 Gate 9C `CONDITIONAL PASS`，指定
+  `9ca6778f315e4d702af704be3c0bad2de3d2e8bb` 为 `INTERNAL_PRODUCT_COMPLETENESS_SEAL`
+  候选，并授权建立 `t2/gate10a-prep-internal-quality` 开展只读质量审计和分批计划。
+- Gate 9C annotated tag 只允许形成精确名称、目标和 message 提案；未经再次确认不得创建、
+  移动或推送 tag。
+- 本阶段只允许治理、CR、ADR 提案、静态/仓库审计、P2 Finding、影响分析、测试设计、
+  R1—R4 串行计划、外部最小资料清单、专用检查脚本、CI 和启动评审报告；不得修改 Server、
+  Vue、Flutter、Kotlin/Android、依赖、数据库、已发布迁移、基础设施或业务运行时。
+- 当前 88 项 `ACCEPTED`、300 API、26 页面、22 Owner 和 Gate 9B 四项关闭账不得漂移；
+  本轮 P2 不重新打开内部 P0/P1。发现新业务或需要改变资金、库存、租户、支付、同步、迁移
+  语义时必须停止并提交独立 CR 与 Requirement ID。
+- 质量加固按 R1 CI/依赖/供应链、R2 Server/数据库/可维护性、R3 Vue/Flutter/SQLite/端侧、
+  R4 可观测性/长稳/恢复/内部发布复验严格串行。项目发起人确认前不得进入任何运行时整改。
+- 拉卡拉、Android 主认证机和外设只整理最小离线资料清单；不得调用 Provider 网络、安装、
+  重启或控制真实设备/外设。
+- `T2-PAY-002/HWD-001/PRN-001/PAR-001` 继续 `BLOCKED`；`T2-UAT-001/REL-001`
+  继续 `DRAFT`；`T2-LIC-001/JSH-001` 继续 `DEFERRED`。Provider 网络、真实资金、
+  设备/外设命令、伙伴现场、完整 Alpha、生产部署和商业声明必须为 0。
+
 ## 5. 工程与测试规则
 
 - 服务端采用 RuoYi-Vue-Plus 模块化单体，不得把领域逻辑写入 Controller、通用工具类或框架系统模块。

@@ -354,4 +354,6 @@
 | CR-T2G9C-004 | 2026-08-26 | GATE9C_EVIDENCE_INDEX_PYTHON_BOOLEAN_LITERAL_FAILURE | 首个封板候选`b7c18348d9de496ad9abb685cd46d3715365eaf6`的Run`32926660201`七个上游作业通过，最终证据索引因Python使用JSON字面量`false`触发NameError而失败关闭 | T2-CMP-001、T2-CI-001 | 仅修正为Python布尔`False`并追加失败历史；不重跑失败Job，新提交完整复跑；不改运行时、依赖、数据库、迁移或外部状态 |
 | CR-T2G9C-005 | 2026-08-26 | GATE9C_COMPLETE_CI_CONDITIONAL_PASS_EVIDENCE_BACKFILL | 候选`756038c0b53323a173892535aa996fc392c825c2`的Run`32927500915`从新提交运行8个作业节点全绿，8个Artifact ID与SHA-256完整 | T2-CMP-001、T2-CI-001 | 建议内部产品完整性封板CONDITIONAL PASS并回填证据；回填提交再次完整复跑；不创建tag，不提升外部/Alpha/生产证据 |
 
+| CR-T2G10A-001 | 2026-08-26 | GATE9C_ACCEPTED_GATE10A_PREP_IN_PROGRESS | 项目发起人接受Gate9C CONDITIONAL PASS，指定`9ca6778f315e4d702af704be3c0bad2de3d2e8bb`为内部产品完整性封板候选，并授权只做质量审计、P2账、测试设计、外部最小资料清单和R1—R4计划 | T2-CMP-001、T2-SEC-002、T2-MTN-001、T2-PERF-002、T2-RDY-001、ADR-073 | 新登记10项P2但内部P0/P1仍为0；不修改运行时/依赖/迁移、不创建tag；R1等待再次确认，外部状态和零执行边界不变 |
+
 后续变更不得直接改表中历史记录；新增一行并在独立 CR 文档中保留分析与签字。
