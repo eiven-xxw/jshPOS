@@ -1,0 +1,72 @@
+{
+  "schemaVersion": "1.0",
+  "gate": "T2_GATE10A_R2_R2_R2_R2_RPT_INVENTORY_INDEX",
+  "candidateCommit": "0488897009f249ab1887da24cd036186a8320f40",
+  "workflowRunId": 32993457583,
+  "workflowConclusion": "success",
+  "jobs": {
+    "expected": 10,
+    "successful": 10
+  },
+  "migration": {
+    "version": "202608260089",
+    "emptyToV89": true,
+    "v88ToV89": true,
+    "repeatMigrateExecuted": 0,
+    "flywayValidate": true
+  },
+  "mysql84": {
+    "version": "8.4.11",
+    "v88RedPlan": {
+      "fullScanObserved": true,
+      "filesortObserved": true,
+      "approvedIndexObserved": false
+    },
+    "tiers": [
+      {
+        "name": "SMOKE_10K",
+        "authorizedRows": 8000,
+        "interactiveQueries": 1,
+        "exportQueries": 1,
+        "exportQueryBudget": 1,
+        "fullScanObserved": false,
+        "filesortObserved": false,
+        "approvedIndexObserved": true,
+        "duplicateKeys": 0,
+        "missingRows": 0,
+        "crossTenantRows": 0,
+        "twelveFieldConservationPassed": true
+      },
+      {
+        "name": "BASELINE_100K",
+        "authorizedRows": 80000,
+        "interactiveQueries": 1,
+        "exportQueries": 9,
+        "exportQueryBudget": 9,
+        "fullScanObserved": false,
+        "filesortObserved": false,
+        "approvedIndexObserved": true,
+        "duplicateKeys": 0,
+        "missingRows": 0,
+        "crossTenantRows": 0,
+        "twelveFieldConservationPassed": true
+      }
+    ]
+  },
+  "artifacts": {
+    "mysql84": {
+      "id": 9615830998,
+      "digest": "sha256:7830c033fa40d6b0fd3bbad026352212be52e90692ab17f3a04a4d24e205b90b"
+    },
+    "evidenceIndex": {
+      "id": 9615842261,
+      "digest": "sha256:e52e5fab463c076d29b366117f23b49e2c08288f3fbbdfbd7cc2c433911dd9c6",
+      "indexedFiles": 325
+    }
+  },
+  "decision": "INDEX_VERIFIED_AWAITING_SPONSOR_CONFIRMATION",
+  "findingState": "OPEN",
+  "resourceFindingState": "PREPARED",
+  "externalExecution": 0,
+  "productionSla": false
+}

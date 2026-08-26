@@ -115,9 +115,17 @@ def main() -> None:
     agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
     log = (ROOT / "docs/governance/change-log.md").read_text(encoding="utf-8")
     cr = (ROOT / "docs/governance/CR-T2G10A-024_RPT-INVENTORY-keyset索引前向迁移提案.md").read_text(encoding="utf-8")
-    require("## 4.88" in agents and "CR-T2G10A-025" in log
-            and "APPROVED_INDEX_RUNTIME_IN_PROGRESS" in cr,
+    require("## 4.88" in agents and "CR-T2G10A-026" in log
+            and "INDEX_VERIFIED_AWAITING_SPONSOR_CONFIRMATION" in cr,
             "治理批准记录不完整")
+    verification = json.loads((CONTRACT / "verification-v1.json").read_text(encoding="utf-8"))
+    require(verification["candidateCommit"] == "0488897009f249ab1887da24cd036186a8320f40"
+            and verification["workflowRunId"] == 32993457583
+            and verification["jobs"] == {"expected": 10, "successful": 10},
+            "V89 完整 CI 验证记录不完整")
+    require((ROOT / "docs/t2-gate10a-r2-r2-r2-r2-rpt-inventory-index/"
+                    "03_RPT-INVENTORY索引独立周门禁报告.md").is_file(),
+            "缺少索引独立周门禁报告")
     print(f"T2 Gate10A RPT-INVENTORY INDEX OK: changed={len(changed)} migration=V89-only "
           "sqlMapperApi=unchanged finding=OPEN res=PREPARED external=0")
 

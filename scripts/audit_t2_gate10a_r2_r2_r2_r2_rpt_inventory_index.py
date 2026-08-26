@@ -26,7 +26,7 @@ def main() -> None:
     payload = {
         "schemaVersion": "1.0",
         "gate": "T2_GATE10A_R2_R2_R2_R2_RPT_INVENTORY_INDEX",
-        "decision": "INDEX_IMPLEMENTED_AWAITING_MYSQL_VERIFICATION",
+        "decision": "INDEX_VERIFIED_AWAITING_SPONSOR_CONFIRMATION",
         "finding": {"id": "G10A-SQL-P2-001", "state": "OPEN"},
         "resourceFinding": {"id": "G10A-RES-P2-001", "state": "PREPARED"},
         "changeRequest": "CR-T2G10A-024",

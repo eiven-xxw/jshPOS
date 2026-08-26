@@ -2,7 +2,7 @@
 
 ## 1. 当前状态
 
-- 状态：`APPROVED_INDEX_RUNTIME_IN_PROGRESS`
+- 状态：`INDEX_VERIFIED_AWAITING_SPONSOR_CONFIRMATION`
 - Finding：`G10A-SQL-P2-001 = OPEN`
 - 资源 Finding：`G10A-RES-P2-001 = PREPARED`
 - 依据：GitHub Actions [Run 32990329996](https://github.com/eiven-xxw/jshPOS/actions/runs/32990329996)
@@ -10,11 +10,11 @@
 - 证据边界：`INTERNAL_SYNTHETIC_MYSQL84_ONLY`
 - 本 CR 只申请一个二级索引及唯一前向迁移，不改变查询结果、API v1、事件、库存、成本、
   租户或同步语义。
-- 当前未创建索引、迁移或数据库对象；运行时整改停在
-  `CONDITIONAL_NO_GO_PENDING_INDEX_CR`。
 - 项目发起人确认：2026-08-27 `CONDITIONAL GO`；只授权从
   `30edba224d9acf35f64d81c042b5153e08e2eb66` 建立
   `t2/gate10a-r2-r2-r2-r2-rpt-inventory-index`，先红后绿实施唯一 V89。
+- 验证候选：`0488897009f249ab1887da24cd036186a8320f40`；完整 CI
+  [Run 32993457583](https://github.com/eiven-xxw/jshPOS/actions/runs/32993457583) 十项 Job 全绿。
 
 ## 2. 可复现实测结论
 
@@ -55,8 +55,8 @@
 
 ## 5. Go/No-Go
 
-- 当前结论：`CONDITIONAL_NO_GO_PENDING_INDEX_CR`。
-- 建议：项目发起人仅对上述单一索引与 V89 作 `CONDITIONAL GO/NO-GO` 决策。
-- 未经确认，不得创建 V89、执行 DDL、修改查询/Mapper、进入 RPT-PAY-REC、RES、R3、
-  完整 Alpha 或生产发布。
+- 当前结论：索引子批 `CONDITIONAL PASS / INDEX_VERIFIED_AWAITING_SPONSOR_CONFIRMATION`。
+- 建议：确认 CR-T2G10A-024 授权的单一索引与 V89 已完成内部验证；不得据此关闭整个
+  SQL Finding。
+- 未经确认，不得进入 RPT-PAY-REC、RES、R3、完整 Alpha 或生产发布。
 - 即使索引获批并验证通过，`G10A-SQL-P2-001` 仍保持 `OPEN`，等待后续获批查询全部收口。
