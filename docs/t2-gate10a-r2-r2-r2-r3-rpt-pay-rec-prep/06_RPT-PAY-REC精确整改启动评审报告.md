@@ -2,8 +2,8 @@
 
 ## 当前结论
 
-当前为 `PREP_IN_PROGRESS_RUNTIME_NOT_ADMITTED`。独立 CI 完整通过并回填候选提交、Run、Job、
-Artifact 与 MySQL 指标后，最高可建议 `PREP_VERIFIED_AWAITING_SPONSOR_CONFIRMATION`。
+当前为 `PREP_VERIFIED_AWAITING_SPONSOR_CONFIRMATION`。候选提交的独立 CI 已完整通过，
+准备范围、红基线、候选设计与停止线具备可重复证据；正式运行时仍未获准。
 
 `G10A-SQL-P2-001` 继续 `OPEN`，`G10A-RES-P2-001` 继续 `PREPARED`。本报告不关闭 Finding，
 不授权运行时、索引、迁移或 Provider 网络。
@@ -30,15 +30,29 @@ Artifact 与 MySQL 指标后，最高可建议 `PREP_VERIFIED_AWAITING_SPONSOR_C
 
 ## Go/No-Go
 
-- 当前运行时：`NO-GO`，等待完整 CI 与项目发起人确认；
-- CI 全绿后的建议：`CONDITIONAL GO`，只准入 RPT-PAY-REC 运行时第一批；
+- 当前运行时：`NO-GO`，等待项目发起人确认本报告；
+- 本报告建议：`CONDITIONAL GO`，只准入 RPT-PAY-REC 运行时精确整改；
 - 索引/迁移、Provider 网络、真实账单：`NO-GO`，均需独立确认；
 - RES、R3、完整 Alpha、生产发布与外部执行：`NO-GO`。
 
-## 待回填证据
+## 已回填证据
 
-- 候选 commit：`PENDING`；
-- GitHub Run：`PENDING`；
-- MySQL 10k/100k、50/501 查询与守恒：`PENDING`；
-- Artifact 与 SHA-256：`PENDING`；
-- 最终准备结论：`PENDING`。
+- 候选 commit：`f895e540ba771e83cfc28c199633192618ccb9b5`；
+- GitHub Run：[`32999443460`](https://github.com/eiven-xxw/jshPOS/actions/runs/32999443460)，
+  总耗时 `10m12s`，五个 Job 全绿：`governance-ubuntu`、`governance-windows`、
+  `test-baseline`、`mysql84`、`evidence`；
+- MySQL：`8.4.11`，Schema `202608260089`，10k/100k 各执行一次正式冻结 SQL；均未观察到全表扫描，
+  均观察到 `filesort`，分别返回 `4,800/48,000` 行；`crossTenantRows=0`；
+- 查询放大红基线：500 个支付/退款引用为 `501` 次 JDBC 查询，50 门店旧导出为 `50` 次查询；
+- 十二项差异守恒：10k/100k 均通过；100k 样本为内部/账单各 `48,000` 行、匹配 `45,000`、
+  差异/OPEN 各 `3,000`、净差额 `300,000` 最小货币单位；
+- MySQL Artifact：`9618262270`，摘要
+  `sha256:0be3384846c2818ed5f1f19b7199c8851702111739dcb798b340c242628b6a7f`；
+- 汇总证据 Artifact：`9618271347`，摘要
+  `sha256:6720ce63a470cbaee72cef4fc509300dcde79bfb34243e785fd09d8dd1988b30`；
+- 治理 Ubuntu/Windows Artifact：`9617907738` / `9617912998`；测试基线 Artifact：`9618104132`；
+- 最终准备结论：`PREP_VERIFIED_AWAITING_SPONSOR_CONFIRMATION`。
+
+以上只证明内部准备与红基线可重复，不代表性能达标或生产容量。`filesort`、无界结果、
+50 次旧导出和 501 次引用读取是后续运行时批次必须关闭的红项；如正式候选 SQL 仍需索引，
+必须停止并单独提交索引 CR 与唯一前向迁移方案。
