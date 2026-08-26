@@ -188,20 +188,16 @@ jobs:
           pushd packages/pos_device_adapter
           flutter pub get --enforce-lockfile
           popd
-          pushd packages/pos_device_adapter/example
-          flutter pub get --enforce-lockfile
-          popd
-          chmod +x pos-flutter/android/gradlew packages/pos_device_adapter/example/android/gradlew
+          chmod +x pos-flutter/android/gradlew
           pos-flutter/android/gradlew -p pos-flutter/android --no-daemon --version | tee "$out/gradle-version.txt"
+          pos-flutter/android/gradlew -p pos-flutter/android --no-daemon projects > "$out/gradle-projects.txt"
           pos-flutter/android/gradlew -p pos-flutter/android --no-daemon dependencies > "$out/pos-gradle-dependencies.txt"
           pos-flutter/android/gradlew -p pos-flutter/android --no-daemon testDebugUnitTest
-          packages/pos_device_adapter/example/android/gradlew -p packages/pos_device_adapter/example/android --no-daemon dependencies > "$out/adapter-gradle-dependencies.txt"
-          packages/pos_device_adapter/example/android/gradlew -p packages/pos_device_adapter/example/android --no-daemon testDebugUnitTest assembleDebug
           pushd pos-flutter
           flutter build apk --debug
           popd
           cp pos-flutter/build/app/outputs/flutter-apk/app-debug.apk "$out/jshpos-internal-debug.apk"
-          python scripts/snapshot_t2_gate10a_r1.py --ecosystem KOTLIN_GRADLE --output "$out/snapshot.json" --tool-version "$(grep distributionUrl pos-flutter/android/gradle/wrapper/gradle-wrapper.properties)" --evidence "$out/gradle-version.txt" --evidence "$out/pos-gradle-dependencies.txt" --evidence "$out/adapter-gradle-dependencies.txt" --evidence "$out/jshpos-internal-debug.apk"
+          python scripts/snapshot_t2_gate10a_r1.py --ecosystem KOTLIN_GRADLE --output "$out/snapshot.json" --tool-version "$(grep distributionUrl pos-flutter/android/gradle/wrapper/gradle-wrapper.properties)" --evidence "$out/gradle-version.txt" --evidence "$out/gradle-projects.txt" --evidence "$out/pos-gradle-dependencies.txt" --evidence "$out/jshpos-internal-debug.apk"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with: { name: t2-gate10a-r1-kotlin-android, path: artifacts/t2/gate10a-r1/kotlin-android, if-no-files-found: error, retention-days: 30 }
 

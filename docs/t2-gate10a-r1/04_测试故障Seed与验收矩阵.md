@@ -8,6 +8,7 @@
 | G10A-R1-ACT-002 | 172 条 `setup-java v4` 引用 | `setup-java v6.0.0` 固定 SHA，旧引用为 0 |
 | G10A-R1-DEP-001 | 4 个技术栈尚未 clean-run 复验 | 四栈按顺序完成且输入摘要不漂移 |
 | G10A-R1-CI-001 | 首轮 Run 32940429973 暴露 8 个 Windows/Ubuntu 换行摘要差异 | 改用 Git blob 规范字节，两平台摘要一致 |
+| G10A-R1-KOT-001 | Run 32940754079 错误假定 example 的已忽略生成式 `gradlew` 已跟踪 | 使用正式 POS 已跟踪 wrapper 验证插件工程、Kotlin 单测与 APK |
 
 原始 seed 保存在 `contracts/t2/gate10a-r1/failure-seeds-v1.json`，不得删除或改写为从未失败。
 

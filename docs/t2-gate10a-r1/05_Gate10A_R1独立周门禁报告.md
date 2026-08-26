@@ -22,6 +22,11 @@ SHA-256、四栈 clean-run 结果和最终 Go/No-Go。项目发起人确认前�
 导致的跨平台非确定性；失败历史已冻结为 `G10A-R1-CI-001`。修复只把摘要输入改为
 Git commit blob 规范字节，不改变任何应用依赖、业务代码或门禁阈值，并从新提交全量复跑。
 
+第二轮候选 Run `32940754079` 已通过治理、Maven、pnpm 及 Flutter Ubuntu/Windows，
+随后因脚本错误假定设备适配 example 中被 `.gitignore` 排除的生成式 `gradlew` 已提交而
+失败关闭。该失败冻结为 `G10A-R1-KOT-001`；修复改为使用正式 POS 已跟踪的 Gradle
+wrapper 发现并编译插件工程、执行 Kotlin 单测和构建包含插件的 APK，不新增或提交生成文件。
+
 ## 待完成门禁
 
 | Finding | 当前状态 | 关闭前条件 |
