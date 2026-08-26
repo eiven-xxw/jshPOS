@@ -2,7 +2,7 @@
 
 - 日期：2026-08-26
 - 查询：`RPT-INVENTORY / ReportingPersistenceMapper.queryInventoryCost`
-- 状态：`RUNTIME_IN_PROGRESS_INDEX_NOT_ADMITTED`
+- 状态：`CONDITIONAL_NO_GO_PENDING_INDEX_CR`
 - 准备起点：`206b07f93014a468102380577a987ac85af1ceff`
 - 准备分支：`t2/gate10a-r2-r2-r2-r2-rpt-inventory-prep`
 - 准备封存提交：`f36df63b21bd3bb98ea0d5022f8fe5fac5def72f`
@@ -33,3 +33,10 @@ RPT-INVENTORY 运行时精确整改。允许先补冻结失败测试，再串行
 旧契约保留兼容窗口，新入口独立版本化；回退不得改写投影或权威事实。字段、数量/成本口径、
 投影版本语义或数据范围变化必须停止并单独评审。本 CR 不批准索引或迁移变更；固定 MySQL 8.4.11
 计划若证明需要索引，必须立即停止并提交独立索引 CR 与唯一前向迁移方案。
+
+## 运行时停止结论
+
+GitHub Actions Run `32990329996` 已验证运行时功能、10k/100k 查询数、0 重复/缺失/越权和
+十二项数量/成本守恒，但两档执行计划均出现全表扫描与 filesort。已按停止线提交
+`CR-T2G10A-024`，候选只允许通过唯一 `V202608260089` 新增
+`idx_rpt_inventory_keyset`。未经项目发起人确认，索引与迁移变化必须保持 0。

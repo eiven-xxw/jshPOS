@@ -63,6 +63,7 @@ def main() -> None:
         ".github/workflows/t2-gate10a-r2-r2-r2-r2-rpt-inventory-runtime.yml",
         "contracts/t2/gate5d/openapi-reporting-v1.yaml",
         "docs/governance/CR-T2G10A-014_RPT-INVENTORY分页导出兼容性准备.md",
+        "docs/governance/CR-T2G10A-024_RPT-INVENTORY-keyset索引前向迁移提案.md",
         "docs/governance/change-log.md",
         "docs/governance/rtm.csv",
         "server/ruoyi-modules/jshpos-release/src/test/java/com/jingshanghui/pos/release/performance/SqlBaselineQueries.java",
@@ -85,8 +86,23 @@ def main() -> None:
             "准入起点或 SQL Finding 状态漂移")
     require(status["states"]["G10A-RES-P2-001"] == "PREPARED" and status["externalExecution"] == 0,
             "资源 Finding 或外部执行边界漂移")
+    require(status["runtimeDecision"] == "CONDITIONAL_NO_GO_PENDING_INDEX_CR"
+            and status["indexProposalCr"] == "CR-T2G10A-024",
+            "MySQL 停止结论或独立索引 CR 漂移")
     require(not status["indexChangeAuthorized"] and not status["migrationChangeAuthorized"],
             "索引或迁移被越权准入")
+    proposal = json.loads((CONTRACT / "index-proposal-v1.json").read_text(encoding="utf-8"))
+    require(proposal["proposal"]["migrationVersion"] == "V202608260089"
+            and proposal["proposal"]["index"] == "idx_rpt_inventory_keyset",
+            "候选 V89 或索引名漂移")
+    require(not (ROOT / "server/ruoyi-modules/jshpos-reporting/src/main/resources/db/migration/"
+                 "V202608260089__reporting_inventory_keyset_index.sql").exists(),
+            "未经项目发起人确认不得创建 V89")
+    require_text("docs/governance/CR-T2G10A-024_RPT-INVENTORY-keyset索引前向迁移提案.md",
+                 "PROPOSED_AWAITING_SPONSOR_CONFIRMATION", "CONDITIONAL_NO_GO_PENDING_INDEX_CR")
+    require_text("docs/t2-gate10a-r2-r2-r2-r2-rpt-inventory-runtime/"
+                 "04_RPT-INVENTORY精确整改独立周门禁报告.md",
+                 "Run 32990329996", "STOP_AND_REQUEST_INDEPENDENT_INDEX_CR")
 
     mapper = (ROOT / MAPPER).read_text(encoding="utf-8")
     baseline_mapper = git("show", f"{BASE}:{MAPPER}")

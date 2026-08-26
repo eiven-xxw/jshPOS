@@ -25,13 +25,14 @@ def main() -> None:
     payload = {
         "schemaVersion": "1.0",
         "gate": "T2_GATE10A_R2_R2_R2_R2_RPT_INVENTORY_RUNTIME",
-        "decision": "RUNTIME_IMPLEMENTED_AWAITING_MYSQL_INDEX_DECISION",
+        "decision": "CONDITIONAL_NO_GO_PENDING_INDEX_CR",
         "finding": {"id": "G10A-SQL-P2-001", "state": "OPEN"},
         "resourceFinding": {"id": "G10A-RES-P2-001", "state": "PREPARED"},
         "query": "RPT-INVENTORY",
         "controls": {"v1Frozen": True, "interactiveLimit": 500, "signedCursor": "HMAC-SHA256",
                      "resumableStreamingExport": True, "conservedFields": 12,
-                     "indexOrMigrationChanged": False},
+                     "indexOrMigrationChanged": False,
+                     "indexProposalCr": "CR-T2G10A-024"},
         "failureSeedCount": len(seeds),
         "externalExecution": 0,
         "contractFiles": [{"path": path.relative_to(ROOT).as_posix(), "sha256": sha256(path)}

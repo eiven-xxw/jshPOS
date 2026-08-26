@@ -1337,6 +1337,13 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
   `G10A-RES-P2-001`、R3、完整 Alpha、生产发布及所有外部执行继续禁止。
 - `G10A-SQL-P2-001` 继续 `OPEN`，`G10A-RES-P2-001` 继续 `PREPARED`；完成后只提交独立周门禁报告
   等待项目发起人确认，不得自动进入后续批次。
+- GitHub Actions Run `32990329996` 已完成运行时正确性和完整 CI 验证，但 MySQL 8.4.11 固定
+  10k/100k 计划均观察到全表扫描与 filesort；当前结论为
+  `CONDITIONAL_NO_GO_PENDING_INDEX_CR`，并已提交 `CR-T2G10A-024`。
+- `CR-T2G10A-024` 只提议通过唯一前向迁移 `V202608260089` 为
+  `rpt_inventory_cost_daily` 新增
+  `idx_rpt_inventory_keyset(tenant_id,projection_version,business_date,store_id,warehouse_id,sku_id,currency)`；
+  当前未获索引或迁移授权，V89、DDL 和索引变化必须为 0，等待项目发起人再次确认。
 
 ## 5. 工程与测试规则
 

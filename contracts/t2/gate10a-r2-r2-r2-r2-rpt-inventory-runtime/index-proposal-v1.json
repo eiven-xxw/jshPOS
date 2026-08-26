@@ -1,0 +1,64 @@
+{
+  "schemaVersion": "1.0",
+  "crId": "CR-T2G10A-024",
+  "queryId": "RPT-INVENTORY",
+  "decision": "CONDITIONAL_NO_GO_PENDING_INDEX_CR",
+  "finding": {
+    "id": "G10A-SQL-P2-001",
+    "state": "OPEN"
+  },
+  "evidence": {
+    "runId": 32990329996,
+    "verifiedCommit": "c11bad82b183d88bccadb5b679b13a75dc0864cc",
+    "mysqlArtifactId": 9614637298,
+    "mysqlArtifactSha256": "6b4ff8527a9433e73e51de7caa3527a87584b7bf5ecc98d29af85d5cbda1a2ce",
+    "tiers": [
+      {
+        "name": "SMOKE_10K",
+        "seededRows": 10000,
+        "authorizedRows": 8000,
+        "interactiveQueryCount": 1,
+        "exportQueryCount": 1,
+        "duplicateRows": 0,
+        "missingRows": 0,
+        "crossTenantRows": 0,
+        "twelveFieldConservationPassed": true,
+        "fullScanObserved": true,
+        "filesortObserved": true
+      },
+      {
+        "name": "BASELINE_100K",
+        "seededRows": 100000,
+        "authorizedRows": 80000,
+        "interactiveQueryCount": 1,
+        "exportQueryCount": 9,
+        "duplicateRows": 0,
+        "missingRows": 0,
+        "crossTenantRows": 0,
+        "twelveFieldConservationPassed": true,
+        "fullScanObserved": true,
+        "filesortObserved": true
+      }
+    ]
+  },
+  "proposal": {
+    "migrationVersion": "V202608260089",
+    "migrationFile": "jshpos-reporting/src/main/resources/db/migration/V202608260089__reporting_inventory_keyset_index.sql",
+    "table": "rpt_inventory_cost_daily",
+    "index": "idx_rpt_inventory_keyset",
+    "columns": [
+      "tenant_id",
+      "projection_version",
+      "business_date",
+      "store_id",
+      "warehouse_id",
+      "sku_id",
+      "currency"
+    ]
+  },
+  "authorization": {
+    "indexChangeAuthorized": false,
+    "migrationChangeAuthorized": false,
+    "externalExecution": 0
+  }
+}
