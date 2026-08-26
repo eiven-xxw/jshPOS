@@ -1201,6 +1201,28 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
   R2-R2 准备报告经项目发起人再次确认前不得进入 SQL 正式整改。
 - 所有外部 `BLOCKED`、UAT/REL `DRAFT`、LIC/JSH `DEFERRED` 与零执行边界保持不变。
 
+## 4.82 当前 T2 Gate 10A-R2-R2-R1 MySQL 8.4 可执行红基线条件准入
+
+- 项目发起人已于 2026-08-26 接受 R2-R2 准备阶段 `CONDITIONAL PASS`，授权从最终治理提交
+  `8eb77ec855b7bf89f93eedf4c01f7681465f0544` 建立
+  `t2/gate10a-r2-r2-r1-sql-executable-baseline`；本批只允许为 `G10A-SQL-P2-001` 建立
+  MySQL 8.4.11 可执行计划、JDBC 查询数和租户/只读权限红基线。
+- 允许新增 `jshpos-release/src/test` 范围的确定性合成数据夹具、从正式 Mapper XML 读取的12条
+  查询适配、`EXPLAIN FORMAT=JSON`、`EXPLAIN ANALYZE FORMAT=TREE`、JDBC查询数探针、只读数据库
+  账号攻击、参数/表统计/`SHOW INDEX`/计划摘要和专用 CI 证据；测试代码不得进入商业 JAR。
+- 必须在固定 10k 与 100k 主事实分布执行全部12条查询；1m只允许执行契约明确批准的趋势查询，
+  结果一律标记 `SYNTHETIC_TREND_ONLY`，不得形成生产容量或商业 SLA。绝对墙钟时间不作为单独判据。
+- 查询必须每次从正式 Mapper XML 解析，并与 R2-R2 冻结摘要匹配；禁止复制后脱离来源演进。三条
+  动态报表查询本批冻结为可选 terminal/cashier/warehouse/sku 条件均为空的既有参数分支。
+- 禁止修改任何生产 Java、Mapper Java/XML、SQL 注解、POM/依赖、配置、索引、数据库对象和已发布
+  MySQL/SQLite 迁移；禁止把测试夹具迁入生产初始化、数据迁移或运行时装配。需要新增/调整索引时
+  必须先提交独立 CR 且只允许前向迁移。
+- 本批只能形成逐查询 `GO/NO_GO/CR_REQUIRED` 建议和
+  `EXECUTABLE_BASELINE_VERIFIED_AWAITING_SPONSOR_CONFIRMATION`；不得关闭 `G10A-SQL-P2-001`，
+  不得自动进入 SQL/N+1/分页整改或 `G10A-RES-P2-001`。
+- `G10A-RES-P2-001` 继续 `PREPARED`；所有外部 `BLOCKED`、UAT/REL `DRAFT`、LIC/JSH
+  `DEFERRED` 与 Provider网络、真实资金、设备/外设、伙伴现场、完整Alpha和生产部署零执行边界不变。
+
 ## 5. 工程与测试规则
 
 - 服务端采用 RuoYi-Vue-Plus 模块化单体，不得把领域逻辑写入 Controller、通用工具类或框架系统模块。

@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0",
+  "required": {
+    "queryTierExecutions": 25,
+    "required10k": 12,
+    "required100k": 12,
+    "approved1m": ["RPT-SALES"],
+    "sourceDigestMatches": 25,
+    "logicalPlans": 25,
+    "actualPlans": 25,
+    "parameterFiles": 25,
+    "crossTenantRowsMaximum": 0,
+    "jdbcSingleQueryCount": 1,
+    "journeys": {
+      "REPORT_EXPORT_50_STORES_3_TYPES": 150,
+      "PAYMENT_RECONCILIATION_500_REFERENCES": 501,
+      "LOT_EXPIRY_500_CANDIDATES": 501
+    },
+    "readOnlySelect": true,
+    "readOnlyWriteDenied": true,
+    "publishedMigrationChanges": 0,
+    "productionRuntimeChanges": 0
+  },
+  "evidence": [
+    "environment.json",
+    "query-results.json",
+    "query-results.csv",
+    "decision-candidates.json",
+    "jdbc-query-counts.json",
+    "permission-boundary.json",
+    "plans/<tier>/<query>-explain.json",
+    "plans/<tier>/<query>-analyze.txt",
+    "plans/<tier>/<query>-parameters.json",
+    "database/<tier>/table-statistics.json",
+    "database/<tier>/show-index.json",
+    "database/<tier>/optimizer-switch.txt"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.0",
+  "rules": [
+    {"when": "tenant or read-only permission attack fails", "decision": "NO_GO_SECURITY"},
+    {"when": "source digest plan parameter or tier evidence missing", "decision": "NO_GO_EVIDENCE"},
+    {"when": "public pagination or response shape must change", "decision": "CR_REQUIRED_COMPATIBILITY"},
+    {"when": "index or database object must change", "decision": "CR_REQUIRED_FORWARD_MIGRATION"},
+    {"when": "full scan filesort or linear query amplification requires runtime change", "decision": "NO_GO_RUNTIME_REMEDIATION_REVIEW"},
+    {"when": "plan and count remain within frozen shape without runtime change", "decision": "GO_CANDIDATE_KEEP_CURRENT_IMPLEMENTATION"}
+  ],
+  "automaticRuntimeChange": false,
+  "findingMayCloseInThisBatch": false
+}

@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "1.0",
+  "seeds": [
+    {"seedId": "G10A-SQL-R1-F01", "risk": "frozen Mapper digest drifts", "expected": "fail before execution"},
+    {"seedId": "G10A-SQL-R1-F02", "risk": "one of 12 queries is not executed at 10k", "expected": "required tier count fails"},
+    {"seedId": "G10A-SQL-R1-F03", "risk": "one of 12 queries is not executed at 100k", "expected": "required tier count fails"},
+    {"seedId": "G10A-SQL-R1-F04", "risk": "unapproved query executes at 1m", "expected": "trend allowlist fails"},
+    {"seedId": "G10A-SQL-R1-F05", "risk": "absent tenant returns rows", "expected": "tenant attack fails closed"},
+    {"seedId": "G10A-SQL-R1-F06", "risk": "read-only database user can update", "expected": "permission attack fails closed"},
+    {"seedId": "G10A-SQL-R1-F07", "risk": "production Java Mapper SQL index or migration changes", "expected": "scope gate fails"},
+    {"seedId": "G10A-SQL-R1-F08", "risk": "N+1 query count no longer matches frozen journey", "expected": "query-count evidence gate fails"},
+    {"seedId": "G10A-SQL-R1-F09", "risk": "plan or parameters are missing from evidence", "expected": "evidence completeness fails"},
+    {"seedId": "G10A-SQL-R1-F10", "risk": "test credential is persisted", "expected": "Secret gate fails"}
+  ]
+}

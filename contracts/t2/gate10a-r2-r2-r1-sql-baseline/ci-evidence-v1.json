@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "1.0",
+  "gate": "T2_GATE_10A_R2_R2_R1_SQL_EXECUTABLE_BASELINE",
+  "candidateCommit": "PENDING",
+  "workflowRun": "PENDING",
+  "jobs": "PENDING",
+  "evidenceArtifact": "PENDING",
+  "evidenceSha256": "PENDING",
+  "result": "PENDING_CLEAN_RUN"
+}

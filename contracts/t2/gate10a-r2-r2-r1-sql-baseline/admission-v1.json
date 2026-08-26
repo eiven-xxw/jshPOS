@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "1.0",
+  "gate": "T2_GATE_10A_R2_R2_R1_SQL_EXECUTABLE_BASELINE",
+  "baselineCommit": "8eb77ec855b7bf89f93eedf4c01f7681465f0544",
+  "branch": "t2/gate10a-r2-r2-r1-sql-executable-baseline",
+  "finding": "G10A-SQL-P2-001",
+  "classification": "MYSQL84_SYNTHETIC_EXECUTABLE_RED_BASELINE",
+  "allowed": [
+    "test scoped deterministic synthetic fixtures",
+    "read-only adapters parsed from 12 frozen production Mapper statements",
+    "EXPLAIN JSON and EXPLAIN ANALYZE TREE evidence",
+    "JDBC query count and tenant/read-only permission attacks",
+    "10k and 100k all-query execution and approved 1m trend execution",
+    "go no-go CR recommendations governance CI and evidence"
+  ],
+  "forbidden": [
+    "production Java Mapper SQL index database object dependency or configuration change",
+    "published MySQL or SQLite migration change",
+    "test fixture runtime assembly",
+    "new business capability or Requirement ID",
+    "resource endurance remediation",
+    "external execution full Alpha production release"
+  ],
+  "findingState": "EXECUTABLE_BASELINE_IN_PROGRESS",
+  "runtimeSqlRemediationAuthorized": false,
+  "newBusinessCapabilities": 0,
+  "externalExecution": 0
+}
