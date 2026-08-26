@@ -44,8 +44,8 @@
       "mapsTo": ["T2-MTN-001"],
       "title": "Server 存在 19 个不低于 400 行的 Owner 生产类且无复杂度预算门禁",
       "facts": ["656 Java production files", "19 Java files >= 400 physical lines", "largest class 760 physical lines"],
-      "state": "IN_PROGRESS_GATE10A_R2_R1",
-      "closure": "先补行为金标与依赖/事务边界测试，再按职责拆分；保持 Owner、事务、不变量、错误码和 API 不变"
+      "state": "VERIFIED_AWAITING_SPONSOR_CONFIRMATION",
+      "closure": "行为金标、依赖/事务边界与19类只减不增预算已通过；5个高风险类合计减少526行，新生产类最大141行，Owner依赖环为0；等待项目发起人确认后方可关闭"
     },
     {
       "findingId": "G10A-SQL-P2-001",

@@ -2,10 +2,12 @@
   "schemaVersion": "1.0",
   "finding": "G10A-MTN-P2-001",
   "seeds": [
-    {"id":"G10A-R2-R1-MTN-RED-001","expectedBeforeRemediation":"FAIL","reason":"ProcurementService/LotInventoryService/TransferService/ReplenishmentService 超过600行，ReturnOrchestrationService超过本批560行预算"},
-    {"id":"G10A-R2-R1-API-001","expected":"PASS","reason":"五个公开服务方法集合及@Transactional边界保持不变"},
-    {"id":"G10A-R2-R1-ERR-001","expected":"PASS","reason":"四个Owner应用服务目录错误码多重集合摘要保持不变"},
-    {"id":"G10A-R2-R1-BOUNDARY-001","expected":"PASS","reason":"无Controller/Mapper/XML/POM/迁移/配置变化且Owner依赖环为0"}
+    {"id":"G10A-R2-R1-MTN-RED-001","expectedBeforeRemediation":"FAIL","observedBeforeRemediation":"FAIL","observedAfterRemediation":"PASS","reason":"ProcurementService/LotInventoryService/TransferService/ReplenishmentService 超过600行，ReturnOrchestrationService超过本批560行预算"},
+    {"id":"G10A-R2-R1-API-001","expected":"PASS","observed":"PASS","reason":"五个公开服务方法集合及@Transactional边界保持不变"},
+    {"id":"G10A-R2-R1-ERR-001","expected":"PASS","observed":"PASS","reason":"四个Owner应用服务目录错误码多重集合摘要保持不变"},
+    {"id":"G10A-R2-R1-BOUNDARY-001","expected":"PASS","observed":"PASS","reason":"无Controller/Mapper/XML/POM/迁移/配置变化且Owner依赖环为0"},
+    {"id":"G10A-R2-R1-COMPILE-001","expected":"FAIL_THEN_FIXED_WITHOUT_RETRY","observed":"FAIL_THEN_FIXED","reason":"职责提取后 LotInventoryService 缺少 Set import，编译失败后最小修复"},
+    {"id":"G10A-R2-R1-COMPILE-002","expected":"FAIL_THEN_FIXED_WITHOUT_RETRY","observed":"FAIL_THEN_FIXED","reason":"职责提取后 TransferService 缺少 RoundingMode import，编译失败后最小修复"}
   ],
   "automaticRetryAllowed": false
 }

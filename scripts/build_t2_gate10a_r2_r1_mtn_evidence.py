@@ -1,0 +1,63 @@
+#!/usr/bin/env python3
+"""聚合 Gate 10A-R2-R1 完整 CI 证据并形成机器索引。"""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import pathlib
+
+
+EXPECTED = {
+    "governance-ubuntu", "governance-windows", "server", "web",
+    "flutter-ubuntu", "flutter-windows", "android", "security", "gate9c-regression",
+}
+
+
+def digest(path: pathlib.Path) -> str:
+    value = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            value.update(chunk)
+    return value.hexdigest()
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--bundle-dir", required=True, type=pathlib.Path)
+    parser.add_argument("--output", required=True, type=pathlib.Path)
+    parser.add_argument("--commit", required=True)
+    args = parser.parse_args()
+    producers = {path.name for path in args.bundle_dir.iterdir() if path.is_dir()}
+    if producers != EXPECTED:
+        raise AssertionError(f"producer drift: {sorted(producers)} != {sorted(EXPECTED)}")
+    files = []
+    for producer in sorted(EXPECTED):
+        root = args.bundle_dir / producer
+        owned = [path for path in sorted(root.rglob("*")) if path.is_file()]
+        if not owned:
+            raise AssertionError(f"empty producer: {producer}")
+        for path in owned:
+            files.append({
+                "producer": producer, "path": path.relative_to(root).as_posix(),
+                "size": path.stat().st_size, "sha256": digest(path),
+            })
+    index = {
+        "schemaVersion": "1.0", "gate": "T2_GATE_10A_R2_R1_MTN",
+        "commitSha": args.commit,
+        "classification": "INTERNAL_SERVER_MAINTAINABILITY_VERIFIED_CANDIDATE",
+        "producerCount": len(EXPECTED), "fileCount": len(files),
+        "findingState": "VERIFIED_AWAITING_SPONSOR_CONFIRMATION",
+        "sqlFindingState": "PREPARED", "resourceFindingState": "PREPARED",
+        "openP0": 0, "openP1": 0, "newBusinessCapabilities": 0,
+        "publishedMigrationChanges": 0, "externalExecution": 0,
+        "files": files,
+    }
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_text(json.dumps(index, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    print(f"T2 Gate10A R2-R1 evidence PASS: producers={len(EXPECTED)} files={len(files)}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

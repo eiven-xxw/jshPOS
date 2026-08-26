@@ -61,6 +61,7 @@ def main() -> None:
         "AGENTS.md", ".github/workflows/t2-gate10a-r2-r1-mtn.yml", "docs/adr/README.md",
         "docs/adr/ADR-074-gate10a-r2-server-database-resource-remediation.md",
         "docs/governance/CR-T2G10A-007_Gate10A-R2-R1可维护性正式整改准入.md",
+        "docs/governance/CR-T2G10A-008_G10A-MTN-P2-001验证候选.md",
         "docs/governance/change-log.md", "contracts/t2/gate10a-prep/findings-register-v1.json",
         "scripts/check_t2_gate10a_r2_r1_mtn.py", "scripts/audit_t2_gate10a_r2_r1_mtn.py",
         "scripts/build_t2_gate10a_r2_r1_mtn_evidence.py",
