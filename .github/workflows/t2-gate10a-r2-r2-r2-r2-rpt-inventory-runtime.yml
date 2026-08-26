@@ -3,16 +3,21 @@ name: T2 Gate 10A RPT Inventory Runtime
 on:
   workflow_call:
   push:
-    branches: ["t2/gate10a-r2-r2-r2-r2-rpt-inventory-runtime"]
+    branches:
+      - "t2/gate10a-r2-r2-r2-r2-rpt-inventory-runtime"
+      - "t2/gate10a-r2-r2-r2-r2-rpt-inventory-index"
   pull_request:
     paths:
       - "AGENTS.md"
       - ".github/workflows/t2-gate10a-r2-r2-r2-r2-rpt-inventory-runtime.yml"
       - "contracts/t2/gate10a-r2-r2-r2-r2-rpt-inventory-runtime/**"
+      - "contracts/t2/gate10a-r2-r2-r2-r2-rpt-inventory-index/**"
       - "contracts/t2/gate5d/openapi-reporting-v1.yaml"
       - "docs/governance/**"
       - "docs/t2-gate10a-r2-r2-r2-r2-rpt-inventory-runtime/**"
+      - "docs/t2-gate10a-r2-r2-r2-r2-rpt-inventory-index/**"
       - "scripts/*gate10a_r2_r2_r2_r2_rpt_inventory_runtime*"
+      - "scripts/*gate10a_r2_r2_r2_r2_rpt_inventory_index*"
       - "server/ruoyi-modules/jshpos-reporting/**"
       - "server/ruoyi-modules/jshpos-release/src/test/java/com/jingshanghui/pos/release/performance/**"
 
@@ -39,9 +44,14 @@ jobs:
           python scripts/check_t0_structure.py
           python scripts/check_rtm.py
           python scripts/check_contracts.py
-          python -m py_compile scripts/check_t2_gate10a_r2_r2_r2_r2_rpt_inventory_runtime.py scripts/audit_t2_gate10a_r2_r2_r2_r2_rpt_inventory_runtime.py scripts/build_t2_gate10a_r2_r2_r2_r2_rpt_inventory_runtime_evidence.py
-          python scripts/check_t2_gate10a_r2_r2_r2_r2_rpt_inventory_runtime.py | tee "$out/scope.txt"
-          python scripts/audit_t2_gate10a_r2_r2_r2_r2_rpt_inventory_runtime.py --output "$out/audit.json"
+          python -m py_compile scripts/check_t2_gate10a_r2_r2_r2_r2_rpt_inventory_runtime.py scripts/audit_t2_gate10a_r2_r2_r2_r2_rpt_inventory_runtime.py scripts/build_t2_gate10a_r2_r2_r2_r2_rpt_inventory_runtime_evidence.py scripts/check_t2_gate10a_r2_r2_r2_r2_rpt_inventory_index.py scripts/audit_t2_gate10a_r2_r2_r2_r2_rpt_inventory_index.py scripts/build_t2_gate10a_r2_r2_r2_r2_rpt_inventory_index_evidence.py
+          if [[ "$GITHUB_REF_NAME" == "t2/gate10a-r2-r2-r2-r2-rpt-inventory-index" ]]; then
+            python scripts/check_t2_gate10a_r2_r2_r2_r2_rpt_inventory_index.py | tee "$out/scope.txt"
+            python scripts/audit_t2_gate10a_r2_r2_r2_r2_rpt_inventory_index.py --output "$out/audit.json"
+          else
+            python scripts/check_t2_gate10a_r2_r2_r2_r2_rpt_inventory_runtime.py | tee "$out/scope.txt"
+            python scripts/audit_t2_gate10a_r2_r2_r2_r2_rpt_inventory_runtime.py --output "$out/audit.json"
+          fi
           python scripts/audit_t2_gate6g_api.py --output "$out/api-current.json"
           git diff --check
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -63,8 +73,13 @@ jobs:
           python scripts/check_t0_structure.py
           python scripts/check_rtm.py
           python scripts/check_contracts.py
-          python scripts/check_t2_gate10a_r2_r2_r2_r2_rpt_inventory_runtime.py | tee "$out/scope.txt"
-          python scripts/audit_t2_gate10a_r2_r2_r2_r2_rpt_inventory_runtime.py --output "$out/audit.json"
+          if [[ "$GITHUB_REF_NAME" == "t2/gate10a-r2-r2-r2-r2-rpt-inventory-index" ]]; then
+            python scripts/check_t2_gate10a_r2_r2_r2_r2_rpt_inventory_index.py | tee "$out/scope.txt"
+            python scripts/audit_t2_gate10a_r2_r2_r2_r2_rpt_inventory_index.py --output "$out/audit.json"
+          else
+            python scripts/check_t2_gate10a_r2_r2_r2_r2_rpt_inventory_runtime.py | tee "$out/scope.txt"
+            python scripts/audit_t2_gate10a_r2_r2_r2_r2_rpt_inventory_runtime.py --output "$out/audit.json"
+          fi
           git diff --check
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with: { name: t2-gate10a-rpt-inventory-runtime-governance-windows, path: artifacts/t2/gate10a-rpt-inventory-runtime/governance-windows, if-no-files-found: error, retention-days: 30 }
@@ -106,6 +121,7 @@ jobs:
           --health-interval=10s --health-timeout=5s --health-retries=12
     env:
       G10A_INVENTORY_MYSQL_JDBC_URL: jdbc:mysql://127.0.0.1:3306/jshpos_rpt_inventory?useUnicode=true&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&rewriteBatchedStatements=true
+      G10A_INVENTORY_EMPTY_MYSQL_JDBC_URL: jdbc:mysql://127.0.0.1:3306/jshpos_rpt_inventory_empty?useUnicode=true&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&rewriteBatchedStatements=true
       G10A_INVENTORY_MYSQL_USERNAME: root
       G10A_INVENTORY_MYSQL_PASSWORD: synthetic_rpt_inventory_root
       G10A_INVENTORY_REPO_ROOT: ${{ github.workspace }}
@@ -121,6 +137,8 @@ jobs:
           set -euo pipefail
           out=artifacts/t2/gate10a-rpt-inventory-runtime/mysql84
           mkdir -p "$out/executable" "$out/test-reports"
+          mysql --protocol=TCP -h 127.0.0.1 -uroot -psynthetic_rpt_inventory_root \
+            -e "CREATE DATABASE jshpos_rpt_inventory_empty CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci"
           ./server/mvnw -f server/pom.xml -pl ruoyi-modules/jshpos-release -am test \
             -Dtest=InventoryKeysetRemediationMySqlIT -Dsurefire.failIfNoSpecifiedTests=false -DskipTests=false \
             | tee "$out/mysql84.log"
@@ -132,12 +150,24 @@ jobs:
           assert [r['tier'] for r in rows]==['SMOKE_10K','BASELINE_100K']
           assert all(r['interactiveQueryCount']==1 and r['crossTenantRows']==0 for r in rows)
           assert all(r['duplicateKeys']==0 and r['missingRows']==0 for r in rows)
-          assert all(r['twelveFieldConservationPassed'] and not r['schemaOrIndexChanged'] for r in rows)
+          assert all(r['twelveFieldConservationPassed'] for r in rows)
+          if pathlib.Path(root/'v88-red-plan.json').exists():
+              assert all(r['exportQueryCount']<=r['exportQueryBudget'] for r in rows)
+              assert all(not r['fullScanObserved'] and not r['filesortObserved'] for r in rows)
+              assert all(r['approvedIndexObserved'] and not r['indexCrRequired'] for r in rows)
+              red=json.loads((root/'v88-red-plan.json').read_text())
+              assert red['schemaVersion']=='202608260088'
+              assert red['fullScanObserved'] and red['filesortObserved'] and not red['approvedIndexObserved']
           for row in rows:
               print('G10A_RPT_INVENTORY_'+row['tier']+'='+json.dumps(row,sort_keys=True,separators=(',',':')))
           print('G10A_RPT_INVENTORY_INDEX_CR_REQUIRED='+str(any(r['indexCrRequired'] for r in rows)).lower())
           PY
-          test -z "$(git diff --name-only f36df63b21bd3bb98ea0d5022f8fe5fac5def72f HEAD -- 'server/**/db/migration/**')"
+          if [[ "$GITHUB_REF_NAME" == "t2/gate10a-r2-r2-r2-r2-rpt-inventory-index" ]]; then
+            migration_change="$(git diff --name-status 30edba224d9acf35f64d81c042b5153e08e2eb66 HEAD -- 'server/**/db/migration/**')"
+            test "$migration_change" = $'A\tserver/ruoyi-modules/jshpos-reporting/src/main/resources/db/migration/V202608260089__reporting_inventory_keyset_index.sql'
+          else
+            test -z "$(git diff --name-only f36df63b21bd3bb98ea0d5022f8fe5fac5def72f HEAD -- 'server/**/db/migration/**')"
+          fi
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with: { name: t2-gate10a-rpt-inventory-runtime-mysql84, path: artifacts/t2/gate10a-rpt-inventory-runtime/mysql84, if-no-files-found: error, retention-days: 30 }
 
@@ -278,6 +308,10 @@ jobs:
             producer="${pair%%:*}"; artifact="${pair#*:}"; mkdir -p "$bundle/$producer"
             cp -R "downloaded/$artifact/." "$bundle/$producer/"
           done
-          python scripts/build_t2_gate10a_r2_r2_r2_r2_rpt_inventory_runtime_evidence.py --bundle-dir "$bundle" --output "$final/evidence-index.json" --commit "$GITHUB_SHA"
+          if [[ "$GITHUB_REF_NAME" == "t2/gate10a-r2-r2-r2-r2-rpt-inventory-index" ]]; then
+            python scripts/build_t2_gate10a_r2_r2_r2_r2_rpt_inventory_index_evidence.py --bundle-dir "$bundle" --output "$final/evidence-index.json" --commit "$GITHUB_SHA"
+          else
+            python scripts/build_t2_gate10a_r2_r2_r2_r2_rpt_inventory_runtime_evidence.py --bundle-dir "$bundle" --output "$final/evidence-index.json" --commit "$GITHUB_SHA"
+          fi
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with: { name: t2-gate10a-rpt-inventory-runtime-evidence-index, path: artifacts/t2/gate10a-rpt-inventory-runtime/final, if-no-files-found: error, retention-days: 90 }

@@ -16,10 +16,10 @@ import java.util.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * RPT-INVENTORY v2 keyset 与批量导出的 MySQL 8.4.11 可执行验收。
+ * Gate 10A-R2-R2-R2-R2 RPT-INVENTORY V89 keyset 索引 MySQL 8.4.11 可执行验收。
  *
- * <p>本测试验证查询数、逐键完整性、租户隔离和十二项投影字段守恒，同时如实记录当前索引下的
- * 全扫/filesort。发现需要索引时只输出停止建议，不创建数据库对象或迁移。</p>
+ * <p>测试分别验证空库到 V89 与 V88 到 V89，只在临时 MySQL 中写入确定性合成数据；
+ * 先保存 V88 的全扫/filesort 红基线，再验证 V89 计划、查询数、完整性、守恒和租户边界。</p>
  */
 class InventoryKeysetRemediationMySqlIT {
     private static final ObjectMapper JSON = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
@@ -30,19 +30,20 @@ class InventoryKeysetRemediationMySqlIT {
         "transferCostDeltaMinor");
 
     private final String url = required("G10A_INVENTORY_MYSQL_JDBC_URL");
+    private final String emptyUrl = required("G10A_INVENTORY_EMPTY_MYSQL_JDBC_URL");
     private final String username = required("G10A_INVENTORY_MYSQL_USERNAME");
     private final String password = required("G10A_INVENTORY_MYSQL_PASSWORD");
     private final Path repositoryRoot = Path.of(required("G10A_INVENTORY_REPO_ROOT")).toAbsolutePath().normalize();
     private final Path evidenceRoot = Path.of(required("G10A_INVENTORY_EVIDENCE_DIR")).toAbsolutePath().normalize();
 
     @Test
-    void verifiesKeysetIntegrityAndProducesIndexDecision() throws Exception {
+    void provesV89MigrationAndEliminatesFullScanAndFilesort() throws Exception {
         Files.createDirectories(evidenceRoot);
-        migrateEmptyDatabase();
+        verifyEmptyDatabaseToV89();
+        migrateV88ToV89WithRedBaseline();
         List<Map<String, Object>> tiers = new ArrayList<>();
         try (Connection connection = DriverManager.getConnection(url, username, password)) {
             configureSession(connection);
-            SqlBaselineFixture.extendAll(connection, 0, 10_000);
             SqlBaselineFixture.analyze(connection);
             tiers.add(captureTier(connection, "SMOKE_10K", 10_000));
             SqlBaselineFixture.extendAll(connection, 10_000, 100_000);
@@ -57,7 +58,12 @@ class InventoryKeysetRemediationMySqlIT {
             assertThat(row.get("duplicateKeys")).isEqualTo(0L);
             assertThat(row.get("missingRows")).isEqualTo(0L);
             assertThat(row.get("twelveFieldConservationPassed")).isEqualTo(true);
-            assertThat(row.get("schemaOrIndexChanged")).isEqualTo(false);
+            assertThat((Integer) row.get("exportQueryCount"))
+                .isLessThanOrEqualTo((Integer) row.get("exportQueryBudget"));
+            assertThat(row.get("fullScanObserved")).isEqualTo(false);
+            assertThat(row.get("filesortObserved")).isEqualTo(false);
+            assertThat(row.get("approvedIndexObserved")).isEqualTo(true);
+            assertThat(row.get("indexCrRequired")).isEqualTo(false);
         });
     }
 
@@ -105,6 +111,9 @@ class InventoryKeysetRemediationMySqlIT {
         boolean fullScan = observesAccessAll(plan);
         boolean filesort = observesFilesort(plan);
         boolean indexCrRequired = fullScan || filesort;
+        boolean approvedIndexObserved = logicalPlan.contains("idx_rpt_inventory_keyset");
+        int queryBudget = (int) Math.ceil(expected / 10_000.0d)
+            + (expected > 0 && expected % 10_000 == 0 ? 1 : 0);
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("tier", tier);
@@ -114,6 +123,7 @@ class InventoryKeysetRemediationMySqlIT {
         result.put("interactiveRows", firstRows.size());
         result.put("interactiveQueryCount", interactive.count());
         result.put("exportQueryCount", export.count());
+        result.put("exportQueryBudget", queryBudget);
         result.put("duplicateKeys", observed - keys.size());
         result.put("missingRows", expected - observed);
         result.put("crossTenantRows", crossTenantRows);
@@ -122,6 +132,7 @@ class InventoryKeysetRemediationMySqlIT {
         result.put("twelveFieldConservationPassed", sums.equals(authoritative));
         result.put("fullScanObserved", fullScan);
         result.put("filesortObserved", filesort);
+        result.put("approvedIndexObserved", approvedIndexObserved);
         result.put("indexCrRequired", indexCrRequired);
         result.put("recommendation", indexCrRequired ? "STOP_AND_REQUEST_INDEPENDENT_INDEX_CR"
             : "KEEP_EXISTING_INDEXES");
@@ -129,7 +140,7 @@ class InventoryKeysetRemediationMySqlIT {
             SqlBaselineQueries.inventoryCostPageSource(repositoryRoot)));
         result.put("logicalPlanSha256", SqlBaselineQueries.sha256(logicalPlan));
         result.put("actualPlanSha256", SqlBaselineQueries.sha256(actualPlan));
-        result.put("schemaOrIndexChanged", false);
+        result.put("migrationVersion", "202608260089");
         result.put("syntheticOnly", true);
         result.put("productionSla", false);
         writeJson(planRoot.resolve("rpt-inventory-result.json"), result);
@@ -193,18 +204,92 @@ class InventoryKeysetRemediationMySqlIT {
             new SqlBaselineQueries.InventoryCostKey(day, store, warehouse, sku, currency), Map.copyOf(values));
     }
 
-    private void migrateEmptyDatabase() throws Exception {
-        createFrameworkMenuFixture();
-        Flyway flyway = Flyway.configure().dataSource(url, username, password).locations(migrationLocations())
-            .table("jshpos_flyway_schema_history").baselineOnMigrate(true).baselineVersion("0")
-            .cleanDisabled(true).load();
-        flyway.migrate();
+    /** 验证全新数据库一次安装至 V89、validate 与重复执行零迁移。 */
+    private void verifyEmptyDatabaseToV89() throws Exception {
+        createFrameworkMenuFixture(emptyUrl);
+        Flyway flyway = flyway(emptyUrl);
+        assertThat(flyway.migrate().migrationsExecuted).isPositive();
         flyway.validate();
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("202608260088");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("202608260089");
+        assertThat(flyway.migrate().migrationsExecuted).isZero();
+        try (Connection connection = DriverManager.getConnection(emptyUrl, username, password)) {
+            assertApprovedIndex(connection);
+        }
     }
 
-    private void createFrameworkMenuFixture() throws SQLException {
-        try (Connection connection = DriverManager.getConnection(url, username, password);
+    /** 在 V88 固化失败计划后只执行 V89，并验证重复执行与 Flyway validate。 */
+    private void migrateV88ToV89WithRedBaseline() throws Exception {
+        createFrameworkMenuFixture(url);
+        Flyway v88 = Flyway.configure().dataSource(url, username, password).locations(migrationLocations())
+            .table("jshpos_flyway_schema_history").baselineOnMigrate(true).baselineVersion("0")
+            .target("202608260088").cleanDisabled(true).load();
+        v88.migrate();
+        v88.validate();
+        assertThat(v88.info().current().getVersion().getVersion()).isEqualTo("202608260088");
+        try (Connection connection = DriverManager.getConnection(url, username, password)) {
+            configureSession(connection);
+            SqlBaselineFixture.extendAll(connection, 0, 10_000);
+            SqlBaselineFixture.analyze(connection);
+            captureV88RedPlan(connection);
+        }
+
+        Flyway v89 = flyway(url);
+        assertThat(v89.migrate().migrationsExecuted).isEqualTo(1);
+        v89.validate();
+        assertThat(v89.info().current().getVersion().getVersion()).isEqualTo("202608260089");
+        assertThat(v89.migrate().migrationsExecuted).isZero();
+        try (Connection connection = DriverManager.getConnection(url, username, password)) {
+            assertApprovedIndex(connection);
+        }
+    }
+
+    private Flyway flyway(String jdbcUrl) throws Exception {
+        return Flyway.configure().dataSource(jdbcUrl, username, password).locations(migrationLocations())
+            .table("jshpos_flyway_schema_history").baselineOnMigrate(true).baselineVersion("0")
+            .cleanDisabled(true).load();
+    }
+
+    /** V88 必须稳定重现获批 CR 所针对的全扫和 filesort，防止测试伪绿。 */
+    private void captureV88RedPlan(Connection connection) throws Exception {
+        SqlBaselineQueries.ExecutableQuery query = SqlBaselineQueries.inventoryCostPage(repositoryRoot,
+            SqlBaselineQueries.TENANT_A, "v1", java.sql.Date.valueOf("2026-08-01"),
+            java.sql.Date.valueOf("2026-08-31"), STORES, null, 501);
+        String explainJson = firstColumn(connection, "EXPLAIN FORMAT=JSON " + query.sql(), query.parameters());
+        JsonNode plan = JSON.readTree(explainJson);
+        boolean fullScan = observesAccessAll(plan);
+        boolean filesort = observesFilesort(plan);
+        Map<String, Object> red = new LinkedHashMap<>();
+        red.put("schemaVersion", "202608260088");
+        red.put("fullScanObserved", fullScan);
+        red.put("filesortObserved", filesort);
+        red.put("approvedIndexObserved", explainJson.contains("idx_rpt_inventory_keyset"));
+        red.put("expectedFailure", true);
+        writeJson(evidenceRoot.resolve("v88-red-plan.json"), red);
+        Path redPlan = evidenceRoot.resolve("plans/v88-red-explain.json");
+        Files.createDirectories(redPlan.getParent());
+        Files.writeString(redPlan, explainJson + "\n", StandardCharsets.UTF_8);
+        assertThat(fullScan).isTrue();
+        assertThat(filesort).isTrue();
+        assertThat(explainJson).doesNotContain("idx_rpt_inventory_keyset");
+    }
+
+    /** 核验索引名、非唯一属性与七列顺序；不得以同名但错序索引冒充。 */
+    private void assertApprovedIndex(Connection connection) throws SQLException {
+        List<String> columns = new ArrayList<>();
+        try (PreparedStatement statement = connection.prepareStatement("""
+            SELECT column_name FROM information_schema.statistics
+             WHERE table_schema=DATABASE() AND table_name='rpt_inventory_cost_daily'
+               AND index_name='idx_rpt_inventory_keyset'
+             ORDER BY seq_in_index
+            """); ResultSet rows = statement.executeQuery()) {
+            while (rows.next()) columns.add(rows.getString(1));
+        }
+        assertThat(columns).containsExactly("tenant_id", "projection_version", "business_date", "store_id",
+            "warehouse_id", "sku_id", "currency");
+    }
+
+    private void createFrameworkMenuFixture(String jdbcUrl) throws SQLException {
+        try (Connection connection = DriverManager.getConnection(jdbcUrl, username, password);
              Statement statement = connection.createStatement()) {
             statement.executeUpdate("CREATE TABLE IF NOT EXISTS sys_menu (menu_id BIGINT NOT NULL PRIMARY KEY,"
                 + "menu_name VARCHAR(50) NOT NULL,parent_id BIGINT DEFAULT 0,order_num INT DEFAULT 0,"
