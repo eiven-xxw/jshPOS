@@ -1,0 +1,66 @@
+{
+  "schemaVersion": "1.0",
+  "baselineRegister": "contracts/t2/gate9a-prep/defect-register-v1.json",
+  "historicalRegisterImmutable": true,
+  "summary": {
+    "closedInGate9B": 4,
+    "openInternalP0": 0,
+    "openInternalP1": 0
+  },
+  "findings": [
+    {
+      "findingId": "G9A-API-P1-001",
+      "state": "CLOSED_IN_GATE9B",
+      "sponsorConfirmedAt": "2026-08-24",
+      "reusedRequirements": ["T2-API-001"],
+      "candidateCommit": "5ebcde37f753193757f6cf9de0ae960808f406b7",
+      "githubRunId": "32728598791",
+      "evidence": [
+        "contracts/t2/gate9b/defect-closure-v1.json",
+        "docs/t2-gate9b/03_G9A-R1正式API契约修复独立周门禁报告.md"
+      ]
+    },
+    {
+      "findingId": "G9A-ASM-P1-001",
+      "state": "CLOSED_IN_GATE9B",
+      "sponsorConfirmedAt": "2026-08-24",
+      "reusedRequirements": ["T2-CORE-001", "T2-SEC-002", "T2-RDY-001"],
+      "candidateCommit": "839b23f5d33cb225fe7ea5589150bffa537e6c50",
+      "githubRunId": "32741052481",
+      "evidence": [
+        "contracts/t2/gate9b-r2/defect-closure-v1.json",
+        "docs/t2-gate9b-r2/03_G9A-R2生产装配与演示面收敛独立周门禁报告.md",
+        "docs/t2-gate9b-r2/06_G9A_R2项目发起人接受记录.md"
+      ]
+    },
+    {
+      "findingId": "G9A-UI-P1-001",
+      "state": "CLOSED_IN_GATE9B",
+      "sponsorConfirmedAt": "2026-08-25",
+      "reusedRequirements": ["T2-UX-001", "T2-ADM-001", "T2-ADM-002", "T2-POS-007", "T2-POS-008", "T2-POS-009"],
+      "candidateCommit": "d7b238d8a4a5caad4e9f0ed169f0babb61862b9d",
+      "githubRunId": "32832408085",
+      "evidence": [
+        "contracts/t2/gate9b-r3d-runtime/joint-acceptance-v1.json",
+        "docs/t2-gate9b-r3d-runtime/07_G9A-R3D全部26页联合验收独立周门禁报告.md",
+        "docs/governance/CR-T2G9R4-001_G9A-R3D接受与R4准备准入.md"
+      ]
+    },
+    {
+      "findingId": "G9A-E2E-P1-001",
+      "state": "CLOSED_IN_GATE9B",
+      "sponsorConfirmedAt": "2026-08-26",
+      "reusedRequirements": ["T2-E2E-004", "T2-E2E-005", "T2-INT-001"],
+      "candidateCommit": "bf7a48bcde02ace78d4909a10318be7266bb5934",
+      "githubRunId": "32917121269",
+      "finalGovernanceCommit": "1e5807691df9f857fc5fc223244e1e97d5363174",
+      "finalGovernanceRunId": "32918417614",
+      "evidence": [
+        "contracts/t2/gate9b-r4/gate-admission-v1.json",
+        "docs/t2-gate9b-r4-runtime/01_G9A-R4正式运行栈跨Owner内部E2E独立周门禁报告.md",
+        "docs/t2-gate9b-r4-runtime/02_G9A-R4最终证据索引.md",
+        "docs/governance/CR-T2G9R4-023_G9A-R4完整门禁通过待确认.md"
+      ]
+    }
+  ]
+}

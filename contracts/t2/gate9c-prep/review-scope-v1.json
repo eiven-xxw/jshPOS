@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "1.0",
+  "scope": "COMMERCIAL_V1_INTERNAL_PRODUCT_COMPLETENESS_FINAL_REVIEW",
+  "acceptedRequirementCount": 88,
+  "ownerCount": 22,
+  "api": {
+    "controllerOperations": 300,
+    "openApiOperations": 300,
+    "bidirectionalDifferences": 0
+  },
+  "ui": {
+    "vueSurfaces": 20,
+    "flutterSurfaces": 6,
+    "jointSurfaces": 26
+  },
+  "formalRuntime": {
+    "industries": 3,
+    "ownerCheckpoints": 66,
+    "conservationAssertions": 36,
+    "fixedFaultSeeds": 12
+  },
+  "commercialOperationsJourney": [
+    "T2-SAA-001",
+    "T2-SUB-001",
+    "T2-SVC-001",
+    "T2-E2E-005"
+  ],
+  "reviewDimensions": [
+    "REQUIREMENT_TRACEABILITY",
+    "OWNER_RUNTIME_ASSEMBLY",
+    "API_OPENAPI_ALIGNMENT",
+    "UI_STATE_PERMISSION_RECOVERY",
+    "PRODUCTION_TEMPORARY_MARKERS",
+    "MIGRATION_IMMUTABILITY",
+    "BACKUP_RELEASE_OPERABILITY",
+    "SBOM_DEPENDENCY_LICENSE",
+    "P0_P1_DEFECTS"
+  ]
+}

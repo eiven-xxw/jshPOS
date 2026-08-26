@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "1.0",
+  "internalAcceptedScope": {
+    "openP0": 0,
+    "openP1": 0,
+    "newBusinessCapabilities": 0
+  },
+  "externalAndReleaseGaps": [
+    {"id": "T2-PAY-002", "state": "BLOCKED", "evidenceNeeded": "AUTHORIZED_PAYMENT_SANDBOX"},
+    {"id": "T2-HWD-001", "state": "BLOCKED", "evidenceNeeded": "REAL_DEVICE"},
+    {"id": "T2-PRN-001", "state": "BLOCKED", "evidenceNeeded": "REAL_PERIPHERAL"},
+    {"id": "T2-PAR-001", "state": "BLOCKED", "evidenceNeeded": "VERIFIED_PARTNER_AND_PILOT_AUTHORIZATION"},
+    {"id": "T2-LIC-001", "state": "DEFERRED", "evidenceNeeded": "COMMERCIAL_LICENSE_CLOSURE"},
+    {"id": "T2-JSH-001", "state": "DEFERRED", "evidenceNeeded": "AUTHORIZED_CONNECTOR_DOCUMENTS"},
+    {"id": "T2-UAT-001", "state": "DRAFT", "evidenceNeeded": "FULL_ALPHA_ADMISSION"},
+    {"id": "T2-REL-001", "state": "DRAFT", "evidenceNeeded": "RELEASE_ADMISSION_AND_ACCEPTED_UAT"}
+  ],
+  "nonCommercialEvidence": [
+    "SYNTHETIC_RESTORE_ONLY",
+    "EPHEMERAL_SOFTWARE_SIGNING_ONLY",
+    "FIXED_GITHUB_EXECUTOR_PERFORMANCE_ONLY"
+  ]
+}

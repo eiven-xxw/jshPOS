@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1.0",
+  "target": "GATE9B_INTERNAL_PRODUCT_COMPLETENESS_SEAL_CANDIDATE",
+  "steps": [
+    "FREEZE_FOUR_FINDING_CLOSURES",
+    "VERIFY_88_REQUIREMENT_TRACEABILITY",
+    "VERIFY_300_API_26_UI_22_OWNER_CURRENT_STATE",
+    "VERIFY_RUNTIME_ASSEMBLY_MIGRATION_BACKUP_RELEASE_SUPPLY_CHAIN",
+    "CONFIRM_INTERNAL_P0_P1_ZERO",
+    "ARCHIVE_GATE9B_EVIDENCE_AND_FAILURE_HISTORY",
+    "SUBMIT_SEAL_REVIEW_BEFORE_ANY_TAG"
+  ],
+  "automaticTagCreation": false,
+  "automaticRuntimeDevelopment": false,
+  "automaticExternalExecution": false,
+  "automaticAlphaOrProduction": false
+}

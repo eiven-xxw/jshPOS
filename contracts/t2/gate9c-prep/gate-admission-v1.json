@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "1.0",
+  "gate": "T2_GATE_9C_PREP",
+  "requirementId": "T2-CMP-001",
+  "baselineCommit": "1e5807691df9f857fc5fc223244e1e97d5363174",
+  "branch": "t2/gate9c-prep-v1-product-completeness",
+  "evidenceLevel": "STATIC_GOVERNANCE_REPOSITORY_AND_BASELINE_REGRESSION",
+  "expectedAcceptedT2Requirements": 88,
+  "expectedOwnerModules": 22,
+  "expectedControllerOperations": 300,
+  "expectedOpenApiOperations": 300,
+  "expectedVueSurfaces": 20,
+  "expectedFlutterSurfaces": 6,
+  "expectedIndustries": [
+    "CONVENIENCE",
+    "SNACK_DISCOUNT",
+    "COMMUNITY_SUPERMARKET"
+  ],
+  "closureFindings": [
+    "G9A-API-P1-001",
+    "G9A-ASM-P1-001",
+    "G9A-UI-P1-001",
+    "G9A-E2E-P1-001"
+  ],
+  "newRequirementIds": [],
+  "runtimeChangesAllowed": false,
+  "dependencyChangesAllowed": false,
+  "publishedMigrationChangesAllowed": false,
+  "externalStates": {
+    "T2-PAY-002": "BLOCKED",
+    "T2-HWD-001": "BLOCKED",
+    "T2-PRN-001": "BLOCKED",
+    "T2-PAR-001": "BLOCKED",
+    "T2-UAT-001": "DRAFT",
+    "T2-REL-001": "DRAFT",
+    "T2-LIC-001": "DEFERRED",
+    "T2-JSH-001": "DEFERRED"
+  },
+  "externalExecution": {
+    "providerNetwork": 0,
+    "realFunds": 0,
+    "realDeviceCommands": 0,
+    "realPeripheralCommands": 0,
+    "partnerFieldExecution": 0,
+    "fullAlpha": 0,
+    "productionDeployment": 0
+  }
+}

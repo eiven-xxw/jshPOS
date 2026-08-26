@@ -1043,6 +1043,29 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
   继续 `DRAFT`；`T2-LIC-001/JSH-001` 继续 `DEFERRED`。Provider 网络、真实资金、
   设备/外设命令、伙伴现场、完整 Alpha、生产部署和商业声明必须为 0。
 
+## 4.75 当前 T2 Gate 9C-Prep 商业 V1 内部产品完整性最终复审条件准入
+
+- 项目发起人已于 2026-08-26 接受 G9A-R4 `CONDITIONAL PASS`，确认
+  `G9A-E2E-P1-001 CLOSED_IN_GATE9B`，并授权从最终治理提交
+  `1e5807691df9f857fc5fc223244e1e97d5363174` 建立
+  `t2/gate9c-prep-v1-product-completeness`。历史失败 Run、CR、Gate 9A 原始缺陷账和
+  Gate 9B 四批来源证据保持不可变。
+- 本阶段复用 `T2-CMP-001`，只允许更新当前机器关闭账、治理记录和证据索引，汇总
+  `G9A-API-P1-001/G9A-ASM-P1-001/G9A-UI-P1-001/G9A-E2E-P1-001` 四项关闭证据，
+  并对当前 88 项 `ACCEPTED`、22 Owner、300 API、26 页面、三业态和 SAA/SUB/SVC 旅程
+  进行只读复审；不得新增 Requirement ID 或业务能力。
+- 允许新增 Gate 9C-Prep 专用契约、审计/范围校验/证据聚合脚本、准备阶段 CI、复审报告、
+  差距、封板计划和下一步内部代码建议；不得修改服务端、Vue、Flutter、Kotlin/Android、
+  数据库迁移、依赖、基础设施或任何业务运行时。
+- 生产路径 Fake/Mock/Stub/Locked/InMemory/TODO/空实现必须逐条分类；失败关闭的外部边界、
+  测试夹具和平台接口不得误报为成功实现。发现既有 P0/P1 只能提出独立修复批次，发现新业务
+  必须另行 CR 与 Requirement ID，准备阶段不得直接整改。
+- Gate 9C-Prep 只能形成 `CONDITIONAL_PASS_AWAITING_SPONSOR_CONFIRMATION` 和 Gate 9B 内部
+  封板建议；不得自动创建 tag、进入新一轮运行时编码、外部执行、完整 Alpha、现场试点或生产发布。
+- `T2-PAY-002/HWD-001/PRN-001/PAR-001` 继续 `BLOCKED`；`T2-UAT-001/REL-001`
+  继续 `DRAFT`；`T2-LIC-001/JSH-001` 继续 `DEFERRED`。Provider 网络、真实资金、
+  设备/外设命令、伙伴现场、完整 Alpha、生产部署和商业声明必须为 0。
+
 ## 5. 工程与测试规则
 
 - 服务端采用 RuoYi-Vue-Plus 模块化单体，不得把领域逻辑写入 Controller、通用工具类或框架系统模块。
