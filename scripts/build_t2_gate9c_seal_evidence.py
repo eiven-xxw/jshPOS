@@ -73,7 +73,7 @@ def main() -> int:
         "openInternalP0": 0,
         "openInternalP1": 0,
         "externalExecution": 0,
-        "automaticTag": false,
+        "automaticTag": False,
         "decision": "CONDITIONAL_PASS_AWAITING_SPONSOR_CONFIRMATION",
         "files": files,
     }

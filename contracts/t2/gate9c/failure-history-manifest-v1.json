@@ -34,5 +34,16 @@
   "gate9CPrepRuns": [
     {"runId": "32922801554", "result": "SUCCESS", "purpose": "INITIAL_COMPLETE_CANDIDATE"},
     {"runId": "32923488551", "result": "SUCCESS", "purpose": "FINAL_GOVERNANCE_COMMIT"}
+  ],
+  "gate9CRuns": [
+    {
+      "runId": "32926660201",
+      "commitSha": "b7c18348d9de496ad9abb685cd46d3715365eaf6",
+      "result": "FAIL",
+      "purpose": "INITIAL_SEAL_CANDIDATE",
+      "failure": "EVIDENCE_INDEX_PYTHON_BOOLEAN_LITERAL",
+      "upstreamJobsPassed": 7,
+      "rerunFailedJob": false
+    }
   ]
 }
