@@ -1362,6 +1362,28 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
 - `G10A-SQL-P2-001` 继续 `OPEN`，`G10A-RES-P2-001` 继续 `PREPARED`；RPT-PAY-REC、RES、R3、
   完整 Alpha、生产发布和所有外部执行继续禁止。
 
+## 4.89 当前 T2 Gate 10A-R2-R2-R2-R3 RPT-PAY-REC 精确整改准备条件准入
+
+- 项目发起人已于 2026-08-27 接受 RPT-INVENTORY V89 索引子批 `CONDITIONAL PASS`，确认
+  `G10A-SQL-P2-001` 继续 `OPEN`、`G10A-RES-P2-001` 继续 `PREPARED`，并授权从
+  `8ae78147028dfab37c8ee615f212b4212f7673d6` 建立
+  `t2/gate10a-r2-r2-r2-r3-rpt-pay-rec-prep`。
+- 本阶段只允许复用 `CR-T2G10A-015` 的兼容性方向，冻结 Provider 无关支付、退款与内部合成
+  账单对账的 v1 契约、正式 SQL 摘要、Owner 批量读取边界、版本化 keyset、受控流式导出、
+  10k/100k MySQL 8.4.11 执行计划、查询数、租户权限、差异守恒、故障 seed、影响与回退。
+- 允许增加测试范围的静态红基线、MySQL 合成夹具/计划采集器、契约草案、治理脚本、CI 与评审
+  材料；禁止修改生产 Java、正式 SQL/Mapper/XML、索引、数据库对象、依赖、API、事件和任何
+  已发布迁移。
+- 当前 v1 API、Provider 无关状态和支付 `UNKNOWN` 语义必须保持冻结。v2 keyset、Reporting
+  批量读取端口、Payment Owner 批量事实端口及流式导出只能形成草案；不得新增 Provider SDK、
+  HTTP 客户端、回调、账单下载或网络调用。
+- 如执行候选 SQL 必须新增或调整索引，本阶段立即停止索引实施，只能提交独立索引 CR 和唯一
+  前向迁移方案；未经确认不得创建 V90、执行 DDL 或修改现有索引。
+- 不得改变 Payment/Refund 权威事实、金额/币种、差异归并、处理状态、审计、可信 tenant_id、
+  门店数据范围、同步或事件语义；出现这些变化必须停止并提交独立 CR/Requirement ID。
+- `G10A-RES-P2-001`、R3、完整 Alpha、生产发布及所有外部执行继续禁止；完成后只提交
+  《RPT-PAY-REC 精确整改启动评审报告》等待项目发起人确认，不得自动进入运行时整改。
+
 ## 5. 工程与测试规则
 
 - 服务端采用 RuoYi-Vue-Plus 模块化单体，不得把领域逻辑写入 Controller、通用工具类或框架系统模块。

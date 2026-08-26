@@ -1,0 +1,77 @@
+{
+  "schemaVersion": "1.0",
+  "state": "DESIGN_ONLY_AWAITING_RUNTIME_ADMISSION",
+  "candidateApi": {
+    "method": "GET",
+    "path": "/api/v2/reports/payment-reconciliation",
+    "operationId": "queryPaymentReconciliationPage",
+    "response": "R<PaymentReconciliationPageView>",
+    "parameters": ["fromDate", "toDate", "storeIds", "differenceType", "handlingState", "cursor", "limit"],
+    "limit": {"default": 200, "minimum": 1, "maximum": 500},
+    "v1Compatibility": "KEEP_UNCHANGED_DURING_EXPLICIT_WINDOW"
+  },
+  "reportingOwnerPort": {
+    "name": "ReportingBatchReadPort.readPaymentReconciliation",
+    "storeIdsMaximum": 50,
+    "exportChunkRowsMaximum": 10000,
+    "input": ["trustedTenantId", "authorizedStoreIds", "businessDateRange", "differenceType", "handlingState", "snapshotIdentity", "after", "limit", "requestSha256"],
+    "output": "DETERMINISTIC_PROVIDER_NEUTRAL_RECONCILIATION_ROWS",
+    "writes": 0
+  },
+  "paymentOwnerPort": {
+    "name": "ProviderNeutralPaymentFactBatchReadPort.readByReferences",
+    "referenceMaximum": 500,
+    "input": ["trustedTenantId", "providerNeutralReferences", "businessDateRange", "requestSha256"],
+    "output": "MINIMIZED_PROVIDER_NEUTRAL_PAYMENT_REFUND_FACTS",
+    "sensitiveProviderPayload": false,
+    "writes": 0
+  },
+  "keyset": {
+    "contractVersion": "payment-reconciliation-page.v2",
+    "order": ["business_date", "reconciliation_id"],
+    "cursorBindings": ["tenant_id", "authorized_store_ids_sha256", "date_range", "difference_type", "handling_state", "snapshot_identity", "business_date", "reconciliation_id"],
+    "signature": "HMAC_SHA256_SECRET_REFERENCE",
+    "snapshotRule": "SOURCE_CHECKPOINT_AND_SCOPE_DIGEST_DRIFT_FAILS_CLOSED",
+    "failClosed": ["TENANT_DRIFT", "STORE_SCOPE_DRIFT", "FILTER_DRIFT", "SNAPSHOT_DRIFT", "TAMPER", "EXPIRED_FORMAT"]
+  },
+  "controlledExport": {
+    "interactiveQueryBudget": 1,
+    "exportQueryBudget10kFixture": 1,
+    "exportQueryBudget100kFixture": 5,
+    "referenceBatchQueryBudget500": 2,
+    "resumeIdentity": ["tenant_id", "export_id", "request_sha256", "snapshot_identity", "cursor", "byte_offset"],
+    "mustPreserve": ["APPROVAL", "FIELD_MASK", "WATERMARK", "AUDIT", "EXPIRY_CLEANUP", "ZERO_DUPLICATE_OR_GAP", "NO_PAYMENT_SENSITIVE_DATA"],
+    "publicationRule": "TEMPORARY_OBJECT_ONLY_UNTIL_DIGEST_AND_SNAPSHOT_RECHECK_PASS"
+  },
+  "candidateSql": {
+    "type": "MAPPER_XML_MULTI_STORE_KEYSET_DRAFT",
+    "filters": ["tenant_id", "business_date_range", "authorized_store_ids", "optional_difference_type", "optional_handling_state"],
+    "keysetPredicate": "business_date > afterDate OR business_date = afterDate AND reconciliation_id > afterId",
+    "order": ["business_date", "reconciliation_id"],
+    "limitRequired": true,
+    "productionSqlChanged": false
+  },
+  "indexCandidates": [
+    {
+      "id": "IDX-A-ORDER-ALIGNED",
+      "columns": ["tenant_id", "business_date", "reconciliation_id"],
+      "purpose": "GLOBAL_AUTHORIZED_STORE_KEYSET_ORDER",
+      "decision": "EXECUTABLE_COMPARISON_REQUIRED"
+    },
+    {
+      "id": "IDX-B-STATE-SELECTIVE",
+      "columns": ["tenant_id", "difference_type", "handling_state", "business_date", "reconciliation_id"],
+      "purpose": "DIFFERENCE_WORK_QUEUE_FILTER_AND_KEYSET_ORDER",
+      "decision": "EXECUTABLE_COMPARISON_REQUIRED"
+    },
+    {
+      "id": "IDX-C-EXISTING-STORE-FAMILY",
+      "columns": ["tenant_id", "store_id", "business_date", "difference_type", "handling_state"],
+      "purpose": "CURRENT_SINGLE_STORE_V1_COMPARISON",
+      "decision": "EXISTING_INDEX_NO_CHANGE"
+    }
+  ],
+  "indexChangeAuthorized": false,
+  "migrationChangeAuthorized": false,
+  "providerNetworkAuthorized": false
+}

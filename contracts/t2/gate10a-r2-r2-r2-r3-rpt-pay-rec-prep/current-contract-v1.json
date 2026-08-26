@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0",
+  "queryId": "RPT-PAY-REC",
+  "owner": "Reporting",
+  "requirement": "T2-RPT-002",
+  "evidenceBoundary": "PROVIDER_NEUTRAL_INTERNAL_SYNTHETIC_ONLY",
+  "api": {
+    "method": "GET",
+    "path": "/api/v1/reports/payment-reconciliation",
+    "operationId": "queryPaymentReconciliation",
+    "permission": "report:payment-reconciliation:read",
+    "response": "R<List<ReconciliationView>>",
+    "rowCap": null,
+    "frozenCompatibility": true
+  },
+  "applicationService": "PaymentReconciliationService.query",
+  "persistencePort": "PaymentReconciliationPersistencePort.query",
+  "mapper": "PaymentReconciliationMapper.query",
+  "mapperPath": "server/ruoyi-modules/jshpos-reporting/src/main/resources/mapper/reporting/PaymentReconciliationMapper.xml",
+  "sourceSqlSha256": "7562de6d4e0698f16f94a30bc27db9a7c75df8cffe319140375576360741709d",
+  "stableOrder": ["business_date", "reconciliation_id"],
+  "trustedScope": ["tenant_id", "business_date_range", "store_id"],
+  "optionalFilters": ["difference_type", "handling_state"],
+  "exportPattern": "ONE_QUERY_PER_STORE_THEN_IN_MEMORY_MATERIALIZATION",
+  "paymentReferencePattern": "ONE_RANGE_QUERY_PLUS_ONE_QUERY_PER_REFERENCE",
+  "currentIndexes": [
+    "PRIMARY(tenant_id,reconciliation_id)",
+    "uk_rpt_recon_key(tenant_id,reconciliation_key)",
+    "idx_rpt_recon_query(tenant_id,store_id,business_date,difference_type,handling_state)"
+  ],
+  "runtimeChangeAuthorized": false
+}

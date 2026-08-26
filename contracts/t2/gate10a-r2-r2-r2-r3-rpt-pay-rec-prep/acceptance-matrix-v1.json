@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "1.0",
+  "phase": "RUNTIME_START_REVIEW",
+  "criteria": [
+    {"id":"PAYREC-PREP-01","criterion":"V1_API_SQL_DIGEST_AND_RESPONSE_FROZEN","required":true},
+    {"id":"PAYREC-PREP-02","criterion":"10K_100K_MYSQL84_RED_PLAN_AND_QUERY_COUNT_REPRODUCIBLE","required":true},
+    {"id":"PAYREC-PREP-03","criterion":"TWELVE_DIFFERENCE_INVARIANTS_CAPTURED","required":true},
+    {"id":"PAYREC-PREP-04","criterion":"ZERO_CROSS_TENANT_ROWS_AND_PERMISSION_BOUNDARY","required":true},
+    {"id":"PAYREC-PREP-05","criterion":"REPORTING_AND_PAYMENT_OWNER_BATCH_PORTS_DESIGNED","required":true},
+    {"id":"PAYREC-PREP-06","criterion":"VERSIONED_KEYSET_SIGNED_CURSOR_AND_SNAPSHOT_DRIFT_RULES_COMPLETE","required":true},
+    {"id":"PAYREC-PREP-07","criterion":"CONTROLLED_EXPORT_RESUME_AND_NO_SENSITIVE_DATA_RULES_COMPLETE","required":true},
+    {"id":"PAYREC-PREP-08","criterion":"CANDIDATE_SQL_INDEX_COMPARISON_WITH_NO_DATABASE_CHANGE","required":true},
+    {"id":"PAYREC-PREP-09","criterion":"ROLLBACK_COMPATIBILITY_EXTERNAL_STOP_LINES_COMPLETE","required":true},
+    {"id":"PAYREC-PREP-10","criterion":"GOVERNANCE_WINDOWS_UBUNTU_MYSQL_AND_EVIDENCE_GREEN","required":true},
+    {"id":"PAYREC-PREP-11","criterion":"SPONSOR_RUNTIME_CONFIRMATION","required":true}
+  ],
+  "runtimeGoBeforeSponsorConfirmation": false
+}
