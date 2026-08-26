@@ -14,6 +14,7 @@ import pathlib
 import time
 import urllib.parse
 from datetime import datetime, timedelta, timezone
+from decimal import Decimal, InvalidOperation
 from typing import Any
 
 from run_t2_g9a_r4_bootstrap import WAREHOUSE_ID, stable_ulid
@@ -28,6 +29,12 @@ OWNERS = (
 EXTERNAL_ONBOARDING_CHECKS = {
     "PAYMENT_EXTERNAL", "HARDWARE_EXTERNAL", "PRINT_EXTERNAL", "DESIGN_PARTNER_EXTERNAL",
 }
+INVENTORY_COST_KEYS = (
+    "onHandDelta", "availableDelta", "reservedDelta", "ledgerQuantityDelta",
+    "purchaseQuantityDelta", "stocktakeQuantityDelta", "transferQuantityDelta",
+    "inventoryValueDeltaMinor", "cogsDeltaMinor", "purchaseCostDeltaMinor",
+    "stocktakeCostDeltaMinor", "transferCostDeltaMinor",
+)
 
 
 def load(path: pathlib.Path) -> dict[str, Any]:
@@ -61,6 +68,18 @@ def canonical_occurred_at() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
+def canonical_decimal_text(value: Any, field: str) -> str:
+    """按 Reporting Owner 的 DECIMAL(25,6) 规则生成载荷和摘要共用文本。"""
+    try:
+        decimal = Decimal(str(value))
+    except (InvalidOperation, ValueError) as error:
+        raise JourneyFailure(f"invalid reporting decimal: {field}") from error
+    scale = max(0, -decimal.as_tuple().exponent)
+    if not decimal.is_finite() or len(decimal.as_tuple().digits) > 25 or scale > 6:
+        raise JourneyFailure(f"reporting decimal exceeds DECIMAL(25,6): {field}")
+    return format(decimal.quantize(Decimal("0.000001")), "f")
+
+
 def report_event(
     *, context: dict[str, Any], journey: dict[str, Any], owner: str, family: str,
     sequence: int, delta: dict[str, Any], run_id: str,
@@ -73,7 +92,8 @@ def report_event(
     warehouse_id = None if family == "SALES" else WAREHOUSE_ID
     sku_id = None if family == "SALES" else int(context["skuId"])
     sales = delta if family == "SALES" else None
-    inventory = delta if family == "INVENTORY_COST" else None
+    inventory = ({key: canonical_decimal_text(delta[key], key) for key in INVENTORY_COST_KEYS}
+                 if family == "INVENTORY_COST" else None)
     fields = [
         event_id, owner, text(journey, "originalOrderRef"), str(sequence),
         f"{owner}:{context['storeId']}:{context['businessDate']}", "1.0", "g5d-v1",
@@ -90,12 +110,7 @@ def report_event(
         fields.append("")
     else:
         fields.append("")
-        fields.append(",".join(str(inventory[key]) for key in (
-            "onHandDelta", "availableDelta", "reservedDelta", "ledgerQuantityDelta",
-            "purchaseQuantityDelta", "stocktakeQuantityDelta", "transferQuantityDelta",
-            "inventoryValueDeltaMinor", "cogsDeltaMinor", "purchaseCostDeltaMinor",
-            "stocktakeCostDeltaMinor", "transferCostDeltaMinor",
-        )))
+        fields.append(",".join(inventory[key] for key in INVENTORY_COST_KEYS))
     fields.append(correlation)
     content_hash = hashlib.sha256("|".join(fields).encode("utf-8")).hexdigest()
     return {

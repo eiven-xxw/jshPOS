@@ -7,6 +7,7 @@ import json
 import pathlib
 import re
 import subprocess
+import sys
 
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -84,6 +85,12 @@ def main() -> None:
             and "replace(microsecond=0)" in postflight_text
             and "occurred_at = canonical_occurred_at()" in postflight_text,
             "report source timestamps must round-trip through Java Instant without hash drift")
+    scripts_path = str(ROOT / "scripts")
+    if scripts_path not in sys.path:
+        sys.path.insert(0, scripts_path)
+    from run_t2_g9a_r4_postflight import canonical_decimal_text
+    require(canonical_decimal_text("0", "regression") == "0.000000",
+            "report inventory payload and hash must use DECIMAL(25,6) canonical text")
     fault_text = fault_runner.read_text(encoding="utf-8")
     require("R4-F01" in fault_text and "R4-F12" in fault_text,
             "R4-R5 runner must emit the complete fixed seed ledger")
