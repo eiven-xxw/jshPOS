@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1.0",
+  "owner": "Reporting",
+  "readOwnership": "rpt_sales_daily",
+  "trustedTenant": true,
+  "authorizedStoreMaximum": 50,
+  "interactivePageMaximum": 500,
+  "exportChunkMaximum": 10000,
+  "exportCheckpoint": ["request_sha256", "confirmed_byte_offset", "signed_resume_cursor"],
+  "sqlMode": "XML",
+  "migrationChangeCount": 0,
+  "indexChangeCount": 0,
+  "externalExecution": 0
+}

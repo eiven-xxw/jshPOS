@@ -2,6 +2,7 @@
 
 | CR | 日期 | 状态 | 变更 | 影响需求/ADR | 批准人 |
 |---|---|---|---|---|---|
+| CR-T2G10A-017 | 2026-08-26 | RPT_SALES_RUNTIME_IN_PROGRESS | 项目发起人接受R2-R2-R2准备阶段CONDITIONAL PASS及CR-013/014/015兼容方向，授权从`972fcfafdf131a555e47f5644e0ae914ce6297fb`先红后绿实现Reporting批量读取端口、RPT-SALES版本化keyset分页和受控流式导出 | G10A-SQL-P2-001、T2-RPT-001、T2-API-001、ADR-074 | 仅准入RPT-SALES；旧v1兼容冻结，Inventory/Payment不得提前整改；索引如有必要必须独立CR及前向迁移；Finding保持OPEN，RES保持PREPARED，外部执行为0 |
 | CR-T2G10A-016 | 2026-08-26 | REMEDIATION_PREP_VERIFIED_AWAITING_SPONSOR_CONFIRMATION | 准备候选`69b907d64a3536656078fa00df8b29e4b796bb4a`的Run`32970951406`完成Ubuntu/Windows治理、基线契约与证据聚合4项全绿 | G10A-SQL-P2-001、G10A-RES-P2-001、T2-API-001、ADR-074 | 3项报表CR、9项候选、3组Owner批量端口和12个失败seed通过；生产SQL/Mapper/索引/迁移与外部执行为0；SQL Finding保持OPEN，等待启动确认 |
 | CR-T2G10A-015 | 2026-08-26 | PROPOSED_AWAITING_SPONSOR_RUNTIME_CONFIRMATION | 为 `RPT-PAY-REC` 冻结交互分页、受控流式导出、确定性排序、兼容窗口和回退方案；当前响应/API/SQL保持不变 | G10A-SQL-P2-001、T2-RPT-002、T2-API-001、ADR-074 | 仅形成兼容性 CR 与失败测试；未经逐项确认不得修改 Controller/OpenAPI、客户端、SQL、索引或迁移 |
 | CR-T2G10A-014 | 2026-08-26 | PROPOSED_AWAITING_SPONSOR_RUNTIME_CONFIRMATION | 为 `RPT-INVENTORY` 冻结交互分页、受控流式导出、确定性排序、兼容窗口和回退方案；当前响应/API/SQL保持不变 | G10A-SQL-P2-001、T2-RPT-001、T2-API-001、ADR-074 | 仅形成兼容性 CR 与失败测试；未经逐项确认不得修改 Controller/OpenAPI、客户端、SQL、索引或迁移 |

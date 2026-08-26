@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "1.0",
+  "legacy": {
+    "method": "GET",
+    "path": "/api/v1/reports/sales-daily",
+    "operationId": "querySalesDailyReport",
+    "response": "R<List<SalesDailyView>>",
+    "state": "FROZEN_COMPATIBILITY_WINDOW"
+  },
+  "versioned": {
+    "method": "GET",
+    "path": "/api/v2/reports/sales-daily",
+    "operationId": "querySalesDailyReportV2",
+    "response": "R<SalesDailyPageView>",
+    "maximumPageRows": 500,
+    "cursor": "HMAC_SHA256_TENANT_FILTER_PROJECTION_KEYSET_BOUND"
+  },
+  "stableOrder": ["business_date", "store_id", "terminal_id", "cashier_id", "currency"],
+  "rollback": "DISABLE_V2_AND_STREAMING_ASSEMBLY_KEEP_V1_AND_HISTORY"
+}

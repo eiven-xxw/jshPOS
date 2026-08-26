@@ -65,6 +65,17 @@ public final class ReportingPersistenceParams {
     public record SalesQueryParam(String tenantId, String projectionVersion, LocalDate fromDate,
                                   LocalDate toDate, Long storeId, String terminalId, Long cashierId) {}
     /**
+     * @param tenantId 可信租户 @param projectionVersion 冻结投影版本 @param fromDate 起始业务日
+     * @param toDate 结束业务日 @param storeIds 已授权门店集合 @param terminalId 可选终端
+     * @param cashierId 可选收银员 @param afterBusinessDate 上批最后业务日 @param afterStoreId 上批最后门店
+     * @param afterTerminalId 上批最后终端 @param afterCashierId 上批最后收银员
+     * @param afterCurrency 上批最后币种 @param limit 本批最大行数
+     */
+    public record SalesPageParam(String tenantId, String projectionVersion, LocalDate fromDate,
+                                 LocalDate toDate, List<Long> storeIds, String terminalId, Long cashierId,
+                                 LocalDate afterBusinessDate, Long afterStoreId, String afterTerminalId,
+                                 Long afterCashierId, String afterCurrency, int limit) {}
+    /**
      * @param tenantId 可信租户 @param projectionVersion 活动投影版本 @param fromDate 起始日
      * @param toDate 结束日 @param storeId 门店 @param warehouseId 仓库 @param skuId SKU
      */

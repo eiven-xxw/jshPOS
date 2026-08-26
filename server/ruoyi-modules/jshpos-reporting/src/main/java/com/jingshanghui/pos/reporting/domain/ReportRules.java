@@ -17,6 +17,7 @@ public final class ReportRules {
     public static final int MAX_QUERY_DAYS = 31;
     public static final int APPROVAL_ROW_THRESHOLD = 10_000;
     public static final int MAX_EXPORT_ROWS = 100_000;
+    public static final int MAX_SALES_PAGE_ROWS = 500;
     public static final int DOWNLOAD_TTL_MINUTES = 10;
     private static final Pattern ULID = Pattern.compile("^[0-9A-HJKMNP-TV-Z]{26}$");
     private static final Pattern SHA256 = Pattern.compile("^[a-f0-9]{64}$");
@@ -100,6 +101,13 @@ public final class ReportRules {
         if (from == null || to == null || to.isBefore(from) || ChronoUnit.DAYS.between(from, to) >= MAX_QUERY_DAYS) {
             throw bad("RPT-G5D-009", "报表日期范围必须为 1 至 31 个业务日");
         }
+    }
+
+    public static int requireSalesPageLimit(int limit) {
+        if (limit < 1 || limit > MAX_SALES_PAGE_ROWS) {
+            throw bad("RPT-R2R2-001", "销售分页行数必须为 1 至 500");
+        }
+        return limit;
     }
 
     public static Set<String> requireExportFields(String reportType, Set<String> fields) {

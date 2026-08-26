@@ -100,6 +100,20 @@ public final class ReportingCommands {
     }
 
     /**
+     * 版本化销售 keyset 分页查询；tenantId 不进入客户端模型。
+     * @param fromDate 起始业务日
+     * @param toDate 结束业务日
+     * @param storeId 门店数据范围目标
+     * @param terminalId 可选终端过滤
+     * @param cashierId 可选收银员过滤
+     * @param cursor 上一页服务端签发游标，首屏为空
+     * @param limit 单页行数，范围 1 至 500
+     */
+    public record SalesPageQuery(LocalDate fromDate, LocalDate toDate, Long storeId,
+                                 String terminalId, Long cashierId, String cursor, int limit) {
+    }
+
+    /**
      * 库存成本日投影查询。
      * @param fromDate 起始业务日
      * @param toDate 结束业务日

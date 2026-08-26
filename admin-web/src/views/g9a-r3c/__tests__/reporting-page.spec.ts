@@ -12,7 +12,7 @@ const reportingApi = vi.hoisted(() => ({
   issueReportDownloadToken: vi.fn(),
   queryInventoryCostDaily: vi.fn(),
   queryPaymentReconciliation: vi.fn(),
-  querySalesDaily: vi.fn(),
+  querySalesDailyPage: vi.fn(),
   requestReportExport: vi.fn(),
   transitionPaymentReconciliation: vi.fn()
 }));
@@ -48,7 +48,7 @@ describe('G9A-R3C R1 VUE-16 报表运营页', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     document.body.innerHTML = '';
-    reportingApi.querySalesDaily.mockResolvedValue({ data: [] });
+    reportingApi.querySalesDailyPage.mockResolvedValue({ data: { items: [], hasMore: false } });
     vi.spyOn(ElMessageBox, 'confirm').mockResolvedValue('confirm');
   });
 

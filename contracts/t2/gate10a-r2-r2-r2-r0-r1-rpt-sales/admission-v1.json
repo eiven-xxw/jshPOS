@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "1.0",
+  "gate": "T2_GATE10A_R2_R2_R2_R0_R1",
+  "startCommit": "972fcfafdf131a555e47f5644e0ae914ce6297fb",
+  "branch": "t2/gate10a-r2-r2-r2-r0-r1-rpt-sales-runtime",
+  "finding": {"id": "G10A-SQL-P2-001", "state": "OPEN"},
+  "admitted": [
+    "REPORTING_BATCH_READ_PORT_SALES_ONLY",
+    "RPT_SALES_VERSIONED_KEYSET_PAGE",
+    "RPT_SALES_CONTROLLED_STREAM_EXPORT",
+    "MYSQL_8_4_11_10K_100K_EXECUTABLE_EVIDENCE"
+  ],
+  "notAdmitted": [
+    "RPT_INVENTORY_RUNTIME_REMEDIATION",
+    "RPT_PAY_REC_RUNTIME_REMEDIATION",
+    "INDEX_OR_DATABASE_OBJECT_CHANGE",
+    "PUBLISHED_MIGRATION_CHANGE",
+    "G10A_RES_P2_001",
+    "NEW_BUSINESS_CAPABILITY"
+  ],
+  "externalExecution": 0
+}

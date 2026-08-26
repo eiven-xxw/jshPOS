@@ -3,8 +3,10 @@ import { newUlid, parseStoreIds, REPORTING_ENDPOINTS, trustedReportingPayload } 
 
 describe('Gate 5D reporting client contract', () => {
   it('uses only versioned first-party reporting endpoints', () => {
-    expect(Object.values(REPORTING_ENDPOINTS)).toHaveLength(5);
-    expect(Object.values(REPORTING_ENDPOINTS).every((path) => path.startsWith('/api/v1/'))).toBe(true);
+    expect(Object.values(REPORTING_ENDPOINTS)).toHaveLength(6);
+    expect(Object.values(REPORTING_ENDPOINTS).every((path) => /^\/api\/v[12]\//.test(path))).toBe(true);
+    expect(REPORTING_ENDPOINTS.salesDaily).toBe('/api/v1/reports/sales-daily');
+    expect(REPORTING_ENDPOINTS.salesDailyV2).toBe('/api/v2/reports/sales-daily');
     expect(REPORTING_ENDPOINTS.paymentReconciliationManage).toBe('/api/v1/reporting/payment-reconciliation');
   });
 

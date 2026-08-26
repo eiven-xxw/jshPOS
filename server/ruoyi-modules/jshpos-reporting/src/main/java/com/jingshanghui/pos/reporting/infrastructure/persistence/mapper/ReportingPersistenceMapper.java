@@ -26,6 +26,7 @@ public interface ReportingPersistenceMapper {
     int updateInventoryProjectionStatus(ProjectionEvent param);
     int updateLineageProjectionStatus(FamilyStatusParam param);
     List<SalesDailyView> querySales(SalesQueryParam param);
+    List<SalesDailyView> querySalesPage(SalesPageParam param);
     List<InventoryCostDailyView> queryInventoryCost(InventoryQueryParam param);
     long countSales(CountParam param);
     long countInventoryCost(CountParam param);

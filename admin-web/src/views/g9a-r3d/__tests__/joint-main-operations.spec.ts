@@ -155,7 +155,7 @@ const reportingApi = vi.hoisted(() => ({
   issueReportDownloadToken: vi.fn(),
   queryInventoryCostDaily: vi.fn(),
   queryPaymentReconciliation: vi.fn(),
-  querySalesDaily: vi.fn(),
+  querySalesDailyPage: vi.fn(),
   requestReportExport: vi.fn()
 }));
 

@@ -3,6 +3,7 @@ const ULID_ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
 
 export const REPORTING_ENDPOINTS = Object.freeze({
   salesDaily: '/api/v1/reports/sales-daily',
+  salesDailyV2: '/api/v2/reports/sales-daily',
   inventoryCostDaily: '/api/v1/reports/inventory-cost-daily',
   paymentReconciliation: '/api/v1/reports/payment-reconciliation',
   paymentReconciliationManage: '/api/v1/reporting/payment-reconciliation',

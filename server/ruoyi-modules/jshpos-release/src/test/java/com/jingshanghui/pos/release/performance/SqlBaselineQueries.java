@@ -108,6 +108,68 @@ final class SqlBaselineQueries {
     record ExecutableQuery(String sql, List<Object> parameters) {
     }
 
+    /**
+     * 从正式 Reporting Mapper 冻结 RPT-SALES v2 keyset 查询，并生成 JDBC 可执行适配。
+     *
+     * <p>这里仍然读取当前工作树中的正式 XML 并校验关键结构；测试适配只展开 MyBatis 的
+     * {@code foreach/if} 标签，不复制业务筛选或排序语义。</p>
+     */
+    static ExecutableQuery salesPage(Path repositoryRoot, String tenantId, String projectionVersion,
+                                     Date fromDate, Date toDate, List<Long> storeIds,
+                                     SalesKey after, int limit) throws IOException {
+        if (storeIds == null || storeIds.isEmpty()) {
+            throw new IllegalArgumentException("storeIds不能为空");
+        }
+        Path mapper = repositoryRoot.resolve(
+            "server/ruoyi-modules/jshpos-reporting/src/main/resources/mapper/reporting/ReportingPersistenceMapper.xml");
+        String xml = Files.readString(mapper, StandardCharsets.UTF_8);
+        String body = selectBody(xml, "querySalesPage");
+        body = resolveIncludes(xml, body);
+        String normalized = normalize(unescapeXml(stripComments(body)));
+        if (!normalized.contains("tenant_id=#{tenantId} AND projection_version=#{projectionVersion}")
+            || !normalized.contains("store_id IN")
+            || !normalized.contains("(business_date,store_id,terminal_id,cashier_id,currency)")
+            || !normalized.contains("ORDER BY business_date,store_id,terminal_id,cashier_id,currency")
+            || !normalized.endsWith("LIMIT #{limit}")) {
+            throw new IllegalStateException("RPT-SALES keyset正式SQL结构漂移");
+        }
+
+        String columns = selectColumns(xml, "salesColumns");
+        String placeholders = storeIds.stream().map(ignored -> "?").collect(java.util.stream.Collectors.joining(","));
+        StringBuilder sql = new StringBuilder("SELECT ").append(columns)
+            .append(" FROM rpt_sales_daily WHERE tenant_id=? AND projection_version=?")
+            .append(" AND business_date BETWEEN ? AND ? AND store_id IN (").append(placeholders).append(')');
+        List<Object> parameters = new ArrayList<>();
+        parameters.add(tenantId);
+        parameters.add(projectionVersion);
+        parameters.add(fromDate);
+        parameters.add(toDate);
+        parameters.addAll(storeIds);
+        if (after != null) {
+            sql.append(" AND (business_date,store_id,terminal_id,cashier_id,currency) > (?,?,?,?,?)");
+            parameters.add(after.businessDate());
+            parameters.add(after.storeId());
+            parameters.add(after.terminalId());
+            parameters.add(after.cashierId());
+            parameters.add(after.currency());
+        }
+        sql.append(" ORDER BY business_date,store_id,terminal_id,cashier_id,currency LIMIT ?");
+        parameters.add(limit);
+        return new ExecutableQuery(normalize(sql.toString()), List.copyOf(parameters));
+    }
+
+    /** 返回已解析 include、仍保留 MyBatis 动态标签的正式 RPT-SALES v2 statement。 */
+    static String salesPageSource(Path repositoryRoot) throws IOException {
+        Path mapper = repositoryRoot.resolve(
+            "server/ruoyi-modules/jshpos-reporting/src/main/resources/mapper/reporting/ReportingPersistenceMapper.xml");
+        String xml = Files.readString(mapper, StandardCharsets.UTF_8);
+        return normalize(unescapeXml(resolveIncludes(xml, selectBody(xml, "querySalesPage"))));
+    }
+
+    /** RPT-SALES keyset 的冻结复合游标。 */
+    record SalesKey(Date businessDate, long storeId, String terminalId, long cashierId, String currency) {
+    }
+
     static List<QuerySpec> all() {
         return List.of(
             spec("INV-FEFO", "Inventory", "server/ruoyi-modules/jshpos-inventory/src/main/resources/mapper/inventory/LotInventoryMapper.xml",
@@ -192,5 +254,41 @@ final class SqlBaselineQueries {
     private static String unescapeXml(String value) {
         return value.replace("&gt;", ">").replace("&lt;", "<")
             .replace("&amp;", "&").replace("&quot;", "\"").replace("&apos;", "'");
+    }
+
+    private static String selectBody(String xml, String statementId) {
+        Matcher matcher = Pattern.compile(SELECT.pattern().formatted(Pattern.quote(statementId)), Pattern.DOTALL)
+            .matcher(xml);
+        if (!matcher.find()) {
+            throw new IllegalStateException("缺少正式 Mapper statement: " + statementId);
+        }
+        return stripComments(matcher.group(1));
+    }
+
+    private static String resolveIncludes(String xml, String body) {
+        String resolved = body;
+        for (;;) {
+            Matcher include = INCLUDE.matcher(resolved);
+            if (!include.find()) {
+                return resolved;
+            }
+            String fragmentId = include.group(1);
+            Matcher fragment = Pattern.compile(SQL_FRAGMENT.pattern().formatted(Pattern.quote(fragmentId)), Pattern.DOTALL)
+                .matcher(xml);
+            if (!fragment.find()) {
+                throw new IllegalStateException("缺少 include: " + fragmentId);
+            }
+            resolved = resolved.substring(0, include.start()) + stripComments(fragment.group(1))
+                + resolved.substring(include.end());
+        }
+    }
+
+    private static String selectColumns(String xml, String fragmentId) {
+        Matcher fragment = Pattern.compile(SQL_FRAGMENT.pattern().formatted(Pattern.quote(fragmentId)), Pattern.DOTALL)
+            .matcher(xml);
+        if (!fragment.find()) {
+            throw new IllegalStateException("缺少列清单: " + fragmentId);
+        }
+        return normalize(unescapeXml(stripComments(fragment.group(1))));
     }
 }

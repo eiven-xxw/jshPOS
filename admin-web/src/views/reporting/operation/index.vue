@@ -81,6 +81,9 @@
           </template>
         </el-table-column>
       </el-table>
+      <div v-if="reportType === 'SALES_DAILY' && salesHasMore" class="mt-3 text-center">
+        <el-button data-testid="reporting-sales-load-more" :loading="pageBusy" @click="loadMoreSales">加载下一页</el-button>
+      </div>
 
       <el-table v-else-if="reportType === 'INVENTORY_COST_DAILY'" v-loading="loading" :data="inventoryRows" border>
         <el-table-column prop="businessDate" label="业务日" width="115" fixed />
@@ -223,7 +226,7 @@ import {
   issueReportDownloadToken,
   queryInventoryCostDaily,
   queryPaymentReconciliation,
-  querySalesDaily,
+  querySalesDailyPage,
   requestReportExport,
   transitionPaymentReconciliation
 } from '@/api/reporting';
@@ -247,6 +250,8 @@ const operationKeys = useStableOperationIdentity(newUlid);
 const pageBusy = computed(() => phase.value === 'LOADING' || submitting.value);
 const loading = computed(() => phase.value === 'LOADING');
 const salesRows = ref<SalesDailyVO[]>([]);
+const salesCursor = ref<string>();
+const salesHasMore = ref(false);
 const inventoryRows = ref<InventoryCostDailyVO[]>([]);
 const paymentRows = ref<PaymentReconciliationVO[]>([]);
 const queryPermissions = computed(() =>
@@ -320,19 +325,45 @@ const normalizedQuery = (): ReportQuery => ({
 });
 
 const loadReport = async () => {
+  if (reportType.value === 'SALES_DAILY') {
+    salesCursor.value = undefined;
+    salesHasMore.value = false;
+    const result = await runRead(
+      async () => (await querySalesDailyPage({ ...normalizedQuery(), limit: 200 })).data,
+      (page) => page.items.length === 0
+    );
+    if (!result) return;
+    salesRows.value = result.items;
+    salesCursor.value = result.nextCursor;
+    salesHasMore.value = result.hasMore;
+    inventoryRows.value = [];
+    paymentRows.value = [];
+    return;
+  }
   const result = await runRead(
     async () =>
-      reportType.value === 'SALES_DAILY'
-        ? (await querySalesDaily(normalizedQuery())).data
-        : reportType.value === 'INVENTORY_COST_DAILY'
-          ? (await queryInventoryCostDaily(normalizedQuery())).data
-          : (await queryPaymentReconciliation(normalizedQuery())).data,
+      reportType.value === 'INVENTORY_COST_DAILY'
+        ? (await queryInventoryCostDaily(normalizedQuery())).data
+        : (await queryPaymentReconciliation(normalizedQuery())).data,
     (rows) => rows.length === 0
   );
   if (!result) return;
-  salesRows.value = reportType.value === 'SALES_DAILY' ? (result as SalesDailyVO[]) : [];
+  salesRows.value = [];
   inventoryRows.value = reportType.value === 'INVENTORY_COST_DAILY' ? (result as InventoryCostDailyVO[]) : [];
   paymentRows.value = reportType.value === 'PAYMENT_RECONCILIATION' ? (result as PaymentReconciliationVO[]) : [];
+};
+
+const loadMoreSales = async () => {
+  if (!salesCursor.value || pageBusy.value) return;
+  const frozenCursor = salesCursor.value;
+  const result = await runRead(
+    async () => (await querySalesDailyPage({ ...normalizedQuery(), cursor: frozenCursor, limit: 200 })).data,
+    () => false
+  );
+  if (!result) return;
+  salesRows.value = [...salesRows.value, ...result.items];
+  salesCursor.value = result.nextCursor;
+  salesHasMore.value = result.hasMore;
 };
 
 const confirmImpact = async (title: string, message: string): Promise<boolean> => {

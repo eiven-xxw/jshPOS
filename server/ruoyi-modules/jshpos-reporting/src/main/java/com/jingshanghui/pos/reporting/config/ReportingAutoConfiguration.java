@@ -2,6 +2,7 @@ package com.jingshanghui.pos.reporting.config;
 
 import com.jingshanghui.pos.reporting.application.port.ReportArtifactStore;
 import com.jingshanghui.pos.reporting.application.port.ReportDownloadTokenProtector;
+import com.jingshanghui.pos.reporting.application.port.SalesPageCursorCodec;
 import com.jingshanghui.pos.reporting.infrastructure.export.*;
 import com.jingshanghui.pos.reporting.infrastructure.security.*;
 import org.mybatis.spring.annotation.MapperScan;
@@ -38,6 +39,17 @@ public class ReportingAutoConfiguration {
             return new HmacReportDownloadTokenProtector(Base64.getDecoder().decode(encoded));
         } catch (RuntimeException exception) {
             return new RejectingReportDownloadTokenProtector();
+        }
+    }
+
+    @Bean
+    public SalesPageCursorCodec salesPageCursorCodec(Environment environment) {
+        String encoded = environment.getProperty("JSH_REPORT_CURSOR_HMAC_KEY_B64");
+        if (encoded == null || encoded.isBlank()) return new RejectingSalesPageCursorCodec();
+        try {
+            return new HmacSalesPageCursorCodec(Base64.getDecoder().decode(encoded));
+        } catch (RuntimeException exception) {
+            return new RejectingSalesPageCursorCodec();
         }
     }
 }

@@ -198,6 +198,21 @@
       <if test="cashierId != null">AND cashier_id=#{cashierId}</if>
     ORDER BY business_date,store_id,terminal_id,cashier_id,currency
   </select>
+  <!-- R2R2R2-R1：复杂 keyset 与多门店集合读取固定在 XML，禁止 Wrapper 或前端拼接。 -->
+  <select id="querySalesPage" resultType="com.jingshanghui.pos.reporting.application.model.ReportingViews$SalesDailyView">
+    SELECT <include refid="salesColumns"/> FROM rpt_sales_daily
+    WHERE tenant_id=#{tenantId} AND projection_version=#{projectionVersion}
+      AND business_date BETWEEN #{fromDate} AND #{toDate}
+      AND store_id IN <foreach collection="storeIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+      <if test="terminalId != null and terminalId != ''">AND terminal_id=#{terminalId}</if>
+      <if test="cashierId != null">AND cashier_id=#{cashierId}</if>
+      <if test="afterBusinessDate != null">
+        AND (business_date,store_id,terminal_id,cashier_id,currency)
+          &gt; (#{afterBusinessDate},#{afterStoreId},#{afterTerminalId},#{afterCashierId},#{afterCurrency})
+      </if>
+    ORDER BY business_date,store_id,terminal_id,cashier_id,currency
+    LIMIT #{limit}
+  </select>
   <select id="queryInventoryCost" resultType="com.jingshanghui.pos.reporting.application.model.ReportingViews$InventoryCostDailyView">
     SELECT <include refid="inventoryColumns"/> FROM rpt_inventory_cost_daily
     WHERE tenant_id=#{tenantId} AND projection_version=#{projectionVersion}

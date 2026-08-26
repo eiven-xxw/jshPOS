@@ -25,6 +25,13 @@ export interface SalesDailyVO {
   projectionStatus: ProjectionStatus;
 }
 
+export interface SalesDailyPageVO {
+  items: SalesDailyVO[];
+  nextCursor?: string;
+  hasMore: boolean;
+  projectionVersion?: string;
+}
+
 export interface InventoryCostDailyVO {
   businessDate: string;
   orgId: Id64;
@@ -98,6 +105,11 @@ export interface ReportQuery {
   skuId?: Id64;
   differenceType?: PaymentReconciliationVO['differenceType'];
   handlingState?: PaymentReconciliationVO['handlingState'];
+}
+
+export interface SalesPageQuery extends ReportQuery {
+  cursor?: string;
+  limit?: number;
 }
 
 export interface ExportRequest {

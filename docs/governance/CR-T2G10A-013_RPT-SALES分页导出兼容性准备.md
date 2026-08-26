@@ -2,7 +2,7 @@
 
 - 日期：2026-08-26
 - 查询：`RPT-SALES / ReportingPersistenceMapper.querySales`
-- 状态：`PROPOSED_AWAITING_SPONSOR_RUNTIME_CONFIRMATION`
+- 状态：`RUNTIME_ADMITTED_IN_R0_R1`
 
 ## 现状与价值
 
@@ -21,5 +21,6 @@
 ## 兼容、回退与停止线
 
 旧客户端在兼容窗口内保持原响应；新契约必须使用新 operationId/版本并冻结错误码。回退为停止
-新入口、继续旧入口，不删除事实或导出审计。任何金额口径、字段、排序业务含义或 300 API 封板
-变化必须另行确认。本 CR 当前不批准 Controller/OpenAPI、SQL、索引或迁移变更。
+新入口、继续旧入口，不删除事实或导出审计。项目发起人于 2026-08-26 准入新 Controller/OpenAPI、
+Reporting 批量读取端口、RPT-SALES keyset SQL 和流式导出；金额口径、字段、排序业务含义保持不变。
+索引和迁移仍未授权，如 MySQL 8.4 计划证明需要索引，必须先提交独立 CR 与唯一前向迁移方案。

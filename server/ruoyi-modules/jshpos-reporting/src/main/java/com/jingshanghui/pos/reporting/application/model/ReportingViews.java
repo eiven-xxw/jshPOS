@@ -53,6 +53,20 @@ public final class ReportingViews {
     }
 
     /**
+     * 版本化销售 keyset 分页结果。
+     * @param items 当前页销售投影
+     * @param nextCursor 下一页服务端签名游标；无后续数据时为 null
+     * @param hasMore 是否存在下一页
+     * @param projectionVersion 本次读取冻结的投影版本
+     */
+    public record SalesPageView(java.util.List<SalesDailyView> items, String nextCursor, boolean hasMore,
+                                String projectionVersion) {
+        public SalesPageView {
+            items = items == null ? java.util.List.of() : java.util.List.copyOf(items);
+        }
+    }
+
+    /**
      * 库存成本日投影。
      * @param businessDate 业务日
      * @param orgId 组织标识

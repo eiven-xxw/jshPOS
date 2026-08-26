@@ -6,6 +6,8 @@ import com.jingshanghui.pos.reporting.application.model.PaymentReconciliationVie
 import com.jingshanghui.pos.reporting.domain.ReportRules;
 
 import java.nio.charset.StandardCharsets;
+import java.io.IOException;
+import java.io.Writer;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,6 +20,29 @@ public final class ReportCsvEncoder {
                         List<SalesDailyView> rows, Instant generatedAt) {
         List<String> fields = requestedFields.stream().sorted().toList();
         return encode(tenantId, exportId, fields, rows, generatedAt, field -> salesValue(field));
+    }
+
+    /** 写入销售 CSV 水印和字段头；断点续传仅在新制品偏移为 0 时调用一次。 */
+    public void writeSalesHeader(Writer writer, String tenantId, String exportId,
+                                 Set<String> requestedFields, Instant generatedAt) throws IOException {
+        List<String> fields = requestedFields.stream().sorted().toList();
+        writer.append("# tenant=").append(csvCell(tenantId)).append(",export=").append(csvCell(exportId))
+            .append(",generatedAt=").append(csvCell(generatedAt)).append("\r\n");
+        writer.append(String.join(",", fields.stream().map(this::csvCell).toList())).append("\r\n");
+    }
+
+    /** 按冻结字段顺序追加一批销售行，不缓存其他批次。 */
+    public void writeSalesRows(Writer writer, Set<String> requestedFields,
+                               List<SalesDailyView> rows) throws IOException {
+        List<String> fields = requestedFields.stream().sorted().toList();
+        List<Function<SalesDailyView, Object>> extractors = fields.stream().map(this::salesValue).toList();
+        for (SalesDailyView row : rows) {
+            List<String> values = new ArrayList<>(fields.size());
+            for (Function<SalesDailyView, Object> extractor : extractors) {
+                values.add(csvCell(extractor.apply(row)));
+            }
+            writer.append(String.join(",", values)).append("\r\n");
+        }
     }
 
     public byte[] inventoryCost(String tenantId, String exportId, Set<String> requestedFields,

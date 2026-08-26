@@ -2,7 +2,9 @@ package com.jingshanghui.pos.reporting.infrastructure.persistence;
 
 import com.jingshanghui.pos.reporting.application.model.ReportingCommands.*;
 import com.jingshanghui.pos.reporting.application.model.ReportingViews.*;
+import com.jingshanghui.pos.reporting.application.port.ReportingBatchReadPort;
 import com.jingshanghui.pos.reporting.application.port.ReportingPersistencePort;
+import com.jingshanghui.pos.reporting.domain.ReportRules;
 import com.jingshanghui.pos.reporting.infrastructure.persistence.ReportingPersistenceParams.*;
 import com.jingshanghui.pos.reporting.infrastructure.persistence.mapper.ReportingPersistenceMapper;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +23,7 @@ import java.util.List;
 /** MyBatis XML 适配器；复杂聚合、状态条件和显式锁不暴露通用 CRUD。 */
 @Repository
 @RequiredArgsConstructor
-public class MyBatisReportingPersistenceAdapter implements ReportingPersistencePort {
+public class MyBatisReportingPersistenceAdapter implements ReportingPersistencePort, ReportingBatchReadPort {
     private final ReportingPersistenceMapper mapper;
 
     @Override public InboxRow findInbox(String tenantId, String sourceEventId) {
@@ -89,6 +91,19 @@ public class MyBatisReportingPersistenceAdapter implements ReportingPersistenceP
                                                      LocalDate toDate, Long storeId, String terminalId, Long cashierId) {
         return mapper.querySales(new SalesQueryParam(tenantId, projectionVersion, fromDate, toDate, storeId,
             terminalId, cashierId));
+    }
+    @Override public List<SalesDailyView> readSales(SalesBatchRequest request) {
+        ReportRules.requireSha256(request.requestSha256(), "RPT-R2R2-002");
+        if (request.storeIds().isEmpty() || request.storeIds().size() > 50
+            || request.limit() < 1 || request.limit() > MAX_EXPORT_CHUNK_ROWS) {
+            throw new ServiceException("RPT-R2R2-003: 销售批量读取范围或行数非法", 400);
+        }
+        SalesKey after = request.after();
+        return mapper.querySalesPage(new SalesPageParam(request.tenantId(), request.projectionVersion(),
+            request.fromDate(), request.toDate(), request.storeIds(), request.terminalId(), request.cashierId(),
+            after == null ? null : after.businessDate(), after == null ? null : after.storeId(),
+            after == null ? null : after.terminalId(), after == null ? null : after.cashierId(),
+            after == null ? null : after.currency(), request.limit()));
     }
     @Override public List<InventoryCostDailyView> queryInventoryCost(String tenantId, String projectionVersion,
                                                                      LocalDate fromDate, LocalDate toDate,

@@ -46,6 +46,29 @@ paths:
         - { name: skuId, in: query, schema: { type: integer, format: int64, minimum: 1 } }
       responses:
         "200": { description: 精确数量和成本日投影 }
+  /api/v2/reports/sales-daily:
+    get:
+      operationId: querySalesDailyReportV2
+      x-requirement: T2-RPT-001
+      x-change-request: CR-T2G10A-013
+      x-permission: report:operation:read
+      x-legacy-compatible-operation: querySalesDailyReport
+      parameters:
+        - { $ref: "#/components/parameters/FromDate" }
+        - { $ref: "#/components/parameters/ToDate" }
+        - { $ref: "#/components/parameters/StoreId" }
+        - { name: terminalId, in: query, schema: { type: string, maxLength: 64 } }
+        - { name: cashierId, in: query, schema: { type: integer, format: int64, minimum: 1 } }
+        - { name: cursor, in: query, schema: { type: string, maxLength: 2048 }, description: 服务端签名且绑定租户、筛选与投影版本的游标 }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 500, default: 200 } }
+      responses:
+        "200":
+          description: 有界销售 keyset 页；金额字段继续沿用原投影口径
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SalesPage" }
+        "400": { description: 日期、行数或签名游标无效 }
+        "403": { description: 门店超出可信数据范围 }
   /api/v1/reporting/rebuilds:
     post:
       operationId: rebuildReportingProjection
@@ -224,4 +247,13 @@ components:
     ReconciliationId: { name: reconciliationId, in: path, required: true, schema: { $ref: "#/components/schemas/Ulid" } }
   schemas:
     Ulid: { type: string, pattern: "^[0-9A-HJKMNP-TV-Z]{26}$" }
+    SalesPage:
+      type: object
+      additionalProperties: false
+      required: [items, hasMore]
+      properties:
+        items: { type: array, maxItems: 500, items: { type: object } }
+        nextCursor: { type: [string, "null"], maxLength: 2048 }
+        hasMore: { type: boolean }
+        projectionVersion: { type: [string, "null"], maxLength: 32 }
 security: [{ bearerAuth: [] }]

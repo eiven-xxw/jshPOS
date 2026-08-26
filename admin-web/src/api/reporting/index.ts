@@ -9,13 +9,19 @@ import type {
   PaymentReconciliationAuditVO,
   PaymentReconciliationVO,
   ReportQuery,
-  SalesDailyVO
+  SalesDailyVO,
+  SalesDailyPageVO,
+  SalesPageQuery
 } from './types';
 
 export { REPORTING_ENDPOINTS } from './contract';
 
 export const querySalesDaily = (params: ReportQuery): AxiosPromise<SalesDailyVO[]> =>
   request({ url: REPORTING_ENDPOINTS.salesDaily, method: 'get', params: trustedReportingPayload(params) });
+
+/** 新页面使用的有界 keyset 契约；旧列表方法保留兼容窗口，不再作为默认页面读取路径。 */
+export const querySalesDailyPage = (params: SalesPageQuery): AxiosPromise<SalesDailyPageVO> =>
+  request({ url: REPORTING_ENDPOINTS.salesDailyV2, method: 'get', params: trustedReportingPayload(params) });
 
 export const queryInventoryCostDaily = (params: ReportQuery): AxiosPromise<InventoryCostDailyVO[]> =>
   request({ url: REPORTING_ENDPOINTS.inventoryCostDaily, method: 'get', params: trustedReportingPayload(params) });

@@ -10,11 +10,13 @@ import com.jingshanghui.pos.reporting.application.port.*;
 import com.jingshanghui.pos.reporting.application.port.ReportingPersistencePort.*;
 import com.jingshanghui.pos.reporting.domain.CanonicalReportHash;
 import com.jingshanghui.pos.reporting.infrastructure.export.ReportCsvEncoder;
+import com.jingshanghui.pos.reporting.infrastructure.security.HmacSalesPageCursorCodec;
 import org.dromara.common.core.exception.ServiceException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
+import java.io.ByteArrayOutputStream;
 import java.time.*;
 import java.util.*;
 
@@ -27,6 +29,7 @@ class ReportExportServiceTest {
     private static final String TENANT="tenant_alpha";
     private static final Instant NOW=Instant.parse("2026-08-17T03:00:00Z");
     private ReportingPersistencePort persistence;
+    private ReportingBatchReadPort batchRead;
     private PaymentReconciliationPersistencePort paymentPersistence;
     private ReportArtifactStore store;
     private ReportDownloadTokenProtector tokens;
@@ -38,12 +41,14 @@ class ReportExportServiceTest {
 
     @BeforeEach void setUp() {
         persistence=mock(ReportingPersistencePort.class);
+        batchRead=mock(ReportingBatchReadPort.class);
         paymentPersistence=mock(PaymentReconciliationPersistencePort.class); store=mock(ReportArtifactStore.class);
         tokens=mock(ReportDownloadTokenProtector.class); context=mock(TrustedTenantContext.class);
         auth=mock(ScopeAuthorizationService.class); differences=mock(ReportingDifferenceService.class);
         audit=mock(DomainAuditService.class);
         when(context.requirePrincipal()).thenReturn(new TrustedPrincipal(TENANT,7L,1L,"synthetic"));
-        service=new ReportExportService(persistence,paymentPersistence,store,tokens,context,auth,differences,audit,
+        service=new ReportExportService(persistence,batchRead,paymentPersistence,store,tokens,
+            new HmacSalesPageCursorCodec("sales-export-cursor-key-32-bytes!".getBytes()),context,auth,differences,audit,
             Clock.fixed(NOW,ZoneOffset.UTC),new ReportCsvEncoder());
     }
 
@@ -109,12 +114,21 @@ class ReportExportServiceTest {
         when(persistence.findExport(TENANT,id)).thenReturn(requested,ready);
         when(persistence.transitionExport(TENANT,id,"REQUESTED","GENERATING",null,null,0,NOW)).thenReturn(1);
         when(persistence.activeProjectionVersion(TENANT,"SALES")).thenReturn("g5d-v1");
-        when(persistence.querySales(TENANT,"g5d-v1",day,day,11L,null,null)).thenReturn(List.of(
+        when(batchRead.readSales(any())).thenReturn(List.of(
             new SalesDailyView(day,1L,11L,"=cmd",7L,"CNY",1,0,0,100,0,0,100,0,100,0,0,0,"CURRENT")));
+        when(store.writeResumable(eq("reporting/"+TENANT+"/"+id),anyString(),any())).thenAnswer(invocation -> {
+            ByteArrayOutputStream output=new ByteArrayOutputStream();
+            ReportArtifactStore.ResumableWriter writer=invocation.getArgument(2);
+            writer.write(output,null,cursor -> { });
+            byte[] content=output.toByteArray();
+            String digest=CanonicalReportHash.sha256(content);
+            assertThat(new String(content,StandardCharsets.UTF_8)).contains("'=cmd");
+            return new ReportArtifactStore.StoredArtifact("reporting/"+TENANT+"/"+id+"/"+digest+".csv",
+                digest,content.length);
+        });
         ExportView result=service.generate(new ExportGenerate(id,0,"01ARZ3NDEKTSV4RRFFQ69G5FAW"));
         assertThat(result.state()).isEqualTo("READY");
-        verify(store).put(matches("^reporting/tenant_alpha/"+id+"/[a-f0-9]{64}\\.csv$"),
-            argThat(content -> new String(content,StandardCharsets.UTF_8).contains("'=cmd")));
+        verify(store).writeResumable(eq("reporting/"+TENANT+"/"+id),anyString(),any());
         verify(persistence).attachArtifact(eq(TENANT),argThat(artifact -> artifact.sizeBytes()>0
             && artifact.objectKey().startsWith("reporting/tenant_alpha/")));
     }

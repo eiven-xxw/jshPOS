@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "1.0",
+  "items": [
+    {"crId": "CR-T2G10A-013", "queryId": "RPT-SALES", "state": "RUNTIME_ADMITTED_IN_R0_R1"},
+    {"crId": "CR-T2G10A-014", "queryId": "RPT-INVENTORY", "state": "COMPATIBILITY_DIRECTION_ACCEPTED_RUNTIME_NOT_ADMITTED"},
+    {"crId": "CR-T2G10A-015", "queryId": "RPT-PAY-REC", "state": "COMPATIBILITY_DIRECTION_ACCEPTED_RUNTIME_NOT_ADMITTED"}
+  ],
+  "historicalPreparationContractModified": false
+}

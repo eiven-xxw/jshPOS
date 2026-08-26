@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1.0",
+  "redBaseline": {"tests": 6, "failures": 6, "errors": 0, "retries": 0},
+  "items": [
+    {"seedId": "R2R2R2-F01", "r1Slice": "RPT_SALES_BOUNDED_KEYSET", "state": "GREEN_LOCAL"},
+    {"seedId": "R2R2R2-F04", "r1Slice": "RPT_SALES_NO_PER_STORE_EXPORT_QUERY", "state": "PARTIAL_PARENT_REMAINS_OPEN"},
+    {"seedId": "R2R2R2-F07", "r1Slice": "RPT_SALES_TRUSTED_TENANT_AND_STORE", "state": "PARTIAL_PARENT_REMAINS_OPEN"},
+    {"seedId": "R2R2R2-F08", "r1Slice": "RPT_SALES_SIGNED_FILTER_BOUND_CURSOR", "state": "GREEN_LOCAL"},
+    {"seedId": "R2R2R2-F09", "r1Slice": "SALES_EXPORT_SAME_ID_DIFFERENT_HASH", "state": "PARTIAL_PARENT_REMAINS_OPEN"},
+    {"seedId": "R2R2R2-F12", "r1Slice": "SALES_EXPORT_CURSOR_OFFSET_RESUME", "state": "GREEN_LOCAL"}
+  ],
+  "findingState": "OPEN",
+  "automaticRetry": false
+}
