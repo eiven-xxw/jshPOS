@@ -1249,6 +1249,9 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
   SQL/Mapper/索引运行时整改、资源整改、R3、完整 Alpha 或生产发布。
 - 所有外部 `BLOCKED`、UAT/REL `DRAFT`、LIC/JSH `DEFERRED` 与 Provider 网络、真实资金、
   设备/外设、伙伴现场、完整 Alpha 和生产部署零执行边界保持不变。
+- 首个准备候选 `69b907d64a3536656078fa00df8b29e4b796bb4a` 的 GitHub Run `32970951406`
+  已完成 Ubuntu/Windows 治理、R2-R2-R1 不可变基线、Gate 9C/API 回归和证据聚合，4 个 Job
+  全绿；当前只允许回填不可变证据并从新提交完整复跑，`G10A-SQL-P2-001` 仍不得关闭。
 
 ## 5. 工程与测试规则
 

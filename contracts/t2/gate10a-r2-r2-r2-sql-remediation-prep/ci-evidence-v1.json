@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0",
   "gate": "T2_GATE_10A_R2_R2_R2_SQL_REMEDIATION_PREP",
-  "state": "PENDING_FIRST_REMOTE_RUN",
+  "state": "FIRST_REMOTE_RUN_SUCCESS_BACKFILLED",
   "sourceExecutableBaseline": {
     "runId": 32968444145,
     "commit": "8c65991919757cb52786cdf037b7a44f7f095c53",
@@ -10,7 +10,23 @@
     "evidenceArtifactId": 9606801124,
     "evidenceArtifactSha256": "4d093d8f09202a767c82074d5f3de591de6e2ef6398ad721f6c17f695a0d89e7"
   },
-  "currentRun": null,
-  "currentCommit": null,
-  "artifacts": []
+  "currentRun": {
+    "runId": 32970951406,
+    "url": "https://github.com/eiven-xxw/jshPOS/actions/runs/32970951406",
+    "status": "SUCCESS",
+    "durationSeconds": 39,
+    "jobs": {
+      "governanceUbuntu": 98184304796,
+      "governanceWindows": 98184304980,
+      "baselineContract": 98184397290,
+      "evidence": 98184445848
+    }
+  },
+  "currentCommit": "69b907d64a3536656078fa00df8b29e4b796bb4a",
+  "artifacts": [
+    {"id":9607559911,"name":"governance-ubuntu","sha256":"fe15e5cb6155faf9b8467cd8bc8e2bdb744964237519c9205d55a6cc1b40caf5"},
+    {"id":9607564584,"name":"governance-windows","sha256":"9fc35e831f2f5aecb9d1efede4dea7495271a6bd8682287c34de0be1ec6ab81f"},
+    {"id":9607571384,"name":"baseline-contract","sha256":"19faf14a802b552b74a826cc23579ad133e2c31c702f7de8671926af20f42930"},
+    {"id":9607576493,"name":"evidence-index","sha256":"df14f4a90f66461ad795dbd886bc35c17a66f681e802dfb0f3c3b52eb303ef16"}
+  ]
 }

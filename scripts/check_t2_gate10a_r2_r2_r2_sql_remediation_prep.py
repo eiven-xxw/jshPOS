@@ -64,6 +64,7 @@ def main() -> None:
         "docs/governance/CR-T2G10A-013_RPT-SALES分页导出兼容性准备.md",
         "docs/governance/CR-T2G10A-014_RPT-INVENTORY分页导出兼容性准备.md",
         "docs/governance/CR-T2G10A-015_RPT-PAY-REC分页导出兼容性准备.md",
+        "docs/governance/CR-T2G10A-016_Gate10A-R2-R2-R2准备验证候选.md",
         "scripts/check_t2_gate10a_r2_r2_r2_sql_remediation_prep.py",
         "scripts/audit_t2_gate10a_r2_r2_r2_sql_remediation_prep.py",
         "scripts/build_t2_gate10a_r2_r2_r2_sql_remediation_prep_evidence.py",
@@ -126,7 +127,7 @@ def main() -> None:
         fail("RES Finding 状态漂移")
 
     change_log = (ROOT / "docs/governance/change-log.md").read_text(encoding="utf-8")
-    for cr_id in ("CR-T2G10A-012", "CR-T2G10A-013", "CR-T2G10A-014", "CR-T2G10A-015"):
+    for cr_id in ("CR-T2G10A-012", "CR-T2G10A-013", "CR-T2G10A-014", "CR-T2G10A-015", "CR-T2G10A-016"):
         if cr_id not in change_log:
             fail(f"变更日志缺少 {cr_id}")
 
