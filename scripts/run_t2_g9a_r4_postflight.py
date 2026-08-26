@@ -11,6 +11,7 @@ import base64
 import hashlib
 import json
 import pathlib
+import re
 import time
 import urllib.parse
 from datetime import datetime, timedelta, timezone
@@ -78,6 +79,20 @@ def canonical_decimal_text(value: Any, field: str) -> str:
     if not decimal.is_finite() or len(decimal.as_tuple().digits) > 25 or scale > 6:
         raise JourneyFailure(f"reporting decimal exceeds DECIMAL(25,6): {field}")
     return format(decimal.quantize(Decimal("0.000001")), "f")
+
+
+def synthetic_release_version(label: str, purpose: str) -> str:
+    """生成符合 Release Owner 契约且可按原命令稳定恢复的合成版本号。"""
+    normalized_label = re.sub(r"[^A-Za-z0-9]+", ".", label).strip(".").lower()
+    normalized_purpose = re.sub(r"[^A-Za-z0-9]+", ".", purpose).strip(".").lower()
+    if not normalized_label or not normalized_purpose:
+        raise JourneyFailure("synthetic release version identity is empty")
+    version = f"0.0.0-r4.{normalized_purpose}.{normalized_label}"
+    if len(version) > 64 or re.fullmatch(
+        r"[0-9]+(?:\.[0-9]+){0,3}(?:[-+][A-Za-z0-9.-]+)?", version,
+    ) is None:
+        raise JourneyFailure("synthetic release version violates Release Owner contract")
+    return version
 
 
 def report_event(
@@ -351,7 +366,8 @@ def run_journey(
     client.login(text(context, "tenantId"), text(secret, "username"), text(secret, "password"),
                  f"{label}-release-admin-login")
     release_body = {
-        "artifactType": "DATA_PACKAGE", "version": f"R4-{label[-12:]}", "channel": "INTERNAL",
+        "artifactType": "DATA_PACKAGE", "version": synthetic_release_version(label, "journey"),
+        "channel": "INTERNAL",
         "objectKey": f"releases/{context['tenantId']}/{run_id}/{label}.bin",
         "artifactSha256": hashlib.sha256(f"{run_id}:{label}:artifact".encode()).hexdigest(),
         "signatureBase64": base64.b64encode(hashlib.sha256(f"{run_id}:{label}:signature".encode()).digest()).decode(),

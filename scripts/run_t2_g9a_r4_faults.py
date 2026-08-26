@@ -18,7 +18,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from run_t2_g9a_r4_bootstrap import WAREHOUSE_ID, stable_ulid
-from run_t2_g9a_r4_postflight import report_event
+from run_t2_g9a_r4_postflight import report_event, synthetic_release_version
 from run_t2_gate8b_runtime_api_journey import ApiClient, JourneyFailure, data
 
 
@@ -60,7 +60,8 @@ def checkpoint_id(postflight: dict[str, Any], journey_id: str, owner: str) -> st
 def release_body(context: dict[str, Any], run_id: str, build_commit: str) -> dict[str, Any]:
     label = text(context, "journeyId").lower()
     return {
-        "artifactType": "DATA_PACKAGE", "version": f"R4-IDEMP-{label[-8:]}", "channel": "INTERNAL",
+        "artifactType": "DATA_PACKAGE", "version": synthetic_release_version(label, "idempotency"),
+        "channel": "INTERNAL",
         "objectKey": f"releases/{context['tenantId']}/{run_id}/r4-idempotency.bin",
         "artifactSha256": hashlib.sha256(f"{run_id}:{label}:idempotency-artifact".encode()).hexdigest(),
         "signatureBase64": base64.b64encode(hashlib.sha256(b"r4-invalid-signature").digest()).decode(),
