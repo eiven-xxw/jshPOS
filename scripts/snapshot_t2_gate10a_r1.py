@@ -21,6 +21,11 @@ def digest(path: pathlib.Path) -> str:
     return value.hexdigest()
 
 
+def git_blob(relative: str) -> bytes:
+    """快照使用提交对象规范字节，保证 Ubuntu/Windows 摘要一致。"""
+    return subprocess.check_output(["git", "show", f"HEAD:{relative}"], cwd=ROOT)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--ecosystem", required=True, choices=sorted(VALID))
@@ -47,10 +52,11 @@ def main() -> int:
     owned = []
     for path in files:
         relative = path.relative_to(ROOT).as_posix()
-        actual = digest(path)
+        content = git_blob(relative)
+        actual = hashlib.sha256(content).hexdigest()
         aggregate.update(relative.encode("utf-8"))
         aggregate.update(b"\0")
-        aggregate.update(path.read_bytes())
+        aggregate.update(content)
         aggregate.update(b"\0")
         owned.append({"path": relative, "sha256": actual, "size": path.stat().st_size})
     if len(files) != input_set["fileCount"] or aggregate.hexdigest() != input_set["aggregateSha256"]:

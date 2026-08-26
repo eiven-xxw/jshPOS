@@ -49,6 +49,15 @@ def sha256(path: pathlib.Path) -> str:
     return value.hexdigest()
 
 
+def git_blob(revision: str, relative: str) -> bytes:
+    """读取 Git 对象中的规范字节，避免 Windows checkout 换行影响跨平台摘要。"""
+    return subprocess.check_output(["git", "show", f"{revision}:{relative}"], cwd=ROOT)
+
+
+def sha256_git_blob(revision: str, relative: str) -> str:
+    return hashlib.sha256(git_blob(revision, relative)).hexdigest()
+
+
 def changed_paths() -> set[str]:
     changed = set(
         filter(
@@ -184,7 +193,7 @@ def check_dependency_freeze() -> int:
     drift = [
         path
         for path, expected in baseline["manifestDigests"].items()
-        if sha256(ROOT / path) != expected
+        if sha256_git_blob("HEAD", path) != expected
     ]
     for name, input_set in baseline["inputSets"].items():
         files = sorted(
@@ -201,7 +210,7 @@ def check_dependency_freeze() -> int:
             relative = path.relative_to(ROOT).as_posix()
             value.update(relative.encode("utf-8"))
             value.update(b"\0")
-            value.update(path.read_bytes())
+            value.update(git_blob("HEAD", relative))
             value.update(b"\0")
         actual_digest = value.hexdigest()
         if len(files) != input_set["fileCount"] or actual_digest != input_set["aggregateSha256"]:

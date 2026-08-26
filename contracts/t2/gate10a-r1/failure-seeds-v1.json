@@ -3,6 +3,7 @@
   "seeds": [
     {"seedId": "G10A-R1-ACT-001", "expectedFailure": "OLD_OR_UNREGISTERED_ACTION_PIN", "initialObservedCount": 1892, "state": "FROZEN_BEFORE_REPAIR"},
     {"seedId": "G10A-R1-ACT-002", "expectedFailure": "SETUP_JAVA_V4_PRESENT", "initialObservedCount": 172, "state": "FROZEN_BEFORE_REPAIR"},
-    {"seedId": "G10A-R1-DEP-001", "expectedFailure": "DEPENDENCY_STAGE_NOT_CLEANLY_REVALIDATED", "initialObservedCount": 4, "state": "FROZEN_BEFORE_REPAIR"}
+    {"seedId": "G10A-R1-DEP-001", "expectedFailure": "DEPENDENCY_STAGE_NOT_CLEANLY_REVALIDATED", "initialObservedCount": 4, "state": "FROZEN_BEFORE_REPAIR"},
+    {"seedId": "G10A-R1-CI-001", "expectedFailure": "PLATFORM_LINE_ENDING_DEPENDENCY_DIGEST_DRIFT", "initialObservedCount": 8, "sourceRun": 32940429973, "state": "FROZEN_BEFORE_REPAIR"}
   ]
 }
