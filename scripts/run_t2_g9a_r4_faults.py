@@ -18,7 +18,11 @@ from datetime import datetime, timezone
 from typing import Any
 
 from run_t2_g9a_r4_bootstrap import WAREHOUSE_ID, stable_ulid
-from run_t2_g9a_r4_postflight import report_event, synthetic_release_version
+from run_t2_g9a_r4_postflight import (
+    report_event,
+    synthetic_release_compatibility,
+    synthetic_release_version,
+)
 from run_t2_gate8b_runtime_api_journey import ApiClient, JourneyFailure, data
 
 
@@ -67,11 +71,7 @@ def release_body(context: dict[str, Any], run_id: str, build_commit: str) -> dic
         "signatureBase64": base64.b64encode(hashlib.sha256(b"r4-invalid-signature").digest()).decode(),
         "keyVersion": "R4_EXTERNAL_BLOCKED", "buildCommit": build_commit,
         "sbomSha256": hashlib.sha256(f"{build_commit}:sbom".encode()).hexdigest(),
-        "compatibility": {"minAppVersion": "1.0.0", "maxAppVersion": "1.0.x",
-                          "minProtocolVersion": "1.0", "maxProtocolVersion": "1.0",
-                          "minSchemaVersion": "1.0", "maxSchemaVersion": "1.0",
-                          "minSystemVersion": "1.0", "maxSystemVersion": "1.0",
-                          "requiredCapabilitySha256": ""},
+        "compatibility": synthetic_release_compatibility(),
         "targetStoreIds": [context["storeId"]],
     }
 

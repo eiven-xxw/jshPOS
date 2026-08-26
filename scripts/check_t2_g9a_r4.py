@@ -88,7 +88,11 @@ def main() -> None:
     scripts_path = str(ROOT / "scripts")
     if scripts_path not in sys.path:
         sys.path.insert(0, scripts_path)
-    from run_t2_g9a_r4_postflight import canonical_decimal_text, synthetic_release_version
+    from run_t2_g9a_r4_postflight import (
+        canonical_decimal_text,
+        synthetic_release_compatibility,
+        synthetic_release_version,
+    )
     require(canonical_decimal_text("0", "regression") == "0.000000",
             "report inventory payload and hash must use DECIMAL(25,6) canonical text")
     release_version = synthetic_release_version("r4-community", "journey")
@@ -96,6 +100,12 @@ def main() -> None:
             "formal release fixture must satisfy the accepted Release Owner version contract")
     require(release_version == synthetic_release_version("r4-community", "journey"),
             "formal release fixture version must be deterministic for original-command recovery")
+    compatibility = synthetic_release_compatibility()
+    for field in ("minAppVersion", "maxAppVersion", "minProtocolVersion", "maxProtocolVersion",
+                  "minSchemaVersion", "maxSchemaVersion", "minSystemVersion", "maxSystemVersion"):
+        require(re.fullmatch(r"[0-9]+(?:\.[0-9]+){0,3}(?:[-+][A-Za-z0-9.-]+)?",
+                             str(compatibility.get(field, ""))) is not None,
+                f"formal release compatibility fixture must satisfy Release Owner contract: {field}")
     fault_text = fault_runner.read_text(encoding="utf-8")
     require("R4-F01" in fault_text and "R4-F12" in fault_text,
             "R4-R5 runner must emit the complete fixed seed ledger")

@@ -95,6 +95,21 @@ def synthetic_release_version(label: str, purpose: str) -> str:
     return version
 
 
+def synthetic_release_compatibility() -> dict[str, str]:
+    """返回只覆盖当前虚构终端版本的最小合成兼容窗口。"""
+    return {
+        "minAppVersion": "1.0.0",
+        "maxAppVersion": "1.0.0",
+        "minProtocolVersion": "1.0",
+        "maxProtocolVersion": "1.0",
+        "minSchemaVersion": "1.0",
+        "maxSchemaVersion": "1.0",
+        "minSystemVersion": "1.0",
+        "maxSystemVersion": "1.0",
+        "requiredCapabilitySha256": "",
+    }
+
+
 def report_event(
     *, context: dict[str, Any], journey: dict[str, Any], owner: str, family: str,
     sequence: int, delta: dict[str, Any], run_id: str,
@@ -373,11 +388,7 @@ def run_journey(
         "signatureBase64": base64.b64encode(hashlib.sha256(f"{run_id}:{label}:signature".encode()).digest()).decode(),
         "keyVersion": "R4_EXTERNAL_BLOCKED", "buildCommit": build_commit,
         "sbomSha256": hashlib.sha256(f"{build_commit}:sbom".encode()).hexdigest(),
-        "compatibility": {"minAppVersion": "1.0.0", "maxAppVersion": "1.0.x",
-                          "minProtocolVersion": "1.0", "maxProtocolVersion": "1.0",
-                          "minSchemaVersion": "1.0", "maxSchemaVersion": "1.0",
-                          "minSystemVersion": "1.0", "maxSystemVersion": "1.0",
-                          "requiredCapabilitySha256": ""},
+        "compatibility": synthetic_release_compatibility(),
         "targetStoreIds": [context["storeId"]],
     }
     release = data(client.call("POST", "/api/v1/releases", f"{label}-release-create", body=release_body,
