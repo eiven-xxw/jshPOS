@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "1.0",
+  "services": [
+    {
+      "class":"ProcurementService",
+      "path":"server/ruoyi-modules/jshpos-procurement/src/main/java/com/jingshanghui/pos/procurement/application/service/ProcurementService.java",
+      "publicMethods":["approveOrder","approveReturn","changeSupplierState","closeOrder","confirmedInTransitBase","confirmReceipt","createOrder","createReceipt","createReplenishmentDraft","createReturn","createSupplier","importSupplier","orderDetail","receiptDetail","requireActiveSupplier","submitOrder","submitReturn"]
+    },
+    {
+      "class":"LotInventoryService",
+      "path":"server/ruoyi-modules/jshpos-inventory/src/main/java/com/jingshanghui/pos/inventory/application/service/LotInventoryService.java",
+      "publicMethods":["allocateSale","applyExplicit","findAlerts","findLots","rebuild","receive","receiveTransfer","requiresLotTracking","returnOriginal"]
+    },
+    {
+      "class":"TransferService",
+      "path":"server/ruoyi-modules/jshpos-transfer/src/main/java/com/jingshanghui/pos/transfer/application/service/TransferService.java",
+      "publicMethods":["approve","cancel","create","detail","dispatch","receive","reconcileTransit","resolveDifference","submit"]
+    },
+    {
+      "class":"ReplenishmentService",
+      "path":"server/ruoyi-modules/jshpos-procurement/src/main/java/com/jingshanghui/pos/procurement/application/service/ReplenishmentService.java",
+      "publicMethods":["approve","createPolicy","createPurchaseDraft","generate","listPolicies","listSuggestions","policyDetail","publishPolicy","reject","retirePolicy","review"]
+    },
+    {
+      "class":"ReturnOrchestrationService",
+      "path":"server/ruoyi-modules/jshpos-returns/src/main/java/com/jingshanghui/pos/returns/application/service/ReturnOrchestrationService.java",
+      "publicMethods":["acceptCashRefund","acceptInventory","acceptPromotion","acknowledgePaymentRequest","approve","find","observePayment","preview","request"]
+    }
+  ],
+  "errorCodeFamilies": [
+    {"root":"server/ruoyi-modules/jshpos-procurement/src/main/java/com/jingshanghui/pos/procurement/application/service","count":94,"sha256":"3f95164e5ce2b1145b59ae54840526a1c40f1da80348bd07996d5bdb936349b9"},
+    {"root":"server/ruoyi-modules/jshpos-inventory/src/main/java/com/jingshanghui/pos/inventory/application/service","count":105,"sha256":"0b38ad38df26ea9f8c6bf35ee126d965d6a962deed5096da9cede68c09b1dc8f"},
+    {"root":"server/ruoyi-modules/jshpos-transfer/src/main/java/com/jingshanghui/pos/transfer/application/service","count":39,"sha256":"61e6c47165e65282e790116c618b1fdc25adf0a0194fb9b25cedcbd1732cd3eb"},
+    {"root":"server/ruoyi-modules/jshpos-returns/src/main/java/com/jingshanghui/pos/returns/application/service","count":65,"sha256":"e194b29f50966f9060284ae61b9b58ec73ee972f8dbb7ddcc54cbba4f23fc407"}
+  ],
+  "behaviorTests": [
+    "ProcurementServiceTest",
+    "ReplenishmentServiceTest",
+    "LotInventoryServiceTest",
+    "TransferServiceTest",
+    "ReturnOrchestrationServiceTest"
+  ],
+  "goldenDimensions": ["PUBLIC_API", "ERROR_CODE", "TRANSACTION", "ROLLBACK", "IDEMPOTENCY", "AUDIT", "OUTBOX", "OWNER_BOUNDARY", "CONSERVATION"]
+}

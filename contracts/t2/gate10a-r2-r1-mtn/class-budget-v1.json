@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1.0",
+  "measurement": "physical_lines_utf8",
+  "newProductionClassMaximum": 400,
+  "ownerDependencyCycleMaximum": 0,
+  "existingLargeClasses": [
+    {"path":"server/ruoyi-modules/jshpos-procurement/src/main/java/com/jingshanghui/pos/procurement/application/service/ProcurementService.java","baseline":760,"targetMaximum":600},
+    {"path":"server/ruoyi-modules/jshpos-inventory/src/main/java/com/jingshanghui/pos/inventory/application/service/LotInventoryService.java","baseline":700,"targetMaximum":600},
+    {"path":"server/ruoyi-modules/jshpos-transfer/src/main/java/com/jingshanghui/pos/transfer/application/service/TransferService.java","baseline":658,"targetMaximum":600},
+    {"path":"server/ruoyi-modules/jshpos-procurement/src/main/java/com/jingshanghui/pos/procurement/application/service/ReplenishmentService.java","baseline":607,"targetMaximum":600},
+    {"path":"server/ruoyi-modules/jshpos-returns/src/main/java/com/jingshanghui/pos/returns/application/service/ReturnOrchestrationService.java","baseline":581,"targetMaximum":560},
+    {"path":"server/ruoyi-modules/jshpos-migration/src/main/java/com/jingshanghui/pos/migration/application/service/BusinessMigrationService.java","baseline":556,"targetMaximum":556},
+    {"path":"server/ruoyi-modules/jshpos-catalog/src/main/java/com/jingshanghui/pos/catalog/application/service/ShelfLabelService.java","baseline":547,"targetMaximum":547},
+    {"path":"server/ruoyi-modules/jshpos-costing/src/main/java/com/jingshanghui/pos/costing/application/service/CostingService.java","baseline":537,"targetMaximum":537},
+    {"path":"server/ruoyi-modules/jshpos-inventory/src/main/java/com/jingshanghui/pos/inventory/application/service/InventoryLedgerService.java","baseline":512,"targetMaximum":512},
+    {"path":"server/ruoyi-modules/jshpos-catalog/src/main/java/com/jingshanghui/pos/catalog/infrastructure/persistence/mapper/CatalogMapper.java","baseline":487,"targetMaximum":487},
+    {"path":"server/ruoyi-modules/jshpos-promotion/src/main/java/com/jingshanghui/pos/promotion/application/service/PromotionTransactionService.java","baseline":461,"targetMaximum":461},
+    {"path":"server/ruoyi-modules/jshpos-onboarding/src/main/java/com/jingshanghui/pos/onboarding/application/service/OnboardingService.java","baseline":459,"targetMaximum":459},
+    {"path":"server/ruoyi-modules/jshpos-member/src/main/java/com/jingshanghui/pos/member/application/service/MemberPointsService.java","baseline":458,"targetMaximum":458},
+    {"path":"server/ruoyi-modules/jshpos-payment/src/main/java/com/jingshanghui/pos/payment/application/service/TenderPlanService.java","baseline":453,"targetMaximum":453},
+    {"path":"server/ruoyi-modules/jshpos-order/src/main/java/com/jingshanghui/pos/order/application/service/ShiftService.java","baseline":445,"targetMaximum":445},
+    {"path":"server/ruoyi-modules/jshpos-returns/src/main/java/com/jingshanghui/pos/returns/application/service/ExchangeOrchestrationService.java","baseline":437,"targetMaximum":437},
+    {"path":"server/ruoyi-modules/jshpos-operations/src/main/java/com/jingshanghui/pos/operations/application/service/ExceptionCenterService.java","baseline":415,"targetMaximum":415},
+    {"path":"server/ruoyi-modules/jshpos-member/src/main/java/com/jingshanghui/pos/member/application/service/MemberProfileService.java","baseline":414,"targetMaximum":414},
+    {"path":"server/ruoyi-modules/jshpos-order/src/main/java/com/jingshanghui/pos/order/infrastructure/persistence/mapper/OrderMapper.java","baseline":409,"targetMaximum":409}
+  ]
+}

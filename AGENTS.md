@@ -1162,6 +1162,23 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
   继续 `DRAFT`；`T2-LIC-001/JSH-001` 继续 `DEFERRED`。Provider 网络、真实资金、
   设备/外设命令、伙伴现场、完整 Alpha、生产部署和商业声明必须为 0。
 
+## 4.80 当前 T2 Gate 10A-R2-R1 Server 可维护性正式整改条件准入
+
+- 项目发起人已于 2026-08-26 接受 Gate 10A-R2 准备阶段 `CONDITIONAL PASS` 与 ADR-074，
+  并授权从 `5b02eebe165a6151b08f3d27fb64ec58210e3adf` 建立
+  `t2/gate10a-r2-r1-mtn-runtime`；本批只允许整改 `G10A-MTN-P2-001`。
+- 必须先冻结五个高风险编排类的公开 API、错误码、事务、幂等、审计、Outbox、Owner 边界与
+  数据守恒金标，再启用既有 19 类只减不增及新增类最大 400 行的预算，最后按采购、批次库存、
+  调拨、补货、退货编排顺序做最小职责拆分。
+- 禁止按行数机械拆类，禁止把领域逻辑移动到 Controller、Mapper、RuoYi 系统模块或通用工具类；
+  原服务继续持有公开 API 与事务边界，抽取协作者必须保持 Owner 内聚且具备有效中文注释。
+- 不得改变资金、库存、租户、支付、同步、幂等、事件 Schema、错误码、API 或迁移语义；不得修改
+  Mapper XML、依赖、配置和任何已发布 MySQL/SQLite 迁移。需要越界时必须停止并提交独立 CR。
+- `G10A-SQL-P2-001`、`G10A-RES-P2-001` 继续 `PREPARED`，不得在本批修改 SQL、索引、连接池、
+  缓存、任务或长稳阈值。`G10A-MTN-P2-001` 完成后只能更新为
+  `VERIFIED_AWAITING_SPONSOR_CONFIRMATION` 并提交独立周门禁报告，未经确认不得关闭。
+- 所有外部 `BLOCKED`、UAT/REL `DRAFT`、LIC/JSH `DEFERRED` 与零执行边界保持不变。
+
 ## 5. 工程与测试规则
 
 - 服务端采用 RuoYi-Vue-Plus 模块化单体，不得把领域逻辑写入 Controller、通用工具类或框架系统模块。

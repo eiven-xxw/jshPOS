@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.0",
+  "gate": "T2_GATE_10A_R2_R1_MTN",
+  "baseCommit": "5b02eebe165a6151b08f3d27fb64ec58210e3adf",
+  "branch": "t2/gate10a-r2-r1-mtn-runtime",
+  "finding": "G10A-MTN-P2-001",
+  "adr": "ADR-074",
+  "allowed": ["行为金标", "复杂度预算", "Owner内最小职责拆分", "中文注释", "测试与证据"],
+  "forbidden": ["新业务", "Controller或Mapper承载领域逻辑", "SQL/XML修改", "依赖或配置修改", "已发布迁移修改", "资金库存租户支付同步或事件语义修改"],
+  "sqlFindingState": "PREPARED",
+  "resourceFindingState": "PREPARED",
+  "externalExecution": 0
+}

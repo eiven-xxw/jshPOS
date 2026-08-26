@@ -1,8 +1,8 @@
 # ADR-074：Gate 10A-R2 Server、数据库与资源整改边界
 
-- 状态：Proposed
+- 状态：Accepted
 - 日期：2026-08-26
-- 决策范围：Gate 10A-R2 准备与待批正式整改
+- 决策范围：Gate 10A-R2；当前仅准入 R2-R1 可维护性整改
 
 ## 背景
 
@@ -10,7 +10,7 @@ Gate 10A-R1 已关闭 CI、四栈依赖快照与供应链治理问题。当前 R
 大型 Owner 生产类缺少复杂度预算、关键 SQL 缺少 MySQL 查询计划/N+1 回归、Server 长期
 资源斜率证据不足。重构和性能调整若同时铺开，会使事务、Owner 与数据守恒证据失去可比性。
 
-## 建议决策
+## 决策
 
 1. 严格按 `MTN → SQL → RES` 串行；前项未独立 VERIFIED 并经确认，后项不得改运行时；
 2. MTN 先建立行为金标、公开 API、错误码、事务回滚和 Owner 边界保护，再拆分职责；禁止按行数
@@ -30,5 +30,6 @@ Gate 10A-R1 已关闭 CI、四栈依赖快照与供应链治理问题。当前 R
 
 ## 证据边界
 
-最高结论仅为 `INTERNAL_SERVER_DATABASE_MAINTAINABILITY_PREPARED`。不代表 SANDBOX、
-REAL_DEVICE、REAL_PERIPHERAL、PILOT、FULL_ALPHA、PRODUCTION、COMMERCIAL 或商业 SLA。
+R2-R1 的最高结论仅为 `INTERNAL_SERVER_MAINTAINABILITY_VERIFIED`。SQL 与资源整改仍处于
+`PREPARED`，不得由本次结果替代。不代表 SANDBOX、REAL_DEVICE、REAL_PERIPHERAL、PILOT、
+FULL_ALPHA、PRODUCTION、COMMERCIAL 或商业 SLA。

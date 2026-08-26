@@ -2,6 +2,7 @@
 
 | CR | 日期 | 状态 | 变更 | 影响需求/ADR | 批准人 |
 |---|---|---|---|---|---|
+| CR-T2G10A-007 | 2026-08-26 | APPROVED | 接受 ADR-074 并准入 Gate 10A-R2-R1 Server 可维护性正式整改 | G10A-MTN-P2-001、T2-MTN-001、ADR-074 | 仅允许行为金标、复杂度预算和五个高风险 Owner 类最小职责拆分；SQL/RES 与外部边界不变 |
 | CR-T2G9A-001 | 2026-08-24 | GATE9A_PREP_IN_PROGRESS | 项目发起人明确暂缓许可证和全部外部 P0，授权从`4ba20f8bb9bfdc36f4fee1b831ca35c7b54b9533`全面审计当前87项ACCEPTED需求、22个Owner、页面/API/装配/数据/事件/权限/测试/CI并升级历史15 Owner完整性工具 | T2-CMP-001、T2-CORE-001、T2-API-001、T2-INT-001、T2-E2E-004/005、ADR-068 | 本阶段仅审计与准备；运行时修复需再次确认；外部状态和零执行边界不变 |
 | CR-T2G9A-002 | 2026-08-24 | VERIFIED_CONDITIONAL_PASS_AWAITING_CONFIRMATION | 候选`a541acc18f016080c2f9f83518339da4a81cb89c`的Run`32725740311`完成Ubuntu/Windows当前态审计、范围守恒和证据聚合4个Job全绿；覆盖87项ACCEPTED、22 Owner、26页面和300 Controller操作，内部P0=0、P1=4 | T2-CMP-001、T2-API-001、T2-CORE-001、T2-E2E-004/005、ADR-068 | T2-CMP-001仅更新为VERIFIED审计候选；4个P1保持OPEN；Evidence Artifact`9519423618`摘要`62b7d9bddbe725c91b721fc8d1b607022f7093c6f2a1585166798287fe199087`；等待项目发起人确认 |
 | CR-T0-001 | 2026-08-15 | APPROVED | 建立 T0 治理、工程与 CI 基线；不引入正式业务逻辑 | T0-*、ADR-001—012 | 项目发起人指令 |
