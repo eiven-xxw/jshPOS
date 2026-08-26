@@ -1,0 +1,13 @@
+order,owner,mapper,statement_id,risk,required_evidence
+1,Inventory,LotInventoryMapper.xml,lockFefoCandidates,FEFO锁定与并发范围,MySQL8.4计划+租户仓库SKU索引命中+锁范围
+2,Inventory,LotInventoryMapper.xml,findNearExpiry,效期范围与分页,MySQL8.4计划+稳定排序+页大小预算
+3,Inventory,LotInventoryMapper.xml,findPackageLots,离线批次包构建,MySQL8.4计划+租户门店范围+100k数据
+4,Promotion,PromotionPersistenceMapper.xml,listPublishedRules,规则时间窗口,MySQL8.4计划+门店时间索引+确定性排序
+5,Promotion,PromotionPersistenceMapper.xml,listQuoteLines,成交报价明细,查询数预算+订单/报价绑定
+6,Reporting,ReportingPersistenceMapper.xml,querySales,销售报表分页,MySQL8.4计划+业务日范围+count/page两查询预算
+7,Reporting,ReportingPersistenceMapper.xml,queryInventoryCost,库存成本报表,MySQL8.4计划+业务日门店SKU范围
+8,Reporting,PaymentReconciliationMapper.xml,query,内部支付对账分页,MySQL8.4计划+状态时间范围+权限范围
+9,Payment,PaymentMapper.xml,findInternalFacts,支付退款内部事实,MySQL8.4计划+原单/引用索引+查询数预算
+10,Procurement,ProcurementMapper.xml,findOrderLines,采购单明细,MySQL8.4计划+单据行索引+无N+1
+11,Transfer,TransferMapper.xml,findLines,调拨单明细,MySQL8.4计划+单据行索引+无N+1
+12,Member,PointsPersistenceMapper.xml,listFefoAvailableLots,积分批次FEFO,MySQL8.4计划+会员范围+稳定锁顺序

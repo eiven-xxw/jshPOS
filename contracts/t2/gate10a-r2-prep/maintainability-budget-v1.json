@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "1.0",
+  "current": {"ownerModules": 22, "productionJavaFiles": 656, "filesAtLeast400Lines": 19, "affectedOwnerModules": 13, "maximumLines": 760, "dependencyCycles": 0, "crossFileDuplicateEightLineWindowsForTriage": 3},
+  "proposedGuardrails": {
+    "newProductionClassWarningLines": 300,
+    "newProductionClassMaximumLines": 400,
+    "existingLargeClassWhitelistMustBeMonotonic": true,
+    "existingClassHardCeilingLines": 600,
+    "behaviorGoldenTestRequiredBeforeSplit": true,
+    "transactionRollbackTestRequired": true,
+    "ownerDependencyCycleMaximum": 0,
+    "controllerOrUtilityDomainLogicAllowed": false
+  },
+  "firstRiskOrder": [
+    "ProcurementService",
+    "LotInventoryService",
+    "TransferService",
+    "ReplenishmentService",
+    "ReturnOrchestrationService"
+  ],
+  "decision": "PROPOSED_NOT_ENFORCED_UNTIL_RUNTIME_ADMISSION"
+}

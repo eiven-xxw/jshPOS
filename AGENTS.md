@@ -1139,6 +1139,26 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
   三项 Finding 当前均为 `VERIFIED_AWAITING_SPONSOR_CONFIRMATION`；该结果只允许提交 R1
   周门禁报告，仍不得自行标记 `CLOSED_IN_GATE10A_R1` 或开始 R2。
 
+## 4.79 当前 T2 Gate 10A-R2 Server、数据库与可维护性整改准备条件准入
+
+- 项目发起人已于 2026-08-26 接受 Gate 10A-R1 `CONDITIONAL PASS`，并将
+  `G10A-CI-P2-001`、`G10A-DEP-P2-001`、`G10A-SUP-P2-001` 确认为
+  `CLOSED_IN_GATE10A_R1`；该关闭不提升任何外部证据等级。
+- 当前只授权从 R1 最终治理提交 `19c4ef804dc45fca8a17fd378881bbec75b29419` 建立
+  `t2/gate10a-r2-prep-server-db-maintainability`，复核 `G10A-MTN-P2-001`、
+  `G10A-SQL-P2-001`、`G10A-RES-P2-001`。
+- 本准备阶段只允许独立 ADR、静态/仓库审计、可复现失败红基线、影响分析、容量与阈值设计、
+  测试矩阵、串行修复计划、治理 CI、证据和启动评审报告；不得修改 Server 运行时、SQL/XML、
+  数据库对象、依赖、配置、基础设施或已发布迁移。
+- 三项 Finding 必须保持 `OPEN/PREPARED_AWAITING_SPONSOR_CONFIRMATION`，不得在准备阶段标记
+  `VERIFIED` 或关闭。发现需要新增索引/迁移、改变资金、库存、租户、支付、同步、API 或 Owner
+  语义时必须停止并提交独立 CR 与 Requirement ID。
+- R2 正式整改必须按可维护性、SQL、长期资源边界逐项串行，每项独立 VERIFIED 并等待项目发起人
+  确认；不得一次拆分全部大类、批量改写 SQL 或用短时结果冒充 24 小时长稳。
+- `T2-PAY-002/HWD-001/PRN-001/PAR-001` 继续 `BLOCKED`；`T2-UAT-001/REL-001`
+  继续 `DRAFT`；`T2-LIC-001/JSH-001` 继续 `DEFERRED`。Provider 网络、真实资金、
+  设备/外设命令、伙伴现场、完整 Alpha、生产部署和商业声明必须为 0。
+
 ## 5. 工程与测试规则
 
 - 服务端采用 RuoYi-Vue-Plus 模块化单体，不得把领域逻辑写入 Controller、通用工具类或框架系统模块。

@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "1.0",
+  "classification": "OBSERVED_RED_BASELINE_NOT_A_RUNTIME_FAILURE",
+  "seeds": [
+    {"seedId": "G10A-R2-MTN-RED-001", "findingId": "G10A-MTN-P2-001", "observation": "OWNER_JAVA_FILES_AT_LEAST_400_LINES", "expected": 19, "state": "FROZEN_OPEN"},
+    {"seedId": "G10A-R2-SQL-RED-001", "findingId": "G10A-SQL-P2-001", "observation": "MYSQL_EXPLAIN_REGRESSION_FILES", "expected": 0, "state": "FROZEN_OPEN"},
+    {"seedId": "G10A-R2-RES-RED-001", "findingId": "G10A-RES-P2-001", "observation": "FORMAL_RUNTIME_SUSTAINED_SECONDS", "expected": 120, "minimumSmoke": 600, "minimumFormal": 86400, "state": "FROZEN_OPEN"}
+  ],
+  "greenPlaceholderAllowed": false
+}

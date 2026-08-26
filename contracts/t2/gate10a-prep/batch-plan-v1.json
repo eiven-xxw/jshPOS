@@ -2,8 +2,8 @@
   "schemaVersion": "1.0",
   "serial": true,
   "batches": [
-    {"order": 1, "batch": "GATE_10A_R1", "scope": "CI_DEPENDENCY_SUPPLY_CHAIN", "findings": ["G10A-CI-P2-001", "G10A-DEP-P2-001", "G10A-SUP-P2-001"], "runtimeAdmission": "AWAITING_SPONSOR_CONFIRMATION"},
-    {"order": 2, "batch": "GATE_10A_R2", "scope": "SERVER_DATABASE_MAINTAINABILITY", "findings": ["G10A-MTN-P2-001", "G10A-SQL-P2-001", "G10A-RES-P2-001"], "runtimeAdmission": "DRAFT"},
+    {"order": 1, "batch": "GATE_10A_R1", "scope": "CI_DEPENDENCY_SUPPLY_CHAIN", "findings": ["G10A-CI-P2-001", "G10A-DEP-P2-001", "G10A-SUP-P2-001"], "runtimeAdmission": "CLOSED_IN_GATE10A_R1"},
+    {"order": 2, "batch": "GATE_10A_R2", "scope": "SERVER_DATABASE_MAINTAINABILITY", "findings": ["G10A-MTN-P2-001", "G10A-SQL-P2-001", "G10A-RES-P2-001"], "runtimeAdmission": "PREP_ONLY_AWAITING_SPONSOR_RUNTIME_CONFIRMATION"},
     {"order": 3, "batch": "GATE_10A_R3", "scope": "VUE_FLUTTER_SQLITE_ENDPOINT_STABILITY", "findings": ["G10A-POS-P2-001", "G10A-SQLITE-P2-001"], "runtimeAdmission": "DRAFT"},
     {"order": 4, "batch": "GATE_10A_R4", "scope": "OBSERVABILITY_SOAK_RECOVERY_INTERNAL_RELEASE_REVALIDATION", "findings": ["G10A-OBS-P2-001", "G10A-STB-P2-001"], "runtimeAdmission": "DRAFT"}
   ],

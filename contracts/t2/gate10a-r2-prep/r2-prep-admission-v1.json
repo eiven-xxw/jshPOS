@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "1.0",
+  "gate": "T2_GATE_10A_R2_PREP",
+  "baseCommit": "19c4ef804dc45fca8a17fd378881bbec75b29419",
+  "branch": "t2/gate10a-r2-prep-server-db-maintainability",
+  "adr": "ADR-074",
+  "findings": ["G10A-MTN-P2-001", "G10A-SQL-P2-001", "G10A-RES-P2-001"],
+  "runtimeChangesAllowed": false,
+  "sqlChangesAllowed": false,
+  "dependencyChangesAllowed": false,
+  "configurationChangesAllowed": false,
+  "publishedMigrationChangesAllowed": false,
+  "newBusinessCapabilities": 0,
+  "externalStates": {
+    "T2-PAY-002": "BLOCKED",
+    "T2-HWD-001": "BLOCKED",
+    "T2-PRN-001": "BLOCKED",
+    "T2-PAR-001": "BLOCKED",
+    "T2-UAT-001": "DRAFT",
+    "T2-REL-001": "DRAFT",
+    "T2-LIC-001": "DEFERRED",
+    "T2-JSH-001": "DEFERRED"
+  },
+  "externalExecution": {
+    "providerNetwork": 0,
+    "realFunds": 0,
+    "realDeviceCommands": 0,
+    "realPeripheralCommands": 0,
+    "partnerFieldExecution": 0,
+    "fullAlpha": 0,
+    "productionDeployment": 0
+  },
+  "evidenceCeiling": "INTERNAL_SERVER_DATABASE_MAINTAINABILITY_PREPARED"
+}

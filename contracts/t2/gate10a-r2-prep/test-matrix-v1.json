@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.0",
+  "dimensions": [
+    {"id": "MTN-CHAR", "finding": "G10A-MTN-P2-001", "tests": ["公开API与错误码金标", "事务提交/回滚", "幂等同键同内容/异内容", "Owner依赖环", "异常失败关闭", "中文注释与职责边界"]},
+    {"id": "SQL-PLAN", "finding": "G10A-SQL-P2-001", "tests": ["MySQL8.4 EXPLAIN ANALYZE", "可信tenant与门店范围", "稳定分页排序", "N+1查询数预算", "锁顺序与并发", "100k/1m合成基数"]},
+    {"id": "RES-SMOKE", "finding": "G10A-RES-P2-001", "tests": ["10分钟采样", "RSS/Heap/GC", "线程/句柄", "MySQL连接归还", "Redis内存", "Outbox/死信", "临时文件回收"]},
+    {"id": "RES-SOAK", "finding": "G10A-RES-P2-001", "tests": ["24小时正式栈", "六类故障注入", "最终斜率", "积压恢复", "数据守恒", "机器Go/No-Go"]},
+    {"id": "BOUNDARY", "finding": "ALL", "tests": ["无新业务", "无依赖变化", "无已发布迁移变化", "外部状态不变", "外部执行为0"]}
+  ],
+  "p0p1Allowed": 0,
+  "automaticRetryAllowed": false,
+  "commercialSlaAllowed": false
+}

@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "1.0",
+  "gate": "T2_GATE_10A_R2_PREP",
+  "summary": {"openP0": 0, "openP1": 0, "preparedP2": 3, "closedP2": 0},
+  "findings": [
+    {
+      "findingId": "G10A-MTN-P2-001",
+      "state": "PREPARED_AWAITING_SPONSOR_CONFIRMATION",
+      "observedRedSeed": "G10A-R2-MTN-RED-001",
+      "facts": {"ownerModules": 22, "productionJavaFiles": 656, "filesAtLeast400Lines": 19, "affectedOwnerModules": 13, "largestLines": 760, "ownerDependencyCycles": 0},
+      "runtimeAdmission": "NOT_AUTHORIZED"
+    },
+    {
+      "findingId": "G10A-SQL-P2-001",
+      "state": "PREPARED_AWAITING_SPONSOR_CONFIRMATION",
+      "observedRedSeed": "G10A-R2-SQL-RED-001",
+      "facts": {"mapperXmlFiles": 49, "selectStatements": 365, "complexMapperFiles": 27, "explainRegressionFiles": 0, "selectStarViolations": 0},
+      "runtimeAdmission": "NOT_AUTHORIZED"
+    },
+    {
+      "findingId": "G10A-RES-P2-001",
+      "state": "PREPARED_AWAITING_SPONSOR_CONFIRMATION",
+      "observedRedSeed": "G10A-R2-RES-RED-001",
+      "facts": {"existingSustainedSeconds": 120, "requiredSmokeSeconds": 600, "requiredFormalSeconds": 86400, "realProductionEvidence": false},
+      "runtimeAdmission": "NOT_AUTHORIZED"
+    }
+  ],
+  "nextDecision": "R2_FORMAL_RUNTIME_REQUIRES_SPONSOR_CONFIRMATION"
+}

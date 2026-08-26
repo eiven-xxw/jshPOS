@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "1.0",
+  "order": [
+    {"order": 1, "batch": "R2-R1", "finding": "G10A-MTN-P2-001", "scope": "BEHAVIOR_GOLDEN_TESTS_COMPLEXITY_BUDGET_TARGETED_CLASS_SPLIT", "requiresSponsorConfirmation": true},
+    {"order": 2, "batch": "R2-R2", "finding": "G10A-SQL-P2-001", "scope": "MYSQL84_PLAN_QUERY_COUNT_PAGINATION_N_PLUS_ONE", "requiresPreviousAccepted": true},
+    {"order": 3, "batch": "R2-R3", "finding": "G10A-RES-P2-001", "scope": "TEN_MINUTE_SMOKE_THEN_24_HOUR_RESOURCE_SLOPE", "requiresPreviousAccepted": true}
+  ],
+  "automaticProgression": false,
+  "newIndexOrMigrationRequiresIndependentCr": true,
+  "semanticChangeRequiresRequirementId": true
+}

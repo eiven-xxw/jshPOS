@@ -1,0 +1,106 @@
+name: T2 Gate 10A R2 Server Database Maintainability Prep
+
+on:
+  push:
+    branches: ["t2/gate10a-r2-prep-server-db-maintainability"]
+  pull_request:
+    paths:
+      - "AGENTS.md"
+      - ".github/workflows/t2-gate10a-r2-prep.yml"
+      - "contracts/t2/gate10a-r2-prep/**"
+      - "contracts/t2/gate10a-r1/findings-register-v1.json"
+      - "contracts/t2/gate10a-prep/**"
+      - "docs/adr/ADR-073-*"
+      - "docs/adr/ADR-074-*"
+      - "docs/governance/**"
+      - "docs/t2-gate10a-r2-prep/**"
+      - "docs/t2-gate10a-prep/03_P2_Finding账与影响分析.md"
+      - "docs/t2-gate10a-prep/04_Gate10A_R1至R4分批修复计划.md"
+      - "scripts/*gate10a_r2_prep*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gate10a-r2-prep-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  governance-ubuntu:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { fetch-depth: 0, fetch-tags: true }
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with: { python-version: "3.12" }
+      - name: Validate R2 preparation scope and red baseline
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/t2/gate10a-r2-prep/governance-ubuntu/audit
+          python scripts/check_t0_structure.py
+          python scripts/check_rtm.py
+          python scripts/check_contracts.py
+          python -m py_compile scripts/check_t2_gate10a_r2_prep.py scripts/audit_t2_gate10a_r2_prep.py scripts/build_t2_gate10a_r2_prep_evidence.py
+          python scripts/check_t2_gate10a_r2_prep.py | tee artifacts/t2/gate10a-r2-prep/governance-ubuntu/scope.txt
+          python scripts/audit_t2_gate10a_r2_prep.py --output-dir artifacts/t2/gate10a-r2-prep/governance-ubuntu/audit
+          git diff --check
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with: { name: t2-gate10a-r2-prep-governance-ubuntu, path: artifacts/t2/gate10a-r2-prep/governance-ubuntu, if-no-files-found: error, retention-days: 30 }
+
+  governance-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { fetch-depth: 0, fetch-tags: true }
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with: { python-version: "3.12" }
+      - name: Validate UTF-8 and audit determinism
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/t2/gate10a-r2-prep/governance-windows/audit
+          python scripts/check_t0_structure.py
+          python scripts/check_rtm.py
+          python scripts/check_contracts.py
+          python scripts/check_t2_gate10a_r2_prep.py | tee artifacts/t2/gate10a-r2-prep/governance-windows/scope.txt
+          python scripts/audit_t2_gate10a_r2_prep.py --output-dir artifacts/t2/gate10a-r2-prep/governance-windows/audit
+          git diff --check
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with: { name: t2-gate10a-r2-prep-governance-windows, path: artifacts/t2/gate10a-r2-prep/governance-windows, if-no-files-found: error, retention-days: 30 }
+
+  server-baseline:
+    needs: [governance-ubuntu, governance-windows]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { fetch-depth: 0, fetch-tags: true }
+      - uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
+        with: { distribution: temurin, java-version: "21", cache: maven }
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with: { python-version: "3.12" }
+      - name: Re-run unchanged Server tests and repository audit
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/t2/gate10a-r2-prep/server-baseline/audit
+          ./server/mvnw -f server/pom.xml -DskipTests=false test | tee artifacts/t2/gate10a-r2-prep/server-baseline/maven-test.log
+          ./server/mvnw -f server/pom.xml dependency:tree -DoutputFile=../artifacts/t2/gate10a-r2-prep/server-baseline/dependency-tree.txt
+          python scripts/audit_t2_gate10a_r2_prep.py --output-dir artifacts/t2/gate10a-r2-prep/server-baseline/audit
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with: { name: t2-gate10a-r2-prep-server-baseline, path: artifacts/t2/gate10a-r2-prep/server-baseline, if-no-files-found: error, retention-days: 30 }
+
+  evidence:
+    needs: [governance-ubuntu, governance-windows, server-baseline]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with: { python-version: "3.12" }
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with: { pattern: t2-gate10a-r2-prep-*, path: downloaded, merge-multiple: false }
+      - name: Build evidence index
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/t2/gate10a-r2-prep/final
+          python scripts/build_t2_gate10a_r2_prep_evidence.py --bundle-dir downloaded --output artifacts/t2/gate10a-r2-prep/final/evidence-index.json --commit "$GITHUB_SHA"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with: { name: t2-gate10a-r2-prep-evidence-index, path: artifacts/t2/gate10a-r2-prep/final, if-no-files-found: error, retention-days: 90 }

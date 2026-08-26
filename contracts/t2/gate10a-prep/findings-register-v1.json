@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0",
   "gate": "T2_GATE_10A_PREP",
-  "summary": {"openP0": 0, "openP1": 0, "openP2": 10, "runtimeFixesApplied": 0},
+  "summary": {"openP0": 0, "openP1": 0, "openP2": 7, "closedP2": 3, "runtimeFixesApplied": 0},
   "findings": [
     {
       "findingId": "G10A-CI-P2-001",
@@ -11,7 +11,7 @@
       "mapsTo": ["T2-RDY-001", "T2-CI-001"],
       "title": "GitHub Actions Node 20 与 setup-java v4 生命周期债务",
       "facts": ["77 workflows including Gate10A-Prep", "setup-java v4: 172 uses in 54 files", "eight pinned Action families: 2306 uses"],
-      "state": "OPEN",
+      "state": "CLOSED_IN_GATE10A_R1",
       "closure": "建立受控 Action 版本清单，先验证 Node24 runner 兼容，再以精确 SHA 分批升级并复跑所有当前门禁；不得降低供应链阈值"
     },
     {
@@ -22,7 +22,7 @@
       "mapsTo": ["T2-SEC-002", "T2-RDY-001"],
       "title": "四技术栈缺少同一提交的升级候选与兼容风险快照",
       "facts": ["pnpm outdated observed 33 packages on 2026-08-26", "crypto-js 4.2.0 is deprecated", "Maven/Flutter/Kotlin current high/critical gates remain green but no Gate10 immutable upgrade snapshot"],
-      "state": "OPEN",
+      "state": "CLOSED_IN_GATE10A_R1",
       "closure": "在干净执行器生成 Maven、pnpm、Pub、Gradle 的当前/候选/许可证/漏洞/破坏性风险清单，逐生态单独升级并冻结回退"
     },
     {
@@ -33,7 +33,7 @@
       "mapsTo": ["T2-RDY-001", "T2-CI-001"],
       "title": "Action 与供应链步骤在历史工作流中高重复，缺少单一受控版本账",
       "facts": ["checkout 560 uses", "upload-artifact 553 uses", "download-artifact 413 uses", "setup-python 392 uses"],
-      "state": "OPEN",
+      "state": "CLOSED_IN_GATE10A_R1",
       "closure": "建立机器可读 Action/Binary 清单和历史工作流冻结策略；当前活动门禁与历史证据分离，禁止静默批量改写历史语义"
     },
     {
@@ -42,7 +42,7 @@
       "category": "SERVER_MAINTAINABILITY",
       "severity": "P2",
       "mapsTo": ["T2-MTN-001"],
-      "title": "Server 存在 16 个不低于 400 行的 Owner 生产类且无复杂度预算门禁",
+      "title": "Server 存在 19 个不低于 400 行的 Owner 生产类且无复杂度预算门禁",
       "facts": ["656 Java production files", "19 Java files >= 400 physical lines", "largest class 760 physical lines"],
       "state": "OPEN",
       "closure": "先补行为金标与依赖/事务边界测试，再按职责拆分；保持 Owner、事务、不变量、错误码和 API 不变"

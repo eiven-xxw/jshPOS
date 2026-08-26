@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0",
+  "classification": "INTERNAL_SYNTHETIC_NOT_SLA",
+  "current": {
+    "sustainedSeconds": 120,
+    "prodHikariMaxPoolSize": 20,
+    "prodHikariMinIdle": 10,
+    "prodRedissonThreads": 16,
+    "prodRedissonConnectionPoolSize": 64,
+    "ownerScheduledAnnotations": 0,
+    "temporaryFileCreators": 3,
+    "temporaryFileCleanupImplementations": 3
+  },
+  "stages": [
+    {"id": "SMOKE_10M", "durationSeconds": 600, "sampleSeconds": 5, "requiredBefore": "SOAK_24H"},
+    {"id": "SOAK_24H", "durationSeconds": 86400, "sampleSeconds": 30, "requiredBefore": "FINDING_VERIFICATION"}
+  ],
+  "hardInvariants": {"integrityViolations": 0, "tenantViolations": 0, "lostEvents": 0, "unexplainedDeadLetters": 0, "uncollectedTemporaryFiles": 0},
+  "resourceBounds": {
+    "maxApplicationRssMiB": 2048,
+    "maxMysqlConnections": 80,
+    "maxRedisMemoryMiB": 512,
+    "backlogRecoveryMaxSeconds": 120,
+    "finalThreadDeltaMaximum": 10,
+    "finalFileHandleDeltaMaximum": 20,
+    "mysqlConnectionReturnDeltaMaximum": 2,
+    "positiveSlopeAllowedAfterWarmup": false
+  },
+  "faults": ["MYSQL_PAUSE", "REDIS_PAUSE", "ACK_LOSS", "OUTBOX_BACKLOG", "PROCESS_RESTART", "TEMP_CLEANUP_FAILURE"],
+  "decision": "PROPOSED_NOT_EXECUTED_IN_PREP"
+}
