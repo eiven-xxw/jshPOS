@@ -110,6 +110,15 @@ def synthetic_release_compatibility() -> dict[str, str]:
     }
 
 
+def synthetic_release_headers(idempotency_key: str, correlation_id: str) -> dict[str, str]:
+    """为 Release 写命令提供其专用幂等头与可持久化的稳定 ULID 关联标识。"""
+    if re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._:-]{7,127}", idempotency_key) is None:
+        raise JourneyFailure("synthetic release idempotency key violates Release Owner contract")
+    if re.fullmatch(r"[0-9A-HJKMNP-TV-Z]{26}", correlation_id) is None:
+        raise JourneyFailure("synthetic release correlation must be ULID")
+    return {"X-Idempotency-Key": idempotency_key, "X-Correlation-ID": correlation_id}
+
+
 def report_event(
     *, context: dict[str, Any], journey: dict[str, Any], owner: str, family: str,
     sequence: int, delta: dict[str, Any], run_id: str,
@@ -391,8 +400,13 @@ def run_journey(
         "compatibility": synthetic_release_compatibility(),
         "targetStoreIds": [context["storeId"]],
     }
-    release = data(client.call("POST", "/api/v1/releases", f"{label}-release-create", body=release_body,
-                               headers={"X-Idempotency-Key": f"{run_id}:{label}:release"}))
+    release = data(client.call(
+        "POST", "/api/v1/releases", f"{label}-release-create", body=release_body,
+        headers=synthetic_release_headers(
+            f"{run_id}:{label}:release",
+            stable_ulid(f"{run_id}:{label}:release:correlation"),
+        ),
+    ))
 
     facts = {
         "saas": (context["applicationId"], {"applicationId": context["applicationId"]}),

@@ -21,6 +21,7 @@ from run_t2_g9a_r4_bootstrap import WAREHOUSE_ID, stable_ulid
 from run_t2_g9a_r4_postflight import (
     report_event,
     synthetic_release_compatibility,
+    synthetic_release_headers,
     synthetic_release_version,
 )
 from run_t2_gate8b_runtime_api_journey import ApiClient, JourneyFailure, data
@@ -197,14 +198,16 @@ def main() -> int:
 
         # F01：同键同内容稳定返回原 release；同键异内容必须拒绝。
         release_key = f"{run_id}:r4-f01-release"
+        release_correlation = stable_ulid(f"{run_id}:r4-f01-release:correlation")
+        release_headers = synthetic_release_headers(release_key, release_correlation)
         body = release_body(first_context, run_id, args.build_commit)
         created = data(client.call("POST", "/api/v1/releases", "r4-f01-create", body=body,
-                                   headers={"X-Idempotency-Key": release_key}))
+                                   headers=release_headers))
         duplicate = data(client.call("POST", "/api/v1/releases", "r4-f01-duplicate", body=body,
-                                     headers={"X-Idempotency-Key": release_key}))
+                                     headers=release_headers))
         changed = dict(body); changed["version"] = body["version"] + "-CONFLICT"
         conflict = client.call("POST", "/api/v1/releases", "r4-f01-conflict", body=changed,
-                               headers={"X-Idempotency-Key": release_key}, expect_success=False)
+                               headers=release_headers, expect_success=False)
         require(created["releaseId"] == duplicate["releaseId"], "F01 duplicate identity drift")
         seeds: dict[str, dict[str, Any]] = {
             "R4-F01": {"pass": True, "releaseId": created["releaseId"],
@@ -323,7 +326,10 @@ def main() -> int:
 
         release_id = checkpoint_id(postflight, first_id, "release")
         verify = client.call("POST", f"/api/v1/releases/{release_id}/verify", "r4-f12-release-fail-closed",
-                             headers={"X-Idempotency-Key": f"{run_id}:f12:verify"}, expect_success=False)
+                             headers=synthetic_release_headers(
+                                 f"{run_id}:f12:verify",
+                                 stable_ulid(f"{run_id}:f12:verify:correlation"),
+                             ), expect_success=False)
         release = data(client.call("GET", f"/api/v1/releases/{release_id}", "r4-f12-release-read"))
         require(release.get("state") == "DRAFT", "F12 failed verification changed prior release state")
         seeds["R4-F12"] = {"pass": True, "releaseVerifyCode": verify.get("code"),
