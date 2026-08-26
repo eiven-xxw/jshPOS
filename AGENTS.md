@@ -1302,6 +1302,24 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
 - 所有外部 `BLOCKED`、UAT/REL `DRAFT`、LIC/JSH `DEFERRED` 与 Provider 网络、真实资金、
   设备/外设、伙伴现场、完整 Alpha 和生产部署零执行边界保持不变。
 
+## 4.86 当前 T2 Gate 10A-R2-R2-R2-R2 RPT-INVENTORY 精确整改准备条件准入
+
+- 项目发起人已于 2026-08-26 接受 RPT-SALES V88 索引子批 `CONDITIONAL PASS`，确认
+  `G10A-SQL-P2-001` 继续 `OPEN`、`G10A-RES-P2-001` 继续 `PREPARED`，并授权从
+  `206b07f93014a468102380577a987ac85af1ceff` 建立
+  `t2/gate10a-r2-r2-r2-r2-rpt-inventory-prep`。
+- 本阶段只允许复用 `CR-T2G10A-014` 的兼容性方向，冻结 RPT-INVENTORY 当前 v1 契约、
+  `queryInventoryCost` 正式 SQL 摘要、Reporting Owner 批量读取边界、版本化 keyset 分页、
+  受控流式导出、10k/100k MySQL 8.4.11 计划、查询数、租户权限、故障 seed、候选方案与回退。
+- 允许增加测试范围的静态红基线、MySQL 合成夹具/计划采集器、契约草案、治理脚本、CI 与评审材料；
+  禁止修改生产 Java、正式 SQL/Mapper/XML、索引、数据库对象、依赖、API、事件和任何已发布迁移。
+- 当前 v1 API 必须保持兼容且无界风险必须如实记录；v2 keyset、Inventory 批量端口与流式导出只能形成
+  草案。需要新增/调整索引时必须另行提交独立索引 CR 和唯一前向迁移，未经确认不得实施。
+- 不得改变 Inventory/Costing 权威事实、数量/成本口径、可信 tenant_id、门店数据范围、投影版本、
+  事务或同步语义；出现这些变化必须停止并提交独立 CR/Requirement ID。
+- RPT-PAY-REC、RES、R3、完整 Alpha、生产发布及所有外部执行继续禁止；完成后只提交
+  《RPT-INVENTORY 精确整改启动评审报告》等待项目发起人确认，不得自动进入运行时整改。
+
 ## 5. 工程与测试规则
 
 - 服务端采用 RuoYi-Vue-Plus 模块化单体，不得把领域逻辑写入 Controller、通用工具类或框架系统模块。

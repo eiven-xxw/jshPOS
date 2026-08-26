@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1.0",
+  "phase": "RUNTIME_START_REVIEW",
+  "criteria": [
+    {"id":"INV-PREP-01","criterion":"V1_API_SQL_DIGEST_AND_RESPONSE_FROZEN","required":true},
+    {"id":"INV-PREP-02","criterion":"10K_100K_MYSQL84_RED_PLAN_AND_QUERY_COUNT_REPRODUCIBLE","required":true},
+    {"id":"INV-PREP-03","criterion":"QUANTITY_AND_COST_SUMS_CAPTURED","required":true},
+    {"id":"INV-PREP-04","criterion":"ZERO_CROSS_TENANT_ROWS","required":true},
+    {"id":"INV-PREP-05","criterion":"OWNER_BATCH_PORT_AND_KEYSET_DESIGN_COMPLETE","required":true},
+    {"id":"INV-PREP-06","criterion":"CONTROLLED_EXPORT_RESUME_AND_HASH_RULES_COMPLETE","required":true},
+    {"id":"INV-PREP-07","criterion":"CANDIDATE_SQL_INDEX_COMPARISON_WITH_NO_DATABASE_CHANGE","required":true},
+    {"id":"INV-PREP-08","criterion":"ROLLBACK_COMPATIBILITY_AND_STOP_LINES_COMPLETE","required":true},
+    {"id":"INV-PREP-09","criterion":"GOVERNANCE_WINDOWS_UBUNTU_MYSQL_AND_EVIDENCE_GREEN","required":true},
+    {"id":"INV-PREP-10","criterion":"SPONSOR_RUNTIME_CONFIRMATION","required":true}
+  ],
+  "runtimeGoBeforeSponsorConfirmation": false
+}

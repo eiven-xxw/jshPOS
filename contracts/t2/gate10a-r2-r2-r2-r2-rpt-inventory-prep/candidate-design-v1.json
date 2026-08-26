@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "1.0",
+  "state": "DESIGN_ONLY_AWAITING_RUNTIME_ADMISSION",
+  "candidateApi": {
+    "method": "GET",
+    "path": "/api/v2/reports/inventory-cost-daily",
+    "operationId": "queryInventoryCostDailyPage",
+    "response": "R<InventoryCostPageView>",
+    "parameters": ["fromDate", "toDate", "storeId", "warehouseId", "skuId", "cursor", "limit"],
+    "limit": {"default": 200, "minimum": 1, "maximum": 500},
+    "v1Compatibility": "KEEP_UNCHANGED_DURING_EXPLICIT_WINDOW"
+  },
+  "candidateOwnerPort": {
+    "name": "ReportingBatchReadPort.readInventoryCost",
+    "storeIdsMaximum": 50,
+    "exportChunkRowsMaximum": 10000,
+    "input": ["trustedTenantId", "projectionVersion", "businessDateRange", "authorizedStoreIds", "warehouseId", "skuId", "after", "limit", "requestSha256"],
+    "output": "DETERMINISTIC_INVENTORY_COST_ROWS_WITH_NEXT_KEY",
+    "writes": 0
+  },
+  "keyset": {
+    "order": ["business_date", "store_id", "warehouse_id", "sku_id", "currency"],
+    "cursorBindings": ["tenant_id", "projection_version", "filters_sha256", "business_date", "store_id", "warehouse_id", "sku_id", "currency"],
+    "signature": "HMAC_SHA256_SECRET_REFERENCE",
+    "failClosed": ["TENANT_DRIFT", "FILTER_DRIFT", "PROJECTION_VERSION_DRIFT", "TAMPER", "EXPIRED_FORMAT"]
+  },
+  "controlledExport": {
+    "queryBudget": "ONE_QUERY_PER_STORE_CHUNK",
+    "resumeIdentity": ["tenant_id", "export_id", "request_sha256", "projection_version", "cursor", "byte_offset"],
+    "mustPreserve": ["APPROVAL", "FIELD_MASK", "WATERMARK", "AUDIT", "EXPIRY_CLEANUP", "ZERO_DUPLICATE_OR_GAP"]
+  },
+  "candidateSql": {
+    "type": "MAPPER_XML_KEYSET_DRAFT",
+    "filters": ["tenant_id", "projection_version", "business_date_range", "authorized_store_ids", "optional_warehouse_id", "optional_sku_id"],
+    "keysetPredicate": "LEXICOGRAPHIC_AFTER_ON_FROZEN_ORDER",
+    "order": ["business_date", "store_id", "warehouse_id", "sku_id", "currency"],
+    "limitRequired": true,
+    "productionSqlChanged": false
+  },
+  "indexCandidates": [
+    {
+      "id": "IDX-A-ORDER-ALIGNED",
+      "columns": ["tenant_id", "projection_version", "business_date", "store_id", "warehouse_id", "sku_id", "currency"],
+      "purpose": "MULTI_STORE_KEYSET_ORDER",
+      "decision": "EXECUTABLE_COMPARISON_REQUIRED"
+    },
+    {
+      "id": "IDX-B-STORE-SELECTIVE",
+      "columns": ["tenant_id", "projection_version", "store_id", "business_date", "warehouse_id", "sku_id", "currency"],
+      "purpose": "SINGLE_STORE_EQUALITY_AND_DATE_RANGE",
+      "decision": "EXECUTABLE_COMPARISON_REQUIRED"
+    }
+  ],
+  "indexChangeAuthorized": false,
+  "migrationChangeAuthorized": false
+}

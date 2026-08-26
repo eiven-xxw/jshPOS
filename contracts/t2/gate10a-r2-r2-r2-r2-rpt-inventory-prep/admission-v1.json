@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "1.0",
+  "gate": "T2_GATE10A_R2_R2_R2_R2_RPT_INVENTORY_PREP",
+  "startCommit": "206b07f93014a468102380577a987ac85af1ceff",
+  "branch": "t2/gate10a-r2-r2-r2-r2-rpt-inventory-prep",
+  "changeRequest": "CR-T2G10A-014",
+  "decision": "PREP_IN_PROGRESS_RUNTIME_NOT_ADMITTED",
+  "finding": {"id": "G10A-SQL-P2-001", "state": "OPEN"},
+  "admitted": [
+    "CURRENT_CONTRACT_FREEZE",
+    "TEST_ONLY_RED_BASELINE",
+    "MYSQL_8_4_11_10K_100K_PLAN_CAPTURE",
+    "OWNER_PORT_AND_KEYSET_DESIGN",
+    "CANDIDATE_SQL_INDEX_OFFLINE_COMPARISON",
+    "IMPACT_ROLLBACK_TEST_AND_CI_DESIGN"
+  ],
+  "notAdmitted": [
+    "PRODUCTION_JAVA_CHANGE",
+    "MAPPER_XML_OR_SQL_CHANGE",
+    "API_OR_EVENT_RUNTIME_CHANGE",
+    "INDEX_OR_DATABASE_OBJECT_CHANGE",
+    "DEPENDENCY_CHANGE",
+    "MIGRATION_CHANGE",
+    "RPT_PAY_REC_OR_RESOURCE_RUNTIME",
+    "NEW_BUSINESS_CAPABILITY"
+  ],
+  "externalExecution": 0
+}

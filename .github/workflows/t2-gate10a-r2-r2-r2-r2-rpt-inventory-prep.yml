@@ -1,0 +1,170 @@
+name: T2 Gate 10A RPT Inventory Remediation Preparation
+
+on:
+  push:
+    branches: ["t2/gate10a-r2-r2-r2-r2-rpt-inventory-prep"]
+  pull_request:
+    paths:
+      - "AGENTS.md"
+      - ".github/workflows/t2-gate10a-r2-r2-r2-r2-rpt-inventory-prep.yml"
+      - "contracts/t2/gate10a-r2-r2-r2-r2-rpt-inventory-prep/**"
+      - "docs/governance/**"
+      - "docs/t2-gate10a-r2-r2-r2-r2-rpt-inventory-prep/**"
+      - "scripts/*gate10a_r2_r2_r2_r2_rpt_inventory_prep*"
+      - "server/ruoyi-modules/jshpos-reporting/src/test/**"
+      - "server/ruoyi-modules/jshpos-release/src/test/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gate10a-rpt-inventory-prep-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  governance-ubuntu:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { fetch-depth: 0, fetch-tags: true }
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with: { python-version: "3.12" }
+      - name: Validate preparation scope and governance
+        run: |
+          set -euo pipefail
+          out=artifacts/t2/gate10a-rpt-inventory-prep/governance-ubuntu
+          mkdir -p "$out"
+          python scripts/check_t0_structure.py
+          python scripts/check_rtm.py
+          python scripts/check_contracts.py
+          python -m py_compile scripts/check_t2_gate10a_r2_r2_r2_r2_rpt_inventory_prep.py scripts/audit_t2_gate10a_r2_r2_r2_r2_rpt_inventory_prep.py scripts/build_t2_gate10a_r2_r2_r2_r2_rpt_inventory_prep_evidence.py
+          python scripts/check_t2_gate10a_r2_r2_r2_r2_rpt_inventory_prep.py | tee "$out/scope.txt"
+          python scripts/audit_t2_gate10a_r2_r2_r2_r2_rpt_inventory_prep.py --output "$out/audit.json"
+          python scripts/audit_t2_gate6g_api.py --output "$out/api-current.json"
+          git diff --check
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with: { name: t2-gate10a-rpt-inventory-prep-governance-ubuntu, path: artifacts/t2/gate10a-rpt-inventory-prep/governance-ubuntu, if-no-files-found: error, retention-days: 30 }
+
+  governance-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { fetch-depth: 0, fetch-tags: true }
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with: { python-version: "3.12" }
+      - name: Validate UTF8 deterministic scope on Windows
+        shell: bash
+        run: |
+          set -euo pipefail
+          out=artifacts/t2/gate10a-rpt-inventory-prep/governance-windows
+          mkdir -p "$out"
+          python scripts/check_t0_structure.py
+          python scripts/check_rtm.py
+          python scripts/check_contracts.py
+          python scripts/check_t2_gate10a_r2_r2_r2_r2_rpt_inventory_prep.py | tee "$out/scope.txt"
+          python scripts/audit_t2_gate10a_r2_r2_r2_r2_rpt_inventory_prep.py --output "$out/audit.json"
+          git diff --check
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with: { name: t2-gate10a-rpt-inventory-prep-governance-windows, path: artifacts/t2/gate10a-rpt-inventory-prep/governance-windows, if-no-files-found: error, retention-days: 30 }
+
+  test-baseline:
+    needs: [governance-ubuntu, governance-windows]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { fetch-depth: 0, fetch-tags: true }
+      - uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
+        with: { distribution: temurin, java-version: "21", cache: maven }
+      - name: Execute static red baseline and compile MySQL probe
+        run: |
+          set -euo pipefail
+          out=artifacts/t2/gate10a-rpt-inventory-prep/test-baseline
+          mkdir -p "$out/test-reports"
+          ./server/mvnw -f server/pom.xml -pl ruoyi-modules/jshpos-reporting -am test \
+            -Dtest=ReportingInventoryRemediationPrepRedBaselineTest -Dsurefire.failIfNoSpecifiedTests=false \
+            -DskipTests=false | tee "$out/reporting-red-baseline.log"
+          ./server/mvnw -f server/pom.xml -pl ruoyi-modules/jshpos-release -am -DskipTests test-compile \
+            | tee "$out/mysql-probe-compile.log"
+          cp server/ruoyi-modules/jshpos-reporting/target/surefire-reports/TEST-*ReportingInventoryRemediationPrepRedBaselineTest.xml "$out/test-reports/"
+          test -z "$(git diff --name-only 206b07f93014a468102380577a987ac85af1ceff HEAD -- 'server/**/src/main/**' 'server/**/db/migration/**')"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with: { name: t2-gate10a-rpt-inventory-prep-test-baseline, path: artifacts/t2/gate10a-rpt-inventory-prep/test-baseline, if-no-files-found: error, retention-days: 30 }
+
+  mysql84:
+    needs: [governance-ubuntu, governance-windows]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    services:
+      mysql:
+        image: mysql:8.4.11@sha256:b3b90af2a6552ae30c266fdb7d5dd55f3afb72404bb78d37fe8a23eb857fd3fb
+        env:
+          MYSQL_ROOT_PASSWORD: synthetic_rpt_inventory_root
+          MYSQL_DATABASE: jshpos_rpt_inventory
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -psynthetic_rpt_inventory_root"
+          --health-interval=10s --health-timeout=5s --health-retries=12
+    env:
+      G10A_INVENTORY_MYSQL_JDBC_URL: jdbc:mysql://127.0.0.1:3306/jshpos_rpt_inventory?useUnicode=true&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&rewriteBatchedStatements=true
+      G10A_INVENTORY_MYSQL_USERNAME: root
+      G10A_INVENTORY_MYSQL_PASSWORD: synthetic_rpt_inventory_root
+      G10A_INVENTORY_REPO_ROOT: ${{ github.workspace }}
+      G10A_INVENTORY_MIGRATION_ROOT: ${{ github.workspace }}/server/ruoyi-modules
+      G10A_INVENTORY_EVIDENCE_DIR: ${{ github.workspace }}/artifacts/t2/gate10a-rpt-inventory-prep/mysql84/executable
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { fetch-depth: 0, fetch-tags: true }
+      - uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
+        with: { distribution: temurin, java-version: "21", cache: maven }
+      - name: Capture RPT INVENTORY 10k 100k executable red baseline
+        run: |
+          set -euo pipefail
+          out=artifacts/t2/gate10a-rpt-inventory-prep/mysql84
+          mkdir -p "$out/executable" "$out/test-reports"
+          ./server/mvnw -f server/pom.xml -pl ruoyi-modules/jshpos-release -am test \
+            -Dtest=InventoryRemediationPrepMySqlIT -Dsurefire.failIfNoSpecifiedTests=false -DskipTests=false \
+            | tee "$out/mysql84.log"
+          cp server/ruoyi-modules/jshpos-release/target/surefire-reports/TEST-*InventoryRemediationPrepMySqlIT.xml "$out/test-reports/"
+          python - <<'PY'
+          import json, pathlib
+          root=pathlib.Path('artifacts/t2/gate10a-rpt-inventory-prep/mysql84/executable')
+          rows=json.loads((root/'rpt-inventory-red-baseline.json').read_text())
+          assert [r['tier'] for r in rows]==['SMOKE_10K','BASELINE_100K']
+          assert all(r['queryCount']==1 and r['crossTenantRows']==0 for r in rows)
+          assert all(r['fullScanObserved'] or r['filesortObserved'] for r in rows)
+          assert all(not r['runtimeChangeAuthorized'] and r['syntheticOnly'] and not r['productionSla'] for r in rows)
+          legacy=json.loads((root/'legacy-export-query-count.json').read_text())
+          assert legacy['stores']==50 and legacy['jdbcQueryCount']==50
+          for row in rows:
+              print('G10A_RPT_INVENTORY_'+row['tier']+'='+json.dumps(row,sort_keys=True,separators=(',',':')))
+          PY
+          test -z "$(git diff --name-only 206b07f93014a468102380577a987ac85af1ceff HEAD -- 'server/**/src/main/**' 'server/**/db/migration/**')"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with: { name: t2-gate10a-rpt-inventory-prep-mysql84, path: artifacts/t2/gate10a-rpt-inventory-prep/mysql84, if-no-files-found: error, retention-days: 30 }
+
+  evidence:
+    needs: [governance-ubuntu, governance-windows, test-baseline, mysql84]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with: { python-version: "3.12" }
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with: { pattern: t2-gate10a-rpt-inventory-prep-*, path: downloaded, merge-multiple: false }
+      - name: Build immutable evidence index
+        run: |
+          set -euo pipefail
+          bundle=artifacts/t2/gate10a-rpt-inventory-prep/bundle
+          final=artifacts/t2/gate10a-rpt-inventory-prep/final
+          mkdir -p "$bundle" "$final"
+          for pair in \
+            "governance-ubuntu:t2-gate10a-rpt-inventory-prep-governance-ubuntu" \
+            "governance-windows:t2-gate10a-rpt-inventory-prep-governance-windows" \
+            "test-baseline:t2-gate10a-rpt-inventory-prep-test-baseline" \
+            "mysql84:t2-gate10a-rpt-inventory-prep-mysql84"; do
+            producer="${pair%%:*}"; artifact="${pair#*:}"; mkdir -p "$bundle/$producer"
+            cp -R "downloaded/$artifact/." "$bundle/$producer/"
+          done
+          python scripts/build_t2_gate10a_r2_r2_r2_r2_rpt_inventory_prep_evidence.py --bundle-dir "$bundle" --output "$final/evidence-index.json" --commit "$GITHUB_SHA"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with: { name: t2-gate10a-rpt-inventory-prep-evidence-index, path: artifacts/t2/gate10a-rpt-inventory-prep/final, if-no-files-found: error, retention-days: 90 }

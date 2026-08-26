@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "1.0",
+  "queryId": "RPT-INVENTORY",
+  "owner": "Reporting",
+  "requirement": "T2-RPT-001",
+  "api": {
+    "method": "GET",
+    "path": "/api/v1/reports/inventory-cost-daily",
+    "operationId": "queryInventoryCostDailyReport",
+    "permission": "report:operation:read",
+    "response": "R<List<InventoryCostDailyView>>",
+    "rowCap": null,
+    "frozenCompatibility": true
+  },
+  "applicationService": "ReportQueryService.inventoryCost",
+  "persistencePort": "ReportingPersistencePort.queryInventoryCost",
+  "mapper": "ReportingPersistenceMapper.queryInventoryCost",
+  "mapperPath": "server/ruoyi-modules/jshpos-reporting/src/main/resources/mapper/reporting/ReportingPersistenceMapper.xml",
+  "sourceSqlSha256": "316e28301946e57bd138724272875e176f3255a4f14fbb3a7c0a9ab58dcc4595",
+  "stableOrder": ["business_date", "store_id", "warehouse_id", "sku_id", "currency"],
+  "trustedScope": ["tenant_id", "projection_version", "business_date_range", "store_id"],
+  "optionalFilters": ["warehouse_id", "sku_id"],
+  "exportPattern": "ONE_QUERY_PER_STORE_THEN_IN_MEMORY_MATERIALIZATION",
+  "currentIndexes": [
+    "uk_rpt_inventory_dimension(tenant_id,projection_version,business_date,org_id,store_id,warehouse_id,sku_id,currency)",
+    "idx_rpt_inventory_query(tenant_id,store_id,business_date,warehouse_id,sku_id)"
+  ],
+  "runtimeChangeAuthorized": false
+}
