@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jingshanghui.pos.catalog.application.model.LotPolicyModels.PolicyView;
 import com.jingshanghui.pos.catalog.application.port.LotPolicyReadPort;
 import com.jingshanghui.pos.catalog.domain.LotExpiryRules;
-import com.jingshanghui.pos.catalog.domain.LotExpiryRules.PolicySpec;
 import com.jingshanghui.pos.foundation.application.context.TrustedPrincipal;
 import com.jingshanghui.pos.foundation.application.context.TrustedTenantContext;
 import com.jingshanghui.pos.foundation.application.security.ScopeAuthorizationService;
@@ -56,10 +55,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Clock;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
@@ -74,11 +71,6 @@ import java.util.Set;
 @Service
 @RequiredArgsConstructor
 public class LotInventoryService implements AuthoritativeLotMovementPort {
-    private static final Set<String> INBOUND = Set.of("PURCHASE_RECEIPT_IN", "SALE_RETURN_IN",
-        "STOCKTAKE_GAIN", "TRANSFER_IN", "OPENING_IN", "OPENING_ADJUSTMENT");
-    private static final Set<String> OUTBOUND = Set.of("SALE_OUT", "PURCHASE_RETURN_OUT",
-        "STOCKTAKE_LOSS", "TRANSFER_OUT");
-
     private final LotInventoryMapper mapper;
     private final LotPolicyReadPort policyReadPort;
     private final StoreIndustryReadPort industryReadPort;
@@ -87,6 +79,8 @@ public class LotInventoryService implements AuthoritativeLotMovementPort {
     private final UlidGenerator ulids;
     private final ObjectMapper objectMapper;
     private final Clock clock;
+    /** 纯命令规则不持有 Mapper 或事务，公开事务入口仍由本服务独占。 */
+    private final LotInventoryCommandPolicy commandPolicy = new LotInventoryCommandPolicy();
 
     /** 非社区超市或未启用 SKU 返回 false；已启用时上游 Owner 必须提交批次命令。 */
     @Override
@@ -96,7 +90,7 @@ public class LotInventoryService implements AuthoritativeLotMovementPort {
         IndustryBinding binding = industryReadPort.requireCurrentIndustry(storeId);
         if (!LotExpiryRules.COMMUNITY_SUPERMARKET.equals(binding.industry())) return false;
         return policyReadPort.findEffective(storeId, skuId,
-                atBusinessDate(businessDate, binding.zoneId(), binding.businessDayStart()))
+                commandPolicy.atBusinessDate(businessDate, binding.zoneId(), binding.businessDayStart()))
             .map(PolicyView::enabled).orElse(false);
     }
 
@@ -104,15 +98,15 @@ public class LotInventoryService implements AuthoritativeLotMovementPort {
     @Override
     @Transactional
     public ApplyResult receive(ReceiveCommand command) {
-        requireSource(command == null ? null : command.source());
-        requireLines(command.lines());
+        commandPolicy.requireSource(command == null ? null : command.source());
+        commandPolicy.requireLines(command.lines());
         String hash = hash(command);
         ApplyResult replay = replay(command.source(), hash);
         if (replay != null) return replay;
         TrustedPrincipal principal = begin(command.source(), hash);
         Map<String, BigDecimal> expectedBySourceLine = new java.util.LinkedHashMap<>();
         for (ReceiveLine line : command.lines()) {
-            requireLine(line.sourceLineId(), line.skuId(), line.baseUnitId(), line.quantity());
+            commandPolicy.requireLine(line.sourceLineId(), line.skuId(), line.baseUnitId(), line.quantity());
             String key = line.sourceLineId() + "|" + line.skuId();
             expectedBySourceLine.merge(key, LotInventoryRules.exactQuantity(line.quantity(), "receiveQuantity"),
                 BigDecimal::add);
@@ -124,7 +118,7 @@ public class LotInventoryService implements AuthoritativeLotMovementPort {
             Long skuId = Long.valueOf(entry.getKey().substring(separator + 1));
             GenericMovementView generic = requireGeneric(command.source(), sourceLineId, skuId,
                 entry.getValue().setScale(LotInventoryRules.QUANTITY_SCALE));
-            if (!INBOUND.contains(generic.movementType())) {
+            if (!commandPolicy.isInbound(generic.movementType())) {
                 throw new ServiceException("LOT-SOURCE-002: 收货批次对应的仓库总账方向非法", 409);
             }
             genericBySourceLine.put(entry.getKey(), generic);
@@ -134,15 +128,15 @@ public class LotInventoryService implements AuthoritativeLotMovementPort {
             BigDecimal quantity = LotInventoryRules.exactQuantity(line.quantity(), "receiveQuantity");
             GenericMovementView generic = genericBySourceLine.get(line.sourceLineId() + "|" + line.skuId());
             PolicyView policy = requireEnabledPolicy(command.source(), line.skuId());
-            LocalDate expiry = resolveExpiry(policy, line.productionDate(), line.receivedDate(), line.explicitExpiryDate());
-            String identityHash = identityHash(command.source(), line, policy, expiry);
+            LocalDate expiry = commandPolicy.resolveExpiry(policy, line.productionDate(), line.receivedDate(), line.explicitExpiryDate());
+            String identityHash = commandPolicy.identityHash(command.source(), line, policy, expiry);
             LotView lot = mapper.findLotByIdentityHash(principal.tenantId(), command.source().warehouseId(),
                 line.skuId(), identityHash);
             if (lot == null) {
                 String lotId = ulids.next();
-                String internalCode = normalizedCode(line.internalLotCode(), line.sourceLineId());
+                String internalCode = commandPolicy.normalizedCode(line.internalLotCode(), line.sourceLineId());
                 mapper.insertIdentity(new IdentityWrite(lotId, principal.tenantId(), command.source().storeId(),
-                    command.source().warehouseId(), line.skuId(), line.baseUnitId(), nullableCode(line.supplierLotCode()),
+                    command.source().warehouseId(), line.skuId(), line.baseUnitId(), commandPolicy.nullableCode(line.supplierLotCode()),
                     internalCode, line.productionDate(), line.receivedDate(), expiry, policy.policyVersionId(),
                     policy.nearExpiryDays(), identityHash, now()));
                 mapper.insertBalanceIfAbsent(new BalanceSeed(principal.tenantId(), lotId, now()));
@@ -158,15 +152,15 @@ public class LotInventoryService implements AuthoritativeLotMovementPort {
     @Override
     @Transactional
     public ApplyResult allocateSale(SaleCommand command) {
-        requireSource(command == null ? null : command.source());
-        requireLines(command.lines());
+        commandPolicy.requireSource(command == null ? null : command.source());
+        commandPolicy.requireLines(command.lines());
         String hash = hash(command);
         ApplyResult replay = replay(command.source(), hash);
         if (replay != null) return replay;
         TrustedPrincipal principal = begin(command.source(), hash);
         List<AllocationView> results = new ArrayList<>();
         for (SaleLine line : command.lines()) {
-            requireLine(line.sourceLineId(), line.skuId(), line.baseUnitId(), line.quantity());
+            commandPolicy.requireLine(line.sourceLineId(), line.skuId(), line.baseUnitId(), line.quantity());
             BigDecimal quantity = LotInventoryRules.exactQuantity(line.quantity(), "saleQuantity");
             GenericMovementView generic = requireGeneric(command.source(), line.sourceLineId(), line.skuId(), quantity);
             if (!"SALE_OUT".equals(generic.movementType())) {
@@ -192,16 +186,16 @@ public class LotInventoryService implements AuthoritativeLotMovementPort {
     @Override
     @Transactional
     public ApplyResult returnOriginal(ReturnCommand command) {
-        requireSource(command == null ? null : command.source());
+        commandPolicy.requireSource(command == null ? null : command.source());
         InventoryRules.requireUlid(command.originalOrderId(), "originalOrderId");
-        requireLines(command.lines());
+        commandPolicy.requireLines(command.lines());
         String hash = hash(command);
         ApplyResult replay = replay(command.source(), hash);
         if (replay != null) return replay;
         TrustedPrincipal principal = begin(command.source(), hash);
         List<AllocationView> results = new ArrayList<>();
         for (ReturnLine line : command.lines()) {
-            requireLine(line.sourceLineId(), line.skuId(), line.baseUnitId(), line.quantity());
+            commandPolicy.requireLine(line.sourceLineId(), line.skuId(), line.baseUnitId(), line.quantity());
             InventoryRules.requireUlid(line.originalOrderLineId(), "originalOrderLineId");
             BigDecimal remaining = LotInventoryRules.exactQuantity(line.quantity(), "returnQuantity");
             GenericMovementView generic = requireGeneric(command.source(), line.sourceLineId(), line.skuId(), remaining);
@@ -230,8 +224,8 @@ public class LotInventoryService implements AuthoritativeLotMovementPort {
     @Override
     @Transactional
     public ApplyResult applyExplicit(ExplicitCommand command) {
-        requireSource(command == null ? null : command.source());
-        requireLines(command.lines());
+        commandPolicy.requireSource(command == null ? null : command.source());
+        commandPolicy.requireLines(command.lines());
         String hash = hash(command);
         ApplyResult replay = replay(command.source(), hash);
         if (replay != null) return replay;
@@ -239,8 +233,8 @@ public class LotInventoryService implements AuthoritativeLotMovementPort {
         Map<String, BigDecimal> expectedBySourceLine = new java.util.LinkedHashMap<>();
         Map<String, String> movementBySourceLine = new java.util.LinkedHashMap<>();
         for (ExplicitLine line : command.lines()) {
-            requireLine(line.sourceLineId(), line.skuId(), line.baseUnitId(), line.quantity());
-            String movement = explicitMovement(command.movementType(), line.movementType());
+            commandPolicy.requireLine(line.sourceLineId(), line.skuId(), line.baseUnitId(), line.quantity());
+            String movement = commandPolicy.explicitMovement(command.movementType(), line.movementType());
             String key = line.sourceLineId() + "|" + line.skuId();
             String previous = movementBySourceLine.putIfAbsent(key, movement);
             if (previous != null && !previous.equals(movement)) {
@@ -261,11 +255,11 @@ public class LotInventoryService implements AuthoritativeLotMovementPort {
         }
         List<AllocationView> results = new ArrayList<>();
         for (ExplicitLine line : command.lines()) {
-            String movement = explicitMovement(command.movementType(), line.movementType());
+            String movement = commandPolicy.explicitMovement(command.movementType(), line.movementType());
             InventoryRules.requireUlid(line.lotId(), "lotId");
             BigDecimal quantity = LotInventoryRules.exactQuantity(line.quantity(), "explicitQuantity");
             LotView lot = requireLot(principal.tenantId(), line.lotId());
-            requireLotScope(command.source(), line.skuId(), line.baseUnitId(), lot);
+            commandPolicy.requireLotScope(command.source(), line.skuId(), line.baseUnitId(), lot);
             requireEnabledPolicy(command.source(), line.skuId());
             results.add(applyToLot(principal, command.source(), line.sourceLineId(), lot, quantity,
                 movement, "EXPLICIT", null, null));
@@ -277,9 +271,9 @@ public class LotInventoryService implements AuthoritativeLotMovementPort {
     @Override
     @Transactional
     public ApplyResult receiveTransfer(TransferReceiveCommand command) {
-        requireSource(command == null ? null : command.source());
+        commandPolicy.requireSource(command == null ? null : command.source());
         InventoryRules.requireUlid(command.dispatchId(), "dispatchId");
-        requireLines(command.lines());
+        commandPolicy.requireLines(command.lines());
         if (command.lines().stream().map(line -> line.receiptLineId() + "|" + line.sourceLotId()).distinct().count()
             != command.lines().size()) {
             throw new ServiceException("LOT-TRANSFER-001: 同一收货行的来源批次必须唯一", 409);
@@ -290,7 +284,7 @@ public class LotInventoryService implements AuthoritativeLotMovementPort {
         TrustedPrincipal principal = begin(command.source(), hash);
         Map<String, BigDecimal> expectedByLine = new java.util.LinkedHashMap<>();
         for (TransferReceiveLine line : command.lines()) {
-            requireLine(line.receiptLineId(), line.skuId(), line.baseUnitId(), line.quantity());
+            commandPolicy.requireLine(line.receiptLineId(), line.skuId(), line.baseUnitId(), line.quantity());
             InventoryRules.requireUlid(line.dispatchLineId(), "dispatchLineId");
             InventoryRules.requireUlid(line.sourceLotId(), "sourceLotId");
             expectedByLine.merge(line.receiptLineId() + "|" + line.skuId(),
@@ -320,7 +314,7 @@ public class LotInventoryService implements AuthoritativeLotMovementPort {
                 throw new ServiceException("LOT-TRANSFER-004: 原发出批次与商品或单位不一致", 409);
             }
             PolicyView policy = requireEnabledPolicy(command.source(), line.skuId());
-            LocalDate inheritedExpiry = resolveExpiry(policy, sourceLot.productionDate(), sourceLot.receivedDate(),
+            LocalDate inheritedExpiry = commandPolicy.resolveExpiry(policy, sourceLot.productionDate(), sourceLot.receivedDate(),
                 sourceLot.expiryDate());
             if (!inheritedExpiry.equals(sourceLot.expiryDate())) {
                 throw new ServiceException("LOT-TRANSFER-005: 目的门店策略会改变原批次到期日", 409);
@@ -328,7 +322,7 @@ public class LotInventoryService implements AuthoritativeLotMovementPort {
             ReceiveLine identityLine = new ReceiveLine(line.receiptLineId(), line.skuId(), line.baseUnitId(),
                 quantity, sourceLot.supplierLotCode(), sourceLot.internalLotCode(), sourceLot.productionDate(),
                 sourceLot.receivedDate(), sourceLot.expiryDate());
-            String identityHash = identityHash(command.source(), identityLine, policy, inheritedExpiry);
+            String identityHash = commandPolicy.identityHash(command.source(), identityLine, policy, inheritedExpiry);
             LotView destinationLot = mapper.findLotByIdentityHash(principal.tenantId(), command.source().warehouseId(),
                 line.skuId(), identityHash);
             if (destinationLot == null) {
@@ -360,7 +354,7 @@ public class LotInventoryService implements AuthoritativeLotMovementPort {
         return mapper.findNearExpiry(tenantId, storeId, warehouseId, businessDate, limit).stream()
             .map(lot -> {
                 policyReadPort.requireEffective(storeId, lot.skuId(),
-                    atBusinessDate(businessDate, binding.zoneId(), binding.businessDayStart()));
+                    commandPolicy.atBusinessDate(businessDate, binding.zoneId(), binding.businessDayStart()));
                 String status = LotExpiryRules.classify(businessDate, lot.expiryDate(), lot.nearExpiryDays());
                 return new LotView(lot.lotId(), lot.storeId(), lot.warehouseId(), lot.skuId(), lot.baseUnitId(),
                     lot.supplierLotCode(), lot.internalLotCode(), lot.productionDate(), lot.receivedDate(),
@@ -385,14 +379,14 @@ public class LotInventoryService implements AuthoritativeLotMovementPort {
         IndustryBinding binding = industryReadPort.requireCurrentIndustry(storeId);
         if (!LotExpiryRules.COMMUNITY_SUPERMARKET.equals(binding.industry())) return List.of();
         policyReadPort.requireEffective(storeId, skuId,
-            atBusinessDate(businessDate, binding.zoneId(), binding.businessDayStart()));
+            commandPolicy.atBusinessDate(businessDate, binding.zoneId(), binding.businessDayStart()));
         String normalizedStatus = status == null || status.isBlank() ? null : status.strip().toUpperCase();
         if (normalizedStatus != null && !Set.of("AVAILABLE", "NEAR_EXPIRY", "EXPIRED", "DEPLETED", "BLOCKED")
             .contains(normalizedStatus)) {
             throw new ServiceException("LOT-QUERY-003: 批次状态非法", 400);
         }
         return mapper.findLots(tenantContext.requireTenantId(), storeId, warehouseId, skuId, limit).stream()
-            .map(lot -> withStatus(lot, businessDate))
+            .map(lot -> commandPolicy.withStatus(lot, businessDate))
             .filter(lot -> normalizedStatus == null || normalizedStatus.equals(lot.expiryStatus()))
             .toList();
     }
@@ -492,7 +486,7 @@ public class LotInventoryService implements AuthoritativeLotMovementPort {
                                       LotView suppliedLot, BigDecimal positiveQuantity, String movementType,
                                       String allocationType, String originalSourceId, String originalSourceLineId) {
         LotView lot = requireLot(principal.tenantId(), suppliedLot.lotId());
-        BigDecimal delta = OUTBOUND.contains(movementType) ? positiveQuantity.negate() : positiveQuantity;
+        BigDecimal delta = commandPolicy.isOutbound(movementType) ? positiveQuantity.negate() : positiveQuantity;
         BigDecimal after = lot.onHandQuantity().add(delta).setScale(LotInventoryRules.QUANTITY_SCALE);
         if (after.signum() < 0) throw new ServiceException("LOT-BALANCE-003: 指定批次余额不足", 409);
         long sequence = lot.lastLedgerSequence() + 1;
@@ -529,7 +523,7 @@ public class LotInventoryService implements AuthoritativeLotMovementPort {
             "sourceId", source.sourceId(), "warehouseId", source.warehouseId(), "businessDate",
             source.businessDate().toString(), "allocations", allocations));
         String payloadHash = InventoryHash.sha256(payload);
-        mapper.insertOutbox(new OutboxWrite(ulids.next(), principal.tenantId(), eventType(action),
+        mapper.insertOutbox(new OutboxWrite(ulids.next(), principal.tenantId(), commandPolicy.eventType(action),
             source.sourceId(), 1, source.correlationId(), payload, payloadHash, at));
         return new ApplyResult(source.eventId(), "APPLIED", allocations.size(), hash, allocations);
     }
@@ -551,103 +545,17 @@ public class LotInventoryService implements AuthoritativeLotMovementPort {
             throw new ServiceException("LOT-POLICY-001: 当前门店商品未启用社区超市批次能力", 409);
         }
         PolicyView policy = policyReadPort.requireEffective(source.storeId(), skuId,
-            atBusinessDate(source.businessDate(), binding.zoneId(), binding.businessDayStart()));
+            commandPolicy.atBusinessDate(source.businessDate(), binding.zoneId(), binding.businessDayStart()));
         if (!policy.enabled() || !LotExpiryRules.COMMUNITY_SUPERMARKET.equals(policy.industry())) {
             throw new ServiceException("LOT-POLICY-001: 当前门店商品未启用社区超市批次能力", 409);
         }
         return policy;
     }
 
-    private static LocalDate resolveExpiry(PolicyView policy, LocalDate production, LocalDate received,
-                                           LocalDate explicitExpiry) {
-        return LotExpiryRules.resolveExpiry(new PolicySpec(policy.policyVersionId(), policy.storeId(), policy.skuId(),
-            policy.enabled(), policy.expiryBasis(), policy.shelfLifeDays(), policy.nearExpiryDays(),
-            policy.effectiveFrom()), production, received, explicitExpiry);
-    }
-
     private LotView requireLot(String tenantId, String lotId) {
         LotView result = mapper.lockLot(tenantId, lotId);
         if (result == null) throw new ServiceException("LOT-NOT-FOUND: 批次不存在或不属于可信租户", 404);
         return result;
-    }
-
-    private static void requireLotScope(CommandSource source, Long skuId, Long unitId, LotView lot) {
-        if (!source.storeId().equals(lot.storeId()) || !source.warehouseId().equals(lot.warehouseId())
-            || !skuId.equals(lot.skuId()) || !unitId.equals(lot.baseUnitId())) {
-            throw new ServiceException("LOT-SCOPE-001: 批次与门店、仓库、商品或单位不一致", 409);
-        }
-    }
-
-    private static void requireSource(CommandSource source) {
-        if (source == null) throw new ServiceException("LOT-COMMAND-002: 批次来源命令缺失", 400);
-        InventoryRules.requireUlid(source.eventId(), "eventId");
-        InventoryRules.requireUlid(source.sourceId(), "sourceId");
-        InventoryRules.requireUlid(source.warehouseId(), "warehouseId");
-        if (source.sourceType() == null || source.sourceType().isBlank() || source.sourceType().length() > 32
-            || source.storeId() == null || source.storeId() <= 0 || source.businessDate() == null
-            || source.correlationId() == null || source.correlationId().isBlank()
-            || source.correlationId().length() > 96) {
-            throw new ServiceException("LOT-COMMAND-003: 批次来源字段非法", 400);
-        }
-    }
-
-    private static void requireLine(String sourceLineId, Long skuId, Long unitId, BigDecimal quantity) {
-        InventoryRules.requireUlid(sourceLineId, "sourceLineId");
-        if (skuId == null || skuId <= 0 || unitId == null || unitId <= 0) {
-            throw new ServiceException("LOT-LINE-001: SKU 或基础单位非法", 400);
-        }
-        LotInventoryRules.exactQuantity(quantity, "quantity");
-    }
-
-    private static void requireLines(List<?> lines) {
-        if (lines == null || lines.isEmpty() || lines.size() > 500) {
-            throw new ServiceException("LOT-LINE-002: 批次命令行数必须为 1..500", 400);
-        }
-    }
-
-    private static String normalizeMovement(String value) {
-        return value == null ? "" : value.strip().toUpperCase();
-    }
-
-    private static String explicitMovement(String commandMovement, String lineMovement) {
-        String movement = normalizeMovement(lineMovement == null || lineMovement.isBlank()
-            ? commandMovement : lineMovement);
-        if (!INBOUND.contains(movement) && !OUTBOUND.contains(movement) || "SALE_OUT".equals(movement)
-            || "SALE_RETURN_IN".equals(movement)) {
-            throw new ServiceException("LOT-SOURCE-005: 显式批次移动类型未准入", 409);
-        }
-        return movement;
-    }
-
-    private static String eventType(String action) {
-        return switch (action) {
-            case "LOT_RECEIVED" -> "inventory.lot.received.v1";
-            case "LOT_SALE_ALLOCATED" -> "inventory.lot.allocated.v1";
-            case "LOT_RETURN_RESTORED" -> "inventory.lot.returned.v1";
-            case "LOT_EXPLICIT_APPLIED" -> "inventory.lot.moved.v1";
-            case "LOT_TRANSFER_RECEIVED" -> "inventory.lot.transfer-received.v1";
-            default -> throw new ServiceException("LOT-EVENT-002: 未知批次事件动作", 500);
-        };
-    }
-
-    private static String nullableCode(String value) {
-        if (value == null || value.isBlank()) return null;
-        String normalized = value.strip();
-        if (normalized.length() > 96) throw new ServiceException("LOT-CODE-001: 供应商批号过长", 400);
-        return normalized;
-    }
-
-    private static String normalizedCode(String value, String fallback) {
-        String normalized = value == null || value.isBlank() ? fallback : value.strip();
-        if (normalized.length() > 96) throw new ServiceException("LOT-CODE-002: 内部批号过长", 400);
-        return normalized;
-    }
-
-    private static String identityHash(CommandSource source, ReceiveLine line, PolicyView policy,
-                                       LocalDate expiry) {
-        return InventoryHash.sha256(InventoryHash.canonical(java.util.Arrays.asList(source.warehouseId(), line.skuId(),
-            line.baseUnitId(), nullableCode(line.supplierLotCode()), normalizedCode(line.internalLotCode(),
-                line.sourceLineId()), line.productionDate(), line.receivedDate(), expiry, policy.policyVersionId())));
     }
 
     private static String hash(Object command) {
@@ -666,24 +574,6 @@ public class LotInventoryService implements AuthoritativeLotMovementPort {
             projected = projected.add(current.onHandQuantity()).setScale(LotInventoryRules.QUANTITY_SCALE);
         }
         return new RebuildResult(command.commandId(), lots.size(), ledger, projected, changed, requestHash);
-    }
-
-    private static LotView withStatus(LotView lot, LocalDate businessDate) {
-        String value = lot.onHandQuantity().signum() == 0 ? "DEPLETED"
-            : LotExpiryRules.classify(businessDate, lot.expiryDate(), lot.nearExpiryDays());
-        return new LotView(lot.lotId(), lot.storeId(), lot.warehouseId(), lot.skuId(), lot.baseUnitId(),
-            lot.supplierLotCode(), lot.internalLotCode(), lot.productionDate(), lot.receivedDate(), lot.expiryDate(),
-            lot.policyVersionId(), lot.nearExpiryDays(), lot.onHandQuantity(), lot.lastLedgerSequence(), value,
-            lot.updatedAt());
-    }
-
-    private static Instant atBusinessDate(LocalDate value, String zoneId, java.time.LocalTime businessDayStart) {
-        try {
-            if (businessDayStart == null) throw new IllegalArgumentException("businessDayStart");
-            return value.atTime(businessDayStart).atZone(ZoneId.of(zoneId)).toInstant();
-        } catch (RuntimeException exception) {
-            throw new ServiceException("LOT-DATE-003: 门店业务时区或业务日起点非法", 409);
-        }
     }
 
     private LocalDateTime now() {

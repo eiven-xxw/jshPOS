@@ -38,7 +38,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -63,6 +62,8 @@ public class ReturnOrchestrationService {
     private final ScopeAuthorizationService authorizationService;
     private final DomainAuditService audit;
     private final UlidGenerator ulids;
+    /** 纯命令规则不持有 Mapper 或事务，公开事务入口仍由本服务独占。 */
+    private final ReturnCommandPolicy commandPolicy = new ReturnCommandPolicy();
 
     /**
      * 原单与退款金额只读预检。金额只由 Promotion Owner 原成交快照算法计算，
@@ -160,7 +161,7 @@ public class ReturnOrchestrationService {
             .forEach(value -> reserved.put(value.orderLineId(), value.reservedQuantity()));
         Map<String, ReturnOrderLine> source = new HashMap<>();
         order.lines().forEach(line -> source.put(line.lineId(), line));
-        LocalDateTime at = utc(command.occurredAt());
+        LocalDateTime at = commandPolicy.utc(command.occurredAt());
         mapper.insertReturn(new ReturnWrite(command.returnId(), principal.tenantId(), command.idempotencyKey(),
             requestHash, command.commandId(), command.orderId(), command.storeId(), command.terminalId(), command.refundShiftId(),
             command.warehouseId(), command.businessDate(), normalized.kind().name(), command.paymentId(),
@@ -188,7 +189,7 @@ public class ReturnOrchestrationService {
     /** 独立审批后只发布促销恢复命令，不在本事务调用任何其他 Owner。 */
     @Transactional
     public ReturnView approve(ApproveReturn command) {
-        validateApproval(command);
+        commandPolicy.validateApproval(command);
         TrustedPrincipal principal = tenantContext.requirePrincipal();
         ReturnRow current = requireRow(mapper.lockReturn(principal.tenantId(), command.returnId()));
         authorizationService.requireStoreAccess(current.storeId());
@@ -201,7 +202,7 @@ public class ReturnOrchestrationService {
         requireStatus(current, Status.PENDING_APPROVAL);
         ReturnRules.requireTransition(Status.PENDING_APPROVAL, Status.PROMOTION_PENDING);
         String eventId = ulids.next();
-        LocalDateTime at = utc(command.occurredAt());
+        LocalDateTime at = commandPolicy.utc(command.occurredAt());
         if (mapper.approve(principal.tenantId(), current.returnId(), current.recordVersion(), principal.userId(),
             eventId, at) != 1) throw conflict();
         appendOutbox(principal.tenantId(), eventId, "return.promotion.allocate.requested.v1", current.returnId(),
@@ -217,11 +218,11 @@ public class ReturnOrchestrationService {
     public ReturnView acceptPromotion(String eventId, AllocationResult result, Instant occurredAt) {
         ReturnRules.requireUlid(eventId, "eventId");
         TrustedPrincipal principal = tenantContext.requirePrincipal();
-        String payloadHash = hashAllocation(result);
+        String payloadHash = commandPolicy.hashAllocation(result);
         ReturnRow current = requireRow(mapper.lockReturn(principal.tenantId(), result.refundId()));
         authorizationService.requireStoreAccess(current.storeId());
         if (!acceptInbox(principal.tenantId(), eventId, "PROMOTION", current.returnId(), payloadHash,
-            utc(occurredAt))) return view(current, true);
+            commandPolicy.utc(occurredAt))) return view(current, true);
         requireStatus(current, Status.PROMOTION_PENDING);
         if (!eventId.equals(current.promotionEventId()) || !result.snapshotId().equals(current.promotionSnapshotId())) {
             throw new ServiceException("RET-PRM-001: Promotion结果身份与原事件不一致", 409);
@@ -238,7 +239,7 @@ public class ReturnOrchestrationService {
             : SettlementKind.CASH.name().equals(current.settlementKind())
             ? Status.CASH_REFUND_PENDING : Status.PAYMENT_PENDING;
         ReturnRules.requireTransition(Status.PROMOTION_PENDING, next);
-        LocalDateTime at = utc(occurredAt);
+        LocalDateTime at = commandPolicy.utc(occurredAt);
         if (mapper.applyPromotionHeader(principal.tenantId(), current.returnId(), current.recordVersion(), next.name(),
             result.grossAmountMinor(), result.recoveredDiscountMinor(), result.refundableAmountMinor(),
             paymentEventId, inventoryEventId, at) != 1) throw conflict();
@@ -266,7 +267,7 @@ public class ReturnOrchestrationService {
         ReturnRow current = requireRow(mapper.lockReturn(principal.tenantId(), returnId));
         authorizationService.requireStoreAccess(current.storeId());
         if (!acceptInbox(principal.tenantId(), eventId, "CASH_REFUND", returnId, payloadSha256,
-            utc(occurredAt))) return view(current, true);
+            commandPolicy.utc(occurredAt))) return view(current, true);
         requireStatus(current, Status.CASH_REFUND_PENDING);
         if (!eventId.equals(current.paymentEventId()) || !"SUCCEEDED".equals(status)
             || current.refundableAmountMinor() == null || current.refundableAmountMinor() != amountMinor) {
@@ -284,13 +285,13 @@ public class ReturnOrchestrationService {
         String payloadHash = ReturnHash.sha256(ReturnHash.canonical(List.of(state.refundId(), state.paymentId(),
             state.status(), state.amountMinor(), state.currency())));
         if (!acceptInbox(principal.tenantId(), eventId, "PAYMENT_COMMAND", current.returnId(), payloadHash,
-            utc(occurredAt))) return view(current, true);
+            commandPolicy.utc(occurredAt))) return view(current, true);
         requireStatus(current, Status.PAYMENT_PENDING);
         if (!eventId.equals(current.paymentEventId()) || !state.paymentId().equals(current.paymentId())
             || state.amountMinor() != current.refundableAmountMinor() || !"CNY".equals(state.currency())) {
             throw new ServiceException("RET-PAY-001: Payment命令回执身份或金额不一致", 409);
         }
-        mapper.markOutboxDelivered(principal.tenantId(), eventId, utc(occurredAt));
+        mapper.markOutboxDelivered(principal.tenantId(), eventId, commandPolicy.utc(occurredAt));
         audit.append("RETURN_PAYMENT_REQUEST_ACKED", "RETURN", current.returnId(), current.status(),
             current.status(), Map.of("paymentStatus", state.status()));
         return view(current, false);
@@ -299,12 +300,12 @@ public class ReturnOrchestrationService {
     /** 合并 Provider 无关退款查询/可信观察；UNKNOWN 绝不生成新退款命令。 */
     @Transactional
     public ReturnView observePayment(PaymentObservation observation) {
-        validateObservation(observation);
+        commandPolicy.validateObservation(observation);
         TrustedPrincipal principal = tenantContext.requirePrincipal();
         ReturnRow current = requireRow(mapper.lockReturn(principal.tenantId(), observation.returnId()));
         authorizationService.requireStoreAccess(current.storeId());
         if (!acceptInbox(principal.tenantId(), observation.observationId(), "PAYMENT_OBSERVATION",
-            current.returnId(), observation.payloadSha256(), utc(observation.observedAt()))) return view(current, true);
+            current.returnId(), observation.payloadSha256(), commandPolicy.utc(observation.observedAt()))) return view(current, true);
         Status before = Status.valueOf(current.status());
         if (before != Status.PAYMENT_PENDING && before != Status.PAYMENT_UNKNOWN) {
             throw new ServiceException("RET-PAY-002: 当前Saga不接受支付退款观察", 409);
@@ -340,7 +341,7 @@ public class ReturnOrchestrationService {
         ReturnRow current = requireRow(mapper.lockReturn(principal.tenantId(), result.sourceId()));
         authorizationService.requireStoreAccess(current.storeId());
         if (!acceptInbox(principal.tenantId(), eventId, "INVENTORY", current.returnId(), payloadSha256,
-            utc(occurredAt))) return view(current, true);
+            commandPolicy.utc(occurredAt))) return view(current, true);
         requireStatus(current, Status.INVENTORY_PENDING);
         if (!eventId.equals(current.inventoryEventId()) || !eventId.equals(result.eventId())
             || !"REFUND".equals(result.sourceType()) || result.affectedLines() != mapper.listLines(
@@ -348,7 +349,7 @@ public class ReturnOrchestrationService {
             throw new ServiceException("RET-INV-001: 库存结果身份、来源或行数不一致", 409);
         }
         ReturnRules.requireTransition(Status.INVENTORY_PENDING, Status.COMPLETED);
-        LocalDateTime at = utc(occurredAt);
+        LocalDateTime at = commandPolicy.utc(occurredAt);
         if (mapper.completeInventory(principal.tenantId(), current.returnId(), current.recordVersion(), at) != 1) {
             throw conflict();
         }
@@ -372,7 +373,7 @@ public class ReturnOrchestrationService {
         String inventoryEventId = current.inventoryEventId() == null ? ulids.next() : current.inventoryEventId();
         ReturnView changed = advance(principal, current, eventId, Status.INVENTORY_PENDING,
             inventoryEventId, reason, occurredAt);
-        LocalDateTime at = utc(occurredAt);
+        LocalDateTime at = commandPolicy.utc(occurredAt);
         appendOutbox(principal.tenantId(), inventoryEventId, "return.inventory.receipt.requested.v1",
             current.returnId(), current.recordVersion() + 1, current.correlationId(),
             Map.of("returnId", current.returnId(), "warehouseId", current.warehouseId()), at);
@@ -384,7 +385,7 @@ public class ReturnOrchestrationService {
                                String inventoryEventId, String reason, Instant occurredAt) {
         Status before = Status.valueOf(current.status());
         ReturnRules.requireTransition(before, next);
-        LocalDateTime at = utc(occurredAt);
+        LocalDateTime at = commandPolicy.utc(occurredAt);
         if (mapper.advancePayment(principal.tenantId(), current.returnId(), current.recordVersion(),
             current.status(), next.name(), inventoryEventId, at) != 1) throw conflict();
         history(principal, current, eventId, next, reason, at);
@@ -507,40 +508,12 @@ public class ReturnOrchestrationService {
         }
     }
 
-    private void validateApproval(ApproveReturn command) {
-        ReturnRules.requireUlid(command.commandId(), "commandId"); ReturnRules.requireUlid(command.returnId(), "returnId");
-        ReturnRules.requireUlid(command.correlationId(), "correlationId");
-        if (command.reasonCode() == null || !command.reasonCode().matches("^[A-Z0-9_]{2,32}$")
-            || command.occurredAt() == null) throw new ServiceException("RET-APPROVE-001: 审批字段非法", 409);
-    }
-
-    private void validateObservation(PaymentObservation observation) {
-        ReturnRules.requireUlid(observation.observationId(), "observationId");
-        ReturnRules.requireUlid(observation.returnId(), "returnId");
-        ReturnRules.requireHash(observation.payloadSha256(), "payloadSha256");
-        if (observation.amountMinor() < 0 || observation.observedAt() == null
-            || observation.paymentStatus() == null) {
-            throw new ServiceException("RET-PAY-005: Payment观察字段非法", 409);
-        }
-    }
-
     private String hashRequest(RequestReturn command, List<NormalizedLine> lines) {
         List<Object> values = new ArrayList<>(List.of(command.returnId(), command.orderId(), command.storeId(),
             command.terminalId(), command.refundShiftId(), command.warehouseId(), command.businessDate(),
             command.settlementKind(), command.paymentId() == null ? "<cash>" : command.paymentId(),
             command.reasonCode(), command.correlationId(), command.occurredAt()));
         lines.forEach(line -> { values.add(line.orderLineId()); values.add(line.quantity().toPlainString()); });
-        return ReturnHash.sha256(ReturnHash.canonical(values));
-    }
-
-    private String hashAllocation(AllocationResult result) {
-        List<Object> values = new ArrayList<>(List.of(result.refundId(), result.snapshotId(),
-            result.grossAmountMinor(), result.recoveredDiscountMinor(), result.refundableAmountMinor()));
-        result.lines().stream().sorted(Comparator.comparing(AllocatedLine::lineId)).forEach(line -> {
-            values.add(line.lineId()); values.add(line.quantity().toPlainString()); values.add(line.grossAmountMinor());
-            values.add(line.recoveredDiscountMinor()); values.add(line.refundableAmountMinor());
-            values.add(line.cumulativeQuantity().toPlainString()); values.add(line.cumulativePayableAmountMinor());
-        });
         return ReturnHash.sha256(ReturnHash.canonical(values));
     }
 
@@ -569,11 +542,6 @@ public class ReturnOrchestrationService {
 
     private ServiceException conflict() {
         return new ServiceException("RET-STATE-003: Saga并发状态冲突", 409);
-    }
-
-    private LocalDateTime utc(Instant value) {
-        if (value == null) throw new ServiceException("RET-TIME-001: 发生时间必填", 409);
-        return LocalDateTime.ofInstant(value, ZoneOffset.UTC);
     }
 
     private record NormalizedLine(String orderLineId, BigDecimal quantity) { }

@@ -11,12 +11,6 @@ import com.jingshanghui.pos.foundation.application.service.StoreService;
 import com.jingshanghui.pos.inventory.application.port.AuthoritativeInventoryMovementPort;
 import com.jingshanghui.pos.inventory.application.port.AuthoritativeInventoryMovementPort.OwnedMovement;
 import com.jingshanghui.pos.inventory.application.port.AuthoritativeInventoryMovementPort.OwnedMovementLine;
-import com.jingshanghui.pos.inventory.application.port.AuthoritativeLotMovementPort;
-import com.jingshanghui.pos.inventory.application.model.LotInventoryModels.CommandSource;
-import com.jingshanghui.pos.inventory.application.model.LotInventoryModels.ExplicitCommand;
-import com.jingshanghui.pos.inventory.application.model.LotInventoryModels.ExplicitLine;
-import com.jingshanghui.pos.inventory.application.model.LotInventoryModels.ReceiveCommand;
-import com.jingshanghui.pos.inventory.application.model.LotInventoryModels.ReceiveLine;
 import com.jingshanghui.pos.inventory.domain.InventoryStates.MovementType;
 import com.jingshanghui.pos.order.domain.UlidGenerator;
 import com.jingshanghui.pos.procurement.application.model.ProcurementCommands.ApproveOrder;
@@ -24,8 +18,6 @@ import com.jingshanghui.pos.procurement.application.model.ProcurementCommands.Ap
 import com.jingshanghui.pos.procurement.application.model.ProcurementCommands.ChangeSupplierState;
 import com.jingshanghui.pos.procurement.application.model.ProcurementCommands.CloseOrder;
 import com.jingshanghui.pos.procurement.application.model.ProcurementCommands.ConfirmReceipt;
-import com.jingshanghui.pos.procurement.application.model.ProcurementCommands.ReceiptLotSplit;
-import com.jingshanghui.pos.procurement.application.model.ProcurementCommands.ReturnLotSplit;
 import com.jingshanghui.pos.procurement.application.model.ProcurementCommands.CreateOrder;
 import com.jingshanghui.pos.procurement.application.model.ProcurementCommands.CreateReceipt;
 import com.jingshanghui.pos.procurement.application.model.ProcurementCommands.CreateReturn;
@@ -59,7 +51,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -79,18 +70,20 @@ public class ProcurementService implements ReplenishmentProcurementSnapshotPort,
     private final ScopeAuthorizationService authorizationService;
     private final InventoryCatalogSnapshotPort catalogPort;
     private final AuthoritativeInventoryMovementPort movementPort;
-    private final AuthoritativeLotMovementPort lotMovementPort;
+    private final ProcurementLotCoordinator lotCoordinator;
     private final StoreService storeService;
     private final UlidGenerator ulids;
     private final ObjectMapper objectMapper;
     private final Clock clock;
+    /** 纯命令规则不持有 Mapper 或事务，公开事务入口仍由本服务独占。 */
+    private final ProcurementCommandPolicy commandPolicy = new ProcurementCommandPolicy();
 
     @Transactional
     public Supplier createSupplier(CreateSupplier command) {
         ProcurementRules.ulid(command.supplierId(), "supplierId");
         String code = ProcurementRules.text(command.code(), 64, "PUR-SUP-002");
         String name = ProcurementRules.text(command.name(), 160, "PUR-SUP-003");
-        requireCorrelation(command.correlationId());
+        commandPolicy.requireCorrelation(command.correlationId());
         TrustedPrincipal principal = tenantContext.requirePrincipal();
         authorizationService.requireTenantAdministrator();
         Supplier existing = mapper.findSupplier(principal.tenantId(), command.supplierId());
@@ -126,7 +119,7 @@ public class ProcurementService implements ReplenishmentProcurementSnapshotPort,
     @Transactional
     public Supplier changeSupplierState(ChangeSupplierState command) {
         ProcurementRules.ulid(command.supplierId(), "supplierId");
-        requireCorrelation(command.correlationId());
+        commandPolicy.requireCorrelation(command.correlationId());
         String next = ProcurementRules.supplierState(command.state());
         TrustedPrincipal principal = tenantContext.requirePrincipal();
         authorizationService.requireTenantAdministrator();
@@ -146,12 +139,12 @@ public class ProcurementService implements ReplenishmentProcurementSnapshotPort,
     /** 创建不改变库存的采购单，并冻结商品单位换算、商业价格和税率快照。 */
     @Transactional
     public OrderDetail createOrder(CreateOrder command) {
-        validateOrder(command);
+        commandPolicy.validateOrder(command);
         TrustedPrincipal principal = tenantContext.requirePrincipal();
         authorizationService.requireStoreAccess(command.storeId());
         int tolerance = ProcurementRules.tolerance(command.overReceiptToleranceBps());
         if (tolerance > 0) authorizationService.requireTenantAdministrator();
-        String requestHash = hashOrder(command);
+        String requestHash = commandPolicy.hashOrder(command);
         OrderHead existing = mapper.findOrder(principal.tenantId(), command.orderId());
         if (existing != null) {
             if (!requestHash.equals(mapper.findOrderRequestHash(principal.tenantId(), command.orderId()))) {
@@ -187,7 +180,7 @@ public class ProcurementService implements ReplenishmentProcurementSnapshotPort,
     @Transactional
     public OrderDetail submitOrder(SubmitOrder command) {
         ProcurementRules.ulid(command.orderId(), "orderId");
-        requireCorrelation(command.correlationId());
+        commandPolicy.requireCorrelation(command.correlationId());
         TrustedPrincipal principal = tenantContext.requirePrincipal();
         OrderHead order = requireLockedOrder(principal.tenantId(), command.orderId());
         authorizationService.requireStoreAccess(order.storeId());
@@ -203,7 +196,7 @@ public class ProcurementService implements ReplenishmentProcurementSnapshotPort,
     @Transactional
     public OrderDetail approveOrder(ApproveOrder command) {
         ProcurementRules.ulid(command.orderId(), "orderId");
-        requireCorrelation(command.correlationId());
+        commandPolicy.requireCorrelation(command.correlationId());
         TrustedPrincipal principal = tenantContext.requirePrincipal();
         OrderHead order = requireLockedOrder(principal.tenantId(), command.orderId());
         authorizationService.requireStoreAccess(order.storeId());
@@ -225,7 +218,7 @@ public class ProcurementService implements ReplenishmentProcurementSnapshotPort,
     @Transactional
     public OrderDetail closeOrder(CloseOrder command) {
         ProcurementRules.ulid(command.orderId(), "orderId");
-        requireCorrelation(command.correlationId());
+        commandPolicy.requireCorrelation(command.correlationId());
         String reason = ProcurementRules.text(command.reason(), 256, "PUR-ORDER-004");
         TrustedPrincipal principal = tenantContext.requirePrincipal();
         OrderHead order = requireLockedOrder(principal.tenantId(), command.orderId());
@@ -241,7 +234,7 @@ public class ProcurementService implements ReplenishmentProcurementSnapshotPort,
     /** 创建收货草稿，草稿不改变采购累计收货和库存。 */
     @Transactional
     public ReceiptDetail createReceipt(CreateReceipt command) {
-        validateReceiptDraft(command);
+        commandPolicy.validateReceiptDraft(command);
         TrustedPrincipal principal = tenantContext.requirePrincipal();
         ReceiptHead existing = mapper.findReceipt(principal.tenantId(), command.receiptId());
         if (existing != null) {
@@ -282,7 +275,7 @@ public class ProcurementService implements ReplenishmentProcurementSnapshotPort,
     /** 确认既有收货草稿与 PURCHASE_RECEIPT_IN 流水处于同一事务。 */
     @Transactional
     public ReceiptDetail confirmReceipt(ConfirmReceipt command) {
-        validateReceiptConfirmation(command);
+        commandPolicy.validateReceiptConfirmation(command);
         TrustedPrincipal principal = tenantContext.requirePrincipal();
         ReceiptHead receipt = mapper.lockReceipt(principal.tenantId(), command.receiptId());
         if (receipt == null) throw new ServiceException("PUR-RECEIPT-005: 收货单不存在或不可见", 404);
@@ -293,7 +286,7 @@ public class ProcurementService implements ReplenishmentProcurementSnapshotPort,
             }
             OrderHead order = requireLockedOrder(principal.tenantId(), receipt.orderId());
             LocalDate businessDate = storeService.businessDate(order.storeId(), clock.instant()).businessDate();
-            applyReceiptLots(command, receipt, order,
+            lotCoordinator.applyReceiptLots(command, receipt, order,
                 mapper.findReceiptLines(principal.tenantId(), command.receiptId()), businessDate);
             return receiptDetail(command.receiptId());
         }
@@ -325,7 +318,7 @@ public class ProcurementService implements ReplenishmentProcurementSnapshotPort,
         movementPort.applyOwnedMovement(new OwnedMovement(command.eventId(), "PURCHASE_RECEIPT",
             command.receiptId(), order.warehouseId(), order.storeId(), businessDate,
             command.correlationId(), movements));
-        applyReceiptLots(command, receipt, order, confirmedLines, businessDate);
+        lotCoordinator.applyReceiptLots(command, receipt, order, confirmedLines, businessDate);
         audit(principal, order.storeId(), "PURCHASE_RECEIPT_CONFIRMED", "PURCHASE_RECEIPT",
             command.receiptId(), command.eventId(), command.correlationId(), "DRAFT", "CONFIRMED",
             "INVENTORY_LEDGER_APPENDED", at);
@@ -335,45 +328,10 @@ public class ProcurementService implements ReplenishmentProcurementSnapshotPort,
         return receiptDetail(command.receiptId());
     }
 
-    /** 社区超市启用 SKU 必须将收货基础数量完整拆分到批次，与总账同事务守恒。 */
-    private void applyReceiptLots(ConfirmReceipt command, ReceiptHead receipt, OrderHead order,
-                                  List<ReceiptLine> receiptLines, LocalDate businessDate) {
-        Map<String, List<ReceiptLotSplit>> byLine = command.lotSplits().stream()
-            .collect(java.util.stream.Collectors.groupingBy(ReceiptLotSplit::receiptLineId));
-        List<ReceiveLine> lotLines = new ArrayList<>();
-        for (ReceiptLine line : receiptLines) {
-            boolean required = lotMovementPort.requiresLotTracking(order.storeId(), line.skuId(), businessDate);
-            List<ReceiptLotSplit> splits = byLine.remove(line.receiptLineId());
-            if (!required) {
-                if (splits != null && !splits.isEmpty()) {
-                    throw new ServiceException("PUR-LOT-001: 未启用批次的商品禁止提交批次拆分", 409);
-                }
-                continue;
-            }
-            if (splits == null || splits.isEmpty()) {
-                throw new ServiceException("PUR-LOT-002: 已启用批次的收货行缺少批次拆分", 409);
-            }
-            BigDecimal total = splits.stream().map(ReceiptLotSplit::baseQuantity)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-            if (total.compareTo(line.baseQuantity()) != 0) {
-                throw new ServiceException("PUR-LOT-003: 批次拆分与收货基础数量不守恒", 409);
-            }
-            splits.forEach(split -> lotLines.add(new ReceiveLine(split.receiptLineId(), line.skuId(),
-                line.baseUnitId(), split.baseQuantity(), split.supplierLotCode(), split.internalLotCode(),
-                split.productionDate(), split.receivedDate(), split.explicitExpiryDate())));
-        }
-        if (!byLine.isEmpty()) throw new ServiceException("PUR-LOT-004: 批次拆分引用了未知收货行", 409);
-        if (!lotLines.isEmpty()) {
-            lotMovementPort.receive(new ReceiveCommand(new CommandSource(command.eventId(), "PURCHASE_RECEIPT",
-                receipt.receiptId(), order.warehouseId(), order.storeId(), businessDate,
-                command.correlationId()), lotLines));
-        }
-    }
-
     /** 创建原收货退货草稿，不改变累计退货和库存。 */
     @Transactional
     public ReturnHead createReturn(CreateReturn command) {
-        validateReturnDraft(command);
+        commandPolicy.validateReturnDraft(command);
         TrustedPrincipal principal = tenantContext.requirePrincipal();
         ReturnHead existing = mapper.findReturn(principal.tenantId(), command.purchaseReturnId());
         if (existing != null) {
@@ -412,7 +370,7 @@ public class ProcurementService implements ReplenishmentProcurementSnapshotPort,
     @Transactional
     public ReturnHead submitReturn(SubmitReturn command) {
         ProcurementRules.ulid(command.purchaseReturnId(), "purchaseReturnId");
-        requireCorrelation(command.correlationId());
+        commandPolicy.requireCorrelation(command.correlationId());
         TrustedPrincipal principal = tenantContext.requirePrincipal();
         ReturnHead value = mapper.lockReturn(principal.tenantId(), command.purchaseReturnId());
         if (value == null) throw new ServiceException("PUR-RETURN-007: 采购退货不存在或不可见", 404);
@@ -431,7 +389,7 @@ public class ProcurementService implements ReplenishmentProcurementSnapshotPort,
     /** 审批原收货退货与 PURCHASE_RETURN_OUT 流水处于同一事务。 */
     @Transactional
     public ReturnHead approveReturn(ApproveReturn command) {
-        validateReturnApproval(command);
+        commandPolicy.validateReturnApproval(command);
         TrustedPrincipal principal = tenantContext.requirePrincipal();
         ReturnHead value = mapper.lockReturn(principal.tenantId(), command.purchaseReturnId());
         if (value == null) throw new ServiceException("PUR-RETURN-007: 采购退货不存在或不可见", 404);
@@ -447,7 +405,7 @@ public class ProcurementService implements ReplenishmentProcurementSnapshotPort,
                 .map(input -> new OwnedMovementLine(input.returnLineId(), input.skuId(), input.baseUnitId(),
                     input.baseQuantity(), MovementType.PURCHASE_RETURN_OUT)).toList();
             LocalDate businessDate = storeService.businessDate(receipt.storeId(), clock.instant()).businessDate();
-            applyReturnLots(command, receipt, replayMovements, businessDate);
+            lotCoordinator.applyReturnLots(command, receipt, replayMovements, businessDate);
             return value;
         }
         if (!"PENDING_APPROVAL".equals(value.status())) {
@@ -483,7 +441,7 @@ public class ProcurementService implements ReplenishmentProcurementSnapshotPort,
         movementPort.applyOwnedMovement(new OwnedMovement(command.eventId(), "PURCHASE_RETURN",
             command.purchaseReturnId(), receipt.warehouseId(), receipt.storeId(), businessDate,
             command.correlationId(), movements));
-        applyReturnLots(command, receipt, movements, businessDate);
+        lotCoordinator.applyReturnLots(command, receipt, movements, businessDate);
         audit(principal, receipt.storeId(), "PURCHASE_RETURN_POSTED", "PURCHASE_RETURN",
             command.purchaseReturnId(), command.eventId(), command.correlationId(), "PENDING_APPROVAL", "POSTED",
             "INVENTORY_LEDGER_APPENDED", at);
@@ -492,41 +450,6 @@ public class ProcurementService implements ReplenishmentProcurementSnapshotPort,
                 "receiptId", receipt.receiptId(), "sourceEventId", command.eventId(),
                 "lineCount", movements.size()), at);
         return mapper.findReturn(principal.tenantId(), command.purchaseReturnId());
-    }
-
-    /** 已启用批次商品的采购退货必须完整指定原仓批次，且与总账退货行逐行守恒。 */
-    private void applyReturnLots(ApproveReturn command, ReceiptHead receipt,
-                                 List<OwnedMovementLine> movements, LocalDate businessDate) {
-        Map<String, List<ReturnLotSplit>> byLine = command.lotSplits().stream()
-            .collect(java.util.stream.Collectors.groupingBy(ReturnLotSplit::returnLineId));
-        List<ExplicitLine> lotLines = new ArrayList<>();
-        for (OwnedMovementLine movement : movements) {
-            boolean required = lotMovementPort.requiresLotTracking(receipt.storeId(), movement.skuId(), businessDate);
-            List<ReturnLotSplit> splits = byLine.remove(movement.sourceLineId());
-            if (!required) {
-                if (splits != null && !splits.isEmpty()) {
-                    throw new ServiceException("PUR-LOT-005: 未启用批次的采购退货禁止提交批次拆分", 409);
-                }
-                continue;
-            }
-            if (splits == null || splits.isEmpty()) {
-                throw new ServiceException("PUR-LOT-006: 已启用批次的采购退货缺少批次拆分", 409);
-            }
-            BigDecimal total = splits.stream().map(ReturnLotSplit::baseQuantity)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-            if (total.compareTo(movement.quantity()) != 0) {
-                throw new ServiceException("PUR-LOT-007: 退货批次拆分与仓库总账数量不守恒", 409);
-            }
-            splits.forEach(split -> lotLines.add(new ExplicitLine(split.returnLineId(), split.lotId(),
-                movement.skuId(), movement.baseUnitId(), split.baseQuantity(),
-                MovementType.PURCHASE_RETURN_OUT.name())));
-        }
-        if (!byLine.isEmpty()) throw new ServiceException("PUR-LOT-008: 批次拆分引用了未知采购退货行", 409);
-        if (!lotLines.isEmpty()) {
-            lotMovementPort.applyExplicit(new ExplicitCommand(new CommandSource(command.eventId(),
-                "PURCHASE_RETURN", command.purchaseReturnId(), receipt.warehouseId(), receipt.storeId(),
-                businessDate, command.correlationId()), "MIXED", lotLines));
-        }
     }
 
     @Transactional(readOnly = true)
@@ -587,7 +510,7 @@ public class ProcurementService implements ReplenishmentProcurementSnapshotPort,
         ProcurementRules.ulid(command.orderLineId(), "orderLineId");
         ProcurementRules.ulid(command.supplierId(), "supplierId");
         ProcurementRules.ulid(command.warehouseId(), "warehouseId");
-        requireCorrelation(command.correlationId());
+        commandPolicy.requireCorrelation(command.correlationId());
         TrustedPrincipal principal = tenantContext.requirePrincipal();
         authorizationService.requireStoreAccess(command.storeId());
         Supplier supplier = mapper.lockSupplier(principal.tenantId(), command.supplierId());
@@ -625,82 +548,6 @@ public class ProcurementService implements ReplenishmentProcurementSnapshotPort,
             command.purchaseOrderId(), command.suggestionId(), command.correlationId(), null, "DRAFT",
             "SOURCE_REPLENISHMENT", at);
         return new DraftResult(command.purchaseOrderId(), "DRAFT", false);
-    }
-
-    private void validateOrder(CreateOrder command) {
-        ProcurementRules.ulid(command.orderId(), "orderId");
-        ProcurementRules.ulid(command.supplierId(), "supplierId");
-        ProcurementRules.ulid(command.warehouseId(), "warehouseId");
-        requireCorrelation(command.correlationId());
-        if (command.storeId() == null || command.storeId() <= 0 || command.expectedDate() == null
-            || command.lines().isEmpty() || command.lines().size() > 500
-            || new HashSet<>(command.lines().stream().map(
-                com.jingshanghui.pos.procurement.application.model.ProcurementCommands.OrderLine::orderLineId).toList()).size()
-                != command.lines().size()) {
-            throw new ServiceException("PUR-ORDER-002: 采购单主体或行数非法", 409);
-        }
-    }
-
-    private void validateReceiptDraft(CreateReceipt command) {
-        ProcurementRules.ulid(command.receiptId(), "receiptId");
-        ProcurementRules.ulid(command.orderId(), "orderId");
-        requireCorrelation(command.correlationId());
-        if (command.lines().isEmpty() || command.lines().size() > 500
-            || new HashSet<>(command.lines().stream().map(
-                com.jingshanghui.pos.procurement.application.model.ProcurementCommands.ReceiptLine::receiptLineId).toList()).size()
-                != command.lines().size()) {
-            throw new ServiceException("PUR-RECEIPT-006: 收货行必须唯一且为1至500项", 409);
-        }
-    }
-
-    private void validateReceiptConfirmation(ConfirmReceipt command) {
-        ProcurementRules.ulid(command.receiptId(), "receiptId");
-        ProcurementRules.ulid(command.eventId(), "eventId");
-        requireCorrelation(command.correlationId());
-        if (command.lotSplits().size() > 1000) {
-            throw new ServiceException("PUR-LOT-009: 收货批次拆分超过1000项", 409);
-        }
-        command.lotSplits().forEach(split -> {
-            ProcurementRules.ulid(split.receiptLineId(), "receiptLineId");
-            ProcurementRules.quantity(split.baseQuantity(), "lotBaseQuantity");
-        });
-    }
-
-    private void validateReturnDraft(CreateReturn command) {
-        ProcurementRules.ulid(command.purchaseReturnId(), "purchaseReturnId");
-        ProcurementRules.ulid(command.receiptId(), "receiptId");
-        requireCorrelation(command.correlationId());
-        if (command.lines().isEmpty() || command.lines().size() > 500
-            || new HashSet<>(command.lines().stream().map(
-                com.jingshanghui.pos.procurement.application.model.ProcurementCommands.ReturnLine::returnLineId).toList()).size()
-                != command.lines().size()) {
-            throw new ServiceException("PUR-RETURN-006: 退货行必须唯一且为1至500项", 409);
-        }
-    }
-
-    private void validateReturnApproval(ApproveReturn command) {
-        ProcurementRules.ulid(command.purchaseReturnId(), "purchaseReturnId");
-        ProcurementRules.ulid(command.eventId(), "eventId");
-        requireCorrelation(command.correlationId());
-        if (command.lotSplits().size() > 1000) {
-            throw new ServiceException("PUR-LOT-010: 退货批次拆分超过1000项", 409);
-        }
-        command.lotSplits().forEach(split -> {
-            ProcurementRules.ulid(split.returnLineId(), "returnLineId");
-            ProcurementRules.ulid(split.lotId(), "lotId");
-            ProcurementRules.quantity(split.baseQuantity(), "lotBaseQuantity");
-        });
-    }
-
-    private String hashOrder(CreateOrder command) {
-        List<Object> values = new ArrayList<>(List.of(command.orderId(), command.supplierId(), command.storeId(),
-            command.warehouseId(), command.expectedDate(), command.overReceiptToleranceBps()));
-        command.lines().stream().sorted(Comparator.comparing(
-            com.jingshanghui.pos.procurement.application.model.ProcurementCommands.OrderLine::orderLineId)).forEach(line -> {
-                values.add(line.orderLineId()); values.add(line.skuId()); values.add(line.unitId());
-                values.add(line.orderedQuantity()); values.add(line.unitPriceMinor()); values.add(line.taxRateBps());
-            });
-        return ProcurementHash.sha256(ProcurementHash.canonical(values));
     }
 
     private OrderHead requireLockedOrder(String tenantId, String orderId) {
@@ -749,12 +596,5 @@ public class ProcurementService implements ReplenishmentProcurementSnapshotPort,
         mapper.insertOutbox(new OutboxWrite(ulids.next(), tenantId, type, aggregateId, version,
             correlationId, json, ProcurementHash.sha256(json), at));
     }
-
-    private void requireCorrelation(String value) {
-        ProcurementRules.text(value, 96, "PUR-INPUT-002");
-    }
-
-    private LocalDateTime now() {
-        return LocalDateTime.now(clock.withZone(ZoneOffset.UTC));
-    }
+    private LocalDateTime now() { return LocalDateTime.now(clock.withZone(ZoneOffset.UTC)); }
 }

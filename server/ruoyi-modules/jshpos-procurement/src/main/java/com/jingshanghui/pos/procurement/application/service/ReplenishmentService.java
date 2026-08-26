@@ -28,12 +28,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Clock;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -59,15 +57,17 @@ public class ReplenishmentService {
     private final UlidGenerator ulids;
     private final ObjectMapper objectMapper;
     private final Clock clock;
+    /** 纯命令规则不持有 Mapper 或事务，公开事务入口仍由本服务独占。 */
+    private final ReplenishmentCommandPolicy commandPolicy = new ReplenishmentCommandPolicy();
 
     /** 创建尚未生效的规则版本，并冻结商品单位与供应商快照。 */
     @Transactional
     public PolicyDetail createPolicy(CreatePolicy command) {
-        validateCreatePolicy(command);
+        commandPolicy.validateCreatePolicy(command);
         TrustedPrincipal principal = tenantContext.requirePrincipal();
         authorizationService.requireTenantAdministrator();
         authorizationService.requireStoreAccess(command.storeId());
-        String requestHash = policyRequestHash(command);
+        String requestHash = commandPolicy.policyRequestHash(command);
         PolicyView existingByKey = mapper.findPolicyByIdempotencyKey(principal.tenantId(), command.idempotencyKey());
         if (existingByKey != null) {
             if (!command.policyVersionId().equals(existingByKey.policyVersionId())
@@ -85,7 +85,7 @@ public class ReplenishmentService {
         }
         LocalDateTime at = now();
         mapper.insertPolicy(new PolicyWrite(command.policyVersionId(), principal.tenantId(), command.storeId(),
-            command.warehouseId(), command.versionNo(), utc(command.effectiveFrom()), command.idempotencyKey(),
+            command.warehouseId(), command.versionNo(), commandPolicy.utc(command.effectiveFrom()), command.idempotencyKey(),
             requestHash, principal.userId(), at));
         for (PolicyItemInput input : command.items().stream()
             .sorted(Comparator.comparing(PolicyItemInput::policyItemId)).toList()) {
@@ -130,12 +130,12 @@ public class ReplenishmentService {
     /** 按库存检查点、规则版本和可选确认在途量生成可解释建议。 */
     @Transactional
     public GenerationResult generate(GenerateSuggestions command) {
-        validateGeneration(command);
+        commandPolicy.validateGeneration(command, clock.instant());
         TrustedPrincipal principal = tenantContext.requirePrincipal();
         PolicyView policy = mapper.lockPolicy(principal.tenantId(), command.policyVersionId());
         if (policy == null) throw new ServiceException("RPL-POLICY-001: 规则版本不存在或不可见", 404);
         authorizationService.requireStoreAccess(policy.storeId());
-        LocalDateTime calculationAt = utc(command.calculationAt());
+        LocalDateTime calculationAt = commandPolicy.utc(command.calculationAt());
         if (!"PUBLISHED".equals(policy.state()) || policy.effectiveFrom().isAfter(calculationAt)) {
             throw new ServiceException("RPL-POLICY-004: 规则未发布或尚未生效", 409);
         }
@@ -178,7 +178,7 @@ public class ReplenishmentService {
             stalePrevious(principal, item, inventory.lastLedgerSequence(), command.correlationId(), at);
             Calculation calculation = result.orElseThrow();
             String suggestionId = ulids.next();
-            String contentHash = suggestionHash(policy, item, inventory, transit, calculation);
+            String contentHash = commandPolicy.suggestionHash(policy, item, inventory, transit, calculation);
             mapper.insertSuggestion(new SuggestionWrite(suggestionId, principal.tenantId(),
                 command.generationRunId(), policy.policyVersionId(), item.policyItemId(), policy.storeId(),
                 policy.warehouseId(), item.skuId(), item.skuCode(), item.baseUnitId(), item.purchaseUnitId(),
@@ -219,11 +219,11 @@ public class ReplenishmentService {
 
     @Transactional
     public SuggestionView reject(SuggestionCommand command) {
-        validateSuggestionCommand(command);
+        commandPolicy.validateSuggestionCommand(command);
         TrustedPrincipal principal = tenantContext.requirePrincipal();
         SuggestionView value = requireSuggestion(principal.tenantId(), command.suggestionId(), true);
         authorizationService.requireStoreAccess(value.storeId());
-        String commandHash = hashCommand("REJECTED", value.suggestionId(), command.expectedVersion(),
+        String commandHash = commandPolicy.hashCommand("REJECTED", value.suggestionId(), command.expectedVersion(),
             command.reason(), command.idempotencyKey());
         IdempotencyView duplicate = mapper.findIdempotency(principal.tenantId(), command.idempotencyKey());
         if (duplicate != null) {
@@ -238,9 +238,9 @@ public class ReplenishmentService {
     /** 经审批建议才可转采购草稿；库存或单位变化会把建议显式置为 STALE。 */
     @Transactional
     public SuggestionView createPurchaseDraft(CreatePurchaseDraft command) {
-        validateDraft(command);
+        commandPolicy.validateDraft(command);
         TrustedPrincipal principal = tenantContext.requirePrincipal();
-        String commandHash = hashCommand("PURCHASE_DRAFT", command.suggestionId(), command.expectedVersion(),
+        String commandHash = commandPolicy.hashCommand("PURCHASE_DRAFT", command.suggestionId(), command.expectedVersion(),
             command.purchaseOrderId(), command.expectedDate(), command.idempotencyKey());
         IdempotencyView duplicate = mapper.findIdempotency(principal.tenantId(), command.idempotencyKey());
         if (duplicate != null) return duplicateResult(principal.tenantId(), duplicate, commandHash, command.suggestionId());
@@ -285,23 +285,25 @@ public class ReplenishmentService {
 
     @Transactional(readOnly = true)
     public List<PolicyView> listPolicies(Long storeId, String state, int limit) {
-        requireStore(storeId);
+        commandPolicy.requireStore(storeId);
         authorizationService.requireStoreAccess(storeId);
-        return mapper.listPolicies(tenantContext.requireTenantId(), storeId, optionalState(state), pageLimit(limit));
+        return mapper.listPolicies(tenantContext.requireTenantId(), storeId, commandPolicy.optionalState(state),
+            commandPolicy.pageLimit(limit));
     }
 
     @Transactional(readOnly = true)
     public List<SuggestionView> listSuggestions(Long storeId, String state, int limit) {
-        requireStore(storeId);
+        commandPolicy.requireStore(storeId);
         authorizationService.requireStoreAccess(storeId);
-        return mapper.listSuggestions(tenantContext.requireTenantId(), storeId, optionalState(state), pageLimit(limit));
+        return mapper.listSuggestions(tenantContext.requireTenantId(), storeId, commandPolicy.optionalState(state),
+            commandPolicy.pageLimit(limit));
     }
 
     private PolicyDetail changePolicyState(PolicyCommand command, String expected, String next, boolean publish) {
-        validatePolicyCommand(command);
+        commandPolicy.validatePolicyCommand(command);
         TrustedPrincipal principal = tenantContext.requirePrincipal();
         authorizationService.requireTenantAdministrator();
-        String commandHash = hashCommand(next, command.policyVersionId(), command.expectedVersion(),
+        String commandHash = commandPolicy.hashCommand(next, command.policyVersionId(), command.expectedVersion(),
             command.idempotencyKey());
         IdempotencyView duplicate = mapper.findAuditIdempotency(principal.tenantId(), command.idempotencyKey());
         if (duplicate != null) {
@@ -340,12 +342,12 @@ public class ReplenishmentService {
     }
 
     private SuggestionView transition(SuggestionCommand command, String expected, String next, boolean admin) {
-        validateSuggestionCommand(command);
+        commandPolicy.validateSuggestionCommand(command);
         TrustedPrincipal principal = tenantContext.requirePrincipal();
         SuggestionView value = requireSuggestion(principal.tenantId(), command.suggestionId(), true);
         authorizationService.requireStoreAccess(value.storeId());
         if (admin) authorizationService.requireTenantAdministrator();
-        String commandHash = hashCommand(next, value.suggestionId(), command.expectedVersion(),
+        String commandHash = commandPolicy.hashCommand(next, value.suggestionId(), command.expectedVersion(),
             command.reason(), command.idempotencyKey());
         IdempotencyView duplicate = mapper.findIdempotency(principal.tenantId(), command.idempotencyKey());
         if (duplicate != null) {
@@ -362,7 +364,7 @@ public class ReplenishmentService {
 
     private SuggestionView applyTransition(TrustedPrincipal principal, SuggestionView value, String next,
                                            SuggestionCommand command, boolean approver) {
-        String commandHash = hashCommand(next, value.suggestionId(), command.expectedVersion(),
+        String commandHash = commandPolicy.hashCommand(next, value.suggestionId(), command.expectedVersion(),
             command.reason(), command.idempotencyKey());
         IdempotencyView duplicate = mapper.findIdempotency(principal.tenantId(), command.idempotencyKey());
         if (duplicate != null) return duplicateResult(principal.tenantId(), duplicate, commandHash, value.suggestionId());
@@ -492,113 +494,6 @@ public class ReplenishmentService {
         return mapper.findPolicyItems(tenantContext.requireTenantId(), suggestion.policyVersionId()).stream()
             .filter(item -> item.policyItemId().equals(suggestion.policyItemId())).findFirst()
             .orElseThrow(() -> new ServiceException("RPL-POLICY-005: 冻结规则项缺失", 409)).taxRateBps();
-    }
-
-    private String suggestionHash(PolicyView policy, PolicyItemView item, InventorySnapshot inventory,
-                                  BigDecimal transit, Calculation calculation) {
-        return ReplenishmentHash.sha256(ReplenishmentHash.canonical(List.of(policy.policyVersionId(),
-            item.itemSha256(), inventory.lastLedgerSequence(), inventory.balanceVersion(),
-            inventory.onHandQuantity(), inventory.reservedQuantity(), inventory.frozenQuantity(),
-            inventory.safetyStockQuantity(), inventory.availableQuantity(), transit,
-            calculation.effectiveQuantity(), calculation.requiredBaseQuantity(),
-            calculation.suggestedPurchaseQuantity())));
-    }
-
-    private String policyRequestHash(CreatePolicy command) {
-        List<Object> values = new ArrayList<>(List.of(command.policyVersionId(), command.storeId(),
-            command.warehouseId(), command.versionNo(), command.effectiveFrom(), command.idempotencyKey()));
-        command.items().stream().sorted(Comparator.comparing(PolicyItemInput::policyItemId)).forEach(item -> {
-            values.add(item.policyItemId()); values.add(item.skuId()); values.add(item.purchaseUnitId());
-            values.add(item.supplierId()); values.add(item.minimumBaseQuantity()); values.add(item.maximumBaseQuantity());
-            values.add(item.minimumOrderQuantity()); values.add(item.orderMultiple());
-            values.add(item.includeConfirmedInTransit()); values.add(item.unitPriceMinor()); values.add(item.taxRateBps());
-        });
-        return ReplenishmentHash.sha256(ReplenishmentHash.canonical(values));
-    }
-
-    private String hashCommand(Object... values) {
-        return ReplenishmentHash.sha256(ReplenishmentHash.canonical(List.of(values)));
-    }
-
-    private void validateCreatePolicy(CreatePolicy command) {
-        if (command == null) throw new ServiceException("RPL-INPUT-004: 请求为空", 400);
-        ReplenishmentRules.ulid(command.policyVersionId(), "policyVersionId");
-        ReplenishmentRules.ulid(command.warehouseId(), "warehouseId");
-        requireStore(command.storeId());
-        if (command.versionNo() <= 0 || command.effectiveFrom() == null || command.items().isEmpty()
-            || command.items().size() > 10_000) {
-            throw new ServiceException("RPL-POLICY-003: 版本、生效时刻或规则项数量非法", 409);
-        }
-        ReplenishmentRules.text(command.idempotencyKey(), 96, "RPL-INPUT-005");
-        ReplenishmentRules.text(command.correlationId(), 96, "RPL-INPUT-006");
-        HashSet<String> ids = new HashSet<>();
-        HashSet<Long> skus = new HashSet<>();
-        for (PolicyItemInput item : command.items()) {
-            ReplenishmentRules.ulid(item.policyItemId(), "policyItemId");
-            ReplenishmentRules.ulid(item.supplierId(), "supplierId");
-            if (item.skuId() == null || item.skuId() <= 0 || item.purchaseUnitId() == null
-                || item.purchaseUnitId() <= 0 || !ids.add(item.policyItemId()) || !skus.add(item.skuId())) {
-                throw new ServiceException("RPL-POLICY-006: 规则项标识、SKU或单位非法/重复", 409);
-            }
-        }
-    }
-
-    private void validatePolicyCommand(PolicyCommand command) {
-        if (command == null || command.expectedVersion() < 0) {
-            throw new ServiceException("RPL-INPUT-004: 请求或版本非法", 400);
-        }
-        ReplenishmentRules.ulid(command.policyVersionId(), "policyVersionId");
-        ReplenishmentRules.text(command.idempotencyKey(), 96, "RPL-INPUT-005");
-        ReplenishmentRules.text(command.correlationId(), 96, "RPL-INPUT-006");
-    }
-
-    private void validateGeneration(GenerateSuggestions command) {
-        if (command == null || command.calculationAt() == null) {
-            throw new ServiceException("RPL-INPUT-004: 请求或计算时点为空", 400);
-        }
-        ReplenishmentRules.ulid(command.generationRunId(), "generationRunId");
-        ReplenishmentRules.ulid(command.policyVersionId(), "policyVersionId");
-        ReplenishmentRules.text(command.idempotencyKey(), 96, "RPL-INPUT-005");
-        ReplenishmentRules.text(command.correlationId(), 96, "RPL-INPUT-006");
-        if (command.calculationAt().isAfter(clock.instant().plusSeconds(300))) {
-            throw new ServiceException("RPL-RUN-001: 计算时点不可显著晚于服务端时钟", 409);
-        }
-    }
-
-    private void validateSuggestionCommand(SuggestionCommand command) {
-        if (command == null || command.expectedVersion() < 0) {
-            throw new ServiceException("RPL-INPUT-004: 请求或版本非法", 400);
-        }
-        ReplenishmentRules.ulid(command.suggestionId(), "suggestionId");
-        ReplenishmentRules.text(command.idempotencyKey(), 96, "RPL-INPUT-005");
-        ReplenishmentRules.text(command.correlationId(), 96, "RPL-INPUT-006");
-    }
-
-    private void validateDraft(CreatePurchaseDraft command) {
-        if (command == null || command.expectedVersion() < 0 || command.expectedDate() == null) {
-            throw new ServiceException("RPL-INPUT-004: 请求、版本或预计日期非法", 400);
-        }
-        ReplenishmentRules.ulid(command.suggestionId(), "suggestionId");
-        ReplenishmentRules.ulid(command.purchaseOrderId(), "purchaseOrderId");
-        ReplenishmentRules.text(command.idempotencyKey(), 96, "RPL-INPUT-005");
-        ReplenishmentRules.text(command.correlationId(), 96, "RPL-INPUT-006");
-    }
-
-    private String optionalState(String state) {
-        return state == null || state.isBlank() ? null : ReplenishmentRules.text(state, 24, "RPL-INPUT-007");
-    }
-
-    private int pageLimit(int limit) {
-        if (limit < 1 || limit > 500) throw new ServiceException("RPL-INPUT-008: limit 必须为1至500", 400);
-        return limit;
-    }
-
-    private void requireStore(Long storeId) {
-        if (storeId == null || storeId <= 0) throw new ServiceException("RPL-INPUT-009: storeId 非法", 400);
-    }
-
-    private LocalDateTime utc(Instant instant) {
-        return LocalDateTime.ofInstant(instant, ZoneOffset.UTC);
     }
 
     private LocalDateTime now() {

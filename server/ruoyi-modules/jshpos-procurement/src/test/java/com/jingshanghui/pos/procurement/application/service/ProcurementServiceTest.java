@@ -65,7 +65,8 @@ class ProcurementServiceTest {
     void setUp() {
         when(context.requireTenantId()).thenReturn("TENANT_A");
         when(context.requirePrincipal()).thenReturn(new TrustedPrincipal("TENANT_A", 202L, 1L, "operator"));
-        service = new ProcurementService(mapper, context, authorization, catalog, movement, lots, stores,
+        service = new ProcurementService(mapper, context, authorization, catalog, movement,
+            new ProcurementLotCoordinator(lots), stores,
             new UlidGenerator(clock), new ObjectMapper(), clock);
     }
 

@@ -121,7 +121,7 @@ def main() -> None:
 
     with (ROOT / "docs/governance/rtm.csv").open(encoding="utf-8-sig", newline="") as stream:
         rows = {row["requirement_id"]: row for row in csv.DictReader(stream)}
-    accepted = sum(row["status"] == "ACCEPTED" for row in rows.values())
+    accepted = sum(row["phase"] == "T2" and row["status"] == "ACCEPTED" for row in rows.values())
     if accepted != 88:
         fail(f"ACCEPTED 需求漂移: {accepted}")
     for requirement, state in PRESERVED.items():
