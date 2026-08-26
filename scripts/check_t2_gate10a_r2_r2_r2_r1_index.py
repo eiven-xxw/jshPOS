@@ -114,8 +114,9 @@ def main() -> None:
     agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
     log = (ROOT / "docs/governance/change-log.md").read_text(encoding="utf-8")
     cr = (ROOT / "docs/governance/CR-T2G10A-018_RPT-SALES-keyset索引前向迁移提案.md").read_text(encoding="utf-8")
-    require("## 4.85" in agents and "CR-T2G10A-019" in log
-            and "APPROVED_RUNTIME_IN_PROGRESS" in cr, "治理批准记录不完整")
+    require("## 4.85" in agents and "CR-T2G10A-021" in log
+            and "INDEX_VERIFIED_AWAITING_SPONSOR_CONFIRMATION" in cr,
+            "治理批准与验证记录不完整")
     print(f"T2 Gate10A RPT-SALES INDEX OK: changed={len(changed)} migration=V88-only "
           "sqlMapperApi=unchanged finding=OPEN res=PREPARED external=0")
 

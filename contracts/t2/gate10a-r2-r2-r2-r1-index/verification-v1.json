@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "1.0",
+  "gate": "T2_GATE10A_R2_R2_R2_R1_INDEX",
+  "decision": "INDEX_VERIFIED_AWAITING_SPONSOR_CONFIRMATION",
+  "candidateCommit": "6b0552d1edcde3da89ca1c59b5191be20e919aad",
+  "githubRun": 32983607774,
+  "jobs": 10,
+  "allJobsGreen": true,
+  "mysql": {
+    "version": "8.4.11",
+    "emptyToV88": true,
+    "v87ToV88": true,
+    "repeatExecutionZero": true,
+    "flywayValidate": true,
+    "tiers": {
+      "10k": {
+        "approvedIndexObserved": true,
+        "fullScanObserved": false,
+        "filesortObserved": false,
+        "interactiveQueryCount": 1,
+        "exportQueryCount": 1,
+        "duplicateKeys": 0,
+        "missingRows": 0,
+        "crossTenantRows": 0,
+        "amountInvariantPassed": true
+      },
+      "100k": {
+        "approvedIndexObserved": true,
+        "fullScanObserved": false,
+        "filesortObserved": false,
+        "interactiveQueryCount": 1,
+        "exportQueryCount": 9,
+        "exportQueryBudget": 9,
+        "duplicateKeys": 0,
+        "missingRows": 0,
+        "crossTenantRows": 0,
+        "amountInvariantPassed": true
+      }
+    }
+  },
+  "evidenceArtifact": {
+    "id": 9612649154,
+    "name": "t2-gate10a-rpt-sales-evidence-index",
+    "downloadedArchiveSha256": "2523b13caa14d6d0198107fb215ba1f4b899e224d97a3e298b350292908e9060"
+  },
+  "findingState": "OPEN",
+  "resourceFindingState": "PREPARED",
+  "externalExecution": 0
+}

@@ -4,6 +4,9 @@
   "startCommit": "53bcf39d868092142e6464b8c9db730b0074dd2a",
   "branch": "t2/gate10a-r2-r2-r2-r1-index-runtime",
   "changeRequest": "CR-T2G10A-018",
+  "decision": "INDEX_VERIFIED_AWAITING_SPONSOR_CONFIRMATION",
+  "candidateCommit": "6b0552d1edcde3da89ca1c59b5191be20e919aad",
+  "githubRun": 32983607774,
   "finding": {"id": "G10A-SQL-P2-001", "state": "OPEN"},
   "admitted": [
     "V202608260088_ONLY",

@@ -2,7 +2,7 @@
 
 ## 1. 当前状态
 
-- 状态：`APPROVED_RUNTIME_IN_PROGRESS`
+- 状态：`INDEX_VERIFIED_AWAITING_SPONSOR_CONFIRMATION`
 - Finding：`G10A-SQL-P2-001 = OPEN`
 - 依据：Gate 10A-R2-R2-R2-R1 的 MySQL 8.4.11 固定 10k/100k 可执行计划
 - 证据边界：`INTERNAL_SYNTHETIC_MYSQL84_ONLY`
@@ -10,6 +10,8 @@
 - 项目发起人确认：2026-08-26 `CONDITIONAL GO`；只授权
   `Gate 10A-R2-R2-R2-R1-INDEX`，起点为
   `53bcf39d868092142e6464b8c9db730b0074dd2a`。
+- 验证候选：`6b0552d1edcde3da89ca1c59b5191be20e919aad`；完整 CI
+  [Run 32983607774](https://github.com/eiven-xxw/jshPOS/actions/runs/32983607774) 十项 Job 全绿。
 
 ## 2. 可复现实测结论
 
@@ -48,6 +50,7 @@
 
 ## 5. Go/No-Go
 
-- 结论：`CONDITIONAL GO`，仅准入上述单一索引与 V88；SQL/Mapper 继续冻结。
+- 结论：索引子批 `CONDITIONAL PASS / INDEX_VERIFIED_AWAITING_SPONSOR_CONFIRMATION`；
+  上述单一索引与 V88 已完成内部验证，SQL/Mapper 继续冻结。
 - 即使本 CR 获批，`G10A-SQL-P2-001` 仍保持 `OPEN`；只有索引计划复验及后续获批查询全部完成，
   才能另行申请关闭 Finding。
