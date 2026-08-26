@@ -1,6 +1,7 @@
 name: T2 Gate 10A RPT Inventory Remediation Preparation
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - "t2/gate10a-r2-r2-r2-r2-rpt-inventory-prep"
