@@ -38,7 +38,11 @@ P0/P1 为 0；没有新增业务、Requirement、运行时、依赖、数据库�
 `T2-UAT-001`，不代表 SANDBOX、REAL_DEVICE、REAL_PERIPHERAL、PILOT、FULL_ALPHA、
 PRODUCTION、COMMERCIAL 或商业 SLA。
 
-## 5. 待回填
+## 5. 候选与完整 CI
 
-候选 commit、GitHub Run、8 类 Artifact 和最终摘要在完整 CI 全绿后回填证据索引；
-回填治理提交仍需从新提交重跑完整 CI。项目发起人确认前不创建 tag。
+- 完整候选提交：`756038c0b53323a173892535aa996fc392c825c2`；
+- GitHub Run：<https://github.com/eiven-xxw/jshPOS/actions/runs/32927500915>；
+- 结果：8 个作业节点全绿，耗时 4m18s；
+- 制品：8 个，ID 与 SHA-256 已写入 `contracts/t2/gate9c/seal-ci-evidence-v1.json`；
+- 首个失败 Run `32926660201` 与修复链已保留，未重跑失败 Job；
+- 本次证据回填治理提交必须从新提交重新执行完整 CI。项目发起人确认前不创建 tag。

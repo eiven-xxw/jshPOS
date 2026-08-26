@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "1.0",
+  "commitSha": "756038c0b53323a173892535aa996fc392c825c2",
+  "runId": "32927500915",
+  "result": "SUCCESS",
+  "duration": "4m18s",
+  "jobCount": 8,
+  "artifacts": [
+    {"name": "t2-gate9c-seal-evidence-index", "artifactId": "9592115693", "sha256": "7b8163456fba75a939afe0518e0ee03731be195870b8c089707cd05b3309a126"},
+    {"name": "t2-gate9c-seal-flutter-ubuntu-latest", "artifactId": "9592067497", "sha256": "a467afa1ed835559cd9814f01eedf62d787f6a3e30d33b139d36ea52672b8888"},
+    {"name": "t2-gate9c-seal-flutter-windows-latest", "artifactId": "9592107947", "sha256": "4df77fd1997b1b677ee7b670db6234beaf75c26245a13516f954f32591039d0c"},
+    {"name": "t2-gate9c-seal-governance-ubuntu", "artifactId": "9592033292", "sha256": "46b1eb571b62258cfaa84af43dd0306710b9e1f0230c5811d47b769c4fe7983e"},
+    {"name": "t2-gate9c-seal-governance-windows", "artifactId": "9592035627", "sha256": "d9bcba082111a1cdcbcff48f409f842e7de74e8c422906de0e676daba6088368"},
+    {"name": "t2-gate9c-seal-scope-integrity", "artifactId": "9592032325", "sha256": "5ff1e1d83662c7e88e526c0f0095cfbbb7d52164d1e0b54c1ed0d289c1d8f12a"},
+    {"name": "t2-gate9c-seal-server-baseline", "artifactId": "9592097152", "sha256": "133a34b95853b5b33757087f4b433366cab2e910ac42630ec2d054b7231dfa2f"},
+    {"name": "t2-gate9c-seal-web-baseline", "artifactId": "9592061791", "sha256": "5c175cafd996abe6eef53bd19a711cea7311bb056120c456bcfde9dcbd7d988f"}
+  ],
+  "rerunFailedJob": false,
+  "automaticTag": false
+}

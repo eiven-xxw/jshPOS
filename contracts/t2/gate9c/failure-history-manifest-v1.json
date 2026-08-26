@@ -44,6 +44,14 @@
       "failure": "EVIDENCE_INDEX_PYTHON_BOOLEAN_LITERAL",
       "upstreamJobsPassed": 7,
       "rerunFailedJob": false
+    },
+    {
+      "runId": "32927500915",
+      "commitSha": "756038c0b53323a173892535aa996fc392c825c2",
+      "result": "SUCCESS",
+      "purpose": "COMPLETE_SEAL_CANDIDATE_AFTER_NEW_COMMIT",
+      "jobCount": 8,
+      "rerunFailedJob": false
     }
   ]
 }

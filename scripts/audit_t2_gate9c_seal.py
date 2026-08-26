@@ -61,6 +61,7 @@ def main() -> int:
     prep_closure = load_json(PREP_CONTRACT / "finding-closure-register-v1.json")
     prep_summary = load_json(current_state_dir / "summary.json")
     source_ci = load_json(CONTRACT / "source-prep-ci-v1.json")
+    seal_ci = load_json(CONTRACT / "seal-ci-evidence-v1.json")
     failures: list[str] = []
 
     expected = {
@@ -127,6 +128,21 @@ def main() -> int:
         if not re.fullmatch(r"[0-9a-f]{64}", artifact["sha256"]):
             failures.append(f"invalid artifact digest: {artifact['name']}")
 
+    if seal_ci["result"] != "SUCCESS" or seal_ci["jobCount"] != 8:
+        failures.append("Gate 9C complete CI evidence incomplete")
+    if len(seal_ci["artifacts"]) != 8:
+        failures.append("Gate 9C artifact count drift")
+    if seal_ci["rerunFailedJob"] or seal_ci["automaticTag"]:
+        failures.append("Gate 9C rerun/tag boundary drift")
+    if not re.fullmatch(r"[0-9a-f]{40}", seal_ci["commitSha"]):
+        failures.append("invalid Gate 9C candidate commit")
+    for artifact in seal_ci["artifacts"]:
+        if not re.fullmatch(r"\d{10}", artifact["artifactId"]):
+            failures.append(f"invalid Gate 9C artifact id: {artifact['name']}")
+        if not re.fullmatch(r"[0-9a-f]{64}", artifact["sha256"]):
+            failures.append(f"invalid Gate 9C artifact digest: {artifact['name']}")
+    git("cat-file", "-e", f"{seal_ci['commitSha']}^{{commit}}")
+
     critical_paths = [
         "docs/governance/rtm.csv",
         "docs/governance/change-log.md",
@@ -137,6 +153,7 @@ def main() -> int:
         "contracts/t2/gate9b-r4/gate-admission-v1.json",
         "docs/t2-gate9b-r4-runtime/02_G9A-R4最终证据索引.md",
         "contracts/t2/gate9c/source-prep-ci-v1.json",
+        "contracts/t2/gate9c/seal-ci-evidence-v1.json",
         "contracts/t2/gate9c/go-no-go-v1.json",
     ]
     input_manifest = []
