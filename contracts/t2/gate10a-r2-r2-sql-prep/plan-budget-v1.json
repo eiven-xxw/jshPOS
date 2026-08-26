@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "1.0",
+  "evidence": {
+    "logicalPlan": "EXPLAIN FORMAT=JSON",
+    "actualPlan": "EXPLAIN ANALYZE FORMAT=TREE",
+    "capture": ["normalized SQL digest", "typed bind parameters", "SHOW INDEX", "table cardinality", "optimizer_switch", "plan output", "rows returned", "JDBC query count"],
+    "planEvidenceRequiredBeforeRuntimeChange": true
+  },
+  "commonBudgets": {
+    "trustedTenantPredicateRequired": true,
+    "storeOrOwnerScopeRequiredWhenApplicable": true,
+    "deterministicOrderRequired": true,
+    "selectStarAllowed": false,
+    "crossTenantRowsAllowed": 0,
+    "permissionBypassAllowed": 0,
+    "fullScanOnFactTableAt100KAllowed": false,
+    "examinedToReturnedRatioMaximum": 20,
+    "automaticRetryAllowed": false
+  },
+  "classes": {
+    "INTERACTIVE": {"sessionMaxExecutionTimeMs": 2000, "maximumReturnedRows": 500},
+    "LOCKING": {"sessionMaxExecutionTimeMs": 2000, "maximumLockedRows": 500, "stableLockOrderRequired": true},
+    "PACKAGE_OR_EXPORT": {"sessionMaxExecutionTimeMs": 10000, "maximumReturnedRows": 100001},
+    "DOCUMENT_LINES": {"sessionMaxExecutionTimeMs": 1000, "maximumReturnedRows": 500}
+  },
+  "journeyQueryBudgets": [
+    {"journey": "REPORT_EXPORT", "current": "1 query per store and report type", "target": "query count must not grow linearly with store count; target <= 3 plus explicit chunks", "requiresRuntimeReview": true},
+    {"journey": "PAYMENT_RECONCILIATION", "current": "1 reference query per statement key plus one day-range query", "target": "reference lookup query count must not grow linearly with entry count", "requiresRuntimeReview": true},
+    {"journey": "LOT_EXPIRY_ALERT", "current": "1 lot query plus policy lookup per candidate row", "target": "policy query count must not grow linearly with lot count", "requiresRuntimeReview": true}
+  ],
+  "paginationDecision": {
+    "affectedQueries": ["RPT-SALES", "RPT-INVENTORY", "RPT-PAY-REC"],
+    "current": "31-day store-scoped but no explicit page contract",
+    "runtimeRule": "adding public pagination or changing response shape requires compatibility CR before implementation"
+  }
+}

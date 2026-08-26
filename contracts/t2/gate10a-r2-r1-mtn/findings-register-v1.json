@@ -1,9 +1,9 @@
 {
   "schemaVersion": "1.0",
   "gate": "T2_GATE_10A_R2_R1_MTN",
-  "summary": {"inProgressP2": 0, "verifiedP2": 1, "closedP2": 0},
+  "summary": {"inProgressP2": 0, "verifiedP2": 0, "closedP2": 1},
   "findings": [
-    {"findingId":"G10A-MTN-P2-001","state":"VERIFIED_AWAITING_SPONSOR_CONFIRMATION","runtimeAdmission":"AUTHORIZED","baselineLargeClasses":19,"target":"FIVE_RISK_CLASSES_REDUCED_AND_ALL_NINETEEN_MONOTONIC","actualTargetReductionLines":526,"newProductionClassMaximumObserved":141,"ownerDependencyCycles":0,"closed":false}
+    {"findingId":"G10A-MTN-P2-001","state":"CLOSED_IN_GATE10A_R2_R1","runtimeAdmission":"COMPLETED","baselineLargeClasses":19,"target":"FIVE_RISK_CLASSES_REDUCED_AND_ALL_NINETEEN_MONOTONIC","actualTargetReductionLines":526,"newProductionClassMaximumObserved":141,"ownerDependencyCycles":0,"closed":true,"sponsorConfirmedAt":"2026-08-26"}
   ],
   "preserved": {"G10A-SQL-P2-001":"PREPARED","G10A-RES-P2-001":"PREPARED"}
 }

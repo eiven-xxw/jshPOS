@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "1.0",
+  "dimensions": [
+    {"id": "QUERY_IDENTITY", "tests": ["12 mapper statement identities", "normalized SQL SHA-256", "typed parameters", "no SELECT star"]},
+    {"id": "MYSQL84_SCHEMA", "tests": ["MySQL 8.4.11 empty migration", "repeat migrate zero", "Flyway validate", "SHOW INDEX catalog", "published migration diff zero"]},
+    {"id": "PLAN", "tests": ["10k and 100k EXPLAIN FORMAT=JSON", "EXPLAIN ANALYZE TREE", "cold warm separation", "row estimate and actual ratios", "no unexplained fact full scan"]},
+    {"id": "TENANT_PERMISSION", "tests": ["trusted tenant injection", "same natural key in two tenants", "cross-tenant zero rows", "store scope deny", "task and export scope"]},
+    {"id": "PAGINATION", "tests": ["stable total order", "page size maximum", "no missing duplicate rows", "31-day boundary", "compatibility CR if public shape changes"]},
+    {"id": "N_PLUS_ONE", "tests": ["report export 1 10 50 stores", "reconciliation 1 100 1000 entries", "expiry alert 1 100 500 candidates", "JDBC query count budget"]},
+    {"id": "LOCK_TIMEOUT", "tests": ["FEFO stable lock order", "points FEFO NULL expiry order", "deadlock seed", "statement timeout", "rollback and retry identity"]},
+    {"id": "BOUNDARY", "tests": ["no runtime SQL Mapper index migration dependency change", "RES stays PREPARED", "external zero", "no commercial SLA"]}
+  ],
+  "exit": {
+    "preparedFindings": 1,
+    "runtimeChangesApplied": 0,
+    "databaseChangesApplied": 0,
+    "publishedMigrationsModified": 0,
+    "openP0": 0,
+    "openP1": 0,
+    "sponsorRuntimeConfirmationRequired": true
+  }
+}

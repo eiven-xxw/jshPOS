@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0",
   "gate": "T2_GATE_10A_PREP",
-  "summary": {"openP0": 0, "openP1": 0, "openP2": 7, "closedP2": 3, "runtimeFixesApplied": 0},
+  "summary": {"openP0": 0, "openP1": 0, "openP2": 6, "closedP2": 4, "runtimeFixesApplied": 1},
   "findings": [
     {
       "findingId": "G10A-CI-P2-001",
@@ -44,8 +44,8 @@
       "mapsTo": ["T2-MTN-001"],
       "title": "Server 存在 19 个不低于 400 行的 Owner 生产类且无复杂度预算门禁",
       "facts": ["656 Java production files", "19 Java files >= 400 physical lines", "largest class 760 physical lines"],
-      "state": "VERIFIED_AWAITING_SPONSOR_CONFIRMATION",
-      "closure": "行为金标、依赖/事务边界与19类只减不增预算已通过；5个高风险类合计减少526行，新生产类最大141行，Owner依赖环为0；等待项目发起人确认后方可关闭"
+      "state": "CLOSED_IN_GATE10A_R2_R1",
+      "closure": "项目发起人已确认行为金标、依赖/事务边界、19类只减不增预算和五个高风险类最小职责拆分；5类合计减少526行，新生产类最大141行，Owner依赖环为0"
     },
     {
       "findingId": "G10A-SQL-P2-001",

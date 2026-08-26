@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1.0",
+  "gate": "T2_GATE_10A_R2_R2_SQL_PREP",
+  "baselineCommit": "f2a9f454d5c306142b71dbae398853ae17daab9e",
+  "branch": "t2/gate10a-r2-r2-sql-prep",
+  "finding": "G10A-SQL-P2-001",
+  "classification": "STATIC_GOVERNANCE_MYSQL_PLAN_PREPARATION",
+  "allowed": [
+    "MySQL 8.4.11 ephemeral migration validation",
+    "synthetic data distribution and parameter design",
+    "query identity and SQL digest freeze",
+    "EXPLAIN FORMAT=JSON and EXPLAIN ANALYZE evidence design",
+    "index pagination N+1 timeout tenant permission audit",
+    "failure seeds impact analysis serial remediation plan governance CI evidence"
+  ],
+  "forbidden": [
+    "server runtime or Mapper Java/XML change",
+    "SQL annotation index database object dependency configuration change",
+    "published MySQL or SQLite migration change",
+    "new business capability or Requirement ID",
+    "resource endurance remediation",
+    "external execution full Alpha production release"
+  ],
+  "runtimeAdmission": "NOT_AUTHORIZED",
+  "newBusinessCapabilities": 0,
+  "externalExecution": 0
+}

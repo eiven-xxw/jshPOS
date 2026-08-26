@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "1.0",
+  "database": {
+    "engine": "MySQL",
+    "version": "8.4.11",
+    "image": "mysql:8.4.11@sha256:b3b90af2a6552ae30c266fdb7d5dd55f3afb72404bb78d37fe8a23eb857fd3fb",
+    "timeZone": "UTC",
+    "characterSet": "utf8mb4",
+    "collation": "utf8mb4_0900_ai_ci",
+    "statistics": "ANALYZE_TABLE_AFTER_SEED",
+    "coldAndWarmRuns": {"cold": 1, "warmup": 2, "measured": 5}
+  },
+  "execution": {
+    "runner": "github-hosted ubuntu-24.04",
+    "absoluteLatencyComparableAcrossRuns": false,
+    "planShapeAndRowRatiosAuthoritative": true,
+    "syntheticOnly": true,
+    "productionSla": false
+  },
+  "tenants": [
+    {"tenantId": "9000000000000000001", "industry": "CONVENIENCE_STORE", "stores": 10, "warehousesPerStore": 1},
+    {"tenantId": "9000000000000000002", "industry": "COMMUNITY_SUPERMARKET", "stores": 5, "warehousesPerStore": 2}
+  ],
+  "tiers": [
+    {"id": "SMOKE_10K", "rowsPerPrimaryFact": 10000, "requiredForRuntimeAdmission": true},
+    {"id": "BASELINE_100K", "rowsPerPrimaryFact": 100000, "requiredForRuntimeVerification": true},
+    {"id": "TREND_1M", "rowsPerPrimaryFact": 1000000, "requiredForRuntimeVerification": false, "classification": "SYNTHETIC_TREND_ONLY"}
+  ],
+  "skew": {
+    "hotTenantSharePercent": 80,
+    "hotStoreSharePercent": 60,
+    "hotSkuSharePercent": 20,
+    "nullExpiryPercent": 10,
+    "expiredLotPercent": 15,
+    "activePromotionPercent": 20,
+    "paymentRefundSharePercent": 15,
+    "reconciliationDifferencePercent": 5,
+    "maximumDocumentLines": 500,
+    "maximumExportStores": 50,
+    "maximumReportDays": 31
+  },
+  "dataRules": [
+    "two synthetic tenants must use identical natural keys to expose tenant leakage",
+    "business dates include month end year end leap day and UTC boundary",
+    "all ULID barcode currency quantity and amount values remain synthetic and valid",
+    "no production data PII payment credential or external identifier"
+  ]
+}

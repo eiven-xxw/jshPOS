@@ -1179,6 +1179,28 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
   `VERIFIED_AWAITING_SPONSOR_CONFIRMATION` 并提交独立周门禁报告，未经确认不得关闭。
 - 所有外部 `BLOCKED`、UAT/REL `DRAFT`、LIC/JSH `DEFERRED` 与零执行边界保持不变。
 
+## 4.81 当前 T2 Gate 10A-R2-R2 SQL 性能整改独立准备条件准入
+
+- 项目发起人已于 2026-08-26 接受 `G10A-MTN-P2-001 CONDITIONAL PASS` 并确认其为
+  `CLOSED_IN_GATE10A_R2_R1`；授权从最终治理提交
+  `f2a9f454d5c306142b71dbae398853ae17daab9e` 建立独立准备分支
+  `t2/gate10a-r2-r2-sql-prep`。
+- 本阶段只允许关闭已确认 MTN Finding、冻结 MySQL 8.4.11 镜像与执行器、合成数据分布、关键
+  查询身份/参数/摘要、`EXPLAIN FORMAT=JSON` 与 `EXPLAIN ANALYZE` 取证格式、索引/分页/N+1/
+  超时预算、可信租户与门店权限边界、可复现失败 Seed、影响分析、停止线、串行计划、治理 CI、
+  证据和启动评审报告。
+- 禁止修改任何 Server 运行时代码、Mapper Java/XML、SQL 注解、索引、数据库对象、依赖、配置和
+  已发布 MySQL/SQLite 迁移；准备阶段不得把 `G10A-SQL-P2-001` 标记为 `IN_PROGRESS`、
+  `VERIFIED` 或关闭。
+- 关键查询首先覆盖既有 12 个风险 Statement，并冻结报表导出按门店、支付对账按引用、临期策略
+  按批次的查询放大路径；这些红基线只能证明需要正式整改，不能作为生产性能或商业 SLA 结论。
+- 若正式整改需要新增/调整索引或数据库对象，必须先提交独立 CR，且只能新增前向迁移；若需要改变
+  API、错误码、资金、库存、租户、支付、同步、幂等、事件 Schema、Owner 或分页业务语义，必须
+  停止并申请 Requirement ID 与独立 CR。
+- `G10A-RES-P2-001` 继续 `PREPARED`，不得修改连接池、Redis、任务、Outbox、文件或长稳阈值；
+  R2-R2 准备报告经项目发起人再次确认前不得进入 SQL 正式整改。
+- 所有外部 `BLOCKED`、UAT/REL `DRAFT`、LIC/JSH `DEFERRED` 与零执行边界保持不变。
+
 ## 5. 工程与测试规则
 
 - 服务端采用 RuoYi-Vue-Plus 模块化单体，不得把领域逻辑写入 Controller、通用工具类或框架系统模块。

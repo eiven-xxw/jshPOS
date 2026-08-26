@@ -2,6 +2,7 @@
 
 | CR | 日期 | 状态 | 变更 | 影响需求/ADR | 批准人 |
 |---|---|---|---|---|---|
+| CR-T2G10A-009 | 2026-08-26 | SQL_PREP_IN_PROGRESS | 项目发起人确认关闭 G10A-MTN-P2-001，并授权从`f2a9f454d5c306142b71dbae398853ae17daab9e`进入 R2-R2 SQL 性能整改独立准备 | G10A-MTN-P2-001、G10A-SQL-P2-001、G10A-RES-P2-001、ADR-074 | 只允许查询/数据/计划/索引/分页/N+1/超时/租户权限基线、失败Seed与评审材料；SQL/Mapper/索引/迁移/运行时不变，RES保持PREPARED |
 | CR-T2G10A-008 | 2026-08-26 | VERIFIED_AWAITING_SPONSOR_CONFIRMATION | G10A-MTN-P2-001 完成行为金标保护、19类单调预算和五个高风险 Owner 类最小职责拆分 | G10A-MTN-P2-001、T2-MTN-001、ADR-074 | 提交`b1345e138554fe3690155c5a15ee50f2f4845322`的Run`32954582543`十项作业全绿，Evidence Artifact`9601746079`；Finding未关闭，SQL/RES保持PREPARED，外部执行为0 |
 | CR-T2G10A-007 | 2026-08-26 | APPROVED | 接受 ADR-074 并准入 Gate 10A-R2-R1 Server 可维护性正式整改 | G10A-MTN-P2-001、T2-MTN-001、ADR-074 | 仅允许行为金标、复杂度预算和五个高风险 Owner 类最小职责拆分；SQL/RES 与外部边界不变 |
 | CR-T2G9A-001 | 2026-08-24 | GATE9A_PREP_IN_PROGRESS | 项目发起人明确暂缓许可证和全部外部 P0，授权从`4ba20f8bb9bfdc36f4fee1b831ca35c7b54b9533`全面审计当前87项ACCEPTED需求、22个Owner、页面/API/装配/数据/事件/权限/测试/CI并升级历史15 Owner完整性工具 | T2-CMP-001、T2-CORE-001、T2-API-001、T2-INT-001、T2-E2E-004/005、ADR-068 | 本阶段仅审计与准备；运行时修复需再次确认；外部状态和零执行边界不变 |

@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "1.0",
+  "classification": "OBSERVED_PREP_RED_BASELINE",
+  "seeds": [
+    {"seedId": "G10A-R2-R2-SQL-PLAN-RED-001", "observation": "MYSQL_EXPLAIN_REGRESSION_FILES", "expectedCurrent": 0, "state": "FROZEN_RED"},
+    {"seedId": "G10A-R2-R2-SQL-DIGEST-001", "observation": "PRIMARY_QUERY_DIGESTS", "expectedCurrent": 12, "state": "FROZEN_GOLD"},
+    {"seedId": "G10A-R2-R2-SQL-N1-RED-002", "observation": "REPORT_EXPORT_QUERY_CALLS_SCALE_WITH_STORE_COUNT", "maximumStores": 50, "state": "FROZEN_RED"},
+    {"seedId": "G10A-R2-R2-SQL-N1-RED-003", "observation": "PAYMENT_RECONCILIATION_REFERENCE_QUERY_PER_ENTRY", "state": "FROZEN_RED"},
+    {"seedId": "G10A-R2-R2-SQL-N1-RED-004", "observation": "LOT_EXPIRY_POLICY_LOOKUP_PER_CANDIDATE", "maximumCandidates": 500, "state": "FROZEN_RED"},
+    {"seedId": "G10A-R2-R2-SQL-PAGE-RED-005", "observation": "INTERACTIVE_REPORT_QUERIES_WITHOUT_EXPLICIT_PAGE_CONTRACT", "expectedCurrent": 3, "state": "FROZEN_RED"},
+    {"seedId": "G10A-R2-R2-SQL-BOUNDARY-001", "observation": "RUNTIME_MAPPER_INDEX_MIGRATION_DEPENDENCY_CHANGE", "expectedCurrent": 0, "state": "FROZEN_GOLD"}
+  ],
+  "greenPlaceholderAllowed": false,
+  "automaticRetryAllowed": false
+}

@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "1.0",
+  "gate": "T2_GATE_10A_R2_R2_SQL_PREP",
+  "summary": {"closedP2": 1, "preparedP2": 2, "inProgressP2": 0, "verifiedP2": 0},
+  "findings": [
+    {
+      "findingId": "G10A-MTN-P2-001",
+      "state": "CLOSED_IN_GATE10A_R2_R1",
+      "sponsorConfirmedAt": "2026-08-26"
+    },
+    {
+      "findingId": "G10A-SQL-P2-001",
+      "state": "PREPARED_AWAITING_SPONSOR_RUNTIME_CONFIRMATION",
+      "primaryQueries": 12,
+      "observedRedSeeds": 6,
+      "runtimeAdmission": "NOT_AUTHORIZED",
+      "closed": false
+    },
+    {
+      "findingId": "G10A-RES-P2-001",
+      "state": "PREPARED",
+      "runtimeAdmission": "NOT_AUTHORIZED",
+      "closed": false
+    }
+  ]
+}
