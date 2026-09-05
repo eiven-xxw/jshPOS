@@ -10,7 +10,7 @@
 | 领域对象、状态机、账本、同步、设备、连接器、安全 | 详细设计 31—39 |
 | 技术栈、模块边界、编码、发布 | 技术架构与开发规范 V1.0 |
 | 后端日常编码与评审 | [JSH-POS-DEV-STD-001](backend-development-standards.md) |
-| 模型、持久化访问与数据库注释 | [JSH-POS-DEV-STD-002](model-persistence-database-comment-standards.md) |
+| 模型、持久化访问、无外键与数据库注释 | [JSH-POS-DEV-STD-002](model-persistence-database-comment-standards.md) 与 [ADR-075](../adr/ADR-075-local-runnable-and-no-mysql-foreign-keys.md) |
 | 架构决策及替代关系 | [ADR 目录](../adr/README.md) |
 | 已批准变更与历史证据 | [变更日志](change-log.md)及对应 CR 文档 |
 | 完成和商业发布条件 | 详细设计 40 |

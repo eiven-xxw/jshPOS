@@ -5,6 +5,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from check_no_database_foreign_keys import validate_no_database_foreign_keys
+
 
 ROOT = Path(__file__).resolve().parents[1]
 REQUIRED = [
@@ -35,15 +37,25 @@ REQUIRED = [
     "packages/pos_device_adapter/android/src/main/kotlin/com/jingshanghui/pos/pos_device_adapter/PosDeviceAdapterPlugin.kt",
     "contracts/openapi/openapi.yaml",
     "infra/compose/compose.yaml",
+    "infra/local/README.md",
+    "infra/local/.env.example",
+    "infra/local/mysql/jshpos-local-init.sql",
     ".github/workflows/ci.yml",
     "ci/codeup/t0-flow.yml",
     "ci/codeup/README.md",
     "scripts/check_sbom_licenses.py",
+    "scripts/check_no_database_foreign_keys.py",
+    "scripts/local/Start-Local.ps1",
+    "scripts/local/Initialize-LocalDatabase.ps1",
+    "scripts/local/Test-Local.ps1",
+    "scripts/local/Stop-Local.ps1",
     "scripts/review_dependency_diff.py",
+    "server/ruoyi-modules/jshpos-integration/src/main/resources/db/migration/V202609050090__remove_business_foreign_keys.sql",
 ]
 
 
 def main() -> None:
+    foreign_key_count, foreign_key_tables = validate_no_database_foreign_keys()
     missing = [relative for relative in REQUIRED if not (ROOT / relative).exists()]
     tracked_result = subprocess.run(
         ["git", "ls-files", "-z"],
@@ -139,7 +151,8 @@ def main() -> None:
             print("STRUCTURE ERROR: Codeup Flow gates cannot continue on failure: " + ", ".join(unsafe_flow_controls), file=sys.stderr)
         raise SystemExit(1)
     print(
-        f"STRUCTURE OK: {len(REQUIRED)} tracked required paths, no nested Git repositories, CI references pinned"
+        f"STRUCTURE OK: {len(REQUIRED)} tracked required paths, no nested Git repositories, "
+        f"CI references pinned, V90 removes {foreign_key_count} foreign keys from {foreign_key_tables} tables"
     )
 
 

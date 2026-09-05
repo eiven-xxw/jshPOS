@@ -1,0 +1,97 @@
+--- # 仅供单机开发调试；所有 Secret 必须由仓库外 .env.runtime.local 注入
+spring:
+  datasource:
+    type: com.zaxxer.hikari.HikariDataSource
+    dynamic:
+      p6spy: false
+      primary: master
+      strict: true
+      datasource:
+        master:
+          type: ${spring.datasource.type}
+          driverClassName: com.mysql.cj.jdbc.Driver
+          url: ${JSH_LOCAL_DB_URL}
+          username: ${JSH_LOCAL_DB_USERNAME}
+          password: ${JSH_LOCAL_DB_PASSWORD}
+      hikari:
+        maxPoolSize: ${JSH_LOCAL_DB_MAX_POOL_SIZE:12}
+        minIdle: ${JSH_LOCAL_DB_MIN_IDLE:2}
+        connectionTimeout: 30000
+        validationTimeout: 5000
+        idleTimeout: 600000
+        maxLifetime: 1800000
+        keepaliveTime: 30000
+  data:
+    redis:
+      host: ${JSH_LOCAL_REDIS_HOST:127.0.0.1}
+      port: ${JSH_LOCAL_REDIS_PORT:6379}
+      database: 0
+      password: ${JSH_LOCAL_REDIS_PASSWORD}
+      timeout: 10s
+      ssl.enabled: false
+  servlet:
+    multipart:
+      location: ${JSH_LOCAL_MULTIPART_TEMP_DIR}
+      file-size-threshold: 0B
+  boot:
+    admin:
+      client:
+        enabled: false
+
+redisson:
+  keyPrefix: jshpos-local
+  threads: 4
+  nettyThreads: 8
+  singleServerConfig:
+    clientName: JshPOS-Local
+    connectionMinimumIdleSize: 2
+    connectionPoolSize: 12
+    idleConnectionTimeout: 10000
+    timeout: 3000
+    subscriptionConnectionPoolSize: 4
+
+captcha:
+  enable: false
+
+snail-job:
+  enabled: false
+
+mail:
+  enabled: false
+
+sa-token:
+  jwt-secret-key: ${JSH_LOCAL_JWT_SECRET}
+
+api-decrypt:
+  enabled: false
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: when_authorized
+      probes:
+        enabled: true
+    logfile:
+      access: none
+
+spring.boot.admin.client:
+  username: ${JSH_LOCAL_ACTUATOR_USERNAME}
+  password: ${JSH_LOCAL_ACTUATOR_PASSWORD}
+
+jshpos:
+  service:
+    attachment-staging-directory: ${JSH_LOCAL_ATTACHMENT_TEMP_DIR}
+  package-artifacts:
+    local-root: ${JSH_LOCAL_PACKAGE_ROOT}
+    software-signing-key-id: ${JSH_LOCAL_PACKAGE_SIGNING_KEY_ID}
+    software-signing-pkcs8-base64: ${JSH_LOCAL_PACKAGE_SIGNING_PKCS8_B64}

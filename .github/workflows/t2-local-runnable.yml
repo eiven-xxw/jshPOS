@@ -1,0 +1,167 @@
+name: T2 Local Runnable and No MySQL Foreign Keys
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["t2/local-debug-runnable-20260905"]
+  pull_request:
+    paths:
+      - "AGENTS.md"
+      - "infra/local/**"
+      - "scripts/local/**"
+      - "scripts/check_no_database_foreign_keys.py"
+      - "server/ruoyi-admin/src/main/resources/application-local.yml"
+      - "server/ruoyi-admin/src/test/java/org/dromara/test/NoForeignKeyMigrationMySqlIT.java"
+      - "server/ruoyi-modules/jshpos-integration/src/main/resources/db/migration/V202609050090__remove_business_foreign_keys.sql"
+      - "docs/governance/**"
+      - "docs/adr/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: local-runtime-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  governance:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with: { python-version: "3.12" }
+      - run: python scripts/check_no_database_foreign_keys.py
+      - run: python scripts/check_t0_structure.py
+      - run: python scripts/check_rtm.py
+      - run: python scripts/check_contracts.py
+      - run: git diff --check
+
+  server:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
+        with: { distribution: temurin, java-version: "21", cache: maven }
+      - name: Run complete server unit and architecture regression
+        working-directory: server
+        run: ./mvnw -DskipTests=false clean verify
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+        with: { version: 10.33.0 }
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with: { node-version: "24", cache: pnpm, cache-dependency-path: admin-web/pnpm-lock.yaml }
+      - name: Verify local Vue runtime
+        working-directory: admin-web
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm lint:eslint
+          pnpm typecheck
+          pnpm test:unit
+          pnpm build:dev
+
+  flutter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with: { flutter-version: "3.47.0", channel: stable, cache: true }
+      - name: Verify device adapter
+        working-directory: packages/pos_device_adapter
+        run: |
+          flutter pub get --enforce-lockfile
+          flutter analyze --fatal-infos
+          flutter test
+      - name: Verify POS application
+        working-directory: pos-flutter
+        run: |
+          flutter pub get --enforce-lockfile
+          flutter analyze --fatal-infos
+          flutter test
+
+  mysql-local-runtime:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4.11@sha256:b3b90af2a6552ae30c266fdb7d5dd55f3afb72404bb78d37fe8a23eb857fd3fb
+        env:
+          MYSQL_ROOT_PASSWORD: local_ci_root_only
+          MYSQL_DATABASE: jshpos
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -plocal_ci_root_only --silent"
+          --health-interval=10s --health-timeout=5s --health-retries=12
+      redis:
+        image: redis:7.4.10-alpine@sha256:e7723ff73d963f5cc6d9c4643ea3d989527a402a319239054e9472a7fb9219a2
+        ports: ["6379:6379"]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
+        with: { distribution: temurin, java-version: "21", cache: maven }
+      - name: Import RuoYi foundation schema
+        shell: bash
+        run: |
+          set -euo pipefail
+          mysql_container="$(docker ps --filter publish=3306 --format '{{.ID}}' | head -1)"
+          test -n "$mysql_container"
+          docker exec -i "$mysql_container" mysql --default-character-set=utf8mb4 \
+            -uroot -plocal_ci_root_only jshpos < server/script/sql/ry_vue_5.X.sql
+      - name: Verify V89 to V90 and final no-foreign-key schema
+        working-directory: server
+        env:
+          JSH_LOCAL_MYSQL_JDBC_URL: jdbc:mysql://127.0.0.1:3306/jshpos?useUnicode=true&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&nullCatalogMeansCurrent=true
+          JSH_LOCAL_MYSQL_USERNAME: root
+          JSH_LOCAL_MYSQL_PASSWORD: local_ci_root_only
+        run: ./mvnw -Plocal -Dtest=NoForeignKeyMigrationMySqlIT -DfailIfNoTests=false -pl ruoyi-admin -am test
+      - name: Build and boot commercial local JAR
+        shell: bash
+        working-directory: server
+        env:
+          JSH_LOCAL_DB_URL: jdbc:mysql://127.0.0.1:3306/jshpos?useUnicode=true&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&nullCatalogMeansCurrent=true
+          JSH_LOCAL_DB_USERNAME: root
+          JSH_LOCAL_DB_PASSWORD: local_ci_root_only
+          JSH_LOCAL_REDIS_HOST: 127.0.0.1
+          JSH_LOCAL_REDIS_PORT: "6379"
+          JSH_LOCAL_REDIS_PASSWORD: local_ci_redis_only
+          JSH_LOCAL_JWT_SECRET: local_ci_jwt_secret_at_least_32_characters
+          JSH_LOCAL_ACTUATOR_USERNAME: local-ci
+          JSH_LOCAL_ACTUATOR_PASSWORD: local_ci_actuator_only
+        run: |
+          set -euo pipefail
+          redis_container="$(docker ps --filter publish=6379 --format '{{.ID}}' | head -1)"
+          docker exec "$redis_container" redis-cli CONFIG SET requirepass local_ci_redis_only
+          export JSH_MEMBER_LOOKUP_KEY_B64="$(openssl rand -base64 32 | tr -d '\n')"
+          export JSH_MEMBER_ENCRYPTION_KEY_B64="$(openssl rand -base64 32 | tr -d '\n')"
+          export JSH_MEMBER_KEY_VERSION=1
+          export JSH_REPORT_DOWNLOAD_HMAC_KEY_B64="$(openssl rand -base64 32 | tr -d '\n')"
+          export JSH_REPORT_CURSOR_HMAC_KEY_B64="$(openssl rand -base64 32 | tr -d '\n')"
+          export JSH_REPORT_INVENTORY_CURSOR_HMAC_KEY_B64="$(openssl rand -base64 32 | tr -d '\n')"
+          openssl genpkey -algorithm Ed25519 -out "$RUNNER_TEMP/local-signing.pem"
+          export JSH_LOCAL_PACKAGE_SIGNING_PKCS8_B64="$(openssl pkey -in "$RUNNER_TEMP/local-signing.pem" -outform DER | base64 -w0)"
+          export JSH_LOCAL_PACKAGE_SIGNING_KEY_ID=LOCAL_CI_1
+          export JSH_LOCAL_MULTIPART_TEMP_DIR="$RUNNER_TEMP/multipart"
+          export JSH_LOCAL_ATTACHMENT_TEMP_DIR="$RUNNER_TEMP/attachments"
+          export JSH_LOCAL_PACKAGE_ROOT="$RUNNER_TEMP/packages"
+          export JSH_REPORT_ARTIFACT_ROOT="$RUNNER_TEMP/reports"
+          mkdir -p "$JSH_LOCAL_MULTIPART_TEMP_DIR" "$JSH_LOCAL_ATTACHMENT_TEMP_DIR" \
+            "$JSH_LOCAL_PACKAGE_ROOT" "$JSH_REPORT_ARTIFACT_ROOT"
+          ./mvnw -Plocal -DskipTests -pl ruoyi-admin -am package
+          java -jar ruoyi-admin/target/ruoyi-admin.jar --spring.profiles.active=local > "$RUNNER_TEMP/server.log" 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 90); do
+            if curl -fsS http://127.0.0.1:8080/ >/dev/null; then break; fi
+            kill -0 "$server_pid" || { tail -200 "$RUNNER_TEMP/server.log"; exit 1; }
+            sleep 2
+          done
+          curl -fsS http://127.0.0.1:8080/ >/dev/null
+          mysql_container="$(docker ps --filter publish=3306 --format '{{.ID}}' | head -1)"
+          test "$(docker exec "$mysql_container" mysql -Nse \
+            "SELECT COUNT(*) FROM information_schema.referential_constraints WHERE constraint_schema='jshpos'" \
+            -uroot -plocal_ci_root_only)" = "0"

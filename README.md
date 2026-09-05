@@ -2,7 +2,20 @@
 
 连接器型、多租户、离线可营业的商业收银经营平台。
 
-当前阶段：**T2 Gate 8C / Sprint S26-A：T2-SEC-002 生产安全配置与资源边界加固**。项目发起人已接受 Gate 8C-Prep，并仅授权关闭生产默认凭据、Actuator 暴露和服务附件资源三个既定安全发现；`T2-SEC-002` 当前为 `VERIFIED` 候选，必须在完整 CI 全绿并再次确认后才能 `ACCEPTED`。`T2-MTN-001/T2-PERF-002/T2-RDY-001` 继续 `DRAFT`；支付沙箱、真实硬件、真实外设和设计伙伴继续 `BLOCKED`，完整 Alpha 与发布继续 `DRAFT`，不得宣称可试点、可生产或可商用。
+当前提供独立本地调试分支 `t2/local-debug-runnable-20260905`。该分支不新增业务能力，使用 MySQL 8.4、Redis 7.4、商业 JAR、Vue 与 Flutter 现有代码，并以 V90 前向迁移落实服务端 MySQL 无物理外键策略。外部支付、真实硬件/外设和设计伙伴状态不变，完整 Alpha 与发布仍未准入。
+
+## 本地启动
+
+安装并启动 Docker Desktop，准备 JDK 21、Node 24 和 pnpm 10.33，然后在仓库根目录运行：
+
+```powershell
+pwsh ./scripts/local/Start-Local.ps1
+pwsh ./scripts/local/Test-Local.ps1
+```
+
+管理后台地址为 `http://127.0.0.1:4173`，服务端与 Swagger 分别为
+`http://127.0.0.1:8080`、`http://127.0.0.1:8080/swagger-ui/index.html`。
+完整说明见 [本地开发运行环境](infra/local/README.md)。
 
 ## 工程
 

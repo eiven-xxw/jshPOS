@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1.0",
+  "requirementId": "T2-LOC-001",
+  "status": "IN_PROGRESS",
+  "baselineCommit": "558382093368795e738c4a00c5fc0bbb057da0f4",
+  "branch": "t2/local-debug-runnable-20260905",
+  "mysql": {
+    "version": "8.4.11",
+    "latestMigration": "V202609050090",
+    "physicalForeignKeysExpected": 0,
+    "historicalForeignKeysRemoved": 308,
+    "preserve": ["PRIMARY_KEY", "UNIQUE", "CHECK", "NOT_NULL", "INDEX", "IMMUTABILITY_TRIGGER"]
+  },
+  "redis": { "version": "7.4.10", "authority": "CACHE_AND_COORDINATION_ONLY" },
+  "sqlite": {
+    "policy": "EXISTING_LOCAL_DOMAIN_FOREIGN_KEYS_RETAINED",
+    "changeRequiresSeparateCr": true
+  },
+  "externalExecution": {
+    "providerNetworkCalls": 0,
+    "realMoney": 0,
+    "realDeviceCommands": 0,
+    "realPeripheralCommands": 0,
+    "pilotExecution": 0,
+    "productionDeployment": 0
+  }
+}

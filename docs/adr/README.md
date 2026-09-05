@@ -84,3 +84,4 @@ ADR 一经接受不得删除或静默改写。需要改变决策时，新建 ADR
 | ADR-072 | [G9A-R4 同窗正式运行栈跨 Owner E2E](ADR-072-g9a-r4-formal-runtime-cross-owner-e2e.md) | Accepted |
 | ADR-073 | [Gate 10A 内部质量加固的串行批次与语义停止线](ADR-073-gate10a-internal-quality-hardening-sequence.md) | Accepted |
 | ADR-074 | [Gate 10A-R2 Server、数据库与资源整改边界](ADR-074-gate10a-r2-server-database-resource-remediation.md) | Accepted |
+| ADR-075 | [本地可运行基线与 MySQL 业务表无物理外键](ADR-075-local-runnable-and-no-mysql-foreign-keys.md) | Accepted |
