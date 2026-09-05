@@ -54,7 +54,7 @@ pwsh ./scripts/local/Initialize-LocalDatabase.ps1
 
 最终 Schema 规则：
 
-- V1—V89 保持不可变，V90 前向删除 308 个业务外键；
+- V1—V89 保持不可变，V90 前向删除 309 个业务外键；
 - 最终 `information_schema.referential_constraints` 必须为 0；
 - 主键、唯一键、CHECK、NOT NULL、不可变触发器和索引继续保留；
 - 引用完整性由 Owner 应用端口、可信租户校验、幂等与一致性审计负责。

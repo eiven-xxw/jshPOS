@@ -1,9 +1,11 @@
 {
   "schemaVersion": "1.0",
   "requirementId": "T2-LOC-001",
-  "status": "IN_PROGRESS",
+  "status": "VERIFIED_AWAITING_SPONSOR_CONFIRMATION",
   "baselineCommit": "558382093368795e738c4a00c5fc0bbb057da0f4",
   "branch": "t2/local-debug-runnable-20260905",
+  "verifiedRuntimeCommit": "b2ad540971dd8a5b827d9162e5464a9af567007d",
+  "verifiedWorkflowRun": "https://github.com/eiven-xxw/jshPOS/actions/runs/33958678103",
   "mysql": {
     "version": "8.4.11",
     "latestMigration": "V202609050090",

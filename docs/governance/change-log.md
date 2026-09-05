@@ -2,6 +2,7 @@
 
 | CR | 日期 | 状态 | 变更 | 影响需求/ADR | 批准人 |
 |---|---|---|---|---|---|
+| CR-T2LOC-004 | 2026-09-05 | LOCAL_RUNTIME_VERIFIED_AWAITING_SPONSOR_CONFIRMATION | 修复候选`b2ad540971dd8a5b827d9162e5464a9af567007d`的Run`33958678103`六项Job全绿；MySQL8.4.11完成V1—V90、309外键归零、重复迁移、validate和约束不退化，商业JAR以正式MySQL/Redis启动，Server/Web/Flutter及治理双平台通过 | T2-LOC-001、ADR-075、CR-T2LOC-001..003 | 最高仅LOCAL_DEVELOPMENT；T2-LOC-001更新为VERIFIED并等待发起人确认，不自动ACCEPTED；SQLite既有领域内外键和所有外部状态保持不变 |
 | CR-T2LOC-003 | 2026-09-05 | SECOND_CANDIDATE_MYSQL_SCHEMA_FAILURE_FIXED_AWAITING_FULL_RETEST | 第二候选`f4ce9057e5c2ed544aa4d6529a074b2b5c0d8c9d`的Run`33958185695`在真实MySQL 8.4确认V89存在309个物理外键；静态扫描器遗漏同一SQL行的第二个`fk_saas_tenant_version`。保留失败历史，补强多匹配扫描并将V90清单校正为309项，从新提交完整运行 | T2-LOC-001、ADR-075、CR-T2LOC-001、V202609050090 | 不修改V1—V89，不改变业务、租户、资金、库存或同步语义；只校正尚未封存的V90删除清单和测试基线，不重跑失败Job、不降低门禁 |
 | CR-T2LOC-002 | 2026-09-05 | FIRST_CANDIDATE_CI_FAILED_FIX_IN_PROGRESS | 首个候选`c1f188d24938c66559617c4262282cf1f69eb328`的Run`33957943022`发现干净Web执行器缺少预生成自动导入声明，且MySQL专项命令误用Surefire参数；保留失败历史并从新提交完整运行 | T2-LOC-001、ADR-075、CR-T2LOC-001 | 只调整CI执行顺序与测试选择参数，不改业务、数据库语义、V90或门禁阈值；不得重跑失败Job |
 | CR-T2LOC-001 | 2026-09-05 | LOCAL_RUNTIME_NO_MYSQL_FK_IN_PROGRESS | 项目发起人要求整理独立本地可运行分支和数据库初始化并约束后续服务端业务表不使用物理外键；授权从`558382093368795e738c4a00c5fc0bbb057da0f4`新增V90前向删除309个现存外键 | T2-LOC-001、T2-MIG-001、T2-SEC-002、T2-CORE-001、ADR-075 | V1—V89及SQLite迁移不改；主键唯一键CHECK触发器和索引保留；引用完整性转为Owner端口与一致性审计；仅LOCAL_DEVELOPMENT且外部状态不变 |
