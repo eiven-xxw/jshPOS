@@ -61,10 +61,11 @@ jobs:
         working-directory: admin-web
         run: |
           pnpm install --frozen-lockfile
+          # 干净执行器先由 Vite 生成被忽略的自动导入声明，再执行类型检查。
+          pnpm build:dev
           pnpm lint:eslint
           pnpm typecheck
           pnpm test:unit
-          pnpm build:dev
 
   flutter:
     runs-on: ubuntu-latest
@@ -118,7 +119,7 @@ jobs:
           JSH_LOCAL_MYSQL_JDBC_URL: jdbc:mysql://127.0.0.1:3306/jshpos?useUnicode=true&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&nullCatalogMeansCurrent=true
           JSH_LOCAL_MYSQL_USERNAME: root
           JSH_LOCAL_MYSQL_PASSWORD: local_ci_root_only
-        run: ./mvnw -Plocal -Dtest=NoForeignKeyMigrationMySqlIT -DfailIfNoTests=false -pl ruoyi-admin -am test
+        run: ./mvnw -Plocal -Dtest=NoForeignKeyMigrationMySqlIT -Dsurefire.failIfNoSpecifiedTests=false -pl ruoyi-admin -am test
       - name: Build and boot commercial local JAR
         shell: bash
         working-directory: server
