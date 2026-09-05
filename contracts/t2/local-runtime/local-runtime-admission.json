@@ -8,7 +8,7 @@
     "version": "8.4.11",
     "latestMigration": "V202609050090",
     "physicalForeignKeysExpected": 0,
-    "historicalForeignKeysRemoved": 308,
+    "historicalForeignKeysRemoved": 309,
     "preserve": ["PRIMARY_KEY", "UNIQUE", "CHECK", "NOT_NULL", "INDEX", "IMMUTABILITY_TRIGGER"]
   },
   "redis": { "version": "7.4.10", "authority": "CACHE_AND_COORDINATION_ONLY" },

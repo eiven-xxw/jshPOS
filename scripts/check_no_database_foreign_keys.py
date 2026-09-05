@@ -63,7 +63,7 @@ def named_foreign_keys(path: Path) -> set[ForeignKey]:
         elif match := ALTER_TABLE.search(line):
             table, mode = match.group("table"), "alter"
 
-        if match := FOREIGN_KEY.search(line):
+        for match in FOREIGN_KEY.finditer(line):
             if table is None:
                 raise ValueError(f"{path.relative_to(ROOT)}:{line_number}: 无法确定外键所属表")
             found.add(ForeignKey(table, match.group("constraint")))
@@ -112,8 +112,8 @@ def validate_no_database_foreign_keys() -> tuple[int, int]:
     removed = dropped_foreign_keys(POLICY_MIGRATION)
     missing = sorted(historical - removed)
     unknown = sorted(removed - historical)
-    if len(historical) != 308:
-        raise ValueError(f"V1—V89 外键基线应为 308，实际为 {len(historical)}")
+    if len(historical) != 309:
+        raise ValueError(f"V1—V89 外键基线应为 309，实际为 {len(historical)}")
     if missing or unknown:
         raise ValueError(f"V90 外键清单不闭合：missing={missing[:5]} unknown={unknown[:5]}")
 

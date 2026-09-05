@@ -661,7 +661,8 @@ ALTER TABLE `saas_merchant_application`
   DROP FOREIGN KEY `fk_saas_app_plan`;
 
 ALTER TABLE `saas_tenant_entitlement`
-  DROP FOREIGN KEY `fk_saas_tenant_plan`;
+  DROP FOREIGN KEY `fk_saas_tenant_plan`,
+  DROP FOREIGN KEY `fk_saas_tenant_version`;
 
 ALTER TABLE `shf_cash_ledger`
   DROP FOREIGN KEY `fk_cash_ledger_order`,

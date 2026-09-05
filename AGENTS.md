@@ -1390,7 +1390,7 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
   建立 `t2/local-debug-runnable-20260905`，只用于整理本地可启动调试环境、数据库初始化和
   服务端 MySQL 无物理外键治理；唯一需求为 `T2-LOC-001`，决策遵循 `ADR-075`。
 - V1—V89 及全部已发布 MySQL/SQLite 迁移严禁修改；只允许新增唯一前向迁移
-  `V202609050090__remove_business_foreign_keys.sql`，删除 308 个现存 MySQL 业务外键。
+  `V202609050090__remove_business_foreign_keys.sql`，删除 309 个现存 MySQL 业务外键。
 - V90 以后服务端 MySQL 新迁移禁止 `FOREIGN KEY`、`REFERENCES` 和级联删除/更新；必须保留
   主键、唯一键、CHECK、NOT NULL、不可变触发器和普通索引。引用完整性由具名 Owner 应用端口、
   可信 `tenant_id`、状态/版本校验、幂等和一致性审计负责，禁止跨 Owner Mapper。
@@ -1400,7 +1400,7 @@ T0 禁止：正式交易逻辑、真实支付、库存扣减、促销计算、�
   必须另立 CR 和 Requirement ID，不得由本条授权。
 - 本地 Secret 只能随机生成在 Git 忽略文件，禁止提交、打印或复制到共享/生产环境。本地基础账号、
   合成数据和软件签名只形成 `LOCAL_DEVELOPMENT` 证据。
-- 必须由静态门禁核对 308/308 删除清单并阻止未来新增外键；MySQL 8.4 最终 Schema 必须验证
+- 必须由静态门禁核对 309/309 删除清单并阻止未来新增外键；MySQL 8.4 最终 Schema 必须验证
   Flyway V90、外键为 0、重复迁移与 validate 通过，Server/Web/Flutter 既有测试不得退化。
 - `G10A-SQL-P2-001` 继续 OPEN、`G10A-RES-P2-001` 继续 PREPARED；外部 BLOCKED、
   UAT/REL DRAFT、LIC/JSH DEFERRED 和全部零执行边界保持不变。

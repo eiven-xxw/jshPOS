@@ -33,7 +33,7 @@ Schema 约束形态，必须通过独立 CR、唯一 Requirement、ADR 和前向
 
 只有以下全部满足才可把 `T2-LOC-001` 更新为 `VERIFIED`：
 
-- 静态清单确认 308/308 外键均在 V90 删除且未来新增外键失败关闭；
+- 静态清单确认 309/309 外键均在 V90 删除且未来新增外键失败关闭；
 - MySQL 8.4 空库与 V89 升级均到 V90，Flyway validate 通过且最终外键数为 0；
 - 本地脚本不提交 Secret，重复执行不重复导入基础数据；
 - 商业 JAR 健康启动、Vue 可连接正式 API，既有 Server/Web/Flutter 回归不退化；

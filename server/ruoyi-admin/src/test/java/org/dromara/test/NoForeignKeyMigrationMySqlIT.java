@@ -38,7 +38,7 @@ class NoForeignKeyMigrationMySqlIT {
             + "WHERE constraint_schema=DATABASE() AND constraint_type='PRIMARY KEY'");
         long uniqueConstraintsBefore = scalar("SELECT COUNT(*) FROM information_schema.table_constraints "
             + "WHERE constraint_schema=DATABASE() AND constraint_type='UNIQUE'");
-        assertThat(foreignKeysBefore).isEqualTo(308);
+        assertThat(foreignKeysBefore).isEqualTo(309);
 
         Flyway throughV90 = flyway(null);
         assertThat(throughV90.migrate().migrationsExecuted).isOne();
